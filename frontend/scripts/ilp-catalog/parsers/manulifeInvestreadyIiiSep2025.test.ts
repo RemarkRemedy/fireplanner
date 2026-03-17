@@ -39,7 +39,7 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
     ])
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-policy-fee')
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-step-up-booster-bonus')
-    expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-dividend-payout-threshold')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-annual-premium-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-welcome-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-loyalty-bonus')
@@ -76,6 +76,7 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
     expect(firstVariant?.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['policy'],
+      minimumAnnualPayoutAmount: 40,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: false,
       cashPayoutAllowedAfterMip: true,

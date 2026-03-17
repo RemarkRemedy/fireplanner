@@ -205,6 +205,7 @@ export interface IlpTemplateScheduledPayoutSupport {
 export interface IlpTemplateDistributionSupport {
   mode: 'manual-assumption'
   accountIds: string[]
+  minimumAnnualPayoutAmount?: number
   cashPayoutWindows?: Array<{
     startPolicyYear: number
     endPolicyYear: number | null

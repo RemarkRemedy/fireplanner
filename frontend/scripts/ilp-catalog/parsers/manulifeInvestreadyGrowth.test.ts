@@ -36,8 +36,8 @@ describe('parseManulifeInvestreadyGrowth', () => {
       'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-growth-post-flexi-premium-variation')
-    expect(product.metadataOnlyBehaviors).toContain('manulife-investready-growth-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-growth-benefit-payout-handling')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-growth-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-growth-annual-premium-bonus')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-mip-15-flexi-10',
@@ -86,6 +86,7 @@ describe('parseManulifeInvestreadyGrowth', () => {
     expect(firstVariant?.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['policy'],
+      minimumAnnualPayoutAmount: 40,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,

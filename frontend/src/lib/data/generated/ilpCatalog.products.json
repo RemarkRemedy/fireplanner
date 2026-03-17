@@ -15660,7 +15660,6 @@
       "manulife-investready-growth-loyalty-bonus",
       "manulife-investready-growth-partial-withdrawal-flexibility",
       "manulife-investready-growth-partial-withdrawal-flexibility-life-stage-waiver",
-      "manulife-investready-growth-dividend-payout-threshold",
       "manulife-investready-growth-reinvested-dividend-withdrawals",
       "manulife-investready-growth-benefit-payout-handling",
       "manulife-investready-growth-fund-management-charge",
@@ -15670,7 +15669,7 @@
       "manulife-investready-growth-post-flexi-premium-variation"
     ],
     "warnings": [
-      "Manulife InvestReady Growth is cataloged as a supported V1 corridor. The parser captures the accumulated-minimum-premium administrative-charge path, the paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal and full-surrender charge schedules, and the reinvest-default distribution-mode assumption surface, while bonus mechanics, partial-withdrawal flexibility, dividend threshold behavior, benefit payouts, and fund-level charges remain informational only."
+      "Manulife InvestReady Growth is cataloged as a supported V1 corridor. The parser captures the accumulated-minimum-premium administrative-charge path, the paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal and full-surrender charge schedules, and the reinvest-default distribution-mode assumption surface with the published S$40 minimum cash-payout threshold, while bonus mechanics, partial-withdrawal flexibility, benefit payouts, and fund-level charges remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -16046,13 +16045,14 @@
           "accountIds": [
             "policy"
           ],
+          "minimumAnnualPayoutAmount": 40,
           "defaultMode": "reinvest",
           "cashPayoutAllowedDuringMip": true,
           "cashPayoutAllowedAfterMip": true,
           "source": "distribution-paying-funds",
           "notes": [
             "Dividend-paying funds may be reinvested or paid out in cash, subject to the product summary minimum payout amount.",
-            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and amounts below S$40 remain reinvested."
           ],
           "sourceRefs": [
             {
@@ -16082,15 +16082,15 @@
         "warnings": [
           "15 Years Flexi 10 is cataloged as a supported V1 corridor. The parser captures the published administrative-charge path using the accumulated minimum-premium base, the one-time annual-premium bonus when the seed uses annual premium frequency, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal charge schedule, the in-MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
           "The administrative-charge base is interpreted as the future value of annualised regular basic premiums payable through the 10-year Flexi Start window, accumulated at 6% per annum. Keep monthly contribution aligned to the committed regular basic premium because post-Flexi premium variation remains informational only in V1.",
-          "Premium Bonus, Booster Bonus, Loyalty Bonus, partial-withdrawal flexibility, dividend threshold behavior, and fund-level management charges remain informational only.",
-          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
+          "Premium Bonus, Booster Bonus, Loyalty Bonus, partial-withdrawal flexibility, and fund-level management charges remain informational only.",
+          "Withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
           "Welcome Bonus, Premium Bonus, Booster Bonus, and Loyalty Bonus remain informational only.",
           "Changing the regular premium payment mode from annual to a non-annual mode remains informational only.",
           "The partial-withdrawal flexibility corridor from policy year 6 and the life-stage-event waiver remain informational only.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
-          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+          "Withdrawals of accumulated reinvested dividends remain informational only.",
           "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
           "Fund switching, premium redirection, automatic fund rebalancing, change-of-payment-mode, change-of-life-insured, and post-Flexi premium variation options remain informational only.",
           "Reinstatement underwriting and pre-existing-condition exclusions remain informational only."
@@ -16530,13 +16530,14 @@
           "accountIds": [
             "policy"
           ],
+          "minimumAnnualPayoutAmount": 40,
           "defaultMode": "reinvest",
           "cashPayoutAllowedDuringMip": true,
           "cashPayoutAllowedAfterMip": true,
           "source": "distribution-paying-funds",
           "notes": [
             "Dividend-paying funds may be reinvested or paid out in cash, subject to the product summary minimum payout amount.",
-            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and amounts below S$40 remain reinvested."
           ],
           "sourceRefs": [
             {
@@ -16571,15 +16572,15 @@
         "warnings": [
           "20 Years Flexi 10 is cataloged as a supported V1 corridor. The parser captures the published administrative-charge path using the accumulated minimum-premium base, the one-time annual-premium bonus when the seed uses annual premium frequency, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal charge schedule, the in-MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
           "The administrative-charge base is interpreted as the future value of annualised regular basic premiums payable through the 10-year Flexi Start window, accumulated at 6% per annum. Keep monthly contribution aligned to the committed regular basic premium because post-Flexi premium variation remains informational only in V1.",
-          "Premium Bonus, Booster Bonus, Loyalty Bonus, partial-withdrawal flexibility, dividend threshold behavior, and fund-level management charges remain informational only.",
-          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
+          "Premium Bonus, Booster Bonus, Loyalty Bonus, partial-withdrawal flexibility, and fund-level management charges remain informational only.",
+          "Withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
           "Welcome Bonus, Premium Bonus, Booster Bonus, and Loyalty Bonus remain informational only.",
           "Changing the regular premium payment mode from annual to a non-annual mode remains informational only.",
           "The partial-withdrawal flexibility corridor from policy year 6 and the life-stage-event waiver remain informational only.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
-          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+          "Withdrawals of accumulated reinvested dividends remain informational only.",
           "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
           "Fund switching, premium redirection, automatic fund rebalancing, change-of-payment-mode, change-of-life-insured, and post-Flexi premium variation options remain informational only.",
           "Reinstatement underwriting and pre-existing-condition exclusions remain informational only."
@@ -16649,7 +16650,6 @@
     ],
     "metadataOnlyBehaviors": [
       "manulife-investready-iii-top-up-underwriting",
-      "manulife-investready-iii-dividend-payout-threshold",
       "manulife-investready-iii-reinvested-dividend-withdrawals",
       "manulife-investready-iii-benefit-payout-handling",
       "manulife-investready-iii-reinstatement",
@@ -16657,7 +16657,7 @@
       "manulife-investready-iii-fund-management-charge"
     ],
     "warnings": [
-      "Manulife InvestReady (III) is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter insured-life details and current premium bases, the published 1% / 2% welcome-bonus tiers, the annual-premium bonus gate under the annual premium-frequency assumption, the corridor’s 0.0% loyalty-bonus rate after MIP, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface, while annual-mode clawback on later payment-mode changes, flexi-start premium variation, benefit payouts, and fund-level charges remain informational only."
+      "Manulife InvestReady (III) is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter insured-life details and current premium bases, the published 1% / 2% welcome-bonus tiers, the annual-premium bonus gate under the annual premium-frequency assumption, the corridor’s 0.0% loyalty-bonus rate after MIP, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface with the published S$40 minimum cash-payout threshold, while annual-mode clawback on later payment-mode changes, flexi-start premium variation, benefit payouts, and fund-level charges remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -16976,13 +16976,14 @@
           "accountIds": [
             "policy"
           ],
+          "minimumAnnualPayoutAmount": 40,
           "defaultMode": "reinvest",
           "cashPayoutAllowedDuringMip": true,
           "cashPayoutAllowedAfterMip": true,
           "source": "distribution-paying-funds",
           "notes": [
-            "Dividend-paying funds may be reinvested or paid out in cash, subject to the product summary minimum payout amount.",
-            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+            "Dividend-paying funds may be reinvested or paid out in cash, subject to the published minimum payout amount.",
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and amounts below S$40 remain reinvested."
           ],
           "sourceRefs": [
             {
@@ -17001,13 +17002,12 @@
         ],
         "warnings": [
           "Manulife InvestReady (III) is cataloged as a supported V1 corridor. The parser captures the 5 Years Flexi 4 administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the published 1% / 2% welcome-bonus tiers, the annual-premium bonus gate when the seed uses annual premium frequency, the corridor’s 0.0% loyalty-bonus rate after MIP, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
-          "Flexi-start premium variation, annual-mode clawback on later payment-mode changes, partial-withdrawal amount limits, dividend threshold behavior, and fund-level management charges remain informational only.",
-          "Dividend-paying funds seed reinvestment by default in V1. Cash payout requires a manual annual distribution-yield assumption and the published $40 minimum payout threshold remains informational only."
+          "Flexi-start premium variation, annual-mode clawback on later payment-mode changes, partial-withdrawal amount limits, and fund-level management charges remain informational only."
         ],
         "unsupportedItems": [
           "Changing the regular premium payment mode from annual to a non-annual mode during the premium-shortfall-charge period remains informational only.",
           "Top-up underwriting remains informational only.",
-          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+          "Withdrawals of accumulated reinvested dividends remain informational only.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
           "Reinstatement underwriting and pre-existing-condition exclusions remain informational only.",
           "Regular premium variation from Flexi Start onwards remains informational only.",
@@ -17086,7 +17086,6 @@
       "manulife-investready-iii-policy-fee",
       "manulife-investready-iii-step-up-booster-bonus",
       "manulife-investready-iii-life-stage-partial-withdrawal",
-      "manulife-investready-iii-dividend-payout-threshold",
       "manulife-investready-iii-reinvested-dividend-withdrawals",
       "manulife-investready-iii-benefit-payout-handling",
       "manulife-investready-iii-fund-management-charge",
@@ -17094,7 +17093,7 @@
       "manulife-investready-iii-reinstatement"
     ],
     "warnings": [
-      "Manulife InvestReady (III) Sep-2025 summary cohort is cataloged as a separate supported corridor set in V1. The parser captures the published administration-charge path, the 101% paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the Welcome Bonus tiers, the annual-premium bonus gate under the annual premium-frequency assumption, the published Loyalty Bonus rates, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedules, the MIP full-surrender charge schedules, and the reinvest-default distribution-mode assumption surface, while policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, life-stage withdrawal waivers, and fund-level charges remain outside the current engine."
+      "Manulife InvestReady (III) Sep-2025 summary cohort is cataloged as a separate supported corridor set in V1. The parser captures the published administration-charge path, the 101% paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the Welcome Bonus tiers, the annual-premium bonus gate under the annual premium-frequency assumption, the published Loyalty Bonus rates, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedules, the MIP full-surrender charge schedules, and the reinvest-default distribution-mode assumption surface with the published S$40 minimum cash-payout threshold, while policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, life-stage withdrawal waivers, and fund-level charges remain outside the current engine."
     ],
     "archived": false,
     "variants": [
@@ -17422,13 +17421,14 @@
           "accountIds": [
             "policy"
           ],
+          "minimumAnnualPayoutAmount": 40,
           "defaultMode": "reinvest",
           "cashPayoutAllowedDuringMip": false,
           "cashPayoutAllowedAfterMip": true,
           "source": "distribution-paying-funds",
           "notes": [
             "During MIP, dividend-paying funds are compulsory to be reinvested.",
-            "After MIP, V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+            "After MIP, V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and amounts below S$40 remain reinvested."
           ],
           "sourceRefs": [
             {
@@ -17448,7 +17448,7 @@
         "warnings": [
           "5 Years Flexi 4 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the Welcome Bonus tiers, the annual-premium bonus gate when the seed uses annual premium frequency, the Loyalty Bonus rate for this corridor, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
           "Policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.",
-          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
+          "Withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
           "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
@@ -17456,7 +17456,7 @@
           "Step-up Booster Bonus remains informational only.",
           "Life-stage partial-withdrawal waivers remain informational only, including waiver eligibility proof, per-event caps, and the two-application lifetime limit.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
-          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+          "Withdrawals of accumulated reinvested dividends remain informational only.",
           "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
           "Fund switching, premium redirection, automatic fund rebalancing, and change-of-mode-of-payment options remain informational only.",
           "Reinstatement underwriting and pre-existing-condition exclusions remain informational only."
@@ -17848,13 +17848,14 @@
           "accountIds": [
             "policy"
           ],
+          "minimumAnnualPayoutAmount": 40,
           "defaultMode": "reinvest",
           "cashPayoutAllowedDuringMip": false,
           "cashPayoutAllowedAfterMip": true,
           "source": "distribution-paying-funds",
           "notes": [
             "During MIP, dividend-paying funds are compulsory to be reinvested.",
-            "After MIP, V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+            "After MIP, V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and amounts below S$40 remain reinvested."
           ],
           "sourceRefs": [
             {
@@ -17876,7 +17877,7 @@
         "warnings": [
           "7 Years Flexi 5 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the Welcome Bonus tiers, the annual-premium bonus gate when the seed uses annual premium frequency, the Loyalty Bonus rate for this corridor, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
           "Policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.",
-          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
+          "Withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
           "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
@@ -17884,7 +17885,7 @@
           "Step-up Booster Bonus remains informational only.",
           "Life-stage partial-withdrawal waivers remain informational only, including waiver eligibility proof, per-event caps, and the two-application lifetime limit.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
-          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+          "Withdrawals of accumulated reinvested dividends remain informational only.",
           "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
           "Fund switching, premium redirection, automatic fund rebalancing, and change-of-mode-of-payment options remain informational only.",
           "Reinstatement underwriting and pre-existing-condition exclusions remain informational only."
@@ -18281,13 +18282,14 @@
           "accountIds": [
             "policy"
           ],
+          "minimumAnnualPayoutAmount": 40,
           "defaultMode": "reinvest",
           "cashPayoutAllowedDuringMip": false,
           "cashPayoutAllowedAfterMip": true,
           "source": "distribution-paying-funds",
           "notes": [
             "During MIP, dividend-paying funds are compulsory to be reinvested.",
-            "After MIP, V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+            "After MIP, V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and amounts below S$40 remain reinvested."
           ],
           "sourceRefs": [
             {
@@ -18312,7 +18314,7 @@
         "warnings": [
           "10 Years Flexi 3 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the Welcome Bonus tiers, the annual-premium bonus gate when the seed uses annual premium frequency, the Loyalty Bonus rate for this corridor, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
           "Policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.",
-          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
+          "Withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
           "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
@@ -18320,7 +18322,7 @@
           "Step-up Booster Bonus remains informational only.",
           "Life-stage partial-withdrawal waivers remain informational only, including waiver eligibility proof, per-event caps, and the two-application lifetime limit.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
-          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+          "Withdrawals of accumulated reinvested dividends remain informational only.",
           "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
           "Fund switching, premium redirection, automatic fund rebalancing, and change-of-mode-of-payment options remain informational only.",
           "Reinstatement underwriting and pre-existing-condition exclusions remain informational only."
@@ -18727,13 +18729,14 @@
           "accountIds": [
             "policy"
           ],
+          "minimumAnnualPayoutAmount": 40,
           "defaultMode": "reinvest",
           "cashPayoutAllowedDuringMip": false,
           "cashPayoutAllowedAfterMip": true,
           "source": "distribution-paying-funds",
           "notes": [
             "During MIP, dividend-paying funds are compulsory to be reinvested.",
-            "After MIP, V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+            "After MIP, V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and amounts below S$40 remain reinvested."
           ],
           "sourceRefs": [
             {
@@ -18758,7 +18761,7 @@
         "warnings": [
           "10 Years Flexi 5 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the Welcome Bonus tiers, the annual-premium bonus gate when the seed uses annual premium frequency, the Loyalty Bonus rate for this corridor, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
           "Policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.",
-          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
+          "Withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
           "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
@@ -18766,7 +18769,7 @@
           "Step-up Booster Bonus remains informational only.",
           "Life-stage partial-withdrawal waivers remain informational only, including waiver eligibility proof, per-event caps, and the two-application lifetime limit.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
-          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+          "Withdrawals of accumulated reinvested dividends remain informational only.",
           "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
           "Fund switching, premium redirection, automatic fund rebalancing, and change-of-mode-of-payment options remain informational only.",
           "Reinstatement underwriting and pre-existing-condition exclusions remain informational only."
@@ -19188,13 +19191,14 @@
           "accountIds": [
             "policy"
           ],
+          "minimumAnnualPayoutAmount": 40,
           "defaultMode": "reinvest",
           "cashPayoutAllowedDuringMip": false,
           "cashPayoutAllowedAfterMip": true,
           "source": "distribution-paying-funds",
           "notes": [
             "During MIP, dividend-paying funds are compulsory to be reinvested.",
-            "After MIP, V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+            "After MIP, V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and amounts below S$40 remain reinvested."
           ],
           "sourceRefs": [
             {
@@ -19219,7 +19223,7 @@
         "warnings": [
           "10 Years Flexi 8 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the Welcome Bonus tiers, the annual-premium bonus gate when the seed uses annual premium frequency, the Loyalty Bonus rate for this corridor, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
           "Policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.",
-          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
+          "Withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
           "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
@@ -19227,7 +19231,7 @@
           "Step-up Booster Bonus remains informational only.",
           "Life-stage partial-withdrawal waivers remain informational only, including waiver eligibility proof, per-event caps, and the two-application lifetime limit.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
-          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+          "Withdrawals of accumulated reinvested dividends remain informational only.",
           "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
           "Fund switching, premium redirection, automatic fund rebalancing, and change-of-mode-of-payment options remain informational only.",
           "Reinstatement underwriting and pre-existing-condition exclusions remain informational only."
@@ -19674,13 +19678,14 @@
           "accountIds": [
             "policy"
           ],
+          "minimumAnnualPayoutAmount": 40,
           "defaultMode": "reinvest",
           "cashPayoutAllowedDuringMip": false,
           "cashPayoutAllowedAfterMip": true,
           "source": "distribution-paying-funds",
           "notes": [
             "During MIP, dividend-paying funds are compulsory to be reinvested.",
-            "After MIP, V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption."
+            "After MIP, V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and amounts below S$40 remain reinvested."
           ],
           "sourceRefs": [
             {
@@ -19708,7 +19713,7 @@
         "warnings": [
           "13 Years Flexi 10 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 0.70% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the Welcome Bonus tiers, the annual-premium bonus gate when the seed uses annual premium frequency, the Loyalty Bonus rate for this corridor, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
           "Policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.",
-          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only."
+          "Withdrawals of accumulated reinvested dividends remain informational only."
         ],
         "unsupportedItems": [
           "Policy fee remains informational only because it depends on the first-year annualised premium band selected for the variant.",
@@ -19716,7 +19721,7 @@
           "Step-up Booster Bonus remains informational only.",
           "Life-stage partial-withdrawal waivers remain informational only, including waiver eligibility proof, per-event caps, and the two-application lifetime limit.",
           "Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.",
-          "The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.",
+          "Withdrawals of accumulated reinvested dividends remain informational only.",
           "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
           "Fund switching, premium redirection, automatic fund rebalancing, and change-of-mode-of-payment options remain informational only.",
           "Reinstatement underwriting and pre-existing-condition exclusions remain informational only."

@@ -243,26 +243,26 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['policy'],
+      minimumAnnualPayoutAmount: 40,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: [
-        'Dividend-paying funds may be reinvested or paid out in cash, subject to the product summary minimum payout amount.',
-        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.',
+        'Dividend-paying funds may be reinvested or paid out in cash, subject to the published minimum payout amount.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and amounts below S$40 remain reinvested.',
       ],
       sourceRefs: [page12],
     },
     eecTable: [...WITHDRAWAL_AND_SURRENDER_CHARGE_SCHEDULE],
     warnings: [
       'Manulife InvestReady (III) is cataloged as a supported V1 corridor. The parser captures the 5 Years Flexi 4 administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the published 1% / 2% welcome-bonus tiers, the annual-premium bonus gate when the seed uses annual premium frequency, the corridor’s 0.0% loyalty-bonus rate after MIP, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.',
-      'Flexi-start premium variation, annual-mode clawback on later payment-mode changes, partial-withdrawal amount limits, dividend threshold behavior, and fund-level management charges remain informational only.',
-      'Dividend-paying funds seed reinvestment by default in V1. Cash payout requires a manual annual distribution-yield assumption and the published $40 minimum payout threshold remains informational only.',
+      'Flexi-start premium variation, annual-mode clawback on later payment-mode changes, partial-withdrawal amount limits, and fund-level management charges remain informational only.',
     ],
     unsupportedItems: [
       'Changing the regular premium payment mode from annual to a non-annual mode during the premium-shortfall-charge period remains informational only.',
       'Top-up underwriting remains informational only.',
-      'The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.',
+      'Withdrawals of accumulated reinvested dividends remain informational only.',
       'Death / terminal-illness payout handling remains informational only beyond the modeled COI deduction.',
       'Reinstatement underwriting and pre-existing-condition exclusions remain informational only.',
       'Regular premium variation from Flexi Start onwards remains informational only.',
@@ -299,7 +299,6 @@ export function parseManulifeInvestreadyIii(context: ParseContext): IlpCatalogPr
     ],
     metadataOnlyBehaviors: [
       'manulife-investready-iii-top-up-underwriting',
-      'manulife-investready-iii-dividend-payout-threshold',
       'manulife-investready-iii-reinvested-dividend-withdrawals',
       'manulife-investready-iii-benefit-payout-handling',
       'manulife-investready-iii-reinstatement',
@@ -307,7 +306,7 @@ export function parseManulifeInvestreadyIii(context: ParseContext): IlpCatalogPr
       'manulife-investready-iii-fund-management-charge',
     ],
     warnings: [
-      'Manulife InvestReady (III) is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter insured-life details and current premium bases, the published 1% / 2% welcome-bonus tiers, the annual-premium bonus gate under the annual premium-frequency assumption, the corridor’s 0.0% loyalty-bonus rate after MIP, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface, while annual-mode clawback on later payment-mode changes, flexi-start premium variation, benefit payouts, and fund-level charges remain informational only.',
+      'Manulife InvestReady (III) is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter insured-life details and current premium bases, the published 1% / 2% welcome-bonus tiers, the annual-premium bonus gate under the annual premium-frequency assumption, the corridor’s 0.0% loyalty-bonus rate after MIP, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface with the published S$40 minimum cash-payout threshold, while annual-mode clawback on later payment-mode changes, flexi-start premium variation, benefit payouts, and fund-level charges remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

@@ -164,6 +164,7 @@ export const ilpScheduledPayoutSupportSchema = z.object({
 export const ilpDistributionSupportSchema = z.object({
   mode: z.literal('manual-assumption'),
   accountIds: z.array(z.string().min(1)).min(1).max(10),
+  minimumAnnualPayoutAmount: z.number().min(0).max(100_000_000).optional(),
   cashPayoutWindows: z.array(z.object({
     startPolicyYear: z.number().int().min(1).max(100),
     endPolicyYear: z.number().int().min(1).max(100).nullable(),

@@ -81,6 +81,15 @@ function sameRate(left: number | null, right: number | null): boolean {
   return Math.abs(left - right) < 0.000001
 }
 
+function formatCurrencyAmount(currency: string, amount: number): string {
+  return new Intl.NumberFormat('en-SG', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(amount)
+}
+
 function deriveAccountFeeRate(account: IlpTemplateAccount, feeRules: IlpTemplateFeeRule[]): number {
   if (account.feeRate != null) {
     return account.feeRate
@@ -332,6 +341,9 @@ export function templateVariantToPolicySeed(
       ? {
           mode: variant.distributionSupport.mode,
           accountIds: [...variant.distributionSupport.accountIds],
+          ...(variant.distributionSupport.minimumAnnualPayoutAmount != null
+            ? { minimumAnnualPayoutAmount: variant.distributionSupport.minimumAnnualPayoutAmount }
+            : {}),
           ...(variant.distributionSupport.cashPayoutWindows
             ? {
                 cashPayoutWindows: variant.distributionSupport.cashPayoutWindows.map((window) => ({
@@ -399,7 +411,9 @@ export function templateVariantToPolicySeed(
         ? ['This product supports scheduled payout-state, but V1 requires a manual payout assumption. No payout schedule is seeded by default.']
         : []),
       ...(variant.distributionSupport
-        ? ['This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.']
+        ? [variant.distributionSupport.minimumAnnualPayoutAmount != null
+            ? `This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption, and payouts below the published minimum annual cash-payout amount of ${formatCurrencyAmount(variant.currency, variant.distributionSupport.minimumAnnualPayoutAmount)} remain reinvested.`
+            : 'This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.']
         : []),
       ...(variant.bonuses.some((bonus) => bonus.requiredRegularPremiumPaymentFrequency === 'annual')
         ? ['This seed assumes the regular premium is paid on the annual frequency option so the published annual-premium bonus path can execute. Change Regular Premium Payment Frequency in Policy Details if the policy uses a non-annual mode.']

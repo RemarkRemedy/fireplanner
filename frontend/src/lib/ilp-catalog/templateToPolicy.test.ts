@@ -6035,6 +6035,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-full-surrender-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-iii-benefit-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-annual-premium-bonus')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-dividend-payout-threshold')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-welcome-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-loyalty-bonus')
     expect(seed.regularPremiumPaymentFrequency).toBe('annual')
@@ -6111,6 +6112,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['policy'],
+      minimumAnnualPayoutAmount: 40,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -6142,6 +6144,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-growth-partial-withdrawal-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-growth-full-surrender-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-growth-post-flexi-premium-variation')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-growth-dividend-payout-threshold')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-growth-annual-premium-bonus')
     expect(seed.regularPremiumPaymentFrequency).toBe('annual')
     expect(seed.monthlyContribution).toBe(350)
@@ -6210,6 +6213,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['policy'],
+      minimumAnnualPayoutAmount: 40,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -6244,6 +6248,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-full-surrender-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-iii-life-stage-partial-withdrawal')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-annual-premium-bonus')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-dividend-payout-threshold')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-welcome-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-loyalty-bonus')
     expect(seed.regularPremiumPaymentFrequency).toBe('annual')
@@ -6321,6 +6326,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['policy'],
+      minimumAnnualPayoutAmount: 40,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: false,
       cashPayoutAllowedAfterMip: true,

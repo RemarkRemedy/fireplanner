@@ -88,6 +88,7 @@ export type IlpScheduledPayoutAssumption =
 export interface IlpDistributionSupport {
   mode: 'manual-assumption'
   accountIds: string[]
+  minimumAnnualPayoutAmount?: number
   cashPayoutWindows?: Array<{
     startPolicyYear: number
     endPolicyYear: number | null
@@ -1190,7 +1191,14 @@ function getDistributionPayoutsByAccount(
   for (const accountId of eligibleAccountIds) {
     const openBalance = openBalances.get(accountId) ?? 0
     if (openBalance <= 0) continue
-    payouts.set(accountId, openBalance * distributionAssumption.annualYieldRate)
+    const payoutAmount = openBalance * distributionAssumption.annualYieldRate
+    if (
+      distributionSupport.minimumAnnualPayoutAmount != null
+      && payoutAmount < distributionSupport.minimumAnnualPayoutAmount
+    ) {
+      continue
+    }
+    payouts.set(accountId, payoutAmount)
   }
 
   return payouts
