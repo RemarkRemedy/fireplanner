@@ -556,7 +556,8 @@ export function parseTokioMarineWealthMaxIi(context: ParseContext): IlpCatalogPr
     ],
     metadataOnlyBehaviors: [
       'tokio-wealth-max-ii-advanced-death-payout-handling',
-      'tokio-wealth-max-ii-multiple-life-and-life-replacement-administration',
+      'tokio-wealth-max-ii-multiple-life-last-life-settlement',
+      'tokio-wealth-max-ii-change-of-life-assured-and-life-replacement-administration',
     ],
     warnings: [
       'Structured extraction validated against the Wealth Max (II) product summary text layer.',

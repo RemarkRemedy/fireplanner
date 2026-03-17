@@ -32,7 +32,9 @@ describe('parseTokioMarineHarvestFlexi', () => {
     expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-advanced-death-payout-handling')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-harvest-flexi-benefit-payout-handling')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-harvest-flexi-dividend-payout-threshold-and-record-date-instructions')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-multiple-life-and-life-replacement-administration')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-multiple-life-last-life-settlement')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-change-of-life-assured-and-life-replacement-administration')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-harvest-flexi-multiple-life-and-life-replacement-administration')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-harvest-flexi-life-benefit-rider')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-multiple-life-and-capital-guarantee-options')
 

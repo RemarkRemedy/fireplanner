@@ -480,7 +480,8 @@ export function parseTokioMarineHarvestFlexi(context: ParseContext): IlpCatalogP
     ],
     metadataOnlyBehaviors: [
       'tokio-harvest-flexi-advanced-death-payout-handling',
-      'tokio-harvest-flexi-multiple-life-and-life-replacement-administration',
+      'tokio-harvest-flexi-multiple-life-last-life-settlement',
+      'tokio-harvest-flexi-change-of-life-assured-and-life-replacement-administration',
       'tokio-harvest-flexi-partial-withdrawal-limit-gates',
       'tokio-harvest-flexi-credit-card-charge',
     ],

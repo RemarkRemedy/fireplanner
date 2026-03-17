@@ -3549,6 +3549,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-power-up-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-post-mip-regular-premium-routing-back-to-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-max-ii-multiple-life-last-life-settlement')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-max-ii-change-of-life-assured-and-life-replacement-administration')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-max-ii-multiple-life-and-life-replacement-administration')
     expect(seed.accounts.find((account) => account.id === 'initial')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
       { phase: 'after-mip', contributionShare: 1 },
@@ -4107,6 +4110,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-post-mip-regular-premium-routing-back-to-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-explicit-charge-waiver-for-partial-withdrawal-and-shortfall-events')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-pro-ii-multiple-life-last-life-settlement')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-pro-ii-change-of-life-assured-and-life-replacement-administration')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-pro-ii-multiple-life-and-life-replacement-administration')
     expect(seed.bonuses.find((bonus) => bonus.label === 'Initial Bonus')?.tieredRates).toEqual([
       { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.17 },
       { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.35 },
@@ -4234,6 +4240,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-power-up-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.modeledEconomics).not.toContain('tokio-explicit-charge-waiver-for-partial-withdrawal-and-shortfall-events')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-pro-multiple-life-last-life-settlement')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-pro-change-of-life-assured-and-life-replacement-administration')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-harvest-pro-multiple-life-and-life-replacement-administration')
     expect(seed.bonuses.find((bonus) => bonus.label === 'Initial Bonus')?.tieredRates).toEqual([
       { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.14 },
       { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.25 },
@@ -4437,7 +4446,9 @@ describe('templateVariantToPolicySeed', () => {
     )
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-advanced-death-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-harvest-flexi-benefit-payout-handling')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-multiple-life-and-life-replacement-administration')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-multiple-life-last-life-settlement')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-change-of-life-assured-and-life-replacement-administration')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-harvest-flexi-multiple-life-and-life-replacement-administration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-harvest-flexi-life-benefit-rider')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain(
       'tokio-harvest-flexi-dividend-payout-threshold-and-record-date-instructions',
@@ -4801,7 +4812,9 @@ describe('templateVariantToPolicySeed', () => {
     })
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-advanced-death-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-benefit-payout-handling')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-multiple-life-and-life-replacement-administration')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-multiple-life-last-life-settlement')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-change-of-life-assured-and-life-replacement-administration')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-multiple-life-and-life-replacement-administration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-life-benefit-rider')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)

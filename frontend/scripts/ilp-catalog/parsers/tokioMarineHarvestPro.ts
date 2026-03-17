@@ -557,7 +557,8 @@ export function parseTokioMarineHarvestPro(context: ParseContext): IlpCatalogPro
     ],
     metadataOnlyBehaviors: [
       'tokio-harvest-pro-advanced-death-payout-handling',
-      'tokio-harvest-pro-multiple-life-and-life-replacement-administration',
+      'tokio-harvest-pro-multiple-life-last-life-settlement',
+      'tokio-harvest-pro-change-of-life-assured-and-life-replacement-administration',
     ],
     warnings: [
       'Structured extraction validated against the Harvest Pro product summary text layer.',

@@ -560,7 +560,8 @@ export function parseTokioMarineWealthProIi(context: ParseContext): IlpCatalogPr
     ],
     metadataOnlyBehaviors: [
       'tokio-wealth-pro-ii-advanced-death-payout-handling',
-      'tokio-wealth-pro-ii-multiple-life-and-life-replacement-administration',
+      'tokio-wealth-pro-ii-multiple-life-last-life-settlement',
+      'tokio-wealth-pro-ii-change-of-life-assured-and-life-replacement-administration',
     ],
     warnings: [
       'Structured extraction validated against the Wealth Pro (II) product summary text layer.',

@@ -503,7 +503,8 @@ export function parseTokioMarineWealthFlexi(context: ParseContext): IlpCatalogPr
     ],
     metadataOnlyBehaviors: [
       'tokio-wealth-flexi-advanced-death-payout-handling',
-      'tokio-wealth-flexi-multiple-life-and-life-replacement-administration',
+      'tokio-wealth-flexi-multiple-life-last-life-settlement',
+      'tokio-wealth-flexi-change-of-life-assured-and-life-replacement-administration',
     ],
     warnings: [
       'Structured extraction validated against the Wealth Flexi product summary text layer.',

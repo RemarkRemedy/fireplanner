@@ -34,7 +34,9 @@ describe('parseTokioMarineHarvestPro', () => {
     expect(product.modeledEconomics).not.toContain('tokio-explicit-charge-waiver-for-partial-withdrawal-and-shortfall-events')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-dividend-payout-threshold-and-record-date-instructions')
     expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-pro-advanced-death-payout-handling')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-pro-multiple-life-and-life-replacement-administration')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-pro-multiple-life-last-life-settlement')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-pro-change-of-life-assured-and-life-replacement-administration')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-harvest-pro-multiple-life-and-life-replacement-administration')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-multiple-life-and-capital-guarantee-options')
 
     const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-10')

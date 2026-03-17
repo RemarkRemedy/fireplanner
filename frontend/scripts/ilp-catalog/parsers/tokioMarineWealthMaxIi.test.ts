@@ -33,7 +33,9 @@ describe('parseTokioMarineWealthMaxIi', () => {
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-dividend-payout-threshold-and-record-date-instructions')
     expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-max-ii-advanced-death-payout-handling')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-max-ii-multiple-life-and-life-replacement-administration')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-max-ii-multiple-life-last-life-settlement')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-max-ii-change-of-life-assured-and-life-replacement-administration')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-wealth-max-ii-multiple-life-and-life-replacement-administration')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-multiple-life-and-capital-guarantee-options')
 
     const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15')
