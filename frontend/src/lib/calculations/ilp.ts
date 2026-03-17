@@ -293,6 +293,9 @@ export interface IlpEventChargeRule {
   freeEventStartPolicyYear?: number
   freeEventMaxAmountRate?: number
   freeEventMaxAmountBasis?: 'open-balance' | 'initial-single-premium'
+  freeAmountPoolRate?: number
+  freeAmountPoolBasis?: 'open-balance-at-start-policy-year' | 'initial-single-premium'
+  freeAmountPoolReferencePolicyYear?: number
   rate: number
   rateSchedule?: IlpEventChargeRateTier[]
   amount: number
@@ -1289,6 +1292,19 @@ function assertAccruedAssuranceEntryPoint(input: IlpPolicyInput): void {
   if (hasUnsupportedMidPolicyAccrual) {
     throw new Error(
       `Cannot analyze ILP policy "${input.name}": accrued assurance rules currently require inception-state inputs, so mid-policy entry before settlement is not supported.`,
+    )
+  }
+}
+
+function assertFreeAmountPoolEntryPoint(input: IlpPolicyInput): void {
+  const unsupportedRule = input.eventChargeRules?.find((rule) => (
+    rule.freeAmountPoolReferencePolicyYear != null
+    && input.monthsAlreadyPaid > ((rule.freeAmountPoolReferencePolicyYear - 1) * 12)
+  ))
+
+  if (unsupportedRule) {
+    throw new Error(
+      `Cannot analyze ILP policy "${input.name}": free amount pools anchored to an earlier policy year require entry at or before the start of that reference year.`,
     )
   }
 }
@@ -3279,12 +3295,14 @@ function computeFreePartialWithdrawalAmount(
   rule: IlpEventChargeRule,
   event: IlpPolicyEvent,
   openBalances: Map<string, number>,
+  openingBalancesByPolicyYear: Map<number, Map<string, number>>,
+  freeAmountPoolUsedByRule: Map<string, number>,
 ): number {
   if (rule.trigger !== 'partial-withdrawal' || rule.basis !== 'event-amount') {
     return 0
   }
 
-  if ((rule.freeEventCount ?? 0) <= 0 || event.amount == null || event.amount <= 0) {
+  if (event.amount == null || event.amount <= 0) {
     return 0
   }
 
@@ -3293,13 +3311,39 @@ function computeFreePartialWithdrawalAmount(
     return 0
   }
 
-  const priorMatchingEvents = normalized.events.partialWithdrawals
-    .filter((candidate) => (
-      candidate.startPolicyMonth < event.startPolicyMonth
-      && candidate.accountId != null
-      && normalized.multiAccount.withdrawalChargeScopeAccountIds.includes(candidate.accountId)
-      && rule.appliesTo.includes(candidate.accountId)
-    ))
+  if (rule.freeAmountPoolRate != null && rule.freeAmountPoolBasis != null && rule.freeAmountPoolReferencePolicyYear != null) {
+    const poolBalances = rule.freeAmountPoolReferencePolicyYear === eventPolicyYear
+      ? openBalances
+      : openingBalancesByPolicyYear.get(rule.freeAmountPoolReferencePolicyYear)
+
+    if (!poolBalances) {
+      return 0
+    }
+
+    const totalPoolAmount = rule.freeAmountPoolBasis === 'initial-single-premium'
+      ? Math.max(0, (normalized.input.initialSinglePremium ?? 0) * rule.freeAmountPoolRate)
+      : normalized.multiAccount.withdrawalChargeScopeAccountIds
+          .filter((accountId) => rule.appliesTo.includes(accountId))
+          .reduce((sum, accountId) => sum + (poolBalances.get(accountId) ?? 0), 0) * rule.freeAmountPoolRate
+
+    const usedPoolAmount = freeAmountPoolUsedByRule.get(rule.id) ?? 0
+    const freeAmount = Math.max(0, Math.min(event.amount, totalPoolAmount - usedPoolAmount))
+    if (freeAmount > 0) {
+      freeAmountPoolUsedByRule.set(rule.id, usedPoolAmount + freeAmount)
+    }
+    return freeAmount
+  }
+
+  if ((rule.freeEventCount ?? 0) <= 0) {
+    return 0
+  }
+
+  const priorMatchingEvents = normalized.events.partialWithdrawals.filter((candidate) => (
+    candidate.startPolicyMonth < event.startPolicyMonth
+    && candidate.accountId != null
+    && normalized.multiAccount.withdrawalChargeScopeAccountIds.includes(candidate.accountId)
+    && rule.appliesTo.includes(candidate.accountId)
+  ))
 
   if (priorMatchingEvents.length >= (rule.freeEventCount ?? 0)) {
     return 0
@@ -3441,6 +3485,8 @@ function computeEventChargeByAccount(
   context: IlpCashflowYearContext,
   repaymentEvents: IlpSyntheticEvent[],
   openBalances: Map<string, number>,
+  openingBalancesByPolicyYear: Map<number, Map<string, number>>,
+  freeAmountPoolUsedByRule: Map<string, number>,
 ): Map<string, number> {
   const { input } = normalized
   const charges = new Map<string, number>(input.accounts.map((account) => [account.id, 0]))
@@ -3480,7 +3526,17 @@ function computeEventChargeByAccount(
 
       switch (rule.basis) {
         case 'event-amount':
-          totalCharge = Math.max(0, ((event.amount ?? 0) - computeFreePartialWithdrawalAmount(normalized, rule, event as IlpPolicyEvent, openBalances))) * effectiveRuleRate + rule.amount
+          totalCharge = Math.max(
+            0,
+            ((event.amount ?? 0) - computeFreePartialWithdrawalAmount(
+              normalized,
+              rule,
+              event as IlpPolicyEvent,
+              openBalances,
+              openingBalancesByPolicyYear,
+              freeAmountPoolUsedByRule,
+            )),
+          ) * effectiveRuleRate + rule.amount
           break
 
         case 'account-value':
@@ -3648,6 +3704,7 @@ export function projectIlpPolicy(
 ): IlpProjectionResult {
   assertBeforeMip(input)
   assertAccruedAssuranceEntryPoint(input)
+  assertFreeAmountPoolEntryPoint(input)
   assertScheduledPayoutConfiguration(input)
   assertDistributionConfiguration(input)
   const normalized = buildNormalizedPolicyInput(input)
@@ -3675,6 +3732,8 @@ export function projectIlpPolicy(
   )
   let disabledAssuranceRuleIds = new Set<string>()
   let tokioProtectionStateByRule = buildInitialTokioProtectionStateByRule(normalized, previousClose)
+  const openingBalancesByPolicyYear = new Map<number, Map<string, number>>()
+  let freeAmountPoolUsedByRule = new Map<string, number>()
   const assuranceRelevantAccountIds = getAssuranceRelevantAccountIds(normalized)
 
   for (let year = 1; year <= totalYears; year += 1) {
@@ -3691,6 +3750,7 @@ export function projectIlpPolicy(
     const openBalances = new Map(
       input.accounts.map((account) => [account.id, previousClose.get(account.id) ?? getEffectiveCurrentValue(account, initialSinglePremiumState)]),
     )
+    openingBalancesByPolicyYear.set(policyYear, new Map(openBalances))
     const scheduledRegularContributionByAccount = resolveContributionByAccount(normalized, context, scheduledContributionForYear)
     // Annual-contribution charges stay on scheduled regular premiums only.
     // Premium-holiday repayments still count as paid regular premium for assurance bases,
@@ -3726,7 +3786,14 @@ export function projectIlpPolicy(
       openBalances,
       regularContributionByAccount,
     )
-    const eventChargeByAccount = computeEventChargeByAccount(normalized, context, premiumHolidayRepaymentEvents, openBalances)
+    const eventChargeByAccount = computeEventChargeByAccount(
+      normalized,
+      context,
+      premiumHolidayRepaymentEvents,
+      openBalances,
+      openingBalancesByPolicyYear,
+      freeAmountPoolUsedByRule,
+    )
     const bonusCreditByAccount = new Map<string, number>()
     const scheduledPayoutByAccount = new Map<string, number>(input.accounts.map((account) => [account.id, 0]))
     const baseWithdrawalByAccount = new Map<string, number>(input.accounts.map((account) => [account.id, 0]))

@@ -6,13 +6,14 @@
     "variantId": "sgd-mip-10",
     "scenarioId": "baseline",
     "supportStatus": "supported",
-    "description": "HSBC Wealth Focus Flexi 3 SGD baseline scenario proving supported bonus, AMF, surrender-charge, and cash-payout distribution handling.",
+    "description": "HSBC Wealth Focus Flexi 3 SGD baseline scenario proving supported bonus, AMF, surrender-charge, the modeled year-6 free-withdrawal pool surface, and cash-payout distribution handling.",
     "coverageTags": [
       "baseline",
       "branch:wealth-focus-startup-bonus",
       "branch:wealth-focus-premium-contribution-bonus",
       "branch:wealth-focus-loyalty-bonus",
       "branch:wealth-focus-premium-base-amf",
+      "kernel:cumulative-free-partial-withdrawal-pool",
       "branch:wealth-focus-eec",
       "kernel:distribution-mode-assumption"
     ],
@@ -235,6 +236,10 @@
         "appliesTo": [
           "regular"
         ],
+        "freeEventStartPolicyYear": 6,
+        "freeAmountPoolRate": 0.2,
+        "freeAmountPoolBasis": "open-balance-at-start-policy-year",
+        "freeAmountPoolReferencePolicyYear": 6,
         "rate": 0,
         "rateSchedule": [
           {
@@ -340,23 +345,22 @@
         "branch:wealth-focus-partial-withdrawal-charge",
         "branch:wealth-focus-eec",
         "branch:wealth-focus-ad-hoc-top-up-routing",
+        "kernel:cumulative-free-partial-withdrawal-pool",
         "kernel:distribution-mode-assumption",
         "branch:wealth-focus-premium-holiday-charge"
       ],
       "metadataOnlyBehaviors": [
         "wealth-focus-life-replacement-option",
-        "wealth-focus-free-partial-withdrawal-benefit",
         "wealth-focus-regular-withdrawal-facility",
         "wealth-focus-death-and-ti-benefits"
       ]
     },
     "catalogWarnings": [
-      "Wealth Focus Flexi 3 is currently modeled as a supported V1 product. Accumulation charges, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, but life-event free withdrawals, the top-up-first regular-withdrawal facility, and protection-side options remain informational only.",
+      "Wealth Focus Flexi 3 is currently modeled as a supported V1 product. Accumulation charges, the cumulative life-event free-withdrawal pool, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, but the top-up-first regular-withdrawal facility and protection-side options remain informational only.",
       "Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.",
-      "Free Partial Withdrawal Benefit, Regular Withdrawal, and Life Replacement Option remain informational only in V1.",
+      "Regular Withdrawal and Life Replacement Option remain informational only in V1.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.",
       "Life Replacement Option remains informational only.",
-      "Free Partial Withdrawal Benefit remains informational only.",
       "Regular Withdrawal facility remains informational only.",
       "Death, terminal illness, and accidental death payout mechanics remain informational only."
     ]

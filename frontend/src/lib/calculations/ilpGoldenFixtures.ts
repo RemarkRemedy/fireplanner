@@ -12,6 +12,7 @@ export type GoldenCoverageTag =
   | 'baseline'
   | 'event-heavy'
   | 'ocf-stress'
+  | 'kernel:cumulative-free-partial-withdrawal-pool'
   | 'kernel:scheduled-payout-manual-assumption'
   | 'branch:aia-invest-easy-cash-srs-three-percent-single-premium-charge'
   | 'branch:aia-invest-easy-cash-srs-three-percent-top-up-charge'
@@ -1807,7 +1808,8 @@ function hsbcWealthFocusEventHeavyPolicy(
   id: string,
 ): IlpPolicyInput {
   const flexiTerm = Number(productId.slice(-1))
-  const startPolicyMonth = flexiTerm * 12 + 1
+  const usesFreeWithdrawalPoolScenario = flexiTerm === 1
+  const startPolicyMonth = usesFreeWithdrawalPoolScenario ? 61 : (flexiTerm * 12 + 1)
   const policyEvents = [
     ...(flexiTerm > 1
       ? [{
@@ -1830,15 +1832,25 @@ function hsbcWealthFocusEventHeavyPolicy(
       type: 'partial-withdrawal' as const,
       startPolicyMonth: startPolicyMonth + 7,
       durationMonths: 1,
-      amount: 2_500,
+      amount: usesFreeWithdrawalPoolScenario ? 4_000 : 2_500,
       accountId: 'regular' as const,
     },
+    ...(usesFreeWithdrawalPoolScenario
+      ? [{
+          id: 'withdrawal-2',
+          type: 'partial-withdrawal' as const,
+          startPolicyMonth: startPolicyMonth + 10,
+          durationMonths: 1,
+          amount: 5_500,
+          accountId: 'regular' as const,
+        }]
+      : []),
   ]
 
   return hsbcWealthFocusBasePolicy(snapshot, productId, 'sgd-mip-10', id, HSBC_BALANCED_FUNDS, {
     name: `Golden HSBC Wealth Focus Flexi ${flexiTerm} (SGD / MIP 10 Event Heavy)`,
-    currentPolicyYear: flexiTerm + 1,
-    monthsAlreadyPaid: flexiTerm * 12,
+    currentPolicyYear: usesFreeWithdrawalPoolScenario ? 5 : (flexiTerm + 1),
+    monthsAlreadyPaid: usesFreeWithdrawalPoolScenario ? 60 : (flexiTerm * 12),
     policyEvents,
   })
 }
@@ -10394,11 +10406,12 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'event-heavy',
+      'kernel:cumulative-free-partial-withdrawal-pool',
       'branch:wealth-focus-top-up-premium-charge',
       'branch:wealth-focus-partial-withdrawal-charge',
       'branch:wealth-focus-ad-hoc-top-up-routing',
     ],
-    description: 'HSBC Wealth Focus Flexi 1 SGD event-heavy scenario proving charged top-up routing and in-MIP regular-account withdrawals.',
+    description: 'HSBC Wealth Focus Flexi 1 SGD event-heavy scenario proving charged top-up routing plus the cumulative free-withdrawal pool from policy year 6 onward.',
     integrityChecks: [
       {
         description: 'event-heavy Flexi 1 corridor credits the charged top-up into the top-up account',
@@ -10407,8 +10420,29 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
         )),
       },
       {
-        description: 'event-heavy Flexi 1 corridor executes the seeded regular-account withdrawal',
-        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+        description: 'event-heavy Flexi 1 corridor executes both seeded regular-account withdrawals',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals >= 9_500),
+      },
+      {
+        description: 'event-heavy Flexi 1 cumulative free-withdrawal pool keeps fees below the fully charged corridor',
+        test: (fixture, artifact) => {
+          const chargedOnly = ilpPolicySchema.parse({
+            ...fixture.policy,
+            eventChargeRules: fixture.policy.eventChargeRules?.map((rule) => (
+              rule.id === 'partial-withdrawal-charge'
+                ? {
+                    ...rule,
+                    freeAmountPoolRate: undefined,
+                    freeAmountPoolBasis: undefined,
+                    freeAmountPoolReferencePolicyYear: undefined,
+                  }
+                : rule
+            )),
+          })
+          const withPoolFees = artifact.expected.projections.mid.rows.at(-1)?.cumulativeGrossFees ?? 0
+          const chargedOnlyFees = analyzeIlpPolicy(chargedOnly).projections.mid.rows.at(-1)?.cumulativeGrossFees ?? 0
+          return withPoolFees < chargedOnlyFees
+        },
       },
     ],
   },
@@ -10431,10 +10465,11 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'branch:wealth-focus-premium-contribution-bonus',
       'branch:wealth-focus-loyalty-bonus',
       'branch:wealth-focus-premium-base-amf',
+      'kernel:cumulative-free-partial-withdrawal-pool',
       'branch:wealth-focus-eec',
       'kernel:distribution-mode-assumption',
     ],
-    description: 'HSBC Wealth Focus Flexi 3 SGD baseline scenario proving supported bonus, AMF, surrender-charge, and cash-payout distribution handling.',
+    description: 'HSBC Wealth Focus Flexi 3 SGD baseline scenario proving supported bonus, AMF, surrender-charge, the modeled year-6 free-withdrawal pool surface, and cash-payout distribution handling.',
     integrityChecks: [
       {
         description: 'baseline Flexi 3 cash-payout corridor records positive annual withdrawals from the manual distribution assumption',
@@ -10487,10 +10522,11 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'branch:wealth-focus-premium-contribution-bonus',
       'branch:wealth-focus-loyalty-bonus',
       'branch:wealth-focus-premium-base-amf',
+      'kernel:cumulative-free-partial-withdrawal-pool',
       'branch:wealth-focus-eec',
       'kernel:distribution-mode-assumption',
     ],
-    description: 'HSBC Wealth Focus Flexi 5 USD baseline scenario proving the supported second-currency corridor and cash-payout distribution handling.',
+    description: 'HSBC Wealth Focus Flexi 5 USD baseline scenario proving the supported second-currency corridor, the modeled year-6 free-withdrawal pool surface, and cash-payout distribution handling.',
     integrityChecks: [
       {
         description: 'baseline Flexi 5 USD corridor incurs positive gross fees from the premium-base AMF',

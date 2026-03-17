@@ -21,7 +21,10 @@ function usesInitialSinglePremiumBase(variant: IlpTemplateVariant): boolean {
 }
 
 function usesInitialSinglePremiumEventBase(variant: IlpTemplateVariant): boolean {
-  return variant.eventChargeRules.some((rule) => rule.freeEventMaxAmountBasis === 'initial-single-premium')
+  return variant.eventChargeRules.some((rule) => (
+    rule.freeEventMaxAmountBasis === 'initial-single-premium'
+    || rule.freeAmountPoolBasis === 'initial-single-premium'
+  ))
 }
 
 function usesOriginalSinglePremiumBase(variant: IlpTemplateVariant): boolean {
@@ -232,6 +235,9 @@ function mapEventChargeRules(variant: IlpTemplateVariant): NonNullable<IlpPolicy
       freeEventStartPolicyYear: rule.freeEventStartPolicyYear,
       freeEventMaxAmountRate: rule.freeEventMaxAmountRate,
       freeEventMaxAmountBasis: rule.freeEventMaxAmountBasis,
+      freeAmountPoolRate: rule.freeAmountPoolRate,
+      freeAmountPoolBasis: rule.freeAmountPoolBasis,
+      freeAmountPoolReferencePolicyYear: rule.freeAmountPoolReferencePolicyYear,
       rate: rule.rate ?? 0,
       rateSchedule: rule.rateSchedule?.map((tier) => ({ ...tier })),
       amount: rule.amount ?? 0,

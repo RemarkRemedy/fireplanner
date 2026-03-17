@@ -210,6 +210,9 @@ export const ilpTemplateEventChargeRuleSchema = z.object({
   freeEventStartPolicyYear: z.number().int().min(1).max(100).optional(),
   freeEventMaxAmountRate: z.number().min(0).max(1).optional(),
   freeEventMaxAmountBasis: z.enum(['open-balance', 'initial-single-premium']).optional(),
+  freeAmountPoolRate: z.number().min(0).max(1).optional(),
+  freeAmountPoolBasis: z.enum(['open-balance-at-start-policy-year', 'initial-single-premium']).optional(),
+  freeAmountPoolReferencePolicyYear: z.number().int().min(1).max(100).optional(),
   rate: z.number().min(0).max(5).nullable(),
   rateSchedule: z.array(z.object({
     startPolicyYear: z.number().int().min(1).max(100),
@@ -226,6 +229,36 @@ export const ilpTemplateEventChargeRuleSchema = z.object({
   allocation: z.enum(['pro-rata-by-value', 'pro-rata-by-contribution-share', 'equal-split']),
   notes: z.array(z.string()),
   sourceRefs: z.array(ilpCatalogSourceRefSchema).min(1),
+}).superRefine((rule, ctx) => {
+  const hasFreeAmountPool = rule.freeAmountPoolRate != null
+    || rule.freeAmountPoolBasis != null
+    || rule.freeAmountPoolReferencePolicyYear != null
+
+  if (!hasFreeAmountPool) return
+
+  if (rule.freeAmountPoolRate == null || rule.freeAmountPoolBasis == null || rule.freeAmountPoolReferencePolicyYear == null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'freeAmountPoolRate, freeAmountPoolBasis, and freeAmountPoolReferencePolicyYear must be authored together',
+      path: ['freeAmountPoolRate'],
+    })
+  }
+
+  if (rule.trigger !== 'partial-withdrawal' || rule.basis !== 'event-amount') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Free amount pools can only be used on partial-withdrawal event-amount rules',
+      path: ['trigger'],
+    })
+  }
+
+  if (rule.freeEventCount != null || rule.freeEventMaxAmountRate != null || rule.freeEventMaxAmountBasis != null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Free amount pools cannot be combined with first-N free event settings on the same rule',
+      path: ['freeAmountPoolRate'],
+    })
+  }
 })
 
 export const ilpTemplateScheduledPayoutSupportSchema = z.object({

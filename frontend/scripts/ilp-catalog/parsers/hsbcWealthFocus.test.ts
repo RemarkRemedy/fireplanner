@@ -15,6 +15,7 @@ const CASES = [
       { currency: 'SGD', minAnnualPremium: 50_000, maxAnnualPremium: null, rate: 0.1 },
     ],
     loyaltyRate: 0.007,
+    freeWithdrawalRate: 0.3,
     hasHolidayCharge: false,
     eecTable: [0.3, 0.23, 0.19, 0.16, 0.13, 0.1, 0.08, 0.06, 0.04, 0.03],
   },
@@ -27,6 +28,7 @@ const CASES = [
       { currency: 'SGD', minAnnualPremium: 18_000, maxAnnualPremium: null, rate: 0.12 },
     ],
     loyaltyRate: 0.001,
+    freeWithdrawalRate: 0.2,
     hasHolidayCharge: true,
     holidaySchedule: [
       { startPolicyYear: 1, endPolicyYear: 1, rate: 0 },
@@ -44,6 +46,7 @@ const CASES = [
       { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: null, rate: 0.15 },
     ],
     loyaltyRate: 0.0035,
+    freeWithdrawalRate: 0.2,
     hasHolidayCharge: true,
     holidaySchedule: [
       { startPolicyYear: 1, endPolicyYear: 1, rate: 0 },
@@ -76,7 +79,8 @@ describe('parseHsbcWealthFocus', () => {
       expect(product.supportStatus).toBe('supported')
       expect(product.economicsStatus).toBe('supported')
       expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-      expect(product.metadataOnlyBehaviors).toContain('wealth-focus-free-partial-withdrawal-benefit')
+      expect(product.modeledEconomics).toContain('kernel:cumulative-free-partial-withdrawal-pool')
+      expect(product.metadataOnlyBehaviors).not.toContain('wealth-focus-free-partial-withdrawal-benefit')
       expect(product.metadataOnlyBehaviors).toContain('wealth-focus-regular-withdrawal-facility')
       expect(product.variants).toHaveLength(2)
 
@@ -169,6 +173,10 @@ describe('parseHsbcWealthFocus', () => {
             trigger: 'partial-withdrawal',
             basis: 'event-amount',
             appliesTo: ['regular'],
+            freeEventStartPolicyYear: 6,
+            freeAmountPoolRate: testCase.freeWithdrawalRate,
+            freeAmountPoolBasis: 'open-balance-at-start-policy-year',
+            freeAmountPoolReferencePolicyYear: 6,
             rateSchedule: testCase.eecTable.map((rate, index) => ({
               startPolicyYear: index + 1,
               endPolicyYear: index + 1,

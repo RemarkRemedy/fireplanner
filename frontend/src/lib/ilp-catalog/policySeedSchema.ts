@@ -63,6 +63,9 @@ export const ilpPolicySeedSchema = z.object({
     freeEventStartPolicyYear: z.number().int().min(1).max(100).optional(),
     freeEventMaxAmountRate: z.number().min(0).max(1).optional(),
     freeEventMaxAmountBasis: z.enum(['open-balance', 'initial-single-premium']).optional(),
+    freeAmountPoolRate: z.number().min(0).max(1).optional(),
+    freeAmountPoolBasis: z.enum(['open-balance-at-start-policy-year', 'initial-single-premium']).optional(),
+    freeAmountPoolReferencePolicyYear: z.number().int().min(1).max(100).optional(),
     rate: z.number().min(0).max(5),
     rateSchedule: z.array(z.object({
       startPolicyYear: z.number().int().min(1).max(100),

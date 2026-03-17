@@ -289,8 +289,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:wealth-focus-premium-base-amf')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:wealth-focus-premium-holiday-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:cumulative-free-partial-withdrawal-pool')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('wealth-focus-free-partial-withdrawal-benefit')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('wealth-focus-free-partial-withdrawal-benefit')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('wealth-focus-regular-withdrawal-facility')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('reinvest by default'))).toBe(true)
     expect(seed.accounts.find((account) => account.id === 'regular')?.contributionRules).toEqual([
@@ -323,6 +324,16 @@ describe('templateVariantToPolicySeed', () => {
           basis: 'event-amount',
           appliesTo: ['topup'],
           rate: 0.03,
+        }),
+        expect.objectContaining({
+          id: 'partial-withdrawal-charge',
+          trigger: 'partial-withdrawal',
+          basis: 'event-amount',
+          appliesTo: ['regular'],
+          freeEventStartPolicyYear: 6,
+          freeAmountPoolRate: 0.2,
+          freeAmountPoolBasis: 'open-balance-at-start-policy-year',
+          freeAmountPoolReferencePolicyYear: 6,
         }),
         expect.objectContaining({
           id: 'premium-holiday-charge',
@@ -7215,6 +7226,9 @@ describe('templateVariantToPolicySeed', () => {
         freeEventStartPolicyYear: undefined,
         freeEventMaxAmountRate: undefined,
         freeEventMaxAmountBasis: undefined,
+        freeAmountPoolRate: undefined,
+        freeAmountPoolBasis: undefined,
+        freeAmountPoolReferencePolicyYear: undefined,
         rate: 0.03,
         rateSchedule: undefined,
         amount: 0,

@@ -242,6 +242,10 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', t
       trigger: 'partial-withdrawal',
       basis: 'event-amount',
       appliesTo: ['regular'],
+      freeEventStartPolicyYear: 6,
+      freeAmountPoolRate: roundRate(FLEXI_CONFIG[term].freeWithdrawalRate),
+      freeAmountPoolBasis: 'open-balance-at-start-policy-year',
+      freeAmountPoolReferencePolicyYear: 6,
       rate: 0,
       rateSchedule: buildRateSchedule(FLEXI_CONFIG[term].pwcSchedule),
       amount: 0,
@@ -250,7 +254,7 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', t
       notes: [
         'Applies to withdrawals from the Regular Premium Account during the MIP.',
         'Top-up Account withdrawals are not charged.',
-        `Free life-event withdrawals up to ${Math.round(FLEXI_CONFIG[term].freeWithdrawalRate * 100)}% of the Regular Premium Account value at the 5th anniversary remain informational only in V1.`,
+        `Free life-event withdrawals are modeled as a cumulative pool equal to ${Math.round(FLEXI_CONFIG[term].freeWithdrawalRate * 100)}% of the Regular Premium Account value at the start of policy year 6.`,
       ],
       sourceRefs: [page6, page11],
     },
@@ -328,11 +332,10 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', t
     eecTable: FLEXI_CONFIG[term].eecSchedule.map(roundRate),
     warnings: [
       'Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.',
-      'Free Partial Withdrawal Benefit, Regular Withdrawal, and Life Replacement Option remain informational only in V1.',
+      'Regular Withdrawal and Life Replacement Option remain informational only in V1.',
     ],
     unsupportedItems: [
       'Life Replacement Option remains informational only.',
-      'Free Partial Withdrawal Benefit remains informational only.',
       'Regular Withdrawal facility remains informational only.',
       'Death, terminal illness, and accidental death payout mechanics remain informational only.',
     ],
@@ -353,6 +356,7 @@ export function parseHsbcWealthFocus({ document, sourceChecksumSha256 }: ParseCo
     'branch:wealth-focus-partial-withdrawal-charge',
     'branch:wealth-focus-eec',
     'branch:wealth-focus-ad-hoc-top-up-routing',
+    'kernel:cumulative-free-partial-withdrawal-pool',
     'kernel:distribution-mode-assumption',
   ]
 
@@ -374,12 +378,11 @@ export function parseHsbcWealthFocus({ document, sourceChecksumSha256 }: ParseCo
     modeledEconomics,
     metadataOnlyBehaviors: [
       'wealth-focus-life-replacement-option',
-      'wealth-focus-free-partial-withdrawal-benefit',
       'wealth-focus-regular-withdrawal-facility',
       'wealth-focus-death-and-ti-benefits',
     ],
     warnings: [
-      `Wealth Focus Flexi ${flexiTerm} is currently modeled as a supported V1 product. Accumulation charges, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, but life-event free withdrawals, the top-up-first regular-withdrawal facility, and protection-side options remain informational only.`,
+      `Wealth Focus Flexi ${flexiTerm} is currently modeled as a supported V1 product. Accumulation charges, the cumulative life-event free-withdrawal pool, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, but the top-up-first regular-withdrawal facility and protection-side options remain informational only.`,
     ],
     archived: false,
     variants: [

@@ -6059,6 +6059,106 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[0], 'iia').withdrawalAmount).toBe(15_000)
   })
 
+  it('tracks a cumulative free-withdrawal pool from the reference policy-year opening balance', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 5,
+      monthsAlreadyPaid: 60,
+      monthlyContribution: 0,
+      mipLength: 10,
+      postMipYears: 0,
+      funds: [ZERO_RETURN_FUND],
+      accounts: [
+        { ...IUA_ACCOUNT, id: 'regular', label: 'Regular', currentValue: 1_000, feeRate: 0, postMipFeeRate: 0, contributionShare: 1, subjectToEec: true },
+      ],
+      policyEvents: [
+        {
+          id: 'withdrawal-1',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 61,
+          durationMonths: 1,
+          amount: 70,
+          accountId: 'regular',
+        },
+        {
+          id: 'withdrawal-2',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 73,
+          durationMonths: 1,
+          amount: 70,
+          accountId: 'regular',
+        },
+      ],
+      eventChargeRules: [
+        {
+          id: 'partial-withdrawal-charge',
+          label: 'Partial Withdrawal Charge',
+          trigger: 'partial-withdrawal',
+          basis: 'event-amount',
+          appliesTo: ['regular'],
+          freeEventStartPolicyYear: 6,
+          freeAmountPoolRate: 0.1,
+          freeAmountPoolBasis: 'open-balance-at-start-policy-year',
+          freeAmountPoolReferencePolicyYear: 6,
+          rate: 0.2,
+          amount: 0,
+          allocation: 'equal-split',
+        },
+      ],
+      bonuses: [],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'regular').grossFee).toBeCloseTo(0, 6)
+    expect(accountRow(result.rows[1], 'regular').grossFee).toBeCloseTo(8, 6)
+    expect(accountRow(result.rows[1], 'regular').withdrawalAmount).toBe(70)
+  })
+
+  it('rejects free-withdrawal pool projections that enter after the reference-year anchor point', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 7,
+      monthsAlreadyPaid: 72,
+      monthlyContribution: 0,
+      mipLength: 10,
+      postMipYears: 0,
+      funds: [ZERO_RETURN_FUND],
+      accounts: [
+        { ...IUA_ACCOUNT, id: 'regular', label: 'Regular', currentValue: 1_000, feeRate: 0, postMipFeeRate: 0, contributionShare: 1, subjectToEec: true },
+      ],
+      policyEvents: [
+        {
+          id: 'withdrawal-1',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 85,
+          durationMonths: 1,
+          amount: 70,
+          accountId: 'regular',
+        },
+      ],
+      eventChargeRules: [
+        {
+          id: 'partial-withdrawal-charge',
+          label: 'Partial Withdrawal Charge',
+          trigger: 'partial-withdrawal',
+          basis: 'event-amount',
+          appliesTo: ['regular'],
+          freeEventStartPolicyYear: 6,
+          freeAmountPoolRate: 0.1,
+          freeAmountPoolBasis: 'open-balance-at-start-policy-year',
+          freeAmountPoolReferencePolicyYear: 6,
+          rate: 0.2,
+          amount: 0,
+          allocation: 'equal-split',
+        },
+      ],
+      bonuses: [],
+    })
+
+    expect(() => projectIlpPolicy(policy, 'mid')).toThrow(
+      'free amount pools anchored to an earlier policy year require entry at or before the start of that reference year',
+    )
+  })
+
   it('suppresses a partial-withdrawal charge when the event is explicitly marked as waived', () => {
     const basePolicy = makeDefaultPolicy({
       currentPolicyYear: 10,

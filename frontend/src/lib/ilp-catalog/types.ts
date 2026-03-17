@@ -172,6 +172,9 @@ export interface IlpTemplateEventChargeRule {
   freeEventStartPolicyYear?: number
   freeEventMaxAmountRate?: number
   freeEventMaxAmountBasis?: 'open-balance' | 'initial-single-premium'
+  freeAmountPoolRate?: number
+  freeAmountPoolBasis?: 'open-balance-at-start-policy-year' | 'initial-single-premium'
+  freeAmountPoolReferencePolicyYear?: number
   rate: number | null
   rateSchedule?: Array<{
     startPolicyYear: number

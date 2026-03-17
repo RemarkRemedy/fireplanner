@@ -651,6 +651,9 @@ export const ilpEventChargeRuleSchema = z.object({
   freeEventStartPolicyYear: z.number().int().min(1).max(100).optional(),
   freeEventMaxAmountRate: z.number().min(0).max(1).optional(),
   freeEventMaxAmountBasis: z.enum(['open-balance', 'initial-single-premium']).optional(),
+  freeAmountPoolRate: z.number().min(0).max(1).optional(),
+  freeAmountPoolBasis: z.enum(['open-balance-at-start-policy-year', 'initial-single-premium']).optional(),
+  freeAmountPoolReferencePolicyYear: z.number().int().min(1).max(100).optional(),
   rate: z.number().min(0).max(5),
   rateSchedule: z.array(z.object({
     startPolicyYear: z.number().int().min(1).max(100),
@@ -748,6 +751,36 @@ export const ilpEventChargeRuleSchema = z.object({
       message: 'Free-event max-amount basis requires freeEventMaxAmountRate',
       path: ['freeEventMaxAmountBasis'],
     })
+  }
+
+  const hasFreeAmountPool = rule.freeAmountPoolRate != null
+    || rule.freeAmountPoolBasis != null
+    || rule.freeAmountPoolReferencePolicyYear != null
+
+  if (hasFreeAmountPool) {
+    if (rule.freeAmountPoolRate == null || rule.freeAmountPoolBasis == null || rule.freeAmountPoolReferencePolicyYear == null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Free amount pools must define rate, basis, and reference policy year together',
+        path: ['freeAmountPoolRate'],
+      })
+    }
+
+    if (!(rule.trigger === 'partial-withdrawal' && rule.basis === 'event-amount')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Free amount pools can only be used on partial-withdrawal event-amount rules',
+        path: ['freeAmountPoolRate'],
+      })
+    }
+
+    if (rule.freeEventCount != null || rule.freeEventMaxAmountRate != null || rule.freeEventMaxAmountBasis != null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Free amount pools cannot be combined with first-N free event settings on the same rule',
+        path: ['freeAmountPoolRate'],
+      })
+    }
   }
 
   if (rule.basis === 'premium-reduction-tiered-startup-recovery' && rule.trigger !== 'regular-premium-reduction') {
