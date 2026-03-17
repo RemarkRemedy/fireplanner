@@ -6,7 +6,7 @@
  * - Full (default): Card-wrapped with health check, demo button, CTA. For RetirementCalculatorPage.
  */
 
-import { createElement, useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -35,19 +35,14 @@ import {
 } from '@/lib/calculations/quickEstimate'
 import { computeHealthRatios, type HealthRatioResult } from '@/lib/calculations/healthCheck'
 import { QUICK_ESTIMATE_DEFAULTS } from '@/lib/data/quickEstimateDefaults'
-import { DEMO_SCENARIO_DRAFT, DEMO_PLAN_TYPE } from '@/lib/data/demoScenario'
-import { setDemoActive, clearDemoActive, clearFireplannerData } from '@/components/shared/DemoBadge'
-import { applySetupDraft } from '@/lib/household/setupDraft'
-import { saveScenario } from '@/lib/scenarios'
 import { HOUSEHOLD_PLAN_STORAGE_KEY } from '@/stores/useHouseholdPlanStore'
+import { loadDemoData } from '@/lib/demo'
 import { useUIStore } from '@/stores/useUIStore'
 import { trackEvent } from '@/lib/analytics'
 import { formatCurrency } from '@/lib/utils'
-import type { SectionId } from '@/lib/household/sectionOrder'
 import type { HouseholdPlanType } from '@/lib/household/types'
 import { PlanTypeSelector } from '@/components/household/PlanTypeSelector'
 import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
-import { toast } from 'sonner'
 import {
   ArrowRight,
   ChevronDown,
@@ -56,19 +51,6 @@ import {
   Play,
   Sparkles,
 } from 'lucide-react'
-
-// All setup sections for demo mode
-const ALL_SECTIONS: SectionId[] = [
-  'section-personal',
-  'section-fire-settings',
-  'section-income',
-  'section-expenses',
-  'section-net-worth',
-  'section-cpf',
-  'section-healthcare',
-  'section-property',
-  'section-allocation',
-]
 
 // Health ratio IDs to display in quick check (4 reliable ones)
 const QUICK_HEALTH_RATIO_IDS = ['emergency-fund', 'savings-ratio', 'debt-to-asset', 'solvency']
@@ -98,6 +80,46 @@ function trafficLightDot(status: string | null): string {
     case 'red': return 'bg-red-500'
     default: return 'bg-muted-foreground/40'
   }
+}
+
+/** Module-scope component so React can reconcile it stably (no remount on parent re-render) */
+function DemoButton({ hasExistingData, onLoadDemo, variant = 'outline', size = 'default' }: {
+  hasExistingData: boolean
+  onLoadDemo: () => void
+  variant?: 'outline' | 'ghost'
+  size?: 'default' | 'sm'
+}) {
+  if (hasExistingData) {
+    return (
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant={variant} size={size}>
+            <Play className="mr-2 h-4 w-4" />
+            Explore a demo
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Load demo data?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will replace your current plan with demo data. Your existing plan will be
+              auto-saved as a scenario you can restore later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={onLoadDemo}>Load demo</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    )
+  }
+  return (
+    <Button variant={variant} size={size} onClick={onLoadDemo}>
+      <Play className="mr-2 h-4 w-4" />
+      Explore a demo
+    </Button>
+  )
 }
 
 interface QuickEstimateFormProps {
@@ -215,60 +237,13 @@ export function QuickEstimateForm({ compact = false, syncUrlParams = false, onHa
   }, [])
 
   const loadDemo = useCallback(() => {
-    if (hasExistingData) {
-      try { saveScenario('Auto-save before demo') } catch { /* max scenarios reached, continue */ }
-    }
-    applySetupDraft(DEMO_SCENARIO_DRAFT, DEMO_PLAN_TYPE)
-    setUIField('setupCompleted', true)
-    setUIField('setupPopulatedSections', ALL_SECTIONS)
-    trackEvent('demo_loaded')
-    setDemoActive()
-    navigate('/projection')
-    setTimeout(() => {
-      toast('You are viewing demo data', {
-        description: createElement('div', { className: 'flex flex-col gap-2 mt-1' },
-          createElement('p', { className: 'text-sm' }, 'This is sample data. Start your own plan when ready.'),
-          createElement('button', { className: 'inline-flex items-center rounded-md bg-white border border-amber-400 px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-50', onClick: () => { toast.dismiss(); clearDemoActive(); clearFireplannerData(); window.location.href = '/setup' } }, 'Start your own plan'),
-        ),
-        duration: Infinity,
-        style: { backgroundColor: '#f59e0b', color: '#451a03', border: '1px solid #d97706' },
-      })
-    }, 500)
+    loadDemoData({
+      hasExistingData,
+      setSetupCompleted: (v) => setUIField('setupCompleted', v),
+      setPopulatedSections: (s) => setUIField('setupPopulatedSections', s),
+      navigate,
+    })
   }, [hasExistingData, setUIField, navigate])
-
-  const DemoButton = useCallback(({ variant = 'outline' as const, size = 'default' as const }: { variant?: 'outline' | 'ghost'; size?: 'default' | 'sm' }) => {
-    if (hasExistingData) {
-      return (
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant={variant} size={size}>
-              <Play className="mr-2 h-4 w-4" />
-              Explore a demo
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Load demo data?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will replace your current plan with demo data. Your existing plan will be
-                auto-saved as a scenario you can restore later.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={loadDemo}>Load demo</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )
-    }
-    return (
-      <Button variant={variant} size={size} onClick={loadDemo}>
-        <Play className="mr-2 h-4 w-4" />
-        Explore a demo
-      </Button>
-    )
-  }, [hasExistingData, loadDemo])
 
   // ── Inputs + Results (shared between compact and full) ────────────────
   const inputsAndResults = (
@@ -591,7 +566,7 @@ export function QuickEstimateForm({ compact = false, syncUrlParams = false, onHa
 
       {/* Bottom demo button */}
       <div className="flex justify-center gap-3 pb-8">
-        <DemoButton variant="ghost" size="sm" />
+        <DemoButton hasExistingData={hasExistingData} onLoadDemo={loadDemo} variant="ghost" size="sm" />
         <Button variant="ghost" size="sm" asChild>
           <Link to="/">
             Full planner

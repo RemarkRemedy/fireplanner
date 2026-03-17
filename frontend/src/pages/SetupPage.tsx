@@ -639,10 +639,10 @@ export function SetupPage() {
     const qOrder = searchParams.get('qOrder')
     if (!qIncome && !qExpenses && !qSavings && !qAge) return
     const overrides: Record<string, unknown> = {}
-    if (qIncome) overrides.monthlyIncome = parseFloat(qIncome)
-    if (qExpenses) overrides.monthlyExpenses = parseFloat(qExpenses)
-    if (qSavings) overrides.liquidNetWorth = parseFloat(qSavings)
-    if (qAge) overrides.currentAge = parseInt(qAge, 10)
+    if (qIncome) overrides.monthlyIncome = Math.max(0, Math.min(1_000_000, parseFloat(qIncome) || 0))
+    if (qExpenses) overrides.monthlyExpenses = Math.max(0, Math.min(1_000_000, parseFloat(qExpenses) || 0))
+    if (qSavings) overrides.liquidNetWorth = Math.max(0, Math.min(100_000_000, parseFloat(qSavings) || 0))
+    if (qAge) overrides.currentAge = Math.max(18, Math.min(80, parseInt(qAge, 10) || 30))
     dispatch({ type: 'HYDRATE', values: overrides })
     if (qOrder === 'story-first' || qOrder === 'already-fire' || qOrder === 'goal-first') {
       setUIField('sectionOrder', qOrder)

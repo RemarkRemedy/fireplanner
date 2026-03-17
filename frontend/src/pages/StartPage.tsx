@@ -1,4 +1,4 @@
-import { createElement, useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -23,18 +23,8 @@ import { trackEvent } from '@/lib/analytics'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { LandingEmailSection } from '@/components/email/LandingEmailSection'
 import { QuickEstimateForm } from '@/components/shared/QuickEstimateForm'
-import { DEMO_SCENARIO_DRAFT, DEMO_PLAN_TYPE } from '@/lib/data/demoScenario'
-import { setDemoActive, clearDemoActive, clearFireplannerData } from '@/components/shared/DemoBadge'
-import { applySetupDraft } from '@/lib/household/setupDraft'
-import { saveScenario } from '@/lib/scenarios'
-import type { SectionId } from '@/lib/household/sectionOrder'
-import { toast } from 'sonner'
-
-const ALL_DEMO_SECTIONS: SectionId[] = [
-  'section-personal', 'section-fire-settings', 'section-income',
-  'section-expenses', 'section-net-worth', 'section-cpf',
-  'section-healthcare', 'section-property', 'section-allocation',
-]
+import { clearFireplannerData } from '@/components/shared/DemoBadge'
+import { loadDemoData } from '@/lib/demo'
 
 type ActivePathway = 'goal-first' | 'story-first' | 'already-fire' | null
 
@@ -83,25 +73,12 @@ export function StartPage() {
   }, [])
 
   const loadDemo = useCallback(() => {
-    if (hasExistingData) {
-      try { saveScenario('Auto-save before demo') } catch { /* max scenarios */ }
-    }
-    applySetupDraft(DEMO_SCENARIO_DRAFT, DEMO_PLAN_TYPE)
-    setUIField('setupCompleted', true)
-    setUIField('setupPopulatedSections', ALL_DEMO_SECTIONS)
-    trackEvent('demo_loaded')
-    setDemoActive()
-    navigate('/projection')
-    setTimeout(() => {
-      toast('You are viewing demo data', {
-        description: createElement('div', { className: 'flex flex-col gap-2 mt-1' },
-          createElement('p', { className: 'text-sm' }, 'This is sample data. Start your own plan when ready.'),
-          createElement('button', { className: 'inline-flex items-center rounded-md bg-white border border-amber-400 px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-50', onClick: () => { toast.dismiss(); clearDemoActive(); clearFireplannerData(); window.location.href = '/setup' } }, 'Start your own plan'),
-        ),
-        duration: Infinity,
-        style: { backgroundColor: '#f59e0b', color: '#451a03', border: '1px solid #d97706' },
-      })
-    }, 500)
+    loadDemoData({
+      hasExistingData,
+      setSetupCompleted: (v) => setUIField('setupCompleted', v),
+      setPopulatedSections: (s) => setUIField('setupPopulatedSections', s),
+      navigate,
+    })
   }, [hasExistingData, setUIField, navigate])
 
   // Check if returning user (has saved profile in localStorage)

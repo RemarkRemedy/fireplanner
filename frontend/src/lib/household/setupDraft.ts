@@ -9,6 +9,16 @@ import { createId } from './ids'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { CPF_HEURISTIC_SPLIT, SG_GROSS_UP_FACTOR } from '@/lib/data/cpfRates'
 import { DEFAULT_LTV } from '@/lib/data/propertyDefaults'
+import {
+  DEFAULT_LEASE_YEARS,
+  DEFAULT_APPRECIATION_RATE,
+  DEFAULT_RENTAL_YIELD,
+  DEFAULT_MORTGAGE_RATE as SETUP_DEFAULT_MORTGAGE_RATE,
+  DEFAULT_MORTGAGE_TERM,
+  DEFAULT_HDB_SUBLETTING_RATE,
+  DEFAULT_FUNERAL_COSTS,
+  DEFAULT_PURCHASE_PRICE,
+} from '@/lib/data/setupDefaults'
 
 // ---------------------------------------------------------------------------
 // SetupDraft — flat structure for /setup wizard answers
@@ -369,13 +379,13 @@ function buildPropertyEntry(
     owner,
     label: 'Primary residence',
     propertyType: 'condo',
-    purchasePrice: 1_500_000,
-    leaseYears: 99,
-    appreciationRate: 0.03,
-    rentalYield: 0.03,
-    mortgageRate: 0.035,
-    mortgageTerm: 25,
-    ltv: 0.75, // MAS LTV limit for residential property (75% for first property)
+    purchasePrice: DEFAULT_PURCHASE_PRICE,
+    leaseYears: DEFAULT_LEASE_YEARS,
+    appreciationRate: DEFAULT_APPRECIATION_RATE,
+    rentalYield: DEFAULT_RENTAL_YIELD,
+    mortgageRate: SETUP_DEFAULT_MORTGAGE_RATE,
+    mortgageTerm: DEFAULT_MORTGAGE_TERM,
+    ltv: DEFAULT_LTV,
     purchaseYearsFromNow: 0,
     residencyForAbsd: 'citizen',
     propertyCount: 0,
@@ -387,7 +397,7 @@ function buildPropertyEntry(
     existingMortgageRemainingYears: 25,
     mortgageCpfMonthly: 0,
     ownershipPercent: 1,
-    existingAppreciationRate: 0.03,
+    existingAppreciationRate: DEFAULT_APPRECIATION_RATE,
     existingLeaseYears: 99,
     existingApplyBalaDecay: true,
     downsizing: {
@@ -405,7 +415,7 @@ function buildPropertyEntry(
     hdbMonetizationStrategy: 'none',
     hdbLbsRetainedLease: 30,
     hdbSublettingRooms: 1,
-    hdbSublettingRate: 800,
+    hdbSublettingRate: DEFAULT_HDB_SUBLETTING_RATE,
     hdbCpfUsedForHousing: 0,
     ...overrides,
   }
@@ -440,7 +450,7 @@ function applyPartnerDraft(draft: SetupDraft, selfAdultTemplate: PlanningAdult):
       insuranceDeathCoverage: 0,
       insuranceCICoverage: 0,
       insuranceDisabilityMonthly: 0,
-      funeralCosts: 15_000,
+      funeralCosts: DEFAULT_FUNERAL_COSTS,
       ciRecoveryYears: 5,
       healthcare: {
         enabled: partner.healthcareEnabled ?? false,

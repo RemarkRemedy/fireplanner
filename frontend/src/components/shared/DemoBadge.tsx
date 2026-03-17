@@ -1,7 +1,7 @@
 /**
  * Persistent floating "DEMO" badge shown when demo data is loaded.
  * Small pill in bottom-left corner. Tapping expands to show escape options.
- * Uses sessionStorage so it persists across page navigations but not across sessions.
+ * Uses localStorage so the flag is consistent across tabs (no split-brain).
  */
 
 import { useState, useEffect, useCallback } from 'react'
@@ -11,20 +11,20 @@ const DEMO_FLAG_KEY = 'fireplanner-demo-active'
 
 /** Call this when demo data is loaded */
 export function setDemoActive() {
-  try { sessionStorage.setItem(DEMO_FLAG_KEY, '1') } catch { /* private browsing */ }
+  try { localStorage.setItem(DEMO_FLAG_KEY, '1') } catch { /* private browsing */ }
 }
 
 /** Call this when user exits demo (starts own plan, navigates away) */
 export function clearDemoActive() {
-  try { sessionStorage.removeItem(DEMO_FLAG_KEY) } catch { /* private browsing */ }
+  try { localStorage.removeItem(DEMO_FLAG_KEY) } catch { /* private browsing */ }
 }
 
 /** Check if demo mode is active */
 export function isDemoActive(): boolean {
-  try { return sessionStorage.getItem(DEMO_FLAG_KEY) === '1' } catch { return false }
+  try { return localStorage.getItem(DEMO_FLAG_KEY) === '1' } catch { return false }
 }
 
-/** Remove all fireplanner localStorage keys except scenarios */
+/** Remove all fireplanner localStorage keys except scenarios (also clears demo flag) */
 export function clearFireplannerData() {
   const keysToRemove: string[] = []
   for (let i = 0; i < localStorage.length; i++) {
@@ -33,6 +33,8 @@ export function clearFireplannerData() {
       keysToRemove.push(key)
     }
   }
+  // Also include the demo flag (doesn't start with fireplanner-)
+  keysToRemove.push(DEMO_FLAG_KEY)
   keysToRemove.forEach((k) => localStorage.removeItem(k))
 }
 
@@ -48,6 +50,12 @@ export function DemoBadge() {
 
   useEffect(() => {
     setActive(isDemoActive())
+    // Sync across tabs when demo flag changes in another tab
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === DEMO_FLAG_KEY) setActive(e.newValue === '1')
+    }
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
   }, [])
 
   const handleStartPlan = useCallback(() => {

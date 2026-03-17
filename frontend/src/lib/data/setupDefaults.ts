@@ -16,6 +16,7 @@ export const DEFAULT_RENTAL_YIELD = 0.03
 export const DEFAULT_MORTGAGE_RATE = 0.035
 export const DEFAULT_MORTGAGE_TERM = 25
 export const DEFAULT_LTV = 0.75 // MAS LTV limit for first residential property
+export const DEFAULT_HDB_SUBLETTING_RATE = 800
 export const DEFAULT_FUNERAL_COSTS = 15_000
 
 // --- Nudge flow defaults ---
