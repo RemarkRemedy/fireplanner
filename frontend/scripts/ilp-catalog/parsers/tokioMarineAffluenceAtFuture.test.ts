@@ -114,6 +114,9 @@ describe('parseTokioMarineAffluenceAtFuture', () => {
       ]),
       sourceRefs: expect.any(Array),
     })
+    expect(basicVariant?.distributionSupport?.notes).not.toContain(
+      'The published $50 minimum dividend amount and 30-day instruction window remain informational only in V1.',
+    )
     expect(basicVariant?.eecTable).toEqual([
       1,
       1,

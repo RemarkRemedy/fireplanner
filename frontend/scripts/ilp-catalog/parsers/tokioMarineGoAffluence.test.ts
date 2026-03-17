@@ -106,6 +106,9 @@ describe('parseTokioMarineGoAffluence', () => {
       ]),
       sourceRefs: expect.any(Array),
     })
+    expect(basicVariant?.distributionSupport?.notes).not.toContain(
+      'The published $50 minimum dividend amount and 30-day instruction window remain informational only in V1.',
+    )
     expect(basicVariant?.eecTable).toEqual([1, 1, 0.99, 0.99, 0.99, 0.91, 0.84, 0.76, 0.68, 0.6, 0.5, 0.43, 0.34, 0.26, 0.15])
     expect(product.warnings).toContain(
       'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
