@@ -96,10 +96,7 @@ export function StartPage() {
       toast('You are viewing demo data', {
         description: createElement('div', { className: 'flex flex-col gap-2 mt-1' },
           createElement('p', { className: 'text-sm' }, 'This is sample data. Start your own plan when ready.'),
-          createElement('div', { className: 'flex gap-2' },
-            createElement('button', { className: 'inline-flex items-center rounded-md bg-white border border-amber-400 px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-50', onClick: () => { toast.dismiss(); clearDemoActive(); const s = localStorage.getItem('fireplanner-scenarios'); localStorage.clear(); if (s) localStorage.setItem('fireplanner-scenarios', s); window.location.href = '/setup' } }, 'Start your own plan'),
-            createElement('button', { className: 'inline-flex items-center rounded-md px-3 py-1.5 text-xs font-medium text-amber-800 underline hover:text-amber-950', onClick: () => { toast.dismiss(); clearDemoActive(); const s = localStorage.getItem('fireplanner-scenarios'); localStorage.clear(); if (s) localStorage.setItem('fireplanner-scenarios', s); window.location.href = '/' } }, 'Back to start'),
-          ),
+          createElement('button', { className: 'inline-flex items-center rounded-md bg-white border border-amber-400 px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-50', onClick: () => { toast.dismiss(); clearDemoActive(); const s = localStorage.getItem('fireplanner-scenarios'); localStorage.clear(); if (s) localStorage.setItem('fireplanner-scenarios', s); window.location.href = '/setup' } }, 'Start your own plan'),
         ),
         duration: Infinity,
         style: { backgroundColor: '#f59e0b', color: '#451a03', border: '1px solid #d97706' },
@@ -230,24 +227,17 @@ export function StartPage() {
         </div>
       )}
 
-      {/* Quick estimate for new users */}
+      {/* Demo + Quick estimate for new users */}
       {!isReturningUser && (
         <>
-          <Card>
-            <CardHeader className="pb-2">
-              <p className="text-sm font-medium text-muted-foreground">Quick estimate (10 seconds)</p>
-            </CardHeader>
-            <CardContent>
-              <QuickEstimateForm compact onHasResult={setCalculatorHasResult} />
-            </CardContent>
-          </Card>
+          {/* Demo button — lowest effort, comes first */}
           <div className="flex justify-center">
             {hasExistingData ? (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="outline" size="sm">
                     <Play className="mr-1.5 h-3.5 w-3.5" />
-                    Or explore a demo
+                    Explore a demo
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -265,12 +255,22 @@ export function StartPage() {
                 </AlertDialogContent>
               </AlertDialog>
             ) : (
-              <Button variant="ghost" size="sm" onClick={loadDemo}>
+              <Button variant="outline" size="sm" onClick={loadDemo}>
                 <Play className="mr-1.5 h-3.5 w-3.5" />
-                Or explore a demo
+                Explore a demo
               </Button>
             )}
           </div>
+
+          {/* Quick estimate calculator */}
+          <Card>
+            <CardHeader className="pb-2">
+              <p className="text-sm font-medium text-muted-foreground">Quick estimate (10 seconds)</p>
+            </CardHeader>
+            <CardContent>
+              <QuickEstimateForm compact onHasResult={setCalculatorHasResult} />
+            </CardContent>
+          </Card>
         </>
       )}
 

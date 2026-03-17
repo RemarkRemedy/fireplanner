@@ -5,7 +5,6 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { X } from 'lucide-react'
 
 const DEMO_FLAG_KEY = 'fireplanner-demo-active'
@@ -36,7 +35,6 @@ function clearDemoData() {
 export function DemoBadge() {
   const [active, setActive] = useState(false)
   const [expanded, setExpanded] = useState(false)
-  const navigate = useNavigate()
 
   useEffect(() => {
     setActive(isDemoActive())
@@ -45,14 +43,7 @@ export function DemoBadge() {
   const handleStartPlan = useCallback(() => {
     clearDemoData()
     setActive(false)
-    // Full reload to reset all Zustand stores
     window.location.href = '/setup'
-  }, [])
-
-  const handleBackToStart = useCallback(() => {
-    clearDemoData()
-    setActive(false)
-    window.location.href = '/'
   }, [])
 
   if (!active) return null
@@ -75,20 +66,12 @@ export function DemoBadge() {
           <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
             Viewing demo data
           </p>
-          <div className="flex flex-col gap-1.5">
-            <button
-              onClick={handleStartPlan}
-              className="inline-flex items-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              Start your own plan
-            </button>
-            <button
-              onClick={handleBackToStart}
-              className="inline-flex items-center rounded-md border border-amber-300 dark:border-amber-600 px-3 py-1.5 text-xs font-medium text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900"
-            >
-              Back to start
-            </button>
-          </div>
+          <button
+            onClick={handleStartPlan}
+            className="inline-flex items-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            Start your own plan
+          </button>
         </div>
         <button
           onClick={() => setExpanded(false)}
