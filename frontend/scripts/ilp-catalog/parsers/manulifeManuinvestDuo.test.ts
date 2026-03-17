@@ -28,6 +28,7 @@ describe('parseManulifeManuinvestDuo', () => {
     expect(product.modeledEconomics).toEqual([
       'kernel:protected-base-assurance',
       'kernel:current-death-benefit-estimate',
+      'branch:manuinvest-duo-loyalty-bonus',
       'branch:manuinvest-duo-administrative-charge',
       'branch:manuinvest-duo-zero-top-up-charge',
       'branch:manuinvest-duo-partial-withdrawal-charge',
@@ -37,6 +38,8 @@ describe('parseManulifeManuinvestDuo', () => {
     expect(product.metadataOnlyBehaviors).toContain('manuinvest-duo-premium-shortfall-charge')
     expect(product.metadataOnlyBehaviors).toContain('manuinvest-duo-premium-flexibility-benefit')
     expect(product.metadataOnlyBehaviors).toContain('manuinvest-duo-death-ti-tpd-benefit-payout-handling')
+    expect(product.metadataOnlyBehaviors).toContain('manuinvest-duo-welcome-bonus')
+    expect(product.metadataOnlyBehaviors).not.toContain('manuinvest-duo-loyalty-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('manuinvest-duo-benefit-payout-handling')
     expect(product.metadataOnlyBehaviors).not.toContain('manuinvest-duo-dividend-payout-threshold')
     expect(product.warnings.some((warning) => warning.includes('current-state death-benefit estimate from that same current sum insured'))).toBe(true)
@@ -107,9 +110,27 @@ describe('parseManulifeManuinvestDuo', () => {
       }),
     ])
     expect(variant?.eecTable).toEqual([1, 1, 0.8, 0.63, 0.55, 0.47, 0.4, 0.3, 0.2, 0.08])
+    expect(variant?.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'loyalty-bonus',
+        mode: 'annual-rate',
+        startPolicyYear: 7,
+        endPolicyYear: 10,
+        rate: 0.001,
+        suspensionRules: [{ trigger: 'partial-withdrawal', suspensionMonths: 12 }],
+      }),
+      expect.objectContaining({
+        id: 'loyalty-bonus-2',
+        mode: 'annual-rate',
+        startPolicyYear: 11,
+        endPolicyYear: null,
+        rate: 0.002,
+        suspensionRules: [{ trigger: 'partial-withdrawal', suspensionMonths: 12 }],
+      }),
+    ])
     expect(variant?.warnings).toContain('Premium shortfall charging remains metadata-only because Premium Flexibility Benefit waives the published shortfall charge up to a cumulative missed-premium limit that the current event kernel does not yet track.')
     expect(product.warnings).toContain(
-      'ManuInvest Duo is cataloged as a supported V1 corridor. The parser captures the published 5.00% / 1.00% administration-charge path, the protected-base death / TI / TPD cost-of-insurance formula after you enter insured-life details and current sum insured, the current-state death-benefit estimate from that same current sum insured, the prevailing 0% top-up charge, the MIP withdrawal / surrender charge schedules, and the reinvest-default distribution-mode assumption surface with the published $40 minimum annual payout threshold, while bonus mechanics, premium-flexibility shortfall behavior, withdrawal-flexibility fee handling, death / TI / TPD claim-side treatment, and fund-level charges remain informational only.',
+      'ManuInvest Duo is cataloged as a supported V1 corridor. The parser captures the published 5.00% / 1.00% administration-charge path, the protected-base death / TI / TPD cost-of-insurance formula after you enter insured-life details and current sum insured, the current-state death-benefit estimate from that same current sum insured, the published Loyalty Bonus rate windows, the prevailing 0% top-up charge, the MIP withdrawal / surrender charge schedules, and the reinvest-default distribution-mode assumption surface with the published $40 minimum annual payout threshold, while the issue-time Welcome Bonus grid, premium-flexibility shortfall behavior, withdrawal-flexibility fee handling, death / TI / TPD claim-side treatment, and fund-level charges remain informational only.',
     )
 
     const twentyYearVariant = product.variants.find((entry) => entry.id === 'sgd-mip-20')

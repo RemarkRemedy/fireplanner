@@ -140,6 +140,7 @@ export type GoldenCoverageTag =
   | 'branch:manulife-investready-iii-partial-withdrawal-charge'
   | 'branch:manulife-investready-iii-full-surrender-charge'
   | 'branch:manuinvest-duo-administrative-charge'
+  | 'branch:manuinvest-duo-loyalty-bonus'
   | 'branch:manuinvest-duo-zero-top-up-charge'
   | 'branch:manuinvest-duo-partial-withdrawal-charge'
   | 'branch:manuinvest-duo-full-surrender-charge'
@@ -12031,11 +12032,18 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'kernel:protected-base-assurance',
       'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
+      'branch:manuinvest-duo-loyalty-bonus',
       'branch:manuinvest-duo-administrative-charge',
       'branch:manuinvest-duo-full-surrender-charge',
     ],
-    description: 'ManuInvest Duo 10-year baseline scenario covering the supported administration-charge, full-surrender-charge, protected-base assurance, and cash-payout distribution corridors.',
+    description: 'ManuInvest Duo 10-year baseline scenario covering the supported loyalty-bonus windows, administration-charge, full-surrender-charge, protected-base assurance, and cash-payout distribution corridors.',
     integrityChecks: [
+      {
+        description: 'baseline policy credits a positive loyalty bonus once the first eligible anniversary is reached',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          row.accounts.some((account) => (account.bonusCredit ?? 0) > 0)
+        )),
+      },
       {
         description: 'baseline policy incurs positive cumulative fees under the administration-charge corridor',
         test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
@@ -12060,11 +12068,18 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'kernel:protected-base-assurance',
       'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
+      'branch:manuinvest-duo-loyalty-bonus',
       'branch:manuinvest-duo-administrative-charge',
       'branch:manuinvest-duo-full-surrender-charge',
     ],
-    description: 'ManuInvest Duo 15-year baseline scenario covering the supported administration-charge, full-surrender-charge, protected-base assurance, and cash-payout distribution corridors.',
+    description: 'ManuInvest Duo 15-year baseline scenario covering the supported loyalty-bonus windows, administration-charge, full-surrender-charge, protected-base assurance, and cash-payout distribution corridors.',
     integrityChecks: [
+      {
+        description: 'baseline policy credits a positive loyalty bonus once the first eligible anniversary is reached',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          row.accounts.some((account) => (account.bonusCredit ?? 0) > 0)
+        )),
+      },
       {
         description: 'baseline policy incurs positive cumulative fees under the administration-charge corridor',
         test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
@@ -12089,11 +12104,18 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'kernel:protected-base-assurance',
       'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
+      'branch:manuinvest-duo-loyalty-bonus',
       'branch:manuinvest-duo-administrative-charge',
       'branch:manuinvest-duo-full-surrender-charge',
     ],
-    description: 'ManuInvest Duo 20-year baseline scenario covering the supported administration-charge, full-surrender-charge, protected-base assurance, and cash-payout distribution corridors.',
+    description: 'ManuInvest Duo 20-year baseline scenario covering the supported loyalty-bonus windows, administration-charge, full-surrender-charge, protected-base assurance, and cash-payout distribution corridors.',
     integrityChecks: [
+      {
+        description: 'baseline policy credits a positive loyalty bonus once the first eligible anniversary is reached',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
+          row.accounts.some((account) => (account.bonusCredit ?? 0) > 0)
+        )),
+      },
       {
         description: 'baseline policy incurs positive cumulative fees under the administration-charge corridor',
         test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),

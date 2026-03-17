@@ -6773,11 +6773,14 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:manuinvest-duo-loyalty-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manuinvest-duo-partial-withdrawal-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manuinvest-duo-full-surrender-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manuinvest-duo-welcome-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manuinvest-duo-premium-flexibility-benefit')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manuinvest-duo-death-ti-tpd-benefit-payout-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manuinvest-duo-loyalty-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manuinvest-duo-benefit-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manuinvest-duo-dividend-payout-threshold')
     expect(seed.monthlyContribution).toBe(350)
@@ -6798,6 +6801,20 @@ describe('templateVariantToPolicySeed', () => {
           monthlyModalFactor: 1 / 12,
         }),
         requiresManualInput: true,
+      }),
+    ])
+    expect(seed.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'loyalty-bonus',
+        startPolicyYear: 7,
+        endPolicyYear: 10,
+        rate: 0.001,
+      }),
+      expect.objectContaining({
+        id: 'loyalty-bonus-2',
+        startPolicyYear: 11,
+        endPolicyYear: null,
+        rate: 0.002,
       }),
     ])
     expect(seed.eventChargeRules).toEqual([
