@@ -39,6 +39,7 @@ describe('parseFwdInvestFlexiElite', () => {
     expect(product.metadataOnlyBehaviors).toContain('fwd-invest-flexi-elite-free-partial-withdrawal-benefit')
     expect(product.metadataOnlyBehaviors).not.toContain('fwd-invest-flexi-elite-annual-premium-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('fwd-invest-flexi-elite-insurance-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('fwd-invest-flexi-elite-dividend-cashout-threshold')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-mip-10-flexi-3',
       'sgd-mip-10-flexi-5',
@@ -119,11 +120,12 @@ describe('parseFwdInvestFlexiElite', () => {
       mode: 'manual-assumption',
       accountIds: ['initial', 'accumulation'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 10,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: expect.arrayContaining([
-        expect.stringContaining('S$10 minimum payout threshold'),
+        expect.stringContaining('published S$10 minimum remain reinvested'),
       ]),
       sourceRefs: [
         expect.objectContaining({

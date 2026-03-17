@@ -2363,6 +2363,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('fwd-invest-flexi-elite-premium-shortfall-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-flexi-elite-annual-premium-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-flexi-elite-insurance-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-flexi-elite-dividend-cashout-threshold')
     expect(seed.regularPremiumPaymentFrequency).toBe('annual')
     expect(seed.mipLength).toBe(10)
     expect(seed.accounts).toEqual([
@@ -2439,6 +2440,7 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'manual-assumption',
       accountIds: ['initial', 'accumulation'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 10,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',

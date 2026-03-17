@@ -220,12 +220,13 @@ function buildVariant(document: ExtractedPdfDocument, flexMode: FlexMode): IlpTe
       mode: 'manual-assumption',
       accountIds: ['initial', 'accumulation'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 10,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: [
         'Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash, with reinvestment as the default if no option is elected.',
-        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption and the published S$10 minimum payout threshold remains informational only.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption, and payouts below the published S$10 minimum remain reinvested.',
       ],
       sourceRefs: [page17],
     },
@@ -233,7 +234,7 @@ function buildVariant(document: ExtractedPdfDocument, flexMode: FlexMode): IlpTe
     warnings: [
       `FWD Invest Flexi Elite (${variantLabel}) is cataloged as a supported V1 product. The parser captures the published initial-account-value charge, the one-time annual-premium bonus under the annual premium-frequency assumption, the monthly insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, the initial-units-account surrender-charge schedule, and the reinvest-default distribution-mode assumption surface.`,
       'Premium shortfall charge remains informational only because the published unemployment waiver, refund, and restart timing cannot be expressed exactly in the current event kernel without overstating chargeable missed-premium months.',
-      'Booster Bonus, Contribution Bonus, payment-frequency changes after issue, Free Partial Withdrawal Benefit, the published S$10 dividend cash-out threshold, and broader premium-flexibility behavior remain metadata-only.',
+      'Booster Bonus, Contribution Bonus, payment-frequency changes after issue, Free Partial Withdrawal Benefit, and broader premium-flexibility behavior remain metadata-only.',
     ],
     unsupportedItems: [
       'Premium shortfall charge remains informational only because the unemployment waiver, refund, and variant-specific charge periods are not modeled exactly in V1.',
@@ -242,7 +243,7 @@ function buildVariant(document: ExtractedPdfDocument, flexMode: FlexMode): IlpTe
       'Free Partial Withdrawal Benefit eligibility, capped fee waivers, and life-event proof requirements remain informational only.',
       'Partial-withdrawal limit formulas, minimum withdrawal requirements, and minimum account-value gates remain informational only.',
       'Regular-premium reduction and increase windows, top-up eligibility gates, and premium-payment continuation after the minimum investment term remain informational only.',
-      'Policy closure charge, fund-switching review rights, the published S$10 dividend cash-out threshold and pending-transaction sale timing, and change-of-policy-currency handling remain informational only.',
+      'Policy closure charge, fund-switching review rights, pending-transaction sale timing, and change-of-policy-currency handling remain informational only.',
     ],
     sourceRefs: [page1, page2, page3, page5, page6, page7, page8, page9, page10, page11, page12, page13, page17],
   }
@@ -282,7 +283,6 @@ export function parseFwdInvestFlexiElite(context: ParseContext): IlpCatalogProdu
       'fwd-invest-flexi-elite-regular-withdrawal-option',
       'fwd-invest-flexi-elite-policy-closure-charge',
       'fwd-invest-flexi-elite-fund-switching',
-      'fwd-invest-flexi-elite-dividend-cashout-threshold',
       'fwd-invest-flexi-elite-change-of-policy-currency',
     ],
     warnings: [
