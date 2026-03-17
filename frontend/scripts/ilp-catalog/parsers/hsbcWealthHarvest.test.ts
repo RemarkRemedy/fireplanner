@@ -31,13 +31,14 @@ describe('parseHsbcWealthHarvest', () => {
       'branch:hsbc-harvest-topup-charge',
       'kernel:distribution-mode-assumption',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('hsbc-harvest-dividend-payout-threshold')
+    expect(product.metadataOnlyBehaviors).not.toContain('hsbc-harvest-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-harvest-dividend-bank-routing')
 
     const variant = product.variants.find((entry) => entry.id === 'sgd-mip-11')
     expect(variant?.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['regular', 'topup'],
+      minimumAnnualPayoutAmount: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,

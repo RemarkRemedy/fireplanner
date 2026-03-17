@@ -236,20 +236,21 @@ function buildVariant(document: ExtractedPdfDocument, coverOption: CoverOption):
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['policy'],
+      minimumAnnualPayoutAmount: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: [
         'The summary allows either dividend reinvestment or cash payout, with reinvestment as the default.',
-        'Cash payout still depends on the fund-level dividend declaration and the minimum S$30 payout threshold.',
+        'Cash payout still depends on the fund-level dividend declaration, while the published S$30 minimum payout threshold is modeled.',
       ],
       sourceRefs: [page9],
     },
     eecTable: [],
     warnings: [
       `This supported template models the SGD open-ended ${coverLabel} corridor with the published regular-premium charge schedule, the year-5-onward 102% regular-premium allocation uplift, the tiered Additional Bonus Units, the fixed S$5 monthly administration fee, the monthly death / TI insurance charge, the 5% top-up / recurring-single-premium charge path, and the nil withdrawal/redemption-fee path.`,
-      'Dividend cash payout remains a manual assumption surface and still depends on fund-level dividend declaration together with the published S$30 minimum payout threshold.',
+      'Dividend cash payout remains a manual assumption surface and still depends on fund-level dividend declaration.',
     ],
     unsupportedItems: [
       'TPD payout treatment, terminal-illness claim limits, and cross-policy benefit caps remain informational only.',
@@ -292,11 +293,10 @@ export function parseHsbcLifeFlexiProtector({ document, sourceChecksumSha256 }: 
       'hsbc-life-flexi-protector-life-replacement-option',
       'hsbc-life-flexi-protector-policy-change-approvals',
       'hsbc-life-flexi-protector-usd-corridor',
-      'hsbc-life-flexi-protector-dividend-payout-threshold',
     ],
     warnings: [
       'HSBC Life Flexi Protector is cataloged as a supported V1 product. The parser captures explicit SGD open-ended Choice Cover and Max Cover variants with the published regular-premium charge schedule, the year-5-onward 102% regular-premium allocation uplift, the tiered Additional Bonus Units, the fixed S$5 monthly administration fee, the Choice/Max death and terminal-illness insurance-charge corridor, the 5% top-up / recurring-single-premium charge path, and the nil withdrawal/redemption-fee path.',
-      'Dividend payout threshold handling, TPD claim treatment, premium-holiday lapse sequencing, reinstatement, policy-change approvals, and USD-specific constraints remain informational only.',
+      'TPD claim treatment, premium-holiday lapse sequencing, reinstatement, policy-change approvals, and USD-specific constraints remain informational only.',
       'Structured extraction validated against the HSBC Life Flexi Protector product summary text layer.',
     ],
     archived: false,

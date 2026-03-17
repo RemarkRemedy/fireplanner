@@ -116,10 +116,11 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-harvest-brc')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-harvest-regular-withdrawal-facility')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-harvest-dividend-payout-threshold')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-harvest-dividend-payout-threshold')
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['regular', 'topup'],
+      minimumAnnualPayoutAmount: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -3833,7 +3834,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-life-wealth-invest-cash-srs-max-recurring-single-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-recurring-single-premium-routing')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-life-wealth-invest-cash-srs-dividend-cashout-threshold')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-life-wealth-invest-cash-srs-dividend-cashout-threshold')
     expect(seed.accounts.find((account) => account.id === 'policy')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
       { phase: 'top-up', contributionShare: 1 },
@@ -3869,6 +3870,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['policy'],
+      minimumAnnualPayoutAmount: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -5688,6 +5690,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-flexi-choice-max-assurance')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-life-flexi-protector-administration-fee')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-tpd-payout-structure')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-life-flexi-protector-dividend-payout-threshold')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -5747,6 +5750,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['policy'],
+      minimumAnnualPayoutAmount: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,

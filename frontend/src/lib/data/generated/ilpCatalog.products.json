@@ -49796,12 +49796,11 @@
       "hsbc-life-flexi-protector-gio",
       "hsbc-life-flexi-protector-life-replacement-option",
       "hsbc-life-flexi-protector-policy-change-approvals",
-      "hsbc-life-flexi-protector-usd-corridor",
-      "hsbc-life-flexi-protector-dividend-payout-threshold"
+      "hsbc-life-flexi-protector-usd-corridor"
     ],
     "warnings": [
       "HSBC Life Flexi Protector is cataloged as a supported V1 product. The parser captures explicit SGD open-ended Choice Cover and Max Cover variants with the published regular-premium charge schedule, the year-5-onward 102% regular-premium allocation uplift, the tiered Additional Bonus Units, the fixed S$5 monthly administration fee, the Choice/Max death and terminal-illness insurance-charge corridor, the 5% top-up / recurring-single-premium charge path, and the nil withdrawal/redemption-fee path.",
-      "Dividend payout threshold handling, TPD claim treatment, premium-holiday lapse sequencing, reinstatement, policy-change approvals, and USD-specific constraints remain informational only.",
+      "TPD claim treatment, premium-holiday lapse sequencing, reinstatement, policy-change approvals, and USD-specific constraints remain informational only.",
       "Structured extraction validated against the HSBC Life Flexi Protector product summary text layer."
     ],
     "archived": false,
@@ -50165,13 +50164,14 @@
           "accountIds": [
             "policy"
           ],
+          "minimumAnnualPayoutAmount": 30,
           "defaultMode": "reinvest",
           "cashPayoutAllowedDuringMip": true,
           "cashPayoutAllowedAfterMip": true,
           "source": "distribution-paying-funds",
           "notes": [
             "The summary allows either dividend reinvestment or cash payout, with reinvestment as the default.",
-            "Cash payout still depends on the fund-level dividend declaration and the minimum S$30 payout threshold."
+            "Cash payout still depends on the fund-level dividend declaration, while the published S$30 minimum payout threshold is modeled."
           ],
           "sourceRefs": [
             {
@@ -50184,7 +50184,7 @@
         "eecTable": [],
         "warnings": [
           "This supported template models the SGD open-ended Choice Cover corridor with the published regular-premium charge schedule, the year-5-onward 102% regular-premium allocation uplift, the tiered Additional Bonus Units, the fixed S$5 monthly administration fee, the monthly death / TI insurance charge, the 5% top-up / recurring-single-premium charge path, and the nil withdrawal/redemption-fee path.",
-          "Dividend cash payout remains a manual assumption surface and still depends on fund-level dividend declaration together with the published S$30 minimum payout threshold."
+          "Dividend cash payout remains a manual assumption surface and still depends on fund-level dividend declaration."
         ],
         "unsupportedItems": [
           "TPD payout treatment, terminal-illness claim limits, and cross-policy benefit caps remain informational only.",
@@ -50595,13 +50595,14 @@
           "accountIds": [
             "policy"
           ],
+          "minimumAnnualPayoutAmount": 30,
           "defaultMode": "reinvest",
           "cashPayoutAllowedDuringMip": true,
           "cashPayoutAllowedAfterMip": true,
           "source": "distribution-paying-funds",
           "notes": [
             "The summary allows either dividend reinvestment or cash payout, with reinvestment as the default.",
-            "Cash payout still depends on the fund-level dividend declaration and the minimum S$30 payout threshold."
+            "Cash payout still depends on the fund-level dividend declaration, while the published S$30 minimum payout threshold is modeled."
           ],
           "sourceRefs": [
             {
@@ -50614,7 +50615,7 @@
         "eecTable": [],
         "warnings": [
           "This supported template models the SGD open-ended Max Cover corridor with the published regular-premium charge schedule, the year-5-onward 102% regular-premium allocation uplift, the tiered Additional Bonus Units, the fixed S$5 monthly administration fee, the monthly death / TI insurance charge, the 5% top-up / recurring-single-premium charge path, and the nil withdrawal/redemption-fee path.",
-          "Dividend cash payout remains a manual assumption surface and still depends on fund-level dividend declaration together with the published S$30 minimum payout threshold."
+          "Dividend cash payout remains a manual assumption surface and still depends on fund-level dividend declaration."
         ],
         "unsupportedItems": [
           "TPD payout treatment, terminal-illness claim limits, and cross-policy benefit caps remain informational only.",
@@ -50688,7 +50689,6 @@
     ],
     "metadataOnlyBehaviors": [
       "hsbc-harvest-regular-withdrawal-facility",
-      "hsbc-harvest-dividend-payout-threshold",
       "hsbc-harvest-dividend-bank-routing",
       "hsbc-harvest-change-of-life-insured-insurance-charge-adjustment",
       "hsbc-harvest-rsp-restart-after-premium-holiday"
@@ -51075,6 +51075,7 @@
             "regular",
             "topup"
           ],
+          "minimumAnnualPayoutAmount": 30,
           "defaultMode": "reinvest",
           "cashPayoutAllowedDuringMip": true,
           "cashPayoutAllowedAfterMip": true,
@@ -51082,7 +51083,7 @@
           "notes": [
             "Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash, with reinvestment as the default if no option is elected.",
             "Cash payout applies to both the Regular Premium Account and the Top-up Account.",
-            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption while the published S$30 minimum payout threshold and designated-bank-account routing remain informational only."
+            "V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption while designated-bank-account routing remains informational only."
           ],
           "sourceRefs": [
             {
@@ -51394,7 +51395,6 @@
       "hsbc-life-wealth-invest-cash-srs-single-premium-principal-tracking",
       "hsbc-life-wealth-invest-cash-srs-fund-management-charge",
       "hsbc-life-wealth-invest-cash-srs-additional-ilp-sub-fund-charges",
-      "hsbc-life-wealth-invest-cash-srs-dividend-cashout-threshold",
       "hsbc-life-wealth-invest-cash-srs-dividend-bank-account-routing",
       "hsbc-life-wealth-invest-cash-srs-fund-switching",
       "hsbc-life-wealth-invest-cash-srs-free-look-refund",
@@ -51551,13 +51551,14 @@
           "accountIds": [
             "policy"
           ],
+          "minimumAnnualPayoutAmount": 30,
           "defaultMode": "reinvest",
           "cashPayoutAllowedDuringMip": true,
           "cashPayoutAllowedAfterMip": true,
           "source": "distribution-paying-funds",
           "notes": [
             "Cash-funded policies default dividend distributions to reinvestment and may elect cash payout for dividend-paying ILP sub-funds.",
-            "V1 seeds reinvestment by default; payout elections use a manual annual distribution-yield assumption while the published S$30 minimum payout threshold and designated-bank-account payout operations remain informational only."
+            "V1 seeds reinvestment by default; payout elections use a manual annual distribution-yield assumption while designated-bank-account payout operations remain informational only."
           ],
           "sourceRefs": [
             {
@@ -51580,7 +51581,7 @@
           "Recurring single premium enrollment approval, allocation-change requests, and failed-deduction handling remain informational only.",
           "Fund-level management charges and additional ILP-sub-fund charges remain informational only because they depend on the selected fund mix and are not a single product-level rate.",
           "Fund switching administration remains informational only.",
-          "The published S$30 dividend minimum and designated-bank-account payout operations remain informational only.",
+          "Designated-bank-account payout operations remain informational only.",
           "Termination and free-look refund behavior remain informational only."
         ],
         "sourceRefs": [
@@ -51773,7 +51774,7 @@
           "source": "distribution-paying-funds",
           "notes": [
             "SRS-funded policies default dividend distributions to reinvestment because the published payout election is only available to cash-purchased policies.",
-            "V1 seeds reinvestment by default; the published S$30 minimum payout threshold and designated-bank-account payout operations remain informational only because no SRS cash-payout path is modeled."
+            "V1 seeds reinvestment by default because no SRS cash-payout path is modeled, while designated-bank-account payout operations remain informational only."
           ],
           "sourceRefs": [
             {
@@ -51796,7 +51797,7 @@
           "Recurring single premium enrollment approval, allocation-change requests, and failed-deduction handling remain informational only.",
           "Fund-level management charges and additional ILP-sub-fund charges remain informational only because they depend on the selected fund mix and are not a single product-level rate.",
           "Fund switching administration remains informational only.",
-          "The published S$30 dividend minimum and designated-bank-account payout operations remain informational only.",
+          "Designated-bank-account payout operations remain informational only.",
           "Termination and free-look refund behavior remain informational only."
         ],
         "sourceRefs": [

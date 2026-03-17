@@ -240,6 +240,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['regular', 'topup'],
+      minimumAnnualPayoutAmount: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -247,7 +248,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       notes: [
         'Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash, with reinvestment as the default if no option is elected.',
         'Cash payout applies to both the Regular Premium Account and the Top-up Account.',
-        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption while the published S$30 minimum payout threshold and designated-bank-account routing remain informational only.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption while designated-bank-account routing remains informational only.',
       ],
       sourceRefs: [page13],
     },
@@ -281,7 +282,6 @@ export function parseHsbcWealthHarvest(context: ParseContext): IlpCatalogProduct
     ],
     metadataOnlyBehaviors: [
       'hsbc-harvest-regular-withdrawal-facility',
-      'hsbc-harvest-dividend-payout-threshold',
       'hsbc-harvest-dividend-bank-routing',
       'hsbc-harvest-change-of-life-insured-insurance-charge-adjustment',
       'hsbc-harvest-rsp-restart-after-premium-holiday',

@@ -153,6 +153,7 @@ function buildVariant(document: ExtractedPdfDocument, fundingMode: FundingMode):
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['policy'],
+      ...(isSrs ? {} : { minimumAnnualPayoutAmount: 30 }),
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: !isSrs,
       cashPayoutAllowedAfterMip: !isSrs,
@@ -160,11 +161,11 @@ function buildVariant(document: ExtractedPdfDocument, fundingMode: FundingMode):
       notes: isSrs
         ? [
             'SRS-funded policies default dividend distributions to reinvestment because the published payout election is only available to cash-purchased policies.',
-            'V1 seeds reinvestment by default; the published S$30 minimum payout threshold and designated-bank-account payout operations remain informational only because no SRS cash-payout path is modeled.',
+            'V1 seeds reinvestment by default because no SRS cash-payout path is modeled, while designated-bank-account payout operations remain informational only.',
           ]
         : [
             'Cash-funded policies default dividend distributions to reinvestment and may elect cash payout for dividend-paying ILP sub-funds.',
-            'V1 seeds reinvestment by default; payout elections use a manual annual distribution-yield assumption while the published S$30 minimum payout threshold and designated-bank-account payout operations remain informational only.',
+            'V1 seeds reinvestment by default; payout elections use a manual annual distribution-yield assumption while designated-bank-account payout operations remain informational only.',
           ],
       sourceRefs: [page5Dividends],
     },
@@ -183,7 +184,7 @@ function buildVariant(document: ExtractedPdfDocument, fundingMode: FundingMode):
       'Recurring single premium enrollment approval, allocation-change requests, and failed-deduction handling remain informational only.',
       'Fund-level management charges and additional ILP-sub-fund charges remain informational only because they depend on the selected fund mix and are not a single product-level rate.',
       'Fund switching administration remains informational only.',
-      'The published S$30 dividend minimum and designated-bank-account payout operations remain informational only.',
+      'Designated-bank-account payout operations remain informational only.',
       'Termination and free-look refund behavior remain informational only.',
     ],
     sourceRefs: [page3, page5Dividends, page5, page6, page8, page11, page14],
@@ -216,7 +217,6 @@ export function parseHsbcWealthInvestCashSrs(context: ParseContext): IlpCatalogP
       'hsbc-life-wealth-invest-cash-srs-single-premium-principal-tracking',
       'hsbc-life-wealth-invest-cash-srs-fund-management-charge',
       'hsbc-life-wealth-invest-cash-srs-additional-ilp-sub-fund-charges',
-      'hsbc-life-wealth-invest-cash-srs-dividend-cashout-threshold',
       'hsbc-life-wealth-invest-cash-srs-dividend-bank-account-routing',
       'hsbc-life-wealth-invest-cash-srs-fund-switching',
       'hsbc-life-wealth-invest-cash-srs-free-look-refund',

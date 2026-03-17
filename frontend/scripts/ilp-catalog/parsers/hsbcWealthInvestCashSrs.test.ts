@@ -35,6 +35,7 @@ describe('parseHsbcWealthInvestCashSrs', () => {
     ])
     expect(product.metadataOnlyBehaviors).toContain('hsbc-life-wealth-invest-cash-srs-fund-management-charge')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-life-wealth-invest-cash-srs-single-premium-principal-tracking')
+    expect(product.metadataOnlyBehaviors).not.toContain('hsbc-life-wealth-invest-cash-srs-dividend-cashout-threshold')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-open-ended-cash',
       'sgd-open-ended-srs',
@@ -89,6 +90,7 @@ describe('parseHsbcWealthInvestCashSrs', () => {
     expect(cashVariant?.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['policy'],
+      minimumAnnualPayoutAmount: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -147,6 +149,7 @@ describe('parseHsbcWealthInvestCashSrs', () => {
         }),
       ],
     })
+    expect(srsVariant?.distributionSupport).not.toHaveProperty('minimumAnnualPayoutAmount')
     expect(srsVariant?.warnings).toContain('Switching fees are currently nil, while switching behavior, dividend cash-payout operations, and bank-routing edge cases remain outside the current calculator surface.')
   }, 30_000)
 })

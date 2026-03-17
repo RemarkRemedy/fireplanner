@@ -30,6 +30,7 @@ describe('parseHsbcLifeFlexiProtector', () => {
     expect(product.modeledEconomics).toContain('branch:hsbc-flexi-choice-max-assurance')
     expect(product.modeledEconomics).toContain('branch:hsbc-life-flexi-protector-administration-fee')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-tpd-payout-structure')
+    expect(product.metadataOnlyBehaviors).not.toContain('hsbc-life-flexi-protector-dividend-payout-threshold')
 
     expect(product.variants).toHaveLength(2)
 
@@ -110,6 +111,15 @@ describe('parseHsbcLifeFlexiProtector', () => {
     ])
     expect(choiceVariant?.distributionSupport).toEqual(
       expect.objectContaining({
+        minimumAnnualPayoutAmount: 30,
+        defaultMode: 'reinvest',
+        cashPayoutAllowedDuringMip: true,
+        cashPayoutAllowedAfterMip: true,
+      }),
+    )
+    expect(maxVariant?.distributionSupport).toEqual(
+      expect.objectContaining({
+        minimumAnnualPayoutAmount: 30,
         defaultMode: 'reinvest',
         cashPayoutAllowedDuringMip: true,
         cashPayoutAllowedAfterMip: true,
