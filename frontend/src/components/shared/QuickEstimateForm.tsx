@@ -223,13 +223,15 @@ export function QuickEstimateForm({ compact = false, syncUrlParams = false, onHa
     trackEvent('demo_loaded')
     navigate('/projection')
     setTimeout(() => {
-      toast('Viewing demo data', {
-        description: createElement('span', null,
-          createElement(Link, { to: '/setup', className: 'underline font-medium', onClick: () => toast.dismiss() }, 'Start your own plan'),
-          ' or ',
-          createElement(Link, { to: '/retirement-calculator', className: 'underline font-medium', onClick: () => toast.dismiss() }, 'back to calculator'),
+      toast.warning('You are viewing demo data', {
+        description: createElement('div', { className: 'flex flex-col gap-2 mt-1' },
+          createElement('p', { className: 'text-sm' }, 'This is sample data. Start your own plan when ready.'),
+          createElement('div', { className: 'flex gap-2' },
+            createElement(Link, { to: '/setup', className: 'inline-flex items-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90', onClick: () => toast.dismiss() }, 'Start your own plan'),
+            createElement(Link, { to: '/retirement-calculator', className: 'inline-flex items-center rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent', onClick: () => toast.dismiss() }, 'Back to calculator'),
+          ),
         ),
-        duration: 15000,
+        duration: Infinity,
       })
     }, 500)
   }, [hasExistingData, setUIField, navigate])
