@@ -178,7 +178,7 @@ export function GuaranteedIncomeEditor({
                   />
 
                   <NumberInput
-                    label="Ends at age"
+                    label={timing.endAge === null ? 'Ends at age (lifetime)' : 'Ends at age'}
                     integer
                     min={timing.startAge}
                     max={selectedAdult.lifeExpectancy}
@@ -186,7 +186,6 @@ export function GuaranteedIncomeEditor({
                     onChange={(value) => onUpdate(stream.id, {
                       timing: { ...timing, endAge: value >= selectedAdult.lifeExpectancy ? null : value },
                     })}
-                    helperText={timing.endAge === null ? 'Lifetime (no end)' : undefined}
                   />
 
                   <div className="space-y-1.5">
