@@ -230,15 +230,15 @@ export function StartPage() {
       {/* Demo + Quick estimate for new users */}
       {!isReturningUser && (
         <>
-          {/* Demo button — lowest effort, comes first */}
+          {/* Demo link — subtle, before calculator */}
           <div className="flex justify-center">
             {hasExistingData ? (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Play className="mr-1.5 h-3.5 w-3.5" />
-                    Explore a demo
-                  </Button>
+                  <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    <Play className="mr-1 h-3 w-3 inline" />
+                    Or explore a demo first
+                  </button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
@@ -255,10 +255,10 @@ export function StartPage() {
                 </AlertDialogContent>
               </AlertDialog>
             ) : (
-              <Button variant="outline" size="sm" onClick={loadDemo}>
-                <Play className="mr-1.5 h-3.5 w-3.5" />
-                Explore a demo
-              </Button>
+              <button onClick={loadDemo} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Play className="mr-1 h-3 w-3 inline" />
+                Or explore a demo first
+              </button>
             )}
           </div>
 
