@@ -170,6 +170,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       notes: [
         'Applies only to partial withdrawals from the Accumulation Units Account during the minimum contribution period.',
         'Cash dividend payouts after the minimum contribution period are not subject to partial withdrawal charge.',
+        'Dividend cash payouts are modeled separately from partial withdrawals in V1.',
       ],
       sourceRefs: [page5, page23, page24],
     },
@@ -262,21 +263,36 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['initial', 'accumulation', 'topup'],
+      cashPayoutWindows: [
+        {
+          startPolicyYear: 1,
+          endPolicyYear: 10,
+          accountIds: ['accumulation', 'topup'],
+        },
+        {
+          startPolicyYear: 11,
+          endPolicyYear: null,
+          accountIds: ['initial', 'accumulation', 'topup'],
+        },
+      ],
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
-      cashPayoutAllowedDuringMip: false,
+      cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: [
-        'Dividend-paying funds are automatically reinvested during the minimum contribution period.',
+        'During the minimum contribution period, dividends from the Initial Units Account are automatically reinvested.',
+        'During the minimum contribution period, cash payout may be received from the Accumulation Units Account and Top-up Units Account.',
         'After the minimum contribution period, cash payout may be received from the Initial Units Account, Accumulation Units Account, and Top-up Units Account.',
         'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption.',
+        'Distribution-option changes should be submitted at least 30 days before the Record Date.',
       ],
       sourceRefs: [page5],
     },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
       '#goAssure is cataloged as a supported V1 corridor. The parser captures the SGD 10-year cash corridor: three-account regular-premium / top-up routing, the published initial-charge schedule, the premium-base policy charge during MIP, recurring-single-premium and top-up charges, the partial-withdrawal charge schedule, the premium-shortfall charge schedules, the 10-year surrender-charge table, and the manual distribution-mode assumption surface.',
-      'Dividend cash payout after the minimum contribution period requires a manual annual distribution-yield assumption, and the published minimum payout threshold remains informational only.',
+      'Dividend cash payouts are partially modeled through the manual distribution-mode assumption surface: during the minimum contribution period, Initial Units Account dividends stay reinvested while Accumulation Units Account and Top-up Units Account dividends may be paid in cash; after the minimum contribution period, Initial Units Account dividends join the cash-payout corridor; distribution-option changes should be submitted at least 30 days before the Record Date; and the published $50 per-dividend minimum payout threshold remains informational only.',
       'Initial Bonus, Loyalty Bonus, Achievement Bonus, Wellness Bonus, waiver mechanics, Monthly Protection Charge, Guaranteed Extra Protection, and protection-side claim behavior remain outside the current engine.',
     ],
     unsupportedItems: [
@@ -284,7 +300,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       'Waiver of Partial Withdrawal Charge and/or Premium Shortfall Charge remains informational only.',
       'Monthly Protection Charge, sum-at-risk formulas, protection-age transitions, and Guaranteed Extra Protection remain informational only.',
       'Credit-card charge, administrative charge nil surface, policy-currency-change charge nil surface, and third-party charges remain informational only.',
-      'The published minimum dividend-payout threshold and post-MIP cash-dividend processing details remain informational only.',
+      'The published $50 per-dividend minimum payout threshold, plus detailed dividend-payment processing and settlement handling, remain informational only.',
     ],
     sourceRefs: [page1, page5, page8, page13, page14, page15, page23, page24],
   }
@@ -324,7 +340,7 @@ export function parseTokioMarineGoAssure(context: ParseContext): IlpCatalogProdu
       'tokio-marine-goassure-third-party-charges',
     ],
     warnings: [
-      '#goAssure is cataloged as a supported V1 product. The parser captures the SGD 10-year cash corridor charge surfaces and distribution-mode assumption support, while bonuses, waiver mechanics, Monthly Protection Charge, and protection-side claim behavior remain informational only.',
+      '#goAssure is cataloged as a supported V1 product. The parser captures the SGD 10-year cash corridor charge surfaces and distribution-mode assumption support, including phase-specific dividend cash-payout account eligibility and the 30-day record-date instruction lead time, while the published $50 per-dividend minimum payout threshold, bonuses, waiver mechanics, Monthly Protection Charge, and protection-side claim behavior remain informational only.',
     ],
     archived: false,
     variants: [

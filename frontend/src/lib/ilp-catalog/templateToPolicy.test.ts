@@ -7029,12 +7029,14 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-goassure-premium-shortfall-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-marine-goassure-monthly-protection-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-marine-goassure-guaranteed-extra-protection')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-marine-goassure-dividend-payout-threshold')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(10)
     expect(seed.accounts.map((account) => account.id)).toEqual(['initial', 'accumulation', 'topup'])
     expect(seed.eecTable).toEqual([1, 1, 0.95, 0.95, 0.7, 0.65, 0.6, 0.45, 0.25, 0.08])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Monthly Protection Charge'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('distribution-yield assumption'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the Record Date'))).toBe(true)
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -7079,6 +7081,20 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['initial', 'accumulation', 'topup'],
+      cashPayoutWindows: [
+        { startPolicyYear: 1, endPolicyYear: 10, accountIds: ['accumulation', 'topup'] },
+        { startPolicyYear: 11, endPolicyYear: null, accountIds: ['initial', 'accumulation', 'topup'] },
+      ],
+      defaultMode: 'reinvest',
+      recordDateInstructionLeadDays: 30,
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionSupport).not.toHaveProperty('minimumAnnualPayoutAmount')
   })
 
   it('maps #goWealth Enrich into an open-ended single-premium seed with original-base establishment and surrender charges', () => {

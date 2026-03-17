@@ -27,6 +27,7 @@ describe('parseTokioMarineGoAssure', () => {
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('branch:tokio-marine-goassure-policy-charge')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-marine-goassure-dividend-payout-threshold')
 
     const variant = product.variants[0]
     expect(variant?.id).toBe('sgd-mip-10')
@@ -83,15 +84,26 @@ describe('parseTokioMarineGoAssure', () => {
     expect(variant?.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['initial', 'accumulation', 'topup'],
+      cashPayoutWindows: [
+        { startPolicyYear: 1, endPolicyYear: 10, accountIds: ['accumulation', 'topup'] },
+        { startPolicyYear: 11, endPolicyYear: null, accountIds: ['initial', 'accumulation', 'topup'] },
+      ],
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
-      cashPayoutAllowedDuringMip: false,
+      cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: expect.arrayContaining([
+        expect.stringContaining('Initial Units Account are automatically reinvested'),
+        expect.stringContaining('Accumulation Units Account and Top-up Units Account'),
         expect.stringContaining('manual annual distribution-yield assumption'),
       ]),
       sourceRefs: expect.any(Array),
     })
+    expect(variant?.distributionSupport).not.toHaveProperty('minimumAnnualPayoutAmount')
+    expect(variant?.warnings).toContain(
+      'Dividend cash payouts are partially modeled through the manual distribution-mode assumption surface: during the minimum contribution period, Initial Units Account dividends stay reinvested while Accumulation Units Account and Top-up Units Account dividends may be paid in cash; after the minimum contribution period, Initial Units Account dividends join the cash-payout corridor; distribution-option changes should be submitted at least 30 days before the Record Date; and the published $50 per-dividend minimum payout threshold remains informational only.',
+    )
     expect(variant?.eecTable).toEqual([1, 1, 0.95, 0.95, 0.7, 0.65, 0.6, 0.45, 0.25, 0.08])
   }, 30_000)
 })
