@@ -344,14 +344,13 @@ export function parseHsbcWealthAbundance(context: ParseContext): IlpCatalogProdu
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'hsbc-abundance-dividend-payout-threshold',
       'hsbc-abundance-dividend-bank-routing',
       'hsbc-abundance-rsp-administrative-restart-after-premium-holiday',
       'hsbc-abundance-life-replacement-option',
     ],
     warnings: [
       'Structured extraction validated against the Wealth Abundance product summary text layer.',
-      'Wealth Abundance keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
+      'Wealth Abundance keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface with the published S$30 minimum annual payout threshold.',
       'Regular withdrawal is modeled through the manual payout-state kernel; post-holiday recurring-single-premium administrative restart and life replacement remain metadata-only in V1.',
     ],
     archived: false,

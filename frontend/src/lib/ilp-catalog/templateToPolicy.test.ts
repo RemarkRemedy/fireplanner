@@ -158,7 +158,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-abundance-free-withdrawal')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-abundance-dividend-payout-threshold')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-abundance-dividend-payout-threshold')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-abundance-regular-withdrawal-facility')
     expect(seed.scheduledPayoutSupport).toEqual({
       mode: 'manual-assumption',
@@ -177,6 +177,7 @@ describe('templateVariantToPolicySeed', () => {
       source: 'distribution-paying-funds',
     })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('S$30 minimum annual payout threshold'))).toBe(true)
 
     const usdVariant = product?.variants.find((entry) => entry.id === 'usd-mip-10')
     expect(usdVariant).toBeDefined()

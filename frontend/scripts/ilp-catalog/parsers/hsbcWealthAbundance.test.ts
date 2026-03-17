@@ -32,7 +32,7 @@ describe('parseHsbcWealthAbundance', () => {
       'kernel:scheduled-payout-manual-assumption',
       'kernel:distribution-mode-assumption',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('hsbc-abundance-dividend-payout-threshold')
+    expect(product.metadataOnlyBehaviors).not.toContain('hsbc-abundance-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-abundance-dividend-bank-routing')
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-abundance-regular-withdrawal-facility')
 
@@ -75,6 +75,9 @@ describe('parseHsbcWealthAbundance', () => {
       expect.stringContaining('paid in SGD irrespective of policy currency'),
       expect.stringContaining('published S$30 minimum remain reinvested'),
     ]))
+    expect(product.warnings).toContain(
+      'Wealth Abundance keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface with the published S$30 minimum annual payout threshold.',
+    )
     expect(usdVariant?.warnings).toContain(
       'Recurring single premium is not available for USD-denominated policies and is therefore omitted from this variant.',
     )
