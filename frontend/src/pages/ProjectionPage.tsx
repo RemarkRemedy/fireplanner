@@ -991,7 +991,6 @@ export function ProjectionPage() {
       </Dialog>
     </div>
     <aside className="hidden md:block space-y-4">
-      <NudgeSidebar onOpenDrawer={setDrawerFlowId} />
       {healthResult && (
         <Card>
           <CardHeader className="pb-2">
@@ -1001,7 +1000,7 @@ export function ProjectionPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground space-y-2">
-            <p>Check your emergency fund, debt ratios, and protection gaps against MoneySense benchmarks.</p>
+            <p>After you refine your data, check your emergency fund, protection gaps, and debt ratios against MoneySense benchmarks.</p>
             <div className="flex items-center gap-3 text-xs">
               {healthResult.greenCount > 0 && (
                 <span className="flex items-center gap-1">
@@ -1031,6 +1030,7 @@ export function ProjectionPage() {
           </CardContent>
         </Card>
       )}
+      <NudgeSidebar onOpenDrawer={setDrawerFlowId} />
     </aside>
     <NudgeDrawer
       flowId={drawerFlowId}
