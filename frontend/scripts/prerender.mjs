@@ -209,6 +209,38 @@ const routes = [
       </ul>
     `,
   },
+  {
+    path: '/cpf-planner',
+    title: 'CPF Retirement Planner: Estimate Your CPF Balances, BRS/FRS/ERS, and CPF LIFE Payout',
+    heading: 'CPF Retirement Planner',
+    description: 'Free CPF retirement calculator for Singapore. Estimate your OA/SA/MA balances at 55, compare BRS/FRS/ERS tiers, and see your projected CPF LIFE monthly payout.',
+    bodyHtml: `
+      <p>Estimate your CPF balances at age 55 and see how much CPF LIFE will pay you each month. Then find out if CPF alone covers your retirement expenses, or if your portfolio needs to fill the gap.</p>
+      <p>2026 Retirement Sums: BRS $110,200 / FRS $220,400 / ERS $440,800</p>
+      <ul>
+        <li><a href="/">Start full retirement planning</a></li>
+        <li><a href="/retirement-planner">Singapore retirement planner</a></li>
+        <li><a href="/retirement-calculator">Singapore retirement calculator</a></li>
+        <li><a href="/compare">Compare robo-advisors vs DIY</a></li>
+      </ul>
+    `,
+  },
+  {
+    path: '/compare',
+    title: 'Robo-Advisors vs DIY: Singapore Fee Comparison and Retirement Planning',
+    heading: 'Robo-Advisors vs Retirement Planner',
+    description: 'Compare Endowus, StashAway, Syfe, and DBS digiPortfolio fees. See the 30-year cost of each platform and what a free retirement planner adds that robo-advisors cannot.',
+    bodyHtml: `
+      <p>Robo-advisors manage your investments. A retirement planner tells you if those investments are enough. They solve different problems, and most people benefit from both.</p>
+      <p>Compare fees across Endowus, StashAway, Syfe, DBS digiPortfolio, and DIY investing. Then see what SGFirePlanner adds: CPF projections, 12 withdrawal strategies, Monte Carlo stress testing, and household planning.</p>
+      <ul>
+        <li><a href="/">Start planning for free</a></li>
+        <li><a href="/cpf-planner">CPF retirement planner</a></li>
+        <li><a href="/retirement-planner">Singapore retirement planner</a></li>
+        <li><a href="/retirement-calculator">Singapore retirement calculator</a></li>
+      </ul>
+    `,
+  },
 ]
 
 const template = readFileSync(join(distDir, 'index.html'), 'utf-8')

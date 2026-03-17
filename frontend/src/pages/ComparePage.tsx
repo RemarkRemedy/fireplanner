@@ -1,0 +1,298 @@
+import { useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
+import {
+  TrendingUp,
+  BarChart3,
+  Shield,
+  Users,
+  Lock,
+  ArrowRight,
+} from 'lucide-react'
+import { usePageMeta } from '@/hooks/usePageMeta'
+import { FeeComparisonCalculator } from '@/components/compare/FeeComparisonCalculator'
+
+// ---------------------------------------------------------------------------
+// FAQ data (outside component for stable reference)
+// ---------------------------------------------------------------------------
+
+const FAQ_ITEMS = [
+  {
+    question:
+      'Do I need a robo-advisor and a retirement planner?',
+    answer:
+      'Yes, they solve different problems. Robo-advisors automate investing: they allocate your money across funds, rebalance periodically, and keep you disciplined. A retirement planner models your full financial picture, including CPF, property, withdrawal strategies, and stress testing, to answer the question "do I have enough to retire?" You can use both together.',
+  },
+  {
+    question:
+      'How much do robo-advisors cost in Singapore?',
+    answer:
+      'Platform fees range from 0.2% to 0.8% of assets under management, plus fund-level costs (TER) of 0.1% to 0.3%. These may seem small, but over 30 years at 7% returns, even a 0.5% fee difference compounds to tens of thousands of dollars in lost portfolio growth.',
+  },
+  {
+    question:
+      'Can I use SGFirePlanner with my Endowus or StashAway portfolio?',
+    answer:
+      'Yes. Enter your robo portfolio value as part of your total investment assets. SGFirePlanner projects whether your combined assets (CPF + portfolio) are enough to retire. It does not manage your investments directly. It tells you whether the amount you are investing is on track.',
+  },
+] as const
+
+const FAQ_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: FAQ_ITEMS.map((item) => ({
+    '@type': 'Question',
+    name: item.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: item.answer,
+    },
+  })),
+}
+
+const WEB_APP_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'SGFirePlanner',
+  url: 'https://sgfireplanner.com',
+  applicationCategory: 'FinanceApplication',
+  operatingSystem: 'Any',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'SGD',
+  },
+  description:
+    'Free Singapore retirement planner with CPF integration, Monte Carlo stress testing, and 12 withdrawal strategies. Compare robo-advisor fees and plan your path to FIRE.',
+}
+
+// ---------------------------------------------------------------------------
+// Feature cards data
+// ---------------------------------------------------------------------------
+
+const FEATURES = [
+  {
+    icon: TrendingUp,
+    title: 'CPF + portfolio integrated projection',
+    description:
+      'Year-by-year projection that combines your CPF balances (OA, SA, MA, RA) with your investment portfolio. See exactly when CPF LIFE kicks in and how it offsets withdrawals.',
+  },
+  {
+    icon: BarChart3,
+    title: '12 withdrawal strategies compared',
+    description:
+      'From the classic 4% rule to Guyton-Klinger guardrails, VPW, and CAPE-based withdrawals. Compare them side by side with your actual numbers.',
+  },
+  {
+    icon: Shield,
+    title: 'Monte Carlo stress testing',
+    description:
+      '10,000 simulated market scenarios. See your probability of success across bull markets, bear markets, and everything in between.',
+  },
+  {
+    icon: Users,
+    title: 'Household and joint planning',
+    description:
+      'Model two adults with separate incomes, CPF accounts, and retirement ages. See how your combined finances work together.',
+  },
+  {
+    icon: Lock,
+    title: '100% private: no data leaves your browser',
+    description:
+      'No account needed. No server. Your financial data stays in your browser and never touches our servers. Export to JSON anytime.',
+  },
+]
+
+// ---------------------------------------------------------------------------
+// ComparePage
+// ---------------------------------------------------------------------------
+
+export function ComparePage() {
+  usePageMeta({
+    title:
+      'Robo-Advisors vs DIY: Singapore Fee Comparison and Retirement Planning',
+    description:
+      'Compare Endowus, StashAway, Syfe, and DBS digiPortfolio fees. See the 30-year cost of each platform and what a free retirement planner adds that robo-advisors cannot.',
+    path: '/compare',
+  })
+
+  // Inject structured data schemas
+  useEffect(() => {
+    const faqScript = document.createElement('script')
+    faqScript.type = 'application/ld+json'
+    faqScript.textContent = JSON.stringify(FAQ_SCHEMA)
+    document.head.appendChild(faqScript)
+
+    const webAppScript = document.createElement('script')
+    webAppScript.type = 'application/ld+json'
+    webAppScript.textContent = JSON.stringify(WEB_APP_SCHEMA)
+    document.head.appendChild(webAppScript)
+
+    return () => {
+      document.head.removeChild(faqScript)
+      document.head.removeChild(webAppScript)
+    }
+  }, [])
+
+  return (
+    <div className="mx-auto max-w-4xl space-y-12 px-4 py-12">
+      {/* Hero */}
+      <header className="space-y-3 text-center">
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          Robo-advisors manage your money. A planner helps you decide if it's
+          enough.
+        </h1>
+        <p className="text-lg text-muted-foreground">
+          They solve different problems. Here's how they work together.
+        </p>
+      </header>
+
+      {/* Philosophy section */}
+      <section className="prose prose-neutral dark:prose-invert max-w-none space-y-4">
+        <h2 className="text-2xl font-semibold">
+          What robo-advisors do well
+        </h2>
+        <p>
+          Robo-advisors like Endowus, StashAway, and Syfe have made investing
+          dramatically more accessible in Singapore. They handle portfolio
+          construction, automatic rebalancing, and dividend reinvestment for a
+          fraction of what traditional wealth managers charge. For many people,
+          they remove the biggest barrier to investing: getting started.
+        </p>
+        <p>
+          They also provide access to tax-advantaged accounts. Endowus is the
+          only platform that supports both SRS and CPF-IS investing, letting you
+          put your retirement savings to work in diversified funds. StashAway and
+          Syfe support SRS. These integrations matter because idle cash in your
+          SRS or CPF accounts earns less than it could in a well-diversified
+          portfolio.
+        </p>
+        <p>
+          The discipline factor is real too. Automated monthly contributions and
+          rebalancing keep you invested through market downturns when the
+          temptation to sell is strongest. For accumulation-phase investors, this
+          behavioural guardrail alone can be worth the management fee.
+        </p>
+
+        <h2 className="text-2xl font-semibold">
+          What robo-advisors cannot tell you
+        </h2>
+        <p>
+          A robo-advisor tells you how your portfolio is performing. It does not
+          tell you whether your portfolio, combined with your CPF, property, and
+          spending plans, is enough to retire on. That is a fundamentally
+          different question.
+        </p>
+        <p>
+          Retirement planning in Singapore involves variables that no
+          robo-advisor models: CPF contribution rates that change at age 55, 60,
+          65, and 70. CPF LIFE payouts that begin at 65. BRS, FRS, and ERS
+          thresholds that grow at 3.5% per year. Property loan tenures,
+          MediShield Life premiums, and CareShield Life contributions. Income
+          tax reliefs from SRS contributions. The interaction between all of
+          these determines when you can actually stop working.
+        </p>
+        <p>
+          A retirement planner also stress-tests your plan. What happens if
+          markets drop 40% in your first year of retirement? What if you face a
+          career disruption at age 45? What withdrawal strategy gives you the
+          best chance of not running out of money? Robo-advisors do not answer
+          these questions because they are not designed to.
+        </p>
+        <p>
+          The best approach is to use both: a robo-advisor (or DIY ETF portfolio)
+          for execution, and a retirement planner for strategy. SGFirePlanner
+          is free, runs entirely in your browser, and works alongside whatever
+          investment platform you choose.
+        </p>
+      </section>
+
+      {/* Fee comparison calculator */}
+      <section>
+        <FeeComparisonCalculator />
+      </section>
+
+      {/* Feature cards */}
+      <section className="space-y-6">
+        <h2 className="text-2xl font-semibold text-center">
+          What SGFirePlanner adds that robo-advisors cannot
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {FEATURES.map(({ icon: Icon, title, description }) => (
+            <Card key={title}>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="rounded-lg bg-primary/10 p-2">
+                    <Icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <CardTitle className="text-base">{title}</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">{description}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="space-y-4">
+        <h2 className="text-2xl font-semibold">Frequently asked questions</h2>
+        <Accordion type="single" collapsible className="w-full">
+          {FAQ_ITEMS.map((item, i) => (
+            <AccordionItem key={i} value={`faq-${i}`}>
+              <AccordionTrigger>{item.question}</AccordionTrigger>
+              <AccordionContent>{item.answer}</AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </section>
+
+      {/* CTA + related tools */}
+      <section className="space-y-6 text-center">
+        <div className="space-y-3">
+          <h2 className="text-2xl font-semibold">
+            Ready to plan your retirement?
+          </h2>
+          <p className="text-muted-foreground">
+            Free. No account needed. Your data stays in your browser.
+          </p>
+          <Button size="lg" asChild>
+            <Link to="/">
+              Start planning
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-muted-foreground">
+            Related tools
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/">Home</Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/cpf-planner">CPF Planner</Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/retirement-planner">Retirement Planner</Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/retirement-calculator">Retirement Calculator</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}

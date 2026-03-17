@@ -32,6 +32,8 @@ const PAGE_NAMES: Record<string, string> = {
   '/retirement-planner': 'Retirement Planner',
   '/retirement-calculator': 'Retirement Calculator',
   '/quick-estimate': 'Quick Estimate',
+  '/cpf-planner': 'CPF Planner',
+  '/compare': 'Compare',
 }
 
 export function usePageMeta({ title, description, path = '/' }: PageMeta) {
