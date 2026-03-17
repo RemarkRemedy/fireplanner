@@ -24,7 +24,7 @@ import { usePageMeta } from '@/hooks/usePageMeta'
 import { LandingEmailSection } from '@/components/email/LandingEmailSection'
 import { QuickEstimateForm } from '@/components/shared/QuickEstimateForm'
 import { DEMO_SCENARIO_DRAFT, DEMO_PLAN_TYPE } from '@/lib/data/demoScenario'
-import { setDemoActive, clearDemoActive } from '@/components/shared/DemoBadge'
+import { setDemoActive, clearDemoActive, clearFireplannerData } from '@/components/shared/DemoBadge'
 import { applySetupDraft } from '@/lib/household/setupDraft'
 import { saveScenario } from '@/lib/scenarios'
 import type { SectionId } from '@/lib/household/sectionOrder'
@@ -96,7 +96,7 @@ export function StartPage() {
       toast('You are viewing demo data', {
         description: createElement('div', { className: 'flex flex-col gap-2 mt-1' },
           createElement('p', { className: 'text-sm' }, 'This is sample data. Start your own plan when ready.'),
-          createElement('button', { className: 'inline-flex items-center rounded-md bg-white border border-amber-400 px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-50', onClick: () => { toast.dismiss(); clearDemoActive(); const s = localStorage.getItem('fireplanner-scenarios'); localStorage.clear(); if (s) localStorage.setItem('fireplanner-scenarios', s); window.location.href = '/setup' } }, 'Start your own plan'),
+          createElement('button', { className: 'inline-flex items-center rounded-md bg-white border border-amber-400 px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-50', onClick: () => { toast.dismiss(); clearDemoActive(); clearFireplannerData(); window.location.href = '/setup' } }, 'Start your own plan'),
         ),
         duration: Infinity,
         style: { backgroundColor: '#f59e0b', color: '#451a03', border: '1px solid #d97706' },
@@ -183,9 +183,7 @@ export function StartPage() {
                 <AlertDialogAction
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   onClick={() => {
-                    const scenarios = localStorage.getItem('fireplanner-scenarios')
-                    localStorage.clear()
-                    if (scenarios) localStorage.setItem('fireplanner-scenarios', scenarios)
+                    clearFireplannerData()
                     window.location.href = '/'
                   }}
                 >

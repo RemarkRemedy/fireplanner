@@ -24,12 +24,22 @@ export function isDemoActive(): boolean {
   try { return sessionStorage.getItem(DEMO_FLAG_KEY) === '1' } catch { return false }
 }
 
+/** Remove all fireplanner localStorage keys except scenarios */
+export function clearFireplannerData() {
+  const keysToRemove: string[] = []
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i)
+    if (key && key.startsWith('fireplanner-') && key !== 'fireplanner-scenarios') {
+      keysToRemove.push(key)
+    }
+  }
+  keysToRemove.forEach((k) => localStorage.removeItem(k))
+}
+
 /** Clear demo data from localStorage, preserving scenarios */
 function clearDemoData() {
   clearDemoActive()
-  const scenarios = localStorage.getItem('fireplanner-scenarios')
-  localStorage.clear()
-  if (scenarios) localStorage.setItem('fireplanner-scenarios', scenarios)
+  clearFireplannerData()
 }
 
 export function DemoBadge() {

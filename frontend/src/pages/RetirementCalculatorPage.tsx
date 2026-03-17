@@ -24,7 +24,7 @@ const howToSchema = {
 
 export function RetirementCalculatorPage() {
   usePageMeta({
-    title: 'Singapore Retirement Calculator — Estimate CPF-Aware Retirement Needs',
+    title: 'Singapore Retirement Calculator: Estimate CPF-Aware Retirement Needs',
     description: 'Use this free Singapore retirement calculator to estimate your retirement target, timeline, CPF support, and required withdrawals.',
     path: '/retirement-calculator',
   })

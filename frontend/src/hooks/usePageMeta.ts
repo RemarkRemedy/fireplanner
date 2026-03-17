@@ -73,7 +73,7 @@ export function usePageMeta({ title, description, path = '/' }: PageMeta) {
       breadcrumbItems.push({
         '@type': 'ListItem',
         position: 2,
-        name: PAGE_NAMES[path] ?? title.split('—')[0].trim(),
+        name: PAGE_NAMES[path] ?? title.split(/[—:]/)[0].trim(),
         item: canonicalUrl,
       })
     }
