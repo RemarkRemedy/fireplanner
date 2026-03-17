@@ -30,7 +30,7 @@ describe('parseTokioMarineGoLuxe', () => {
     expect(product.modeledEconomics).toContain('branch:tokio-goluxe-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-loyalty-and-achievement-bonuses')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-dividend-payout-threshold-record-date-and-regular-withdrawal')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-regular-withdrawal-facility')
 
     const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15')
     const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15-advanced-death')
@@ -83,15 +83,19 @@ describe('parseTokioMarineGoLuxe', () => {
         { startPolicyYear: 16, endPolicyYear: null, accountIds: ['initial', 'accumulation', 'topup'] },
       ],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 50,
+      recordDateInstructionLeadDays: 30,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: expect.arrayContaining([
         expect.stringContaining('During the 15-year minimum contribution period'),
+        expect.stringContaining('$50 minimum dividend amount'),
       ]),
       sourceRefs: expect.any(Array),
     })
     expect(basicVariant?.eecTable).toEqual([1, 1, 1, 0.95, 0.76, 0.76, 0.76, 0.73, 0.73, 0.73, 0.7, 0.6, 0.45, 0.25, 0.07])
+    expect(product.warnings.some((warning) => warning.includes('30-day record-date lead time'))).toBe(true)
     expect(advancedVariant?.feeRules).toEqual([
       expect.objectContaining({
         id: 'monthly-protection-charge',

@@ -5240,6 +5240,8 @@ describe('templateVariantToPolicySeed', () => {
         { startPolicyYear: 16, endPolicyYear: null, accountIds: ['initial', 'accumulation', 'topup'] },
       ],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 50,
+      recordDateInstructionLeadDays: 30,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
@@ -5249,9 +5251,10 @@ describe('templateVariantToPolicySeed', () => {
       source: 'catalog-default',
     })
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-loyalty-and-achievement-bonuses')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-dividend-payout-threshold-record-date-and-regular-withdrawal')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-regular-withdrawal-facility')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('supported V1 product'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
   })
 
   it('maps Tokio Marine #goLuxe advanced-death into a supported seed with accrued Tokio MPC valuation accounts', () => {
@@ -5325,6 +5328,8 @@ describe('templateVariantToPolicySeed', () => {
         { startPolicyYear: 16, endPolicyYear: null, accountIds: ['initial', 'accumulation', 'topup'] },
       ],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 50,
+      recordDateInstructionLeadDays: 30,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
@@ -5334,9 +5339,10 @@ describe('templateVariantToPolicySeed', () => {
       source: 'catalog-default',
     })
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-loyalty-and-achievement-bonuses')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-dividend-payout-threshold-record-date-and-regular-withdrawal')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-regular-withdrawal-facility')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Advanced Death variant also models the published Monthly Protection Charge'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
   })
 
   it('maps Tokio Marine #goAffluence into a supported seed with executable initial-charge and policy-charge rules', () => {

@@ -312,6 +312,8 @@ function buildVariant(
         },
       ],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 50,
+      recordDateInstructionLeadDays: 30,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
@@ -319,14 +321,14 @@ function buildVariant(
         'Dividend-paying ILP sub-funds default to reinvestment unless the policyholder elects cash payout.',
         'During the 15-year minimum contribution period, only dividends from the Accumulation Units Account and Top-up Units Account may be paid in cash.',
         'After the minimum contribution period, dividends from the Initial Units Account, Accumulation Units Account, and Top-up Units Account may be paid in cash.',
-        'The published $50 minimum dividend amount and 30-day instruction window remain informational only in V1.',
+        'Cash payouts below the published $50 minimum dividend amount are reinvested, and distribution-option instruction changes require at least 30 days before the Record Date.',
       ],
       sourceRefs: [page8],
     },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
       `This partial template models the SGD / minimum-contribution-period-15 (${isAdvancedDeath ? 'Advanced Death' : 'Basic Death'}) corridor only.`,
-      'This partial template models regular-premium routing through year 15, the published initial charge and policy charge through account fee rates, top-up routing, recurring single premium routing, the published surrender charge on the Initial Units Account, the published partial-withdrawal and premium-shortfall charge schedules, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
+      'This partial template models regular-premium routing through year 15, the published initial charge and policy charge through account fee rates, top-up routing, recurring single premium routing, the published surrender charge on the Initial Units Account, the published partial-withdrawal and premium-shortfall charge schedules, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface with the published $50 minimum cash-payout threshold and 30-day record-date lead time.',
       ...(isAdvancedDeath
         ? [
             'The Advanced Death variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window, policy-year-4 lump-sum settlement, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base.',
@@ -343,8 +345,7 @@ function buildVariant(
         : [
             'Advanced Death selection, Monthly Protection Charge, multiple-life handling, and change-of-life-assured administration remain metadata-only for this product.',
           ]),
-      'Regular withdrawal, partial-withdrawal limit caps, and non-SGD policy currencies remain metadata-only for this product.',
-      'The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only in V1.',
+      'Regular withdrawal and non-SGD policy currencies remain metadata-only for this product.',
     ],
     sourceRefs: [page1, page2, page4, page5, page6, page8, page9, page10, page15, page16],
   }
@@ -385,12 +386,12 @@ export function parseTokioMarineGoLuxe(context: ParseContext): IlpCatalogProduct
     metadataOnlyBehaviors: [
       'tokio-goluxe-loyalty-and-achievement-bonuses',
       'tokio-goluxe-advanced-death-payout-handling-and-life-assured-administration',
-      'tokio-goluxe-dividend-payout-threshold-record-date-and-regular-withdrawal',
+      'tokio-goluxe-regular-withdrawal-facility',
       'tokio-goluxe-non-sgd-policy-currencies',
     ],
     warnings: [
-      '#goLuxe is cataloged as a supported V1 product. The SGD / 15-year minimum-contribution corridors model regular-premium routing, initial bonus allocation, initial and policy charges, top-up and recurring-single-premium routing / charges, partial-withdrawal and premium-shortfall charges, surrender mechanics, and reinvest-default distribution support; the Advanced Death variant also models the accrued Monthly Protection Charge corridor from insured-life inputs.',
-      'Loyalty bonus and achievement bonus qualification, advanced-death payout handling beyond the modeled Monthly Protection Charge, dividend payout threshold / record-date handling, regular-withdrawal rules, and non-SGD policy currencies remain informational only.',
+      '#goLuxe is cataloged as a supported V1 product. The SGD / 15-year minimum-contribution corridors model regular-premium routing, initial bonus allocation, initial and policy charges, top-up and recurring-single-premium routing / charges, partial-withdrawal and premium-shortfall charges, surrender mechanics, and reinvest-default distribution support with the published $50 minimum cash-payout threshold and 30-day record-date lead time; the Advanced Death variant also models the accrued Monthly Protection Charge corridor from insured-life inputs.',
+      'Loyalty bonus and achievement bonus qualification, advanced-death payout handling beyond the modeled Monthly Protection Charge, regular-withdrawal rules, and non-SGD policy currencies remain informational only.',
     ],
     archived: false,
     variants: [
