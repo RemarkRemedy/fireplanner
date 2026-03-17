@@ -114,9 +114,15 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-harvest-holiday-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-harvest-pwc')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-harvest-brc')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-harvest-regular-withdrawal-facility')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-harvest-regular-withdrawal-facility')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-harvest-dividend-payout-threshold')
+    expect(seed.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      accountId: 'regular',
+      source: 'policy-redemption',
+    })
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['regular', 'topup'],
@@ -150,8 +156,16 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-abundance-tiered-brc')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:hsbc-abundance-free-withdrawal')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-abundance-dividend-payout-threshold')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-abundance-regular-withdrawal-facility')
+    expect(seed.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      accountId: 'topup',
+      fallbackAccountIds: ['regular'],
+      source: 'policy-redemption',
+    })
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['regular', 'topup'],
@@ -226,10 +240,18 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('hsbc-voyage-premium-base-amf')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-voyage-premium-holiday-charge-after-free-duration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-voyage-dividend-payout-threshold')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-voyage-regular-withdrawal-loyalty-suspension')
+    expect(seed.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      accountId: 'topup',
+      fallbackAccountIds: ['regular'],
+      source: 'policy-redemption',
+    })
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

@@ -68,6 +68,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page10 = sourceRef(10, 'Fees and charges', snippetNear(document, 10, 'PREMIUM HOLIDAY CHARGE'))
   const page11 = sourceRef(11, 'Fees and charges', snippetNear(document, 11, 'EARLY ENCASHMENT CHARGE'))
   const page13 = sourceRef(13, 'Distribution Paying Fund', snippetNear(document, 13, 'Distribution Paying Fund'))
+  const page14 = sourceRef(14, 'Regular Withdrawal', snippetNear(document, 14, 'REGULAR WITHDRAWAL', 20))
 
   const bonuses: IlpTemplateBonus[] = [
     {
@@ -101,9 +102,13 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       notes: [
         'Allocated monthly from the first policy month in policy year 10 onward while the policy remains in force.',
         'No Loyalty Bonus will be payable in the next 12 policy months after a partial withdrawal from the Regular Premium Account.',
-        'The product summary also suspends this bonus after regular withdrawal from the Regular Premium Account, which remains metadata-only in V1.',
+        'Regular Withdrawal is modeled through the manual scheduled-payout assumption surface, so loyalty-bonus suspension follows scheduled redemptions while that assumption is active.',
       ],
-      sourceRefs: [page5],
+      suspensionRules: [
+        { trigger: 'partial-withdrawal', suspensionMonths: 12 },
+        { trigger: 'scheduled-payout', suspensionMonths: 12 },
+      ],
+      sourceRefs: [page5, page14],
     },
   ]
 
@@ -237,6 +242,17 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     bonuses,
     feeRules,
     eventChargeRules,
+    scheduledPayoutSupport: {
+      mode: 'manual-assumption',
+      accountId: 'regular',
+      source: 'policy-redemption',
+      notes: [
+        'Regular Withdrawal may be paid yearly, half-yearly, quarterly, or monthly from policy year 12 onward by redeeming units from the Regular Premium Account.',
+        'V1 exposes Regular Withdrawal as a manual scheduled-redemption assumption from the Regular Premium Account only.',
+        'The published minimum withdrawal amounts, minimum remaining Regular Premium Account value, and the insurer’s right to suspend or terminate the facility remain informational only in V1.',
+      ],
+      sourceRefs: [page14],
+    },
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['regular', 'topup'],
@@ -278,10 +294,10 @@ export function parseHsbcWealthHarvest(context: ParseContext): IlpCatalogProduct
       'branch:hsbc-harvest-pwc',
       'branch:hsbc-harvest-brc',
       'branch:hsbc-harvest-topup-charge',
+      'kernel:scheduled-payout-manual-assumption',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'hsbc-harvest-regular-withdrawal-facility',
       'hsbc-harvest-dividend-bank-routing',
       'hsbc-harvest-change-of-life-insured-insurance-charge-adjustment',
       'hsbc-harvest-rsp-restart-after-premium-holiday',
@@ -289,7 +305,7 @@ export function parseHsbcWealthHarvest(context: ParseContext): IlpCatalogProduct
     warnings: [
       'Structured extraction validated against the Wealth Harvest product summary text layer.',
       'Wealth Harvest keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
-      'Regular withdrawal, change-of-life-insured behavior, and recurring-single-premium administrative restart after premium holiday remain metadata-only in V1.',
+      'Regular withdrawal is modeled through the manual payout-state kernel; change-of-life-insured behavior and recurring-single-premium administrative restart after premium holiday remain metadata-only in V1.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

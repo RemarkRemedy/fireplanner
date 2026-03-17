@@ -9,7 +9,8 @@
     "description": "HSBC Wealth Abundance SGD baseline scenario under the V1 reinvestment-default assumption.",
     "coverageTags": [
       "baseline",
-      "kernel:distribution-mode-assumption"
+      "kernel:distribution-mode-assumption",
+      "kernel:scheduled-payout-manual-assumption"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "HSBC Life Wealth Abundance Product Summary.pdf",
@@ -172,6 +173,10 @@
           {
             "trigger": "partial-withdrawal",
             "suspensionMonths": 12
+          },
+          {
+            "trigger": "scheduled-payout",
+            "suspensionMonths": 12
           }
         ]
       }
@@ -331,12 +336,12 @@
         "branch:hsbc-abundance-tiered-brc",
         "branch:hsbc-abundance-topup-charge",
         "branch:hsbc-abundance-power-up-restoration",
+        "kernel:scheduled-payout-manual-assumption",
         "kernel:distribution-mode-assumption"
       ],
       "metadataOnlyBehaviors": [
         "hsbc-abundance-dividend-payout-threshold",
         "hsbc-abundance-dividend-bank-routing",
-        "hsbc-abundance-regular-withdrawal-facility",
         "hsbc-abundance-rsp-administrative-restart-after-premium-holiday",
         "hsbc-abundance-life-replacement-option"
       ]
@@ -344,8 +349,9 @@
     "catalogWarnings": [
       "Structured extraction validated against the Wealth Abundance product summary text layer.",
       "Wealth Abundance keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.",
-      "Regular withdrawals, post-holiday recurring-single-premium administrative restart, and life replacement remain metadata-only in V1.",
+      "Regular withdrawal is modeled through the manual payout-state kernel; post-holiday recurring-single-premium administrative restart and life replacement remain metadata-only in V1.",
       "This template captures the modeled regular-premium, top-up, recurring-single-premium, free-withdrawal, BRC, account-fee, and reinvest-default distribution subset.",
+      "This product supports scheduled payout-state, but V1 requires a manual payout assumption. No payout schedule is seeded by default.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption, and payouts below the published minimum annual cash-payout amount of S$30 remain reinvested.",
       "Designated-bank-account routing, unsuccessful cash-credit fallback to reinvestment, and payout execution operations remain informational only."
     ]

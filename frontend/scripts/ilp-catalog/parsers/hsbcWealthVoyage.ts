@@ -191,6 +191,7 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', m
   const page12 = sourceRef(12, 'Partial Withdrawal Charge and EEC', snippetNear(document, 12, '6.5 Partial Withdrawal Charge'))
   const page13 = sourceRef(13, 'Early Encashment Charge', snippetNear(document, 13, 'Early Encashment Charge Rate'))
   const page14 = sourceRef(14, 'Top-up Premiums', snippetNear(document, 14, 'Top-up Premiums'))
+  const page16 = sourceRef(16, 'Regular Withdrawal', snippetNear(document, 16, '8.3 Regular Withdrawal', 22))
   const page19 = sourceRef(19, 'Distribution of Dividend', snippetNear(document, 19, 'If you choose to reinvest dividends'))
 
   const startupRates = STARTUP_RATE_TABLE[mipLength]
@@ -263,12 +264,13 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', m
       tieredRates: [],
       suspensionRules: [
         { trigger: 'partial-withdrawal', suspensionMonths: 12 },
+        { trigger: 'scheduled-payout', suspensionMonths: 12 },
       ],
       notes: [
-        'Loyalty Bonus is modeled after MIP with partial-withdrawal suspension only.',
-        'Regular-withdrawal-linked loyalty suspension remains metadata-only in V1 because regular withdrawal events are not first-class runtime events.',
+        'Loyalty Bonus is modeled after MIP with suspension on partial withdrawals and manual scheduled payouts.',
+        'Regular Withdrawal is modeled through the manual scheduled-payout assumption surface, so loyalty-bonus suspension follows scheduled redemptions while that assumption is active.',
       ],
-      sourceRefs: [page5],
+      sourceRefs: [page5, page16],
     },
   ]
 
@@ -378,6 +380,18 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', m
     bonuses,
     feeRules,
     eventChargeRules,
+    scheduledPayoutSupport: {
+      mode: 'manual-assumption',
+      accountId: 'topup',
+      fallbackAccountIds: ['regular'],
+      source: 'policy-redemption',
+      notes: [
+        'Regular Withdrawal may be paid yearly, half-yearly, quarterly, or monthly after the MIP by redeeming units.',
+        'V1 exposes Regular Withdrawal as a manual scheduled-redemption assumption that redeems the Top-up Account first and then the Regular Premium Account.',
+        'The published minimum withdrawal amounts, minimum holding checks on the Regular Premium Account, proportional sub-fund redemption details, and the insurer’s right to suspend or terminate the facility remain informational only in V1.',
+      ],
+      sourceRefs: [page16],
+    },
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['regular', 'topup'],
@@ -427,17 +441,17 @@ export function parseHsbcWealthVoyage(context: ParseContext): IlpCatalogProduct 
       'hsbc-voyage-topup-premium-charge',
       'hsbc-voyage-partial-withdrawal-charge',
       'hsbc-voyage-eec',
+      'kernel:scheduled-payout-manual-assumption',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'hsbc-voyage-dividend-payout-threshold',
       'hsbc-voyage-premium-holiday-charge-after-free-duration',
       'hsbc-voyage-premium-holiday-backpay-amf-reconciliation',
-      'hsbc-voyage-regular-withdrawal-loyalty-suspension',
       'hsbc-voyage-life-replacement-option',
     ],
     warnings: [
-      'Wealth Voyage is cataloged as a supported V1 product. Premium-base AMF, start-up bonus, bonus recovery charge, top-up charge, partial-withdrawal charge, surrender mechanics, the modeled subset of power-up / loyalty bonus suspension rules, and reinvest-default distribution support are modeled; premium-holiday charge after the free duration, premium-holiday backpay AMF reconciliation, regular-withdrawal-linked loyalty suspension, and the life replacement option remain informational only.',
+      'Wealth Voyage is cataloged as a supported V1 product. Premium-base AMF, start-up bonus, bonus recovery charge, top-up charge, partial-withdrawal charge, surrender mechanics, manual regular-withdrawal payout support, the modeled subset of power-up / loyalty bonus suspension rules, and reinvest-default distribution support are modeled; premium-holiday charge after the free duration, premium-holiday backpay AMF reconciliation, and the life replacement option remain informational only.',
     ],
     archived: false,
     variants: [

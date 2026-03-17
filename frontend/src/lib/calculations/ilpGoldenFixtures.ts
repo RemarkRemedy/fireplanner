@@ -10131,7 +10131,11 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     variantId: 'sgd-mip-11',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
-    coverageTags: ['baseline', 'kernel:distribution-mode-assumption'],
+    coverageTags: [
+      'baseline',
+      'kernel:distribution-mode-assumption',
+      'kernel:scheduled-payout-manual-assumption',
+    ],
     description: 'HSBC Wealth Harvest baseline scenario under the V1 reinvestment-default assumption.',
   },
   {
@@ -10189,7 +10193,11 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     variantId: 'sgd-mip-10',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
-    coverageTags: ['baseline', 'kernel:distribution-mode-assumption'],
+    coverageTags: [
+      'baseline',
+      'kernel:distribution-mode-assumption',
+      'kernel:scheduled-payout-manual-assumption',
+    ],
     description: 'HSBC Wealth Abundance SGD baseline scenario under the V1 reinvestment-default assumption.',
   },
   {
@@ -10283,6 +10291,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'hsbc-voyage-premium-base-amf',
       'hsbc-voyage-eec',
       'kernel:distribution-mode-assumption',
+      'kernel:scheduled-payout-manual-assumption',
     ],
     description: 'HSBC Wealth Voyage SGD / MIP 15 baseline scenario proving start-up bonus, premium-base AMF, surrender mechanics, and reinvest-default distribution support.',
   },

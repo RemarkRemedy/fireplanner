@@ -47,7 +47,7 @@ export const ilpTemplateBonusSchema = z.object({
   amount: z.number().min(0).max(100_000_000).nullable(),
   tieredRates: z.array(ilpTemplateBonusTierSchema),
   suspensionRules: z.array(z.object({
-    trigger: z.enum(['premium-holiday', 'partial-withdrawal', 'regular-premium-reduction']),
+    trigger: z.enum(['premium-holiday', 'partial-withdrawal', 'regular-premium-reduction', 'scheduled-payout']),
     suspensionMonths: z.number().int().min(1).max(120),
   })).max(5).optional(),
   restorationRules: z.array(z.object({

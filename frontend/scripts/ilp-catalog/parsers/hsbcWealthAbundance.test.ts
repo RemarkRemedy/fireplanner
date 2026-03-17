@@ -29,10 +29,12 @@ describe('parseHsbcWealthAbundance', () => {
       'branch:hsbc-abundance-tiered-brc',
       'branch:hsbc-abundance-topup-charge',
       'branch:hsbc-abundance-power-up-restoration',
+      'kernel:scheduled-payout-manual-assumption',
       'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('hsbc-abundance-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-abundance-dividend-bank-routing')
+    expect(product.metadataOnlyBehaviors).not.toContain('hsbc-abundance-regular-withdrawal-facility')
 
     const sgdVariant = product.variants.find((entry) => entry.id === 'sgd-mip-10')
     expect(sgdVariant?.distributionSupport).toEqual({
@@ -76,5 +78,29 @@ describe('parseHsbcWealthAbundance', () => {
     expect(usdVariant?.warnings).toContain(
       'Recurring single premium is not available for USD-denominated policies and is therefore omitted from this variant.',
     )
+    expect(sgdVariant?.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      accountId: 'topup',
+      fallbackAccountIds: ['regular'],
+      source: 'policy-redemption',
+      notes: expect.arrayContaining([
+        expect.stringContaining('Top-up Account first'),
+      ]),
+      sourceRefs: [
+        expect.objectContaining({
+          page: 14,
+          section: 'Regular Withdrawal',
+        }),
+      ],
+    })
+    expect(sgdVariant?.bonuses).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'loyalty-bonus',
+        suspensionRules: [
+          { trigger: 'partial-withdrawal', suspensionMonths: 12 },
+          { trigger: 'scheduled-payout', suspensionMonths: 12 },
+        ],
+      }),
+    ]))
   }, 30_000)
 })

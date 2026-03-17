@@ -45794,19 +45794,19 @@
       "branch:hsbc-abundance-tiered-brc",
       "branch:hsbc-abundance-topup-charge",
       "branch:hsbc-abundance-power-up-restoration",
+      "kernel:scheduled-payout-manual-assumption",
       "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "hsbc-abundance-dividend-payout-threshold",
       "hsbc-abundance-dividend-bank-routing",
-      "hsbc-abundance-regular-withdrawal-facility",
       "hsbc-abundance-rsp-administrative-restart-after-premium-holiday",
       "hsbc-abundance-life-replacement-option"
     ],
     "warnings": [
       "Structured extraction validated against the Wealth Abundance product summary text layer.",
       "Wealth Abundance keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.",
-      "Regular withdrawals, post-holiday recurring-single-premium administrative restart, and life replacement remain metadata-only in V1."
+      "Regular withdrawal is modeled through the manual payout-state kernel; post-holiday recurring-single-premium administrative restart and life replacement remain metadata-only in V1."
     ],
     "archived": false,
     "variants": [
@@ -45970,17 +45970,26 @@
               {
                 "trigger": "partial-withdrawal",
                 "suspensionMonths": 12
+              },
+              {
+                "trigger": "scheduled-payout",
+                "suspensionMonths": 12
               }
             ],
             "notes": [
               "Allocated monthly from the first policy month after the MIP.",
-              "Regular-withdrawal-triggered suspension remains metadata-only in V1 because regular withdrawals are not yet modeled as policy events."
+              "Regular Withdrawal is modeled through the manual scheduled-payout assumption surface, so loyalty-bonus suspension follows scheduled redemptions while that assumption is active."
             ],
             "sourceRefs": [
               {
                 "page": 4,
                 "section": "Bonuses",
                 "excerpt": "2.4.1 Start-up Bonus You will be entitled to a one-time Start-up Bonus, calculated as a percentage of the Regular Premium(s) paid for the first Policy Year, as set out in the table below. Start-up Bonus = applicable Star"
+              },
+              {
+                "page": 14,
+                "section": "Regular Withdrawal",
+                "excerpt": "8.3 Regular Withdrawal • While the Policy is in force and after the MIP, you may apply to regularly withdraw part of the Account Value of the Regular Premium Account or Top-up Account by specifying the number of Units fr"
               }
             ]
           }
@@ -46190,6 +46199,26 @@
             ]
           }
         ],
+        "scheduledPayoutSupport": {
+          "mode": "manual-assumption",
+          "accountId": "topup",
+          "fallbackAccountIds": [
+            "regular"
+          ],
+          "source": "policy-redemption",
+          "notes": [
+            "Regular Withdrawal may be paid yearly, half-yearly, quarterly, or monthly after the MIP by redeeming units.",
+            "V1 exposes Regular Withdrawal as a manual scheduled-redemption assumption that redeems the Top-up Account first and then the Regular Premium Account.",
+            "The published minimum withdrawal amounts, minimum holding checks on the Regular Premium Account, and fund-allocation redemption details remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 14,
+              "section": "Regular Withdrawal",
+              "excerpt": "8.3 Regular Withdrawal • While the Policy is in force and after the MIP, you may apply to regularly withdraw part of the Account Value of the Regular Premium Account or Top-up Account by specifying the number of Units fr"
+            }
+          ]
+        },
         "distributionSupport": {
           "mode": "manual-assumption",
           "accountIds": [
@@ -46437,17 +46466,26 @@
               {
                 "trigger": "partial-withdrawal",
                 "suspensionMonths": 12
+              },
+              {
+                "trigger": "scheduled-payout",
+                "suspensionMonths": 12
               }
             ],
             "notes": [
               "Allocated monthly from the first policy month after the MIP.",
-              "Regular-withdrawal-triggered suspension remains metadata-only in V1 because regular withdrawals are not yet modeled as policy events."
+              "Regular Withdrawal is modeled through the manual scheduled-payout assumption surface, so loyalty-bonus suspension follows scheduled redemptions while that assumption is active."
             ],
             "sourceRefs": [
               {
                 "page": 4,
                 "section": "Bonuses",
                 "excerpt": "2.4.1 Start-up Bonus You will be entitled to a one-time Start-up Bonus, calculated as a percentage of the Regular Premium(s) paid for the first Policy Year, as set out in the table below. Start-up Bonus = applicable Star"
+              },
+              {
+                "page": 14,
+                "section": "Regular Withdrawal",
+                "excerpt": "8.3 Regular Withdrawal • While the Policy is in force and after the MIP, you may apply to regularly withdraw part of the Account Value of the Regular Premium Account or Top-up Account by specifying the number of Units fr"
               }
             ]
           }
@@ -46633,6 +46671,26 @@
             ]
           }
         ],
+        "scheduledPayoutSupport": {
+          "mode": "manual-assumption",
+          "accountId": "topup",
+          "fallbackAccountIds": [
+            "regular"
+          ],
+          "source": "policy-redemption",
+          "notes": [
+            "Regular Withdrawal may be paid yearly, half-yearly, quarterly, or monthly after the MIP by redeeming units.",
+            "V1 exposes Regular Withdrawal as a manual scheduled-redemption assumption that redeems the Top-up Account first and then the Regular Premium Account.",
+            "The published minimum withdrawal amounts, minimum holding checks on the Regular Premium Account, and fund-allocation redemption details remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 14,
+              "section": "Regular Withdrawal",
+              "excerpt": "8.3 Regular Withdrawal • While the Policy is in force and after the MIP, you may apply to regularly withdraw part of the Account Value of the Regular Premium Account or Top-up Account by specifying the number of Units fr"
+            }
+          ]
+        },
         "distributionSupport": {
           "mode": "manual-assumption",
           "accountIds": [
@@ -50707,10 +50765,10 @@
       "branch:hsbc-harvest-pwc",
       "branch:hsbc-harvest-brc",
       "branch:hsbc-harvest-topup-charge",
+      "kernel:scheduled-payout-manual-assumption",
       "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
-      "hsbc-harvest-regular-withdrawal-facility",
       "hsbc-harvest-dividend-bank-routing",
       "hsbc-harvest-change-of-life-insured-insurance-charge-adjustment",
       "hsbc-harvest-rsp-restart-after-premium-holiday"
@@ -50718,7 +50776,7 @@
     "warnings": [
       "Structured extraction validated against the Wealth Harvest product summary text layer.",
       "Wealth Harvest keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.",
-      "Regular withdrawal, change-of-life-insured behavior, and recurring-single-premium administrative restart after premium holiday remain metadata-only in V1."
+      "Regular withdrawal is modeled through the manual payout-state kernel; change-of-life-insured behavior and recurring-single-premium administrative restart after premium holiday remain metadata-only in V1."
     ],
     "archived": false,
     "variants": [
@@ -50809,16 +50867,31 @@
             "rate": 0.0035,
             "amount": null,
             "tieredRates": [],
+            "suspensionRules": [
+              {
+                "trigger": "partial-withdrawal",
+                "suspensionMonths": 12
+              },
+              {
+                "trigger": "scheduled-payout",
+                "suspensionMonths": 12
+              }
+            ],
             "notes": [
               "Allocated monthly from the first policy month in policy year 10 onward while the policy remains in force.",
               "No Loyalty Bonus will be payable in the next 12 policy months after a partial withdrawal from the Regular Premium Account.",
-              "The product summary also suspends this bonus after regular withdrawal from the Regular Premium Account, which remains metadata-only in V1."
+              "Regular Withdrawal is modeled through the manual scheduled-payout assumption surface, so loyalty-bonus suspension follows scheduled redemptions while that assumption is active."
             ],
             "sourceRefs": [
               {
                 "page": 5,
                 "section": "Loyalty Bonus",
                 "excerpt": "3.4 LOYALTY BONUS Starting from the first Policy month from 10th Policy Year onwards and while the Policy is in force, the Policyholder will receive the Loyalty Bonus every month throughout the Policy Term, subject to th"
+              },
+              {
+                "page": 14,
+                "section": "Regular Withdrawal",
+                "excerpt": "Annual 1,200 1,200 Regular Withdrawal can be made as long as the remaining Account Value in Regular Premium Account Semi-annual 600 600 after the withdrawal is not less than the Minimum Holding Amount. Quarterly 300 300 "
               }
             ]
           }
@@ -51091,6 +51164,23 @@
             ]
           }
         ],
+        "scheduledPayoutSupport": {
+          "mode": "manual-assumption",
+          "accountId": "regular",
+          "source": "policy-redemption",
+          "notes": [
+            "Regular Withdrawal may be paid yearly, half-yearly, quarterly, or monthly from policy year 12 onward by redeeming units from the Regular Premium Account.",
+            "V1 exposes Regular Withdrawal as a manual scheduled-redemption assumption from the Regular Premium Account only.",
+            "The published minimum withdrawal amounts, minimum remaining Regular Premium Account value, and the insurer’s right to suspend or terminate the facility remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 14,
+              "section": "Regular Withdrawal",
+              "excerpt": "Annual 1,200 1,200 Regular Withdrawal can be made as long as the remaining Account Value in Regular Premium Account Semi-annual 600 600 after the withdrawal is not less than the Minimum Holding Amount. Quarterly 300 300 "
+            }
+          ]
+        },
         "distributionSupport": {
           "mode": "manual-assumption",
           "accountIds": [
@@ -51882,17 +51972,17 @@
       "hsbc-voyage-topup-premium-charge",
       "hsbc-voyage-partial-withdrawal-charge",
       "hsbc-voyage-eec",
+      "kernel:scheduled-payout-manual-assumption",
       "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
       "hsbc-voyage-dividend-payout-threshold",
       "hsbc-voyage-premium-holiday-charge-after-free-duration",
       "hsbc-voyage-premium-holiday-backpay-amf-reconciliation",
-      "hsbc-voyage-regular-withdrawal-loyalty-suspension",
       "hsbc-voyage-life-replacement-option"
     ],
     "warnings": [
-      "Wealth Voyage is cataloged as a supported V1 product. Premium-base AMF, start-up bonus, bonus recovery charge, top-up charge, partial-withdrawal charge, surrender mechanics, the modeled subset of power-up / loyalty bonus suspension rules, and reinvest-default distribution support are modeled; premium-holiday charge after the free duration, premium-holiday backpay AMF reconciliation, regular-withdrawal-linked loyalty suspension, and the life replacement option remain informational only."
+      "Wealth Voyage is cataloged as a supported V1 product. Premium-base AMF, start-up bonus, bonus recovery charge, top-up charge, partial-withdrawal charge, surrender mechanics, manual regular-withdrawal payout support, the modeled subset of power-up / loyalty bonus suspension rules, and reinvest-default distribution support are modeled; premium-holiday charge after the free duration, premium-holiday backpay AMF reconciliation, and the life replacement option remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -52086,17 +52176,26 @@
               {
                 "trigger": "partial-withdrawal",
                 "suspensionMonths": 12
+              },
+              {
+                "trigger": "scheduled-payout",
+                "suspensionMonths": 12
               }
             ],
             "notes": [
-              "Loyalty Bonus is modeled after MIP with partial-withdrawal suspension only.",
-              "Regular-withdrawal-linked loyalty suspension remains metadata-only in V1 because regular withdrawal events are not first-class runtime events."
+              "Loyalty Bonus is modeled after MIP with suspension on partial withdrawals and manual scheduled payouts.",
+              "Regular Withdrawal is modeled through the manual scheduled-payout assumption surface, so loyalty-bonus suspension follows scheduled redemptions while that assumption is active."
             ],
             "sourceRefs": [
               {
                 "page": 5,
                 "section": "Power-up Bonus and Loyalty Bonus",
                 "excerpt": "Power-up Bonus Rate (p.a.) Policy Year MIP 15 20 25 3 to 5 Not applicable 0.10% 0.10% 6 to 10 0.20% 0.30% 0.40% 11 to 15 0.20% 0.50% 0.70%"
+              },
+              {
+                "page": 16,
+                "section": "Regular Withdrawal",
+                "excerpt": "8.3 Regular Withdrawal • While the Policy is in force and after the MIP, you may apply to regularly withdraw part of the Account Value of the Regular Premium Account or Top-up Account by specifying the number of Units fr"
               }
             ]
           }
@@ -52352,6 +52451,26 @@
             ]
           }
         ],
+        "scheduledPayoutSupport": {
+          "mode": "manual-assumption",
+          "accountId": "topup",
+          "fallbackAccountIds": [
+            "regular"
+          ],
+          "source": "policy-redemption",
+          "notes": [
+            "Regular Withdrawal may be paid yearly, half-yearly, quarterly, or monthly after the MIP by redeeming units.",
+            "V1 exposes Regular Withdrawal as a manual scheduled-redemption assumption that redeems the Top-up Account first and then the Regular Premium Account.",
+            "The published minimum withdrawal amounts, minimum holding checks on the Regular Premium Account, proportional sub-fund redemption details, and the insurer’s right to suspend or terminate the facility remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 16,
+              "section": "Regular Withdrawal",
+              "excerpt": "8.3 Regular Withdrawal • While the Policy is in force and after the MIP, you may apply to regularly withdraw part of the Account Value of the Regular Premium Account or Top-up Account by specifying the number of Units fr"
+            }
+          ]
+        },
         "distributionSupport": {
           "mode": "manual-assumption",
           "accountIds": [
@@ -52776,17 +52895,26 @@
               {
                 "trigger": "partial-withdrawal",
                 "suspensionMonths": 12
+              },
+              {
+                "trigger": "scheduled-payout",
+                "suspensionMonths": 12
               }
             ],
             "notes": [
-              "Loyalty Bonus is modeled after MIP with partial-withdrawal suspension only.",
-              "Regular-withdrawal-linked loyalty suspension remains metadata-only in V1 because regular withdrawal events are not first-class runtime events."
+              "Loyalty Bonus is modeled after MIP with suspension on partial withdrawals and manual scheduled payouts.",
+              "Regular Withdrawal is modeled through the manual scheduled-payout assumption surface, so loyalty-bonus suspension follows scheduled redemptions while that assumption is active."
             ],
             "sourceRefs": [
               {
                 "page": 5,
                 "section": "Power-up Bonus and Loyalty Bonus",
                 "excerpt": "Power-up Bonus Rate (p.a.) Policy Year MIP 15 20 25 3 to 5 Not applicable 0.10% 0.10% 6 to 10 0.20% 0.30% 0.40% 11 to 15 0.20% 0.50% 0.70%"
+              },
+              {
+                "page": 16,
+                "section": "Regular Withdrawal",
+                "excerpt": "8.3 Regular Withdrawal • While the Policy is in force and after the MIP, you may apply to regularly withdraw part of the Account Value of the Regular Premium Account or Top-up Account by specifying the number of Units fr"
               }
             ]
           }
@@ -53067,6 +53195,26 @@
             ]
           }
         ],
+        "scheduledPayoutSupport": {
+          "mode": "manual-assumption",
+          "accountId": "topup",
+          "fallbackAccountIds": [
+            "regular"
+          ],
+          "source": "policy-redemption",
+          "notes": [
+            "Regular Withdrawal may be paid yearly, half-yearly, quarterly, or monthly after the MIP by redeeming units.",
+            "V1 exposes Regular Withdrawal as a manual scheduled-redemption assumption that redeems the Top-up Account first and then the Regular Premium Account.",
+            "The published minimum withdrawal amounts, minimum holding checks on the Regular Premium Account, proportional sub-fund redemption details, and the insurer’s right to suspend or terminate the facility remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 16,
+              "section": "Regular Withdrawal",
+              "excerpt": "8.3 Regular Withdrawal • While the Policy is in force and after the MIP, you may apply to regularly withdraw part of the Account Value of the Regular Premium Account or Top-up Account by specifying the number of Units fr"
+            }
+          ]
+        },
         "distributionSupport": {
           "mode": "manual-assumption",
           "accountIds": [
@@ -53540,17 +53688,26 @@
               {
                 "trigger": "partial-withdrawal",
                 "suspensionMonths": 12
+              },
+              {
+                "trigger": "scheduled-payout",
+                "suspensionMonths": 12
               }
             ],
             "notes": [
-              "Loyalty Bonus is modeled after MIP with partial-withdrawal suspension only.",
-              "Regular-withdrawal-linked loyalty suspension remains metadata-only in V1 because regular withdrawal events are not first-class runtime events."
+              "Loyalty Bonus is modeled after MIP with suspension on partial withdrawals and manual scheduled payouts.",
+              "Regular Withdrawal is modeled through the manual scheduled-payout assumption surface, so loyalty-bonus suspension follows scheduled redemptions while that assumption is active."
             ],
             "sourceRefs": [
               {
                 "page": 5,
                 "section": "Power-up Bonus and Loyalty Bonus",
                 "excerpt": "Power-up Bonus Rate (p.a.) Policy Year MIP 15 20 25 3 to 5 Not applicable 0.10% 0.10% 6 to 10 0.20% 0.30% 0.40% 11 to 15 0.20% 0.50% 0.70%"
+              },
+              {
+                "page": 16,
+                "section": "Regular Withdrawal",
+                "excerpt": "8.3 Regular Withdrawal • While the Policy is in force and after the MIP, you may apply to regularly withdraw part of the Account Value of the Regular Premium Account or Top-up Account by specifying the number of Units fr"
               }
             ]
           }
@@ -53856,6 +54013,26 @@
             ]
           }
         ],
+        "scheduledPayoutSupport": {
+          "mode": "manual-assumption",
+          "accountId": "topup",
+          "fallbackAccountIds": [
+            "regular"
+          ],
+          "source": "policy-redemption",
+          "notes": [
+            "Regular Withdrawal may be paid yearly, half-yearly, quarterly, or monthly after the MIP by redeeming units.",
+            "V1 exposes Regular Withdrawal as a manual scheduled-redemption assumption that redeems the Top-up Account first and then the Regular Premium Account.",
+            "The published minimum withdrawal amounts, minimum holding checks on the Regular Premium Account, proportional sub-fund redemption details, and the insurer’s right to suspend or terminate the facility remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 16,
+              "section": "Regular Withdrawal",
+              "excerpt": "8.3 Regular Withdrawal • While the Policy is in force and after the MIP, you may apply to regularly withdraw part of the Account Value of the Regular Premium Account or Top-up Account by specifying the number of Units fr"
+            }
+          ]
+        },
         "distributionSupport": {
           "mode": "manual-assumption",
           "accountIds": [
@@ -54158,17 +54335,26 @@
               {
                 "trigger": "partial-withdrawal",
                 "suspensionMonths": 12
+              },
+              {
+                "trigger": "scheduled-payout",
+                "suspensionMonths": 12
               }
             ],
             "notes": [
-              "Loyalty Bonus is modeled after MIP with partial-withdrawal suspension only.",
-              "Regular-withdrawal-linked loyalty suspension remains metadata-only in V1 because regular withdrawal events are not first-class runtime events."
+              "Loyalty Bonus is modeled after MIP with suspension on partial withdrawals and manual scheduled payouts.",
+              "Regular Withdrawal is modeled through the manual scheduled-payout assumption surface, so loyalty-bonus suspension follows scheduled redemptions while that assumption is active."
             ],
             "sourceRefs": [
               {
                 "page": 5,
                 "section": "Power-up Bonus and Loyalty Bonus",
                 "excerpt": "Power-up Bonus Rate (p.a.) Policy Year MIP 15 20 25 3 to 5 Not applicable 0.10% 0.10% 6 to 10 0.20% 0.30% 0.40% 11 to 15 0.20% 0.50% 0.70%"
+              },
+              {
+                "page": 16,
+                "section": "Regular Withdrawal",
+                "excerpt": "8.3 Regular Withdrawal • While the Policy is in force and after the MIP, you may apply to regularly withdraw part of the Account Value of the Regular Premium Account or Top-up Account by specifying the number of Units fr"
               }
             ]
           }
@@ -54424,6 +54610,26 @@
             ]
           }
         ],
+        "scheduledPayoutSupport": {
+          "mode": "manual-assumption",
+          "accountId": "topup",
+          "fallbackAccountIds": [
+            "regular"
+          ],
+          "source": "policy-redemption",
+          "notes": [
+            "Regular Withdrawal may be paid yearly, half-yearly, quarterly, or monthly after the MIP by redeeming units.",
+            "V1 exposes Regular Withdrawal as a manual scheduled-redemption assumption that redeems the Top-up Account first and then the Regular Premium Account.",
+            "The published minimum withdrawal amounts, minimum holding checks on the Regular Premium Account, proportional sub-fund redemption details, and the insurer’s right to suspend or terminate the facility remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 16,
+              "section": "Regular Withdrawal",
+              "excerpt": "8.3 Regular Withdrawal • While the Policy is in force and after the MIP, you may apply to regularly withdraw part of the Account Value of the Regular Premium Account or Top-up Account by specifying the number of Units fr"
+            }
+          ]
+        },
         "distributionSupport": {
           "mode": "manual-assumption",
           "accountIds": [
@@ -54848,17 +55054,26 @@
               {
                 "trigger": "partial-withdrawal",
                 "suspensionMonths": 12
+              },
+              {
+                "trigger": "scheduled-payout",
+                "suspensionMonths": 12
               }
             ],
             "notes": [
-              "Loyalty Bonus is modeled after MIP with partial-withdrawal suspension only.",
-              "Regular-withdrawal-linked loyalty suspension remains metadata-only in V1 because regular withdrawal events are not first-class runtime events."
+              "Loyalty Bonus is modeled after MIP with suspension on partial withdrawals and manual scheduled payouts.",
+              "Regular Withdrawal is modeled through the manual scheduled-payout assumption surface, so loyalty-bonus suspension follows scheduled redemptions while that assumption is active."
             ],
             "sourceRefs": [
               {
                 "page": 5,
                 "section": "Power-up Bonus and Loyalty Bonus",
                 "excerpt": "Power-up Bonus Rate (p.a.) Policy Year MIP 15 20 25 3 to 5 Not applicable 0.10% 0.10% 6 to 10 0.20% 0.30% 0.40% 11 to 15 0.20% 0.50% 0.70%"
+              },
+              {
+                "page": 16,
+                "section": "Regular Withdrawal",
+                "excerpt": "8.3 Regular Withdrawal • While the Policy is in force and after the MIP, you may apply to regularly withdraw part of the Account Value of the Regular Premium Account or Top-up Account by specifying the number of Units fr"
               }
             ]
           }
@@ -55139,6 +55354,26 @@
             ]
           }
         ],
+        "scheduledPayoutSupport": {
+          "mode": "manual-assumption",
+          "accountId": "topup",
+          "fallbackAccountIds": [
+            "regular"
+          ],
+          "source": "policy-redemption",
+          "notes": [
+            "Regular Withdrawal may be paid yearly, half-yearly, quarterly, or monthly after the MIP by redeeming units.",
+            "V1 exposes Regular Withdrawal as a manual scheduled-redemption assumption that redeems the Top-up Account first and then the Regular Premium Account.",
+            "The published minimum withdrawal amounts, minimum holding checks on the Regular Premium Account, proportional sub-fund redemption details, and the insurer’s right to suspend or terminate the facility remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 16,
+              "section": "Regular Withdrawal",
+              "excerpt": "8.3 Regular Withdrawal • While the Policy is in force and after the MIP, you may apply to regularly withdraw part of the Account Value of the Regular Premium Account or Top-up Account by specifying the number of Units fr"
+            }
+          ]
+        },
         "distributionSupport": {
           "mode": "manual-assumption",
           "accountIds": [
@@ -55612,17 +55847,26 @@
               {
                 "trigger": "partial-withdrawal",
                 "suspensionMonths": 12
+              },
+              {
+                "trigger": "scheduled-payout",
+                "suspensionMonths": 12
               }
             ],
             "notes": [
-              "Loyalty Bonus is modeled after MIP with partial-withdrawal suspension only.",
-              "Regular-withdrawal-linked loyalty suspension remains metadata-only in V1 because regular withdrawal events are not first-class runtime events."
+              "Loyalty Bonus is modeled after MIP with suspension on partial withdrawals and manual scheduled payouts.",
+              "Regular Withdrawal is modeled through the manual scheduled-payout assumption surface, so loyalty-bonus suspension follows scheduled redemptions while that assumption is active."
             ],
             "sourceRefs": [
               {
                 "page": 5,
                 "section": "Power-up Bonus and Loyalty Bonus",
                 "excerpt": "Power-up Bonus Rate (p.a.) Policy Year MIP 15 20 25 3 to 5 Not applicable 0.10% 0.10% 6 to 10 0.20% 0.30% 0.40% 11 to 15 0.20% 0.50% 0.70%"
+              },
+              {
+                "page": 16,
+                "section": "Regular Withdrawal",
+                "excerpt": "8.3 Regular Withdrawal • While the Policy is in force and after the MIP, you may apply to regularly withdraw part of the Account Value of the Regular Premium Account or Top-up Account by specifying the number of Units fr"
               }
             ]
           }
@@ -55928,6 +56172,26 @@
             ]
           }
         ],
+        "scheduledPayoutSupport": {
+          "mode": "manual-assumption",
+          "accountId": "topup",
+          "fallbackAccountIds": [
+            "regular"
+          ],
+          "source": "policy-redemption",
+          "notes": [
+            "Regular Withdrawal may be paid yearly, half-yearly, quarterly, or monthly after the MIP by redeeming units.",
+            "V1 exposes Regular Withdrawal as a manual scheduled-redemption assumption that redeems the Top-up Account first and then the Regular Premium Account.",
+            "The published minimum withdrawal amounts, minimum holding checks on the Regular Premium Account, proportional sub-fund redemption details, and the insurer’s right to suspend or terminate the facility remain informational only in V1."
+          ],
+          "sourceRefs": [
+            {
+              "page": 16,
+              "section": "Regular Withdrawal",
+              "excerpt": "8.3 Regular Withdrawal • While the Policy is in force and after the MIP, you may apply to regularly withdraw part of the Account Value of the Regular Premium Account or Top-up Account by specifying the number of Units fr"
+            }
+          ]
+        },
         "distributionSupport": {
           "mode": "manual-assumption",
           "accountIds": [

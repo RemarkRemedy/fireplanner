@@ -53,7 +53,7 @@ export interface IlpTemplateBonus {
   amount: number | null
   tieredRates: IlpTemplateBonusTier[]
   suspensionRules?: Array<{
-    trigger: 'premium-holiday' | 'partial-withdrawal' | 'regular-premium-reduction'
+    trigger: 'premium-holiday' | 'partial-withdrawal' | 'regular-premium-reduction' | 'scheduled-payout'
     suspensionMonths: number
   }>
   restorationRules?: Array<{

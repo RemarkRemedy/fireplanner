@@ -97,6 +97,7 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD'): 
   const page9 = sourceRef(9, 'Policy charges', snippetNear(document, 9, 'Account Maintenance Fee'))
   const page10 = sourceRef(10, 'Policy charges', snippetNear(document, 10, 'Partial Withdrawal Charge'))
   const page11 = sourceRef(11, 'Policy charges', snippetNear(document, 11, 'Early Encashment Charge'))
+  const page14 = sourceRef(14, 'Regular Withdrawal', snippetNear(document, 14, '8.3 Regular Withdrawal', 22))
   const page16 = sourceRef(16, 'Dividend distribution', snippetNear(document, 16, 'dividends'))
 
   const bonuses: IlpTemplateBonus[] = [
@@ -140,14 +141,15 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD'): 
       rate: roundRate(LOYALTY_RATE),
       amount: null,
       tieredRates: [],
-      suspensionRules: [
-        { trigger: 'partial-withdrawal', suspensionMonths: 12 },
-      ],
       notes: [
         'Allocated monthly from the first policy month after the MIP.',
-        'Regular-withdrawal-triggered suspension remains metadata-only in V1 because regular withdrawals are not yet modeled as policy events.',
+        'Regular Withdrawal is modeled through the manual scheduled-payout assumption surface, so loyalty-bonus suspension follows scheduled redemptions while that assumption is active.',
       ],
-      sourceRefs: [page4],
+      suspensionRules: [
+        { trigger: 'partial-withdrawal', suspensionMonths: 12 },
+        { trigger: 'scheduled-payout', suspensionMonths: 12 },
+      ],
+      sourceRefs: [page4, page14],
     },
   ]
 
@@ -280,6 +282,18 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD'): 
     bonuses,
     feeRules,
     eventChargeRules,
+    scheduledPayoutSupport: {
+      mode: 'manual-assumption',
+      accountId: 'topup',
+      fallbackAccountIds: ['regular'],
+      source: 'policy-redemption',
+      notes: [
+        'Regular Withdrawal may be paid yearly, half-yearly, quarterly, or monthly after the MIP by redeeming units.',
+        'V1 exposes Regular Withdrawal as a manual scheduled-redemption assumption that redeems the Top-up Account first and then the Regular Premium Account.',
+        'The published minimum withdrawal amounts, minimum holding checks on the Regular Premium Account, and fund-allocation redemption details remain informational only in V1.',
+      ],
+      sourceRefs: [page14],
+    },
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['regular', 'topup'],
@@ -326,19 +340,19 @@ export function parseHsbcWealthAbundance(context: ParseContext): IlpCatalogProdu
       'branch:hsbc-abundance-tiered-brc',
       'branch:hsbc-abundance-topup-charge',
       'branch:hsbc-abundance-power-up-restoration',
+      'kernel:scheduled-payout-manual-assumption',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'hsbc-abundance-dividend-payout-threshold',
       'hsbc-abundance-dividend-bank-routing',
-      'hsbc-abundance-regular-withdrawal-facility',
       'hsbc-abundance-rsp-administrative-restart-after-premium-holiday',
       'hsbc-abundance-life-replacement-option',
     ],
     warnings: [
       'Structured extraction validated against the Wealth Abundance product summary text layer.',
       'Wealth Abundance keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
-      'Regular withdrawals, post-holiday recurring-single-premium administrative restart, and life replacement remain metadata-only in V1.',
+      'Regular withdrawal is modeled through the manual payout-state kernel; post-holiday recurring-single-premium administrative restart and life replacement remain metadata-only in V1.',
     ],
     archived: false,
     variants: [

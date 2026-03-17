@@ -116,7 +116,7 @@ export type IlpDistributionAssumption =
     }
 
 export interface IlpBonusSuspensionRule {
-  trigger: 'premium-holiday' | 'partial-withdrawal' | 'regular-premium-reduction'
+  trigger: 'premium-holiday' | 'partial-withdrawal' | 'regular-premium-reduction' | 'scheduled-payout'
   suspensionMonths: number
 }
 
@@ -2326,7 +2326,7 @@ function computeTieredStartupRecoveryCharge(
 function getNormalizedEventsForBonusTrigger(
   normalized: IlpNormalizedPolicyInput,
   trigger: IlpBonusSuspensionRule['trigger'],
-): IlpPolicyEvent[] {
+): Array<Pick<IlpPolicyEvent, 'id' | 'startPolicyMonth' | 'durationMonths' | 'bonusSuspensionWaived'>> {
   switch (trigger) {
     case 'premium-holiday':
       return normalized.events.premiumHolidays.filter((event) => event.bonusSuspensionWaived !== true)
@@ -2334,6 +2334,18 @@ function getNormalizedEventsForBonusTrigger(
       return normalized.events.partialWithdrawals.filter((event) => event.bonusSuspensionWaived !== true)
     case 'regular-premium-reduction':
       return normalized.events.regularPremiumReductions.filter((event) => event.bonusSuspensionWaived !== true)
+    case 'scheduled-payout': {
+      const scheduledPayout = normalized.input.scheduledPayoutAssumption
+      if (!scheduledPayout || scheduledPayout.mode !== 'scheduled-redemption') {
+        return []
+      }
+
+      return Array.from({ length: scheduledPayout.durationYears }, (_, index) => ({
+        id: `scheduled-payout-${scheduledPayout.startPolicyYear + index}`,
+        startPolicyMonth: ((scheduledPayout.startPolicyYear + index - 1) * 12) + 1,
+        durationMonths: 12,
+      }))
+    }
   }
 }
 

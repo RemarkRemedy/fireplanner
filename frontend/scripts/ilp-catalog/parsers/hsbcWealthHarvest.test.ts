@@ -29,9 +29,11 @@ describe('parseHsbcWealthHarvest', () => {
       'branch:hsbc-harvest-pwc',
       'branch:hsbc-harvest-brc',
       'branch:hsbc-harvest-topup-charge',
+      'kernel:scheduled-payout-manual-assumption',
       'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-harvest-dividend-payout-threshold')
+    expect(product.metadataOnlyBehaviors).not.toContain('hsbc-harvest-regular-withdrawal-facility')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-harvest-dividend-bank-routing')
 
     const variant = product.variants.find((entry) => entry.id === 'sgd-mip-11')
@@ -54,6 +56,29 @@ describe('parseHsbcWealthHarvest', () => {
         }),
       ],
     })
+    expect(variant?.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      accountId: 'regular',
+      source: 'policy-redemption',
+      notes: expect.arrayContaining([
+        expect.stringContaining('policy year 12 onward'),
+      ]),
+      sourceRefs: [
+        expect.objectContaining({
+          page: 14,
+          section: 'Regular Withdrawal',
+        }),
+      ],
+    })
+    expect(variant?.bonuses).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'loyalty-bonus',
+        suspensionRules: [
+          { trigger: 'partial-withdrawal', suspensionMonths: 12 },
+          { trigger: 'scheduled-payout', suspensionMonths: 12 },
+        ],
+      }),
+    ]))
     expect(variant?.warnings).toContain(
       'This template captures the modeled regular-premium, top-up, premium-holiday, withdrawal-charge, BRC, and reinvest-default distribution mechanics.',
     )

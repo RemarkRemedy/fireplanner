@@ -24,8 +24,10 @@ describe('parseHsbcWealthVoyage', () => {
     expect(product.id).toBe('hsbc-life-wealth-voyage')
     expect(product.supportStatus).toBe('supported')
     expect(product.economicsStatus).toBe('supported')
+    expect(product.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-voyage-dividend-payout-threshold')
+    expect(product.metadataOnlyBehaviors).not.toContain('hsbc-voyage-regular-withdrawal-loyalty-suspension')
 
     const sgdMip20 = product.variants.find((variant) => variant.id === 'sgd-mip-20')
     expect(sgdMip20).toBeDefined()
@@ -58,6 +60,30 @@ describe('parseHsbcWealthVoyage', () => {
         minimumAnnualPayoutCurrency: 'SGD',
       }),
     )
+    expect(sgdMip20?.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      accountId: 'topup',
+      fallbackAccountIds: ['regular'],
+      source: 'policy-redemption',
+      notes: expect.arrayContaining([
+        expect.stringContaining('Top-up Account first'),
+      ]),
+      sourceRefs: [
+        expect.objectContaining({
+          page: 16,
+          section: 'Regular Withdrawal',
+        }),
+      ],
+    })
+    expect(sgdMip20?.bonuses).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'loyalty-bonus',
+        suspensionRules: [
+          { trigger: 'partial-withdrawal', suspensionMonths: 12 },
+          { trigger: 'scheduled-payout', suspensionMonths: 12 },
+        ],
+      }),
+    ]))
     expect(sgdMip20?.feeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

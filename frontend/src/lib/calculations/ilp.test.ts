@@ -5111,6 +5111,42 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[0], 'aua').bonusCredit).toBeGreaterThan(0)
   })
 
+  it('suspends bonus credit while a scheduled payout assumption is active', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 14,
+      monthsAlreadyPaid: 168,
+      monthlyContribution: 0,
+      accounts: [
+        { ...IUA_ACCOUNT, currentValue: 0 },
+        { ...AUA_ACCOUNT, currentValue: 10_000 },
+      ],
+      scheduledPayoutSupport: {
+        mode: 'manual-assumption',
+        accountId: 'aua',
+        source: 'policy-redemption',
+      },
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        source: 'manual-assumption',
+        accountId: 'aua',
+        startPolicyYear: 15,
+        durationYears: 1,
+        annualPayoutAmount: 500,
+      },
+      bonuses: [
+        {
+          ...POWER_UP,
+          rate: 0.12,
+          suspensionRules: [{ trigger: 'scheduled-payout', suspensionMonths: 12 }],
+        },
+      ],
+    })
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'aua').bonusCredit).toBeCloseTo(0, 2)
+    expect(accountRow(result.rows[1], 'aua').bonusCredit).toBeGreaterThan(0)
+  })
+
   it('applies event-triggered charges when a partial withdrawal happens in the projection year', () => {
     const policy = makeDefaultPolicy({
       monthlyContribution: 0,
