@@ -35,7 +35,8 @@ describe('parseManulifeSmartRetireIncome', () => {
       'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-post-mip-death-benefit-corridor')
-    expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-benefit-payout-handling')
+    expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-amount-owed-deductions-and-claim-handling')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-income-benefit-payout-handling')
     expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-coi-refund')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-income-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-reinvested-dividend-withdrawal')

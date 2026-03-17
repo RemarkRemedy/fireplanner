@@ -239,7 +239,7 @@ export function parseManulifeSmartRetireSum({ document, sourceChecksumSha256 }: 
       'manulife-smartretire-v-sum-target-retirement-sum-withdrawal',
       'manulife-smartretire-v-sum-regular-income-drawdown',
       'manulife-smartretire-v-sum-post-mip-death-benefit-corridor',
-      'manulife-smartretire-v-sum-benefit-payout-handling',
+      'manulife-smartretire-v-sum-amount-owed-deductions-and-claim-handling',
       'manulife-smartretire-v-sum-waiver-of-premium-benefit',
       'manulife-smartretire-v-sum-coi-refund',
       'manulife-smartretire-v-sum-welcome-bonus',

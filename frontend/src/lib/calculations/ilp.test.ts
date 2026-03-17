@@ -8120,7 +8120,7 @@ describe('computeSummaryMetrics', () => {
         economicsStatus: 'supported',
         structureStatus: 'structured',
         modeledEconomics: ['kernel:current-death-benefit-estimate'],
-        metadataOnlyBehaviors: ['manulife-smartretire-v-income-benefit-payout-handling'],
+        metadataOnlyBehaviors: ['manulife-smartretire-v-income-amount-owed-deductions-and-claim-handling'],
       },
       funds: [ZERO_RETURN_FUND],
       scheduledPayoutSupport: {
