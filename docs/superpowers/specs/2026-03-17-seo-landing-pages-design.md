@@ -26,18 +26,22 @@ Two new SEO landing pages to capture search traffic from redirect domains and pr
   - Monthly salary (currency input, default $6,000)
   - Monthly expenses (currency input, default $3,000, used for gap calculation)
   - CPF LIFE plan (radio: Basic/Standard/Escalating, default Standard)
-- Outputs (instant, recalculated on every input change):
+  - Residency (radio: Citizen/PR, default Citizen. Required because CPF contribution rates differ.)
+- **Input validation:** All inputs must be validated before calculation runs. Show inline errors for out-of-range values. Do not run calculations on invalid inputs (per CLAUDE.md validation-before-calculation rule).
+- Outputs (recalculated when all inputs are valid):
   - Projected OA/SA/MA balances at age 55
   - BRS/FRS/ERS comparison (which tier you'll hit)
-  - Estimated CPF LIFE monthly payout at 65 (divide `estimateCpfLifePayout()` result by 12 for monthly display)
-  - The gap: "CPF LIFE gives you $X/month. If your expenses are $Y/month (inflation-adjusted to age 65), your portfolio needs to cover $Z/month for N years." Where N = lifeExpectancy(90) - 65 = 25 years, and expenses are inflated at 2.5% from current age to 65.
-- **Two-step calculation flow:**
-  1. `estimateCpfBalances(age, salary)` to estimate current OA/SA/MA balances from age and salary
-  2. `projectCpfBalances(currentAge, 55, currentBalances, salary, salaryGrowth=0.03)` to forward-project to age 55
-  3. `calculateBrsFrsErs(55)` for retirement sum comparison
-  4. `estimateCpfLifePayout(saBalanceAt55, plan)` / 12 for monthly CPF LIFE payout. **Note:** the payout rates (5.4% Basic, 6.3% Standard, 4.8% Escalating) are percentages of the accumulated balance at age 65, not the retirement sum at 55. The function handles this correctly since it takes the balance as input, but the landing page content must not claim these are percentages "of your retirement sum at 55."
+  - Estimated CPF LIFE monthly payout at 65
+  - The gap: "CPF LIFE gives you $X/month. If your expenses are $Y/month, your portfolio needs to cover the difference for N years."
+  - **Disclaimer:** "This is a rough estimate based on heuristic assumptions. For a precise projection, enter your actual CPF balances in the full planner."
+- **Calculation flow (actual function signatures):**
+  1. `estimateCpfBalances(currentAge, grossAnnualIncome, residencyStatus)` -> returns `{ oa, sa, ma, ra, total }`. This is a heuristic estimate (setup wizard level), not a precise projection.
+  2. `projectCpfBalances(currentAge, 55, oa, sa, ma, grossAnnualIncome, 0.03, residencyStatus)` -> returns `CpfProjection[]`. Extract final row's OA/SA/MA balances at 55.
+  3. `calculateBrsFrsErs(currentAge)` -> returns `{ brs, frs, ers }`. **Takes current age, not 55.** The function internally calculates years-until-55 and applies growth.
+  4. CPF LIFE payout: `estimateCpfLifePayout(retirementSumAt55, plan)` returns the **annual** payout based on the retirement sum at 55 multiplied by plan rates. Divide by 12 for monthly display. **Note:** this is a simplified estimate. The real engine grows RA from 55 to payout start age. For the landing page, this approximation is acceptable with the disclaimer.
+  5. Gap calculation: all values in **today's dollars** (real terms). Monthly expenses stay as entered (no inflation). CPF LIFE monthly = step 4 / 12. Gap = expenses - cpfLifeMonthly. Years = 90 - 65 = 25. This avoids the mixed-dollar-basis violation (CLAUDE.md).
 - Self-contained component, no Zustand store reads
-- Use `formatCurrency(value, 0)` for balance displays, `formatCurrency(value, 0)` for monthly payouts (round to whole dollars for clarity)
+- Use `formatCurrency(value, 0)` for all displays (whole dollars for clarity)
 
 **3. Content section (~800-1000 words)**
 - What BRS/FRS/ERS means and which one to target
@@ -63,13 +67,13 @@ Two new SEO landing pages to capture search traffic from redirect domains and pr
 - BreadcrumbList (via usePageMeta)
 
 ### What we reuse
-- `estimateCpfBalances()` from `lib/calculations/cpf.ts` (estimate current balances from age + salary)
-- `projectCpfBalances()` from `lib/calculations/cpf.ts` (forward-project to age 55)
-- `calculateBrsFrsErs()` from `lib/calculations/cpf.ts`
-- `estimateCpfLifePayout()` from `lib/calculations/cpf.ts` (returns annual, divide by 12 for monthly)
+- `estimateCpfBalances(currentAge, grossAnnualIncome, residencyStatus, prMonths?, oaMortgageUsed?)` from `lib/calculations/cpf.ts` (heuristic estimate of current balances)
+- `projectCpfBalances(startAge, endAge, initialOA, initialSA, initialMA, annualSalary, salaryGrowth, residencyStatus?, prMonths?)` from `lib/calculations/cpf.ts` (year-by-year forward projection)
+- `calculateBrsFrsErs(currentAge, currentYear?)` from `lib/calculations/cpf.ts` (takes current age, not target age)
+- `estimateCpfLifePayout(retirementSumAt55, plan)` from `lib/calculations/cpf.ts` (returns annual payout, divide by 12)
 - CPF rate constants from `lib/data/cpfRates.ts`
 - `CurrencyInput` / `NumberInput` from `components/shared/`
-- Email signup endpoint (existing, needs `emailConstants.ts` update)
+- Email signup: requires changes to `emailConstants.ts` (new source/feature values), `LandingEmailSection.tsx` (parameterize source), and awareness that the flow uses `EMAIL_WORKER_URL` + double opt-in, not a simple POST
 - `usePageMeta` hook for meta tags + breadcrumb
 
 ### Required updates to existing files
@@ -165,7 +169,7 @@ Tier selection: the calculator auto-selects the correct fee tier based on the sl
 ### What we create
 - `src/pages/ComparePage.tsx` - route component
 - `src/components/compare/FeeComparisonCalculator.tsx` - interactive fee drag calculator
-- `src/lib/data/roboFees.ts` - fee tier data for Endowus, StashAway, Syfe, DIY
+- `src/lib/data/roboFees.ts` - fee tier data for ALL platforms in the comparison (Endowus, StashAway, Syfe, DBS digiPortfolio, DIY). Per CLAUDE.md: all Singapore-specific financial data in `lib/data/`, not inline in components. Include `lastVerified: '2026-03-17'` and source URLs per platform.
 - Route entry in `router.tsx`
 - Sitemap entry
 - Prerender entry
