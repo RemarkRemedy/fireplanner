@@ -17,6 +17,7 @@ export function formatCurrency(value: number, decimals = 0): string {
 
 /** Format currency in compact form for tight spaces: $3.36M, $842K, $50 */
 export function formatCompactCurrency(value: number): string {
+  if (!isFinite(value)) return '$0'
   const abs = Math.abs(value)
   const sign = value < 0 ? '-' : ''
   if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(abs >= 10_000_000 ? 1 : 2)}M`
