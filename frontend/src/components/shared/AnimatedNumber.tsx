@@ -17,7 +17,11 @@ export function AnimatedNumber({ value, format, delay = 0, className }: Animated
     const to = value
     prevValue.current = value
 
-    if (from === to) return
+    // Skip animation when from is NaN (StrictMode cleanup) or values match
+    if (!isFinite(from) || from === to) {
+      setDisplay(to)
+      return
+    }
 
     const duration = 600
     let start: number | null = null
