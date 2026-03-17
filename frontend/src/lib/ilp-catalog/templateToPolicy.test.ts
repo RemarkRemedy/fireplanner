@@ -6488,6 +6488,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-smartretire-v-administrative-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-target-retirement-sum-withdrawal')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-sum-dividend-payout-threshold')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-reinvested-dividend-withdrawal')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(8)
     expect(seed.accounts).toEqual([
@@ -6518,6 +6520,7 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 40,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
@@ -6544,6 +6547,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-death-benefit')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-income-dividend-payout-threshold')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-reinvested-dividend-withdrawal')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(8)
     expect(seed.accounts).toEqual([
@@ -6580,6 +6585,7 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 40,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',

@@ -35,6 +35,8 @@ describe('parseManulifeSmartRetireIncome', () => {
     ])
     expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-death-benefit')
     expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-coi-refund')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-income-dividend-payout-threshold')
+    expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-reinvested-dividend-withdrawal')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-mip-8-flexi-3',
       'sgd-mip-8-flexi-5',
@@ -64,6 +66,7 @@ describe('parseManulifeSmartRetireIncome', () => {
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 40,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
@@ -121,6 +124,6 @@ describe('parseManulifeSmartRetireIncome', () => {
       ],
     }))
     expect(lastVariant?.eecTable).toEqual([1, 1, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.25, 0.2, 0.15, 0.1, 0])
-    expect(lastVariant?.warnings).toContain('The published $40 minimum dividend-payout threshold and withdrawals of accumulated reinvested dividends remain informational only.')
+    expect(lastVariant?.warnings).toContain('Withdrawals of accumulated reinvested dividends remain informational only.')
   }, 30_000)
 })
