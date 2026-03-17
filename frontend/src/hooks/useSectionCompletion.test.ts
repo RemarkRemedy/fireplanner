@@ -23,7 +23,7 @@ describe('useSectionCompletion', () => {
   it('default state: sections at "default" status (not customized)', () => {
     const { result } = renderHook(() => useSectionCompletion())
     const { sections } = result.current
-    // Default profile: age 30, retirement 65, life 90 — all defaults
+    // Default profile: age 34, retirement 38, life 85 — all defaults
     expect(sections['section-personal'].status).toBe('default')
     expect(sections['section-fire-settings'].status).toBe('default')
     expect(sections['section-income'].status).toBe('default')
@@ -37,7 +37,7 @@ describe('useSectionCompletion', () => {
   })
 
   it('changing SWR marks FIRE settings as customized', () => {
-    useProfileStore.getState().setField('swr', 0.035)
+    useProfileStore.getState().setField('swr', 0.04)
     const { result } = renderHook(() => useSectionCompletion())
     expect(result.current.sections['section-fire-settings'].status).toBe('customized')
   })
@@ -61,7 +61,7 @@ describe('useSectionCompletion', () => {
     const initialCount = r1.current.completedCount
 
     useProfileStore.getState().setField('currentAge', 40) // Personal
-    useProfileStore.getState().setField('swr', 0.035)     // FIRE settings
+    useProfileStore.getState().setField('swr', 0.04)      // FIRE settings
     useProfileStore.getState().setField('liquidNetWorth', 100000) // NW
 
     const { result: r2 } = renderHook(() => useSectionCompletion())

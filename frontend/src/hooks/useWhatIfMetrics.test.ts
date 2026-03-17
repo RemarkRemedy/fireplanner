@@ -46,6 +46,30 @@ describe('useWhatIfMetrics', () => {
   })
 
   it('increase expected return: fewer years to FIRE', () => {
+    // Use a profile where FIRE is not yet achieved so return increase matters
+    useProfileStore.setState({
+      ...useProfileStore.getState(),
+      currentAge: 30,
+      retirementAge: 65,
+      lifeExpectancy: 90,
+      annualIncome: 72000,
+      annualExpenses: 48000,
+      liquidNetWorth: 0,
+      cpfOA: 0,
+      cpfSA: 0,
+      cpfMA: 0,
+      srsAnnualContribution: 0,
+      swr: 0.04,
+      usePortfolioReturn: false,
+      expectedReturn: 0.05,
+      inflation: 0.025,
+      expenseRatio: 0.003,
+      validationErrors: {},
+    })
+    useIncomeStore.setState({
+      ...useIncomeStore.getState(),
+      annualSalary: 72000,
+    })
     const { result } = renderHook(() => useWhatIfMetrics({ expectedReturn: 0.12 }))
     expect(result.current.deltas).not.toBeNull()
     // Higher return should decrease years (negative delta)
@@ -62,7 +86,23 @@ describe('useWhatIfMetrics', () => {
   })
 
   it('increase income: fewer years to FIRE', () => {
-    const { result } = renderHook(() => useWhatIfMetrics({ annualIncome: 120000 }))
+    // Use a profile where FIRE is not yet achieved so income increase matters
+    useProfileStore.setState({
+      ...useProfileStore.getState(),
+      currentAge: 30,
+      retirementAge: 65,
+      lifeExpectancy: 90,
+      annualIncome: 72000,
+      annualExpenses: 48000,
+      liquidNetWorth: 0,
+      cpfOA: 0,
+      cpfSA: 0,
+      cpfMA: 0,
+      srsAnnualContribution: 0,
+      swr: 0.04,
+      validationErrors: {},
+    })
+    const { result } = renderHook(() => useWhatIfMetrics({ annualIncome: 250000 }))
     expect(result.current.deltas).not.toBeNull()
     if (isFinite(result.current.deltas!.yearsToFire)) {
       expect(result.current.deltas!.yearsToFire).toBeLessThan(0)
@@ -70,7 +110,23 @@ describe('useWhatIfMetrics', () => {
   })
 
   it('increase liquidNetWorth: fewer years to FIRE', () => {
-    const { result } = renderHook(() => useWhatIfMetrics({ liquidNetWorth: 500000 }))
+    // Use a profile where FIRE is not yet achieved so net worth increase matters
+    useProfileStore.setState({
+      ...useProfileStore.getState(),
+      currentAge: 30,
+      retirementAge: 65,
+      lifeExpectancy: 90,
+      annualIncome: 72000,
+      annualExpenses: 48000,
+      liquidNetWorth: 50000,
+      cpfOA: 0,
+      cpfSA: 0,
+      cpfMA: 0,
+      srsAnnualContribution: 0,
+      swr: 0.04,
+      validationErrors: {},
+    })
+    const { result } = renderHook(() => useWhatIfMetrics({ liquidNetWorth: 800000 }))
     expect(result.current.deltas).not.toBeNull()
     if (isFinite(result.current.deltas!.yearsToFire)) {
       expect(result.current.deltas!.yearsToFire).toBeLessThan(0)
@@ -95,9 +151,20 @@ describe('useWhatIfMetrics', () => {
   })
 
   it('usePortfolioReturn changes base metrics via expected return', () => {
-    // Manual return of 10%
+    // Use a profile where FIRE is not yet achieved so return differences matter
     useProfileStore.setState({
       ...useProfileStore.getState(),
+      currentAge: 30,
+      retirementAge: 65,
+      lifeExpectancy: 90,
+      annualIncome: 72000,
+      annualExpenses: 48000,
+      liquidNetWorth: 0,
+      cpfOA: 0,
+      cpfSA: 0,
+      cpfMA: 0,
+      srsAnnualContribution: 0,
+      swr: 0.04,
       usePortfolioReturn: false,
       expectedReturn: 0.10,
       validationErrors: {},
@@ -128,6 +195,10 @@ describe('useWhatIfMetrics', () => {
       annualIncome: 30000,
       annualExpenses: 80000, // Expenses > income, can never save enough
       liquidNetWorth: 0,
+      cpfOA: 0,
+      cpfSA: 0,
+      cpfMA: 0,
+      srsAnnualContribution: 0,
       swr: 0.04,
       fireNumberBasis: 'today',
       usePortfolioReturn: false,
@@ -135,6 +206,11 @@ describe('useWhatIfMetrics', () => {
       inflation: 0.025,
       expenseRatio: 0.003,
       validationErrors: {},
+    })
+    // Also set income store salary to match low income
+    useIncomeStore.setState({
+      ...useIncomeStore.getState(),
+      annualSalary: 30000,
     })
 
     // Override to a slightly different expense to trigger delta computation
@@ -158,6 +234,10 @@ describe('useWhatIfMetrics', () => {
       annualIncome: 30000,
       annualExpenses: 80000,
       liquidNetWorth: 0,
+      cpfOA: 0,
+      cpfSA: 0,
+      cpfMA: 0,
+      srsAnnualContribution: 0,
       swr: 0.04,
       fireNumberBasis: 'today',
       usePortfolioReturn: false,
@@ -165,6 +245,11 @@ describe('useWhatIfMetrics', () => {
       inflation: 0.025,
       expenseRatio: 0.003,
       validationErrors: {},
+    })
+    // Also set income store salary to match low income
+    useIncomeStore.setState({
+      ...useIncomeStore.getState(),
+      annualSalary: 30000,
     })
 
     const { result } = renderHook(() => useWhatIfMetrics({ annualExpenses: 90000 }))

@@ -72,6 +72,9 @@ describe('usePortfolioStats', () => {
   })
 
   it('glide path enabled returns year-by-year allocations', () => {
+    // Set retirement age far enough for a meaningful glide path
+    useProfileStore.getState().setField('retirementAge', 65)
+    useProfileStore.getState().setField('lifeExpectancy', 90)
     const store = useAllocationStore.getState()
     useAllocationStore.setState({
       ...store,
@@ -79,7 +82,7 @@ describe('usePortfolioStats', () => {
         ...store.glidePathConfig,
         enabled: true,
         method: 'linear',
-        startAge: 30,
+        startAge: 34,
         endAge: 55,
       },
       targetWeights: [0.2, 0, 0.1, 0.5, 0, 0.05, 0.15, 0],

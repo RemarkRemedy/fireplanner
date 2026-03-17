@@ -51,6 +51,7 @@ describe('useDashboardCharts', () => {
       annualExpenses: 48000,
       swr: 0.04,
       fireNumberBasis: 'today',
+      fireType: 'regular',
       validationErrors: {},
     })
     const { result } = renderHook(() => useDashboardCharts())

@@ -415,7 +415,7 @@ describe('useCompanionPlannerBridge', () => {
     })
 
     expect(result.current.activeRunOverrides?.annualExpenses).toBe(31_200)
-    expect(result.current.activeRunOverrides?.retirementAge).toBe(65)
+    expect(result.current.activeRunOverrides?.retirementAge).toBe(38)
 
     act(() => {
       useProfileStore.getState().setField('annualExpenses', 40_000)

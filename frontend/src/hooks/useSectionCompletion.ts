@@ -1,4 +1,4 @@
-import { useProfileStore } from '@/stores/useProfileStore'
+import { useProfileStore, DEFAULT_PERSONAL_FIELDS, DEFAULT_FIRE_SETTINGS_FIELDS, DEFAULT_EXPENSE_FIELDS, DEFAULT_NET_WORTH_FIELDS } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { usePropertyStore } from '@/stores/usePropertyStore'
@@ -68,26 +68,26 @@ export function useSectionCompletion(): UseSectionCompletionResult {
   }
 
   const personalCustomized =
-    profile.currentAge !== 30 ||
-    profile.retirementAge !== 65 ||
-    profile.lifeExpectancy !== 90 ||
-    profile.maritalStatus !== 'single' ||
-    profile.residencyStatus !== 'citizen'
+    profile.currentAge !== DEFAULT_PERSONAL_FIELDS.currentAge ||
+    profile.retirementAge !== DEFAULT_PERSONAL_FIELDS.retirementAge ||
+    profile.lifeExpectancy !== DEFAULT_PERSONAL_FIELDS.lifeExpectancy ||
+    profile.maritalStatus !== DEFAULT_PERSONAL_FIELDS.maritalStatus ||
+    profile.residencyStatus !== DEFAULT_PERSONAL_FIELDS.residencyStatus
 
   const fireCustomized =
-    profile.swr !== 0.036 ||
-    profile.fireType !== 'regular' ||
-    profile.expectedReturn !== 0.07 ||
-    profile.inflation !== 0.025
+    profile.swr !== DEFAULT_FIRE_SETTINGS_FIELDS.swr ||
+    profile.fireType !== DEFAULT_FIRE_SETTINGS_FIELDS.fireType ||
+    profile.expectedReturn !== DEFAULT_FIRE_SETTINGS_FIELDS.expectedReturn ||
+    profile.inflation !== DEFAULT_FIRE_SETTINGS_FIELDS.inflation
 
   const incomeCustomized =
-    income.annualSalary !== 72000 ||
+    income.annualSalary !== 178800 ||
     income.salaryModel !== 'simple' ||
     income.incomeStreams.length > 0
 
-  const expensesCustomized = profile.annualExpenses !== 48000
-  const nwCustomized = profile.liquidNetWorth !== 0
-  const cpfCustomized = profile.cpfOA !== 0 || profile.cpfSA !== 0
+  const expensesCustomized = profile.annualExpenses !== DEFAULT_EXPENSE_FIELDS.annualExpenses
+  const nwCustomized = profile.liquidNetWorth !== DEFAULT_NET_WORTH_FIELDS.liquidNetWorth
+  const cpfCustomized = profile.cpfOA !== DEFAULT_NET_WORTH_FIELDS.cpfOA || profile.cpfSA !== DEFAULT_NET_WORTH_FIELDS.cpfSA
   const healthcareCustomized = profile.healthcareConfig.enabled
   const propertyCustomized = property.ownsProperty !== false
   const allocationCustomized = allocation.selectedTemplate !== 'balanced'

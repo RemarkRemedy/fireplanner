@@ -55,6 +55,13 @@ const PROFILE_DATA_KEYS = [
   'cashReserveMonths', 'cashReserveReturn', 'retirementMitigation',
 ] as const
 
+// Owner birth year — used to compute currentAge dynamically
+const OWNER_BIRTH_YEAR = 1992
+
+function getOwnerAge(): number {
+  return new Date().getFullYear() - OWNER_BIRTH_YEAR
+}
+
 const DEFAULT_HEALTHCARE_CONFIG: HealthcareConfig = {
   enabled: false,
   mediShieldLifeEnabled: true,
@@ -63,42 +70,42 @@ const DEFAULT_HEALTHCARE_CONFIG: HealthcareConfig = {
   oopBaseAmount: 1200,
   oopModel: 'age-curve',
   oopInflationRate: 0.03,
-  oopReferenceAge: 30,
+  oopReferenceAge: getOwnerAge(),
   oopCurveVariant: 'study-backed',
   mediSaveTopUpAnnual: 0,
 }
 
 const DEFAULT_PROFILE: Omit<ProfileState, 'validationErrors'> = {
-  currentAge: 30,
-  retirementAge: 65,
-  lifeExpectancy: 90,
+  currentAge: getOwnerAge(),
+  retirementAge: 38,
+  lifeExpectancy: 85,
   lifeStage: 'pre-fire',
   maritalStatus: 'single',
   residencyStatus: 'citizen',
   prMonths: 24,
-  annualIncome: 72000,
-  annualExpenses: 48000,
-  liquidNetWorth: 0,
-  cpfOA: 0,
-  cpfSA: 0,
-  cpfMA: 0,
+  annualIncome: 178800,
+  annualExpenses: 15036,
+  liquidNetWorth: 507000,
+  cpfOA: 198723,
+  cpfSA: 70942,
+  cpfMA: 75875,
   cpfRA: 0,
   cpfTopUpOA: 0,
   cpfTopUpSA: 0,
   cpfTopUpMA: 0,
   srsBalance: 0,
-  srsAnnualContribution: 0,
+  srsAnnualContribution: 15300,
   srsInvestmentReturn: 0.04,
   srsDrawdownStartAge: 63,
   srsPostFireEnabled: false,
-  fireType: 'regular',
-  swr: 0.036,
+  fireType: 'lean',
+  swr: 0.035,
   fireNumberBasis: 'fireAge',
   retirementSpendingAdjustment: 1.0,
   expectedReturn: 0.07,
   usePortfolioReturn: true,
-  inflation: 0.025,
-  expenseRatio: 0.003,
+  inflation: 0.03,
+  expenseRatio: 0.001,
   rebalanceFrequency: 'annual',
   retirementPhase: null,
   cpfLifeActualMonthlyPayout: 0,

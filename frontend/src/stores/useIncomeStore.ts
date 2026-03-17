@@ -46,7 +46,7 @@ const INCOME_DATA_KEYS = [
 
 const DEFAULT_INCOME: Omit<IncomeState, 'validationErrors'> = {
   salaryModel: 'simple',
-  annualSalary: 72000,
+  annualSalary: 178800,
   salaryGrowthRate: 0.03,
   bonusMonths: 0,
   employerCpfEnabled: true,

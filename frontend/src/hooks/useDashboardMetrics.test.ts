@@ -38,6 +38,7 @@ describe('useDashboardMetrics', () => {
       annualExpenses: 48000,
       swr: 0.04,
       fireNumberBasis: 'today',
+      fireType: 'regular',
       retirementSpendingAdjustment: 1.0,
       usePortfolioReturn: false,
       parentSupportEnabled: false,

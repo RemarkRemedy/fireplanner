@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useProfileStore } from './useProfileStore'
 
+const OWNER_AGE = new Date().getFullYear() - 1992
+
 // Reset store to defaults before each test
 beforeEach(() => {
   useProfileStore.getState().reset()
@@ -10,21 +12,21 @@ describe('useProfileStore', () => {
   describe('initial state', () => {
     it('has correct default values', () => {
       const state = useProfileStore.getState()
-      expect(state.currentAge).toBe(30)
-      expect(state.retirementAge).toBe(65)
-      expect(state.lifeExpectancy).toBe(90)
+      expect(state.currentAge).toBe(OWNER_AGE)
+      expect(state.retirementAge).toBe(38)
+      expect(state.lifeExpectancy).toBe(85)
       expect(state.lifeStage).toBe('pre-fire')
       expect(state.maritalStatus).toBe('single')
       expect(state.residencyStatus).toBe('citizen')
-      expect(state.annualIncome).toBe(72000)
-      expect(state.annualExpenses).toBe(48000)
-      expect(state.liquidNetWorth).toBe(0)
-      expect(state.swr).toBe(0.036)
-      expect(state.fireType).toBe('regular')
-      expect(state.inflation).toBe(0.025)
-      expect(state.cpfOA).toBe(0)
-      expect(state.cpfSA).toBe(0)
-      expect(state.cpfMA).toBe(0)
+      expect(state.annualIncome).toBe(178800)
+      expect(state.annualExpenses).toBe(15036)
+      expect(state.liquidNetWorth).toBe(507000)
+      expect(state.swr).toBe(0.035)
+      expect(state.fireType).toBe('lean')
+      expect(state.inflation).toBe(0.03)
+      expect(state.cpfOA).toBe(198723)
+      expect(state.cpfSA).toBe(70942)
+      expect(state.cpfMA).toBe(75875)
     })
 
     it('has no validation errors with defaults', () => {
@@ -41,8 +43,8 @@ describe('useProfileStore', () => {
 
     it('does not affect other fields', () => {
       useProfileStore.getState().setField('currentAge', 35)
-      expect(useProfileStore.getState().retirementAge).toBe(65)
-      expect(useProfileStore.getState().annualIncome).toBe(72000)
+      expect(useProfileStore.getState().retirementAge).toBe(38)
+      expect(useProfileStore.getState().annualIncome).toBe(178800)
     })
 
     it('triggers validation on field change', () => {
@@ -59,19 +61,19 @@ describe('useProfileStore', () => {
     })
 
     it('produces cross-field error when retirementAge <= currentAge', () => {
-      useProfileStore.getState().setField('retirementAge', 30)
+      useProfileStore.getState().setField('retirementAge', OWNER_AGE)
       const errors = useProfileStore.getState().validationErrors
       expect(errors.retirementAge).toBe('Retirement age must be later than current age')
     })
 
     it('produces cross-field error when lifeExpectancy <= retirementAge', () => {
-      useProfileStore.getState().setField('lifeExpectancy', 65)
+      useProfileStore.getState().setField('lifeExpectancy', 38)
       const errors = useProfileStore.getState().validationErrors
       expect(errors.lifeExpectancy).toBe('Life expectancy must be later than retirement age')
     })
 
     it('syncs oopReferenceAge when currentAge changes and they match', () => {
-      // Default: currentAge=30, oopReferenceAge=30 (they match)
+      // Default: currentAge=OWNER_AGE, oopReferenceAge=OWNER_AGE (they match)
       useProfileStore.getState().setField('currentAge', 40)
       expect(useProfileStore.getState().healthcareConfig.oopReferenceAge).toBe(40)
     })
@@ -150,12 +152,12 @@ describe('useProfileStore', () => {
     it('restores all defaults', () => {
       useProfileStore.getState().setField('currentAge', 50)
       useProfileStore.getState().setField('annualIncome', 200000)
-      useProfileStore.getState().setField('swr', 0.035)
+      useProfileStore.getState().setField('swr', 0.04)
       useProfileStore.getState().reset()
       const state = useProfileStore.getState()
-      expect(state.currentAge).toBe(30)
-      expect(state.annualIncome).toBe(72000)
-      expect(state.swr).toBe(0.036)
+      expect(state.currentAge).toBe(OWNER_AGE)
+      expect(state.annualIncome).toBe(178800)
+      expect(state.swr).toBe(0.035)
       expect(Object.keys(state.validationErrors)).toHaveLength(0)
     })
   })

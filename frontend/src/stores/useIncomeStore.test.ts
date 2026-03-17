@@ -10,7 +10,7 @@ describe('useIncomeStore', () => {
     it('has correct defaults', () => {
       const state = useIncomeStore.getState()
       expect(state.salaryModel).toBe('simple')
-      expect(state.annualSalary).toBe(72000)
+      expect(state.annualSalary).toBe(178800)
       expect(state.salaryGrowthRate).toBe(0.03)
       expect(state.employerCpfEnabled).toBe(true)
       expect(state.incomeStreams).toEqual([])
@@ -184,7 +184,7 @@ describe('useIncomeStore', () => {
       useIncomeStore.getState().setField('salaryModel', 'data-driven')
       useIncomeStore.getState().reset()
       const state = useIncomeStore.getState()
-      expect(state.annualSalary).toBe(72000)
+      expect(state.annualSalary).toBe(178800)
       expect(state.salaryModel).toBe('simple')
       expect(state.incomeStreams).toEqual([])
     })

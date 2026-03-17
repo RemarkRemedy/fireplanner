@@ -28,7 +28,7 @@ describe('useCashFlowChart', () => {
     expect(result.current).not.toBeNull()
     const data = result.current!
     expect(data.rows.length).toBeGreaterThan(0)
-    expect(data.retirementAge).toBe(65)
+    expect(data.retirementAge).toBe(38)
     // Should have both retired and non-retired rows
     const hasPreRetirement = data.rows.some((r) => !r.isRetired)
     const hasPostRetirement = data.rows.some((r) => r.isRetired)
@@ -109,7 +109,13 @@ describe('useCashFlowChart', () => {
   })
 
   it('srsWithdrawal is not visible when no SRS configured', () => {
-    // Default profile has zero SRS contribution, so no withdrawal flows through
+    // Explicitly set zero SRS contribution so no withdrawal flows through
+    useProfileStore.setState({
+      ...useProfileStore.getState(),
+      srsAnnualContribution: 0,
+      srsBalance: 0,
+      validationErrors: {},
+    })
     const { result } = renderHook(() => useCashFlowChart('all'))
     expect(result.current).not.toBeNull()
     const data = result.current!
