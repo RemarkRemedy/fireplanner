@@ -1,20 +1,25 @@
-import { useNavigate } from 'react-router-dom'
 import { CheckCircle2, Circle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { usePlanCompleteness } from '@/hooks/usePlanCompleteness'
 import type { CompletenessRow } from '@/hooks/usePlanCompleteness'
+import type { NudgeFlowId } from '@/lib/data/nudgeFlows'
 
-export function PlanCompleteness() {
+interface PlanCompletenessProps {
+  /** When provided, opens the drawer directly instead of navigating to Projection. */
+  onOpenDrawer?: (flowId: NudgeFlowId) => void
+}
+
+export function PlanCompleteness({ onOpenDrawer }: PlanCompletenessProps) {
   const rows = usePlanCompleteness()
-  const navigate = useNavigate()
 
   const providedCount = rows.filter(r => r.status === 'provided' || r.status === 'provided-basic' || r.status === 'not-applicable').length
   const totalCount = rows.length
 
   const handleAction = (row: CompletenessRow) => {
-    // All flows now open as drawers on the projection page
-    navigate('/projection', { state: { openFlow: row.flowId } })
+    if (onOpenDrawer) {
+      onOpenDrawer(row.flowId)
+    }
   }
 
   return (

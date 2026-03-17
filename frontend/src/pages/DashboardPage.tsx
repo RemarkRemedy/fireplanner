@@ -10,6 +10,8 @@ import { CashFlowPanel } from '@/components/dashboard/CashFlowPanel'
 import { RiskDashboard } from '@/components/dashboard/RiskDashboard'
 import { EmptyDashboardState } from '@/components/dashboard/EmptyDashboardState'
 import { PlanCompleteness } from '@/components/dashboard/PlanCompleteness'
+import { NudgeDrawer } from '@/components/projection/NudgeDrawer'
+import type { NudgeFlowId } from '@/lib/data/nudgeFlows'
 import { StrategyCard } from '@/components/dashboard/StrategyCard'
 import { PassiveIncomePanel } from '@/components/dashboard/PassiveIncomePanel'
 import { TrajectoryPanel } from '@/components/dashboard/TrajectoryPanel'
@@ -48,6 +50,7 @@ export function DashboardPage() {
   const { sections } = useSectionCompletion()
   const householdPlanType = useHouseholdPlanStore((state) => state.plan.planType)
 
+  const [drawerFlowId, setDrawerFlowId] = useState<NudgeFlowId | null>(null)
   const lastMC = useSimulationStore((s) => s.lastMCSuccessRate)
   const lastBT = useSimulationStore((s) => s.lastBacktestSuccessRate)
   const hasRunSimulation = lastMC !== null || lastBT !== null
@@ -68,7 +71,7 @@ export function DashboardPage() {
         </p>
       </div>
 
-      <PlanCompleteness />
+      <PlanCompleteness onOpenDrawer={setDrawerFlowId} />
 
       {!isEmpty && uncustomized.length > 0 && (
         <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 p-3">
@@ -151,6 +154,12 @@ export function DashboardPage() {
       ) : (
         <JointPanels metrics={metrics} isEligible={isEligible} />
       )}
+
+      <NudgeDrawer
+        flowId={drawerFlowId}
+        onClose={() => setDrawerFlowId(null)}
+        onComplete={(_delta) => { setDrawerFlowId(null) }}
+      />
     </div>
   )
 }
