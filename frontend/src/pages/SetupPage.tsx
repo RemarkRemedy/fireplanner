@@ -199,14 +199,14 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'partner-income',
     title: "Partner's income",
     fields: [
-      { name: 'partnerIncome', label: 'Annual income', type: 'currency', required: true, validationKey: 'partnerIncome', tooltip: "Partner's total yearly employment income." },
+      { name: 'partnerMonthlyIncome', label: 'Monthly income', type: 'currency', required: true, validationKey: 'partnerIncome', tooltip: "Partner's monthly employment income." },
       {
         name: 'partnerIncomeType',
         label: 'Income basis',
         type: 'select',
         options: [
-          { value: 'gross', label: 'Gross' },
           { value: 'take-home', label: 'Take-home' },
+          { value: 'gross', label: 'Gross' },
         ],
         required: true,
       },
@@ -217,7 +217,7 @@ const SCREENS: (NudgeFlowScreen & {
     id: 'partner-expenses',
     title: "Partner's expenses & savings",
     fields: [
-      { name: 'partnerExpenses', label: 'Annual personal expenses', type: 'currency', required: true, validationKey: 'partnerExpenses', tooltip: "Partner's personal annual expenses (not shared household costs)." },
+      { name: 'partnerMonthlyExpenses', label: 'Monthly personal expenses', type: 'currency', required: true, validationKey: 'partnerExpenses', tooltip: "Partner's personal monthly expenses (not shared household costs)." },
       { name: 'partnerNetWorth', label: 'Cash & investments', type: 'currency', required: true, validationKey: 'partnerNetWorth', tooltip: "Partner's personal cash and investments (excluding CPF and property)." },
     ],
     planTypes: ['couple', 'household'],
@@ -329,9 +329,9 @@ const INITIAL_VALUES: Record<string, unknown> = {
   partnerName: '',
   partnerAge: 30,
   partnerRetirementAge: 55,
-  partnerIncome: 72000,
-  partnerIncomeType: 'gross',
-  partnerExpenses: 48000,
+  partnerMonthlyIncome: 4800,
+  partnerIncomeType: 'take-home',
+  partnerMonthlyExpenses: 2500,
   partnerNetWorth: 50000,
   partnerResidency: 'citizen',
   partnerCpfKnown: false,
@@ -416,9 +416,9 @@ function draftFromValues(values: Record<string, unknown>, planType: HouseholdPla
       name: values.partnerName as string,
       currentAge: values.partnerAge as number,
       retirementAge: values.partnerRetirementAge as number,
-      annualIncome: values.partnerIncome as number,
+      annualIncome: (values.partnerMonthlyIncome as number) * 12,
       incomeType: values.partnerIncomeType as 'gross' | 'take-home',
-      annualExpenses: values.partnerExpenses as number,
+      annualExpenses: (values.partnerMonthlyExpenses as number) * 12,
       liquidNetWorth: values.partnerNetWorth as number,
       residency: values.partnerResidency as 'citizen' | 'pr' | 'foreigner',
       cpfKnown: values.partnerCpfKnown as boolean,
@@ -477,9 +477,9 @@ function hydrateDraftToValues(draft: SetupDraft): Record<string, unknown> {
     values.partnerName = draft.partner.name
     values.partnerAge = draft.partner.currentAge
     values.partnerRetirementAge = draft.partner.retirementAge
-    values.partnerIncome = draft.partner.annualIncome
+    values.partnerMonthlyIncome = Math.round(draft.partner.annualIncome / 12)
     values.partnerIncomeType = draft.partner.incomeType
-    values.partnerExpenses = draft.partner.annualExpenses
+    values.partnerMonthlyExpenses = Math.round(draft.partner.annualExpenses / 12)
     values.partnerNetWorth = draft.partner.liquidNetWorth
     values.partnerResidency = draft.partner.residency
     values.partnerCpfKnown = draft.partner.cpfKnown
