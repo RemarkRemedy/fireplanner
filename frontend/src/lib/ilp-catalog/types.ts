@@ -207,6 +207,7 @@ export interface IlpTemplateDistributionSupport {
   accountIds: string[]
   minimumAnnualPayoutAmount?: number
   minimumAnnualPayoutCurrency?: IlpCatalogCurrency
+  recordDateInstructionLeadDays?: number
   cashPayoutWindows?: Array<{
     startPolicyYear: number
     endPolicyYear: number | null

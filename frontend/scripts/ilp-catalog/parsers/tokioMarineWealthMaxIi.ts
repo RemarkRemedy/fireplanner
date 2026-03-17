@@ -445,6 +445,9 @@ function buildVariant(
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['initial', 'accumulation', 'topup'],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       cashPayoutWindows: [
         {
           startPolicyYear: 1,
@@ -465,7 +468,8 @@ function buildVariant(
         'Dividend-paying ILP sub-funds default to reinvestment unless the policyholder elects cash payout.',
         'During the 15-year minimum investment period, only dividends from the Accumulation Units Account and Top-up Units Account may be paid in cash.',
         'After the minimum investment period, dividends from the Initial Units Account, Accumulation Units Account, and Top-up Units Account may be paid in cash.',
-        'The published $50 minimum dividend amount and 30-day instruction window remain informational only in V1.',
+        'Cash payouts below the published SGD 50 annual dividend threshold remain reinvested in V1.',
+        'Cash payout elections should be lodged at least 30 days before the dividend record date.',
       ],
       sourceRefs: [page9],
     },
@@ -482,7 +486,7 @@ function buildVariant(
       'Recurring single premium remains blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the restart month.',
       'Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD variant.',
       'Regular premiums paid after the minimum investment period route back to the Initial Units Account in line with the product summary.',
-      'The phase-specific dividend cash-payout account restrictions are modeled through the manual distribution-mode assumption surface.',
+      'The phase-specific dividend cash-payout account restrictions are modeled through the manual distribution-mode assumption surface, together with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
     ],
     unsupportedItems: [
       ...(isAdvancedDeath
@@ -492,7 +496,7 @@ function buildVariant(
         : [
             'Advanced Death selection, Monthly Protection Charge, and multiple-life and capital-guarantee option administration remain metadata-only for this product.',
           ]),
-      'The published $50 dividend payout threshold, 30-day record-date instruction window, and regular withdrawal facility remain informational only in V1.',
+      'The published regular withdrawal facility remains informational only in V1.',
     ],
     sourceRefs: [page2, page3, page5, page6, page9, page11, page12, ...advancedSourceRefs, page19],
   }
@@ -536,7 +540,6 @@ export function parseTokioMarineWealthMaxIi(context: ParseContext): IlpCatalogPr
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-dividend-payout-threshold-and-record-date-instructions',
       'tokio-multiple-life-and-capital-guarantee-options',
     ],
     warnings: [
@@ -547,7 +550,7 @@ export function parseTokioMarineWealthMaxIi(context: ParseContext): IlpCatalogPr
       'When a regular-premium reduction overlaps a recurring single premium, the modeled cashflow reduces the recurring single premium first before reducing regular premium contributions.',
       'Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.',
       'Regular premiums paid after the minimum investment period are modeled back into the Initial Units Account in line with the product summary.',
-      'Dividend cash payouts are modeled through the manual distribution-mode assumption surface: only Accumulation Units Account and Top-up Units Account dividends may be paid in cash during the minimum investment period, and Initial Units Account dividends join after the minimum investment period.',
+      'Dividend cash payouts are modeled through the manual distribution-mode assumption surface: only Accumulation Units Account and Top-up Units Account dividends may be paid in cash during the minimum investment period, Initial Units Account dividends join after the minimum investment period, payouts below SGD 50 remain reinvested, and cash-payout elections should be made at least 30 days before the record date.',
     ],
     archived: false,
     variants: [

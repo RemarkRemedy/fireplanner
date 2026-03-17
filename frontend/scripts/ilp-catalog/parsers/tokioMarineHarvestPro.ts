@@ -450,6 +450,9 @@ function buildVariant(
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['initial', 'accumulation', 'topup'],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -457,7 +460,8 @@ function buildVariant(
       notes: [
         'Dividend-paying funds default to reinvestment, while cash payout can be explored through the manual annual distribution-yield assumption.',
         'The published dividend election applies across the Initial Units Account, Accumulation Units Account, and Top-up Units Account.',
-        'The published $50 minimum payout threshold and 30-day record-date instruction window remain informational only in V1.',
+        'Cash payouts below the published SGD 50 annual dividend threshold remain reinvested in V1.',
+        'Cash payout elections should be lodged at least 30 days before the dividend record date.',
       ],
       sourceRefs: [page9],
     },
@@ -473,7 +477,7 @@ function buildVariant(
         : []),
       'Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the restart month.',
       'Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD variant.',
-      'Harvest Pro keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
+      'Harvest Pro keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
     ],
     unsupportedItems: [
       ...(isAdvancedDeath
@@ -483,7 +487,6 @@ function buildVariant(
         : [
             'Advanced Death selection, Monthly Protection Charge, and multiple-life and capital-guarantee option administration remain metadata-only for this product.',
           ]),
-      'The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only for this product.',
     ],
     sourceRefs: [
       page1,
@@ -538,7 +541,6 @@ export function parseTokioMarineHarvestPro(context: ParseContext): IlpCatalogPro
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-dividend-payout-threshold-and-record-date-instructions',
       'tokio-multiple-life-and-capital-guarantee-options',
     ],
     warnings: [
@@ -548,6 +550,7 @@ export function parseTokioMarineHarvestPro(context: ParseContext): IlpCatalogPro
       'Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge.',
       'Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.',
       'Regular premiums paid after the minimum investment period are modeled back into the Initial Units Account in line with the product summary.',
+      'Dividend cash payouts are modeled through the manual distribution-mode assumption surface across the Initial, Accumulation, and Top-up Units Accounts, with payouts below SGD 50 remaining reinvested and cash-payout elections submitted at least 30 days before the record date.',
       'The Advanced Death variant also models the published first-three-policy-years Monthly Protection Charge accrual and policy-year-4 lump-sum catch-up before normal monthly-in-advance deductions resume.',
     ],
     archived: false,

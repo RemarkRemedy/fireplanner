@@ -90,6 +90,7 @@ export interface IlpDistributionSupport {
   accountIds: string[]
   minimumAnnualPayoutAmount?: number
   minimumAnnualPayoutCurrency?: 'SGD' | 'USD'
+  recordDateInstructionLeadDays?: number
   cashPayoutWindows?: Array<{
     startPolicyYear: number
     endPolicyYear: number | null

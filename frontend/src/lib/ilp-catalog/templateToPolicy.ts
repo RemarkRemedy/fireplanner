@@ -358,6 +358,9 @@ export function templateVariantToPolicySeed(
           ...(variant.distributionSupport.minimumAnnualPayoutCurrency
             ? { minimumAnnualPayoutCurrency: variant.distributionSupport.minimumAnnualPayoutCurrency }
             : {}),
+          ...(variant.distributionSupport.recordDateInstructionLeadDays != null
+            ? { recordDateInstructionLeadDays: variant.distributionSupport.recordDateInstructionLeadDays }
+            : {}),
           ...(variant.distributionSupport.cashPayoutWindows
             ? {
                 cashPayoutWindows: variant.distributionSupport.cashPayoutWindows.map((window) => ({
@@ -425,22 +428,27 @@ export function templateVariantToPolicySeed(
         ? ['This product supports scheduled payout-state, but V1 requires a manual payout assumption. No payout schedule is seeded by default.']
         : []),
       ...(variant.distributionSupport
-        ? [variant.distributionSupport.minimumAnnualPayoutAmount != null
-            ? (variant.distributionSupport.minimumAnnualPayoutCurrency != null
-                && variant.distributionSupport.minimumAnnualPayoutCurrency !== variant.currency)
-                ? `This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption, and the published minimum annual cash-payout amount of ${formatExplicitCurrencyAmount(
-                    variant.distributionSupport.minimumAnnualPayoutCurrency,
-                    variant.distributionSupport.minimumAnnualPayoutAmount,
-                  )} remains informational for this policy currency.`
-                : `This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption, and payouts below the published minimum annual cash-payout amount of ${
-                    variant.distributionSupport.minimumAnnualPayoutCurrency != null
-                      ? formatExplicitCurrencyAmount(
-                          variant.distributionSupport.minimumAnnualPayoutCurrency,
-                          variant.distributionSupport.minimumAnnualPayoutAmount,
-                        )
-                      : formatCurrencyAmount(variant.currency, variant.distributionSupport.minimumAnnualPayoutAmount)
-                  } remain reinvested.`
-            : 'This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.']
+        ? [
+            variant.distributionSupport.minimumAnnualPayoutAmount != null
+              ? (variant.distributionSupport.minimumAnnualPayoutCurrency != null
+                  && variant.distributionSupport.minimumAnnualPayoutCurrency !== variant.currency)
+                  ? `This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption, and the published minimum annual cash-payout amount of ${formatExplicitCurrencyAmount(
+                      variant.distributionSupport.minimumAnnualPayoutCurrency,
+                      variant.distributionSupport.minimumAnnualPayoutAmount,
+                    )} remains informational for this policy currency.`
+                  : `This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption, and payouts below the published minimum annual cash-payout amount of ${
+                      variant.distributionSupport.minimumAnnualPayoutCurrency != null
+                        ? formatExplicitCurrencyAmount(
+                            variant.distributionSupport.minimumAnnualPayoutCurrency,
+                            variant.distributionSupport.minimumAnnualPayoutAmount,
+                          )
+                        : formatCurrencyAmount(variant.currency, variant.distributionSupport.minimumAnnualPayoutAmount)
+                    } remain reinvested.`
+              : 'This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.',
+            ...(variant.distributionSupport.recordDateInstructionLeadDays != null
+              ? [`Cash payout elections for dividend-paying funds should be submitted at least ${variant.distributionSupport.recordDateInstructionLeadDays} days before the record date.`]
+              : []),
+          ]
         : []),
       ...(variant.bonuses.some((bonus) => bonus.requiredRegularPremiumPaymentFrequency === 'annual')
         ? ['This seed assumes the regular premium is paid on the annual frequency option so the published annual-premium bonus path can execute. Change Regular Premium Payment Frequency in Policy Details if the policy uses a non-annual mode.']

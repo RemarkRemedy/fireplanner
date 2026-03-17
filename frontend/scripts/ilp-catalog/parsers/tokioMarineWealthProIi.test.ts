@@ -31,7 +31,7 @@ describe('parseTokioMarineWealthProIi', () => {
     expect(product.modeledEconomics).toContain('tokio-explicit-charge-waiver-for-partial-withdrawal-and-shortfall-events')
     expect(product.modeledEconomics).toContain('branch:tokio-wealth-pro-ii-advanced-death-monthly-protection-charge-accrual')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-dividend-payout-threshold-and-record-date-instructions')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-dividend-payout-threshold-and-record-date-instructions')
 
     const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-10')
     const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-10-advanced-death')
@@ -131,6 +131,9 @@ describe('parseTokioMarineWealthProIi', () => {
     expect(basicVariant?.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['initial', 'accumulation', 'topup'],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       cashPayoutWindows: [
         { startPolicyYear: 1, endPolicyYear: 10, accountIds: ['accumulation', 'topup'] },
         { startPolicyYear: 11, endPolicyYear: null, accountIds: ['initial', 'accumulation', 'topup'] },
@@ -146,6 +149,12 @@ describe('parseTokioMarineWealthProIi', () => {
     })
     expect(advancedVariant?.distributionSupport).toEqual(basicVariant?.distributionSupport)
     expect(advancedVariant?.eventChargeRules).toEqual(basicVariant?.eventChargeRules)
+    expect(product.warnings).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('payouts below SGD 50 remain reinvested'),
+        expect.stringContaining('30 days before the record date'),
+      ]),
+    )
     expect(basicVariant?.unsupportedItems).toContain(
       'Advanced Death selection, Monthly Protection Charge, and multiple-life and capital-guarantee option administration remain metadata-only for this product.',
     )

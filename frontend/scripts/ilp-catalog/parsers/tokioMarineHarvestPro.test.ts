@@ -32,7 +32,7 @@ describe('parseTokioMarineHarvestPro', () => {
     expect(product.modeledEconomics).toContain('branch:tokio-harvest-pro-advanced-death-monthly-protection-charge-accrual')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.modeledEconomics).not.toContain('tokio-explicit-charge-waiver-for-partial-withdrawal-and-shortfall-events')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-dividend-payout-threshold-and-record-date-instructions')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-dividend-payout-threshold-and-record-date-instructions')
     expect(product.metadataOnlyBehaviors).toContain('tokio-multiple-life-and-capital-guarantee-options')
 
     const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-10')
@@ -46,6 +46,9 @@ describe('parseTokioMarineHarvestPro', () => {
     expect(basicVariant?.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['initial', 'accumulation', 'topup'],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -156,7 +159,7 @@ describe('parseTokioMarineHarvestPro', () => {
       'The Advanced Death variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window and policy-year-4 lump-sum settlement, after you enter the insured-life details and current net premium base.',
     )
     expect(basicVariant?.warnings).toContain(
-      'Harvest Pro keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface.',
+      'Harvest Pro keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
     )
   }, 30_000)
 })

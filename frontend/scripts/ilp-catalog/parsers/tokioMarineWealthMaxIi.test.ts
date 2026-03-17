@@ -31,7 +31,7 @@ describe('parseTokioMarineWealthMaxIi', () => {
     expect(product.modeledEconomics).toContain('tokio-post-mip-regular-premium-routing-back-to-initial-account')
     expect(product.modeledEconomics).toContain('branch:tokio-wealth-max-ii-advanced-death-monthly-protection-charge-accrual')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-dividend-payout-threshold-and-record-date-instructions')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-dividend-payout-threshold-and-record-date-instructions')
 
     const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15')
     const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15-advanced-death')
@@ -127,6 +127,9 @@ describe('parseTokioMarineWealthMaxIi', () => {
     expect(basicVariant?.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['initial', 'accumulation', 'topup'],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       cashPayoutWindows: [
         { startPolicyYear: 1, endPolicyYear: 15, accountIds: ['accumulation', 'topup'] },
         { startPolicyYear: 16, endPolicyYear: null, accountIds: ['initial', 'accumulation', 'topup'] },
@@ -142,6 +145,12 @@ describe('parseTokioMarineWealthMaxIi', () => {
     })
     expect(advancedVariant?.distributionSupport).toEqual(basicVariant?.distributionSupport)
     expect(advancedVariant?.eventChargeRules).toEqual(basicVariant?.eventChargeRules)
+    expect(product.warnings).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('payouts below SGD 50 remain reinvested'),
+        expect.stringContaining('30 days before the record date'),
+      ]),
+    )
     expect(basicVariant?.unsupportedItems).toContain(
       'Advanced Death selection, Monthly Protection Charge, and multiple-life and capital-guarantee option administration remain metadata-only for this product.',
     )

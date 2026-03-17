@@ -592,7 +592,6 @@
         "kernel:distribution-mode-assumption"
       ],
       "metadataOnlyBehaviors": [
-        "tokio-dividend-payout-threshold-and-record-date-instructions",
         "tokio-multiple-life-and-capital-guarantee-options"
       ]
     },
@@ -603,18 +602,18 @@
       "Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge.",
       "Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.",
       "Regular premiums paid after the minimum investment period are modeled back into the Initial Units Account in line with the product summary.",
-      "Dividend cash payouts are modeled through the manual distribution-mode assumption surface: only Accumulation Units Account and Top-up Units Account dividends may be paid in cash during the minimum investment period, and Initial Units Account dividends join after the minimum investment period.",
+      "Dividend cash payouts are modeled through the manual distribution-mode assumption surface: only Accumulation Units Account and Top-up Units Account dividends may be paid in cash during the minimum investment period, Initial Units Account dividends join after the minimum investment period, payouts below SGD 50 remain reinvested, and cash-payout elections should be made at least 30 days before the record date.",
       "Use the charge waiver toggle on qualifying premium holidays, regular-premium reductions, or partial withdrawals only after Tokio has approved the involuntary unemployment or hospitalisation waiver.",
       "This supported template models the SGD / MIP 10 (Basic Death) corridor only.",
       "This supported template models regular-premium routing through year 10, top-up routing, recurring single premium routing, the published initial setup charge, policy investment charge, admin charge, surrender charge on the Initial Units Account, and the published partial-withdrawal charge schedule.",
       "This supported template also models the published premium shortfall charge for non-payment periods and regular-premium reductions, including the higher-charge rule when both overlap.",
       "Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the restart month.",
       "Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD variant.",
-      "The phase-specific dividend cash-payout account restrictions are modeled through the manual distribution-mode assumption surface.",
-      "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.",
+      "The phase-specific dividend cash-payout account restrictions are modeled through the manual distribution-mode assumption surface, together with the published SGD 50 minimum payout threshold and 30-day record-date lead time.",
+      "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption, and payouts below the published minimum annual cash-payout amount of S$50 remain reinvested.",
+      "Cash payout elections for dividend-paying funds should be submitted at least 30 days before the record date.",
       "Advanced Death selection, Monthly Protection Charge, and multiple-life and capital-guarantee option administration remain metadata-only for this product.",
-      "Involuntary unemployment and hospitalisation benefit waiver remains metadata-only for this product.",
-      "The published $50 dividend payout threshold and 30-day record-date instruction window remain informational only in V1."
+      "Involuntary unemployment and hospitalisation benefit waiver remains metadata-only for this product."
     ]
   },
   "expected": {

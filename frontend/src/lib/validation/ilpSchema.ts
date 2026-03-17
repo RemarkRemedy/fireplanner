@@ -166,6 +166,7 @@ export const ilpDistributionSupportSchema = z.object({
   accountIds: z.array(z.string().min(1)).min(1).max(10),
   minimumAnnualPayoutAmount: z.number().min(0).max(100_000_000).optional(),
   minimumAnnualPayoutCurrency: z.enum(['SGD', 'USD']).optional(),
+  recordDateInstructionLeadDays: z.number().int().min(1).max(365).optional(),
   cashPayoutWindows: z.array(z.object({
     startPolicyYear: z.number().int().min(1).max(100),
     endPolicyYear: z.number().int().min(1).max(100).nullable(),
