@@ -70421,13 +70421,13 @@
     ],
     "metadataOnlyBehaviors": [
       "tokio-affluence-atfuture-loyalty-bonus-adjustment-factor",
-      "tokio-affluence-atfuture-advanced-death-payout-life-benefit-rider-and-life-assured-administration",
+      "tokio-affluence-atfuture-advanced-death-payout-and-life-assured-administration",
       "tokio-affluence-atfuture-regular-withdrawal-and-partial-withdrawal-constraints",
       "tokio-affluence-atfuture-change-of-life-assured-and-multiple-life-handling",
       "tokio-affluence-atfuture-premium-holiday-and-non-sgd-or-non-25-year-variants"
     ],
     "warnings": [
-      "Affluence@Future is cataloged as a supported V1 product. The SGD / 15-year premium-payment corridors model regular-premium routing, initial bonus allocation, initial and policy charges, top-up and recurring-single-premium routing / charges, zero-charge partial withdrawals, surrender mechanics, and reinvest-default distribution support; the Advanced Death variant also models the accrued Monthly Protection Charge corridor from insured-life inputs.",
+      "Affluence@Future is cataloged as a supported V1 product. The SGD / 15-year premium-payment corridors model regular-premium routing, initial bonus allocation, initial and policy charges, top-up and recurring-single-premium routing / charges, zero-charge partial withdrawals, surrender mechanics, and reinvest-default distribution support; the Advanced Death variant also models the accrued Monthly Protection Charge corridor from insured-life inputs, and the Advanced Death with Life Benefit Rider variant extends that same published Monthly Protection Charge corridor through the policy anniversary immediately after age 99.",
       "Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.",
       "Loyalty bonus adjustment-factor handling, advanced-death payout handling beyond the modeled Monthly Protection Charge, regular-withdrawal administration, partial-withdrawal minimum-account-value constraints, change-of-life-assured administration, and premium-holiday / non-SGD / non-25-year variants remain informational only."
     ],
@@ -70933,7 +70933,7 @@
         ],
         "unsupportedItems": [
           "Loyalty bonus remains metadata-only because the published adjustment-factor formula and period-band windows are not yet represented directly in the template bonus basis.",
-          "Advanced Death selection, Monthly Protection Charge, Advanced Death Benefit with Life Benefit Rider, multiple-life handling, and change-of-life-assured administration remain metadata-only for this product.",
+          "This basic-death corridor does not model Advanced Death or Advanced Death Benefit with Life Benefit Rider selection or Monthly Protection Charge; multiple-life handling and change-of-life-assured administration remain metadata-only for this product.",
           "Regular withdrawal, partial-withdrawal minimum-account-value constraints, premium holiday state handling, and non-SGD or non-25-year variants remain metadata-only for this product."
         ],
         "sourceRefs": [
@@ -71354,8 +71354,7 @@
               "Models the published Monthly Protection Charge for the Advanced Death corridor during the 15-year premium payment term.",
               "The Monthly Protection Charge for policy years 1 to 2 is accrued and collected in one lump sum in policy year 3.",
               "Sum at risk is the published net premium less 101% of the Initial Units Account value and 101% of the Accumulation Units Account value, floored at zero.",
-              "The charge is deducted monthly in advance from the Accumulation Units Account, with outstanding amounts deducted from the Top-up Units Account and then the Initial Units Account if needed.",
-              "Advanced Death Benefit with Life Benefit Rider remains metadata-only even though the same MPC table family is published for that corridor."
+              "The charge is deducted monthly in advance from the Accumulation Units Account, with outstanding amounts deducted from the Top-up Units Account and then the Initial Units Account if needed."
             ],
             "sourceRefs": [
               {
@@ -71540,7 +71539,618 @@
         ],
         "unsupportedItems": [
           "Loyalty bonus remains metadata-only because the published adjustment-factor formula and period-band windows are not yet represented directly in the template bonus basis.",
-          "Advanced Death payout handling beyond the modeled Monthly Protection Charge, together with Advanced Death Benefit with Life Benefit Rider, multiple-life handling, and change-of-life-assured administration, remain metadata-only for this product.",
+          "Advanced Death payout handling beyond the modeled Monthly Protection Charge, Advanced Death Benefit with Life Benefit Rider selection, multiple-life handling, and change-of-life-assured administration remain metadata-only for this product.",
+          "Regular withdrawal, partial-withdrawal minimum-account-value constraints, premium holiday state handling, and non-SGD or non-25-year variants remain metadata-only for this product."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan Description",
+            "excerpt": "PRODUCT SUMMARY − Affluence@Future In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description Affluence@Future is a whole life, limited premium investment-lin"
+          },
+          {
+            "page": 2,
+            "section": "Initial Bonus",
+            "excerpt": "Initial Bonus While the policy is in force, an initial bonus will be paid in the first two (2) policy years upon receipt of each regular premium. Initial bonus = Applicable Initial bonus rate × each regular premium recei"
+          },
+          {
+            "page": 5,
+            "section": "Regular Premium Routing",
+            "excerpt": "2 0.92% 3 0.98% 4 0.99% 5 0.99% ii) The loyalty bonus rate payable from policy year 41 onwards is 0.30% per annum. The loyalty bonus will be allocated to the policy in the form of additional units to the Accumulation Uni"
+          },
+          {
+            "page": 6,
+            "section": "Recurring Single Premium / Top-up Premium",
+            "excerpt": "If recurring single premium is being paid concurrently with regular premium, the recurring single premium will be reduced first before reducing the regular premium. In the event of reduction in regular premium amount, th"
+          },
+          {
+            "page": 8,
+            "section": "Partial Withdrawal / Regular Withdrawal",
+            "excerpt": "Partial Withdrawal You may request for a partial withdrawal of policy value from the third policy year onwards while the policy is in force provided the minimum amount to be withdrawn is at least $500 (in the policy curr"
+          },
+          {
+            "page": 10,
+            "section": "Dividend Distribution / Initial Charge",
+            "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
+          },
+          {
+            "page": 11,
+            "section": "Policy Charge / top-up charges",
+            "excerpt": "Policy Charge th From the 25 policy month, a policy charge will be deducted monthly in advance on each Policy Monthiversary through deduction of units from the Accumulation Units Account based on the unit price on the ne"
+          },
+          {
+            "page": 12,
+            "section": "Partial Withdrawal and Regular Withdrawal Charge",
+            "excerpt": "Partial Withdrawal and Regular Withdrawal Charge Nil Credit Card Charge When premiums are paid by credit card, we will impose a charge of 1.60% on each premium to cover charges imposed by the issuing company. Policy Curr"
+          },
+          {
+            "page": 16,
+            "section": "Appendix A Monthly Protection Charge Rates",
+            "excerpt": "Monthly Rates for Monthly Protection Charges (For Death), Per $1,000 Sum at Risk Age Next Male Female Age Next Male Female Birthday ($) ($) Birthday ($) ($) 1 0.02590 0.02230 51 0.16850 0.12050 2 0.02590 0.02230 52 0.187"
+          },
+          {
+            "page": 18,
+            "section": "Appendix A Surrender Charge",
+            "excerpt": "Premium Payment Term: 15 – 20 Years Policy Premium Payment Term Year 15 16 17 18 19 20 1 100% 100% 100% 100% 100% 100% 2 100% 100% 100% 100% 100% 100% 3 99% 99% 99% 99% 99% 99% 4 99% 99% 99% 99% 99% 99% 5 99% 99% 99% 99%"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-15-advanced-death-life-benefit-rider",
+        "currency": "SGD",
+        "mipLength": 15,
+        "icpMonths": 24,
+        "accounts": [
+          {
+            "id": "initial",
+            "label": "Initial Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "initial",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan Description",
+                "excerpt": "PRODUCT SUMMARY − Affluence@Future In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description Affluence@Future is a whole life, limited premium investment-lin"
+              },
+              {
+                "page": 5,
+                "section": "Regular Premium Routing",
+                "excerpt": "2 0.92% 3 0.98% 4 0.99% 5 0.99% ii) The loyalty bonus rate payable from policy year 41 onwards is 0.30% per annum. The loyalty bonus will be allocated to the policy in the form of additional units to the Accumulation Uni"
+              },
+              {
+                "page": 10,
+                "section": "Dividend Distribution / Initial Charge",
+                "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
+              }
+            ]
+          },
+          {
+            "id": "accumulation",
+            "label": "Accumulation Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "after-icp",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-mip",
+                "targetAccountId": "accumulation",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan Description",
+                "excerpt": "PRODUCT SUMMARY − Affluence@Future In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description Affluence@Future is a whole life, limited premium investment-lin"
+              },
+              {
+                "page": 5,
+                "section": "Regular Premium Routing",
+                "excerpt": "2 0.92% 3 0.98% 4 0.99% 5 0.99% ii) The loyalty bonus rate payable from policy year 41 onwards is 0.30% per annum. The loyalty bonus will be allocated to the policy in the form of additional units to the Accumulation Uni"
+              },
+              {
+                "page": 11,
+                "section": "Policy Charge / top-up charges",
+                "excerpt": "Policy Charge th From the 25 policy month, a policy charge will be deducted monthly in advance on each Policy Monthiversary through deduction of units from the Accumulation Units Account based on the unit price on the ne"
+              }
+            ]
+          },
+          {
+            "id": "topup",
+            "label": "Top-up Units Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "topup",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan Description",
+                "excerpt": "PRODUCT SUMMARY − Affluence@Future In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description Affluence@Future is a whole life, limited premium investment-lin"
+              },
+              {
+                "page": 6,
+                "section": "Recurring Single Premium / Top-up Premium",
+                "excerpt": "If recurring single premium is being paid concurrently with regular premium, the recurring single premium will be reduced first before reducing the regular premium. In the event of reduction in regular premium amount, th"
+              },
+              {
+                "page": 11,
+                "section": "Policy Charge / top-up charges",
+                "excerpt": "Policy Charge th From the 25 policy month, a policy charge will be deducted monthly in advance on each Policy Monthiversary through deduction of units from the Accumulation Units Account based on the unit price on the ne"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "initial-bonus",
+            "type": "allocation",
+            "label": "Initial Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "initial"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 2,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.72
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.8
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.87
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.95
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 1
+              }
+            ],
+            "notes": [
+              "Tier is based on the published SGD annualised regular premium band for the 15-year premium payment term.",
+              "Allocated to the Initial Units Account upon each regular premium received in the first two policy years."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Initial Bonus",
+                "excerpt": "Initial Bonus While the policy is in force, an initial bonus will be paid in the first two (2) policy years upon receipt of each regular premium. Initial bonus = Applicable Initial bonus rate × each regular premium recei"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "initial-charge",
+            "label": "Initial Charge",
+            "basis": "account-value",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "initial"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.01
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.02
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.03
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.04
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.05
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.06
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.07
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.09
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 11,
+                "endPolicyYear": 11,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 12,
+                "endPolicyYear": 12,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 13,
+                "endPolicyYear": 13,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 14,
+                "endPolicyYear": 14,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 15,
+                "endPolicyYear": 15,
+                "rate": 0.1
+              }
+            ],
+            "activeWindow": "during-mip",
+            "notes": [
+              "Models the published monthly initial charge for the SGD 15-year term as 1.00% p.a. multiplied by the current policy year, capped at policy year 10."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Initial Charge",
+                "excerpt": "Initial Charge During the premium payment term, an initial charge will be deducted monthly in advance on each Policy Monthiversary* through deduction of units from the Initial Units Account based on the unit price on the"
+              }
+            ]
+          },
+          {
+            "id": "policy-charge-during-mip",
+            "label": "Policy Charge",
+            "basis": "premium-base-mip-multiplier",
+            "rate": 0.012,
+            "amount": 0,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": false,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 3,
+                  "endPolicyYear": 15,
+                  "mode": "policy-year"
+                }
+              ]
+            },
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup",
+              "initial"
+            ],
+            "activeWindow": "during-mip",
+            "startPolicyYear": 3,
+            "notes": [
+              "Models the published monthly policy charge from the 25th policy month through the premium payment term using annualised regular premium committed at commencement date multiplied by the current policy year."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Policy Charge",
+                "excerpt": "Policy Charge th From the 25 policy month, a policy charge will be deducted monthly in advance on each Policy Monthiversary through deduction of units from the Accumulation Units Account based on the unit price on the ne"
+              }
+            ]
+          },
+          {
+            "id": "policy-charge-after-mip",
+            "label": "Policy Charge",
+            "basis": "premium-base-mip-multiplier",
+            "rate": 0.012,
+            "amount": 0,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": false,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 16,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 15
+                }
+              ]
+            },
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup",
+              "initial"
+            ],
+            "activeWindow": "after-mip",
+            "notes": [
+              "Models the published monthly policy charge after the premium payment term using the fixed 15-year multiplier."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Policy Charge",
+                "excerpt": "Policy Charge th From the 25 policy month, a policy charge will be deducted monthly in advance on each Policy Monthiversary through deduction of units from the Accumulation Units Account based on the unit price on the ne"
+              }
+            ]
+          },
+          {
+            "id": "monthly-protection-charge",
+            "label": "Monthly Protection Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": 0,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "tokio-mpc-net-premium-floor",
+              "rateTable": "tokio-mpc-unzo-death",
+              "monthlyModalFactor": 1,
+              "maxAgeNextBirthday": 99,
+              "accrual": {
+                "startPolicyYear": 1,
+                "endPolicyYear": 2,
+                "settlementPolicyYear": 3
+              }
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "accumulation"
+            ],
+            "assuranceValueAppliesTo": [
+              "initial",
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup",
+              "initial"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published Monthly Protection Charge for the Advanced Death Benefit with Life Benefit Rider corridor through the policy anniversary immediately after age 99.",
+              "The Monthly Protection Charge for policy years 1 to 2 is accrued and collected in one lump sum in policy year 3.",
+              "Sum at risk is the published net premium less 101% of the Initial Units Account value and 101% of the Accumulation Units Account value, floored at zero.",
+              "The charge is deducted monthly in advance from the Accumulation Units Account, with outstanding amounts deducted from the Top-up Units Account and then the Initial Units Account if needed."
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan Description",
+                "excerpt": "PRODUCT SUMMARY − Affluence@Future In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description Affluence@Future is a whole life, limited premium investment-lin"
+              },
+              {
+                "page": 12,
+                "section": "Monthly Protection Charge",
+                "excerpt": "Appendix A – Monthly Rates for Monthly Protection Charges (For Death). The sum at risk is calculated based on the prevailing unit price on the Policy Monthiversary. The MPC rates are not guaranteed. We will calculate the"
+              },
+              {
+                "page": 16,
+                "section": "Appendix A Monthly Protection Charge Rates",
+                "excerpt": "Monthly Rates for Monthly Protection Charges (For Death), Per $1,000 Sum at Risk Age Next Male Female Age Next Male Female Birthday ($) ($) Birthday ($) ($) 1 0.02590 0.02230 51 0.16850 0.12050 2 0.02590 0.02230 52 0.187"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "A 5% premium charge is deducted before each top-up premium allocation to the Top-up Units Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Recurring Single Premium / Top-up Premium",
+                "excerpt": "If recurring single premium is being paid concurrently with regular premium, the recurring single premium will be reduced first before reducing the regular premium. In the event of reduction in regular premium amount, th"
+              },
+              {
+                "page": 11,
+                "section": "Policy Charge / top-up charges",
+                "excerpt": "Policy Charge th From the 25 policy month, a policy charge will be deducted monthly in advance on each Policy Monthiversary through deduction of units from the Accumulation Units Account based on the unit price on the ne"
+              }
+            ]
+          },
+          {
+            "id": "recurring-single-premium-charge",
+            "label": "Recurring Single Premium Charge",
+            "trigger": "recurring-single-premium",
+            "basis": "event-amount-with-overlap-months",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.05,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "A 5% premium charge is deducted before each recurring single premium allocation to the Top-up Units Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Recurring Single Premium / Top-up Premium",
+                "excerpt": "If recurring single premium is being paid concurrently with regular premium, the recurring single premium will be reduced first before reducing the regular premium. In the event of reduction in regular premium amount, th"
+              },
+              {
+                "page": 11,
+                "section": "Policy Charge / top-up charges",
+                "excerpt": "Policy Charge th From the 25 policy month, a policy charge will be deducted monthly in advance on each Policy Monthiversary through deduction of units from the Accumulation Units Account based on the unit price on the ne"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "topup",
+              "initial"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "The source document publishes nil partial-withdrawal and regular-withdrawal charges.",
+              "Minimum withdrawal amount, minimum remaining account value, and during-vs-after-premium-term withdrawal-account gating remain metadata-only constraints in this partial template."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Partial Withdrawal / Regular Withdrawal",
+                "excerpt": "Partial Withdrawal You may request for a partial withdrawal of policy value from the third policy year onwards while the policy is in force provided the minimum amount to be withdrawn is at least $500 (in the policy curr"
+              },
+              {
+                "page": 12,
+                "section": "Partial Withdrawal and Regular Withdrawal Charge",
+                "excerpt": "Partial Withdrawal and Regular Withdrawal Charge Nil Credit Card Charge When premiums are paid by credit card, we will impose a charge of 1.60% on each premium to cover charges imposed by the issuing company. Policy Curr"
+              }
+            ]
+          }
+        ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "initial",
+            "accumulation",
+            "topup"
+          ],
+          "minimumAnnualPayoutAmount": 50,
+          "minimumAnnualPayoutCurrency": "SGD",
+          "recordDateInstructionLeadDays": 30,
+          "cashPayoutWindows": [
+            {
+              "startPolicyYear": 1,
+              "endPolicyYear": 15,
+              "accountIds": [
+                "accumulation",
+                "topup"
+              ]
+            },
+            {
+              "startPolicyYear": 16,
+              "endPolicyYear": null,
+              "accountIds": [
+                "initial",
+                "accumulation",
+                "topup"
+              ]
+            }
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": true,
+          "cashPayoutAllowedAfterMip": true,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Dividend-paying ILP sub-funds default to reinvestment unless the policyholder elects cash payout.",
+            "During the premium payment term, only dividends from the Accumulation Units Account and Top-up Units Account may be paid in cash.",
+            "After the premium payment term, dividends from the Initial Units Account, Accumulation Units Account and Top-up Units Account may be paid in cash.",
+            "Cash payouts below the published SGD 50 minimum dividend amount are reinvested.",
+            "Distribution-option instruction changes require at least 30 days before the Record Date."
+          ],
+          "sourceRefs": [
+            {
+              "page": 10,
+              "section": "Dividend Distribution / Initial Charge",
+              "excerpt": "Dividend Distribution If you choose to invest in ILP sub-fund(s) that pays dividends and it allows the payment of dividend in the form of cash, you have the option to either reinvest these dividends or receive payments o"
+            }
+          ]
+        },
+        "eecTable": [
+          1,
+          1,
+          0.99,
+          0.99,
+          0.99,
+          0.91,
+          0.9,
+          0.8,
+          0.75,
+          0.65,
+          0.55,
+          0.5,
+          0.4,
+          0.3,
+          0.12
+        ],
+        "warnings": [
+          "This partial template models the SGD / premium-payment-term-15 (Advanced Death with Life Benefit Rider) corridor only.",
+          "This partial template models 24-month initial-versus-accumulation routing, the published initial bonus tiers, the year-scaled initial charge schedule with the policy-year-10 cap, the policy charge premium-base multiplier basis, top-up routing, recurring single premium routing, nil partial-withdrawal charge, the published 15-year surrender charge table, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.",
+          "The Advanced Death with Life Benefit Rider variant also models the published Monthly Protection Charge, including the first-two-policy-years accrual window, policy-year-3 lump-sum settlement, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base through the policy anniversary immediately after age 99.",
+          "Recurring single premium stays blocked during premium holiday until regular premium resumes at the committed commencement-date amount."
+        ],
+        "unsupportedItems": [
+          "Loyalty bonus remains metadata-only because the published adjustment-factor formula and period-band windows are not yet represented directly in the template bonus basis.",
+          "Advanced Death and Life Benefit Rider payout handling beyond the modeled Monthly Protection Charge, multiple-life handling, and change-of-life-assured administration remain metadata-only for this product.",
           "Regular withdrawal, partial-withdrawal minimum-account-value constraints, premium holiday state handling, and non-SGD or non-25-year variants remain metadata-only for this product."
         ],
         "sourceRefs": [

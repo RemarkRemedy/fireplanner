@@ -40,13 +40,16 @@ describe('parseTokioMarineAffluenceAtFuture', () => {
     expect(product.modeledEconomics).toContain('branch:tokio-marine-affluence-atfuture-zero-partial-withdrawal-charge')
     expect(product.modeledEconomics).toContain('branch:tokio-marine-affluence-atfuture-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-advanced-death-payout-and-life-assured-administration')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-advanced-death-payout-life-benefit-rider-and-life-assured-administration')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-dividend-payout-threshold-record-date-regular-withdrawal-and-partial-withdrawal-constraints')
     expect(product.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-regular-withdrawal-and-partial-withdrawal-constraints')
 
     const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15')
     const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15-advanced-death')
+    const riderVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15-advanced-death-life-benefit-rider')
 
-    expect(product.variants).toHaveLength(2)
+    expect(product.variants).toHaveLength(3)
     expect(basicVariant?.icpMonths).toBe(24)
     expect(basicVariant?.accounts.map((account) => account.id)).toEqual(['initial', 'accumulation', 'topup'])
     expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
@@ -141,6 +144,7 @@ describe('parseTokioMarineAffluenceAtFuture', () => {
       expect.arrayContaining([
         expect.objectContaining({
           id: 'monthly-protection-charge',
+          activeWindow: 'during-mip',
           appliesTo: ['accumulation'],
           assuranceValueAppliesTo: ['initial', 'accumulation'],
           fallbackAppliesTo: ['topup', 'initial'],
@@ -155,6 +159,36 @@ describe('parseTokioMarineAffluenceAtFuture', () => {
           }),
         }),
       ]),
+    )
+    expect(riderVariant?.feeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'monthly-protection-charge',
+          activeWindow: 'policy-term',
+          appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          fallbackAppliesTo: ['topup', 'initial'],
+          assuranceConfig: expect.objectContaining({
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            maxAgeNextBirthday: 99,
+            accrual: {
+              startPolicyYear: 1,
+              endPolicyYear: 2,
+              settlementPolicyYear: 3,
+            },
+          }),
+          notes: expect.arrayContaining([
+            'Models the published Monthly Protection Charge for the Advanced Death Benefit with Life Benefit Rider corridor through the policy anniversary immediately after age 99.',
+          ]),
+        }),
+      ]),
+    )
+    expect(riderVariant?.warnings).toContain(
+      'The Advanced Death with Life Benefit Rider variant also models the published Monthly Protection Charge, including the first-two-policy-years accrual window, policy-year-3 lump-sum settlement, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base through the policy anniversary immediately after age 99.',
+    )
+    expect(riderVariant?.unsupportedItems).toContain(
+      'Advanced Death and Life Benefit Rider payout handling beyond the modeled Monthly Protection Charge, multiple-life handling, and change-of-life-assured administration remain metadata-only for this product.',
     )
   }, 30_000)
 })

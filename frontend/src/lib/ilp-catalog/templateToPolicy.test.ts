@@ -5559,6 +5559,8 @@ describe('templateVariantToPolicySeed', () => {
       source: 'distribution-paying-funds',
     })
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-loyalty-bonus-adjustment-factor')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-advanced-death-payout-and-life-assured-administration')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-advanced-death-payout-life-benefit-rider-and-life-assured-administration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-regular-withdrawal-and-partial-withdrawal-constraints')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-dividend-payout-threshold-record-date-regular-withdrawal-and-partial-withdrawal-constraints')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
@@ -5580,6 +5582,7 @@ describe('templateVariantToPolicySeed', () => {
         expect.objectContaining({
           id: 'monthly-protection-charge',
           basis: 'assurance-sum-at-risk',
+          activeWindow: 'during-mip',
           appliesTo: ['accumulation'],
           assuranceValueAppliesTo: ['initial', 'accumulation'],
           fallbackAppliesTo: ['topup', 'initial'],
@@ -5598,6 +5601,43 @@ describe('templateVariantToPolicySeed', () => {
       ]),
     )
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Advanced Death variant also models the published Monthly Protection Charge'))).toBe(true)
+  })
+
+  it('maps Tokio Marine Affluence@Future advanced-death-life-benefit-rider into a supported seed with policy-term Tokio MPC inputs', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-affluence-atfuture')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-15-advanced-death-life-benefit-rider')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-affluence-atfuture-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
+    expect(seed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'monthly-protection-charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          fallbackAppliesTo: ['topup', 'initial'],
+          allocation: 'pro-rata-by-value',
+          assuranceConfig: expect.objectContaining({
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            accrual: {
+              startPolicyYear: 1,
+              endPolicyYear: 2,
+              settlementPolicyYear: 3,
+            },
+          }),
+          requiresManualInput: true,
+        }),
+      ]),
+    )
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('through the policy anniversary immediately after age 99'))).toBe(true)
   })
 
   it('maps Tokio Marine #goClassic basic-death into a supported seed with combined account-fee modeling and accumulation top-up routing', () => {

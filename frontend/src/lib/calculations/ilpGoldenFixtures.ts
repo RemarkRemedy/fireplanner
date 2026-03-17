@@ -7987,6 +7987,36 @@ function tokioAffluenceAtFutureAdvancedDeathBaselinePolicy(
   ))
 }
 
+function tokioAffluenceAtFutureAdvancedDeathLifeBenefitRiderBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-affluence-atfuture', 'sgd-mip-15-advanced-death-life-benefit-rider', id)
+  return withResolvedManualInputs(withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden Tokio Marine Affluence@Future (SGD / MIP 15 Advanced Death Life Benefit Rider Baseline)',
+        monthlyContribution: 2_000,
+        currentPolicyYear: 14,
+        monthsAlreadyPaid: 156,
+        assuranceProfile: {
+          currentAgeNextBirthday: 57,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetRegularPremiumBase: 72_000,
+        },
+        postMipYears: 15,
+        policyEvents: [],
+      }),
+      TOKIO_BALANCED_FUNDS,
+    ),
+    10_000,
+    20_000,
+    0,
+  ))
+}
+
 function tokioAffluenceAtFutureStressPolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
@@ -15408,6 +15438,17 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
   },
   {
     productId: 'tokio-marine-affluence-atfuture',
+    variantId: 'sgd-mip-15-advanced-death-life-benefit-rider',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:tokio-marine-affluence-atfuture-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts',
+    ],
+    description: 'Tokio Marine Affluence@Future advanced-death with Life Benefit Rider baseline proving the rider corridor seeds the same accrued Monthly Protection Charge inputs under the supported V1 policy window.',
+  },
+  {
+    productId: 'tokio-marine-affluence-atfuture',
     variantId: 'sgd-mip-15',
     scenarioId: 'event-heavy',
     fixtureClass: 'supported',
@@ -16952,6 +16993,9 @@ function buildPolicyForDefinition(
   if (definition.productId === 'tokio-marine-affluence-atfuture' && definition.scenarioId === 'baseline') {
     if (definition.variantId === 'sgd-mip-15-advanced-death') {
       return tokioAffluenceAtFutureAdvancedDeathBaselinePolicy(snapshot, id)
+    }
+    if (definition.variantId === 'sgd-mip-15-advanced-death-life-benefit-rider') {
+      return tokioAffluenceAtFutureAdvancedDeathLifeBenefitRiderBaselinePolicy(snapshot, id)
     }
     return tokioBaselinePolicy(
       snapshot,
