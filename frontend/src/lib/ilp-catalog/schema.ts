@@ -75,6 +75,7 @@ export const ilpTemplateFeeRuleSchema = z.object({
       'hsbc-flexi-choice-death-ti',
       'hsbc-flexi-max-death-ti',
       'great-eastern-wa4-death-ti',
+      'great-eastern-gla4-death-ti',
       'fwd-invest-flexi-elite-death',
       'income-invest-flex-death-ti',
       'income-legacy-flex-solitaire-death-ti',

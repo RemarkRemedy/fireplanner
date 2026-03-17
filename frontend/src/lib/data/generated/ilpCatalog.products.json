@@ -33461,13 +33461,15 @@
     "sourceChecksumSha256": "edfaa47546cf5acd6e2ede8956782aaabf0fe5da858810597b18e731bb8b9a3e",
     "sourceDocumentType": "summary",
     "sourceClass": "summary",
-    "supportStatus": "partial",
+    "supportStatus": "supported",
     "structureStatus": "structured",
-    "economicsStatus": "partial-modeled-subset",
+    "economicsStatus": "supported",
     "modeledEconomics": [
+      "kernel:protected-base-assurance",
       "branch:great-life-advantage-4-premium-charge",
       "branch:great-life-advantage-4-premium-reward",
       "branch:great-life-advantage-4-policy-fee",
+      "branch:great-life-advantage-4-insurance-charge",
       "branch:great-life-advantage-4-premium-holiday-charge",
       "branch:great-life-advantage-4-premium-holiday-charge-refund",
       "branch:great-life-advantage-4-top-up-charge",
@@ -33475,7 +33477,6 @@
       "branch:great-life-advantage-4-surrender-charge"
     ],
     "metadataOnlyBehaviors": [
-      "great-life-advantage-4-insurance-charge",
       "great-life-advantage-4-non-lapse-guarantee-debt",
       "great-life-advantage-4-continuation-event",
       "great-life-advantage-4-basic-sum-assured-state",
@@ -33487,7 +33488,7 @@
       "great-life-advantage-4-afr-and-fund-switching"
     ],
     "warnings": [
-      "GREAT Life Advantage 4 is cataloged as a partial modeled subset in V1. The parser captures the premium-year regular premium charge schedule, premium reward, first-two-policy-years premium-holiday charge and refund privilege, top-up charge, first-two-policy-years withdrawal / surrender charges, and the fixed policy fee, while insurance charge, non-lapse debt carry, continuation-event behavior, and broader protection-state mechanics remain outside the current engine."
+      "GREAT Life Advantage 4 is cataloged as a supported V1 corridor. The parser captures the premium-year regular premium charge schedule, premium reward, fixed policy fee, monthly insurance charge, first-two-policy-years premium-holiday charge and refund privilege, top-up charge, and first-two-policy-years withdrawal / surrender charges, while non-lapse debt carry, continuation-event behavior, and broader protection-state mechanics remain metadata only."
     ],
     "archived": false,
     "variants": [
@@ -33661,6 +33662,34 @@
                 "excerpt": "We will deduct a policy fee of S$5 monthly by cancelling units from the fund(s) you Policy fee have invested in. We may change the policy fee by notifying you 1 month prior to changing the policy fee. We will deduct a mo"
               }
             ]
+          },
+          {
+            "id": "insurance-charge",
+            "label": "Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": null,
+            "assuranceConfig": {
+              "formula": "great-eastern-gla4-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Requires insured-life details plus the current basic sum assured and current net single-premium top-up base before the calculator can model the monthly insurance charge.",
+              "Models the published net-sum-assured formula: basic sum assured plus total single-premium top-ups less total withdrawals including partial-withdrawal charges, minus account value."
+            ],
+            "sourceRefs": [
+              {
+                "page": 12,
+                "section": "Insurance charge and account mechanics",
+                "excerpt": "We will deduct a policy fee of S$5 monthly by cancelling units from the fund(s) you Policy fee have invested in. We may change the policy fee by notifying you 1 month prior to changing the policy fee. We will deduct a mo"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -33796,11 +33825,10 @@
           1
         ],
         "warnings": [
-          "GREAT Life Advantage 4 is cataloged as a partial modeled subset in V1. The parser captures the premium-year regular premium charge schedule, the 2% premium reward path, the first-two-policy-years premium-holiday charge and refund privilege, the 5% top-up charge, the first-two-policy-years withdrawal / surrender charge schedule, and the fixed S$5 monthly policy fee.",
-          "Insurance charge, non-lapse guarantee debt carry, continuation-event behavior after TPD, rider deductions, and basic-sum-assured / premium-stream state changes remain outside the current engine."
+          "GREAT Life Advantage 4 is cataloged as a supported V1 corridor. The parser captures the premium-year regular premium charge schedule, the 2% premium reward path, the fixed S$5 monthly policy fee, the monthly insurance charge, the first-two-policy-years premium-holiday charge and refund privilege, the 5% top-up charge, and the first-two-policy-years withdrawal / surrender charge schedule.",
+          "Non-lapse guarantee debt carry, continuation-event behavior after TPD, rider deductions, and basic-sum-assured / premium-stream state changes remain metadata only."
         ],
         "unsupportedItems": [
-          "Insurance charge remains informational only because it depends on appendix rate tables, attained age, sex, smoker status, and current net sum assured.",
           "Non-lapse guarantee debt carry and lapse/reinstatement debt sequencing remain informational only.",
           "Continuation Event behavior after a TPD claim remains informational only.",
           "Basic sum assured changes, GISA milestones, and premium-stream resets after regular-premium increases remain informational only.",

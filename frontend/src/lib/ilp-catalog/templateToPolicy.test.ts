@@ -1334,7 +1334,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('default 20-year review horizon'))).toBe(true)
   })
 
-  it('maps GREAT Life Advantage 4 into an open-ended partial regular-premium seed', () => {
+  it('maps GREAT Life Advantage 4 into an open-ended supported regular-premium seed', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'great-eastern-great-life-advantage-4')
     expect(product).toBeDefined()
@@ -1344,10 +1344,12 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('GREAT Life Advantage 4 (SGD / Open-ended (Regular Pay))')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:protected-base-assurance')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-life-advantage-4-premium-charge')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-life-advantage-4-insurance-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-life-advantage-4-insurance-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('great-life-advantage-4-insurance-charge')
     expect(seed.mipBasis).toBe('open-ended')
     expect(seed.mipLength).toBeNull()
     expect(seed.postMipYears).toBe(20)
@@ -1376,6 +1378,16 @@ describe('templateVariantToPolicySeed', () => {
         expect.objectContaining({
           id: 'policy-fee',
           basis: 'fixed-annual',
+        }),
+        expect.objectContaining({
+          id: 'insurance-charge',
+          basis: 'assurance-sum-at-risk',
+          requiresManualInput: true,
+          assuranceConfig: {
+            formula: 'great-eastern-gla4-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
         }),
       ]),
     )

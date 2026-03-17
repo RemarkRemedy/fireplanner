@@ -376,6 +376,15 @@ export type GoldenCoverageTag =
   | 'branch:great-eastern-wa4-top-up-premium-charge'
   | 'branch:great-eastern-wa4-loyalty-bonus'
   | 'branch:great-eastern-wa4-surrender-charge'
+  | 'branch:great-life-advantage-4-premium-charge'
+  | 'branch:great-life-advantage-4-premium-reward'
+  | 'branch:great-life-advantage-4-policy-fee'
+  | 'branch:great-life-advantage-4-insurance-charge'
+  | 'branch:great-life-advantage-4-premium-holiday-charge'
+  | 'branch:great-life-advantage-4-premium-holiday-charge-refund'
+  | 'branch:great-life-advantage-4-top-up-charge'
+  | 'branch:great-life-advantage-4-withdrawal-charge'
+  | 'branch:great-life-advantage-4-surrender-charge'
   | 'branch:great-eastern-ilp2-policy-fee-rate'
   | 'branch:great-eastern-ilp2-choice10-fixed-policy-fee'
   | 'branch:great-eastern-ilp2-insurance-charge'
@@ -2807,6 +2816,110 @@ function greatEasternWealthAdvantage4StressPolicy(
       smokerStatus: 'non-smoker',
       currentNetRegularPremiumBase: 96_000,
       currentNetSupplementaryPremiumBase: 12_000,
+    },
+  })
+}
+
+function greatEasternGreatLifeAdvantage4BasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const monthlyContribution = 350
+  const currentPolicyYear = 6
+  const base = seedPolicy(snapshot, 'great-eastern-great-life-advantage-4', 'sgd-open-ended-regular-pay', id, {
+    monthlyContribution,
+    currentPolicyYear,
+    monthsAlreadyPaid: (currentPolicyYear - 1) * 12,
+    assuranceProfile: {
+      currentAgeNextBirthday: 45,
+      sex: 'male',
+      smokerStatus: 'non-smoker',
+      currentBasicSumAssured: 120_000,
+      currentNetSupplementaryPremiumBase: 12_000,
+    },
+  })
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden GREAT Life Advantage 4 (SGD / Open-ended Regular Pay)',
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: 28_000,
+      })),
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function greatEasternGreatLifeAdvantage4BaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return greatEasternGreatLifeAdvantage4BasePolicy(snapshot, id, HSBC_BALANCED_FUNDS)
+}
+
+function greatEasternGreatLifeAdvantage4EventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return greatEasternGreatLifeAdvantage4BasePolicy(snapshot, id, HSBC_BALANCED_FUNDS, {
+    name: 'Golden GREAT Life Advantage 4 (SGD / Open-ended Regular Pay Event Heavy)',
+    currentPolicyYear: 8,
+    monthsAlreadyPaid: 84,
+    assuranceProfile: {
+      currentAgeNextBirthday: 47,
+      sex: 'male',
+      smokerStatus: 'non-smoker',
+      currentBasicSumAssured: 120_000,
+      currentNetSupplementaryPremiumBase: 16_500,
+    },
+    policyEvents: [
+      {
+        id: 'holiday-1',
+        type: 'premium-holiday',
+        startPolicyMonth: 85,
+        durationMonths: 2,
+        repayMissedPremiums: true,
+        repaymentAccountId: 'policy',
+      },
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 88,
+        durationMonths: 1,
+        amount: 4_500,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 91,
+        durationMonths: 1,
+        amount: 1_800,
+        accountId: 'policy',
+      },
+    ],
+  })
+}
+
+function greatEasternGreatLifeAdvantage4StressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return greatEasternGreatLifeAdvantage4BasePolicy(snapshot, id, HSBC_STRESS_FUNDS, {
+    name: 'Golden GREAT Life Advantage 4 (SGD / Open-ended Regular Pay OCF Stress)',
+    currentPolicyYear: 11,
+    monthsAlreadyPaid: 120,
+    assuranceProfile: {
+      currentAgeNextBirthday: 49,
+      sex: 'female',
+      smokerStatus: 'non-smoker',
+      currentBasicSumAssured: 120_000,
+      currentNetSupplementaryPremiumBase: 18_000,
     },
   })
 }
@@ -12797,6 +12910,58 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'Etiqa Invest Wealth Purpose alternate-fund stress scenario through the supported 15-year corridor.',
   },
   {
+    productId: 'great-eastern-great-life-advantage-4',
+    variantId: 'sgd-open-ended-regular-pay',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:protected-base-assurance',
+      'branch:great-life-advantage-4-premium-charge',
+      'branch:great-life-advantage-4-premium-reward',
+      'branch:great-life-advantage-4-policy-fee',
+      'branch:great-life-advantage-4-insurance-charge',
+    ],
+    description: 'Baseline GREAT Life Advantage 4 scenario proving the supported regular-premium charge, premium-reward, fixed policy-fee, and monthly insurance-charge corridor.',
+    integrityChecks: [
+      {
+        description: 'baseline policy incurs positive cumulative fees under the supported Great Life protection corridor',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
+      },
+    ],
+  },
+  {
+    productId: 'great-eastern-great-life-advantage-4',
+    variantId: 'sgd-open-ended-regular-pay',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:great-life-advantage-4-premium-holiday-charge',
+      'branch:great-life-advantage-4-premium-holiday-charge-refund',
+      'branch:great-life-advantage-4-top-up-charge',
+      'branch:great-life-advantage-4-withdrawal-charge',
+    ],
+    description: 'GREAT Life Advantage 4 event-heavy scenario covering top-up handling, a repaid premium holiday, and a later withdrawal.',
+    integrityChecks: [
+      {
+        description: 'event-heavy corridor records both additional contributions and a later withdrawal',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > artifact.policyInput.monthlyContribution * 12 && row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'great-eastern-great-life-advantage-4',
+    variantId: 'sgd-open-ended-regular-pay',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'ocf-stress',
+      'branch:great-life-advantage-4-surrender-charge',
+    ],
+    description: 'GREAT Life Advantage 4 alternate-fund high-OCF stress scenario through the supported open-ended corridor.',
+  },
+  {
     productId: 'great-eastern-wealth-advantage-4',
     variantId: 'sgd-mip-10-choice-5',
     scenarioId: 'baseline',
@@ -15178,6 +15343,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'great-eastern-wealth-advantage-4' && definition.scenarioId === 'ocf-stress') {
     return greatEasternWealthAdvantage4StressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'great-eastern-great-life-advantage-4' && definition.scenarioId === 'baseline') {
+    return greatEasternGreatLifeAdvantage4BaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'great-eastern-great-life-advantage-4' && definition.scenarioId === 'event-heavy') {
+    return greatEasternGreatLifeAdvantage4EventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'great-eastern-great-life-advantage-4' && definition.scenarioId === 'ocf-stress') {
+    return greatEasternGreatLifeAdvantage4StressPolicy(snapshot, id)
   }
   if (definition.productId === 'great-eastern-investment-linked-insurance-plan-2' && definition.scenarioId === 'baseline') {
     return greatEasternInvestmentLinkedInsurancePlan2BaselinePolicy(snapshot, definition.variantId as

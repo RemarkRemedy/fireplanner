@@ -118,6 +118,26 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       ],
       sourceRefs: [page11, page12],
     },
+    {
+      id: 'insurance-charge',
+      label: 'Insurance Charge',
+      basis: 'assurance-sum-at-risk',
+      rate: null,
+      amount: null,
+      assuranceConfig: {
+        formula: 'great-eastern-gla4-death-ti',
+        monthlyModalFactor: 1 / 12,
+        maxAgeNextBirthday: 99,
+      },
+      requiresManualInput: true,
+      appliesTo: ['policy'],
+      activeWindow: 'policy-term',
+      notes: [
+        'Requires insured-life details plus the current basic sum assured and current net single-premium top-up base before the calculator can model the monthly insurance charge.',
+        'Models the published net-sum-assured formula: basic sum assured plus total single-premium top-ups less total withdrawals including partial-withdrawal charges, minus account value.',
+      ],
+      sourceRefs: [page12],
+    },
   ]
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
@@ -216,11 +236,10 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     eventChargeRules,
     eecTable: [...PARTIAL_WITHDRAWAL_AND_SURRENDER_CHARGE],
     warnings: [
-      'GREAT Life Advantage 4 is cataloged as a partial modeled subset in V1. The parser captures the premium-year regular premium charge schedule, the 2% premium reward path, the first-two-policy-years premium-holiday charge and refund privilege, the 5% top-up charge, the first-two-policy-years withdrawal / surrender charge schedule, and the fixed S$5 monthly policy fee.',
-      'Insurance charge, non-lapse guarantee debt carry, continuation-event behavior after TPD, rider deductions, and basic-sum-assured / premium-stream state changes remain outside the current engine.',
+      'GREAT Life Advantage 4 is cataloged as a supported V1 corridor. The parser captures the premium-year regular premium charge schedule, the 2% premium reward path, the fixed S$5 monthly policy fee, the monthly insurance charge, the first-two-policy-years premium-holiday charge and refund privilege, the 5% top-up charge, and the first-two-policy-years withdrawal / surrender charge schedule.',
+      'Non-lapse guarantee debt carry, continuation-event behavior after TPD, rider deductions, and basic-sum-assured / premium-stream state changes remain metadata only.',
     ],
     unsupportedItems: [
-      'Insurance charge remains informational only because it depends on appendix rate tables, attained age, sex, smoker status, and current net sum assured.',
       'Non-lapse guarantee debt carry and lapse/reinstatement debt sequencing remain informational only.',
       'Continuation Event behavior after a TPD claim remains informational only.',
       'Basic sum assured changes, GISA milestones, and premium-stream resets after regular-premium increases remain informational only.',
@@ -241,13 +260,15 @@ export function parseGreatEasternGreatLifeAdvantage4({ document, sourceChecksumS
     sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
+      'kernel:protected-base-assurance',
       'branch:great-life-advantage-4-premium-charge',
       'branch:great-life-advantage-4-premium-reward',
       'branch:great-life-advantage-4-policy-fee',
+      'branch:great-life-advantage-4-insurance-charge',
       'branch:great-life-advantage-4-premium-holiday-charge',
       'branch:great-life-advantage-4-premium-holiday-charge-refund',
       'branch:great-life-advantage-4-top-up-charge',
@@ -255,7 +276,6 @@ export function parseGreatEasternGreatLifeAdvantage4({ document, sourceChecksumS
       'branch:great-life-advantage-4-surrender-charge',
     ],
     metadataOnlyBehaviors: [
-      'great-life-advantage-4-insurance-charge',
       'great-life-advantage-4-non-lapse-guarantee-debt',
       'great-life-advantage-4-continuation-event',
       'great-life-advantage-4-basic-sum-assured-state',
@@ -267,7 +287,7 @@ export function parseGreatEasternGreatLifeAdvantage4({ document, sourceChecksumS
       'great-life-advantage-4-afr-and-fund-switching',
     ],
     warnings: [
-      'GREAT Life Advantage 4 is cataloged as a partial modeled subset in V1. The parser captures the premium-year regular premium charge schedule, premium reward, first-two-policy-years premium-holiday charge and refund privilege, top-up charge, first-two-policy-years withdrawal / surrender charges, and the fixed policy fee, while insurance charge, non-lapse debt carry, continuation-event behavior, and broader protection-state mechanics remain outside the current engine.',
+      'GREAT Life Advantage 4 is cataloged as a supported V1 corridor. The parser captures the premium-year regular premium charge schedule, premium reward, fixed policy fee, monthly insurance charge, first-two-policy-years premium-holiday charge and refund privilege, top-up charge, and first-two-policy-years withdrawal / surrender charges, while non-lapse debt carry, continuation-event behavior, and broader protection-state mechanics remain metadata only.',
     ],
     archived: false,
     variants: [buildVariant(document)],

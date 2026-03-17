@@ -173,6 +173,7 @@ export interface IlpAssuranceChargeConfig {
     | 'hsbc-flexi-choice-death-ti'
     | 'hsbc-flexi-max-death-ti'
     | 'great-eastern-wa4-death-ti'
+    | 'great-eastern-gla4-death-ti'
     | 'fwd-invest-flexi-elite-death'
     | 'income-invest-flex-death-ti'
     | 'income-legacy-flex-solitaire-death-ti'
@@ -517,6 +518,7 @@ type IlpAssuranceFormulaFamily =
   | 'hsbc-flexi'
   | 'protected-base-paid-premium-floor'
   | 'protected-base-sum-assured'
+  | 'protected-base-basic-sum-assured-with-topups'
   | 'tokio-mpc-net-premium-floor'
   | 'tokio-mpc-locked-in-policy-value'
   | 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium'
@@ -1472,6 +1474,8 @@ function getAssuranceFormulaFamily(
     case 'fwd-invest-flexi-elite-death':
     case 'income-invest-flex-death-ti':
       return 'protected-base-paid-premium-floor'
+    case 'great-eastern-gla4-death-ti':
+      return 'protected-base-basic-sum-assured-with-topups'
     case 'income-legacy-flex-solitaire-death-ti':
       return 'protected-base-sum-assured'
     case 'manulife-investready-iii-death-ti':
@@ -1517,6 +1521,8 @@ function resolveAssuranceRate(
     case 'hsbc-flexi-max-death-ti':
       return applyAssuranceRateMultipliers(rule, HSBC_FLEXI_DEATH_TI_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
     case 'great-eastern-wa4-death-ti':
+      return applyAssuranceRateMultipliers(rule, GREAT_EASTERN_WA4_DEATH_TI_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
+    case 'great-eastern-gla4-death-ti':
       return applyAssuranceRateMultipliers(rule, GREAT_EASTERN_WA4_DEATH_TI_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
     case 'fwd-invest-flexi-elite-death':
       return applyAssuranceRateMultipliers(rule, FWD_FLEXI_ELITE_DEATH_RATE_TABLE[riskClass][ageIndex] ?? 0, policyYear, currentSumAssured)
@@ -1630,7 +1636,7 @@ function computeAiaPlp2SumAtRisk(
 }
 
 function computeProtectedBaseSumAtRisk(
-  formula: Extract<IlpAssuranceChargeConfig['formula'], 'great-eastern-wa4-death-ti' | 'fwd-invest-flexi-elite-death' | 'income-invest-flex-death-ti' | 'income-legacy-flex-solitaire-death-ti' | 'manulife-investready-iii-death-ti' | 'manulife-manuinvest-duo-death-ti-tpd'>,
+  formula: Extract<IlpAssuranceChargeConfig['formula'], 'great-eastern-wa4-death-ti' | 'great-eastern-gla4-death-ti' | 'fwd-invest-flexi-elite-death' | 'income-invest-flex-death-ti' | 'income-legacy-flex-solitaire-death-ti' | 'manulife-investready-iii-death-ti' | 'manulife-manuinvest-duo-death-ti-tpd'>,
   regularPremiumBaseAtStartOfYear: number,
   regularPremiumPaidThisYear: number,
   supplementaryPremiumBaseAtStartOfYear: number,
@@ -1656,6 +1662,15 @@ function computeProtectedBaseSumAtRisk(
 
     case 'income-legacy-flex-solitaire-death-ti':
       return Math.max(0, (sumAssuredAtStartOfYear ?? 0) - midpointApplicableValue)
+
+    case 'great-eastern-gla4-death-ti': {
+      const midpointSupplementaryPremiumBase = Math.max(
+        0,
+        supplementaryPremiumBaseAtStartOfYear + ((supplementaryPremiumPaidThisYear - currentYearApplicableWithdrawals) / 2),
+      )
+      const midpointProtectedBase = Math.max(0, (sumAssuredAtStartOfYear ?? 0) + midpointSupplementaryPremiumBase)
+      return Math.max(0, midpointProtectedBase - midpointApplicableValue)
+    }
 
     case 'manulife-manuinvest-duo-death-ti-tpd': {
       const midpointProtectedBase = Math.max(
@@ -2000,8 +2015,9 @@ function computeAssuranceChargeByAccount(
 
       case 'protected-base-paid-premium-floor':
       case 'protected-base-sum-assured':
+      case 'protected-base-basic-sum-assured-with-topups':
         sumAtRisk = computeProtectedBaseSumAtRisk(
-          rule.assuranceConfig.formula as Extract<IlpAssuranceChargeConfig['formula'], 'great-eastern-wa4-death-ti' | 'fwd-invest-flexi-elite-death' | 'income-invest-flex-death-ti' | 'income-legacy-flex-solitaire-death-ti' | 'manulife-investready-iii-death-ti' | 'manulife-manuinvest-duo-death-ti-tpd'>,
+          rule.assuranceConfig.formula as Extract<IlpAssuranceChargeConfig['formula'], 'great-eastern-wa4-death-ti' | 'great-eastern-gla4-death-ti' | 'fwd-invest-flexi-elite-death' | 'income-invest-flex-death-ti' | 'income-legacy-flex-solitaire-death-ti' | 'manulife-investready-iii-death-ti' | 'manulife-manuinvest-duo-death-ti-tpd'>,
           regularPremiumBaseAtStartOfYear,
           regularPremiumPaidThisYear,
           supplementaryPremiumBaseAtStartOfYear,
@@ -3526,7 +3542,7 @@ export function projectIlpPolicy(
   let cumulativePremiums = (input.monthlyContribution * input.monthsAlreadyPaid) + initialSinglePremiumState.totalGrossContribution
   let assuranceRegularPremiumBase = input.assuranceProfile?.currentNetRegularPremiumBase ?? 0
   let assuranceSupplementaryPremiumBase = input.assuranceProfile?.currentNetSupplementaryPremiumBase ?? 0
-  let assuranceSumAssured = input.assuranceProfile?.currentSumAssured
+  let assuranceSumAssured = input.assuranceProfile?.currentSumAssured ?? input.assuranceProfile?.currentBasicSumAssured
   let assuranceWealthAssureValue = input.assuranceProfile?.currentWealthAssureValue
   let assuranceGrowthFrozen = false
   let assuranceAccruedChargeBalanceByRule = new Map<string, number>(

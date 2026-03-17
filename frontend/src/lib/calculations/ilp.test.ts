@@ -1427,6 +1427,53 @@ describe('projectIlpPolicy', () => {
   })
 
   it('supports sum-assured protected-base assurance formulas without regressing existing assurance families', () => {
+    const greatLifeResult = projectIlpPolicy(makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      postMipYears: 1,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 15_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentBasicSumAssured: 120_000,
+        currentNetSupplementaryPremiumBase: 10_000,
+      },
+      chargeRules: [
+        {
+          id: 'great-life-protection-charge',
+          label: 'Insurance Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'great-eastern-gla4-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+    }), 'mid')
+
+    expect(accountRow(greatLifeResult.rows[0], 'policy').grossFee).toBeCloseTo(149.155, 4)
+
     const duoResult = projectIlpPolicy(makeOpenEndedPolicy({
       monthlyContribution: 0,
       postMipYears: 1,

@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseGreatEasternGreatLifeAdvantage4', () => {
-  it('builds a valid partial modeled-subset product from the source PDF', async () => {
+  it('builds a valid supported product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseGreatEasternGreatLifeAdvantage4({
       document,
@@ -23,17 +23,21 @@ describe('parseGreatEasternGreatLifeAdvantage4', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('great-eastern-great-life-advantage-4')
     expect(product.productName).toBe('GREAT Life Advantage 4')
+    expect(product.supportStatus).toBe('supported')
+    expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
+      'kernel:protected-base-assurance',
       'branch:great-life-advantage-4-premium-charge',
       'branch:great-life-advantage-4-premium-reward',
       'branch:great-life-advantage-4-policy-fee',
+      'branch:great-life-advantage-4-insurance-charge',
       'branch:great-life-advantage-4-premium-holiday-charge',
       'branch:great-life-advantage-4-premium-holiday-charge-refund',
       'branch:great-life-advantage-4-top-up-charge',
       'branch:great-life-advantage-4-withdrawal-charge',
       'branch:great-life-advantage-4-surrender-charge',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('great-life-advantage-4-insurance-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('great-life-advantage-4-insurance-charge')
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended-regular-pay'])
 
     const variant = product.variants[0]
@@ -65,6 +69,16 @@ describe('parseGreatEasternGreatLifeAdvantage4', () => {
         id: 'policy-fee',
         basis: 'fixed-annual',
         amountSchedule: [{ startPolicyYear: 1, endPolicyYear: null, amount: 60 }],
+      }),
+      expect.objectContaining({
+        id: 'insurance-charge',
+        basis: 'assurance-sum-at-risk',
+        requiresManualInput: true,
+        assuranceConfig: {
+          formula: 'great-eastern-gla4-death-ti',
+          monthlyModalFactor: 1 / 12,
+          maxAgeNextBirthday: 99,
+        },
       }),
     ])
     expect(variant.eventChargeRules).toEqual([
