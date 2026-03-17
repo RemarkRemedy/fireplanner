@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { Info, FlaskConical } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -155,11 +156,14 @@ export function DashboardPage() {
         <JointPanels metrics={metrics} isEligible={isEligible} />
       )}
 
-      <NudgeDrawer
-        flowId={drawerFlowId}
-        onClose={() => setDrawerFlowId(null)}
-        onComplete={(_delta) => { setDrawerFlowId(null) }}
-      />
+      {drawerFlowId && createPortal(
+        <NudgeDrawer
+          flowId={drawerFlowId}
+          onClose={() => setDrawerFlowId(null)}
+          onComplete={(_delta) => { setDrawerFlowId(null) }}
+        />,
+        document.body
+      )}
     </div>
   )
 }
