@@ -63,6 +63,7 @@ export function StartPage() {
     setupCompleted ? existingPlanType : 'individual'
   )
   const [householdPlannerEnabled] = useState(() => isHouseholdPlannerV1Enabled())
+  const [calculatorHasResult, setCalculatorHasResult] = useState(false)
 
   // Check if returning user (has saved profile in localStorage)
   const [isReturningUser] = useState(() => {
@@ -194,17 +195,17 @@ export function StartPage() {
             <p className="text-sm font-medium text-muted-foreground">Quick estimate (10 seconds)</p>
           </CardHeader>
           <CardContent>
-            <QuickEstimateForm compact />
+            <QuickEstimateForm compact onHasResult={setCalculatorHasResult} />
           </CardContent>
         </Card>
       )}
 
-      {householdPlannerEnabled && (
+      {householdPlannerEnabled && !calculatorHasResult && (
         <PlanTypeSelector value={selectedPlanType} onChange={setSelectedPlanType} />
       )}
 
-      {/* Pathway cards */}
-      <div className="grid grid-cols-1 @2xl:grid-cols-3 gap-4">
+      {/* Pathway cards — hidden when calculator has results (CTA takes over) */}
+      <div className={`grid grid-cols-1 @2xl:grid-cols-3 gap-4 ${calculatorHasResult && !isReturningUser ? 'hidden' : ''}`}>
         {PATHWAY_CARDS.map(({ key, label, description, icon: Icon }, index) => (
           <button
             key={key}

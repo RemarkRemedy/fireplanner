@@ -556,6 +556,25 @@ export function SetupPage() {
     }
   }, [isRedo])
 
+  // Hydrate from quick estimate URL params (qIncome, qExpenses, qSavings, qAge, qOrder)
+  useEffect(() => {
+    const qIncome = searchParams.get('qIncome')
+    const qExpenses = searchParams.get('qExpenses')
+    const qSavings = searchParams.get('qSavings')
+    const qAge = searchParams.get('qAge')
+    const qOrder = searchParams.get('qOrder')
+    if (!qIncome && !qExpenses && !qSavings && !qAge) return
+    const overrides: Record<string, unknown> = {}
+    if (qIncome) overrides.monthlyIncome = parseFloat(qIncome)
+    if (qExpenses) overrides.monthlyExpenses = parseFloat(qExpenses)
+    if (qSavings) overrides.liquidNetWorth = parseFloat(qSavings)
+    if (qAge) overrides.currentAge = parseInt(qAge, 10)
+    dispatch({ type: 'HYDRATE', values: overrides })
+    if (qOrder === 'story-first' || qOrder === 'already-fire' || qOrder === 'goal-first') {
+      setUIField('sectionOrder', qOrder)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- run once on mount
+
   // Compute active (non-skipped) screen indices
   const activeScreenIndices = useMemo(
     () =>

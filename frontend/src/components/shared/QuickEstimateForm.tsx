@@ -104,9 +104,11 @@ interface QuickEstimateFormProps {
   compact?: boolean
   /** Sync inputs to URL search params. Only used in full mode. */
   syncUrlParams?: boolean
+  /** Called when the calculator has results — lets parent react (e.g. hide pathway cards) */
+  onHasResult?: (hasResult: boolean) => void
 }
 
-export function QuickEstimateForm({ compact = false, syncUrlParams = false }: QuickEstimateFormProps) {
+export function QuickEstimateForm({ compact = false, syncUrlParams = false, onHasResult }: QuickEstimateFormProps) {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const setUIField = useUIStore((s) => s.setField)
@@ -159,6 +161,11 @@ export function QuickEstimateForm({ compact = false, syncUrlParams = false }: Qu
   const result = useMemo(() => computeQuickEstimate(inputs), [inputs])
   const hasInput = monthlyIncome > 0
 
+  // Notify parent when results are available
+  useEffect(() => {
+    onHasResult?.(hasInput && result.status !== 'no-income')
+  }, [hasInput, result.status, onHasResult])
+
   // Track first computation
   const [tracked, setTracked] = useState(false)
   useEffect(() => {
@@ -167,6 +174,18 @@ export function QuickEstimateForm({ compact = false, syncUrlParams = false }: Qu
       setTracked(true)
     }
   }, [hasInput, result.status, tracked])
+
+  // ── Build setup URL with pre-filled values ────────────────────────────
+  const setupUrl = useMemo(() => {
+    const order = result.status === 'already-fire' ? 'already-fire' : 'story-first'
+    const params = new URLSearchParams({ planType: 'individual' })
+    if (monthlyIncome > 0) params.set('qIncome', String(monthlyIncome))
+    if (monthlyExpenses > 0) params.set('qExpenses', String(monthlyExpenses))
+    if (currentSavings > 0) params.set('qSavings', String(currentSavings))
+    if (currentAge !== QUICK_ESTIMATE_DEFAULTS.defaultAge) params.set('qAge', String(currentAge))
+    params.set('qOrder', order)
+    return `/setup?${params.toString()}`
+  }, [monthlyIncome, monthlyExpenses, currentSavings, currentAge, result.status])
 
   // ── Stage 2: Health score (full mode only) ─────────────────────────────
   const healthResult = useMemo(() => {
@@ -401,7 +420,7 @@ export function QuickEstimateForm({ compact = false, syncUrlParams = false }: Qu
         </div>
       )}
 
-      {/* Compact CTA — make them doubt the quick number */}
+      {/* Compact CTA — make them doubt their quick number */}
       {compact && hasInput && result.status === 'ok' && (
         <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
           <p className="text-sm font-medium">
@@ -426,8 +445,41 @@ export function QuickEstimateForm({ compact = false, syncUrlParams = false }: Qu
             </li>
           </ul>
           <Button asChild className="w-full">
-            <Link to="/setup">
+            <Link to={setupUrl}>
               Get your real FIRE age
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      )}
+
+      {/* Compact CTA for already-FIRE */}
+      {compact && hasInput && result.status === 'already-fire' && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-800 p-4 space-y-3">
+          <p className="text-sm font-medium">
+            You have enough to retire. Now make sure it lasts:
+          </p>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            <li className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+              CPF LIFE payout timing and amounts
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+              12 withdrawal strategies compared
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+              Healthcare costs that escalate with age
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+              Stress test against historical market crashes
+            </li>
+          </ul>
+          <Button asChild className="w-full">
+            <Link to={setupUrl}>
+              Build your drawdown plan
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
@@ -522,7 +574,7 @@ export function QuickEstimateForm({ compact = false, syncUrlParams = false }: Qu
                   <PlanTypeSelector value={selectedPlanType} onChange={setSelectedPlanType} />
                 )}
                 <Button asChild>
-                  <Link to={`/setup?planType=${selectedPlanType}`}>
+                  <Link to={setupUrl + (selectedPlanType !== 'individual' ? `&planType=${selectedPlanType}` : '')}>
                     Get a personalized plan
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
