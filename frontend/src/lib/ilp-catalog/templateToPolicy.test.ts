@@ -5013,7 +5013,14 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-link-3-12-involuntary-unemployment-waiver')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-link-3-12-benefit-payout-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-wealth-flexi-link-3-12-advanced-death-benefit-and-eligible-rider-handling',
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-wealth-flexi-link-3-12-regular-withdrawal-and-minimum-account-value-constraints',
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-link-3-12-benefit-payout-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-link-3-12-life-benefit-rider')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-link-3-12-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.accounts.find((account) => account.id === 'accumulation')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
