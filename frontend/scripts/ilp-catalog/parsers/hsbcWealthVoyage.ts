@@ -382,22 +382,24 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', m
       mode: 'manual-assumption',
       accountIds: ['regular', 'topup'],
       defaultMode: 'reinvest',
+      minimumAnnualPayoutAmount: 30,
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: [
         'Dividend-paying ILP sub-funds may either reinvest distributions or pay them out in cash, with reinvestment as the default if no option is elected.',
-        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption, and the published S$30 minimum payout threshold remains informational only.',
+        'Cash dividends are paid in SGD irrespective of policy currency, and the published S$30 minimum annual payout applies across both the Regular Premium Account and Top-up Account.',
+        'V1 seeds reinvestment by default; cash payout requires a manual annual distribution-yield assumption, and payouts below the published S$30 minimum remain reinvested.',
       ],
       sourceRefs: [page19],
     },
     eecTable: EEC_SCHEDULES[mipLength].map(roundRate),
     warnings: [
       'This template models the premium-base AMF, start-up bonus, BRC, top-up charge, PWC, EEC, the modeled subset of power-up / loyalty bonus suspension rules, and the reinvest-default distribution-mode assumption surface.',
-      'Premium Holiday Charge waiver exhaustion, backpaid premium-holiday AMF reconciliation, regular-withdrawal-linked loyalty suspension, and the published S$30 dividend-payout threshold remain metadata-only for this product family.',
+      'Premium Holiday Charge waiver exhaustion, backpaid premium-holiday AMF reconciliation, and regular-withdrawal-linked loyalty suspension remain metadata-only for this product family.',
     ],
     unsupportedItems: [
-      'The published S$30 dividend-payout threshold, bank-credit fallback to reinvestment, and cash payout in SGD remain informational only.',
+      'Designated-bank-account routing, unsuccessful cash-credit fallback to reinvestment, and payout execution operations remain informational only.',
     ],
     sourceRefs: [page2, page4, page5, page6, page10, page11, page12, page13, page14, page19],
   }
@@ -430,11 +432,10 @@ export function parseHsbcWealthVoyage(context: ParseContext): IlpCatalogProduct 
       'hsbc-voyage-premium-holiday-charge-after-free-duration',
       'hsbc-voyage-premium-holiday-backpay-amf-reconciliation',
       'hsbc-voyage-regular-withdrawal-loyalty-suspension',
-      'hsbc-voyage-dividend-payout-threshold',
       'hsbc-voyage-life-replacement-option',
     ],
     warnings: [
-      'Wealth Voyage is cataloged as a supported V1 product. Premium-base AMF, start-up bonus, bonus recovery charge, top-up charge, partial-withdrawal charge, surrender mechanics, the modeled subset of power-up / loyalty bonus suspension rules, and reinvest-default distribution support are modeled; premium-holiday charge after the free duration, premium-holiday backpay AMF reconciliation, regular-withdrawal-linked loyalty suspension, the dividend payout threshold, and the life replacement option remain informational only.',
+      'Wealth Voyage is cataloged as a supported V1 product. Premium-base AMF, start-up bonus, bonus recovery charge, top-up charge, partial-withdrawal charge, surrender mechanics, the modeled subset of power-up / loyalty bonus suspension rules, and reinvest-default distribution support are modeled; premium-holiday charge after the free duration, premium-holiday backpay AMF reconciliation, regular-withdrawal-linked loyalty suspension, and the life replacement option remain informational only.',
     ],
     archived: false,
     variants: [
