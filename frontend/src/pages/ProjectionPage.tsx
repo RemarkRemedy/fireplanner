@@ -74,7 +74,7 @@ const STRATEGY_SHORT_LABELS: Record<WithdrawalStrategyType, string> = {
 }
 
 export function ProjectionPage() {
-  usePageMeta({ title: 'Projection — SG FIRE Planner', description: 'See your net worth trajectory from today to retirement and beyond. Tracks portfolio growth, CPF OA/SA/MA balances, income changes, and spending year by year.', path: '/projection' })
+  usePageMeta({ title: 'Projection | SG FIRE Planner', description: 'Year-by-year financial projection with net worth trajectory, CPF balances, and retirement milestones.', path: '/projection' })
 
   const [drawerFlowId, setDrawerFlowId] = useState<NudgeFlowId | null>(null)
   const [deltaStack, setDeltaStack] = useState<DeltaSummary[]>([])

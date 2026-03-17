@@ -114,13 +114,9 @@ export const LIFE_STAGE_GUIDES: { minAge: number; maxAge: number; label: string;
   },
 ]
 
-/** Returns the best-matching life-stage guide for a given age. */
-export function getLifeStageGuide(age: number): typeof LIFE_STAGE_GUIDES[number] | null {
-  // Prefer narrower ranges by iterating in order (starting-out < starting-family < supporting < retiree)
-  for (const guide of LIFE_STAGE_GUIDES) {
-    if (age >= guide.minAge && age <= guide.maxAge) return guide
-  }
-  return null
+/** Returns all matching life-stage guides for a given age (ranges overlap intentionally). */
+export function getLifeStageGuides(age: number): typeof LIFE_STAGE_GUIDES[number][] {
+  return LIFE_STAGE_GUIDES.filter((guide) => age >= guide.minAge && age <= guide.maxAge)
 }
 
 export const MONEYSENSE_DISCLAIMER =

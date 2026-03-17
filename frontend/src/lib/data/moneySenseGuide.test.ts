@@ -1,35 +1,61 @@
 import { describe, it, expect } from 'vitest'
-import { getLifeStageGuide, MONEYSENSE_AREAS } from './moneySenseGuide'
+import { getLifeStageGuides, MONEYSENSE_AREAS } from './moneySenseGuide'
 import { HEALTH_RATIOS } from './healthBenchmarks'
 
-describe('getLifeStageGuide', () => {
-  it('returns starting-out guide for age 25 (start of starting-family range, but starting-out is first)', () => {
-    expect(getLifeStageGuide(25)?.label).toContain('Starting Out')
+describe('getLifeStageGuides', () => {
+  it('returns only starting-out for age 20', () => {
+    const guides = getLifeStageGuides(20)
+    expect(guides).toHaveLength(1)
+    expect(guides[0].label).toContain('Starting Out')
   })
 
-  it('returns starting-family guide for age 30', () => {
-    expect(getLifeStageGuide(30)?.label).toContain('Starting a Family')
+  it('returns two guides for age 25 (starting-out + starting-family overlap)', () => {
+    const guides = getLifeStageGuides(25)
+    expect(guides).toHaveLength(2)
+    expect(guides[0].label).toContain('Starting Out')
+    expect(guides[1].label).toContain('Starting a Family')
   })
 
-  it('returns supporting-parents guide for age 50', () => {
-    expect(getLifeStageGuide(50)?.label).toContain('Supporting Children & Parents')
+  it('returns one guide for age 30 (starting-family only)', () => {
+    const guides = getLifeStageGuides(30)
+    expect(guides).toHaveLength(1)
+    expect(guides[0].label).toContain('Starting a Family')
   })
 
-  it('returns retiree guide for age 60', () => {
-    expect(getLifeStageGuide(60)?.label).toContain('Retiree')
+  it('returns two guides for age 36 (starting-family + supporting overlap)', () => {
+    const guides = getLifeStageGuides(36)
+    expect(guides).toHaveLength(2)
+    expect(guides[0].label).toContain('Starting a Family')
+    expect(guides[1].label).toContain('Supporting Children & Parents')
   })
 
-  it('returns retiree guide for age 55 (start of retiree range, but supporting is first)', () => {
-    // 55 matches both 35-59 and 55-120. Supporting is first in array.
-    expect(getLifeStageGuide(55)?.label).toContain('Supporting Children & Parents')
+  it('returns one guide for age 50 (supporting only)', () => {
+    const guides = getLifeStageGuides(50)
+    expect(guides).toHaveLength(1)
+    expect(guides[0].label).toContain('Supporting Children & Parents')
   })
 
-  it('returns null for age 18 (below minimum)', () => {
-    expect(getLifeStageGuide(18)).toBeNull()
+  it('returns two guides for age 55 (supporting + retiree overlap)', () => {
+    const guides = getLifeStageGuides(55)
+    expect(guides).toHaveLength(2)
+    expect(guides[0].label).toContain('Supporting Children & Parents')
+    expect(guides[1].label).toContain('Retiree')
+  })
+
+  it('returns retiree only for age 60', () => {
+    const guides = getLifeStageGuides(60)
+    expect(guides).toHaveLength(1)
+    expect(guides[0].label).toContain('Retiree')
+  })
+
+  it('returns empty array for age 18 (below minimum)', () => {
+    expect(getLifeStageGuides(18)).toHaveLength(0)
   })
 
   it('returns retiree guide for age 120 (max)', () => {
-    expect(getLifeStageGuide(120)?.label).toContain('Retiree')
+    const guides = getLifeStageGuides(120)
+    expect(guides).toHaveLength(1)
+    expect(guides[0].label).toContain('Retiree')
   })
 })
 

@@ -43,7 +43,7 @@ const HOUSEHOLD_KEY_SECTIONS: { id: SectionId; label: string }[] = [
 ]
 
 export function DashboardPage() {
-  usePageMeta({ title: 'Dashboard — SG FIRE Planner', description: 'See your FIRE number, years to retirement, portfolio at retirement, success probability, and risk assessment in one view. Updated live as you adjust inputs.', path: '/dashboard' })
+  usePageMeta({ title: 'Dashboard | SG FIRE Planner', description: 'Your FIRE dashboard with key metrics, risk assessment, and retirement readiness overview.', path: '/dashboard' })
   const metrics = useDashboardMetrics()
   const isEmpty = metrics.fireNumber === null
   const { isEligible } = useExpenseTracker()
@@ -61,7 +61,7 @@ export function DashboardPage() {
 
   const isHouseholdMode = isHouseholdPlannerV1Enabled() && householdPlanType !== 'individual'
   const keySections = isHouseholdMode ? HOUSEHOLD_KEY_SECTIONS : INDIVIDUAL_KEY_SECTIONS
-  const uncustomized = keySections.filter((section) => !sections[section.id].isComplete)
+  const uncustomized = keySections.filter((section) => !sections[section.id]?.isComplete)
 
   return (
     <div className="space-y-8">

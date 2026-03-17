@@ -48,7 +48,7 @@ const PATHWAY_CARDS: { key: NonNullable<ActivePathway>; label: string; descripti
 
 export function StartPage() {
   usePageMeta({
-    title: 'SG FIRE Planner — Singapore Retirement Calculator',
+    title: 'SG FIRE Planner | Singapore Retirement Calculator',
     description: 'Free Singapore FIRE calculator with CPF, tax, Monte Carlo simulation, and 12 withdrawal strategies for retirement planning.',
     path: '/',
   })

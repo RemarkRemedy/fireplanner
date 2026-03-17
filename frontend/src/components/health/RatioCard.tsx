@@ -1,16 +1,11 @@
 import { type HealthRatioResult } from '@/lib/calculations/healthCheck'
+import { TRAFFIC_LIGHT_COLORS } from '@/lib/data/healthBenchmarks'
 import { Card, CardContent } from '@/components/ui/card'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { cn } from '@/lib/utils'
 
-const STATUS_COLORS = {
-  green: 'bg-emerald-500',
-  amber: 'bg-amber-500',
-  red: 'bg-red-500',
-} as const
-
 export function RatioCard({ ratio }: { ratio: HealthRatioResult }) {
-  const dotColor = ratio.status ? STATUS_COLORS[ratio.status] : 'bg-muted'
+  const dotColor = ratio.status ? TRAFFIC_LIGHT_COLORS[ratio.status] : 'bg-muted'
 
   return (
     <Card className="h-full flex flex-col justify-center overflow-visible">

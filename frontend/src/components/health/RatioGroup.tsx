@@ -2,17 +2,11 @@ import { Link } from 'react-router-dom'
 import { ExternalLink } from 'lucide-react'
 import { type MoneySenseArea } from '@/lib/data/moneySenseGuide'
 import { type HealthRatioResult } from '@/lib/calculations/healthCheck'
-import { type TrafficLight } from '@/lib/data/healthBenchmarks'
+import { type TrafficLight, TRAFFIC_LIGHT_COLORS } from '@/lib/data/healthBenchmarks'
 import { type InsuranceNeedsResult, type InsuranceNeedsInputs } from '@/lib/calculations/insuranceNeeds'
 import { cn } from '@/lib/utils'
 import { RatioCard } from './RatioCard'
 import { InsuranceNeedsPanel } from './InsuranceNeedsPanel'
-
-const STATUS_DOT = {
-  green: 'bg-emerald-500',
-  amber: 'bg-amber-500',
-  red: 'bg-red-500',
-} as const
 
 interface RatioGroupProps {
   area: MoneySenseArea
@@ -49,7 +43,7 @@ export function RatioGroup({ area, ratios, insuranceNeeds, insuranceInputs, show
       <div>
         <div className="flex items-center gap-2">
           {areaStatus && (
-            <div className={cn('h-2.5 w-2.5 rounded-full shrink-0', STATUS_DOT[areaStatus])} />
+            <div className={cn('h-2.5 w-2.5 rounded-full shrink-0', TRAFFIC_LIGHT_COLORS[areaStatus])} />
           )}
           <h2 className="text-lg font-semibold">{area.title}</h2>
         </div>

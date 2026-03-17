@@ -6,6 +6,13 @@
 
 export type TrafficLight = 'green' | 'amber' | 'red'
 
+/** Tailwind dot color classes for traffic-light status indicators. */
+export const TRAFFIC_LIGHT_COLORS: Record<TrafficLight, string> = {
+  green: 'bg-emerald-500',
+  amber: 'bg-amber-500',
+  red: 'bg-red-500',
+} as const
+
 export type RatioDirection = 'higher-is-better' | 'lower-is-better'
 
 export interface HealthRatioMeta {

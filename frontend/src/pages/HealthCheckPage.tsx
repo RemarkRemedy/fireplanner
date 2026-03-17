@@ -7,7 +7,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { RatioGroup } from '@/components/health/RatioGroup'
 import { HEALTH_RATIOS } from '@/lib/data/healthBenchmarks'
-import { MONEYSENSE_AREAS, MONEYSENSE_DISCLAIMER, getLifeStageGuide } from '@/lib/data/moneySenseGuide'
+import { MONEYSENSE_AREAS, MONEYSENSE_DISCLAIMER, getLifeStageGuides } from '@/lib/data/moneySenseGuide'
 import { cn } from '@/lib/utils'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { ExternalLink } from 'lucide-react'
@@ -20,7 +20,7 @@ function formatThreshold(value: number, unit: string): string {
 
 export function HealthCheckPage() {
   usePageMeta({
-    title: 'Health Check — SG FIRE Planner',
+    title: 'Health Check | SG FIRE Planner',
     description:
       'Check your financial health against MoneySense guidelines: emergency funds, protection, debt health, and investment ratios.',
     path: '/health-check',
@@ -48,7 +48,7 @@ export function HealthCheckPage() {
     return computeInsuranceNeeds(inputs.insuranceInputs)
   }, [inputs])
 
-  const lifeStageGuide = getLifeStageGuide(currentAge)
+  const lifeStageGuides = getLifeStageGuides(currentAge)
 
   return (
     <div className="space-y-8">
@@ -90,14 +90,14 @@ export function HealthCheckPage() {
             Enter income and expenses for {selectedAdult?.displayName ?? 'this adult'} to see the health assessment.
           </p>
         </div>
-      ) : (
+      ) : healthCheck ? (
         <>
           {/* 4 MoneySense areas */}
           {MONEYSENSE_AREAS.map((area, i) => (
             <RatioGroup
               key={area.id}
               area={area}
-              ratios={healthCheck!.ratios}
+              ratios={healthCheck.ratios}
               insuranceNeeds={insuranceNeeds}
               insuranceInputs={inputs?.insuranceInputs ?? null}
               showDivider={i > 0}
@@ -113,7 +113,7 @@ export function HealthCheckPage() {
               <AccordionContent>
                 <div className="space-y-4 pt-2">
                   {HEALTH_RATIOS.map((meta) => {
-                    const computed = healthCheck!.ratios.find((r) => r.id === meta.id)
+                    const computed = healthCheck.ratios.find((r) => r.id === meta.id)
                     return (
                       <div key={meta.id} className="border-b pb-3 last:border-b-0 last:pb-0">
                         <div className="flex items-center gap-2 mb-1">
@@ -183,23 +183,30 @@ export function HealthCheckPage() {
             </AccordionItem>
           </Accordion>
         </>
-      )}
+      ) : null}
 
-      {/* Life-stage guide link */}
-      {lifeStageGuide && (
+      {/* Life-stage guide links */}
+      {lifeStageGuides.length > 0 && (
         <div className="rounded-lg border bg-muted/30 p-4">
-          <p className="text-sm">
-            <span className="font-medium">MoneySense guide for your life stage:</span>{' '}
-            <a
-              href={lifeStageGuide.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline inline-flex items-center gap-1"
-            >
-              {lifeStageGuide.label} (PDF)
-              <ExternalLink className="h-3 w-3" />
-            </a>
+          <p className="text-sm font-medium mb-1">
+            {lifeStageGuides.length === 1
+              ? 'MoneySense guide for your life stage:'
+              : 'MoneySense guides for your life stage:'}
           </p>
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            {lifeStageGuides.map((guide) => (
+              <a
+                key={guide.label}
+                href={guide.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+              >
+                {guide.label} (PDF)
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            ))}
+          </div>
         </div>
       )}
 
