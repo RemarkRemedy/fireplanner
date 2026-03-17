@@ -31,6 +31,7 @@ import { useExpenseTracker } from '@/hooks/useExpenseTracker'
 import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { BucketVisualization } from '@/components/dashboard/BucketVisualization'
+import { AnnualReviewBanner } from '@/components/shared/AnnualReviewBanner'
 
 const INDIVIDUAL_KEY_SECTIONS: { id: SectionId; label: string }[] = [
   { id: 'section-personal', label: 'Personal Details' },
@@ -75,6 +76,8 @@ export function DashboardPage() {
           Your financial independence snapshot. All metrics are computed from your profile, income, and allocation settings.
         </p>
       </div>
+
+      <AnnualReviewBanner />
 
       <PlanCompleteness onOpenDrawer={setDrawerFlowId} />
 

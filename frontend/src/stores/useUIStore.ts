@@ -5,6 +5,7 @@ import type { HouseholdSectionToggles } from '@/lib/household/sectionVisibility'
 import type { SectionId, SectionOrderKey } from '@/lib/household/sectionOrder'
 
 import type { NudgeFlowId } from '@/lib/data/nudgeFlows'
+import { SNOOZE_DURATION_MS } from '@/lib/annualReview'
 
 type StatsPosition = 'bottom' | 'top'
 
@@ -39,6 +40,12 @@ interface UIState {
   dismissedSectionIntros: SectionId[]
   /** When true, the blended per-expense FIRE number overrides the dashboard primary FIRE number */
   useBlendedFireNumber: boolean
+  /** ISO date string of the last completed annual review, or null if never reviewed */
+  lastReviewDate: string | null
+  /** ISO date string: suppress the annual review banner until this date */
+  reviewSnoozeUntil: string | null
+  /** IDs of annual review checklist items the user has checked off in the current review */
+  reviewCheckedItems: string[]
 }
 
 interface UIActions {
@@ -53,6 +60,12 @@ interface UIActions {
   toggleSection: (sectionId: string) => void
   expandSection: (sectionId: string) => void
   setContextualNudgeActive: (active: boolean) => void
+  /** Toggle a review checklist item */
+  toggleReviewItem: (itemId: string) => void
+  /** Mark the annual review as complete (sets lastReviewDate, clears checklist) */
+  completeReview: () => void
+  /** Snooze the review banner for 30 days */
+  snoozeReview: () => void
 }
 
 const DEFAULT_UI: UIState = {
@@ -80,6 +93,9 @@ const DEFAULT_UI: UIState = {
   completedNudgeFlows: [] as NudgeFlowId[],
   dismissedSectionIntros: [] as SectionId[],
   useBlendedFireNumber: false,
+  lastReviewDate: null,
+  reviewSnoozeUntil: null,
+  reviewCheckedItems: [] as string[],
 }
 
 export const useUIStore = create<UIState & UIActions>()(
@@ -155,10 +171,30 @@ export const useUIStore = create<UIState & UIActions>()(
         })),
 
       setContextualNudgeActive: (active) => set({ contextualNudgeActive: active }),
+
+      toggleReviewItem: (itemId) =>
+        set((state) => {
+          const items = state.reviewCheckedItems.includes(itemId)
+            ? state.reviewCheckedItems.filter((id) => id !== itemId)
+            : [...state.reviewCheckedItems, itemId]
+          return { reviewCheckedItems: items }
+        }),
+
+      completeReview: () =>
+        set({
+          lastReviewDate: new Date().toISOString(),
+          reviewCheckedItems: [],
+          reviewSnoozeUntil: null,
+        }),
+
+      snoozeReview: () =>
+        set({
+          reviewSnoozeUntil: new Date(Date.now() + SNOOZE_DURATION_MS).toISOString(),
+        }),
     }),
     {
       name: 'fireplanner-ui',
-      version: 15,
+      version: 16,
       partialize: (state) => {
         // Exclude transient fields from persistence
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -224,6 +260,11 @@ export const useUIStore = create<UIState & UIActions>()(
         }
         if (version < 15) {
           state.useBlendedFireNumber = false
+        }
+        if (version < 16) {
+          state.lastReviewDate = null
+          state.reviewSnoozeUntil = null
+          state.reviewCheckedItems = []
         }
         return state
       },
