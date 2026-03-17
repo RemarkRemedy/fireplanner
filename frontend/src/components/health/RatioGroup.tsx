@@ -44,7 +44,7 @@ export function RatioGroup({ area, ratios, insuranceNeeds, insuranceInputs, show
   const areaStatus = deriveAreaStatus(filteredRatios)
 
   return (
-    <section className={cn('space-y-3', showDivider && 'border-t pt-6')}>
+    <section className={cn('space-y-4', showDivider && 'border-t pt-8')}>
       {/* Section header with status dot */}
       <div>
         <div className="flex items-center gap-2">
