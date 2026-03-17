@@ -189,6 +189,8 @@ export interface CompiledHouseholdPlan extends NormalizedHouseholdPlan {
   milestones: HouseholdMilestoneRow[]
   annualSavingsByYear: number[]
   postRetirementIncomeByYear: number[]
+  /** Guaranteed income floor by year offset (annuities, endowments, pensions). Excludes CPF LIFE. */
+  guaranteedIncomeByYear: number[]
   retirementExpenseBaseByYear: number[]
   householdWithdrawalNeedByYear: number[]
   portfolioAdjustments: HouseholdPortfolioAdjustment[]
@@ -964,6 +966,7 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
 
   const sharedIncomeByYear = zeroes(yearCount)
   const retiredSharedIncomeByYear = zeroes(yearCount)
+  const guaranteedIncomeByYear = zeroes(yearCount)
   const propertyIncomeByYear = zeroes(yearCount)
   const propertyExpenseByYear = zeroes(yearCount)
   const totalNetIncomeByYear = zeroes(yearCount)
@@ -1117,6 +1120,30 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
     }
   }
 
+  // Guaranteed income floor: per-adult owned streams (excludes CPF LIFE, which the
+  // per-adult projection already handles separately via sumPostRetirementIncome)
+  for (const incomeId of normalized.incomeOrder) {
+    const source = normalized.incomeById[incomeId]
+    if (!source.guaranteed || source.isActive === false || source.owner === 'shared') continue
+
+    const window = resolvedTiming.incomeById[source.id]
+    if (!window) continue
+    const ownerAdult = adultsByOwner[source.owner]
+    if (!ownerAdult) continue
+
+    const stream = convertToIncomeStream(source, window)
+    for (let yearOffset = 0; yearOffset < yearCount; yearOffset += 1) {
+      const amount = getStreamAmountAtAge(
+        stream,
+        ownerAdult.currentAge + yearOffset,
+        normalized.assumptions.returns.inflation
+      )
+      if (amount > 0) {
+        guaranteedIncomeByYear[yearOffset] += amount
+      }
+    }
+  }
+
   for (const incomeId of normalized.incomeOrder) {
     const source = normalized.incomeById[incomeId]
     if (source.owner !== 'shared') continue
@@ -1150,6 +1177,9 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
       sharedIncomeByYear[yearOffset] += amount
       if (source.streamType !== 'employment') {
         retiredSharedIncomeByYear[yearOffset] += amount
+      }
+      if (source.guaranteed) {
+        guaranteedIncomeByYear[yearOffset] += amount
       }
     }
   }
@@ -1356,6 +1386,7 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
     milestones: sortMilestones(milestones),
     annualSavingsByYear,
     postRetirementIncomeByYear,
+    guaranteedIncomeByYear,
     retirementExpenseBaseByYear,
     householdWithdrawalNeedByYear,
     portfolioAdjustments: sortAdjustments(portfolioAdjustments),
