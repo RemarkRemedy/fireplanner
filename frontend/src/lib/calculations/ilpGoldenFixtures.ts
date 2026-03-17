@@ -281,6 +281,13 @@ export type GoldenCoverageTag =
   | 'branch:fwd-invest-first-max-recurring-single-premium-charge'
   | 'branch:fwd-invest-first-max-zero-redemption-fee'
   | 'branch:fwd-invest-first-max-surrender-charge'
+  | 'branch:fwd-invest-first-summit-initial-account-charge'
+  | 'branch:fwd-invest-first-summit-accumulation-account-charge'
+  | 'branch:fwd-invest-first-summit-top-up-premium-charge'
+  | 'branch:fwd-invest-first-summit-premium-shortfall-charge'
+  | 'branch:fwd-invest-first-summit-premium-reduction-charge'
+  | 'branch:fwd-invest-first-summit-zero-redemption-fee'
+  | 'branch:fwd-invest-first-summit-surrender-charge'
   | 'branch:fwd-invest-goal-1-zero-single-premium-charge'
   | 'branch:fwd-invest-goal-1-initial-account-charge'
   | 'branch:fwd-invest-goal-1-plan-charge'
@@ -816,6 +823,8 @@ function clonePolicySeedIntoInput(
       premiumBaseConfig: rule.premiumBaseConfig
         ? {
             useHigherOfCommencementAndPrevailing: rule.premiumBaseConfig.useHigherOfCommencementAndPrevailing,
+            capRate: rule.premiumBaseConfig.capRate,
+            multiplierYearBasis: rule.premiumBaseConfig.multiplierYearBasis,
             multiplierSchedule: rule.premiumBaseConfig.multiplierSchedule.map((tier) => ({ ...tier })),
           }
         : undefined,
@@ -4088,6 +4097,90 @@ function fwdInvestFirstMaxStressPolicy(
     name: 'Golden FWD Invest First Max (SGD / MIP 10 OCF Stress)',
     currentPolicyYear: 6,
     monthsAlreadyPaid: 60,
+  })
+}
+
+function fwdInvestFirstSummitBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'fwd-invest-first-summit', 'sgd-mip-10', id, {
+    monthlyContribution: 1_000,
+    currentPolicyYear: 3,
+    monthsAlreadyPaid: 36,
+  })
+
+  return withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden FWD Invest First Summit (SGD / MIP 10)',
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: account.id === 'initial' ? 18_000 : 90_000,
+      })),
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  )
+}
+
+function fwdInvestFirstSummitBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return fwdInvestFirstSummitBasePolicy(snapshot, id, HSBC_BALANCED_FUNDS)
+}
+
+function fwdInvestFirstSummitEventHeavyPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return fwdInvestFirstSummitBasePolicy(snapshot, id, HSBC_BALANCED_FUNDS, {
+    name: 'Golden FWD Invest First Summit (SGD / MIP 10 Event Heavy)',
+    policyEvents: [
+      {
+        id: 'holiday-1',
+        type: 'premium-holiday',
+        startPolicyMonth: 37,
+        durationMonths: 6,
+      },
+      {
+        id: 'top-up-1',
+        type: 'top-up',
+        startPolicyMonth: 40,
+        durationMonths: 1,
+        amount: 5_000,
+      },
+      {
+        id: 'reduction-1',
+        type: 'regular-premium-reduction',
+        startPolicyMonth: 42,
+        durationMonths: 1,
+        amount: 2_400,
+      },
+      {
+        id: 'withdrawal-1',
+        type: 'partial-withdrawal',
+        startPolicyMonth: 44,
+        durationMonths: 1,
+        amount: 3_000,
+        accountId: 'accumulation',
+      },
+    ],
+  })
+}
+
+function fwdInvestFirstSummitStressPolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return fwdInvestFirstSummitBasePolicy(snapshot, id, HSBC_STRESS_FUNDS, {
+    name: 'Golden FWD Invest First Summit (SGD / MIP 10 OCF Stress)',
+    currentPolicyYear: 6,
+    monthsAlreadyPaid: 72,
   })
 }
 
@@ -12407,6 +12500,58 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'FWD Invest First Max alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'fwd-invest-first-summit',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:fwd-invest-first-summit-initial-account-charge',
+      'branch:fwd-invest-first-summit-accumulation-account-charge',
+      'branch:fwd-invest-first-summit-surrender-charge',
+    ],
+    description: 'FWD Invest First Summit baseline scenario proving the supported initial-account charge, capped accumulation-account charge, and surrender-charge corridor.',
+    integrityChecks: [
+      {
+        description: 'baseline policy incurs positive cumulative fees under the supported account-charge corridors',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
+      },
+      {
+        description: 'baseline policy exposes a positive surrender-charge rate during the MIP corridor',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.eecRate > 0),
+      },
+    ],
+  },
+  {
+    productId: 'fwd-invest-first-summit',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:fwd-invest-first-summit-top-up-premium-charge',
+      'branch:fwd-invest-first-summit-premium-shortfall-charge',
+      'branch:fwd-invest-first-summit-premium-reduction-charge',
+      'branch:fwd-invest-first-summit-zero-redemption-fee',
+    ],
+    description: 'FWD Invest First Summit event-heavy scenario covering charged top-up allocation, premium-shortfall charging, premium reduction charging, and zero-redemption-fee partial withdrawal on the supported corridor.',
+    integrityChecks: [
+      {
+        description: 'event-heavy policy records a withdrawal and a non-steady annual contribution year from the holiday/reduction/top-up mix',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) =>
+          row.annualWithdrawals > 0 && row.annualContribution !== artifact.policyInput.monthlyContribution * 12),
+      },
+    ],
+  },
+  {
+    productId: 'fwd-invest-first-summit',
+    variantId: 'sgd-mip-10',
+    scenarioId: 'ocf-stress',
+    fixtureClass: 'supported',
+    coverageTags: ['ocf-stress'],
+    description: 'FWD Invest First Summit alternate-fund high-OCF stress scenario.',
+  },
+  {
     productId: 'fwd-invest-goal-1',
     variantId: 'sgd-open-ended',
     scenarioId: 'baseline',
@@ -15218,6 +15363,15 @@ function buildPolicyForDefinition(
   }
   if (definition.productId === 'fwd-invest-first-max' && definition.scenarioId === 'ocf-stress') {
     return fwdInvestFirstMaxStressPolicy(snapshot, id)
+  }
+  if (definition.productId === 'fwd-invest-first-summit' && definition.scenarioId === 'baseline') {
+    return fwdInvestFirstSummitBaselinePolicy(snapshot, id)
+  }
+  if (definition.productId === 'fwd-invest-first-summit' && definition.scenarioId === 'event-heavy') {
+    return fwdInvestFirstSummitEventHeavyPolicy(snapshot, id)
+  }
+  if (definition.productId === 'fwd-invest-first-summit' && definition.scenarioId === 'ocf-stress') {
+    return fwdInvestFirstSummitStressPolicy(snapshot, id)
   }
   if (definition.productId === 'fwd-invest-goal-1' && definition.scenarioId === 'baseline') {
     return fwdInvestGoal1BaselinePolicy(snapshot, definition.variantId as 'sgd-open-ended' | 'usd-open-ended', id)

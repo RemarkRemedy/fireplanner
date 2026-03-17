@@ -70,6 +70,29 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       ],
       sourceRefs: [page5],
     },
+    {
+      id: 'accumulation-account-charge',
+      label: 'Accumulation Account Charge',
+      basis: 'premium-base-mip-multiplier-capped-account-value',
+      yearBasis: 'policy-year',
+      rate: 0.015,
+      amount: 0,
+      appliesTo: ['accumulation'],
+      premiumBaseConfig: {
+        useHigherOfCommencementAndPrevailing: true,
+        capRate: 0.007,
+        multiplierYearBasis: 'policy-year',
+        multiplierSchedule: [
+          { startPolicyYear: 1, endPolicyYear: null, mode: 'fixed', multiplier: 10 },
+        ],
+      },
+      activeWindow: 'policy-term',
+      notes: [
+        'Models the published accumulation-account charge as the lower of 1.50% p.a. of accumulation-account value or 0.70% p.a. of the 10-year premium base at issue.',
+        'The cap remains anchored to the annualised regular premium committed at the effective date, matching the published formula.',
+      ],
+      sourceRefs: [page6],
+    },
   ]
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
@@ -179,12 +202,10 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     eventChargeRules,
     eecTable: [...SURRENDER_CHARGE_SCHEDULE],
     warnings: [
-      'FWD Invest First Summit is cataloged as a partial modeled subset in V1. The parser captures the SGD 10-year base-layer corridor only: initial-account charge, top-up premium charge, premium shortfall charge, premium reduction charge, zero redemption fee on the executable withdrawal path, and the 10-year surrender-charge schedule.',
-      'The accumulation-account charge remains informational only because the published lower-of capped formula cannot yet be expressed exactly in the current fee kernel.',
+      'FWD Invest First Summit is cataloged as a supported V1 corridor. The parser captures the SGD 10-year base-layer corridor only: initial-account charge, capped accumulation-account charge, top-up premium charge, premium shortfall charge, premium reduction charge, zero redemption fee on the executable withdrawal path, and the 10-year surrender-charge schedule.',
       'Booster Bonus, Loyalty Bonus, Perpetual Bonus, Support Benefit logic, multi-life protection structure, and broader policy-flexibility behavior remain outside the current engine.',
     ],
     unsupportedItems: [
-      'Accumulation-account charge remains informational only because the published lower-of account-value versus premium-term cap cannot be represented exactly in V1.',
       'Booster Bonus, Loyalty Bonus, and Perpetual Bonus remain informational only.',
       'Support Benefit waiver/refund logic, premium-shortfall recovery state, and outstanding-charge accumulation remain informational only.',
       'Death benefit, multi-life last-survivor handling, and change-of-person-insured behavior remain informational only.',
@@ -204,11 +225,12 @@ export function parseFwdInvestFirstSummit(context: ParseContext): IlpCatalogProd
     sourceChecksumSha256: context.sourceChecksumSha256,
     sourceDocumentType: 'summary',
     sourceClass: 'summary',
-    supportStatus: 'partial',
+    supportStatus: 'supported',
     structureStatus: 'structured',
-    economicsStatus: 'partial-modeled-subset',
+    economicsStatus: 'supported',
     modeledEconomics: [
       'branch:fwd-invest-first-summit-initial-account-charge',
+      'branch:fwd-invest-first-summit-accumulation-account-charge',
       'branch:fwd-invest-first-summit-top-up-premium-charge',
       'branch:fwd-invest-first-summit-premium-shortfall-charge',
       'branch:fwd-invest-first-summit-premium-reduction-charge',
@@ -216,7 +238,6 @@ export function parseFwdInvestFirstSummit(context: ParseContext): IlpCatalogProd
       'branch:fwd-invest-first-summit-surrender-charge',
     ],
     metadataOnlyBehaviors: [
-      'fwd-invest-first-summit-accumulation-account-charge-capped',
       'fwd-invest-first-summit-booster-bonus',
       'fwd-invest-first-summit-loyalty-bonus',
       'fwd-invest-first-summit-perpetual-bonus',
@@ -230,8 +251,8 @@ export function parseFwdInvestFirstSummit(context: ParseContext): IlpCatalogProd
       'fwd-invest-first-summit-fund-management-charge',
     ],
     warnings: [
-      'FWD Invest First Summit is cataloged as a partial modeled subset in V1. The current parser covers the SGD 10-year base-layer corridor: initial-account charge, top-up premium charge, premium shortfall charge, premium reduction charge, zero redemption fee on the executable withdrawal path, and the 10-year surrender-charge schedule.',
-      'The capped accumulation-account charge, bonuses, Support Benefit behavior, and multi-life protection structure remain outside the current engine.',
+      'FWD Invest First Summit is cataloged as a supported V1 corridor. The current parser covers the SGD 10-year base-layer corridor: initial-account charge, capped accumulation-account charge, top-up premium charge, premium shortfall charge, premium reduction charge, zero redemption fee on the executable withdrawal path, and the 10-year surrender-charge schedule.',
+      'Bonuses, Support Benefit behavior, and multi-life protection structure remain outside the current engine.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

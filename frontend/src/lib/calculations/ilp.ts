@@ -214,6 +214,7 @@ export interface IlpPremiumBaseMultiplierTier {
 
 export interface IlpPremiumBaseChargeConfig {
   useHigherOfCommencementAndPrevailing: boolean
+  capRate?: number
   multiplierYearBasis?: 'policy-year' | 'premium-year'
   multiplierSchedule: IlpPremiumBaseMultiplierTier[]
 }
@@ -232,7 +233,7 @@ export interface IlpCumulativePaidPremiumChargeConfig {
 export interface IlpChargeRule {
   id: string
   label: string
-  basis: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier' | 'cumulative-paid-regular-premium' | 'initial-single-premium' | 'initial-single-premium-base'
+  basis: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier' | 'premium-base-mip-multiplier-capped-account-value' | 'cumulative-paid-regular-premium' | 'initial-single-premium' | 'initial-single-premium-base'
   activeWindow: 'during-mip' | 'after-mip' | 'policy-term'
   yearBasis?: 'policy-year' | 'premium-year'
   requiresPremiumsPaidUpToDate?: boolean
@@ -3021,6 +3022,39 @@ function computePremiumBaseMultiplierCharge(
   return total
 }
 
+function computePremiumBaseMultiplierCappedAccountValueCharge(
+  normalized: IlpNormalizedPolicyInput,
+  context: IlpCashflowYearContext,
+  rule: IlpChargeRule,
+  appliesTo: IlpAccount[],
+  openBalances: Map<string, number>,
+): number {
+  if (!rule.premiumBaseConfig) {
+    return 0
+  }
+
+  const multiplier = resolvePremiumBaseMultiplier(rule, context)
+  const accountValueRate = resolveChargeRate(rule, context)
+  const capRate = rule.premiumBaseConfig.capRate ?? 0
+
+  if (multiplier <= 0 || accountValueRate <= 0 || capRate <= 0) {
+    return 0
+  }
+
+  const committedAnnualPremium = normalized.input.monthlyContribution * 12
+  const prevailingAnnualPremium = getScheduledAnnualPremiumAtMonth(normalized, context.range.startPolicyMonth)
+  const premiumBase = rule.premiumBaseConfig.useHigherOfCommencementAndPrevailing
+    ? Math.max(committedAnnualPremium, prevailingAnnualPremium)
+    : prevailingAnnualPremium
+  const accountValueCharge = appliesTo.reduce(
+    (sum, account) => sum + ((openBalances.get(account.id) ?? 0) * accountValueRate),
+    0,
+  )
+  const cappedPremiumBaseCharge = premiumBase * multiplier * capRate
+
+  return Math.min(accountValueCharge, cappedPremiumBaseCharge)
+}
+
 function computeCumulativePaidRegularPremiumCharge(
   normalized: IlpNormalizedPolicyInput,
   context: IlpCashflowYearContext,
@@ -3263,6 +3297,27 @@ function computeAdditionalChargeByAccount(
 
       case 'premium-base-mip-multiplier': {
         const totalCharge = computePremiumBaseMultiplierCharge(normalized, context, rule)
+        const allocations = applyChargeAllocationsWithFallback(
+          totalCharge,
+          rule.allocation,
+          appliesTo,
+          fallbackAppliesTo,
+          openBalances,
+        )
+        for (const [accountId, amount] of allocations.entries()) {
+          charges.set(accountId, (charges.get(accountId) ?? 0) + amount)
+        }
+        break
+      }
+
+      case 'premium-base-mip-multiplier-capped-account-value': {
+        const totalCharge = computePremiumBaseMultiplierCappedAccountValueCharge(
+          normalized,
+          context,
+          rule,
+          appliesTo,
+          openBalances,
+        )
         const allocations = applyChargeAllocationsWithFallback(
           totalCharge,
           rule.allocation,

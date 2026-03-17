@@ -66,7 +66,7 @@ export interface IlpTemplateBonus {
 export interface IlpTemplateFeeRule {
   id: string
   label: string
-  basis?: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier' | 'cumulative-paid-regular-premium' | 'initial-single-premium' | 'initial-single-premium-base'
+  basis?: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier' | 'premium-base-mip-multiplier-capped-account-value' | 'cumulative-paid-regular-premium' | 'initial-single-premium' | 'initial-single-premium-base'
   yearBasis?: 'policy-year' | 'premium-year'
   requiresPremiumsPaidUpToDate?: boolean
   rate: number | null
@@ -118,6 +118,7 @@ export interface IlpTemplateFeeRule {
   }
   premiumBaseConfig?: {
     useHigherOfCommencementAndPrevailing: boolean
+    capRate?: number
     multiplierYearBasis?: 'policy-year' | 'premium-year'
     multiplierSchedule: Array<{
       startPolicyYear: number

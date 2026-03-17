@@ -2089,7 +2089,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('SGD 10-year base-layer corridor'))).toBe(true)
   })
 
-  it('maps FWD Invest First Summit into a finite-MIP multi-account partial seed', () => {
+  it('maps FWD Invest First Summit into a finite-MIP multi-account supported seed', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'fwd-invest-first-summit')
     expect(product).toBeDefined()
@@ -2099,10 +2099,9 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.name).toBe('FWD Invest First Summit (SGD / MIP 10)')
-    expect(seed.catalogSource?.supportStatus).toBe('partial')
-    expect(seed.catalogSource?.economicsStatus).toBe('partial-modeled-subset')
-    expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-first-summit-premium-shortfall-charge')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('fwd-invest-first-summit-accumulation-account-charge-capped')
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-first-summit-accumulation-account-charge')
     expect(seed.mipLength).toBe(10)
     expect(seed.accounts).toEqual([
       expect.objectContaining({
@@ -2121,6 +2120,19 @@ describe('templateVariantToPolicySeed', () => {
         rate: 0.0395,
         activeWindow: 'during-mip',
       }),
+      expect.objectContaining({
+        id: 'accumulation-account-charge',
+        basis: 'premium-base-mip-multiplier-capped-account-value',
+        rate: 0.015,
+        premiumBaseConfig: expect.objectContaining({
+          capRate: 0.007,
+          multiplierYearBasis: 'policy-year',
+          useHigherOfCommencementAndPrevailing: true,
+          multiplierSchedule: [
+            { startPolicyYear: 1, endPolicyYear: null, mode: 'fixed', multiplier: 10 },
+          ],
+        }),
+      }),
     ])
     expect(seed.eventChargeRules).toEqual([
       expect.objectContaining({ id: 'top-up-premium-charge', trigger: 'top-up', rate: 0.05 }),
@@ -2136,7 +2148,7 @@ describe('templateVariantToPolicySeed', () => {
       expect.objectContaining({ id: 'partial-withdrawal-charge', trigger: 'partial-withdrawal', rate: 0 }),
     ])
     expect(seed.eecTable).toEqual([1, 1, 0.99, 0.99, 0.99, 0.81, 0.65, 0.5, 0.31, 0.09])
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('accumulation-account charge remains informational only'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('capped accumulation-account charge'))).toBe(true)
   })
 
   it('maps FWD Invest Flexi VII into a finite-MIP multi-account supported seed', () => {

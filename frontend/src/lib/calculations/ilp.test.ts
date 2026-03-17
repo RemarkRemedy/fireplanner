@@ -5107,6 +5107,104 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[4], 'regular').grossFee).toBeCloseTo(324, 2)
   })
 
+  it('caps premium-base charges at the lower of account-value and premium-base corridor amounts', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 1,
+      monthsAlreadyPaid: 12,
+      monthlyContribution: 1_000,
+      currency: 'SGD',
+      mipLength: 10,
+      postMipYears: 1,
+      funds: [ZERO_RETURN_FUND],
+      accounts: [
+        {
+          id: 'accumulation',
+          label: 'Accumulation Units Account',
+          feeRate: 0,
+          currentValue: 100_000,
+          contributionShare: 1,
+          subjectToEec: false,
+          postMipFeeRate: null,
+        },
+      ],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'capped-accumulation-charge',
+          label: 'Accumulation Account Charge',
+          basis: 'premium-base-mip-multiplier-capped-account-value',
+          activeWindow: 'policy-term',
+          yearBasis: 'policy-year',
+          appliesTo: ['accumulation'],
+          rate: 0.015,
+          amount: 0,
+          allocation: 'equal-split',
+          premiumBaseConfig: {
+            useHigherOfCommencementAndPrevailing: true,
+            capRate: 0.007,
+            multiplierYearBasis: 'policy-year',
+            multiplierSchedule: [
+              { startPolicyYear: 1, endPolicyYear: null, mode: 'fixed', multiplier: 10 },
+            ],
+          },
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'accumulation').grossFee).toBeCloseTo(840, 2)
+  })
+
+  it('uses the lower account-value side when the capped premium-base corridor is higher', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 1,
+      monthsAlreadyPaid: 12,
+      monthlyContribution: 1_000,
+      currency: 'SGD',
+      mipLength: 10,
+      postMipYears: 1,
+      funds: [ZERO_RETURN_FUND],
+      accounts: [
+        {
+          id: 'accumulation',
+          label: 'Accumulation Units Account',
+          feeRate: 0,
+          currentValue: 40_000,
+          contributionShare: 1,
+          subjectToEec: false,
+          postMipFeeRate: null,
+        },
+      ],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'capped-accumulation-charge',
+          label: 'Accumulation Account Charge',
+          basis: 'premium-base-mip-multiplier-capped-account-value',
+          activeWindow: 'policy-term',
+          yearBasis: 'policy-year',
+          appliesTo: ['accumulation'],
+          rate: 0.015,
+          amount: 0,
+          allocation: 'equal-split',
+          premiumBaseConfig: {
+            useHigherOfCommencementAndPrevailing: true,
+            capRate: 0.007,
+            multiplierYearBasis: 'policy-year',
+            multiplierSchedule: [
+              { startPolicyYear: 1, endPolicyYear: null, mode: 'fixed', multiplier: 10 },
+            ],
+          },
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'accumulation').grossFee).toBeCloseTo(600, 2)
+  })
+
   it('freezes premium-year charge bands during premium holidays and resumes when premiums restart', () => {
     const policy = makeDefaultPolicy({
       currentPolicyYear: 5,

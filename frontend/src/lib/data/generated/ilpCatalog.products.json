@@ -5349,11 +5349,12 @@
     "sourceChecksumSha256": "acaaa1659b6d663ab70fea7817da00f1c5d7212d1840bc78108b12c4cf4442a6",
     "sourceDocumentType": "summary",
     "sourceClass": "summary",
-    "supportStatus": "partial",
+    "supportStatus": "supported",
     "structureStatus": "structured",
-    "economicsStatus": "partial-modeled-subset",
+    "economicsStatus": "supported",
     "modeledEconomics": [
       "branch:fwd-invest-first-summit-initial-account-charge",
+      "branch:fwd-invest-first-summit-accumulation-account-charge",
       "branch:fwd-invest-first-summit-top-up-premium-charge",
       "branch:fwd-invest-first-summit-premium-shortfall-charge",
       "branch:fwd-invest-first-summit-premium-reduction-charge",
@@ -5361,7 +5362,6 @@
       "branch:fwd-invest-first-summit-surrender-charge"
     ],
     "metadataOnlyBehaviors": [
-      "fwd-invest-first-summit-accumulation-account-charge-capped",
       "fwd-invest-first-summit-booster-bonus",
       "fwd-invest-first-summit-loyalty-bonus",
       "fwd-invest-first-summit-perpetual-bonus",
@@ -5375,8 +5375,8 @@
       "fwd-invest-first-summit-fund-management-charge"
     ],
     "warnings": [
-      "FWD Invest First Summit is cataloged as a partial modeled subset in V1. The current parser covers the SGD 10-year base-layer corridor: initial-account charge, top-up premium charge, premium shortfall charge, premium reduction charge, zero redemption fee on the executable withdrawal path, and the 10-year surrender-charge schedule.",
-      "The capped accumulation-account charge, bonuses, Support Benefit behavior, and multi-life protection structure remain outside the current engine."
+      "FWD Invest First Summit is cataloged as a supported V1 corridor. The current parser covers the SGD 10-year base-layer corridor: initial-account charge, capped accumulation-account charge, top-up premium charge, premium shortfall charge, premium reduction charge, zero redemption fee on the executable withdrawal path, and the 10-year surrender-charge schedule.",
+      "Bonuses, Support Benefit behavior, and multi-life protection structure remain outside the current engine."
     ],
     "archived": false,
     "variants": [
@@ -5497,6 +5497,42 @@
                 "page": 5,
                 "section": "Initial account charge",
                 "excerpt": "Celebrate living fwd.com.sg Your benefits Support You can apply for a waiver of the premium shortfall charge and/or premium reduction charge at Benefit any time from Policy Year 3 onwards, if you have stopped paying or h"
+              }
+            ]
+          },
+          {
+            "id": "accumulation-account-charge",
+            "label": "Accumulation Account Charge",
+            "basis": "premium-base-mip-multiplier-capped-account-value",
+            "yearBasis": "policy-year",
+            "rate": 0.015,
+            "amount": 0,
+            "premiumBaseConfig": {
+              "useHigherOfCommencementAndPrevailing": true,
+              "capRate": 0.007,
+              "multiplierYearBasis": "policy-year",
+              "multiplierSchedule": [
+                {
+                  "startPolicyYear": 1,
+                  "endPolicyYear": null,
+                  "mode": "fixed",
+                  "multiplier": 10
+                }
+              ]
+            },
+            "appliesTo": [
+              "accumulation"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published accumulation-account charge as the lower of 1.50% p.a. of accumulation-account value or 0.70% p.a. of the 10-year premium base at issue.",
+              "The cap remains anchored to the annualised regular premium committed at the effective date, matching the published formula."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Accumulation account charge and top-up premium charge",
+                "excerpt": "Celebrate living fwd.com.sg 3. How much premiums do I have to pay? How do I pay for the premiums? Regular Premium Regular Premiums for FWD Invest First Summit are payable throughout the Premium Payment Term, which ranges"
               }
             ]
           }
@@ -5645,12 +5681,10 @@
           0.09
         ],
         "warnings": [
-          "FWD Invest First Summit is cataloged as a partial modeled subset in V1. The parser captures the SGD 10-year base-layer corridor only: initial-account charge, top-up premium charge, premium shortfall charge, premium reduction charge, zero redemption fee on the executable withdrawal path, and the 10-year surrender-charge schedule.",
-          "The accumulation-account charge remains informational only because the published lower-of capped formula cannot yet be expressed exactly in the current fee kernel.",
+          "FWD Invest First Summit is cataloged as a supported V1 corridor. The parser captures the SGD 10-year base-layer corridor only: initial-account charge, capped accumulation-account charge, top-up premium charge, premium shortfall charge, premium reduction charge, zero redemption fee on the executable withdrawal path, and the 10-year surrender-charge schedule.",
           "Booster Bonus, Loyalty Bonus, Perpetual Bonus, Support Benefit logic, multi-life protection structure, and broader policy-flexibility behavior remain outside the current engine."
         ],
         "unsupportedItems": [
-          "Accumulation-account charge remains informational only because the published lower-of account-value versus premium-term cap cannot be represented exactly in V1.",
           "Booster Bonus, Loyalty Bonus, and Perpetual Bonus remain informational only.",
           "Support Benefit waiver/refund logic, premium-shortfall recovery state, and outstanding-charge accumulation remain informational only.",
           "Death benefit, multi-life last-survivor handling, and change-of-person-insured behavior remain informational only.",

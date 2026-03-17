@@ -283,7 +283,7 @@ export const ilpBonusRuleSchema = z.object({
 export const ilpChargeRuleSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
-  basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier', 'cumulative-paid-regular-premium', 'initial-single-premium', 'initial-single-premium-base']),
+  basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier', 'premium-base-mip-multiplier-capped-account-value', 'cumulative-paid-regular-premium', 'initial-single-premium', 'initial-single-premium-base']),
   activeWindow: z.enum(['during-mip', 'after-mip', 'policy-term']),
   yearBasis: z.enum(['policy-year', 'premium-year']).optional(),
   requiresPremiumsPaidUpToDate: z.boolean().optional(),
@@ -353,6 +353,7 @@ export const ilpChargeRuleSchema = z.object({
   }).optional(),
   premiumBaseConfig: z.object({
     useHigherOfCommencementAndPrevailing: z.boolean(),
+    capRate: z.number().min(0).max(1).optional(),
     multiplierYearBasis: z.enum(['policy-year', 'premium-year']).optional(),
     multiplierSchedule: z.array(z.object({
       startPolicyYear: z.number().int().min(1).max(100),
@@ -400,10 +401,10 @@ export const ilpChargeRuleSchema = z.object({
     }
   })
 
-  if ((rule.rateSchedule?.length ?? 0) > 0 && !(rule.basis === 'account-value' || rule.basis === 'annual-contribution' || rule.basis === 'cumulative-paid-regular-premium' || rule.basis === 'premium-base-mip-multiplier' || rule.basis === 'initial-single-premium-base')) {
+  if ((rule.rateSchedule?.length ?? 0) > 0 && !(rule.basis === 'account-value' || rule.basis === 'annual-contribution' || rule.basis === 'cumulative-paid-regular-premium' || rule.basis === 'premium-base-mip-multiplier' || rule.basis === 'premium-base-mip-multiplier-capped-account-value' || rule.basis === 'initial-single-premium-base')) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'Charge rule rate schedules can only be used with account-value, annual-contribution, cumulative-paid-regular-premium, premium-base-mip-multiplier, or initial-single-premium-base basis',
+      message: 'Charge rule rate schedules can only be used with account-value, annual-contribution, cumulative-paid-regular-premium, premium-base-mip-multiplier, premium-base-mip-multiplier-capped-account-value, or initial-single-premium-base basis',
       path: ['rateSchedule'],
     })
   }
@@ -478,7 +479,10 @@ export const ilpChargeRuleSchema = z.object({
     }
   })
 
-  if (rule.basis === 'premium-base-mip-multiplier' && !rule.premiumBaseConfig) {
+  if (
+    (rule.basis === 'premium-base-mip-multiplier' || rule.basis === 'premium-base-mip-multiplier-capped-account-value')
+    && !rule.premiumBaseConfig
+  ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: 'Premium-base charge rules must include a premium-base configuration',
@@ -486,11 +490,31 @@ export const ilpChargeRuleSchema = z.object({
     })
   }
 
-  if (rule.basis !== 'premium-base-mip-multiplier' && rule.premiumBaseConfig) {
+  if (
+    rule.basis !== 'premium-base-mip-multiplier'
+    && rule.basis !== 'premium-base-mip-multiplier-capped-account-value'
+    && rule.premiumBaseConfig
+  ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: 'Premium-base configuration can only be used on premium-base-mip-multiplier charge rules',
       path: ['premiumBaseConfig'],
+    })
+  }
+
+  if (rule.basis === 'premium-base-mip-multiplier-capped-account-value' && rule.premiumBaseConfig?.capRate == null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Capped premium-base charge rules must include premiumBaseConfig.capRate',
+      path: ['premiumBaseConfig', 'capRate'],
+    })
+  }
+
+  if (rule.basis !== 'premium-base-mip-multiplier-capped-account-value' && rule.premiumBaseConfig?.capRate != null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'premiumBaseConfig.capRate can only be used on premium-base-mip-multiplier-capped-account-value rules',
+      path: ['premiumBaseConfig', 'capRate'],
     })
   }
 

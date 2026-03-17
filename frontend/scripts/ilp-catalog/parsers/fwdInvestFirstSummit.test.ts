@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseFwdInvestFirstSummit', () => {
-  it('builds a valid partial FWD Invest First Summit product from the source PDF', async () => {
+  it('builds a valid supported FWD Invest First Summit product from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseFwdInvestFirstSummit({
       document,
@@ -23,9 +23,10 @@ describe('parseFwdInvestFirstSummit', () => {
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.id).toBe('fwd-invest-first-summit')
     expect(product.productName).toBe('FWD Invest First Summit')
-    expect(product.supportStatus).toBe('partial')
+    expect(product.supportStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:fwd-invest-first-summit-initial-account-charge',
+      'branch:fwd-invest-first-summit-accumulation-account-charge',
       'branch:fwd-invest-first-summit-top-up-premium-charge',
       'branch:fwd-invest-first-summit-premium-shortfall-charge',
       'branch:fwd-invest-first-summit-premium-reduction-charge',
@@ -41,6 +42,19 @@ describe('parseFwdInvestFirstSummit', () => {
         id: 'initial-account-charge',
         basis: 'account-value',
         rate: 0.0395,
+      }),
+      expect.objectContaining({
+        id: 'accumulation-account-charge',
+        basis: 'premium-base-mip-multiplier-capped-account-value',
+        rate: 0.015,
+        premiumBaseConfig: expect.objectContaining({
+          capRate: 0.007,
+          multiplierYearBasis: 'policy-year',
+          useHigherOfCommencementAndPrevailing: true,
+          multiplierSchedule: [
+            { startPolicyYear: 1, endPolicyYear: null, mode: 'fixed', multiplier: 10 },
+          ],
+        }),
       }),
     ])
     expect(variant?.eventChargeRules).toEqual([

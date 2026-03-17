@@ -115,6 +115,7 @@ function mapFeeRuleBasis(
   switch (basis) {
     case 'assurance-sum-at-risk':
     case 'premium-base-mip-multiplier':
+    case 'premium-base-mip-multiplier-capped-account-value':
     case 'cumulative-paid-regular-premium':
     case 'initial-single-premium':
     case 'initial-single-premium-base':
@@ -192,6 +193,7 @@ function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] 
         premiumBaseConfig: rule.premiumBaseConfig
             ? {
               useHigherOfCommencementAndPrevailing: rule.premiumBaseConfig.useHigherOfCommencementAndPrevailing,
+              capRate: rule.premiumBaseConfig.capRate,
               multiplierYearBasis: rule.premiumBaseConfig.multiplierYearBasis,
               multiplierSchedule: rule.premiumBaseConfig.multiplierSchedule.map((tier) => ({ ...tier })),
             }
