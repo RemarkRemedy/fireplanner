@@ -28,7 +28,7 @@ describe('parseTokioMarineGoClassicSecure', () => {
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.modeledEconomics).toContain('kernel:tokio-locked-in-protection-state')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-goclassic-secure-dividend-payout-threshold-and-record-date-instructions')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-goclassic-secure-dividend-payout-threshold-and-record-date-instructions')
 
     expect(product.variants).toHaveLength(2)
 
@@ -74,6 +74,9 @@ describe('parseTokioMarineGoClassicSecure', () => {
         { startPolicyYear: 1, endPolicyYear: 25, accountIds: ['accumulation'] },
         { startPolicyYear: 26, endPolicyYear: null, accountIds: ['initial', 'accumulation'] },
       ],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -88,6 +91,9 @@ describe('parseTokioMarineGoClassicSecure', () => {
       0.77, 0.74, 0.71, 0.68, 0.64, 0.6, 0.56, 0.51, 0.46, 0.41,
       0.36, 0.31, 0.26, 0.21, 0.15,
     ])
+    expect(product.warnings).toContain(
+      'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
+    )
 
     const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-25-advanced-death')
     expect(advancedVariant).toBeDefined()

@@ -5564,7 +5564,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goclassic-loyalty-bonus-adjustment-factor')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goclassic-dividend-payout-threshold-and-record-date-instructions')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goclassic-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.accounts).toEqual([
       expect.objectContaining({
         id: 'initial',
@@ -5604,6 +5604,9 @@ describe('templateVariantToPolicySeed', () => {
         { startPolicyYear: 1, endPolicyYear: 25, accountIds: ['accumulation'] },
         { startPolicyYear: 26, endPolicyYear: null, accountIds: ['initial', 'accumulation'] },
       ],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -5615,6 +5618,7 @@ describe('templateVariantToPolicySeed', () => {
     })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('premium-payment-term-25 (Basic Death) corridor only'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
   })
 
   it('maps Tokio Marine #goClassic advanced-death into a supported seed with accrued Tokio MPC disable-on-failure inputs', () => {
@@ -5664,7 +5668,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goclassic-secure-dividend-payout-threshold-and-record-date-instructions')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goclassic-secure-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.accounts).toEqual([
       expect.objectContaining({
         id: 'initial',
@@ -5704,6 +5708,9 @@ describe('templateVariantToPolicySeed', () => {
         { startPolicyYear: 1, endPolicyYear: 25, accountIds: ['accumulation'] },
         { startPolicyYear: 26, endPolicyYear: null, accountIds: ['initial', 'accumulation'] },
       ],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -5715,6 +5722,7 @@ describe('templateVariantToPolicySeed', () => {
     })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Basic Death'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
   })
 
   it('maps Tokio Marine #goClassic Secure advanced death into a supported seed with locked-in-value MPC', () => {
@@ -6035,6 +6043,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-atlas-loyalty-bonus-adjustment-factor')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-atlas-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.accounts).toEqual([
       expect.objectContaining({
         id: 'initial',
@@ -6067,7 +6076,27 @@ describe('templateVariantToPolicySeed', () => {
       expect.objectContaining({ id: 'top-up-premium-charge', appliesTo: ['accumulation'], rate: 0.05 }),
       expect.objectContaining({ id: 'recurring-single-premium-charge', appliesTo: ['accumulation'], rate: 0.05 }),
     ])
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['initial', 'accumulation'],
+      cashPayoutWindows: [
+        { startPolicyYear: 1, endPolicyYear: 25, accountIds: ['accumulation'] },
+        { startPolicyYear: 26, endPolicyYear: null, accountIds: ['initial', 'accumulation'] },
+      ],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('premium-payment-term-25 (Basic Death) corridor only'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
   })
 
   it('maps Tokio Marine TM Atlas Wealth advanced-death into a supported seed with disable-on-failure Tokio MPC inputs', () => {
