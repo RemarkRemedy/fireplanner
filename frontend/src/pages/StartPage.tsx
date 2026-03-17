@@ -24,7 +24,7 @@ import { usePageMeta } from '@/hooks/usePageMeta'
 import { LandingEmailSection } from '@/components/email/LandingEmailSection'
 import { QuickEstimateForm } from '@/components/shared/QuickEstimateForm'
 import { DEMO_SCENARIO_DRAFT, DEMO_PLAN_TYPE } from '@/lib/data/demoScenario'
-import { setDemoActive } from '@/components/shared/DemoBadge'
+import { setDemoActive, clearDemoActive } from '@/components/shared/DemoBadge'
 import { applySetupDraft } from '@/lib/household/setupDraft'
 import { saveScenario } from '@/lib/scenarios'
 import type { SectionId } from '@/lib/household/sectionOrder'
@@ -97,8 +97,8 @@ export function StartPage() {
         description: createElement('div', { className: 'flex flex-col gap-2 mt-1' },
           createElement('p', { className: 'text-sm' }, 'This is sample data. Start your own plan when ready.'),
           createElement('div', { className: 'flex gap-2' },
-            createElement('button', { className: 'inline-flex items-center rounded-md bg-white border border-amber-400 px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-50', onClick: () => { toast.dismiss(); window.location.href = '/setup' } }, 'Start your own plan'),
-            createElement('button', { className: 'inline-flex items-center rounded-md px-3 py-1.5 text-xs font-medium text-amber-800 underline hover:text-amber-950', onClick: () => { toast.dismiss(); window.location.href = '/' } }, 'Back to start'),
+            createElement('button', { className: 'inline-flex items-center rounded-md bg-white border border-amber-400 px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-50', onClick: () => { toast.dismiss(); clearDemoActive(); const s = localStorage.getItem('fireplanner-scenarios'); localStorage.clear(); if (s) localStorage.setItem('fireplanner-scenarios', s); window.location.href = '/setup' } }, 'Start your own plan'),
+            createElement('button', { className: 'inline-flex items-center rounded-md px-3 py-1.5 text-xs font-medium text-amber-800 underline hover:text-amber-950', onClick: () => { toast.dismiss(); clearDemoActive(); const s = localStorage.getItem('fireplanner-scenarios'); localStorage.clear(); if (s) localStorage.setItem('fireplanner-scenarios', s); window.location.href = '/' } }, 'Back to start'),
           ),
         ),
         duration: Infinity,
