@@ -445,8 +445,7 @@ export function parseTokioMarineWealthFlexiLink510(context: ParseContext): IlpCa
     ],
     metadataOnlyBehaviors: [
       'tokio-wealth-flexi-link-5-10-involuntary-unemployment-waiver',
-      'tokio-wealth-flexi-link-5-10-benefit-payout-handling',
-      'tokio-wealth-flexi-link-5-10-life-benefit-rider',
+      'tokio-wealth-flexi-link-5-10-advanced-death-benefit-and-eligible-rider-handling',
       'tokio-wealth-flexi-link-5-10-credit-card-charge',
       'tokio-wealth-flexi-link-5-10-life-replacement-option',
     ],
