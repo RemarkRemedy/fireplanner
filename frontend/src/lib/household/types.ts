@@ -157,6 +157,8 @@ export interface IncomeSource {
   realisticPhases?: CareerPhase[]
   promotionJumps?: PromotionJump[]
   legacySourceId?: string
+  /** True = guaranteed income floor (annuity, endowment, pension). False/undefined = variable. */
+  guaranteed?: boolean
 }
 
 export interface ExpenseItem {
@@ -270,6 +272,8 @@ export interface HouseholdAssumptions {
   }
   cashReserve: HouseholdCashReserveSettings
   retirementMitigation: RetirementMitigationConfig
+  /** When one partner passes, shared expenses multiply by this ratio. Default 0.75 (75%). */
+  survivorExpenseRatio?: number
 }
 
 export interface LegacyMutationCoupling {

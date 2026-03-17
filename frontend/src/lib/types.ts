@@ -1053,6 +1053,45 @@ export interface FinancialGoal {
 }
 
 // ============================================================
+// Per-Expense SWR (Advisory Gap Feature 1)
+// ============================================================
+
+export type ExpenseFlexibility = 'essential' | 'fixed-term' | 'flexible'
+
+export interface RetirementExpenseItem {
+  id: string
+  label: string
+  annualAmount: number           // today's dollars (real terms)
+  flexibility: ExpenseFlexibility
+  swr: number                    // e.g. 0.0325, 0.04, 0.05
+  endAge?: number                // null = lifetime, else stops at this age
+  category?: string              // optional grouping
+}
+
+// ============================================================
+// Bucket Allocation (Advisory Gap Feature 5)
+// ============================================================
+
+export interface TimeBucket {
+  id: string
+  label: string                    // e.g. "Years 1-5"
+  startYear: number                // 0
+  endYear: number                  // 5
+  targetAllocation: {
+    equities: number               // 0.0 to 1.0
+    bonds: number
+    cash: number
+  }
+  currentAmount: number            // user-entered current allocation to this bucket
+}
+
+export interface BucketConfig {
+  enabled: boolean
+  buckets: TimeBucket[]
+  incomeFloorAnnual: number        // from guaranteed income streams, or manual entry
+}
+
+// ============================================================
 // Validation
 // ============================================================
 
