@@ -208,35 +208,14 @@ export function StartPage() {
         <p className="text-muted-foreground mt-2 text-base">
           Plan your path to Financial Independence with Singapore-specific calculations.
         </p>
-        <p className="mt-2 text-sm text-muted-foreground">Set up in under 3 minutes.</p>
-      </div>
-
-      {/* Returning user guidance */}
-      {isReturningUser && (
-        <div className="flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 p-4">
-          <Info className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
-          <div className="text-sm text-amber-800 dark:text-amber-200">
-            <p>
-              Want to switch your path or mode? Go ahead, your existing inputs are safe.
-              To see your results, head to the{' '}
-              <Link to="/dashboard" className="font-medium underline hover:no-underline">
-                Dashboard
-              </Link>.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Demo + Quick estimate for new users */}
-      {!isReturningUser && (
-        <>
-          {/* Demo link — subtle, before calculator */}
-          <div className="flex justify-center">
-            {hasExistingData ? (
+        <p className="mt-2 text-sm text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span>Set up in under 3 minutes.</span>
+          {!isReturningUser && (
+            hasExistingData ? (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    <Play className="mr-1 h-3 w-3 inline" />
+                  <button className="text-muted-foreground hover:text-foreground transition-colors inline-flex items-center">
+                    <Play className="mr-1 h-3 w-3" />
                     Or explore a demo first
                   </button>
                 </AlertDialogTrigger>
@@ -255,14 +234,34 @@ export function StartPage() {
                 </AlertDialogContent>
               </AlertDialog>
             ) : (
-              <button onClick={loadDemo} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                <Play className="mr-1 h-3 w-3 inline" />
+              <button onClick={loadDemo} className="text-muted-foreground hover:text-foreground transition-colors inline-flex items-center">
+                <Play className="mr-1 h-3 w-3" />
                 Or explore a demo first
               </button>
-            )}
-          </div>
+            )
+          )}
+        </p>
+      </div>
 
-          {/* Quick estimate calculator */}
+      {/* Returning user guidance */}
+      {isReturningUser && (
+        <div className="flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 p-4">
+          <Info className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+          <div className="text-sm text-amber-800 dark:text-amber-200">
+            <p>
+              Want to switch your path or mode? Go ahead, your existing inputs are safe.
+              To see your results, head to the{' '}
+              <Link to="/dashboard" className="font-medium underline hover:no-underline">
+                Dashboard
+              </Link>.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Quick estimate for new users */}
+      {!isReturningUser && (
+        <>
           <Card>
             <CardHeader className="pb-2">
               <p className="text-sm font-medium text-muted-foreground">Quick estimate (10 seconds)</p>
