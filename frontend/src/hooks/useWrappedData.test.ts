@@ -2,6 +2,51 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { useWrappedData } from './useWrappedData'
 import { DEFAULT_ANNUAL_EXPENSES } from '@/lib/data/setupDefaults'
+import type { PlanningAdult, HouseholdPlan } from '@/lib/household/types'
+
+// --- Mock couple detection and per-adult FIRE age ---
+
+let mockPlan: HouseholdPlan = {} as HouseholdPlan
+const mockCoupleDetection = {
+  isCoupleMode: false,
+  selfAdult: undefined as PlanningAdult | undefined,
+  partnerAdult: undefined as PlanningAdult | undefined,
+}
+
+vi.mock('@/stores/useHouseholdPlanStore', () => ({
+  useHouseholdPlanStore: (selector: (s: { plan: HouseholdPlan }) => unknown) =>
+    selector({ plan: mockPlan }),
+}))
+
+vi.mock('@/stores/useAllocationStore', () => ({
+  useAllocationStore: (selector: (s: Record<string, unknown>) => unknown) =>
+    selector({
+      currentWeights: [0.6, 0.4],
+      targetWeights: [0.6, 0.4],
+      returnOverrides: [null, null],
+      glidePathConfig: { enabled: false },
+      validationErrors: {},
+    }),
+}))
+
+vi.mock('@/stores/useSimulationStore', () => ({
+  useSimulationStore: (selector: (s: Record<string, unknown>) => unknown) =>
+    selector({
+      selectedStrategy: 'constant-dollar',
+      strategyParams: {},
+      withdrawalBasis: 'total',
+    }),
+}))
+
+vi.mock('@/lib/wrapped/coupleData', () => ({
+  detectCoupleMode: () => mockCoupleDetection,
+  computePerAdultNetWorth: () => 0,
+  computePerAdultSavings: () => 0,
+}))
+
+vi.mock('@/lib/household/computePerAdultFireAge', () => ({
+  computePerAdultFireAge: () => 50,
+}))
 
 // --- Mocks for upstream hooks ---
 
@@ -286,5 +331,136 @@ describe('useWrappedData', () => {
     expect(hints.hasCustomIncome).toBe(false)
     expect(hints.hasCpfData).toBe(false)
     expect(hints.hasProperty).toBe(false)
+  })
+
+  describe('couple mode', () => {
+    const makeSelfAdult = (): PlanningAdult => ({
+      id: 'self-1',
+      owner: 'self',
+      displayName: 'Alice',
+      currentAge: 30,
+      retirementAge: 55,
+      lifeExpectancy: 85,
+      lifeStage: 'pre-fire',
+      maritalStatus: 'married',
+      residencyStatus: 'citizen',
+      prMonths: 0,
+      annualIncome: 100_000,
+      annualExpenses: 40_000,
+      liquidNetWorth: 200_000,
+      parentSupportEnabled: false,
+      lifeEventsEnabled: false,
+      healthcare: {} as PlanningAdult['healthcare'],
+      cpf: { balances: { oa: 50_000, sa: 30_000, ma: 20_000, ra: 0 } } as PlanningAdult['cpf'],
+      srs: {} as PlanningAdult['srs'],
+      taxProfile: {} as PlanningAdult['taxProfile'],
+      lifeEvents: [],
+      cashSavings: 0,
+      nonMortgageDebtTotal: 0,
+      nonMortgageDebtMonthlyPayment: 0,
+      insuranceDeathCoverage: 0,
+      insuranceCICoverage: 0,
+      insuranceDisabilityMonthly: 0,
+      funeralCosts: 0,
+      ciRecoveryYears: 0,
+    })
+
+    const makePartnerAdult = (): PlanningAdult => ({
+      ...makeSelfAdult(),
+      id: 'partner-1',
+      owner: 'partner',
+      displayName: 'Bob',
+      currentAge: 28,
+      annualIncome: 80_000,
+      annualExpenses: 35_000,
+      liquidNetWorth: 150_000,
+      cpf: { balances: { oa: 40_000, sa: 25_000, ma: 15_000, ra: 0 } } as PlanningAdult['cpf'],
+    })
+
+    beforeEach(() => {
+      // Reset to individual mode
+      mockCoupleDetection.isCoupleMode = false
+      mockCoupleDetection.selfAdult = undefined
+      mockCoupleDetection.partnerAdult = undefined
+    })
+
+    it('single-adult plan returns mode "individual" and couple undefined', () => {
+      mockCoupleDetection.isCoupleMode = false
+      const { result } = renderHook(() => useWrappedData())
+      expect(result.current.mode).toBe('individual')
+      expect(result.current.couple).toBeUndefined()
+    })
+
+    it('two-adult plan returns mode "couple" with both names and ages', () => {
+      const self = makeSelfAdult()
+      const partner = makePartnerAdult()
+      mockCoupleDetection.isCoupleMode = true
+      mockCoupleDetection.selfAdult = self
+      mockCoupleDetection.partnerAdult = partner
+
+      const { result } = renderHook(() => useWrappedData())
+      expect(result.current.mode).toBe('couple')
+      expect(result.current.couple).toBeDefined()
+      expect(result.current.couple!.names).toEqual(['Alice', 'Bob'])
+      expect(result.current.couple!.ages).toEqual([30, 28])
+    })
+
+    it('individual mode returns 8 cards, couple mode returns 9', () => {
+      // Individual
+      mockCoupleDetection.isCoupleMode = false
+      const { result: indResult } = renderHook(() => useWrappedData())
+      expect(indResult.current.cards).toHaveLength(8)
+
+      // Couple
+      const self = makeSelfAdult()
+      const partner = makePartnerAdult()
+      mockCoupleDetection.isCoupleMode = true
+      mockCoupleDetection.selfAdult = self
+      mockCoupleDetection.partnerAdult = partner
+      const { result: coupleResult } = renderHook(() => useWrappedData())
+      expect(coupleResult.current.cards).toHaveLength(9)
+      expect(coupleResult.current.cards.map((c) => c.key)).toContain('savingsPower')
+    })
+
+    it('couple mode computes per-person net worth from liquid + CPF balances', () => {
+      const self = makeSelfAdult()
+      const partner = makePartnerAdult()
+      mockCoupleDetection.isCoupleMode = true
+      mockCoupleDetection.selfAdult = self
+      mockCoupleDetection.partnerAdult = partner
+
+      const { result } = renderHook(() => useWrappedData())
+      const couple = result.current.couple!
+      // self: 200K liquid + 50K OA + 30K SA + 20K MA = 300K
+      expect(couple.perPersonNW[0]).toBe(300_000)
+      // partner: 150K liquid + 40K OA + 25K SA + 15K MA = 230K
+      expect(couple.perPersonNW[1]).toBe(230_000)
+    })
+
+    it('couple mode computes savings and ageDelta', () => {
+      const self = makeSelfAdult()
+      const partner = makePartnerAdult()
+      mockCoupleDetection.isCoupleMode = true
+      mockCoupleDetection.selfAdult = self
+      mockCoupleDetection.partnerAdult = partner
+
+      const { result } = renderHook(() => useWrappedData())
+      const couple = result.current.couple!
+      // self savings: 100K - 40K = 60K; partner: 80K - 35K = 45K
+      expect(couple.perPersonSavings).toEqual([60_000, 45_000])
+      expect(couple.combinedSavings).toBe(105_000)
+      expect(couple.ageDelta).toBe(2) // 30 - 28
+    })
+
+    it('couple mode overrides intro.displayName to combined names', () => {
+      const self = makeSelfAdult()
+      const partner = makePartnerAdult()
+      mockCoupleDetection.isCoupleMode = true
+      mockCoupleDetection.selfAdult = self
+      mockCoupleDetection.partnerAdult = partner
+
+      const { result } = renderHook(() => useWrappedData())
+      expect(result.current.intro.displayName).toBe('Alice & Bob')
+    })
   })
 })

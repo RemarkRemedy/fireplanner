@@ -3,7 +3,12 @@ import { useDashboardMetrics } from '@/hooks/useDashboardMetrics'
 import { useDashboardCharts } from '@/hooks/useDashboardCharts'
 import { useFireCalculations } from '@/hooks/useFireCalculations'
 import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { useAllocationStore } from '@/stores/useAllocationStore'
+import { useSimulationStore } from '@/stores/useSimulationStore'
 import { buildCardSequence } from '@/lib/wrapped/gradients'
+import { detectCoupleMode } from '@/lib/wrapped/coupleData'
+import { computePerAdultFireAge } from '@/lib/household/computePerAdultFireAge'
 import { DEFAULT_ANNUAL_EXPENSES } from '@/lib/data/setupDefaults'
 import type { WrappedCardConfig } from '@/lib/wrapped/gradients'
 
@@ -63,8 +68,19 @@ interface RefinementHints {
   hasProperty: boolean
 }
 
+export interface CoupleData {
+  names: [string, string]
+  ages: [number, number]
+  perPersonNW: [number, number]
+  perPersonSavings: [number, number]
+  perPersonFireAge: [number | null, number | null]
+  combinedSavings: number
+  ageDelta: number
+}
+
 export interface WrappedData {
   ready: boolean
+  mode: 'individual' | 'couple'
   intro: WrappedIntro
   netWorth: WrappedNetWorth
   fireNumber: WrappedFireNumber
@@ -75,6 +91,7 @@ export interface WrappedData {
   summary: WrappedSummary
   cards: WrappedCardConfig[]
   refinementHints: RefinementHints
+  couple?: CoupleData
 }
 
 /**
@@ -87,6 +104,21 @@ export function useWrappedData(): WrappedData {
   const { accumulationData } = useDashboardCharts()
   const { metrics } = useFireCalculations()
   const { profile } = useHouseholdRuntimeInputs()
+  const plan = useHouseholdPlanStore((s) => s.plan)
+  const allocation = useAllocationStore((s) => ({
+    currentWeights: s.currentWeights,
+    targetWeights: s.targetWeights,
+    returnOverrides: s.returnOverrides,
+    glidePathConfig: s.glidePathConfig,
+    validationErrors: s.validationErrors,
+  }))
+  const simulation = useSimulationStore((s) => ({
+    selectedStrategy: s.selectedStrategy,
+    strategyParams: s.strategyParams,
+    withdrawalBasis: s.withdrawalBasis,
+  }))
+
+  const { isCoupleMode, selfAdult, partnerAdult } = detectCoupleMode(plan.adults)
 
   return useMemo(() => {
     const liquid = profile.liquidNetWorth
@@ -104,7 +136,8 @@ export function useWrappedData(): WrappedData {
       }
     }
 
-    const cards = buildCardSequence()
+    const mode = isCoupleMode ? 'couple' : 'individual'
+    const cards = buildCardSequence(mode)
 
     // Refinement hints: detect if user has gone beyond defaults
     const hasCpfData = cpf > 0
@@ -118,11 +151,52 @@ export function useWrappedData(): WrappedData {
       ? Math.round(rawFireAge)
       : null
 
+    // Couple data computation
+    let couple: CoupleData | undefined = undefined
+    if (isCoupleMode && selfAdult && partnerAdult) {
+      const selfNW = selfAdult.liquidNetWorth +
+        (selfAdult.cpf?.balances?.oa ?? 0) +
+        (selfAdult.cpf?.balances?.sa ?? 0) +
+        (selfAdult.cpf?.balances?.ma ?? 0)
+      const partnerNW = partnerAdult.liquidNetWorth +
+        (partnerAdult.cpf?.balances?.oa ?? 0) +
+        (partnerAdult.cpf?.balances?.sa ?? 0) +
+        (partnerAdult.cpf?.balances?.ma ?? 0)
+
+      const selfFireAge = computePerAdultFireAge(plan, selfAdult.id, allocation, simulation)
+      const partnerFireAge = computePerAdultFireAge(plan, partnerAdult.id, allocation, simulation)
+
+      const selfSavings = selfAdult.annualIncome - selfAdult.annualExpenses
+      const partnerSavings = partnerAdult.annualIncome - partnerAdult.annualExpenses
+      const combinedSavings = selfSavings + partnerSavings
+
+      couple = {
+        names: [selfAdult.displayName, partnerAdult.displayName],
+        ages: [selfAdult.currentAge, partnerAdult.currentAge],
+        perPersonNW: [selfNW, partnerNW],
+        perPersonSavings: [selfSavings, partnerSavings],
+        perPersonFireAge: [selfFireAge, partnerFireAge],
+        combinedSavings,
+        ageDelta: selfAdult.currentAge - partnerAdult.currentAge,
+      }
+    }
+
+    // Override display name for couple mode
+    const displayName = isCoupleMode && selfAdult && partnerAdult
+      ? `${selfAdult.displayName} & ${partnerAdult.displayName}`
+      : 'there'
+
+    // Override retirement age for couple mode: when both are free
+    const coupleRetirementAge = couple?.perPersonFireAge[0] != null && couple?.perPersonFireAge[1] != null
+      ? Math.max(couple.perPersonFireAge[0], couple.perPersonFireAge[1])
+      : undefined
+
     return {
       ready: true,
+      mode,
       intro: {
         currentAge: profile.currentAge,
-        displayName: 'there', // No user account system; intentional placeholder
+        displayName,
       },
       netWorth: { total: totalNW, liquid, cpf, property },
       fireNumber: { value: dashMetrics.fireNumber ?? 0 },
@@ -135,7 +209,7 @@ export function useWrappedData(): WrappedData {
       },
       trajectory: {
         chartData: accumulationData,
-        retirementAge: fireAge ?? profile.retirementAge,
+        retirementAge: coupleRetirementAge ?? fireAge ?? profile.retirementAge,
         hasFireAge: fireAge != null,
       },
       peak: { value: peakValue, age: peakAge },
@@ -155,6 +229,7 @@ export function useWrappedData(): WrappedData {
         hasCpfData,
         hasProperty,
       },
+      couple,
     }
-  }, [dashMetrics, accumulationData, metrics, profile])
+  }, [dashMetrics, accumulationData, metrics, profile, isCoupleMode, selfAdult, partnerAdult, plan, allocation, simulation])
 }
