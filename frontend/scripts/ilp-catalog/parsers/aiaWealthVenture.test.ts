@@ -123,6 +123,7 @@ describe('parseAiaWealthVenture', () => {
     ])
     expect(product.metadataOnlyBehaviors).toContain('aia-wealth-venture-welcome-bonus')
     expect(product.metadataOnlyBehaviors).toContain('aia-wealth-venture-performance-bonus')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-wealth-venture-reinstatement')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-wealth-venture-dividend-cashout-threshold')
 
     expect(product.variants).toHaveLength(1)
@@ -183,7 +184,7 @@ describe('parseAiaWealthVenture', () => {
     })
     expect(variant.eecTable).toEqual([0.7, 0.65, 0.6, 0.55, 0.5, 0.4, 0.3, 0.2, 0.1, 0.05, 0])
     expect(product.warnings).toContain(
-      'AIA Wealth Venture is cataloged as a supported V1 product for the regular-pay 8-year corridor. The parser captures zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge, the premium-holiday charge schedule, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and reinvest-default distribution support, while bonuses, protection benefits, secondary-insured options, and fund-level charges remain informational only.',
+      'AIA Wealth Venture is cataloged as a supported V1 product for the regular-pay 8-year corridor. The parser captures zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge, the premium-holiday charge schedule with full-outstanding-premium repayment resumption, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and reinvest-default distribution support, while bonuses, protection benefits, secondary-insured options, fund-level charges, and underwriting or approval handling around premium resumption remain informational only.',
     )
   })
 

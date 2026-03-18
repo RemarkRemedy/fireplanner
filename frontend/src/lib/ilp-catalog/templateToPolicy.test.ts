@@ -463,6 +463,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-wealth-venture-regular-supplementary-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-wealth-venture-fund-switching')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-wealth-venture-reinstatement')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-wealth-venture-dividend-cashout-threshold')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
@@ -518,6 +519,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-platinum-wealth-venture-2-regular-supplementary-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-wealth-venture-2-fund-switching')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-venture-2-reinstatement')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-venture-2-dividend-cashout-threshold')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([

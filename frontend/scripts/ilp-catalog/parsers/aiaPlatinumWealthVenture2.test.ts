@@ -131,6 +131,7 @@ describe('parseAiaPlatinumWealthVenture2', () => {
     ])
     expect(product.metadataOnlyBehaviors).toContain('aia-platinum-wealth-venture-2-welcome-bonus')
     expect(product.metadataOnlyBehaviors).toContain('aia-platinum-wealth-venture-2-performance-bonus')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-venture-2-reinstatement')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-venture-2-dividend-cashout-threshold')
 
     expect(product.variants).toHaveLength(1)
@@ -191,7 +192,7 @@ describe('parseAiaPlatinumWealthVenture2', () => {
     })
     expect(variant.eecTable).toEqual([0.6, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0])
     expect(product.warnings).toContain(
-      'AIA Platinum Wealth Venture 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge for the first 7 policy years, the premium-holiday charge schedule, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and reinvest-default distribution support, while bonuses, protection benefits, secondary-insured options, and fund-level charges remain informational only.',
+      'AIA Platinum Wealth Venture 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge for the first 7 policy years, the premium-holiday charge schedule with full-outstanding-premium repayment resumption, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and reinvest-default distribution support, while bonuses, protection benefits, secondary-insured options, fund-level charges, and underwriting or approval handling around premium resumption remain informational only.',
     )
   })
 
