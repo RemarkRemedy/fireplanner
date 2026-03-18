@@ -948,6 +948,16 @@ function isLapseActiveAtMonth(
   ))
 }
 
+function isLapseActiveForEntireRange(
+  normalized: Pick<IlpNormalizedPolicyInput, 'events'>,
+  range: IlpProjectionYearRange,
+): boolean {
+  return Array.from(
+    { length: range.endPolicyMonth - range.startPolicyMonth + 1 },
+    (_, index) => range.startPolicyMonth + index,
+  ).every((policyMonth) => isLapseActiveAtMonth(normalized, policyMonth))
+}
+
 function buildNormalizedRegularPremiumState(
   normalized: Pick<IlpNormalizedPolicyInput, 'input' | 'events' | 'contributionRoutesByPhase'>,
 ): IlpNormalizedPolicyInput['regularPremiums'] {
@@ -4150,7 +4160,8 @@ export function projectIlpPolicy(
     const policyYear = input.currentPolicyYear + year
     const isPostMip = isPostMipPolicyYear(input, policyYear)
     const context = buildCashflowYearContext(normalized, year)
-    const policyState: IlpYearRow['policyState'] = isPolicyLapsed ? 'lapsed' : 'in-force'
+    const hasExplicitLapseForYear = isLapseActiveForEntireRange(normalized, context.range)
+    const policyState: IlpYearRow['policyState'] = (isPolicyLapsed || hasExplicitLapseForYear) ? 'lapsed' : 'in-force'
     const scheduledContributionForYear = (isPostMip && !hasAfterMipContributionRules(input))
       ? 0
       : Math.max(0, annualContribution - getRegularPremiumReductionForYear(normalized, context.range))

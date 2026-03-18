@@ -422,8 +422,138 @@ describe('projectIlpPolicy', () => {
     const result = projectIlpPolicy(policy, 'mid')
 
     expect(result.rows.map((row) => row.policyYear)).toEqual([2, 3, 4])
+    expect(result.rows.map((row) => row.policyState)).toEqual(['lapsed', 'in-force', 'in-force'])
+    expect(result.rows.map((row) => row.annualContribution)).toEqual([0, 1_200, 1_200])
     expect(result.rows.map((row) => row.scheduledPayoutState)).toEqual(['lapsed', 'target-income', 'target-income'])
     expect(result.rows.map((row) => row.annualWithdrawals)).toEqual([0, 500, 500])
+  })
+
+  it('keeps annual policy state in-force for a partial-year lapse while suppressing overlapping scheduled payouts', () => {
+    const policy = makeOpenEndedPolicy({
+      scheduledPayoutSupport: {
+        mode: 'manual-assumption',
+        accountId: 'policy',
+        source: 'policy-redemption',
+        payoutStateSupport: {
+          defaultState: 'secure-income',
+          suppressWhileLapsed: true,
+          stateAfterReinstatement: 'target-income',
+        },
+      },
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        source: 'manual-assumption',
+        accountId: 'policy',
+        startPolicyYear: 3,
+        durationYears: 2,
+        annualPayoutAmount: 500,
+      },
+      policyEvents: [
+        {
+          id: 'lapse-mid-year-2',
+          type: 'lapse',
+          startPolicyMonth: 25,
+          durationMonths: 6,
+        },
+      ],
+      postMipYears: 3,
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows.map((row) => row.policyState)).toEqual(['in-force', 'in-force', 'in-force'])
+    expect(result.rows.map((row) => row.annualContribution)).toEqual([1_200, 1_200, 1_200])
+    expect(result.rows.map((row) => row.scheduledPayoutState)).toEqual(['inactive', 'lapsed', 'target-income'])
+    expect(result.rows.map((row) => row.annualWithdrawals)).toEqual([0, 0, 500])
+  })
+
+  it('does not mark an annual row lapsed when an explicit lapse covers only eleven months', () => {
+    const policy = makeOpenEndedPolicy({
+      scheduledPayoutSupport: {
+        mode: 'manual-assumption',
+        accountId: 'policy',
+        source: 'policy-redemption',
+        payoutStateSupport: {
+          defaultState: 'secure-income',
+          suppressWhileLapsed: true,
+          stateAfterReinstatement: 'target-income',
+        },
+      },
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        source: 'manual-assumption',
+        accountId: 'policy',
+        startPolicyYear: 2,
+        durationYears: 3,
+        annualPayoutAmount: 500,
+      },
+      policyEvents: [
+        {
+          id: 'lapse-eleven-months',
+          type: 'lapse',
+          startPolicyMonth: 13,
+          durationMonths: 11,
+        },
+      ],
+      postMipYears: 3,
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows.map((row) => row.policyState)).toEqual(['in-force', 'in-force', 'in-force'])
+    expect(result.rows.map((row) => row.annualContribution)).toEqual([1_200, 1_200, 1_200])
+    expect(result.rows.map((row) => row.scheduledPayoutState)).toEqual(['lapsed', 'target-income', 'target-income'])
+    expect(result.rows.map((row) => row.annualWithdrawals)).toEqual([0, 500, 500])
+  })
+
+  it('suppresses cash distributions while the policy is explicitly lapsed and resumes after reinstatement', () => {
+    const policy = makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      postMipYears: 3,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 10_000,
+          contributionShare: 1,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      distributionSupport: {
+        mode: 'manual-assumption',
+        accountIds: ['policy'],
+        defaultMode: 'reinvest',
+        cashPayoutAllowedDuringMip: true,
+        cashPayoutAllowedAfterMip: true,
+        source: 'distribution-paying-funds',
+      },
+      distributionAssumption: {
+        mode: 'cash-payout',
+        source: 'manual-assumption',
+        annualYieldRate: 0.1,
+      },
+      policyEvents: [
+        {
+          id: 'lapse-year-2',
+          type: 'lapse',
+          startPolicyMonth: 13,
+          durationMonths: 12,
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows.map((row) => row.policyState)).toEqual(['lapsed', 'in-force', 'in-force'])
+    expect(result.rows.map((row) => row.annualWithdrawals)).toEqual([0, 1_000, 900])
   })
 
   it('switches secure-income scheduled payouts to target-income after premium-holiday activation', () => {
