@@ -26,6 +26,7 @@ describe('parseTokioMarineGoClassicSecure', () => {
     expect(product.supportStatus).toBe('supported')
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
+    expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.modeledEconomics).toContain('kernel:tokio-locked-in-protection-state')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-goclassic-secure-dividend-payout-threshold-and-record-date-instructions')
@@ -126,6 +127,12 @@ describe('parseTokioMarineGoClassicSecure', () => {
         'Appendix A Surrender Charge',
         'Appendix A Monthly Protection Charge Rates',
       ]),
+    )
+    expect(product.warnings).toContain(
+      'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published current death-benefit estimate, Locked-in Policy Value floor, policy-year-3 MPC settlement of years 1-2 accruals, and irreversible downgrade after failed deduction through the locked-in-value protection-state kernel.',
+    )
+    expect(advancedVariant?.unsupportedItems).toContain(
+      'Full death-benefit payout handling beyond the modeled current death-benefit estimate, change-of-life-assured administration, and the exact published monthiversary ratchet timing remain outside the current engine boundary.',
     )
   }, 30_000)
 })

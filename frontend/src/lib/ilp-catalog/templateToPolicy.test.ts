@@ -6248,6 +6248,7 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:tokio-locked-in-protection-state')
     expect(seed.chargeRules).toEqual([
       expect.objectContaining({
@@ -6273,7 +6274,7 @@ describe('templateVariantToPolicySeed', () => {
         requiresManualInput: true,
       }),
     ])
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('Locked-in Policy Value floor'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('current death-benefit estimate, Locked-in Policy Value floor'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current locked-in value manually'))).toBe(true)
   })
 

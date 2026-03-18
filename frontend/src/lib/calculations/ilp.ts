@@ -2973,6 +2973,29 @@ export function computeCurrentDeathBenefitEstimate(
           : Math.max(supportedEstimate, estimate)
         break
       }
+      case 'tokio-mpc-locked-in-policy-value': {
+        if (profile.currentLockedInPolicyValue == null) {
+          continue
+        }
+
+        if (rule.activeWindow === 'during-mip' && !hasFiniteMip(input)) {
+          continue
+        }
+
+        const isWithinLockedInCorridor = rule.activeWindow === 'policy-term'
+          ? (rule.assuranceConfig.maxAgeNextBirthday == null
+            || profile.currentAgeNextBirthday <= rule.assuranceConfig.maxAgeNextBirthday)
+          : (hasFiniteMip(input) && input.currentPolicyYear <= input.mipLength)
+
+        const estimate = isWithinLockedInCorridor
+          ? Math.max(totalCurrentValue, Math.max(0, profile.currentLockedInPolicyValue))
+          : totalCurrentValue
+
+        supportedEstimate = supportedEstimate == null
+          ? estimate
+          : Math.max(supportedEstimate, estimate)
+        break
+      }
       default:
         break
     }

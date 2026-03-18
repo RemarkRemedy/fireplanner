@@ -272,12 +272,12 @@ function buildVariant(
         ? 'This partial template models the SGD / premium-payment-term-25 (Advanced Death) corridor only.'
         : 'This partial template models the SGD / premium-payment-term-25 (Basic Death) corridor only.',
       isAdvancedDeath
-        ? 'This partial template models 24-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, the published 25-year surrender charge on the Initial Units Account, the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface, and the published Advanced Death Monthly Protection Charge through the locked-in-value protection-state kernel.'
+        ? 'This partial template models 24-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, the published 25-year surrender charge on the Initial Units Account, the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface, and the published current death-benefit estimate plus Advanced Death Monthly Protection Charge through the locked-in-value protection-state kernel.'
         : 'This partial template models 24-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, the published 25-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
     ],
     unsupportedItems: [
       ...(isAdvancedDeath
-        ? ['Full death-benefit payout handling, change-of-life-assured administration, and the exact published monthiversary ratchet timing remain outside the current engine boundary.']
+        ? ['Full death-benefit payout handling beyond the modeled current death-benefit estimate, change-of-life-assured administration, and the exact published monthiversary ratchet timing remain outside the current engine boundary.']
         : ['Locked-in Policy Value, Monthly Protection Charge, and the related Advanced Death behavior remain metadata-only on the Basic Death corridor.']),
       'Loyalty Bonus and Additional Bonus remain metadata-only because their annual qualification and adjustment-factor formulas need stateful bonus tracking beyond the current engine.',
       'Premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.',
@@ -318,6 +318,7 @@ export function parseTokioMarineGoClassicSecure(context: ParseContext): IlpCatal
       'tokio-top-up-premium-charge',
       'tokio-recurring-single-premium-charge',
       'tokio-initial-account-surrender-charge',
+      'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
       'kernel:tokio-locked-in-protection-state',
     ],
@@ -333,7 +334,7 @@ export function parseTokioMarineGoClassicSecure(context: ParseContext): IlpCatal
     warnings: [
       '#goClassic Secure is cataloged as a supported V1 product. The parser captures split SGD / premium-payment-term-25 Basic Death and Advanced Death corridors with executable regular-premium routing, published initial bonus tiers, fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the 25-year surrender charge on the Initial Units Account, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
       'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
-      'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published Locked-in Policy Value floor, policy-year-3 MPC settlement of years 1-2 accruals, and irreversible downgrade after failed deduction through the locked-in-value protection-state kernel.',
+      'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published current death-benefit estimate, Locked-in Policy Value floor, policy-year-3 MPC settlement of years 1-2 accruals, and irreversible downgrade after failed deduction through the locked-in-value protection-state kernel.',
       'Loyalty Bonus and Additional Bonus annual qualification and adjustment-factor handling, premium-holiday lapse state, regular-withdrawal administration, credit-card charge, aggregation limits, and change-of-life-assured administration remain informational only.',
     ],
     archived: false,

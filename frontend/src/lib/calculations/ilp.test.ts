@@ -8347,6 +8347,187 @@ describe('computeSummaryMetrics', () => {
     expect(summary.currentDeathBenefitEstimate).toBe(55_000)
   })
 
+  it('adds a #goClassic Secure current death-benefit estimate from the locked-in policy value floor when manual input is known', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 36,
+      currentPolicyYear: 4,
+      mipLength: 25,
+      postMipYears: 0,
+      accounts: [
+        {
+          id: 'initial',
+          label: 'Initial Units Account',
+          feeRate: 0,
+          currentValue: 20_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'accumulation',
+          label: 'Accumulation Units Account',
+          feeRate: 0,
+          currentValue: 25_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'tokio-secure-mpc',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'during-mip',
+          appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-locked-in-policy-value',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+            tokioProtectionState: {
+              mode: 'locked-in-policy-value',
+              trackedValueAccountIds: ['initial', 'accumulation'],
+              withdrawalReductionAccountIds: ['initial', 'accumulation'],
+            },
+          },
+          requiresManualInput: true,
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 45,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentLockedInPolicyValue: 60_000,
+      },
+      catalogSource: {
+        productId: 'tokio-marine-goclassic-secure',
+        productName: '#goClassic Secure',
+        variantId: 'sgd-mip-25-advanced-death',
+        variantLabel: 'SGD / MIP 25 (Advanced Death)',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: [
+          'kernel:tokio-locked-in-protection-state',
+          'kernel:current-death-benefit-estimate',
+        ],
+        metadataOnlyBehaviors: ['tokio-goclassic-secure-change-of-life-assured'],
+      },
+      funds: [ZERO_RETURN_FUND],
+    })
+
+    const summary = computeSummaryMetrics(policy, projectIlpPolicy(policy, 'mid'))
+
+    expect(summary.currentDeathBenefitEstimate).toBe(60_000)
+  })
+
+  it('omits a #goClassic Secure current death-benefit estimate when the current locked-in policy value is unavailable', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 36,
+      currentPolicyYear: 4,
+      mipLength: 25,
+      postMipYears: 0,
+      accounts: [
+        {
+          id: 'initial',
+          label: 'Initial Units Account',
+          feeRate: 0,
+          currentValue: 20_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'accumulation',
+          label: 'Accumulation Units Account',
+          feeRate: 0,
+          currentValue: 25_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'tokio-secure-mpc',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'during-mip',
+          appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-locked-in-policy-value',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+            tokioProtectionState: {
+              mode: 'locked-in-policy-value',
+              trackedValueAccountIds: ['initial', 'accumulation'],
+              withdrawalReductionAccountIds: ['initial', 'accumulation'],
+            },
+          },
+          requiresManualInput: true,
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 45,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+      },
+      catalogSource: {
+        productId: 'tokio-marine-goclassic-secure',
+        productName: '#goClassic Secure',
+        variantId: 'sgd-mip-25-advanced-death',
+        variantLabel: 'SGD / MIP 25 (Advanced Death)',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: [
+          'kernel:tokio-locked-in-protection-state',
+          'kernel:current-death-benefit-estimate',
+        ],
+        metadataOnlyBehaviors: ['tokio-goclassic-secure-change-of-life-assured'],
+      },
+      funds: [ZERO_RETURN_FUND],
+    })
+
+    const summary = computeSummaryMetrics(policy, projectIlpPolicy(policy, 'mid'))
+
+    expect(summary.currentDeathBenefitEstimate).toBeUndefined()
+  })
+
   it('adds a Wealth Focus current death-benefit estimate from paid regular premiums and account balances', () => {
     const policy = makeDefaultPolicy({
       currency: 'SGD',

@@ -8451,7 +8451,7 @@ function tokioGoClassicSecureAdvancedDeathBaselinePolicy(
           sex: 'male',
           smokerStatus: 'non-smoker',
           currentNetRegularPremiumBase: 72_000,
-          currentTokioLockedInValue: 60_000,
+          currentLockedInPolicyValue: 60_000,
         },
         postMipYears: 15,
         policyEvents: [],
@@ -15165,6 +15165,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:tokio-locked-in-protection-state',
+      'kernel:current-death-benefit-estimate',
     ],
     description: 'Tokio Marine #goClassic Secure advanced-death supported baseline proving Locked-in Policy Value protection-state handling from insured-life inputs.',
   },
