@@ -340,10 +340,10 @@ function buildVariant(
       'Loyalty bonus and achievement bonus remain metadata-only because the published adjustment-factor and first-ten-policy-years qualification gates are not yet represented directly in the template bonus basis.',
       ...(isAdvancedDeath
         ? [
-            'Advanced Death payout handling beyond the modeled Monthly Protection Charge, together with multiple-life handling and change-of-life-assured administration, remains metadata-only for this product.',
+            'Advanced Death payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, and change-of-life-assured administration remain metadata-only for this product.',
           ]
         : [
-            'Advanced Death selection, Monthly Protection Charge, multiple-life handling, and change-of-life-assured administration remain metadata-only for this product.',
+            'Advanced Death selection, Monthly Protection Charge, multiple-life last-life settlement, and change-of-life-assured administration remain metadata-only for this product.',
           ]),
       'Regular withdrawal, partial-withdrawal limit caps, and non-SGD policy currencies remain metadata-only for this product.',
     ],
@@ -385,13 +385,15 @@ export function parseTokioMarineGoLuxe(context: ParseContext): IlpCatalogProduct
     ],
     metadataOnlyBehaviors: [
       'tokio-goluxe-loyalty-and-achievement-bonuses',
-      'tokio-goluxe-advanced-death-payout-handling-and-life-assured-administration',
+      'tokio-goluxe-advanced-death-payout-handling',
+      'tokio-goluxe-multiple-life-last-life-settlement',
+      'tokio-goluxe-change-of-life-assured-administration',
       'tokio-goluxe-regular-withdrawal-facility',
       'tokio-goluxe-non-sgd-policy-currencies',
     ],
     warnings: [
       '#goLuxe is cataloged as a supported V1 product. The SGD / 15-year minimum-contribution corridors model regular-premium routing, initial bonus allocation, initial and policy charges, top-up and recurring-single-premium routing / charges, partial-withdrawal and premium-shortfall charges, surrender mechanics, and reinvest-default distribution support with the published $50 minimum cash-payout threshold and 30-day record-date lead time; the Advanced Death variant also models the accrued Monthly Protection Charge corridor from insured-life inputs.',
-      'Loyalty bonus and achievement bonus qualification, advanced-death payout handling beyond the modeled Monthly Protection Charge, regular-withdrawal rules, and non-SGD policy currencies remain informational only.',
+      'Loyalty bonus and achievement bonus qualification, advanced-death payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, change-of-life-assured administration, regular-withdrawal rules, and non-SGD policy currencies remain informational only.',
     ],
     archived: false,
     variants: [

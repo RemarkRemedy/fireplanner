@@ -5595,7 +5595,13 @@ describe('templateVariantToPolicySeed', () => {
       source: 'catalog-default',
     })
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-loyalty-and-achievement-bonuses')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-advanced-death-payout-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-multiple-life-last-life-settlement')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-change-of-life-assured-administration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-regular-withdrawal-facility')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain(
+      'tokio-goluxe-advanced-death-payout-handling-and-life-assured-administration',
+    )
     expect(seed.catalogWarnings?.some((warning) => warning.includes('supported V1 product'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
@@ -5683,7 +5689,13 @@ describe('templateVariantToPolicySeed', () => {
       source: 'catalog-default',
     })
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-loyalty-and-achievement-bonuses')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-advanced-death-payout-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-multiple-life-last-life-settlement')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-change-of-life-assured-administration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-regular-withdrawal-facility')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain(
+      'tokio-goluxe-advanced-death-payout-handling-and-life-assured-administration',
+    )
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Advanced Death variant also models the published Monthly Protection Charge'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)

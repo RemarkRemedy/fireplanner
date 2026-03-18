@@ -30,7 +30,13 @@ describe('parseTokioMarineGoLuxe', () => {
     expect(product.modeledEconomics).toContain('branch:tokio-goluxe-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-loyalty-and-achievement-bonuses')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-advanced-death-payout-handling')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-multiple-life-last-life-settlement')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-change-of-life-assured-administration')
     expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-regular-withdrawal-facility')
+    expect(product.metadataOnlyBehaviors).not.toContain(
+      'tokio-goluxe-advanced-death-payout-handling-and-life-assured-administration',
+    )
 
     const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15')
     const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15-advanced-death')
