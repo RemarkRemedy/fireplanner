@@ -103,10 +103,11 @@ describe('parseAiaEliteSecureIncomeSp', () => {
       'branch:aia-elite-secure-income-sp-full-surrender-charge',
       'branch:aia-elite-secure-income-sp-partial-withdrawal-charge',
       'kernel:scheduled-payout-manual-assumption',
+      'kernel:lapse-reinstatement-payout-state',
     ])
     expect(product.metadataOnlyBehaviors).toContain('aia-elite-secure-income-sp-secure-monthly-income-election')
     expect(product.metadataOnlyBehaviors).toContain('aia-elite-secure-income-sp-single-premium-principal-tracking')
-    expect(product.metadataOnlyBehaviors).toContain('aia-elite-secure-income-sp-reinstatement-payout-continuity')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-reinstatement-payout-continuity')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-reinstatement')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-single-premium-charge')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-supplementary-charge')
@@ -123,6 +124,11 @@ describe('parseAiaEliteSecureIncomeSp', () => {
         mode: 'manual-assumption',
         accountId: 'policy',
         source: 'policy-redemption',
+        payoutStateSupport: {
+          defaultState: 'secure-income',
+          suppressWhileLapsed: true,
+          stateAfterReinstatement: 'target-income',
+        },
       },
     })
     expect(variant.accounts).toEqual([
@@ -173,13 +179,13 @@ describe('parseAiaEliteSecureIncomeSp', () => {
       }),
     ])
     expect(variant.warnings).toContain(
-      'AIA Elite Secure Income - Single Premium is cataloged as a supported V1 product. The parser captures the published 5% single-premium charge, manual annual supplementary charge input, 3% top-up premium charge, full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel.',
+      'AIA Elite Secure Income - Single Premium is cataloged as a supported V1 product. The parser captures the published 5% single-premium charge, manual annual supplementary charge input, 3% top-up premium charge, full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel, including lapse suppression and post-reinstatement Target Monthly Income fallback in the annual-state model.',
     )
     expect(variant.unsupportedItems).toContain(
       'Secure Monthly Income amount, payout age, and payout period selection remain manual-assumption inputs in V1.',
     )
     expect(variant.unsupportedItems).toContain('Single-premium principal tracking remains informational only in V1.')
-    expect(variant.unsupportedItems).toContain('Reinstatement effects on payout continuity remain informational only.')
+    expect(variant.unsupportedItems).not.toContain('Reinstatement effects on payout continuity remain informational only.')
     expect(variant.sourceRefs.find((ref) => ref.page === 7)?.excerpt).toContain(
       'Approximate excerpt; keyword "Reinstatement" not found on page.',
     )

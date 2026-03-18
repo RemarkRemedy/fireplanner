@@ -13,6 +13,7 @@ export type GoldenCoverageTag =
   | 'event-heavy'
   | 'ocf-stress'
   | 'kernel:cumulative-free-partial-withdrawal-pool'
+  | 'kernel:lapse-reinstatement-payout-state'
   | 'kernel:scheduled-payout-manual-assumption'
   | 'branch:aia-invest-easy-cash-srs-three-percent-single-premium-charge'
   | 'branch:aia-invest-easy-cash-srs-three-percent-top-up-charge'
@@ -5993,7 +5994,7 @@ function aiaPlatinumRetirementEliteEventHeavyPolicy(
       mode: 'scheduled-redemption',
       source: 'manual-assumption',
       accountId: 'policy',
-      startPolicyYear: 4,
+      startPolicyYear: 3,
       durationYears: 10,
       annualPayoutAmount: 8_400,
     },
@@ -6014,10 +6015,16 @@ function aiaPlatinumRetirementEliteEventHeavyPolicy(
       {
         id: 'withdrawal-1',
         type: 'partial-withdrawal',
-        startPolicyMonth: 28,
+        startPolicyMonth: 24,
         durationMonths: 1,
         amount: 4_500,
         accountId: 'policy',
+      },
+      {
+        id: 'lapse-1',
+        type: 'lapse',
+        startPolicyMonth: 28,
+        durationMonths: 6,
       },
     ],
   })
@@ -6091,7 +6098,7 @@ function aiaEliteSecureIncome5PayEventHeavyPolicy(
       mode: 'scheduled-redemption',
       source: 'manual-assumption',
       accountId: 'policy',
-      startPolicyYear: 4,
+      startPolicyYear: 3,
       durationYears: 10,
       annualPayoutAmount: 8_400,
     },
@@ -6112,10 +6119,16 @@ function aiaEliteSecureIncome5PayEventHeavyPolicy(
       {
         id: 'withdrawal-1',
         type: 'partial-withdrawal',
-        startPolicyMonth: 28,
+        startPolicyMonth: 24,
         durationMonths: 1,
         amount: 4_500,
         accountId: 'policy',
+      },
+      {
+        id: 'lapse-1',
+        type: 'lapse',
+        startPolicyMonth: 28,
+        durationMonths: 6,
       },
     ],
   })
@@ -6209,6 +6222,12 @@ function aiaEliteSecureIncomeSpEventHeavyPolicy(
         durationMonths: 1,
         amount: 5_000,
         accountId: 'policy',
+      },
+      {
+        id: 'lapse-1',
+        type: 'lapse',
+        startPolicyMonth: 50,
+        durationMonths: 6,
       },
     ],
   })
@@ -9840,11 +9859,12 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'event-heavy',
+      'kernel:lapse-reinstatement-payout-state',
       'branch:aia-platinum-retirement-elite-top-up-premium-charge',
       'branch:aia-platinum-retirement-elite-premium-holiday-charge',
       'branch:aia-platinum-retirement-elite-partial-withdrawal-charge',
     ],
-    description: 'AIA Platinum Retirement Elite event-heavy scenario covering premium holiday, top-up, partial withdrawal, and manual scheduled-redemption.',
+    description: 'AIA Platinum Retirement Elite event-heavy scenario covering premium holiday, top-up, partial withdrawal, lapse/reinstatement payout-state behavior, and manual scheduled-redemption.',
     integrityChecks: [
       {
         description: 'event-heavy policy produces annual withdrawals from the seeded payout and withdrawal events',
@@ -9853,6 +9873,17 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       {
         description: 'event-heavy policy retains top-up contribution in excess of the scheduled annual premium',
         test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > artifact.policyInput.monthlyContribution * 12),
+      },
+      {
+        description: 'event-heavy policy shows a payout gap during the lapse window and resumes positive scheduled withdrawals afterward',
+        test: (_, artifact) => {
+          const payoutRows = artifact.expected.projections.mid.rows.filter((row) => row.policyYear >= 3)
+          const zeroIndex = payoutRows.findIndex((row) => row.annualWithdrawals === 0)
+
+          return zeroIndex > 0
+            && payoutRows.slice(0, zeroIndex).some((row) => row.annualWithdrawals > 0)
+            && payoutRows.slice(zeroIndex + 1).some((row) => row.annualWithdrawals > 0)
+        },
       },
     ],
   },
@@ -9895,10 +9926,11 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'event-heavy',
+      'kernel:lapse-reinstatement-payout-state',
       'branch:aia-elite-secure-income-sp-top-up-premium-charge',
       'branch:aia-elite-secure-income-sp-partial-withdrawal-charge',
     ],
-    description: 'AIA Elite Secure Income - Single Premium event-heavy scenario covering top-up, partial withdrawal, and manual scheduled-redemption.',
+    description: 'AIA Elite Secure Income - Single Premium event-heavy scenario covering top-up, partial withdrawal, lapse/reinstatement payout-state behavior, and manual scheduled-redemption.',
     integrityChecks: [
       {
         description: 'event-heavy policy produces annual withdrawals from the seeded payout and withdrawal events',
@@ -9907,6 +9939,17 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       {
         description: 'event-heavy policy records additional annual contribution from the seeded top-up event',
         test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > 0),
+      },
+      {
+        description: 'event-heavy policy shows a payout gap during the lapse window and resumes positive scheduled withdrawals afterward',
+        test: (_, artifact) => {
+          const payoutRows = artifact.expected.projections.mid.rows.filter((row) => row.policyYear >= 5)
+          const zeroIndex = payoutRows.findIndex((row) => row.annualWithdrawals === 0)
+
+          return zeroIndex > 0
+            && payoutRows.slice(0, zeroIndex).some((row) => row.annualWithdrawals > 0)
+            && payoutRows.slice(zeroIndex + 1).some((row) => row.annualWithdrawals > 0)
+        },
       },
     ],
   },
@@ -9949,11 +9992,12 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'event-heavy',
+      'kernel:lapse-reinstatement-payout-state',
       'branch:aia-elite-secure-income-5p-top-up-premium-charge',
       'branch:aia-elite-secure-income-5p-premium-holiday-charge',
       'branch:aia-elite-secure-income-5p-partial-withdrawal-charge',
     ],
-    description: 'AIA Elite Secure Income - 5 Pay event-heavy scenario covering premium holiday, top-up, partial withdrawal, and manual scheduled-redemption.',
+    description: 'AIA Elite Secure Income - 5 Pay event-heavy scenario covering premium holiday, top-up, partial withdrawal, lapse/reinstatement payout-state behavior, and manual scheduled-redemption.',
     integrityChecks: [
       {
         description: 'event-heavy policy produces annual withdrawals from the seeded payout and withdrawal events',
@@ -9962,6 +10006,17 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       {
         description: 'event-heavy policy retains top-up contribution in excess of the scheduled annual premium',
         test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualContribution > artifact.policyInput.monthlyContribution * 12),
+      },
+      {
+        description: 'event-heavy policy shows a payout gap during the lapse window and resumes positive scheduled withdrawals afterward',
+        test: (_, artifact) => {
+          const payoutRows = artifact.expected.projections.mid.rows.filter((row) => row.policyYear >= 3)
+          const zeroIndex = payoutRows.findIndex((row) => row.annualWithdrawals === 0)
+
+          return zeroIndex > 0
+            && payoutRows.slice(0, zeroIndex).some((row) => row.annualWithdrawals > 0)
+            && payoutRows.slice(zeroIndex + 1).some((row) => row.annualWithdrawals > 0)
+        },
       },
     ],
   },

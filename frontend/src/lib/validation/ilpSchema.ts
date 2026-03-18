@@ -5,7 +5,7 @@ const ilpRegularPremiumPaymentFrequencySchema = z.enum(['annual', 'semi-annual',
 
 export const ilpPolicyEventSchema = z.object({
   id: z.string().min(1),
-  type: z.enum(['premium-holiday', 'partial-withdrawal', 'regular-premium-reduction', 'regular-premium-increase', 'top-up', 'recurring-single-premium', 'recurring-single-premium-resumption', 'assurance-benefit-reduction', 'assurance-benefit-resumption']),
+  type: z.enum(['premium-holiday', 'partial-withdrawal', 'regular-premium-reduction', 'regular-premium-increase', 'top-up', 'recurring-single-premium', 'recurring-single-premium-resumption', 'assurance-benefit-reduction', 'assurance-benefit-resumption', 'lapse']),
   startPolicyMonth: z.number().int().min(1).max(10_000),
   durationMonths: z.number().int().min(1).max(120),
   amount: z.number().min(0).max(100_000_000).optional(),
@@ -152,6 +152,47 @@ export const ilpPolicyEventSchema = z.object({
       path: ['durationMonths'],
     })
   }
+
+  if (event.type === 'lapse' && event.amount != null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Lapse events do not take an amount',
+      path: ['amount'],
+    })
+  }
+
+  if (event.type === 'lapse' && event.accountId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Lapse events are policy-level and must not specify an accountId',
+      path: ['accountId'],
+    })
+  }
+
+  if (event.type === 'lapse' && event.repaymentAccountId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Lapse events must not specify a repayment account',
+      path: ['repaymentAccountId'],
+    })
+  }
+
+  if (event.type === 'lapse' && event.repayMissedPremiums) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Lapse events must not enable missed-premium repayment',
+      path: ['repayMissedPremiums'],
+    })
+  }
+})
+
+export const ilpScheduledPayoutStateSchema = z.enum(['secure-income', 'target-income'])
+
+export const ilpScheduledPayoutStateSupportSchema = z.object({
+  defaultState: ilpScheduledPayoutStateSchema,
+  suppressWhileLapsed: z.boolean(),
+  stateAfterPremiumHolidayActivation: ilpScheduledPayoutStateSchema.optional(),
+  stateAfterReinstatement: ilpScheduledPayoutStateSchema.optional(),
 })
 
 export const ilpScheduledPayoutSupportSchema = z.object({
@@ -159,6 +200,7 @@ export const ilpScheduledPayoutSupportSchema = z.object({
   accountId: z.string().min(1),
   fallbackAccountIds: z.array(z.string().min(1)).min(1).max(10).optional(),
   source: z.literal('policy-redemption'),
+  payoutStateSupport: ilpScheduledPayoutStateSupportSchema.optional(),
 })
 
 export const ilpDistributionSupportSchema = z.object({

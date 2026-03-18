@@ -29,7 +29,7 @@ export const ilpPolicySeedSchema = z.object({
   distributionAssumption: ilpDistributionAssumptionSchema.optional(),
   policyEvents: z.array(z.object({
     id: z.string().min(1),
-    type: z.enum(['premium-holiday', 'partial-withdrawal', 'regular-premium-reduction', 'regular-premium-increase', 'top-up', 'recurring-single-premium', 'recurring-single-premium-resumption', 'assurance-benefit-reduction', 'assurance-benefit-resumption']),
+    type: z.enum(['premium-holiday', 'partial-withdrawal', 'regular-premium-reduction', 'regular-premium-increase', 'top-up', 'recurring-single-premium', 'recurring-single-premium-resumption', 'assurance-benefit-reduction', 'assurance-benefit-resumption', 'lapse']),
     startPolicyMonth: z.number().int().min(1).max(10_000),
     durationMonths: z.number().int().min(1).max(120),
     amount: z.number().min(0).max(100_000_000).optional(),

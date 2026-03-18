@@ -50,7 +50,7 @@ export interface IlpContributionRule {
 
 export interface IlpPolicyEvent {
   id: string
-  type: 'premium-holiday' | 'partial-withdrawal' | 'regular-premium-reduction' | 'regular-premium-increase' | 'top-up' | 'recurring-single-premium' | 'recurring-single-premium-resumption' | 'assurance-benefit-reduction' | 'assurance-benefit-resumption'
+  type: 'premium-holiday' | 'partial-withdrawal' | 'regular-premium-reduction' | 'regular-premium-increase' | 'top-up' | 'recurring-single-premium' | 'recurring-single-premium-resumption' | 'assurance-benefit-reduction' | 'assurance-benefit-resumption' | 'lapse'
   startPolicyMonth: number
   durationMonths: number
   amount?: number
@@ -65,11 +65,21 @@ export interface IlpPolicyEvent {
 
 export type IlpRegularPremiumPaymentFrequency = 'annual' | 'semi-annual' | 'quarterly' | 'monthly'
 
+export type IlpScheduledPayoutState = 'secure-income' | 'target-income'
+
+export interface IlpScheduledPayoutStateSupport {
+  defaultState: IlpScheduledPayoutState
+  suppressWhileLapsed: boolean
+  stateAfterPremiumHolidayActivation?: IlpScheduledPayoutState
+  stateAfterReinstatement?: IlpScheduledPayoutState
+}
+
 export interface IlpScheduledPayoutSupport {
   mode: 'manual-assumption'
   accountId: string
   fallbackAccountIds?: string[]
   source: 'policy-redemption'
+  payoutStateSupport?: IlpScheduledPayoutStateSupport
 }
 
 export type IlpScheduledPayoutAssumption =
@@ -381,6 +391,7 @@ export interface IlpAccountYearRow {
 export interface IlpYearRow {
   year: number
   policyYear: number
+  scheduledPayoutState: 'inactive' | 'lapsed' | IlpScheduledPayoutState
   annualContribution: number
   annualWithdrawals: number
   accounts: IlpAccountYearRow[]
@@ -597,6 +608,7 @@ interface IlpNormalizedBonusKernel {
 
 interface IlpNormalizedPolicyEvents {
   premiumHolidays: IlpPolicyEvent[]
+  lapses: IlpPolicyEvent[]
   partialWithdrawals: IlpPolicyEvent[]
   regularPremiumReductions: IlpPolicyEvent[]
   regularPremiumIncreases: IlpPolicyEvent[]
@@ -920,6 +932,16 @@ function isPremiumHolidayActiveAtMonth(
   ))
 }
 
+function isLapseActiveAtMonth(
+  normalized: Pick<IlpNormalizedPolicyInput, 'events'>,
+  policyMonth: number,
+): boolean {
+  return normalized.events.lapses.some((event) => (
+    policyMonth >= event.startPolicyMonth
+    && policyMonth < (event.startPolicyMonth + event.durationMonths)
+  ))
+}
+
 function buildNormalizedRegularPremiumState(
   normalized: Pick<IlpNormalizedPolicyInput, 'input' | 'events' | 'contributionRoutesByPhase'>,
 ): IlpNormalizedPolicyInput['regularPremiums'] {
@@ -1000,6 +1022,7 @@ function buildNormalizedPolicyInput(input: IlpPolicyInput): IlpNormalizedPolicyI
     multiAccount: buildNormalizedMultiAccountStructure(input, contributionRoutesByPhase),
     events: {
       premiumHolidays: sortPolicyEvents(policyEvents.filter((event) => event.type === 'premium-holiday')),
+      lapses: sortPolicyEvents(policyEvents.filter((event) => event.type === 'lapse')),
       partialWithdrawals: sortPolicyEvents(policyEvents.filter((event) => event.type === 'partial-withdrawal')),
       regularPremiumReductions: sortPolicyEvents(policyEvents.filter((event) => event.type === 'regular-premium-reduction')),
       regularPremiumIncreases: sortPolicyEvents(policyEvents.filter((event) => event.type === 'regular-premium-increase')),
@@ -1138,19 +1161,25 @@ function getPartialWithdrawalsByAccount(
 
 function getScheduledPayoutsByAccount(
   normalized: IlpNormalizedPolicyInput,
-  policyYear: number,
+  context: IlpCashflowYearContext,
+  scheduledPayoutState: IlpYearRow['scheduledPayoutState'],
   availableBeforeBaseWithdrawalsByAccount: Map<string, number>,
   partialWithdrawalByAccount: Map<string, number>,
 ): Map<string, number> {
   const payouts = new Map<string, number>(normalized.input.accounts.map((account) => [account.id, 0]))
   const scheduledPayout = normalized.input.scheduledPayoutAssumption
 
-  if (!scheduledPayout || scheduledPayout.mode !== 'scheduled-redemption') {
+  if (
+    !scheduledPayout
+    || scheduledPayout.mode !== 'scheduled-redemption'
+    || scheduledPayoutState === 'inactive'
+    || scheduledPayoutState === 'lapsed'
+  ) {
     return payouts
   }
 
   const payoutEndPolicyYear = scheduledPayout.startPolicyYear + scheduledPayout.durationYears - 1
-  if (policyYear < scheduledPayout.startPolicyYear || policyYear > payoutEndPolicyYear) {
+  if (context.policyYear < scheduledPayout.startPolicyYear || context.policyYear > payoutEndPolicyYear) {
     return payouts
   }
 
@@ -1175,6 +1204,53 @@ function getScheduledPayoutsByAccount(
   }
 
   return payouts
+}
+
+function resolveScheduledPayoutStateForYear(
+  normalized: IlpNormalizedPolicyInput,
+  context: IlpCashflowYearContext,
+): IlpYearRow['scheduledPayoutState'] {
+  const scheduledPayout = normalized.input.scheduledPayoutAssumption
+  if (!scheduledPayout || scheduledPayout.mode !== 'scheduled-redemption') {
+    return 'inactive'
+  }
+
+  const payoutEndPolicyYear = scheduledPayout.startPolicyYear + scheduledPayout.durationYears - 1
+  if (context.policyYear < scheduledPayout.startPolicyYear || context.policyYear > payoutEndPolicyYear) {
+    return 'inactive'
+  }
+
+  const payoutStateSupport = normalized.input.scheduledPayoutSupport?.payoutStateSupport
+  if (!payoutStateSupport) {
+    return 'target-income'
+  }
+
+  const hasOverlappingLapse = payoutStateSupport.suppressWhileLapsed && Array.from(
+    { length: context.range.endPolicyMonth - context.range.startPolicyMonth + 1 },
+    (_, index) => context.range.startPolicyMonth + index,
+  ).some((policyMonth) => isLapseActiveAtMonth(normalized, policyMonth))
+
+  if (hasOverlappingLapse) {
+    return 'lapsed'
+  }
+
+  let payoutState = payoutStateSupport.defaultState
+
+  if (
+    payoutStateSupport.stateAfterPremiumHolidayActivation
+    && normalized.events.premiumHolidays.some((event) => event.startPolicyMonth <= context.range.endPolicyMonth)
+  ) {
+    payoutState = payoutStateSupport.stateAfterPremiumHolidayActivation
+  }
+
+  if (
+    payoutStateSupport.stateAfterReinstatement
+    && normalized.events.lapses.some((event) => (event.startPolicyMonth + event.durationMonths - 1) < context.range.startPolicyMonth)
+  ) {
+    payoutState = payoutStateSupport.stateAfterReinstatement
+  }
+
+  return payoutState
 }
 
 function getDistributionPayoutsByAccount(
@@ -4159,9 +4235,11 @@ export function projectIlpPolicy(
       availableBeforeBaseWithdrawalsByAccount.set(account.id, availableBeforeBaseWithdrawals)
     }
 
+    const scheduledPayoutState = resolveScheduledPayoutStateForYear(normalized, context)
     const scheduledPayoutByAccount = getScheduledPayoutsByAccount(
       normalized,
-      policyYear,
+      context,
+      scheduledPayoutState,
       availableBeforeBaseWithdrawalsByAccount,
       partialWithdrawalByAccount,
     )
@@ -4251,6 +4329,7 @@ export function projectIlpPolicy(
     rows.push({
       year,
       policyYear,
+      scheduledPayoutState,
       annualContribution: contributionForYear,
       annualWithdrawals,
       accounts: accountRows,

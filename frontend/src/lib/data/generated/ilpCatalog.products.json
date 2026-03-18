@@ -17,7 +17,8 @@
       "branch:aia-elite-secure-income-5p-premium-holiday-charge",
       "branch:aia-elite-secure-income-5p-partial-withdrawal-charge",
       "branch:aia-elite-secure-income-5p-full-surrender-charge",
-      "kernel:scheduled-payout-manual-assumption"
+      "kernel:scheduled-payout-manual-assumption",
+      "kernel:lapse-reinstatement-payout-state"
     ],
     "metadataOnlyBehaviors": [
       "aia-elite-secure-income-5p-secure-monthly-income-election",
@@ -28,7 +29,6 @@
       "aia-elite-secure-income-5p-terminal-illness-benefit",
       "aia-elite-secure-income-5p-fund-management-charge",
       "aia-elite-secure-income-5p-withdrawal-eligibility-gating",
-      "aia-elite-secure-income-5p-reinstatement-target-income",
       "aia-elite-secure-income-5p-no-fund-switching"
     ],
     "warnings": [
@@ -330,6 +330,12 @@
           "mode": "manual-assumption",
           "accountId": "policy",
           "source": "policy-redemption",
+          "payoutStateSupport": {
+            "defaultState": "secure-income",
+            "suppressWhileLapsed": true,
+            "stateAfterPremiumHolidayActivation": "target-income",
+            "stateAfterReinstatement": "target-income"
+          },
           "notes": [
             "Monthly Income after the selected payout age is paid via redemption of policy units, with Secure Monthly Income during the Secure Payout Period and Target Monthly Income thereafter."
           ],
@@ -365,7 +371,7 @@
           0
         ],
         "warnings": [
-          "AIA Elite Secure Income - 5 Pay is cataloged as supported in V1 for the regular-pay corridor. The parser captures the premium-year regular premium charge schedule, a manual-input annual supplementary charge amount from the policy illustration, the 3% top-up premium charge, the premium-holiday charge schedule, the full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel.",
+          "AIA Elite Secure Income - 5 Pay is cataloged as supported in V1 for the regular-pay corridor. The parser captures the premium-year regular premium charge schedule, a manual-input annual supplementary charge amount from the policy illustration, the 3% top-up premium charge, the premium-holiday charge schedule, the full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel, including lapse suppression and permanent Target Monthly Income fallback after Premium Holiday activation or reinstatement in the annual-state model.",
           "Secure Monthly Income eligibility depends on no premium holiday, no regular-premium-unit or bonus-unit withdrawal, and no prior reinstatement, so payout selection and payout-state gating remain manual or informational inputs in V1.",
           "Supplementary charge requires a manual annual amount from the policy illustration because the summary states the formula but not the annual rate."
         ],
@@ -376,7 +382,6 @@
           "Death, accidental death, and terminal illness benefit formulas remain informational only.",
           "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
           "Minimum withdrawal amount, minimum post-withdrawal policy value, and top-up eligibility while premiums are outstanding remain informational only.",
-          "Reinstatement effects on payout-state are only partially represented; the post-reinstatement shift to Target Monthly Income remains informational only.",
           "Fund switching remains informational only because it is not allowed under the product terms."
         ],
         "sourceRefs": [
@@ -436,7 +441,8 @@
       "branch:aia-elite-secure-income-sp-top-up-premium-charge",
       "branch:aia-elite-secure-income-sp-full-surrender-charge",
       "branch:aia-elite-secure-income-sp-partial-withdrawal-charge",
-      "kernel:scheduled-payout-manual-assumption"
+      "kernel:scheduled-payout-manual-assumption",
+      "kernel:lapse-reinstatement-payout-state"
     ],
     "metadataOnlyBehaviors": [
       "aia-elite-secure-income-sp-secure-monthly-income-election",
@@ -445,11 +451,10 @@
       "aia-elite-secure-income-sp-accidental-death-benefit",
       "aia-elite-secure-income-sp-terminal-illness-benefit",
       "aia-elite-secure-income-sp-fund-management-charge",
-      "aia-elite-secure-income-sp-reinstatement-payout-continuity",
       "aia-elite-secure-income-sp-no-fund-switching"
     ],
     "warnings": [
-      "AIA Elite Secure Income - Single Premium is cataloged as a supported V1 product. The parser captures the published 5% single-premium charge, manual annual supplementary charge input, 3% top-up premium charge, full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel; payout selection, principal tracking, protection benefits, reinstatement effects on payout continuity, and fund-level charges remain informational only."
+      "AIA Elite Secure Income - Single Premium is cataloged as a supported V1 product. The parser captures the published 5% single-premium charge, manual annual supplementary charge input, 3% top-up premium charge, full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel; payout selection, principal tracking, protection benefits, and fund-level charges remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -666,6 +671,11 @@
           "mode": "manual-assumption",
           "accountId": "policy",
           "source": "policy-redemption",
+          "payoutStateSupport": {
+            "defaultState": "secure-income",
+            "suppressWhileLapsed": true,
+            "stateAfterReinstatement": "target-income"
+          },
           "notes": [
             "Secure Monthly Income is paid by redeeming policy units after the selected payout start and for the selected payout period."
           ],
@@ -702,7 +712,7 @@
         ],
         "exitChargeBasis": "account-value",
         "warnings": [
-          "AIA Elite Secure Income - Single Premium is cataloged as a supported V1 product. The parser captures the published 5% single-premium charge, manual annual supplementary charge input, 3% top-up premium charge, full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel.",
+          "AIA Elite Secure Income - Single Premium is cataloged as a supported V1 product. The parser captures the published 5% single-premium charge, manual annual supplementary charge input, 3% top-up premium charge, full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel, including lapse suppression and post-reinstatement Target Monthly Income fallback in the annual-state model.",
           "This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract."
         ],
         "unsupportedItems": [
@@ -710,7 +720,6 @@
           "Single-premium principal tracking remains informational only in V1.",
           "Death, accidental-death, and terminal-illness benefit formulas remain informational only.",
           "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
-          "Reinstatement effects on payout continuity remain informational only.",
           "Fund switching is not allowed and remains informational only."
         ],
         "sourceRefs": [
@@ -1918,7 +1927,8 @@
       "branch:aia-platinum-retirement-elite-premium-holiday-charge",
       "branch:aia-platinum-retirement-elite-partial-withdrawal-charge",
       "branch:aia-platinum-retirement-elite-full-surrender-charge",
-      "kernel:scheduled-payout-manual-assumption"
+      "kernel:scheduled-payout-manual-assumption",
+      "kernel:lapse-reinstatement-payout-state"
     ],
     "metadataOnlyBehaviors": [
       "aia-platinum-retirement-elite-monthly-retirement-income-election",
@@ -1928,11 +1938,10 @@
       "aia-platinum-retirement-elite-protection-benefits",
       "aia-platinum-retirement-elite-fund-management-charge",
       "aia-platinum-retirement-elite-top-up-eligibility-gating",
-      "aia-platinum-retirement-elite-fund-switching",
-      "aia-platinum-retirement-elite-premium-holiday-and-reinstatement-payout-continuity"
+      "aia-platinum-retirement-elite-fund-switching"
     ],
     "warnings": [
-      "AIA Platinum Retirement Elite is cataloged as a supported V1 product. The parser captures the regular-pay 5-year corridor, the regular-premium supplementary charge, the withdrawal / surrender schedules, and scheduled payout capability once a manual payout assumption is supplied, while the single-pay corridor, payout-election inputs, Power-up Bonus adjustment, protection benefits, premium-holiday and reinstatement effects on payout continuity, and fund-level charges remain informational only."
+      "AIA Platinum Retirement Elite is cataloged as a supported V1 product. The parser captures the regular-pay 5-year corridor, the regular-premium supplementary charge, the withdrawal / surrender schedules, and scheduled payout capability once a manual payout assumption is supplied, while the single-pay corridor, payout-election inputs, Power-up Bonus adjustment, protection benefits, and fund-level charges remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -2219,6 +2228,11 @@
           "mode": "manual-assumption",
           "accountId": "policy",
           "source": "policy-redemption",
+          "payoutStateSupport": {
+            "defaultState": "target-income",
+            "suppressWhileLapsed": true,
+            "stateAfterReinstatement": "target-income"
+          },
           "notes": [
             "Target Monthly Retirement Income after the selected retirement age is paid by redeeming units from policy value."
           ],
@@ -2249,7 +2263,7 @@
           0
         ],
         "warnings": [
-          "AIA Platinum Retirement Elite is cataloged as a supported V1 product. The current parser captures the regular-pay 5-year corridor: premium-year regular premium charges, the 2.50% p.a. regular-premium supplementary charge, the premium-holiday charge schedule, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and scheduled payout capability once a manual payout assumption is supplied.",
+          "AIA Platinum Retirement Elite is cataloged as a supported V1 product. The current parser captures the regular-pay 5-year corridor: premium-year regular premium charges, the 2.50% p.a. regular-premium supplementary charge, the premium-holiday charge schedule, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and scheduled payout capability once a manual payout assumption is supplied, including lapse suppression in the annual-state model.",
           "Target Monthly Retirement Income amount, payout-age selection, payout-period selection, and stepped-up-income election remain manual or informational inputs in V1.",
           "The single-pay corridor, including 5% initial premium charge, 0.50% p.a. single-premium supplementary charge, and single-premium withdrawal / surrender charge schedules, remains outside the current executable slice."
         ],
@@ -2260,8 +2274,7 @@
           "Death, accidental death, and terminal illness benefit formulas remain informational only.",
           "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
           "Minimum withdrawal amount, minimum post-withdrawal policy value, top-up eligibility while premiums are outstanding, and top-up suspension remain informational only.",
-          "Fund switching mechanics remain informational only.",
-          "Reinstatement and premium-holiday effects on payout continuity remain informational only."
+          "Fund switching mechanics remain informational only."
         ],
         "sourceRefs": [
           {

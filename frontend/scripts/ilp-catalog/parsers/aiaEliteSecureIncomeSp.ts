@@ -185,13 +185,18 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       mode: 'manual-assumption',
       accountId: 'policy',
       source: 'policy-redemption',
+      payoutStateSupport: {
+        defaultState: 'secure-income',
+        suppressWhileLapsed: true,
+        stateAfterReinstatement: 'target-income',
+      },
       notes: [
         'Secure Monthly Income is paid by redeeming policy units after the selected payout start and for the selected payout period.',
       ],
       sourceRefs: [page1, page2, page7],
     },
     warnings: [
-      'AIA Elite Secure Income - Single Premium is cataloged as a supported V1 product. The parser captures the published 5% single-premium charge, manual annual supplementary charge input, 3% top-up premium charge, full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel.',
+      'AIA Elite Secure Income - Single Premium is cataloged as a supported V1 product. The parser captures the published 5% single-premium charge, manual annual supplementary charge input, 3% top-up premium charge, full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel, including lapse suppression and post-reinstatement Target Monthly Income fallback in the annual-state model.',
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
     unsupportedItems: [
@@ -199,7 +204,6 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       'Single-premium principal tracking remains informational only in V1.',
       'Death, accidental-death, and terminal-illness benefit formulas remain informational only.',
       'Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.',
-      'Reinstatement effects on payout continuity remain informational only.',
       'Fund switching is not allowed and remains informational only.',
     ],
     sourceRefs: [page1, page2, page3, page4, page5, page6, page7],
@@ -225,6 +229,7 @@ export function parseAiaEliteSecureIncomeSp(context: ParseContext): IlpCatalogPr
       'branch:aia-elite-secure-income-sp-full-surrender-charge',
       'branch:aia-elite-secure-income-sp-partial-withdrawal-charge',
       'kernel:scheduled-payout-manual-assumption',
+      'kernel:lapse-reinstatement-payout-state',
     ],
     metadataOnlyBehaviors: [
       'aia-elite-secure-income-sp-secure-monthly-income-election',
@@ -233,11 +238,10 @@ export function parseAiaEliteSecureIncomeSp(context: ParseContext): IlpCatalogPr
       'aia-elite-secure-income-sp-accidental-death-benefit',
       'aia-elite-secure-income-sp-terminal-illness-benefit',
       'aia-elite-secure-income-sp-fund-management-charge',
-      'aia-elite-secure-income-sp-reinstatement-payout-continuity',
       'aia-elite-secure-income-sp-no-fund-switching',
     ],
     warnings: [
-      'AIA Elite Secure Income - Single Premium is cataloged as a supported V1 product. The parser captures the published 5% single-premium charge, manual annual supplementary charge input, 3% top-up premium charge, full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel; payout selection, principal tracking, protection benefits, reinstatement effects on payout continuity, and fund-level charges remain informational only.',
+      'AIA Elite Secure Income - Single Premium is cataloged as a supported V1 product. The parser captures the published 5% single-premium charge, manual annual supplementary charge input, 3% top-up premium charge, full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel; payout selection, principal tracking, protection benefits, and fund-level charges remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

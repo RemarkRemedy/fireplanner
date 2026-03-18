@@ -7362,8 +7362,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-elite-secure-income-sp-single-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-elite-secure-income-sp-supplementary-charge-manual-input')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:lapse-reinstatement-payout-state')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-elite-secure-income-sp-secure-monthly-income-election')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-elite-secure-income-sp-reinstatement-payout-continuity')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-reinstatement-payout-continuity')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-reinstatement')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-single-premium-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-elite-secure-income-sp-single-premium-principal-tracking')
@@ -7372,6 +7373,11 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.scheduledPayoutSupport).toEqual({
       mode: 'manual-assumption',
       accountId: 'policy',
+      payoutStateSupport: {
+        defaultState: 'secure-income',
+        suppressWhileLapsed: true,
+        stateAfterReinstatement: 'target-income',
+      },
       source: 'policy-redemption',
     })
     expect(seed.scheduledPayoutAssumption).toBeUndefined()
@@ -7419,6 +7425,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:lapse-reinstatement-payout-state')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-elite-secure-income-5p-supplementary-charge-manual-input')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-elite-secure-income-5p-secure-monthly-income-gating')
     expect(seed.monthlyContribution).toBe(350)
@@ -7426,6 +7433,12 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.scheduledPayoutSupport).toEqual({
       mode: 'manual-assumption',
       accountId: 'policy',
+      payoutStateSupport: {
+        defaultState: 'secure-income',
+        suppressWhileLapsed: true,
+        stateAfterPremiumHolidayActivation: 'target-income',
+        stateAfterReinstatement: 'target-income',
+      },
       source: 'policy-redemption',
     })
     expect(seed.scheduledPayoutAssumption).toBeUndefined()
@@ -7490,14 +7503,20 @@ describe('templateVariantToPolicySeed', () => {
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:lapse-reinstatement-payout-state')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-retirement-elite-single-premium-corridor')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-retirement-elite-premium-holiday-and-reinstatement-payout-continuity')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-retirement-elite-premium-holiday-and-reinstatement-payout-continuity')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-retirement-elite-reinstatement-and-payout-continuity')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(5)
     expect(seed.scheduledPayoutSupport).toEqual({
       mode: 'manual-assumption',
       accountId: 'policy',
+      payoutStateSupport: {
+        defaultState: 'target-income',
+        suppressWhileLapsed: true,
+        stateAfterReinstatement: 'target-income',
+      },
       source: 'policy-redemption',
     })
     expect(seed.chargeRules).toEqual([

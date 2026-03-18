@@ -351,6 +351,16 @@ export function templateVariantToPolicySeed(
             ? { fallbackAccountIds: [...variant.scheduledPayoutSupport.fallbackAccountIds] }
             : {}),
           source: variant.scheduledPayoutSupport.source,
+          ...(variant.scheduledPayoutSupport.payoutStateSupport
+            ? {
+                payoutStateSupport: {
+                  defaultState: variant.scheduledPayoutSupport.payoutStateSupport.defaultState,
+                  suppressWhileLapsed: variant.scheduledPayoutSupport.payoutStateSupport.suppressWhileLapsed,
+                  stateAfterPremiumHolidayActivation: variant.scheduledPayoutSupport.payoutStateSupport.stateAfterPremiumHolidayActivation,
+                  stateAfterReinstatement: variant.scheduledPayoutSupport.payoutStateSupport.stateAfterReinstatement,
+                },
+              }
+            : {}),
         }
       : undefined,
     scheduledPayoutAssumption: undefined,

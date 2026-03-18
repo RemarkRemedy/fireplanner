@@ -221,6 +221,12 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       mode: 'manual-assumption',
       accountId: 'policy',
       source: 'policy-redemption',
+      payoutStateSupport: {
+        defaultState: 'secure-income',
+        suppressWhileLapsed: true,
+        stateAfterPremiumHolidayActivation: 'target-income',
+        stateAfterReinstatement: 'target-income',
+      },
       notes: [
         'Monthly Income after the selected payout age is paid via redemption of policy units, with Secure Monthly Income during the Secure Payout Period and Target Monthly Income thereafter.',
       ],
@@ -228,7 +234,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: [...FULL_SURRENDER_CHARGE_SCHEDULE],
     warnings: [
-      'AIA Elite Secure Income - 5 Pay is cataloged as supported in V1 for the regular-pay corridor. The parser captures the premium-year regular premium charge schedule, a manual-input annual supplementary charge amount from the policy illustration, the 3% top-up premium charge, the premium-holiday charge schedule, the full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel.',
+      'AIA Elite Secure Income - 5 Pay is cataloged as supported in V1 for the regular-pay corridor. The parser captures the premium-year regular premium charge schedule, a manual-input annual supplementary charge amount from the policy illustration, the 3% top-up premium charge, the premium-holiday charge schedule, the full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel, including lapse suppression and permanent Target Monthly Income fallback after Premium Holiday activation or reinstatement in the annual-state model.',
       'Secure Monthly Income eligibility depends on no premium holiday, no regular-premium-unit or bonus-unit withdrawal, and no prior reinstatement, so payout selection and payout-state gating remain manual or informational inputs in V1.',
       'Supplementary charge requires a manual annual amount from the policy illustration because the summary states the formula but not the annual rate.',
     ],
@@ -239,7 +245,6 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       'Death, accidental death, and terminal illness benefit formulas remain informational only.',
       'Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.',
       'Minimum withdrawal amount, minimum post-withdrawal policy value, and top-up eligibility while premiums are outstanding remain informational only.',
-      'Reinstatement effects on payout-state are only partially represented; the post-reinstatement shift to Target Monthly Income remains informational only.',
       'Fund switching remains informational only because it is not allowed under the product terms.',
     ],
     sourceRefs: [page1, page2, page3, page4, page5, page6, page7],
@@ -266,6 +271,7 @@ export function parseAiaEliteSecureIncome5Pay({ document, sourceChecksumSha256 }
       'branch:aia-elite-secure-income-5p-partial-withdrawal-charge',
       'branch:aia-elite-secure-income-5p-full-surrender-charge',
       'kernel:scheduled-payout-manual-assumption',
+      'kernel:lapse-reinstatement-payout-state',
     ],
     metadataOnlyBehaviors: [
       'aia-elite-secure-income-5p-secure-monthly-income-election',
@@ -276,7 +282,6 @@ export function parseAiaEliteSecureIncome5Pay({ document, sourceChecksumSha256 }
       'aia-elite-secure-income-5p-terminal-illness-benefit',
       'aia-elite-secure-income-5p-fund-management-charge',
       'aia-elite-secure-income-5p-withdrawal-eligibility-gating',
-      'aia-elite-secure-income-5p-reinstatement-target-income',
       'aia-elite-secure-income-5p-no-fund-switching',
     ],
     warnings: [

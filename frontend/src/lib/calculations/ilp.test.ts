@@ -389,6 +389,81 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[3], 'policy').withdrawalAmount).toBe(0)
   })
 
+  it('suppresses scheduled payouts while the policy is explicitly lapsed and resumes in target-income state after reinstatement', () => {
+    const policy = makeOpenEndedPolicy({
+      scheduledPayoutSupport: {
+        mode: 'manual-assumption',
+        accountId: 'policy',
+        source: 'policy-redemption',
+        payoutStateSupport: {
+          defaultState: 'secure-income',
+          suppressWhileLapsed: true,
+          stateAfterReinstatement: 'target-income',
+        },
+      },
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        source: 'manual-assumption',
+        accountId: 'policy',
+        startPolicyYear: 2,
+        durationYears: 3,
+        annualPayoutAmount: 500,
+      },
+      policyEvents: [
+        {
+          id: 'lapse-year-2',
+          type: 'lapse',
+          startPolicyMonth: 13,
+          durationMonths: 12,
+        },
+      ],
+      postMipYears: 3,
+    })
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows.map((row) => row.policyYear)).toEqual([2, 3, 4])
+    expect(result.rows.map((row) => row.scheduledPayoutState)).toEqual(['lapsed', 'target-income', 'target-income'])
+    expect(result.rows.map((row) => row.annualWithdrawals)).toEqual([0, 500, 500])
+  })
+
+  it('switches secure-income scheduled payouts to target-income after premium-holiday activation', () => {
+    const policy = makeOpenEndedPolicy({
+      scheduledPayoutSupport: {
+        mode: 'manual-assumption',
+        accountId: 'policy',
+        source: 'policy-redemption',
+        payoutStateSupport: {
+          defaultState: 'secure-income',
+          suppressWhileLapsed: true,
+          stateAfterPremiumHolidayActivation: 'target-income',
+        },
+      },
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        source: 'manual-assumption',
+        accountId: 'policy',
+        startPolicyYear: 3,
+        durationYears: 2,
+        annualPayoutAmount: 600,
+      },
+      policyEvents: [
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 13,
+          durationMonths: 12,
+          repayMissedPremiums: false,
+        },
+      ],
+      postMipYears: 3,
+    })
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows.map((row) => row.policyYear)).toEqual([2, 3, 4])
+    expect(result.rows.map((row) => row.scheduledPayoutState)).toEqual(['inactive', 'target-income', 'target-income'])
+    expect(result.rows.map((row) => row.annualWithdrawals)).toEqual([0, 600, 600])
+  })
+
   it('keeps scheduled payout redemptions out of partial-withdrawal event charges', () => {
     const policy = makeOpenEndedPolicy({
       monthlyContribution: 0,

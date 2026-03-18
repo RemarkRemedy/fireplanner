@@ -270,6 +270,12 @@ export const ilpTemplateScheduledPayoutSupportSchema = z.object({
   accountId: z.string().min(1),
   fallbackAccountIds: z.array(z.string().min(1)).min(1).max(10).optional(),
   source: z.literal('policy-redemption'),
+  payoutStateSupport: z.object({
+    defaultState: z.enum(['secure-income', 'target-income']),
+    suppressWhileLapsed: z.boolean(),
+    stateAfterPremiumHolidayActivation: z.enum(['secure-income', 'target-income']).optional(),
+    stateAfterReinstatement: z.enum(['secure-income', 'target-income']).optional(),
+  }).optional(),
   notes: z.array(z.string()).min(1),
   sourceRefs: z.array(ilpCatalogSourceRefSchema).min(1),
 })

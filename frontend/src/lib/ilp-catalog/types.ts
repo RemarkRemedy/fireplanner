@@ -202,6 +202,12 @@ export interface IlpTemplateScheduledPayoutSupport {
   accountId: string
   fallbackAccountIds?: string[]
   source: 'policy-redemption'
+  payoutStateSupport?: {
+    defaultState: 'secure-income' | 'target-income'
+    suppressWhileLapsed: boolean
+    stateAfterPremiumHolidayActivation?: 'secure-income' | 'target-income'
+    stateAfterReinstatement?: 'secure-income' | 'target-income'
+  }
   notes: string[]
   sourceRefs: IlpCatalogSourceRef[]
 }
