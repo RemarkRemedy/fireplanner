@@ -30,6 +30,7 @@ describe('parseTokioMarineWealthBuilderAtFuture', () => {
     expect(product.modeledEconomics).toContain('tokio-loyalty-bonus')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(product.modeledEconomics).toContain('branch:tokio-wealth-builder-atfuture-advanced-death-monthly-protection-charge')
+    expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-builder-atfuture-advanced-death-benefit-selection')
     expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-builder-atfuture-advanced-death-benefit-payout-handling')
@@ -144,6 +145,9 @@ describe('parseTokioMarineWealthBuilderAtFuture', () => {
           requiresManualInput: true,
         }),
       ]),
+    )
+    expect(advancedVariant?.unsupportedItems).toContain(
+      'Advanced Death Benefit payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, Life Benefit Rider, credit-card charge, multiple-life last-life settlement, change-of-life-assured and life-replacement administration, regular withdrawal behavior, minimum-account-value enforcement, and rider premium-deduction handling remain metadata-only for this product.',
     )
   }, 30_000)
 })

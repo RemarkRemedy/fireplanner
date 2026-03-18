@@ -396,7 +396,7 @@ function buildVariant(
     unsupportedItems: [
       ...(isAdvancedDeath
         ? [
-            'Advanced Death Benefit payout handling beyond the modeled Monthly Protection Charge, Life Benefit Rider, credit-card charge, multiple-life last-life settlement, change-of-life-assured and life-replacement administration, regular withdrawal behavior, minimum-account-value enforcement, and rider premium-deduction handling remain metadata-only for this product.',
+            'Advanced Death Benefit payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, Life Benefit Rider, credit-card charge, multiple-life last-life settlement, change-of-life-assured and life-replacement administration, regular withdrawal behavior, minimum-account-value enforcement, and rider premium-deduction handling remain metadata-only for this product.',
           ]
         : [
             'Advanced Death Benefit selection, Life Benefit Rider, monthly protection charge, credit-card charge, multiple-life last-life settlement, change-of-life-assured and life-replacement administration, regular withdrawal behavior, minimum-account-value enforcement, and rider premium-deduction handling remain metadata-only for this product.',
@@ -434,6 +434,7 @@ export function parseTokioMarineWealthBuilderAtFuture(context: ParseContext): Il
       'tokio-accumulation-partial-withdrawal-charge',
       'tokio-premium-shortfall-charge-non-payment',
       'branch:tokio-wealth-builder-atfuture-advanced-death-monthly-protection-charge',
+      'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [

@@ -15214,6 +15214,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'branch:tokio-harvest-builder-atfuture-advanced-death-monthly-protection-charge',
+      'kernel:current-death-benefit-estimate',
     ],
     description: 'Tokio Marine Harvest Builder@Future advanced-death supported baseline proving Monthly Protection Charge handling from insured-life inputs.',
   },
@@ -15268,6 +15269,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'branch:tokio-wealth-builder-atfuture-advanced-death-monthly-protection-charge',
+      'kernel:current-death-benefit-estimate',
     ],
     description: 'Tokio Marine Wealth Builder@Future advanced-death supported baseline proving Monthly Protection Charge handling from insured-life inputs.',
   },

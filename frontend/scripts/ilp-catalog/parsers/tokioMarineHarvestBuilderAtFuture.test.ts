@@ -30,6 +30,7 @@ describe('parseTokioMarineHarvestBuilderAtFuture', () => {
     expect(product.modeledEconomics).toContain('tokio-loyalty-bonus')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(product.modeledEconomics).toContain('branch:tokio-harvest-builder-atfuture-advanced-death-monthly-protection-charge')
+    expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toEqual([
       'tokio-harvest-builder-atfuture-advanced-death-benefit-selection',
@@ -175,7 +176,7 @@ describe('parseTokioMarineHarvestBuilderAtFuture', () => {
       'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
     )
     expect(advancedVariant?.unsupportedItems).toContain(
-      'Advanced Death Benefit payout handling beyond the modeled Monthly Protection Charge, Life Benefit Rider, credit-card charge, life-replacement administration, regular withdrawal behavior, minimum-account-value enforcement, and rider premium-deduction handling remain metadata-only for this product.',
+      'Advanced Death Benefit payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, Life Benefit Rider, credit-card charge, life-replacement administration, regular withdrawal behavior, minimum-account-value enforcement, and rider premium-deduction handling remain metadata-only for this product.',
     )
     expect(advancedVariant?.sourceRefs.some((ref) => ref.page === 14)).toBe(true)
     expect(basicVariant?.sourceRefs.some((ref) => ref.page === 14)).toBe(false)
