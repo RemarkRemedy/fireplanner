@@ -183,6 +183,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     warnings: [
       'Invest plus SP is cataloged as a supported V1 product for the initial single-premium corridor only. The parser captures zero initial subscription charge, the initial-account policy-charge schedule, the 4.00% top-up premium charge, the initial-account surrender / partial-withdrawal charge tables, and reinvest-default distribution support.',
       'Power-up bonus, representative management charge, death-benefit principal floor, and top-up-specific post-charge accounting remain informational only in V1.',
+      'Grace-period top-up funding, reinstatement, and free-look handling remain informational only.',
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
     unsupportedItems: [
@@ -191,7 +192,9 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       'Top-up premium charge, top-up-specific policy-charge clocks, and top-up-specific surrender / withdrawal charge clocks remain informational only.',
       'Representative management charge remains informational only because the application-agreed rate can vary up to 0.75% per annum.',
       'Fund-level management fees, dividend payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested dividends remain informational only.',
-      'Grace-period top-up funding, reinstatement, and free-look handling remain informational only.',
+      'Grace-period top-up funding remains informational only.',
+      'Reinstatement remains informational only.',
+      'Free-look handling remains informational only.',
     ],
     sourceRefs: [page1, page2, page3, page4Dividend, page7, page9, page10],
   }
@@ -229,7 +232,7 @@ export function parseEtiqaInvestPlusSp(context: ParseContext): IlpCatalogProduct
       'etiqa-invest-plus-sp-free-look',
     ],
     warnings: [
-      'Invest plus SP is cataloged as a supported V1 product for the initial single-premium corridor only. The parser captures zero initial subscription charge, the initial-account policy-charge schedule, the 4.00% top-up premium charge, the initial-account surrender / partial-withdrawal charge tables, and reinvest-default distribution support, while power-up bonus, representative-management charges, protection formulas, and top-up-vintage post-charge accounting remain informational only.',
+      'Invest plus SP is cataloged as a supported V1 product for the initial single-premium corridor only. The parser captures zero initial subscription charge, the initial-account policy-charge schedule, the 4.00% top-up premium charge, the initial-account surrender / partial-withdrawal charge tables, and reinvest-default distribution support, while power-up bonus, representative-management charges, protection formulas, top-up-vintage post-charge accounting, and grace-period / reinstatement / free-look administration remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

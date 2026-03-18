@@ -118,6 +118,9 @@ describe('parseEtiqaInvestPlusSp', () => {
     expect(product.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-power-up-bonus')
     expect(product.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-representative-management-charge')
     expect(product.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-dividend-threshold-and-withdrawal-consequences')
+    expect(product.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-grace-period-top-up-funding')
+    expect(product.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-reinstatement')
+    expect(product.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-free-look')
 
     const variant = product.variants[0]
     expect(variant).toMatchObject({
@@ -164,6 +167,9 @@ describe('parseEtiqaInvestPlusSp', () => {
       sourceRefs: expect.any(Array),
     })
     expect(variant.eecTable).toEqual([0.07, 0.05, 0.04, 0.026, 0.012, 0])
+    expect(variant.unsupportedItems).toContain('Grace-period top-up funding remains informational only.')
+    expect(variant.unsupportedItems).toContain('Reinstatement remains informational only.')
+    expect(variant.unsupportedItems).toContain('Free-look handling remains informational only.')
   })
 
   it.skipIf(!existsSync(SOURCE_PATH))('matches the live source PDF when the local corpus is available', async () => {

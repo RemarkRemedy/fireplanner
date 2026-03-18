@@ -2920,6 +2920,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-invest-plus-sp-top-up-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-dividend-threshold-and-withdrawal-consequences')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-grace-period-top-up-funding')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-reinstatement')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-free-look')
     expect(seed.mipBasis).toBe('open-ended')
     expect(seed.mipLength).toBeNull()
     expect(seed.accounts).toEqual([
