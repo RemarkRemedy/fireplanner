@@ -24,6 +24,19 @@ export function WrappedStoryContainer({ cardRenderers }: WrappedStoryContainerPr
   const [direction, setDirection] = useState(1)
   const isTransitioning = useRef(false)
   const pointerStart = useRef<{ x: number; y: number; time: number } | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const previousFocusRef = useRef<Element | null>(null)
+
+  // Focus trap: capture focus on mount, restore on unmount
+  useEffect(() => {
+    previousFocusRef.current = document.activeElement
+    containerRef.current?.focus()
+    return () => {
+      if (previousFocusRef.current instanceof HTMLElement) {
+        previousFocusRef.current.focus()
+      }
+    }
+  }, [])
 
   const total = data.cards.length
 
@@ -116,8 +129,13 @@ export function WrappedStoryContainer({ cardRenderers }: WrappedStoryContainerPr
 
   return (
     <div
+      ref={containerRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Your FIRE Story"
+      tabIndex={-1}
       className="fixed inset-0 z-50 bg-black overflow-hidden select-none"
-      style={{ height: '100dvh' }}
+      style={{ height: '100dvh', outline: 'none' }}
     >
       <div
         className="absolute inset-0"
@@ -152,7 +170,7 @@ export function WrappedStoryContainer({ cardRenderers }: WrappedStoryContainerPr
       {/* Navigation hints (visible on first card only) */}
       {currentIndex === 0 && (
         <div className="absolute bottom-8 left-0 right-0 z-10 flex justify-center">
-          <p className="text-white/80 text-sm animate-pulse">Tap or swipe to continue</p>
+          <p className="text-white/80 text-sm motion-safe:animate-pulse">Tap or swipe to continue</p>
         </div>
       )}
     </div>

@@ -13,7 +13,7 @@ export function WrappedProgressBar({ total, current }: WrappedProgressBarProps) 
               i < current
                 ? 'bg-white w-full'
                 : i === current
-                  ? 'bg-white/80 animate-pulse w-full'
+                  ? 'bg-white/80 motion-safe:animate-pulse w-full'
                   : 'w-0'
             }`}
           />

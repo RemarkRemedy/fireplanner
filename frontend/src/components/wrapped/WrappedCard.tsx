@@ -57,13 +57,13 @@ export function WrappedCard({ gradient, direction, children }: WrappedCardProps)
       exit="exit"
       transition={{ duration: 0.3, ease: 'easeOut' }}
     >
-      {/* Film grain noise overlay */}
+      {/* Static grain texture (no feTurbulence, GPU-friendly) */}
       <div
-        className="absolute inset-0 opacity-[0.04] pointer-events-none"
+        className="absolute inset-0 pointer-events-none opacity-[0.03]"
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='3' cy='5' r='0.7' fill='white'/%3E%3Ccircle cx='15' cy='12' r='0.5' fill='white'/%3E%3Ccircle cx='28' cy='3' r='0.6' fill='white'/%3E%3Ccircle cx='42' cy='18' r='0.4' fill='white'/%3E%3Ccircle cx='8' cy='25' r='0.5' fill='white'/%3E%3Ccircle cx='22' cy='30' r='0.7' fill='white'/%3E%3Ccircle cx='35' cy='22' r='0.4' fill='white'/%3E%3Ccircle cx='48' cy='8' r='0.6' fill='white'/%3E%3Ccircle cx='5' cy='40' r='0.5' fill='white'/%3E%3Ccircle cx='18' cy='45' r='0.6' fill='white'/%3E%3Ccircle cx='32' cy='38' r='0.4' fill='white'/%3E%3Ccircle cx='45' cy='42' r='0.7' fill='white'/%3E%3Ccircle cx='12' cy='50' r='0.5' fill='white'/%3E%3Ccircle cx='25' cy='48' r='0.3' fill='white'/%3E%3Ccircle cx='40' cy='52' r='0.6' fill='white'/%3E%3C/svg%3E")`,
+          backgroundSize: '50px 55px',
           backgroundRepeat: 'repeat',
-          backgroundSize: '256px 256px',
         }}
       />
       <motion.div
