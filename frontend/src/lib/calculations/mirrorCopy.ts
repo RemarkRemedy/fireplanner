@@ -76,7 +76,7 @@ export function getMirrorCopy(
       const { fireAge, fireNumber, topInsight } = insight.data
       return {
         headline: isYoung
-          ? `If you keep this up: FIRE by ${fireAge}. ${topInsight}`
+          ? `If you keep this up: FIRE by ${fireAge}. ${topInsight} Level complete.`
           : `With everything you've told us: retire at ~${fireAge} with ${formatCurrency(fireNumber)} saved. ${topInsight}`,
         detail: '',
       }

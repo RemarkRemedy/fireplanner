@@ -198,13 +198,14 @@ export function computeMirrorInsights(inputs: MirrorInsightInputs): MirrorInsigh
   // Moment 5: Full Snapshot
   // -----------------------------------------------------------------------
   const yearsToFire = calculateYearsToFire(netRealReturn, annualSavings, totalLiquid + totalCpf, fireNumber)
-  const fireAge = isFinite(yearsToFire) ? Math.round(currentAge + yearsToFire) : retirementAge
+  const fireReachable = isFinite(yearsToFire) && yearsToFire <= 100
+  const fireAge = fireReachable ? Math.round(currentAge + yearsToFire) : 0
 
   const topInsight = deriveTopInsight(inputs, savingsRatePercent, cpfYears, yearsPerExtra500)
 
   const moment5: MirrorInsightData = {
     id: 'full-snapshot',
-    suppressed: false,
+    suppressed: !fireReachable,
     data: {
       fireAge,
       fireNumber,

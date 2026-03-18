@@ -66,6 +66,7 @@ describe('computeMirrorInsights', () => {
     )
     const m1 = insights.find((i) => i.id === 'savings-power')!
     expect(m1).toBeDefined()
+    expect(m1.suppressed).toBe(true)
   })
 
   it('moment 2 suppresses benchmark when savings rate below median', () => {
