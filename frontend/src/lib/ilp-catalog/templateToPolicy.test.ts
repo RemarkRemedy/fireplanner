@@ -6513,6 +6513,11 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-atlas-loyalty-bonus-adjustment-factor')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-atlas-advanced-death-payout-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-atlas-multiple-life-last-life-settlement')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-atlas-change-of-life-assured-administration')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-atlas-advanced-death-payout-and-life-assured-administration')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-atlas-change-of-life-assured-option')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-atlas-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.accounts).toEqual([
       expect.objectContaining({

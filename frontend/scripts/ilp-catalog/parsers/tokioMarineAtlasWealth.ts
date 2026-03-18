@@ -275,10 +275,10 @@ function buildVariant(
       'Loyalty Bonus remains metadata-only because its annual adjustment-factor formula and qualification state are outside the current engine.',
       ...(isAdvancedDeath
         ? [
-            'Advanced Death payout handling beyond the modeled Monthly Protection Charge, add/remove/change-of-life-assured handling, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.',
+            'Advanced Death payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, change-of-life-assured administration, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.',
           ]
         : [
-            'Advanced Death selection, Monthly Protection Charge, add/remove/change-of-life-assured handling, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.',
+            'Advanced Death selection, Monthly Protection Charge, multiple-life last-life settlement, change-of-life-assured administration, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.',
           ]),
     ],
     sourceRefs: [page1, page2, page4, page5, page8Dividend, page8Charges, page9, page14],
@@ -312,8 +312,9 @@ export function parseTokioMarineAtlasWealth(context: ParseContext): IlpCatalogPr
     ],
     metadataOnlyBehaviors: [
       'tokio-atlas-loyalty-bonus-adjustment-factor',
-      'tokio-atlas-advanced-death-payout-and-life-assured-administration',
-      'tokio-atlas-change-of-life-assured-option',
+      'tokio-atlas-advanced-death-payout-handling',
+      'tokio-atlas-multiple-life-last-life-settlement',
+      'tokio-atlas-change-of-life-assured-administration',
       'tokio-atlas-premium-holiday-lapse-state',
       'tokio-atlas-regular-withdrawal-facility',
       'tokio-atlas-credit-card-charge',
@@ -323,7 +324,7 @@ export function parseTokioMarineAtlasWealth(context: ParseContext): IlpCatalogPr
       'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
       'Loyalty Bonus remains informational only because the source uses an annual adjustment-factor formula that the current engine does not execute.',
       'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published first-policy-year accrual, policy-year-2 settlement, policy-value valuation basis, and irreversible downgrade after failed deduction.',
-      'Premium-holiday lapse behavior, add/remove/change-of-life-assured handling, regular withdrawal, and other corridors remain informational only.',
+      'Premium-holiday lapse behavior, multiple-life last-life settlement, change-of-life-assured administration, regular withdrawal, credit-card charge, and other corridors remain informational only.',
       'Structured extraction validated against the TM Atlas Wealth product summary text layer.',
     ],
     archived: false,

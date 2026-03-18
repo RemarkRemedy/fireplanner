@@ -28,6 +28,11 @@ describe('parseTokioMarineAtlasWealth', () => {
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
     expect(product.modeledEconomics).toContain('branch:tokio-atlas-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-atlas-advanced-death-payout-handling')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-atlas-multiple-life-last-life-settlement')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-atlas-change-of-life-assured-administration')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-atlas-advanced-death-payout-and-life-assured-administration')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-atlas-change-of-life-assured-option')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-atlas-dividend-payout-threshold-and-record-date-instructions')
 
     const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-25')
@@ -115,7 +120,7 @@ describe('parseTokioMarineAtlasWealth', () => {
       'The Advanced Death variant also models the published first-policy-year Monthly Protection Charge accrual, policy-year-2 settlement, policy-value valuation basis, and irreversible downgrade to Basic Death after failed Accumulation Units Account deduction.',
     )
     expect(advancedVariant?.unsupportedItems).toContain(
-      'Advanced Death payout handling beyond the modeled Monthly Protection Charge, add/remove/change-of-life-assured handling, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.',
+      'Advanced Death payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, change-of-life-assured administration, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.',
     )
     expect(basicVariant?.eecTable).toEqual([
       1, 1, 0.88, 0.86, 0.84, 0.82, 0.8, 0.78, 0.76, 0.73,
