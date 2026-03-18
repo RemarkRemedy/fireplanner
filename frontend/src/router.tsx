@@ -25,6 +25,7 @@ const HealthCheckPage = lazy(() => import('@/pages/HealthCheckPage').then(m => (
 const CpfPlannerPage = lazy(() => import('@/pages/CpfPlannerPage').then(m => ({ default: m.CpfPlannerPage })))
 const ComparePage = lazy(() => import('@/pages/ComparePage').then(m => ({ default: m.ComparePage })))
 const AdminEmailsPage = lazy(() => import('@/pages/AdminEmailsPage').then(m => ({ default: m.AdminEmailsPage })))
+const WrappedPage = lazy(() => import('@/pages/WrappedPage').then(m => ({ default: m.WrappedPage })))
 
 function PageLoader() {
   return (
@@ -121,6 +122,7 @@ export const router = createBrowserRouter([
       { path: '/retirement-calculator', element: page(RetirementCalculatorPage) },
       { path: '/cpf-planner', element: page(CpfPlannerPage) },
       { path: '/compare', element: page(ComparePage) },
+      { path: '/wrapped', element: page(WrappedPage) },
       // Redirects: old input pages → /inputs with section anchors
       { path: '/profile', element: <Navigate to="/inputs#section-personal" replace /> },
       { path: '/income', element: <Navigate to="/inputs#section-income" replace /> },

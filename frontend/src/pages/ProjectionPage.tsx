@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { AlertTriangle, HeartPulse, PartyPopper } from 'lucide-react'
+import { AlertTriangle, HeartPulse, PartyPopper, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { NWChartView } from '@/components/projection/NWChartView'
 import { Maximize2 } from 'lucide-react'
@@ -678,7 +678,17 @@ export function ProjectionPage() {
       <div>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold">Year-by-Year Projection</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold">Year-by-Year Projection</h1>
+              <Link
+                to="/wrapped"
+                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 px-3 py-1 text-xs font-medium text-white hover:from-indigo-600 hover:to-purple-700 transition-all shadow-sm"
+                onClick={() => trackEvent('wrapped_entry_clicked', { source: 'projection' })}
+              >
+                <Sparkles className="h-3 w-3" />
+                Your FIRE Story
+              </Link>
+            </div>
             <p className="text-muted-foreground text-sm">
               Single-path projection showing income, portfolio growth, and FIRE progress.
               Verify your inputs produce sensible numbers before running Monte Carlo analysis.

@@ -73,6 +73,8 @@ type AnalyticsEvent =
   | 'quick_estimate_computed'
   | 'quick_health_score_viewed'
   | 'demo_loaded'
+  | 'wrapped_entry_clicked'
+  | 'wrapped_card_viewed'
 
 export function trackEvent(event: AnalyticsEvent, data?: Record<string, string | number | boolean>) {
   if (isCompanionMode()) return
