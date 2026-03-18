@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { WRAPPED_GRADIENTS, buildCardSequence } from './gradients'
 import type { WrappedCardKey } from './gradients'
 
-const EXPECTED_KEYS: WrappedCardKey[] = [
+const INDIVIDUAL_KEYS: WrappedCardKey[] = [
   'intro',
   'netWorth',
   'fireNumber',
@@ -13,11 +13,23 @@ const EXPECTED_KEYS: WrappedCardKey[] = [
   'summary',
 ]
 
+const COUPLE_KEYS: WrappedCardKey[] = [
+  'intro',
+  'netWorth',
+  'fireNumber',
+  'savingsPower',
+  'progress',
+  'milestone',
+  'trajectory',
+  'peak',
+  'summary',
+]
+
 describe('WRAPPED_GRADIENTS', () => {
-  it('has all 8 expected keys', () => {
+  it('has all 9 keys (8 individual + savingsPower)', () => {
     const keys = Object.keys(WRAPPED_GRADIENTS)
-    expect(keys).toHaveLength(8)
-    for (const k of EXPECTED_KEYS) {
+    expect(keys).toHaveLength(9)
+    for (const k of COUPLE_KEYS) {
       expect(keys).toContain(k)
     }
   })
@@ -31,26 +43,30 @@ describe('WRAPPED_GRADIENTS', () => {
 })
 
 describe('buildCardSequence', () => {
-  it('returns exactly 8 items', () => {
+  it('defaults to individual mode with 8 cards', () => {
     expect(buildCardSequence()).toHaveLength(8)
   })
 
-  it('returns keys in the correct order', () => {
-    const sequence = buildCardSequence()
+  it('individual mode returns 8 cards without savingsPower', () => {
+    const sequence = buildCardSequence('individual')
     const keys = sequence.map((c) => c.key)
-    expect(keys).toEqual(EXPECTED_KEYS)
+    expect(keys).toEqual(INDIVIDUAL_KEYS)
+    expect(keys).not.toContain('savingsPower')
   })
 
-  it('each card config has a key and gradient that matches WRAPPED_GRADIENTS', () => {
-    const sequence = buildCardSequence()
-    for (const card of sequence) {
-      expect(card.gradient).toBe(WRAPPED_GRADIENTS[card.key])
+  it('couple mode returns 9 cards with savingsPower after fireNumber', () => {
+    const sequence = buildCardSequence('couple')
+    const keys = sequence.map((c) => c.key)
+    expect(keys).toEqual(COUPLE_KEYS)
+    expect(keys).toHaveLength(9)
+  })
+
+  it('each card config has a gradient that matches WRAPPED_GRADIENTS', () => {
+    for (const mode of ['individual', 'couple'] as const) {
+      const sequence = buildCardSequence(mode)
+      for (const card of sequence) {
+        expect(card.gradient).toBe(WRAPPED_GRADIENTS[card.key])
+      }
     }
-  })
-
-  it('WrappedCardKey type covers all keys (runtime check)', () => {
-    const allKeys = Object.keys(WRAPPED_GRADIENTS) as WrappedCardKey[]
-    const sequenceKeys = buildCardSequence().map((c) => c.key)
-    expect(new Set(sequenceKeys)).toEqual(new Set(allKeys))
   })
 })
