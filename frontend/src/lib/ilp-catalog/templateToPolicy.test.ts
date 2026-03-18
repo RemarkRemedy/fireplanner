@@ -4904,10 +4904,26 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-link-5-10-involuntary-unemployment-waiver')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
-      'tokio-wealth-flexi-link-5-10-advanced-death-benefit-and-eligible-rider-handling',
+      'tokio-wealth-flexi-link-5-10-advanced-death-benefit-selection',
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-wealth-flexi-link-5-10-advanced-death-benefit-payout-handling',
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-wealth-flexi-link-5-10-eligible-rider-fallback',
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-wealth-flexi-link-5-10-multiple-life-last-life-settlement',
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-wealth-flexi-link-5-10-change-of-life-assured-and-life-replacement-administration',
     )
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-link-5-10-benefit-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-link-5-10-life-benefit-rider')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain(
+      'tokio-wealth-flexi-link-5-10-advanced-death-benefit-and-eligible-rider-handling',
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-link-5-10-life-replacement-option')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-link-5-10-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.accounts.find((account) => account.id === 'accumulation')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
@@ -5003,6 +5019,26 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-wealth-flexi-link-5-10-advanced-death-monthly-protection-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-link-5-10-involuntary-unemployment-waiver')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-wealth-flexi-link-5-10-advanced-death-benefit-selection',
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-wealth-flexi-link-5-10-advanced-death-benefit-payout-handling',
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-wealth-flexi-link-5-10-eligible-rider-fallback',
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-wealth-flexi-link-5-10-multiple-life-last-life-settlement',
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-wealth-flexi-link-5-10-change-of-life-assured-and-life-replacement-administration',
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain(
+      'tokio-wealth-flexi-link-5-10-advanced-death-benefit-and-eligible-rider-handling',
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-link-5-10-life-replacement-option')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
