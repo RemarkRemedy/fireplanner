@@ -254,7 +254,8 @@ function buildVariant(document: ExtractedPdfDocument, coverOption: CoverOption):
     ],
     unsupportedItems: [
       'TPD payout treatment, terminal-illness claim limits, and cross-policy benefit caps remain informational only.',
-      'Premium-holiday lapse sequencing and policy reinstatement remain informational only.',
+      'Premium Holiday activation, top-up / recurring-single-premium suspension, lapse-state no-benefit periods, and premium-holiday resumption rules remain informational only.',
+      'Policy reinstatement backpay, health evidence, approval timing, and post-reinstatement charge continuation remain informational only.',
       'Guaranteed Insurability Option milestone eligibility, health conditions, issue-time product availability, and cross-policy / sum-assured limits remain informational only.',
       'Life Replacement Option eligibility / underwriting, rider deletion, cover reset, assignment / beneficiary revocation, and new-life waiting-period / pre-existing-condition handling remain informational only.',
       'USD-specific payment constraints and the no-RSP USD corridor remain informational only.',
@@ -290,7 +291,8 @@ export function parseHsbcLifeFlexiProtector({ document, sourceChecksumSha256 }: 
     ],
     metadataOnlyBehaviors: [
       'hsbc-life-flexi-protector-tpd-payout-structure',
-      'hsbc-life-flexi-protector-premium-holiday-lapse-sequencing',
+      'hsbc-life-flexi-protector-premium-holiday-lapse-and-no-claim-state',
+      'hsbc-life-flexi-protector-reinstatement-and-backpay',
       'hsbc-life-flexi-protector-gio-milestone-eligibility-and-health-conditions',
       'hsbc-life-flexi-protector-gio-cross-policy-and-sum-assured-limits',
       'hsbc-life-flexi-protector-life-replacement-eligibility-and-underwriting',
@@ -300,7 +302,7 @@ export function parseHsbcLifeFlexiProtector({ document, sourceChecksumSha256 }: 
     ],
     warnings: [
       'HSBC Life Flexi Protector is cataloged as a supported V1 product. The parser captures explicit SGD open-ended Choice Cover and Max Cover variants with the published regular-premium charge schedule, the year-5-onward 102% regular-premium allocation uplift, the tiered Additional Bonus Units, the fixed S$5 monthly administration fee, the Choice/Max death and terminal-illness insurance-charge corridor, the 5% top-up / recurring-single-premium charge path, and the nil withdrawal/redemption-fee path.',
-      'TPD claim treatment, premium-holiday lapse sequencing, reinstatement, Guaranteed Insurability Option milestone / cross-policy limits, Life Replacement Option underwriting / cover resets, policy-change approvals, and USD-specific constraints remain informational only.',
+      'TPD claim treatment, Premium Holiday lapse / no-claim state, reinstatement, Guaranteed Insurability Option milestone / cross-policy limits, Life Replacement Option underwriting / cover resets, policy-change approvals, and USD-specific constraints remain informational only.',
       'Structured extraction validated against the HSBC Life Flexi Protector product summary text layer.',
     ],
     archived: false,
