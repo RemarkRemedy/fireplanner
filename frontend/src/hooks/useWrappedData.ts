@@ -112,7 +112,11 @@ export function useWrappedData(): WrappedData {
     const hasCustomExpenses = profile.annualExpenses !== DEFAULT_ANNUAL_EXPENSES
     const hasCustomIncome = profile.annualIncome > 0
 
-    const fireAge = dashMetrics.fireAge ?? null
+    const rawFireAge = dashMetrics.fireAge ?? null
+    // Round and cap: ages beyond life expectancy are unreachable
+    const fireAge = rawFireAge != null && rawFireAge <= profile.lifeExpectancy
+      ? Math.round(rawFireAge)
+      : null
 
     return {
       ready: true,
@@ -125,7 +129,9 @@ export function useWrappedData(): WrappedData {
       progress: { percent: dashMetrics.progress ?? 0 },
       milestone: {
         fireAge,
-        yearsToFire: dashMetrics.yearsToFire ?? null,
+        yearsToFire: fireAge != null && dashMetrics.yearsToFire != null
+          ? Math.round(dashMetrics.yearsToFire)
+          : null,
       },
       trajectory: {
         chartData: accumulationData,
