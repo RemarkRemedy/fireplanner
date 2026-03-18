@@ -830,7 +830,8 @@ export function SetupPage() {
     trackEvent('setup_completed', { planType, isRedo, pathway: sectionOrder })
     // Store flag so the projection page can show a welcome orientation
     sessionStorage.setItem('fireplanner-setup-just-completed', '1')
-    navigate('/projection')
+    const isMobile = window.innerWidth < 768
+    navigate(isMobile ? '/wrapped' : '/projection')
   }, [state.values, planType, isRedo, sectionOrder, setUIField, navigate])
 
   // SPA navigation guard for couple/household flows with progress
