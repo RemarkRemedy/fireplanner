@@ -21,6 +21,9 @@ import { grossUpFromTakeHome } from '@/lib/calculations/grossUp'
 import { estimateCpfBalances } from '@/lib/calculations/cpf'
 import { SG_EXPENSE_BENCHMARKS } from '@/lib/data/expenseBenchmarks'
 import { NumberInput } from '@/components/shared/NumberInput'
+import { computeMirrorInsights, type MirrorInsightData, type MirrorId } from '@/lib/calculations/mirrorInsights'
+import { MirrorMoment } from '@/components/setup/MirrorMoment'
+import { useConfetti } from '@/components/setup/SetupConfetti'
 
 // ---------------------------------------------------------------------------
 // Screen definitions
@@ -289,6 +292,20 @@ const SCREENS: (NudgeFlowScreen & {
     planTypes: ['couple', 'household'],
   },
 ]
+
+/**
+ * Map of screen IDs that trigger a mirror moment after completion.
+ * Mirror moments fire once per setup session, for primary adult screens only.
+ */
+const MIRROR_TRIGGERS: Record<string, MirrorId> = {
+  income: 'savings-power',
+  expenses: 'savings-rate',
+  cpf: 'cpf-runway',
+  'property-details': 'net-worth',
+  'property-planning': 'net-worth',
+  'property-toggle': 'net-worth',
+}
+// Moment 5 (full-snapshot) fires on the review screen, handled separately
 
 // ---------------------------------------------------------------------------
 // Reducer
@@ -660,24 +677,94 @@ export function SetupPage() {
   const isReview = currentActivePosition === -1 && state.screenIndex >= visibleScreenDefs.length
   const totalSteps = activeScreenIndices.length
 
+  const [activeMirror, setActiveMirror] = useState<MirrorInsightData | null>(null)
+  const [shownMirrors, setShownMirrors] = useState<Set<MirrorId>>(new Set())
+  const fireConfetti = useConfetti()
+
+  const isYoung = ((state.values.currentAge as number) ?? 30) < 25
+
   const handleChange = useCallback((field: string, value: unknown) => {
     dispatch({ type: 'SET_FIELD', field, value })
   }, [])
 
-  const handleNext = useCallback(() => {
+  const handleNextInner = useCallback(() => {
     const currentPos = activeScreenIndices.indexOf(state.screenIndex)
     const screenDef = visibleScreenDefs[state.screenIndex]
     if (screenDef) {
       trackEvent('setup_step_completed', { step: screenDef.id ?? `step-${state.screenIndex}`, position: currentPos + 1 })
     }
     if (currentPos < activeScreenIndices.length - 1) {
-      // Go to next non-skipped screen
       dispatch({ type: 'GO_TO', index: activeScreenIndices[currentPos + 1] })
     } else {
-      // Last screen -> go to review
       dispatch({ type: 'GO_TO', index: visibleScreenDefs.length })
     }
   }, [activeScreenIndices, state.screenIndex, visibleScreenDefs.length])
+
+  /** Build mirror insight inputs from current setup state values. */
+  const buildMirrorInputs = useCallback(() => {
+    const hasIncome = state.values.hasIncome !== false
+    return {
+      currentAge: (state.values.currentAge as number) ?? 30,
+      retirementAge: (state.values.retirementAge as number) ?? 55,
+      monthlyIncome: hasIncome ? ((state.values.monthlyIncome as number) ?? 0) : 0,
+      monthlyExpenses: (state.values.monthlyExpenses as number) ?? 0,
+      currentSavings: (state.values.liquidNetWorth as number) ?? 0,
+      cpfOA: (state.values.cpfOA as number) ?? 0,
+      cpfSA: (state.values.cpfSA as number) ?? 0,
+      hasCpf: state.values.residency !== 'foreigner',
+      propertyValue: state.values.ownsProperty === 'owns'
+        ? ((state.values.propertyValue as number) ?? 0)
+        : state.values.ownsProperty === 'planning'
+          ? ((state.values.purchasePrice as number) ?? 0)
+          : 0,
+      hasProperty: state.values.ownsProperty === 'owns' || state.values.ownsProperty === 'planning',
+      hasIncome,
+      expectedReturn: 0.05,
+      swr: 0.035,
+    }
+  }, [state.values])
+
+  const handleNext = useCallback(() => {
+    const screenDef = visibleScreenDefs[state.screenIndex]
+    const mirrorId = screenDef ? MIRROR_TRIGGERS[screenDef.id] : undefined
+    if (mirrorId && !shownMirrors.has(mirrorId)) {
+      const insights = computeMirrorInsights(buildMirrorInputs())
+      const mirror = insights.find((i) => i.id === mirrorId)
+      if (mirror && !mirror.suppressed) {
+        setActiveMirror(mirror)
+        setShownMirrors((prev) => new Set(prev).add(mirrorId))
+        // Fire confetti for under-25 on moment 2 (benchmark win)
+        if (isYoung && mirrorId === 'savings-rate' && mirror.id === 'savings-rate' && mirror.data.showBenchmark) {
+          fireConfetti()
+        }
+        return
+      }
+    }
+    handleNextInner()
+  }, [state.screenIndex, visibleScreenDefs, shownMirrors, isYoung, handleNextInner, fireConfetti, buildMirrorInputs])
+
+  const handleMirrorContinue = useCallback(() => {
+    setActiveMirror(null)
+    handleNextInner()
+  }, [handleNextInner])
+
+  // Moment 5 (full-snapshot) on review screen — desktop only
+  const moment5Shown = useRef(false)
+  useEffect(() => {
+    if (!isReview || moment5Shown.current) return
+    if (typeof window !== 'undefined' && window.innerWidth < 768) return
+    const insights = computeMirrorInsights(buildMirrorInputs())
+    const m5 = insights.find((i) => i.id === 'full-snapshot')
+    if (m5 && !m5.suppressed) {
+      moment5Shown.current = true
+      // Defer state updates to avoid synchronous setState-in-effect lint rule
+      queueMicrotask(() => {
+        setActiveMirror(m5)
+        setShownMirrors((prev) => new Set(prev).add('full-snapshot'))
+        if (isYoung) fireConfetti()
+      })
+    }
+  }, [isReview, buildMirrorInputs, isYoung, fireConfetti])
 
   const handleBack = useCallback(() => {
     const currentPos = activeScreenIndices.indexOf(state.screenIndex)
@@ -803,6 +890,15 @@ export function SetupPage() {
 
   // Review screen
   if (isReview) {
+    if (activeMirror) {
+      return (
+        <MirrorMoment
+          insight={activeMirror}
+          isYoung={isYoung}
+          onContinue={() => setActiveMirror(null)}
+        />
+      )
+    }
     const draft = draftFromValues(state.values, planType, isRedo)
     return (
       <ReviewCheckpoint
@@ -1051,6 +1147,16 @@ export function SetupPage() {
     return null
   })()
 
+  if (activeMirror) {
+    return (
+      <MirrorMoment
+        insight={activeMirror}
+        isYoung={isYoung}
+        onContinue={handleMirrorContinue}
+      />
+    )
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <SetupScreen
@@ -1061,8 +1167,11 @@ export function SetupPage() {
         onBack={isFirstScreen ? undefined : handleBack}
         currentStep={currentActivePosition + 1}
         totalSteps={totalSteps}
+        isYoung={isYoung}
         submitLabel={
-          currentActivePosition === totalSteps - 1 ? 'Review your answers' : 'Continue'
+          currentActivePosition === totalSteps - 1
+            ? 'Review your answers'
+            : (isYoung ? 'Next level' : 'Continue')
         }
       >
         {customChildren}
