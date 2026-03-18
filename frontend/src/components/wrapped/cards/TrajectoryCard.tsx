@@ -20,7 +20,7 @@ export function TrajectoryCard({ chartData, retirementAge, gradient, direction }
 
   return (
     <WrappedCard gradient={gradient} direction={direction}>
-      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white font-medium">
+      <motion.p variants={staggerChild} className="text-xs uppercase tracking-widest text-white/60 font-medium">
         Your wealth trajectory
       </motion.p>
 

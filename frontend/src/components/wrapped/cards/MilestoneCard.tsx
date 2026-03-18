@@ -14,7 +14,7 @@ export function MilestoneCard({ fireAge, yearsToFire, gradient, direction }: Mil
 
   return (
     <WrappedCard gradient={gradient} direction={direction}>
-      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white font-medium">
+      <motion.p variants={staggerChild} className="text-xs uppercase tracking-widest text-white/60 font-medium">
         {hasFireAge ? 'Financial freedom at' : 'Your FIRE milestone'}
       </motion.p>
 
@@ -23,6 +23,7 @@ export function MilestoneCard({ fireAge, yearsToFire, gradient, direction }: Mil
           <motion.div variants={staggerChild} className="flex items-baseline gap-3">
             <motion.span
               className="text-6xl md:text-8xl font-bold"
+              style={{ fontFamily: 'Syne, sans-serif' }}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, delay: 0.4, type: 'spring', bounce: 0.3 }}

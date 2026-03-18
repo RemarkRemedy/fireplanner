@@ -1,13 +1,13 @@
-/** Gradient palette for each Wrapped story card. Dark gradients with white text. */
+/** Gradient palette for each Wrapped story card. Dark hex gradients for WCAG AA contrast with white text. */
 export const WRAPPED_GRADIENTS = {
-  intro: 'from-slate-900 via-indigo-950 to-indigo-900',
-  netWorth: 'from-indigo-900 via-purple-900 to-purple-800',
-  fireNumber: 'from-purple-800 via-fuchsia-900 to-fuchsia-800',
-  progress: 'from-fuchsia-800 via-rose-800 to-rose-700',
-  milestone: 'from-rose-700 via-orange-700 to-orange-600',
-  trajectory: 'from-orange-600 via-amber-600 to-amber-500',
-  peak: 'from-amber-500 via-emerald-600 to-emerald-700',
-  summary: 'from-violet-800 via-indigo-800 to-slate-900',
+  intro: 'linear-gradient(to bottom right, #0F0F1A, #1A1040)',
+  netWorth: 'linear-gradient(to bottom right, #1A1040, #2D1B69)',
+  fireNumber: 'linear-gradient(to bottom right, #2D1B69, #4A1060)',
+  progress: 'linear-gradient(to bottom right, #4A1060, #6B1030)',
+  milestone: 'linear-gradient(to bottom right, #6B1030, #7C2400)',
+  trajectory: 'linear-gradient(to bottom right, #7C2400, #5C3D00)',
+  peak: 'linear-gradient(to bottom right, #1A3A2A, #0D2B1F)',
+  summary: 'linear-gradient(to bottom right, #0F1729, #0A0F1E)',
 } as const
 
 export type WrappedCardKey = keyof typeof WRAPPED_GRADIENTS

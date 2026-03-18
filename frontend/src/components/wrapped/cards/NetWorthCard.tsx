@@ -27,10 +27,10 @@ export function NetWorthCard({
 }: NetWorthCardProps) {
   return (
     <WrappedCard gradient={gradient} direction={direction}>
-      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white font-medium">
+      <motion.p variants={staggerChild} className="text-xs uppercase tracking-widest text-white/60 font-medium">
         Your net worth today
       </motion.p>
-      <motion.div variants={staggerChild}>
+      <motion.div variants={staggerChild} style={{ fontFamily: 'Syne, sans-serif' }}>
         <AnimatedNumber
           value={total}
           format={formatCompactCurrency}

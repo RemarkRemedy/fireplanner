@@ -14,7 +14,7 @@ export function ProgressCard({ percent, gradient, direction }: ProgressCardProps
 
   return (
     <WrappedCard gradient={gradient} direction={direction}>
-      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white font-medium">
+      <motion.p variants={staggerChild} className="text-xs uppercase tracking-widest text-white/60 font-medium">
         Your progress
       </motion.p>
 
@@ -49,6 +49,7 @@ export function ProgressCard({ percent, gradient, direction }: ProgressCardProps
         <div className="absolute inset-0 flex items-center justify-center">
           <motion.span
             className="text-4xl md:text-5xl font-bold"
+            style={{ fontFamily: 'Syne, sans-serif' }}
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 1.0 }}

@@ -14,10 +14,10 @@ interface FireNumberCardProps {
 export function FireNumberCard({ value, hasCustomExpenses, gradient, direction }: FireNumberCardProps) {
   return (
     <WrappedCard gradient={gradient} direction={direction}>
-      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white font-medium">
+      <motion.p variants={staggerChild} className="text-xs uppercase tracking-widest text-white/60 font-medium">
         Your FIRE number
       </motion.p>
-      <motion.div variants={staggerChild}>
+      <motion.div variants={staggerChild} style={{ fontFamily: 'Syne, sans-serif' }}>
         <AnimatedNumber
           value={value}
           format={formatCompactCurrency}
