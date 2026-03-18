@@ -381,7 +381,7 @@ function buildVariant(
       'This supported template models regular-premium routing to the Accumulation Units Account, top-up routing, recurring single premium routing, a 2.50% account-value policy charge during the minimum investment period, the published surrender, partial-withdrawal, and premium-shortfall charge schedules, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
       ...(isAdvancedDeath
         ? [
-            'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
+            'The Advanced Death variant also models the published current death-benefit estimate and Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
           ]
         : []),
       'Premium bonus and power-up bonus are modeled at the published rate windows, but their paid-up and no-withdrawal eligibility gates remain manual review assumptions.',
@@ -391,7 +391,7 @@ function buildVariant(
     unsupportedItems: [
       ...(isAdvancedDeath
         ? [
-            'Advanced Death Benefit payout handling beyond the modeled Monthly Protection Charge, eligible-rider fallback, involuntary unemployment waiver, credit-card charge, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+            'Advanced Death Benefit payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, eligible-rider fallback, involuntary unemployment waiver, credit-card charge, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
           ]
         : [
             'Advanced Death Benefit selection, eligible-rider fallback, involuntary unemployment waiver, credit-card charge, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
@@ -441,6 +441,7 @@ export function parseTokioMarineWealthFlexiLink510(context: ParseContext): IlpCa
       'tokio-accumulation-partial-withdrawal-charge',
       'tokio-premium-shortfall-charge-non-payment',
       'branch:tokio-wealth-flexi-link-5-10-advanced-death-monthly-protection-charge',
+      'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
@@ -455,7 +456,7 @@ export function parseTokioMarineWealthFlexiLink510(context: ParseContext): IlpCa
     warnings: [
       'Structured extraction validated against the Wealth Flexi-Link 5.10 product summary text layer.',
       'Wealth Flexi-Link 5.10 is modeled as split SGD / MIP 10 death-benefit-option variants with a published 2.50% policy charge during the minimum investment period and no policy charges after the minimum investment period.',
-      'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
+      'The Advanced Death variant also models the published current death-benefit estimate and Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
       'Dividend cash payouts are modeled through the manual distribution-mode assumption surface: only Top-up Units Account dividends may be paid in cash during the first five policy years, Accumulation Units Account dividends join after policy year 5, and the published SGD 50 minimum payout threshold plus 30-day record-date lead time are applied.',
       'Premium bonus and power-up bonus retain the published paid-up and no-withdrawal eligibility gates as manual review assumptions.',
       'Recurring single premium stays blocked after a premium-holiday event until regular premium resumes at the commencement-date amount.',

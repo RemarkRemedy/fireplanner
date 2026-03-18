@@ -15442,8 +15442,9 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'branch:tokio-wealth-flexi-link-3-12-advanced-death-monthly-protection-charge',
+      'kernel:current-death-benefit-estimate',
     ],
-    description: 'Tokio Marine Wealth Flexi-Link 3.12 advanced-death supported baseline proving Monthly Protection Charge handling from insured-life inputs.',
+    description: 'Tokio Marine Wealth Flexi-Link 3.12 advanced-death supported baseline proving current death-benefit estimate and Monthly Protection Charge handling from insured-life inputs.',
   },
   {
     productId: 'tokio-marine-wealth-flexi-link-3-12',
@@ -15495,8 +15496,9 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'branch:tokio-wealth-flexi-link-5-10-advanced-death-monthly-protection-charge',
+      'kernel:current-death-benefit-estimate',
     ],
-    description: 'Tokio Marine Wealth Flexi-Link 5.10 advanced-death supported baseline proving Monthly Protection Charge handling from insured-life inputs.',
+    description: 'Tokio Marine Wealth Flexi-Link 5.10 advanced-death supported baseline proving current death-benefit estimate and Monthly Protection Charge handling from insured-life inputs.',
   },
   {
     productId: 'tokio-marine-wealth-flexi-link-5-10',

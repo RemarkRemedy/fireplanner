@@ -5062,6 +5062,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-wealth-flexi-link-5-10-advanced-death-monthly-protection-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-link-5-10-involuntary-unemployment-waiver')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
       'tokio-wealth-flexi-link-5-10-advanced-death-benefit-selection',
@@ -5100,7 +5101,7 @@ describe('templateVariantToPolicySeed', () => {
       ]),
     )
     expect(seed.assuranceProfile).toBeUndefined()
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('Monthly Protection Charge'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('current death-benefit estimate and Monthly Protection Charge'))).toBe(true)
   })
 
   it('maps Tokio Marine Wealth Flexi-Link 3.12 into a supported seed with split policy-charge windows and tiered power-up bonuses', () => {
@@ -5260,6 +5261,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-wealth-flexi-link-3-12-advanced-death-monthly-protection-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -5278,7 +5280,7 @@ describe('templateVariantToPolicySeed', () => {
       ]),
     )
     expect(seed.assuranceProfile).toBeUndefined()
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('Monthly Protection Charge'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('current death-benefit estimate and Monthly Protection Charge'))).toBe(true)
   })
 
   it('maps Tokio Marine Wealth Builder@Future into a supported seed with split premium-bonus windows and a power-up milestone', () => {
