@@ -27,13 +27,14 @@ describe('parseHsbcWealthVoyage', () => {
     expect(product.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-voyage-dividend-payout-threshold')
-    expect(product.metadataOnlyBehaviors).not.toContain('hsbc-voyage-regular-withdrawal-loyalty-suspension')
+    expect(product.metadataOnlyBehaviors).toContain('hsbc-voyage-regular-withdrawal-loyalty-suspension')
+    expect(product.metadataOnlyBehaviors).toContain('hsbc-voyage-dividend-cash-payout-routing-fallback-and-execution')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-voyage-life-replacement-eligibility-and-underwriting')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-voyage-life-replacement-cover-reset-and-rider-termination')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-voyage-life-replacement-policy-reissue-fallback')
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-voyage-life-replacement-option')
     expect(product.warnings).toContain(
-      'Wealth Voyage is cataloged as a supported V1 product. Premium-base AMF, start-up bonus, bonus recovery charge, top-up charge, partial-withdrawal charge, surrender mechanics, manual regular-withdrawal payout support, the modeled subset of power-up / loyalty bonus suspension rules, and reinvest-default distribution support are modeled; premium-holiday charge after the free duration, premium-holiday backpay AMF reconciliation, Life Replacement Option eligibility / underwriting, post-replacement cover resets, and policy-reissue fallback remain informational only.',
+      'Wealth Voyage is cataloged as a supported V1 product. Premium-base AMF, start-up bonus, bonus recovery charge, top-up charge, partial-withdrawal charge, surrender mechanics, manual regular-withdrawal payout support, the modeled subset of power-up / loyalty bonus suspension rules, and reinvest-default distribution support are modeled; premium-holiday charge after the free duration, premium-holiday backpay AMF reconciliation, regular-withdrawal-linked loyalty suspension, dividend cash-payout routing / fallback / execution, Life Replacement Option eligibility / underwriting, post-replacement cover resets, and policy-reissue fallback remain informational only.',
     )
 
     const sgdMip20 = product.variants.find((variant) => variant.id === 'sgd-mip-20')
