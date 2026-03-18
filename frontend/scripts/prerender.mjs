@@ -241,6 +241,23 @@ const routes = [
       </ul>
     `,
   },
+  {
+    path: '/stamp-duty-calculator',
+    title: 'Singapore Stamp Duty Calculator: BSD and ABSD for Property Buyers',
+    heading: 'Singapore Stamp Duty Calculator',
+    description: 'Free stamp duty calculator for Singapore property. Calculate BSD and ABSD instantly for citizens, PRs, and foreigners. See bracket breakdowns and effective rates.',
+    bodyHtml: `
+      <p>Calculate Buyer's Stamp Duty (BSD) and Additional Buyer's Stamp Duty (ABSD) for any Singapore residential property purchase. See the progressive bracket breakdown, ABSD rate for your buyer profile, and total upfront cost.</p>
+      <p>BSD rates: 1% on first $180K, 2% on next $180K, 3% on next $640K, 4% on next $500K, 5% on next $1.5M, 6% on remainder.</p>
+      <p>ABSD rates (2023): Citizens 0%/20%/30%, PRs 5%/30%/35%, Foreigners 60%.</p>
+      <ul>
+        <li><a href="/">Start full retirement planning</a></li>
+        <li><a href="/cpf-planner">CPF retirement planner</a></li>
+        <li><a href="/compare">Compare robo-advisors vs DIY</a></li>
+        <li><a href="/retirement-calculator">Singapore retirement calculator</a></li>
+      </ul>
+    `,
+  },
 ]
 
 const template = readFileSync(join(distDir, 'index.html'), 'utf-8')

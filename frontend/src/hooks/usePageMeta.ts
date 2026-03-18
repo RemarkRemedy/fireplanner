@@ -34,6 +34,7 @@ const PAGE_NAMES: Record<string, string> = {
   '/quick-estimate': 'Quick Estimate',
   '/cpf-planner': 'CPF Planner',
   '/compare': 'Compare',
+  '/stamp-duty-calculator': 'Stamp Duty Calculator',
 }
 
 export function usePageMeta({ title, description, path = '/' }: PageMeta) {
