@@ -40,6 +40,7 @@ describe('parseTokioMarineAffluenceAtFuture', () => {
     expect(product.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
     expect(product.modeledEconomics).toContain('branch:tokio-marine-affluence-atfuture-zero-partial-withdrawal-charge')
     expect(product.modeledEconomics).toContain('branch:tokio-marine-affluence-atfuture-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
+    expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-advanced-death-payout-handling')
     expect(product.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-life-benefit-rider')
@@ -258,10 +259,10 @@ describe('parseTokioMarineAffluenceAtFuture', () => {
       ]),
     )
     expect(riderVariant?.warnings).toContain(
-      'The Advanced Death with Life Benefit Rider variant also models the published Monthly Protection Charge, including the first-two-policy-years accrual window, policy-year-3 lump-sum settlement, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base through the policy anniversary immediately after age 99.',
+      'The Advanced Death with Life Benefit Rider variant also models the published current death-benefit estimate, Monthly Protection Charge, including the first-two-policy-years accrual window, policy-year-3 lump-sum settlement, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base through the policy anniversary immediately after age 99.',
     )
     expect(riderVariant?.unsupportedItems).toContain(
-      'Advanced Death payout handling beyond the modeled Monthly Protection Charge, Life Benefit Rider termination / fallback handling, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+      'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, Life Benefit Rider termination / fallback handling, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
     )
   }, 30_000)
 })

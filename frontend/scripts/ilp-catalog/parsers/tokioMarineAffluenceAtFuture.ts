@@ -463,8 +463,8 @@ function buildVariant(
       ...(isAdvancedDeath
         ? [
             hasLifeBenefitRider
-              ? 'The Advanced Death with Life Benefit Rider variant also models the published Monthly Protection Charge, including the first-two-policy-years accrual window, policy-year-3 lump-sum settlement, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base through the policy anniversary immediately after age 99.'
-              : 'The Advanced Death variant also models the published Monthly Protection Charge, including the first-two-policy-years accrual window, policy-year-3 lump-sum settlement, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base.',
+              ? 'The Advanced Death with Life Benefit Rider variant also models the published current death-benefit estimate, Monthly Protection Charge, including the first-two-policy-years accrual window, policy-year-3 lump-sum settlement, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base through the policy anniversary immediately after age 99.'
+              : 'The Advanced Death variant also models the published current death-benefit estimate, Monthly Protection Charge, including the first-two-policy-years accrual window, policy-year-3 lump-sum settlement, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base.',
           ]
         : []),
       'Recurring single premium stays blocked during premium holiday until regular premium resumes at the committed commencement-date amount.',
@@ -472,11 +472,11 @@ function buildVariant(
     unsupportedItems: [
       ...(hasLifeBenefitRider
         ? [
-            'Advanced Death payout handling beyond the modeled Monthly Protection Charge, Life Benefit Rider termination / fallback handling, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+            'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, Life Benefit Rider termination / fallback handling, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
           ]
         : isAdvancedDeath
         ? [
-            'Advanced Death payout handling beyond the modeled Monthly Protection Charge, Life Benefit Rider selection, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+            'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, Life Benefit Rider selection, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
           ]
         : [
             'This basic-death corridor does not model Advanced Death selection, Life Benefit Rider selection, or Monthly Protection Charge; multiple-life last-life settlement and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
@@ -514,6 +514,7 @@ export function parseTokioMarineAffluenceAtFuture(context: ParseContext): IlpCat
       'branch:tokio-marine-affluence-atfuture-zero-partial-withdrawal-charge',
       'branch:tokio-marine-affluence-atfuture-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts',
       'tokio-initial-account-surrender-charge',
+      'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
@@ -527,9 +528,9 @@ export function parseTokioMarineAffluenceAtFuture(context: ParseContext): IlpCat
       'tokio-affluence-atfuture-non-sgd-or-non-15-year-variants',
     ],
     warnings: [
-      'Affluence@Future is cataloged as a supported V1 product. The SGD / 15-year premium-payment corridors model regular-premium routing, initial bonus allocation, annual loyalty bonus with the published bounded adjustment-factor formula during the premium payment term and the post-term rate windows thereafter, initial and policy charges, top-up and recurring-single-premium routing / charges, zero-charge partial withdrawals, surrender mechanics, and reinvest-default distribution support; the Advanced Death variant also models the accrued Monthly Protection Charge corridor from insured-life inputs, and the Advanced Death with Life Benefit Rider variant extends that same published Monthly Protection Charge corridor through the policy anniversary immediately after age 99.',
+      'Affluence@Future is cataloged as a supported V1 product. The SGD / 15-year premium-payment corridors model regular-premium routing, initial bonus allocation, annual loyalty bonus with the published bounded adjustment-factor formula during the premium payment term and the post-term rate windows thereafter, initial and policy charges, top-up and recurring-single-premium routing / charges, zero-charge partial withdrawals, surrender mechanics, and reinvest-default distribution support; the Advanced Death variant also models the published current death-benefit estimate and accrued Monthly Protection Charge corridor from insured-life inputs, and the Advanced Death with Life Benefit Rider variant extends that same published current death-benefit estimate and Monthly Protection Charge corridor through the policy anniversary immediately after age 99.',
       'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
-      'Advanced-death payout handling beyond the modeled Monthly Protection Charge, Life Benefit Rider handling, regular-withdrawal behavior, minimum-account-value enforcement, multiple-life last-life settlement, change-of-life-assured / life-replacement administration, and premium-holiday / non-SGD / non-15-year variants remain informational only.',
+      'Advanced-death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, Life Benefit Rider handling, regular-withdrawal behavior, minimum-account-value enforcement, multiple-life last-life settlement, change-of-life-assured / life-replacement administration, and premium-holiday / non-SGD / non-15-year variants remain informational only.',
     ],
     archived: false,
     variants: [

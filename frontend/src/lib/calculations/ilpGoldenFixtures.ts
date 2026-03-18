@@ -15731,6 +15731,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'branch:tokio-marine-affluence-atfuture-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts',
+      'kernel:current-death-benefit-estimate',
     ],
     description: 'Tokio Marine Affluence@Future advanced-death supported baseline proving accrued Monthly Protection Charge handling across the Initial and Accumulation Units Accounts.',
   },
@@ -15742,6 +15743,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'branch:tokio-marine-affluence-atfuture-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts',
+      'kernel:current-death-benefit-estimate',
     ],
     description: 'Tokio Marine Affluence@Future advanced-death with Life Benefit Rider baseline proving the rider corridor seeds the same accrued Monthly Protection Charge inputs under the supported V1 policy window.',
   },
