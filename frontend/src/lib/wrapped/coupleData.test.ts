@@ -249,7 +249,7 @@ describe('computePerAdultNetWorth', () => {
     expect(computePerAdultNetWorth(adult, plan)).toBe(50_000)
   })
 
-  it('includes 50% of shared-ownership properties (W5)', () => {
+  it('includes 50% of shared-ownership properties with full ownership (W5)', () => {
     const adult = makeAdult({ id: 'a1', owner: 'self', liquidNetWorth: 0 })
     const plan = makeCompiledPlan({
       cpfByAdultId: {},
@@ -265,8 +265,28 @@ describe('computePerAdultNetWorth', () => {
         } as CompiledHouseholdPlan['propertiesById'][string],
       },
     })
-    // Shared property: (1M - 400k) * 0.5 = 300k
+    // Shared property with 100% household ownership: (1M - 400k) * 1.0 * 0.5 = 300k per adult
     expect(computePerAdultNetWorth(adult, plan)).toBe(300_000)
+  })
+
+  it('shared property with default 50% ownershipPercent gives 25% per adult', () => {
+    const adult = makeAdult({ id: 'a1', owner: 'self', liquidNetWorth: 0 })
+    const plan = makeCompiledPlan({
+      cpfByAdultId: {},
+      propertyOrder: ['p1'],
+      propertiesById: {
+        p1: {
+          id: 'p1',
+          owner: 'shared',
+          ownsProperty: true,
+          existingPropertyValue: 1_000_000,
+          existingMortgageBalance: 0,
+          ownershipPercent: 0.5,
+        } as CompiledHouseholdPlan['propertiesById'][string],
+      },
+    })
+    // Shared property with 50% household ownership: 1M * 0.5 * 0.5 = 250k per adult
+    expect(computePerAdultNetWorth(adult, plan)).toBe(250_000)
   })
 })
 

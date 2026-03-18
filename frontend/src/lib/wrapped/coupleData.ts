@@ -47,7 +47,8 @@ export function computePerAdultNetWorth(
     const isShared = prop.owner === 'shared'
     if (!isOwned && !isShared) continue
     const equity = Math.max(0, prop.existingPropertyValue - prop.existingMortgageBalance)
-    const share = isShared ? 0.5 : (prop.ownershipPercent ?? 1)
+    const ownershipShare = prop.ownershipPercent ?? 1
+    const share = isShared ? ownershipShare * 0.5 : ownershipShare
     total += equity * share
   }
 
