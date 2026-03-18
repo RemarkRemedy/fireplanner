@@ -89,8 +89,10 @@ describe('parseHsbcWealthFocus', () => {
       expect(product.metadataOnlyBehaviors).toContain('wealth-focus-life-replacement-cover-reset-and-rider-termination')
       expect(product.metadataOnlyBehaviors).toContain('wealth-focus-life-replacement-policy-reissue-fallback')
       expect(product.metadataOnlyBehaviors).not.toContain('wealth-focus-life-replacement-option')
-      expect(product.metadataOnlyBehaviors).toContain('wealth-focus-accidental-death-and-ti-claim-adjustments')
+      expect(product.metadataOnlyBehaviors).toContain('wealth-focus-accidental-death-uplift-and-claim-cap')
+      expect(product.metadataOnlyBehaviors).toContain('wealth-focus-terminal-illness-aggregate-cap-and-post-claim-reduction')
       expect(product.metadataOnlyBehaviors).toContain('wealth-focus-claim-side-benefit-settlement')
+      expect(product.metadataOnlyBehaviors).not.toContain('wealth-focus-accidental-death-and-ti-claim-adjustments')
       expect(product.metadataOnlyBehaviors).not.toContain('wealth-focus-benefit-payout-handling')
       expect(product.variants).toHaveLength(2)
       expect(product.warnings.some((warning) => warning.includes('current-state death-benefit estimate'))).toBe(true)
@@ -227,7 +229,13 @@ describe('parseHsbcWealthFocus', () => {
         'Life Replacement Option policy-reissue fallback, non-identical replacement-policy terms, and post-replacement premium / term administration remain informational only.',
       )
       expect(sgdVariant?.unsupportedItems).toContain(
-        'Accidental Death uplift, Terminal Illness aggregate-cap and post-claim reduction mechanics, and claim-side payout settlement remain informational only beyond the current death-benefit estimate.',
+        'Accidental Death uplift and claim-cap mechanics remain informational only beyond the current death-benefit estimate.',
+      )
+      expect(sgdVariant?.unsupportedItems).toContain(
+        'Terminal Illness aggregate-cap and post-claim reduction mechanics remain informational only beyond the current death-benefit estimate.',
+      )
+      expect(sgdVariant?.unsupportedItems).toContain(
+        'Claim-side payout settlement remains informational only beyond the current death-benefit estimate.',
       )
 
       const holidayCharge = sgdVariant?.eventChargeRules.find((rule) => rule.id === 'premium-holiday-charge')

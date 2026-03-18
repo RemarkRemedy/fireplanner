@@ -350,7 +350,9 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', t
       'Life Replacement Option request timing, replacement eligibility, and underwriting acceptance remain informational only.',
       'Life Replacement Option rider termination, new suicide / incontestability / exclusion periods, and revised expiry-date administration remain informational only.',
       'Life Replacement Option policy-reissue fallback, non-identical replacement-policy terms, and post-replacement premium / term administration remain informational only.',
-      'Accidental Death uplift, Terminal Illness aggregate-cap and post-claim reduction mechanics, and claim-side payout settlement remain informational only beyond the current death-benefit estimate.',
+      'Accidental Death uplift and claim-cap mechanics remain informational only beyond the current death-benefit estimate.',
+      'Terminal Illness aggregate-cap and post-claim reduction mechanics remain informational only beyond the current death-benefit estimate.',
+      'Claim-side payout settlement remains informational only beyond the current death-benefit estimate.',
     ],
     sourceRefs: [page1, page4, page5, page6, page8, page10, page11, page12, page13, page15, page18],
   }
@@ -395,11 +397,12 @@ export function parseHsbcWealthFocus({ document, sourceChecksumSha256 }: ParseCo
       'wealth-focus-life-replacement-eligibility-and-underwriting',
       'wealth-focus-life-replacement-cover-reset-and-rider-termination',
       'wealth-focus-life-replacement-policy-reissue-fallback',
-      'wealth-focus-accidental-death-and-ti-claim-adjustments',
+      'wealth-focus-accidental-death-uplift-and-claim-cap',
+      'wealth-focus-terminal-illness-aggregate-cap-and-post-claim-reduction',
       'wealth-focus-claim-side-benefit-settlement',
     ],
     warnings: [
-      `Wealth Focus Flexi ${flexiTerm} is currently modeled as a supported V1 product. Accumulation charges, the cumulative life-event free-withdrawal pool, the current-state death-benefit estimate, the top-up-first manual scheduled-payout surface for Regular Withdrawal, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, while Life Replacement Option eligibility / underwriting, post-replacement cover resets, policy-reissue fallback, accidental-death / terminal-illness claim adjustments, and claim-side benefit settlement remain informational only.`,
+      `Wealth Focus Flexi ${flexiTerm} is currently modeled as a supported V1 product. Accumulation charges, the cumulative life-event free-withdrawal pool, the current-state death-benefit estimate, the top-up-first manual scheduled-payout surface for Regular Withdrawal, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, while Life Replacement Option eligibility / underwriting, post-replacement cover resets, policy-reissue fallback, accidental-death uplift / claim-cap handling, terminal-illness aggregate-cap / post-claim reduction mechanics, and claim-side benefit settlement remain informational only.`,
     ],
     archived: false,
     variants: [

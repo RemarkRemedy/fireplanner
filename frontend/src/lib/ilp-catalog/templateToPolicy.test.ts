@@ -362,8 +362,10 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('wealth-focus-life-replacement-cover-reset-and-rider-termination')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('wealth-focus-life-replacement-policy-reissue-fallback')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('wealth-focus-life-replacement-option')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('wealth-focus-accidental-death-and-ti-claim-adjustments')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('wealth-focus-accidental-death-uplift-and-claim-cap')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('wealth-focus-terminal-illness-aggregate-cap-and-post-claim-reduction')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('wealth-focus-claim-side-benefit-settlement')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('wealth-focus-accidental-death-and-ti-claim-adjustments')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('wealth-focus-benefit-payout-handling')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('reinvest by default'))).toBe(true)
     expect(seed.scheduledPayoutSupport).toEqual({
