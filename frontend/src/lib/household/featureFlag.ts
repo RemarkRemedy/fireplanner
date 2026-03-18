@@ -7,8 +7,9 @@ export function isHouseholdPlannerV1Enabled(): boolean {
 
 /** Advisory gap features (F1-F9) are hidden until UX review is complete. */
 export function isAdvisoryGapEnabled(): boolean {
-  if (typeof window !== 'undefined') {
-    return window.localStorage.getItem('fireplanner-feature-advisoryGap') === 'true'
+  try {
+    return globalThis.localStorage?.getItem('fireplanner-feature-advisoryGap') === 'true'
+  } catch {
+    return false
   }
-  return false
 }
