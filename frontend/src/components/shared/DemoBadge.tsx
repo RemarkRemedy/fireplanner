@@ -26,16 +26,18 @@ export function isDemoActive(): boolean {
 
 /** Remove all fireplanner localStorage keys except scenarios (also clears demo flag) */
 export function clearFireplannerData() {
-  const keysToRemove: string[] = []
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i)
-    if (key && key.startsWith('fireplanner-') && key !== 'fireplanner-scenarios') {
-      keysToRemove.push(key)
+  try {
+    const keysToRemove: string[] = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key && key.startsWith('fireplanner-') && key !== 'fireplanner-scenarios') {
+        keysToRemove.push(key)
+      }
     }
-  }
-  // Also include the demo flag (doesn't start with fireplanner-)
-  keysToRemove.push(DEMO_FLAG_KEY)
-  keysToRemove.forEach((k) => localStorage.removeItem(k))
+    // Also include the demo flag (doesn't start with fireplanner-)
+    keysToRemove.push(DEMO_FLAG_KEY)
+    keysToRemove.forEach((k) => localStorage.removeItem(k))
+  } catch { /* private browsing or storage-restricted environment */ }
 }
 
 /** Clear demo data from localStorage, preserving scenarios */
