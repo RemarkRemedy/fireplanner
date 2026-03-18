@@ -199,7 +199,6 @@ const coupleCardRenderers: CardRenderer[] = [
         value={data.peak.value}
         age={data.peak.age}
         ageDelta={data.couple?.ageDelta ?? 0}
-        names={data.couple?.names ?? ['You', 'Partner']}
         partnerLifeExpectancy={data.couple?.partnerLifeExpectancy ?? 85}
         gradient={gradient}
         direction={direction}

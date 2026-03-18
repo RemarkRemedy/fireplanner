@@ -3,6 +3,8 @@ import { WrappedCard, staggerChild } from '@/components/wrapped/WrappedCard'
 import { AnimatedNumber } from '@/components/shared/AnimatedNumber'
 import { formatCompactCurrency, formatPercent } from '@/lib/utils'
 
+const formatPerYear = (v: number) => `${formatCompactCurrency(v)}/year`
+
 interface CoupleSavingsPowerCardProps {
   combinedSavings: number
   perPersonSavings: [number, number]
@@ -25,8 +27,6 @@ export function CoupleSavingsPowerCard({
   const totalAbs = Math.max(1, Math.abs(selfSavings) + Math.abs(partnerSavings))
   const selfPct = Math.max(0, selfSavings) / totalAbs * 100
   const partnerPct = Math.max(0, partnerSavings) / totalAbs * 100
-
-  const formatPerYear = (v: number) => `${formatCompactCurrency(v)}/year`
 
   return (
     <WrappedCard gradient={gradient} direction={direction}>

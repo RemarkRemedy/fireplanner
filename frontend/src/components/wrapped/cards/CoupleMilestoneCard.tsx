@@ -52,6 +52,42 @@ function getJointSummary(
   return `${names[1]} reaches FIRE first at ${a2}. ${names[0]} follows at ${a1}.`
 }
 
+function PersonFireAge({
+  name,
+  fireAge,
+  yearsToFire,
+  animationDelay,
+}: {
+  name: string
+  fireAge: number | null
+  yearsToFire: number | null
+  animationDelay: number
+}) {
+  return (
+    <div className="flex flex-col items-center gap-1 min-w-0 flex-1">
+      <span className="text-sm text-white/70 truncate max-w-full">{name}</span>
+      {fireAge != null ? (
+        <>
+          <motion.span
+            className="text-5xl md:text-6xl font-bold"
+            style={{ fontFamily: 'Syne, sans-serif' }}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: animationDelay, type: 'spring', bounce: 0.3 }}
+          >
+            {fireAge}
+          </motion.span>
+          <span className="text-sm text-white/70">
+            {yearsToFire === 0 ? 'Achieved!' : `${yearsToFire}y away`}
+          </span>
+        </>
+      ) : (
+        <span className="text-lg text-white/50">Not yet calculated</span>
+      )}
+    </div>
+  )
+}
+
 export function CoupleMilestoneCard({
   names,
   perPersonFireAge,
@@ -74,54 +110,9 @@ export function CoupleMilestoneCard({
         <>
           {/* Side-by-side layout */}
           <motion.div variants={staggerChild} className="flex items-center gap-4 md:gap-6 w-full justify-center">
-            {/* Person 1 */}
-            <div className="flex flex-col items-center gap-1 min-w-0 flex-1">
-              <span className="text-sm text-white/70 truncate max-w-full">{names[0]}</span>
-              {fireAge1 != null ? (
-                <>
-                  <motion.span
-                    className="text-5xl md:text-6xl font-bold"
-                    style={{ fontFamily: 'Syne, sans-serif' }}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.6, delay: 0.4, type: 'spring', bounce: 0.3 }}
-                  >
-                    {fireAge1}
-                  </motion.span>
-                  <span className="text-sm text-white/70">
-                    {yearsToFire1 === 0 ? 'Achieved!' : `${yearsToFire1}y away`}
-                  </span>
-                </>
-              ) : (
-                <span className="text-lg text-white/50">Not yet calculated</span>
-              )}
-            </div>
-
-            {/* Vertical divider */}
+            <PersonFireAge name={names[0]} fireAge={fireAge1} yearsToFire={yearsToFire1} animationDelay={0.4} />
             <div className="w-px h-24 bg-white/20 shrink-0" />
-
-            {/* Person 2 */}
-            <div className="flex flex-col items-center gap-1 min-w-0 flex-1">
-              <span className="text-sm text-white/70 truncate max-w-full">{names[1]}</span>
-              {fireAge2 != null ? (
-                <>
-                  <motion.span
-                    className="text-5xl md:text-6xl font-bold"
-                    style={{ fontFamily: 'Syne, sans-serif' }}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.6, delay: 0.5, type: 'spring', bounce: 0.3 }}
-                  >
-                    {fireAge2}
-                  </motion.span>
-                  <span className="text-sm text-white/70">
-                    {yearsToFire2 === 0 ? 'Achieved!' : `${yearsToFire2}y away`}
-                  </span>
-                </>
-              ) : (
-                <span className="text-lg text-white/50">Not yet calculated</span>
-              )}
-            </div>
+            <PersonFireAge name={names[1]} fireAge={fireAge2} yearsToFire={yearsToFire2} animationDelay={0.5} />
           </motion.div>
 
           {/* Joint summary */}
