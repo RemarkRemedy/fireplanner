@@ -141,6 +141,10 @@ export interface IlpBonusRule {
   requiresPremiumsPaidUpToDate?: boolean
   requiredRegularPremiumPaymentFrequency?: IlpRegularPremiumPaymentFrequency
   tieredRates?: IlpBonusTier[]
+  adjustmentFactorConfig?: {
+    formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium'
+    withdrawalAccountIds: string[]
+  }
   suspensionRules?: IlpBonusSuspensionRule[]
   restorationRules?: IlpBonusRestorationRule[]
 }
@@ -2297,6 +2301,30 @@ function resolveNormalizedBonusRate(
   return resolveTieredBonusRate(bonus, tierBasis, annualContribution, currency, accountValue)
 }
 
+function resolveBonusAdjustmentFactor(
+  normalized: IlpNormalizedPolicyInput,
+  normalizedBonus: IlpNormalizedBonusRule,
+  regularPremiumPaidThisYear: number,
+  partialWithdrawalByAccount: Map<string, number>,
+): number {
+  const config = normalizedBonus.bonus.adjustmentFactorConfig
+  if (!config) return 1
+
+  switch (config.formula) {
+    case 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium': {
+      const committedAnnualPremium = normalized.input.monthlyContribution * 12
+      if (committedAnnualPremium <= CONTRIBUTION_TOLERANCE) return 0
+
+      const partialWithdrawals = config.withdrawalAccountIds.reduce(
+        (sum, accountId) => sum + (partialWithdrawalByAccount.get(accountId) ?? 0),
+        0,
+      )
+      const rawFactor = (regularPremiumPaidThisYear - partialWithdrawals) / committedAnnualPremium
+      return Math.max(0, Math.min(1, rawFactor))
+    }
+  }
+}
+
 function computeTieredStartupRecoveryCharge(
   normalized: IlpNormalizedPolicyInput,
   rule: IlpEventChargeRule,
@@ -2458,6 +2486,8 @@ function computeBonusCredit(
   accountOpenBalance: number,
   annualRegularContributionToAccount: number,
   annualRegularContribution: number,
+  regularPremiumPaidThisYear: number,
+  partialWithdrawalByAccount: Map<string, number>,
   currency: IlpPolicyInput['currency'],
 ): number {
   let total = 0
@@ -2472,6 +2502,12 @@ function computeBonusCredit(
 
     const splitCount = Math.max(normalizedBonus.targetAccountIds.length, 1)
     const effectiveRate = resolveNormalizedBonusRate(normalizedBonus, annualRegularContribution, currency, accountOpenBalance)
+      * resolveBonusAdjustmentFactor(
+        normalized,
+        normalizedBonus,
+        regularPremiumPaidThisYear,
+        partialWithdrawalByAccount,
+      )
     const eligibilityFraction = getBonusEligibilityFraction(normalizedBonus, normalized, context)
 
     switch (bonus.mode) {
@@ -4021,6 +4057,8 @@ export function projectIlpPolicy(
           openBalances.get(account.id) ?? account.currentValue,
           scheduledRegularContributionByAccount.get(account.id) ?? 0,
           scheduledRegularPremiumPaidThisYear,
+          regularPremiumPaidThisYear,
+          partialWithdrawalByAccount,
           input.currency,
         ),
       )

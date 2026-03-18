@@ -37,6 +37,7 @@ describe('parseTokioMarineAffluenceAtFuture', () => {
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(product.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
     expect(product.modeledEconomics).toContain('branch:tokio-marine-affluence-atfuture-zero-partial-withdrawal-charge')
     expect(product.modeledEconomics).toContain('branch:tokio-marine-affluence-atfuture-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
@@ -48,6 +49,7 @@ describe('parseTokioMarineAffluenceAtFuture', () => {
     expect(product.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-change-of-life-assured-and-life-replacement-administration')
     expect(product.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-premium-holiday-state-handling')
     expect(product.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-non-sgd-or-non-15-year-variants')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-loyalty-bonus-adjustment-factor')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-advanced-death-payout-and-life-assured-administration')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-advanced-death-payout-life-benefit-rider-and-life-assured-administration')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-dividend-payout-threshold-record-date-regular-withdrawal-and-partial-withdrawal-constraints')
@@ -69,6 +71,67 @@ describe('parseTokioMarineAffluenceAtFuture', () => {
       { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.95 },
       { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 1 },
     ])
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus-policy-years-3-10')).toEqual(
+      expect.objectContaining({
+        startPolicyYear: 3,
+        endPolicyYear: 10,
+        adjustmentFactorConfig: {
+          formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+          withdrawalAccountIds: ['accumulation'],
+        },
+        tieredRates: [
+          { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.007 },
+          { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.007 },
+          { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.007 },
+          { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.007 },
+          { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.0075 },
+        ],
+      }),
+    )
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus-policy-years-11-15')).toEqual(
+      expect.objectContaining({
+        startPolicyYear: 11,
+        endPolicyYear: 15,
+        adjustmentFactorConfig: {
+          formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+          withdrawalAccountIds: ['accumulation'],
+        },
+        tieredRates: [
+          { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.0092 },
+          { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.0092 },
+          { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.0098 },
+          { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.0099 },
+          { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.0099 },
+        ],
+      }),
+    )
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus-policy-years-16-40')).toEqual(
+      expect.objectContaining({
+        startPolicyYear: 16,
+        endPolicyYear: 40,
+        tieredRates: [
+          { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.0092 },
+          { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.0092 },
+          { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.0098 },
+          { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.0099 },
+          { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.0099 },
+        ],
+      }),
+    )
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus-policy-years-16-40')).not.toHaveProperty(
+      'adjustmentFactorConfig',
+    )
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus-policy-year-41-onward')).toEqual(
+      expect.objectContaining({
+        rate: 0.003,
+        startPolicyYear: 41,
+        endPolicyYear: null,
+        tieredRates: [],
+      }),
+    )
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus-policy-year-41-onward')).not.toHaveProperty(
+      'adjustmentFactorConfig',
+    )
     expect(basicVariant?.feeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

@@ -27,13 +27,15 @@ describe('parseTokioMarineGoLuxe', () => {
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(product.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
     expect(product.modeledEconomics).toContain('branch:tokio-goluxe-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-loyalty-and-achievement-bonuses')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-achievement-bonus-qualification')
     expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-advanced-death-payout-handling')
     expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-multiple-life-last-life-settlement')
     expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-change-of-life-assured-administration')
     expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-regular-withdrawal-facility')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-goluxe-loyalty-and-achievement-bonuses')
     expect(product.metadataOnlyBehaviors).not.toContain(
       'tokio-goluxe-advanced-death-payout-handling-and-life-assured-administration',
     )
@@ -55,6 +57,21 @@ describe('parseTokioMarineGoLuxe', () => {
       { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.11 },
       { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.125 },
     ])
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus-policy-years-4-10')).toEqual(
+      expect.objectContaining({
+        rate: 0.005,
+        adjustmentFactorConfig: {
+          formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+          withdrawalAccountIds: ['accumulation'],
+        },
+      }),
+    )
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus-after-mip')).toEqual(
+      expect.objectContaining({
+        rate: 0.003,
+        startPolicyYear: 16,
+      }),
+    )
     expect(basicVariant?.feeRules).toEqual([])
     expect(basicVariant?.eventChargeRules).toEqual(
       expect.arrayContaining([

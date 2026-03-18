@@ -87,6 +87,7 @@ function snippetNear(document: ExtractedPdfDocument, pageNumber: number, keyword
 function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
   const page1 = sourceRef(1, 'Initial Bonus', snippetNear(document, 1, 'Initial Bonus', 18))
   const page2 = sourceRef(2, 'Initial Bonus Rates', snippetNear(document, 2, 'Initial bonus rates on a per annum basis', 20))
+  const loyaltyPage = sourceRef(2, 'Loyalty Bonus / Achievement Bonus', snippetNear(document, 2, 'Loyalty Bonus', 28))
 
   return [
     {
@@ -105,6 +106,59 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
         'Allocated to the Initial Units Account upon each regular premium received in the first three policy years.',
       ],
       sourceRefs: [page1, page2],
+    },
+    {
+      id: 'loyalty-bonus-policy-years-4-10',
+      type: 'loyalty',
+      label: 'Loyalty Bonus (Policy Years 4-10)',
+      mode: 'annual-rate',
+      appliesTo: ['accumulation'],
+      startPolicyYear: 4,
+      endPolicyYear: 10,
+      rate: 0.005,
+      amount: null,
+      tieredRates: [],
+      adjustmentFactorConfig: {
+        formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+        withdrawalAccountIds: ['accumulation'],
+      },
+      notes: [
+        'Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 4 to the end of policy year 10.',
+        'During the first 10 policy years, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus partial withdrawals from the Accumulation Units Account, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1.',
+      ],
+      sourceRefs: [loyaltyPage],
+    },
+    {
+      id: 'loyalty-bonus-policy-years-11-15',
+      type: 'loyalty',
+      label: 'Loyalty Bonus (Policy Years 11-15)',
+      mode: 'annual-rate',
+      appliesTo: ['accumulation'],
+      startPolicyYear: 11,
+      endPolicyYear: 15,
+      rate: 0.005,
+      amount: null,
+      tieredRates: [],
+      notes: [
+        'Models the published annual loyalty bonus on the Accumulation Units Account value from policy year 11 to the end of the minimum contribution period without the adjustment-factor multiplier.',
+      ],
+      sourceRefs: [loyaltyPage],
+    },
+    {
+      id: 'loyalty-bonus-after-mip',
+      type: 'loyalty',
+      label: 'Loyalty Bonus (After Minimum Contribution Period)',
+      mode: 'annual-rate',
+      appliesTo: ['accumulation'],
+      startPolicyYear: 16,
+      endPolicyYear: null,
+      rate: 0.003,
+      amount: null,
+      tieredRates: [],
+      notes: [
+        'Models the published annual loyalty bonus on the Accumulation Units Account value after the minimum contribution period.',
+      ],
+      sourceRefs: [loyaltyPage],
     },
   ]
 }
@@ -337,7 +391,7 @@ function buildVariant(
       'Recurring single premium stays blocked during premium holiday until regular premium resumes at the committed commencement-date amount.',
     ],
     unsupportedItems: [
-      'Loyalty bonus and achievement bonus remain metadata-only because the published adjustment-factor and first-ten-policy-years qualification gates are not yet represented directly in the template bonus basis.',
+      'Achievement bonus remains metadata-only because the published first-ten-policy-years qualification gates and annualised-premium payout basis are not yet represented directly in the template bonus basis.',
       ...(isAdvancedDeath
         ? [
             'Advanced Death payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, and change-of-life-assured administration remain metadata-only for this product.',
@@ -380,11 +434,12 @@ export function parseTokioMarineGoLuxe(context: ParseContext): IlpCatalogProduct
       'tokio-premium-shortfall-charge-regular-premium-reduction',
       'tokio-premium-increase-restores-shortfall-charge-cessation',
       'tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only',
+      'branch:tokio-loyalty-bonus-adjustment-factor',
       'branch:tokio-goluxe-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-goluxe-loyalty-and-achievement-bonuses',
+      'tokio-goluxe-achievement-bonus-qualification',
       'tokio-goluxe-advanced-death-payout-handling',
       'tokio-goluxe-multiple-life-last-life-settlement',
       'tokio-goluxe-change-of-life-assured-administration',
@@ -392,8 +447,8 @@ export function parseTokioMarineGoLuxe(context: ParseContext): IlpCatalogProduct
       'tokio-goluxe-non-sgd-policy-currencies',
     ],
     warnings: [
-      '#goLuxe is cataloged as a supported V1 product. The SGD / 15-year minimum-contribution corridors model regular-premium routing, initial bonus allocation, initial and policy charges, top-up and recurring-single-premium routing / charges, partial-withdrawal and premium-shortfall charges, surrender mechanics, and reinvest-default distribution support with the published $50 minimum cash-payout threshold and 30-day record-date lead time; the Advanced Death variant also models the accrued Monthly Protection Charge corridor from insured-life inputs.',
-      'Loyalty bonus and achievement bonus qualification, advanced-death payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, change-of-life-assured administration, regular-withdrawal rules, and non-SGD policy currencies remain informational only.',
+      '#goLuxe is cataloged as a supported V1 product. The SGD / 15-year minimum-contribution corridors model regular-premium routing, initial bonus allocation, annual loyalty bonus with the published bounded adjustment-factor formula in policy years 4 to 10 and the flat post-window rates thereafter, initial and policy charges, top-up and recurring-single-premium routing / charges, partial-withdrawal and premium-shortfall charges, surrender mechanics, and reinvest-default distribution support with the published $50 minimum cash-payout threshold and 30-day record-date lead time; the Advanced Death variant also models the accrued Monthly Protection Charge corridor from insured-life inputs.',
+      'Achievement bonus qualification, advanced-death payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, change-of-life-assured administration, regular-withdrawal rules, and non-SGD policy currencies remain informational only.',
     ],
     archived: false,
     variants: [

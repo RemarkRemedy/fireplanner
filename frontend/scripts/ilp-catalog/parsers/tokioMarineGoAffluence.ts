@@ -43,6 +43,22 @@ const INITIAL_BONUS_TIERS: IlpTemplateBonusTier[] = [
   { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.75 },
 ]
 
+const LOYALTY_BONUS_POLICY_YEARS_3_TO_10: IlpTemplateBonusTier[] = [
+  { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.007 },
+  { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.007 },
+  { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.007 },
+  { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.007 },
+  { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.0075 },
+]
+
+const LOYALTY_BONUS_POLICY_YEAR_11_ONWARD: IlpTemplateBonusTier[] = [
+  { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.0092 },
+  { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.0092 },
+  { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.0098 },
+  { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.0099 },
+  { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.0099 },
+]
+
 const INITIAL_CHARGE_RATE_SCHEDULE = Array.from({ length: MIP_LENGTH }, (_, index) => {
   const policyYear = index + 1
   return {
@@ -78,6 +94,7 @@ function snippetNear(document: ExtractedPdfDocument, pageNumber: number, keyword
 
 function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
   const page4 = sourceRef(4, 'Initial Bonus', snippetNear(document, 4, 'Initial Bonus', 22))
+  const page5 = sourceRef(5, 'Loyalty Bonus / Achievement Bonus', snippetNear(document, 5, 'Loyalty Bonus', 36))
 
   return [
     {
@@ -96,6 +113,64 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
         'Allocated to the Initial Units Account upon each regular premium received in the first two policy years.',
       ],
       sourceRefs: [page4],
+    },
+    {
+      id: 'loyalty-bonus-policy-years-3-10',
+      type: 'loyalty',
+      label: 'Loyalty Bonus (Policy Years 3-10)',
+      mode: 'annual-rate',
+      appliesTo: ['accumulation'],
+      startPolicyYear: 3,
+      endPolicyYear: 10,
+      rate: null,
+      amount: null,
+      tieredRates: LOYALTY_BONUS_POLICY_YEARS_3_TO_10.map((tier) => ({ ...tier })),
+      adjustmentFactorConfig: {
+        formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+        withdrawalAccountIds: ['accumulation'],
+      },
+      notes: [
+        'Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 3 to the end of policy year 10.',
+        'During the premium payment term, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus partial withdrawals from the Accumulation Units Account, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1.',
+      ],
+      sourceRefs: [page5],
+    },
+    {
+      id: 'loyalty-bonus-policy-years-11-15',
+      type: 'loyalty',
+      label: 'Loyalty Bonus (Policy Years 11-15)',
+      mode: 'annual-rate',
+      appliesTo: ['accumulation'],
+      startPolicyYear: 11,
+      endPolicyYear: 15,
+      rate: null,
+      amount: null,
+      tieredRates: LOYALTY_BONUS_POLICY_YEAR_11_ONWARD.map((tier) => ({ ...tier })),
+      adjustmentFactorConfig: {
+        formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+        withdrawalAccountIds: ['accumulation'],
+      },
+      notes: [
+        'Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 11 to the end of the premium payment term.',
+        'During the premium payment term, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus partial withdrawals from the Accumulation Units Account, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1.',
+      ],
+      sourceRefs: [page5],
+    },
+    {
+      id: 'loyalty-bonus-after-mip',
+      type: 'loyalty',
+      label: 'Loyalty Bonus (After Premium Payment Term)',
+      mode: 'annual-rate',
+      appliesTo: ['accumulation'],
+      startPolicyYear: 16,
+      endPolicyYear: null,
+      rate: null,
+      amount: null,
+      tieredRates: LOYALTY_BONUS_POLICY_YEAR_11_ONWARD.map((tier) => ({ ...tier })),
+      notes: [
+        'Models the published annual loyalty bonus on the Accumulation Units Account value after the premium payment term using the policy year 11 onward loyalty bonus rate table without the adjustment-factor multiplier.',
+      ],
+      sourceRefs: [page5],
     },
   ]
 }
@@ -345,7 +420,7 @@ function buildVariant(
       'Recurring single premium stays blocked during premium holiday until regular premium resumes at the committed commencement-date amount.',
     ],
     unsupportedItems: [
-      'Loyalty bonus and achievement bonus remain metadata-only because the published adjustment-factor and milestone qualification gates are not yet represented directly in the template bonus basis.',
+      'Achievement bonus remains metadata-only because the published eligible-policy-year milestone gates and annualised-premium payout basis are not yet represented directly in the template bonus basis.',
       ...(isAdvancedDeath
         ? [
             'Advanced Death payout handling beyond the modeled Monthly Protection Charge, together with Advanced Death Benefit with Life Benefit Rider, accidental/dependent medical/retrenchment benefits, multiple-life handling, and change-of-life-assured administration, remains metadata-only for this product.',
@@ -383,19 +458,20 @@ export function parseTokioMarineGoAffluence(context: ParseContext): IlpCatalogPr
       'tokio-top-up-premium-charge',
       'tokio-recurring-single-premium-charge',
       'tokio-initial-account-surrender-charge',
+      'branch:tokio-loyalty-bonus-adjustment-factor',
       'branch:tokio-goaffluence-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-goaffluence-loyalty-and-achievement-bonuses',
+      'tokio-goaffluence-achievement-bonus-qualification',
       'tokio-goaffluence-advanced-death-payout-life-benefit-rider-and-life-assured-administration',
       'tokio-goaffluence-regular-withdrawal-and-partial-withdrawal-constraints',
       'tokio-goaffluence-premium-holiday-and-non-sgd-or-non-15-year-variants',
     ],
     warnings: [
-      '#goAffluence is cataloged as a supported V1 product. The SGD / 15-year premium-payment corridors model regular-premium routing, initial bonus allocation, initial and policy charges, top-up and recurring-single-premium routing / charges, surrender mechanics, and reinvest-default distribution support; the Advanced Death variant also models the accrued Monthly Protection Charge corridor from insured-life inputs.',
+      '#goAffluence is cataloged as a supported V1 product. The SGD / 15-year premium-payment corridors model regular-premium routing, initial bonus allocation, annual loyalty bonus with the published bounded adjustment-factor formula during the premium payment term and the flat post-term rate table thereafter, initial and policy charges, top-up and recurring-single-premium routing / charges, surrender mechanics, and reinvest-default distribution support; the Advanced Death variant also models the accrued Monthly Protection Charge corridor from insured-life inputs.',
       'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
-      'Loyalty bonus and achievement bonus qualification, advanced-death payout handling beyond the modeled Monthly Protection Charge, regular-withdrawal administration, partial-withdrawal limit and minimum-account-value constraints, and premium-holiday / non-SGD / non-15-year variants remain informational only.',
+      'Achievement bonus qualification, advanced-death payout handling beyond the modeled Monthly Protection Charge, regular-withdrawal administration, partial-withdrawal limit and minimum-account-value constraints, and premium-holiday / non-SGD / non-15-year variants remain informational only.',
     ],
     archived: false,
     variants: [

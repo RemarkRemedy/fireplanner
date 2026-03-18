@@ -52,6 +52,10 @@ export interface IlpTemplateBonus {
   rate: number | null
   amount: number | null
   tieredRates: IlpTemplateBonusTier[]
+  adjustmentFactorConfig?: {
+    formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium'
+    withdrawalAccountIds: string[]
+  }
   suspensionRules?: Array<{
     trigger: 'premium-holiday' | 'partial-withdrawal' | 'regular-premium-reduction' | 'scheduled-payout'
     suspensionMonths: number

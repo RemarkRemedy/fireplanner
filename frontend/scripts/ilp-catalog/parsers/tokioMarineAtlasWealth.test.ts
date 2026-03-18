@@ -26,11 +26,13 @@ describe('parseTokioMarineAtlasWealth', () => {
     expect(product.supportStatus).toBe('supported')
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
+    expect(product.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
     expect(product.modeledEconomics).toContain('branch:tokio-atlas-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('tokio-atlas-advanced-death-payout-handling')
     expect(product.metadataOnlyBehaviors).toContain('tokio-atlas-multiple-life-last-life-settlement')
     expect(product.metadataOnlyBehaviors).toContain('tokio-atlas-change-of-life-assured-administration')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-atlas-loyalty-bonus-adjustment-factor')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-atlas-advanced-death-payout-and-life-assured-administration')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-atlas-change-of-life-assured-option')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-atlas-dividend-payout-threshold-and-record-date-instructions')
@@ -67,6 +69,15 @@ describe('parseTokioMarineAtlasWealth', () => {
       { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.14 },
       { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.195 },
     ])
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus-during-mip')).toEqual(
+      expect.objectContaining({
+        rate: 0.003,
+        adjustmentFactorConfig: {
+          formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+          withdrawalAccountIds: ['accumulation'],
+        },
+      }),
+    )
     expect(basicVariant?.feeRules).toEqual([])
     expect(basicVariant?.eventChargeRules).toEqual([
       expect.objectContaining({ id: 'top-up-premium-charge', appliesTo: ['accumulation'], rate: 0.05 }),

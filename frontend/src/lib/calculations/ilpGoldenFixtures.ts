@@ -266,6 +266,7 @@ export type GoldenCoverageTag =
   | 'branch:tokio-marine-wealth-enhancer-cpfis-zero-top-up-charge'
   | 'branch:tokio-marine-wealth-enhancer-cpfis-zero-recurring-single-premium-charge'
   | 'branch:tokio-marine-wealth-enhancer-cpfis-zero-partial-withdrawal-charge'
+  | 'branch:tokio-loyalty-bonus-adjustment-factor'
   | 'branch:tokio-marine-affluence-atfuture-zero-partial-withdrawal-charge'
   | 'branch:tokio-marine-goelite-zero-single-premium-charge'
   | 'branch:tokio-marine-goelite-establishment-charge'
@@ -15042,6 +15043,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'branch:tokio-loyalty-bonus-adjustment-factor',
       'tokio-initial-vs-accumulation-regular-premium-routing',
       'tokio-initial-bonus-tiered-premium-allocation',
       'tokio-initial-charge-on-initial-account',
@@ -15069,6 +15071,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'event-heavy',
+      'branch:tokio-loyalty-bonus-adjustment-factor',
       'tokio-top-up-routing',
       'tokio-recurring-single-premium-routing',
       'tokio-top-up-premium-charge',
@@ -15091,6 +15094,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'branch:tokio-loyalty-bonus-adjustment-factor',
       'tokio-initial-vs-accumulation-regular-premium-routing',
       'tokio-initial-bonus-tiered-premium-allocation',
       'tokio-initial-charge-on-initial-account',
@@ -15118,6 +15122,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'event-heavy',
+      'branch:tokio-loyalty-bonus-adjustment-factor',
       'tokio-top-up-routing',
       'tokio-recurring-single-premium-routing',
       'tokio-top-up-premium-charge',
@@ -15140,6 +15145,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'branch:tokio-loyalty-bonus-adjustment-factor',
       'tokio-initial-vs-accumulation-regular-premium-routing',
       'tokio-initial-bonus-tiered-premium-allocation',
       'tokio-initial-charge-on-initial-account',
@@ -15738,6 +15744,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'event-heavy',
+      'branch:tokio-loyalty-bonus-adjustment-factor',
       'branch:tokio-rsp-manual-resumption',
       'branch:tokio-reduction-consumes-rsp-first',
       'tokio-top-up-routing',
@@ -15765,6 +15772,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'branch:tokio-loyalty-bonus-adjustment-factor',
       'tokio-initial-vs-accumulation-regular-premium-routing',
       'tokio-initial-bonus-tiered-premium-allocation',
       'tokio-initial-charge-on-initial-account',
@@ -15792,6 +15800,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'event-heavy',
+      'branch:tokio-loyalty-bonus-adjustment-factor',
       'branch:tokio-rsp-manual-resumption',
       'branch:tokio-shortfall-exclusive',
       'branch:tokio-reduction-consumes-rsp-first',
@@ -15824,6 +15833,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'branch:tokio-loyalty-bonus-adjustment-factor',
       'tokio-initial-vs-accumulation-regular-premium-routing',
       'tokio-initial-bonus-tiered-premium-allocation',
       'tokio-initial-charge-on-initial-account',
@@ -15851,6 +15861,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'event-heavy',
+      'branch:tokio-loyalty-bonus-adjustment-factor',
       'branch:tokio-rsp-manual-resumption',
       'branch:tokio-reduction-consumes-rsp-first',
       'tokio-top-up-routing',

@@ -80,6 +80,7 @@ function snippetNear(document: ExtractedPdfDocument, pageNumber: number, keyword
 function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
   const page1 = sourceRef(1, 'Initial Bonus', snippetNear(document, 1, 'Initial Bonus', 18))
   const page2 = sourceRef(2, 'Initial Bonus Rates', snippetNear(document, 2, 'Initial bonus rates on a per annum basis', 20))
+  const loyaltyPage = sourceRef(2, 'Loyalty Bonus', snippetNear(document, 2, 'Loyalty Bonus', 28))
 
   return [
     {
@@ -98,6 +99,43 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
         'Allocated to the Initial Units Account upon each regular premium received in the first five policy years.',
       ],
       sourceRefs: [page1, page2],
+    },
+    {
+      id: 'loyalty-bonus-during-mip',
+      type: 'loyalty',
+      label: 'Loyalty Bonus (During Premium Payment Term)',
+      mode: 'annual-rate',
+      appliesTo: ['accumulation'],
+      startPolicyYear: 6,
+      endPolicyYear: 25,
+      rate: 0.003,
+      amount: null,
+      tieredRates: [],
+      adjustmentFactorConfig: {
+        formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+        withdrawalAccountIds: ['accumulation'],
+      },
+      notes: [
+        'Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 6 to the end of the premium payment term.',
+        'During the premium payment term, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus withdrawals, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1.',
+      ],
+      sourceRefs: [loyaltyPage],
+    },
+    {
+      id: 'loyalty-bonus-after-mip',
+      type: 'loyalty',
+      label: 'Loyalty Bonus (After Premium Payment Term)',
+      mode: 'annual-rate',
+      appliesTo: ['accumulation'],
+      startPolicyYear: 26,
+      endPolicyYear: null,
+      rate: 0.003,
+      amount: null,
+      tieredRates: [],
+      notes: [
+        'Models the published annual loyalty bonus on the Accumulation Units Account value after the premium payment term without the adjustment-factor multiplier.',
+      ],
+      sourceRefs: [loyaltyPage],
     },
   ]
 }
@@ -272,7 +310,6 @@ function buildVariant(
         : []),
     ],
     unsupportedItems: [
-      'Loyalty Bonus remains metadata-only because its annual adjustment-factor formula and qualification state are outside the current engine.',
       ...(isAdvancedDeath
         ? [
             'Advanced Death payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, change-of-life-assured administration, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.',
@@ -307,11 +344,11 @@ export function parseTokioMarineAtlasWealth(context: ParseContext): IlpCatalogPr
       'tokio-top-up-premium-charge',
       'tokio-recurring-single-premium-charge',
       'tokio-initial-account-surrender-charge',
+      'branch:tokio-loyalty-bonus-adjustment-factor',
       'kernel:distribution-mode-assumption',
       'branch:tokio-atlas-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction',
     ],
     metadataOnlyBehaviors: [
-      'tokio-atlas-loyalty-bonus-adjustment-factor',
       'tokio-atlas-advanced-death-payout-handling',
       'tokio-atlas-multiple-life-last-life-settlement',
       'tokio-atlas-change-of-life-assured-administration',
@@ -320,9 +357,8 @@ export function parseTokioMarineAtlasWealth(context: ParseContext): IlpCatalogPr
       'tokio-atlas-credit-card-charge',
     ],
     warnings: [
-      'TM Atlas Wealth is cataloged as a supported V1 product. The parser captures split SGD / premium-payment-term-25 Basic Death and Advanced Death corridors with executable regular-premium routing, published initial bonus tiers, account-fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the 25-year surrender charge on the Initial Units Account, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
+      'TM Atlas Wealth is cataloged as a supported V1 product. The parser captures split SGD / premium-payment-term-25 Basic Death and Advanced Death corridors with executable regular-premium routing, published initial bonus tiers, annual loyalty bonus with the published bounded adjustment-factor formula during the premium payment term and the flat post-term rate thereafter, account-fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the 25-year surrender charge on the Initial Units Account, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
       'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
-      'Loyalty Bonus remains informational only because the source uses an annual adjustment-factor formula that the current engine does not execute.',
       'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published first-policy-year accrual, policy-year-2 settlement, policy-value valuation basis, and irreversible downgrade after failed deduction.',
       'Premium-holiday lapse behavior, multiple-life last-life settlement, change-of-life-assured administration, regular withdrawal, credit-card charge, and other corridors remain informational only.',
       'Structured extraction validated against the TM Atlas Wealth product summary text layer.',

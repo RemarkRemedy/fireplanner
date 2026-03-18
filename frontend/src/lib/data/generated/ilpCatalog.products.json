@@ -70347,11 +70347,11 @@
       "tokio-top-up-premium-charge",
       "tokio-recurring-single-premium-charge",
       "tokio-initial-account-surrender-charge",
+      "branch:tokio-loyalty-bonus-adjustment-factor",
       "kernel:distribution-mode-assumption",
       "branch:tokio-atlas-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction"
     ],
     "metadataOnlyBehaviors": [
-      "tokio-atlas-loyalty-bonus-adjustment-factor",
       "tokio-atlas-advanced-death-payout-handling",
       "tokio-atlas-multiple-life-last-life-settlement",
       "tokio-atlas-change-of-life-assured-administration",
@@ -70360,9 +70360,8 @@
       "tokio-atlas-credit-card-charge"
     ],
     "warnings": [
-      "TM Atlas Wealth is cataloged as a supported V1 product. The parser captures split SGD / premium-payment-term-25 Basic Death and Advanced Death corridors with executable regular-premium routing, published initial bonus tiers, account-fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the 25-year surrender charge on the Initial Units Account, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.",
+      "TM Atlas Wealth is cataloged as a supported V1 product. The parser captures split SGD / premium-payment-term-25 Basic Death and Advanced Death corridors with executable regular-premium routing, published initial bonus tiers, annual loyalty bonus with the published bounded adjustment-factor formula during the premium payment term and the flat post-term rate thereafter, account-fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the 25-year surrender charge on the Initial Units Account, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.",
       "Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.",
-      "Loyalty Bonus remains informational only because the source uses an annual adjustment-factor formula that the current engine does not execute.",
       "Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published first-policy-year accrual, policy-year-2 settlement, policy-value valuation basis, and irreversible downgrade after failed deduction.",
       "Premium-holiday lapse behavior, multiple-life last-life settlement, change-of-life-assured administration, regular withdrawal, credit-card charge, and other corridors remain informational only.",
       "Structured extraction validated against the TM Atlas Wealth product summary text layer."
@@ -70524,6 +70523,61 @@
                 "excerpt": "Initial bonus rates on a per annum basis are set out below: Annualised Regular Premium Payment Term (Years) Premium Band 5-9 10-14 15-19 20-24 25 1 0.90% 2.50% 5.00% 6.00% 7.50% 2 1.50% 4.50% 6.50% 8.00% 10.00% 3 2.50% 6"
               }
             ]
+          },
+          {
+            "id": "loyalty-bonus-during-mip",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (During Premium Payment Term)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 6,
+            "endPolicyYear": 25,
+            "rate": 0.003,
+            "amount": null,
+            "tieredRates": [],
+            "adjustmentFactorConfig": {
+              "formula": "paid-regular-premium-less-partial-withdrawal-over-annualised-premium",
+              "withdrawalAccountIds": [
+                "accumulation"
+              ]
+            },
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 6 to the end of the premium payment term.",
+              "During the premium payment term, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus withdrawals, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Loyalty Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the sixth policy anniversary. During premium payment term, loyalty bonus will be paid in accor"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-after-mip",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (After Premium Payment Term)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 26,
+            "endPolicyYear": null,
+            "rate": 0.003,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value after the premium payment term without the adjustment-factor multiplier."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Loyalty Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the sixth policy anniversary. During premium payment term, loyalty bonus will be paid in accor"
+              }
+            ]
           }
         ],
         "feeRules": [],
@@ -70662,7 +70716,6 @@
           "This partial template models 12-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, the published 25-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface."
         ],
         "unsupportedItems": [
-          "Loyalty Bonus remains metadata-only because its annual adjustment-factor formula and qualification state are outside the current engine.",
           "Advanced Death selection, Monthly Protection Charge, multiple-life last-life settlement, change-of-life-assured administration, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only."
         ],
         "sourceRefs": [
@@ -70863,6 +70916,61 @@
                 "excerpt": "Initial bonus rates on a per annum basis are set out below: Annualised Regular Premium Payment Term (Years) Premium Band 5-9 10-14 15-19 20-24 25 1 0.90% 2.50% 5.00% 6.00% 7.50% 2 1.50% 4.50% 6.50% 8.00% 10.00% 3 2.50% 6"
               }
             ]
+          },
+          {
+            "id": "loyalty-bonus-during-mip",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (During Premium Payment Term)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 6,
+            "endPolicyYear": 25,
+            "rate": 0.003,
+            "amount": null,
+            "tieredRates": [],
+            "adjustmentFactorConfig": {
+              "formula": "paid-regular-premium-less-partial-withdrawal-over-annualised-premium",
+              "withdrawalAccountIds": [
+                "accumulation"
+              ]
+            },
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 6 to the end of the premium payment term.",
+              "During the premium payment term, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus withdrawals, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Loyalty Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the sixth policy anniversary. During premium payment term, loyalty bonus will be paid in accor"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-after-mip",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (After Premium Payment Term)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 26,
+            "endPolicyYear": null,
+            "rate": 0.003,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value after the premium payment term without the adjustment-factor multiplier."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Loyalty Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the sixth policy anniversary. During premium payment term, loyalty bonus will be paid in accor"
+              }
+            ]
           }
         ],
         "feeRules": [
@@ -71055,7 +71163,6 @@
           "The Advanced Death variant also models the published first-policy-year Monthly Protection Charge accrual, policy-year-2 settlement, policy-value valuation basis, and irreversible downgrade to Basic Death after failed Accumulation Units Account deduction."
         ],
         "unsupportedItems": [
-          "Loyalty Bonus remains metadata-only because its annual adjustment-factor formula and qualification state are outside the current engine.",
           "Advanced Death payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, change-of-life-assured administration, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only."
         ],
         "sourceRefs": [
@@ -71324,13 +71431,13 @@
       "tokio-regular-premium-reduction-consumes-recurring-single-premium-first",
       "tokio-top-up-premium-charge",
       "tokio-recurring-single-premium-charge",
+      "branch:tokio-loyalty-bonus-adjustment-factor",
       "branch:tokio-marine-affluence-atfuture-zero-partial-withdrawal-charge",
       "branch:tokio-marine-affluence-atfuture-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts",
       "tokio-initial-account-surrender-charge",
       "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
-      "tokio-affluence-atfuture-loyalty-bonus-adjustment-factor",
       "tokio-affluence-atfuture-advanced-death-payout-handling",
       "tokio-affluence-atfuture-life-benefit-rider",
       "tokio-affluence-atfuture-regular-withdrawal-behavior",
@@ -71341,9 +71448,9 @@
       "tokio-affluence-atfuture-non-sgd-or-non-15-year-variants"
     ],
     "warnings": [
-      "Affluence@Future is cataloged as a supported V1 product. The SGD / 15-year premium-payment corridors model regular-premium routing, initial bonus allocation, initial and policy charges, top-up and recurring-single-premium routing / charges, zero-charge partial withdrawals, surrender mechanics, and reinvest-default distribution support; the Advanced Death variant also models the accrued Monthly Protection Charge corridor from insured-life inputs, and the Advanced Death with Life Benefit Rider variant extends that same published Monthly Protection Charge corridor through the policy anniversary immediately after age 99.",
+      "Affluence@Future is cataloged as a supported V1 product. The SGD / 15-year premium-payment corridors model regular-premium routing, initial bonus allocation, annual loyalty bonus with the published bounded adjustment-factor formula during the premium payment term and the post-term rate windows thereafter, initial and policy charges, top-up and recurring-single-premium routing / charges, zero-charge partial withdrawals, surrender mechanics, and reinvest-default distribution support; the Advanced Death variant also models the accrued Monthly Protection Charge corridor from insured-life inputs, and the Advanced Death with Life Benefit Rider variant extends that same published Monthly Protection Charge corridor through the policy anniversary immediately after age 99.",
       "Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.",
-      "Loyalty bonus adjustment-factor handling, advanced-death payout handling beyond the modeled Monthly Protection Charge, Life Benefit Rider handling, regular-withdrawal behavior, minimum-account-value enforcement, multiple-life last-life settlement, change-of-life-assured / life-replacement administration, and premium-holiday / non-SGD / non-15-year variants remain informational only."
+      "Advanced-death payout handling beyond the modeled Monthly Protection Charge, Life Benefit Rider handling, regular-withdrawal behavior, minimum-account-value enforcement, multiple-life last-life settlement, change-of-life-assured / life-replacement administration, and premium-holiday / non-SGD / non-15-year variants remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -71506,6 +71613,209 @@
                 "page": 2,
                 "section": "Initial Bonus",
                 "excerpt": "Initial Bonus While the policy is in force, an initial bonus will be paid in the first two (2) policy years upon receipt of each regular premium. Initial bonus = Applicable Initial bonus rate × each regular premium recei"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-policy-years-3-10",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (Policy Years 3-10)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 3,
+            "endPolicyYear": 10,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.007
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.007
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.007
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.007
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 0.0075
+              }
+            ],
+            "adjustmentFactorConfig": {
+              "formula": "paid-regular-premium-less-partial-withdrawal-over-annualised-premium",
+              "withdrawalAccountIds": [
+                "accumulation"
+              ]
+            },
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 3 to the end of policy year 10 for the SGD 15-year premium payment term.",
+              "During the premium payment term, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus partial withdrawals from the Accumulation Units Account, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Loyalty Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, an annual loyalty bonus will be paid at the end of each policy year, starting from the third policy anniversary. During the premium payment term: Loyalty bonus will be paid in "
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-policy-years-11-15",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (Policy Years 11-15)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": 15,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.0092
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.0092
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.0098
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.0099
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 0.0099
+              }
+            ],
+            "adjustmentFactorConfig": {
+              "formula": "paid-regular-premium-less-partial-withdrawal-over-annualised-premium",
+              "withdrawalAccountIds": [
+                "accumulation"
+              ]
+            },
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 11 to the end of the premium payment term for the SGD 15-year premium payment term.",
+              "During the premium payment term, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus partial withdrawals from the Accumulation Units Account, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Loyalty Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, an annual loyalty bonus will be paid at the end of each policy year, starting from the third policy anniversary. During the premium payment term: Loyalty bonus will be paid in "
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-policy-years-16-40",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (Policy Years 16-40)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 16,
+            "endPolicyYear": 40,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.0092
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.0092
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.0098
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.0099
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 0.0099
+              }
+            ],
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from the end of the premium payment term to the end of policy year 40 using the post-premium-payment-term loyalty bonus table."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Loyalty Bonus",
+                "excerpt": "We will continue to pay an annual loyalty bonus equivalent to applicable loyalty bonus rate multiplied by the Accumulation Units Account value at the end of the policy year, as long as the policy is in-force. i) The loya"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-policy-year-41-onward",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (Policy Year 41 Onward)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 41,
+            "endPolicyYear": null,
+            "rate": 0.003,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from policy year 41 onward."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Loyalty Bonus",
+                "excerpt": "We will continue to pay an annual loyalty bonus equivalent to applicable loyalty bonus rate multiplied by the Accumulation Units Account value at the end of the policy year, as long as the policy is in-force. i) The loya"
               }
             ]
           }
@@ -71846,7 +72156,6 @@
           "Recurring single premium stays blocked during premium holiday until regular premium resumes at the committed commencement-date amount."
         ],
         "unsupportedItems": [
-          "Loyalty bonus remains metadata-only because the published adjustment-factor formula and period-band windows are not yet represented directly in the template bonus basis.",
           "This basic-death corridor does not model Advanced Death selection, Life Benefit Rider selection, or Monthly Protection Charge; multiple-life last-life settlement and change-of-life-assured / life-replacement administration remain metadata-only for this product.",
           "Regular withdrawal behavior, minimum-account-value enforcement, premium holiday state handling, and non-SGD or non-15-year variants remain metadata-only for this product."
         ],
@@ -72057,6 +72366,209 @@
                 "page": 2,
                 "section": "Initial Bonus",
                 "excerpt": "Initial Bonus While the policy is in force, an initial bonus will be paid in the first two (2) policy years upon receipt of each regular premium. Initial bonus = Applicable Initial bonus rate × each regular premium recei"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-policy-years-3-10",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (Policy Years 3-10)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 3,
+            "endPolicyYear": 10,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.007
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.007
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.007
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.007
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 0.0075
+              }
+            ],
+            "adjustmentFactorConfig": {
+              "formula": "paid-regular-premium-less-partial-withdrawal-over-annualised-premium",
+              "withdrawalAccountIds": [
+                "accumulation"
+              ]
+            },
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 3 to the end of policy year 10 for the SGD 15-year premium payment term.",
+              "During the premium payment term, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus partial withdrawals from the Accumulation Units Account, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Loyalty Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, an annual loyalty bonus will be paid at the end of each policy year, starting from the third policy anniversary. During the premium payment term: Loyalty bonus will be paid in "
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-policy-years-11-15",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (Policy Years 11-15)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": 15,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.0092
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.0092
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.0098
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.0099
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 0.0099
+              }
+            ],
+            "adjustmentFactorConfig": {
+              "formula": "paid-regular-premium-less-partial-withdrawal-over-annualised-premium",
+              "withdrawalAccountIds": [
+                "accumulation"
+              ]
+            },
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 11 to the end of the premium payment term for the SGD 15-year premium payment term.",
+              "During the premium payment term, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus partial withdrawals from the Accumulation Units Account, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Loyalty Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, an annual loyalty bonus will be paid at the end of each policy year, starting from the third policy anniversary. During the premium payment term: Loyalty bonus will be paid in "
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-policy-years-16-40",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (Policy Years 16-40)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 16,
+            "endPolicyYear": 40,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.0092
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.0092
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.0098
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.0099
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 0.0099
+              }
+            ],
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from the end of the premium payment term to the end of policy year 40 using the post-premium-payment-term loyalty bonus table."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Loyalty Bonus",
+                "excerpt": "We will continue to pay an annual loyalty bonus equivalent to applicable loyalty bonus rate multiplied by the Accumulation Units Account value at the end of the policy year, as long as the policy is in-force. i) The loya"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-policy-year-41-onward",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (Policy Year 41 Onward)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 41,
+            "endPolicyYear": null,
+            "rate": 0.003,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from policy year 41 onward."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Loyalty Bonus",
+                "excerpt": "We will continue to pay an annual loyalty bonus equivalent to applicable loyalty bonus rate multiplied by the Accumulation Units Account value at the end of the policy year, as long as the policy is in-force. i) The loya"
               }
             ]
           }
@@ -72452,7 +72964,6 @@
           "Recurring single premium stays blocked during premium holiday until regular premium resumes at the committed commencement-date amount."
         ],
         "unsupportedItems": [
-          "Loyalty bonus remains metadata-only because the published adjustment-factor formula and period-band windows are not yet represented directly in the template bonus basis.",
           "Advanced Death payout handling beyond the modeled Monthly Protection Charge, Life Benefit Rider selection, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.",
           "Regular withdrawal behavior, minimum-account-value enforcement, premium holiday state handling, and non-SGD or non-15-year variants remain metadata-only for this product."
         ],
@@ -72668,6 +73179,209 @@
                 "page": 2,
                 "section": "Initial Bonus",
                 "excerpt": "Initial Bonus While the policy is in force, an initial bonus will be paid in the first two (2) policy years upon receipt of each regular premium. Initial bonus = Applicable Initial bonus rate × each regular premium recei"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-policy-years-3-10",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (Policy Years 3-10)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 3,
+            "endPolicyYear": 10,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.007
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.007
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.007
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.007
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 0.0075
+              }
+            ],
+            "adjustmentFactorConfig": {
+              "formula": "paid-regular-premium-less-partial-withdrawal-over-annualised-premium",
+              "withdrawalAccountIds": [
+                "accumulation"
+              ]
+            },
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 3 to the end of policy year 10 for the SGD 15-year premium payment term.",
+              "During the premium payment term, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus partial withdrawals from the Accumulation Units Account, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Loyalty Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, an annual loyalty bonus will be paid at the end of each policy year, starting from the third policy anniversary. During the premium payment term: Loyalty bonus will be paid in "
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-policy-years-11-15",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (Policy Years 11-15)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": 15,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.0092
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.0092
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.0098
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.0099
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 0.0099
+              }
+            ],
+            "adjustmentFactorConfig": {
+              "formula": "paid-regular-premium-less-partial-withdrawal-over-annualised-premium",
+              "withdrawalAccountIds": [
+                "accumulation"
+              ]
+            },
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 11 to the end of the premium payment term for the SGD 15-year premium payment term.",
+              "During the premium payment term, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus partial withdrawals from the Accumulation Units Account, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Loyalty Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, an annual loyalty bonus will be paid at the end of each policy year, starting from the third policy anniversary. During the premium payment term: Loyalty bonus will be paid in "
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-policy-years-16-40",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (Policy Years 16-40)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 16,
+            "endPolicyYear": 40,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.0092
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.0092
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.0098
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.0099
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 0.0099
+              }
+            ],
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from the end of the premium payment term to the end of policy year 40 using the post-premium-payment-term loyalty bonus table."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Loyalty Bonus",
+                "excerpt": "We will continue to pay an annual loyalty bonus equivalent to applicable loyalty bonus rate multiplied by the Accumulation Units Account value at the end of the policy year, as long as the policy is in-force. i) The loya"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-policy-year-41-onward",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (Policy Year 41 Onward)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 41,
+            "endPolicyYear": null,
+            "rate": 0.003,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from policy year 41 onward."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Loyalty Bonus",
+                "excerpt": "We will continue to pay an annual loyalty bonus equivalent to applicable loyalty bonus rate multiplied by the Accumulation Units Account value at the end of the policy year, as long as the policy is in-force. i) The loya"
               }
             ]
           }
@@ -73063,7 +73777,6 @@
           "Recurring single premium stays blocked during premium holiday until regular premium resumes at the committed commencement-date amount."
         ],
         "unsupportedItems": [
-          "Loyalty bonus remains metadata-only because the published adjustment-factor formula and period-band windows are not yet represented directly in the template bonus basis.",
           "Advanced Death payout handling beyond the modeled Monthly Protection Charge, Life Benefit Rider termination / fallback handling, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.",
           "Regular withdrawal behavior, minimum-account-value enforcement, premium holiday state handling, and non-SGD or non-15-year variants remain metadata-only for this product."
         ],
@@ -73143,11 +73856,11 @@
       "tokio-top-up-premium-charge",
       "tokio-recurring-single-premium-charge",
       "tokio-initial-account-surrender-charge",
+      "branch:tokio-loyalty-bonus-adjustment-factor",
       "kernel:distribution-mode-assumption",
       "branch:tokio-goclassic-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction"
     ],
     "metadataOnlyBehaviors": [
-      "tokio-goclassic-loyalty-bonus-adjustment-factor",
       "tokio-goclassic-additional-bonus-qualification",
       "tokio-goclassic-advanced-death-payout-handling",
       "tokio-goclassic-multiple-life-last-life-settlement",
@@ -73157,9 +73870,9 @@
       "tokio-goclassic-credit-card-charge"
     ],
     "warnings": [
-      "#goClassic is cataloged as a supported V1 product. The parser captures split SGD / premium-payment-term-25 Basic Death and Advanced Death corridors with executable regular-premium routing, published initial bonus tiers, fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the 25-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.",
+      "#goClassic is cataloged as a supported V1 product. The parser captures split SGD / premium-payment-term-25 Basic Death and Advanced Death corridors with executable regular-premium routing, published initial bonus tiers, annual loyalty bonus with the published bounded adjustment-factor formula during the premium payment term and the flat post-term rate thereafter, fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the 25-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.",
       "Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.",
-      "Loyalty Bonus and Additional Bonus annual qualification and adjustment-factor handling, regular-withdrawal administration, premium-holiday lapse behavior, credit-card charge, multiple-life last-life settlement, change-of-life-assured administration, and other non-SGD or non-25-year corridors remain informational only.",
+      "Additional Bonus annual qualification, regular-withdrawal administration, premium-holiday lapse behavior, credit-card charge, multiple-life last-life settlement, change-of-life-assured administration, and other non-SGD or non-25-year corridors remain informational only.",
       "Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published first-two-policy-years accrual, policy-year-3 settlement, policy-value valuation basis, and irreversible downgrade after failed deduction."
     ],
     "archived": false,
@@ -73319,6 +74032,61 @@
                 "excerpt": "Initial bonus rates on a per annum basis are set out below: Annualised Premium Payment Term (Years) Regular Premium 5-9 10-14 15-19 20 21 22 23 24 25 Band 1 2.00% 5.00% 9.00% 12.00% 12.00% 12.00% 12.00% 12.00% 15.00% 2 4"
               }
             ]
+          },
+          {
+            "id": "loyalty-bonus-during-mip",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (During Premium Payment Term)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 4,
+            "endPolicyYear": 25,
+            "rate": 0.005,
+            "amount": null,
+            "tieredRates": [],
+            "adjustmentFactorConfig": {
+              "formula": "paid-regular-premium-less-partial-withdrawal-over-annualised-premium",
+              "withdrawalAccountIds": [
+                "accumulation"
+              ]
+            },
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 4 to the end of the premium payment term.",
+              "During the premium payment term, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus partial withdrawals from the Accumulation Units Account, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Loyalty Bonus / Additional Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the fourth policy anniversary. During premium payment term, loyalty bonus will be paid in acco"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-after-mip",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (After Premium Payment Term)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 26,
+            "endPolicyYear": null,
+            "rate": 0.005,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value after the premium payment term without the adjustment-factor multiplier."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Loyalty Bonus / Additional Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the fourth policy anniversary. During premium payment term, loyalty bonus will be paid in acco"
+              }
+            ]
           }
         ],
         "feeRules": [],
@@ -73457,7 +74225,7 @@
           "This partial template models 24-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, the published 25-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface."
         ],
         "unsupportedItems": [
-          "Loyalty Bonus and Additional Bonus remain metadata-only because their annual qualification and adjustment-factor formulas need stateful bonus tracking beyond the current engine.",
+          "Additional Bonus remains metadata-only because its annual qualification gates remain outside the current executable bonus set.",
           "Advanced Death Benefit selection, Monthly Protection Charge, premium-holiday lapse behavior, regular withdrawal, credit-card charge, multiple-life last-life settlement, change-of-life-assured administration, and non-SGD or non-25-year corridors remain metadata-only."
         ],
         "sourceRefs": [
@@ -73658,6 +74426,61 @@
                 "excerpt": "Initial bonus rates on a per annum basis are set out below: Annualised Premium Payment Term (Years) Regular Premium 5-9 10-14 15-19 20 21 22 23 24 25 Band 1 2.00% 5.00% 9.00% 12.00% 12.00% 12.00% 12.00% 12.00% 15.00% 2 4"
               }
             ]
+          },
+          {
+            "id": "loyalty-bonus-during-mip",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (During Premium Payment Term)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 4,
+            "endPolicyYear": 25,
+            "rate": 0.005,
+            "amount": null,
+            "tieredRates": [],
+            "adjustmentFactorConfig": {
+              "formula": "paid-regular-premium-less-partial-withdrawal-over-annualised-premium",
+              "withdrawalAccountIds": [
+                "accumulation"
+              ]
+            },
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 4 to the end of the premium payment term.",
+              "During the premium payment term, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus partial withdrawals from the Accumulation Units Account, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Loyalty Bonus / Additional Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the fourth policy anniversary. During premium payment term, loyalty bonus will be paid in acco"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-after-mip",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (After Premium Payment Term)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 26,
+            "endPolicyYear": null,
+            "rate": 0.005,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value after the premium payment term without the adjustment-factor multiplier."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Loyalty Bonus / Additional Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the fourth policy anniversary. During premium payment term, loyalty bonus will be paid in acco"
+              }
+            ]
           }
         ],
         "feeRules": [
@@ -73850,7 +74673,7 @@
           "The Advanced Death variant also models the published Monthly Protection Charge, including the first-two-policy-years accrual window, policy-year-3 lump-sum settlement, policy-value valuation basis, and the irreversible downgrade to Basic Death after failed Accumulation Units Account deduction."
         ],
         "unsupportedItems": [
-          "Loyalty Bonus and Additional Bonus remain metadata-only because their annual qualification and adjustment-factor formulas need stateful bonus tracking beyond the current engine.",
+          "Additional Bonus remains metadata-only because its annual qualification gates remain outside the current executable bonus set.",
           "Advanced Death payout handling beyond the modeled Monthly Protection Charge, premium-holiday lapse behavior, regular withdrawal, credit-card charge, multiple-life last-life settlement, change-of-life-assured administration, and non-SGD or non-25-year corridors remain metadata-only."
         ],
         "sourceRefs": [
@@ -76790,19 +77613,20 @@
       "tokio-top-up-premium-charge",
       "tokio-recurring-single-premium-charge",
       "tokio-initial-account-surrender-charge",
+      "branch:tokio-loyalty-bonus-adjustment-factor",
       "branch:tokio-goaffluence-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts",
       "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
-      "tokio-goaffluence-loyalty-and-achievement-bonuses",
+      "tokio-goaffluence-achievement-bonus-qualification",
       "tokio-goaffluence-advanced-death-payout-life-benefit-rider-and-life-assured-administration",
       "tokio-goaffluence-regular-withdrawal-and-partial-withdrawal-constraints",
       "tokio-goaffluence-premium-holiday-and-non-sgd-or-non-15-year-variants"
     ],
     "warnings": [
-      "#goAffluence is cataloged as a supported V1 product. The SGD / 15-year premium-payment corridors model regular-premium routing, initial bonus allocation, initial and policy charges, top-up and recurring-single-premium routing / charges, surrender mechanics, and reinvest-default distribution support; the Advanced Death variant also models the accrued Monthly Protection Charge corridor from insured-life inputs.",
+      "#goAffluence is cataloged as a supported V1 product. The SGD / 15-year premium-payment corridors model regular-premium routing, initial bonus allocation, annual loyalty bonus with the published bounded adjustment-factor formula during the premium payment term and the flat post-term rate table thereafter, initial and policy charges, top-up and recurring-single-premium routing / charges, surrender mechanics, and reinvest-default distribution support; the Advanced Death variant also models the accrued Monthly Protection Charge corridor from insured-life inputs.",
       "Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.",
-      "Loyalty bonus and achievement bonus qualification, advanced-death payout handling beyond the modeled Monthly Protection Charge, regular-withdrawal administration, partial-withdrawal limit and minimum-account-value constraints, and premium-holiday / non-SGD / non-15-year variants remain informational only."
+      "Achievement bonus qualification, advanced-death payout handling beyond the modeled Monthly Protection Charge, regular-withdrawal administration, partial-withdrawal limit and minimum-account-value constraints, and premium-holiday / non-SGD / non-15-year variants remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -76965,6 +77789,185 @@
                 "page": 4,
                 "section": "Initial Bonus",
                 "excerpt": "Initial Bonus While the policy is in force, an initial bonus will be paid in the first two (2) policy years upon receipt of each regular premium. Initial bonus = Applicable initial bonus rate (based on annualised regular"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-policy-years-3-10",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (Policy Years 3-10)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 3,
+            "endPolicyYear": 10,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.007
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.007
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.007
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.007
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 0.0075
+              }
+            ],
+            "adjustmentFactorConfig": {
+              "formula": "paid-regular-premium-less-partial-withdrawal-over-annualised-premium",
+              "withdrawalAccountIds": [
+                "accumulation"
+              ]
+            },
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 3 to the end of policy year 10.",
+              "During the premium payment term, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus partial withdrawals from the Accumulation Units Account, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Loyalty Bonus / Achievement Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the third policy anniversary. During premium payment term, loyalty bonus will be paid in accor"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-policy-years-11-15",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (Policy Years 11-15)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": 15,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.0092
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.0092
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.0098
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.0099
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 0.0099
+              }
+            ],
+            "adjustmentFactorConfig": {
+              "formula": "paid-regular-premium-less-partial-withdrawal-over-annualised-premium",
+              "withdrawalAccountIds": [
+                "accumulation"
+              ]
+            },
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 11 to the end of the premium payment term.",
+              "During the premium payment term, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus partial withdrawals from the Accumulation Units Account, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Loyalty Bonus / Achievement Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the third policy anniversary. During premium payment term, loyalty bonus will be paid in accor"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-after-mip",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (After Premium Payment Term)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 16,
+            "endPolicyYear": null,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.0092
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.0092
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.0098
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.0099
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 0.0099
+              }
+            ],
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value after the premium payment term using the policy year 11 onward loyalty bonus rate table without the adjustment-factor multiplier."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Loyalty Bonus / Achievement Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the third policy anniversary. During premium payment term, loyalty bonus will be paid in accor"
               }
             ]
           }
@@ -77271,7 +78274,7 @@
           "Recurring single premium stays blocked during premium holiday until regular premium resumes at the committed commencement-date amount."
         ],
         "unsupportedItems": [
-          "Loyalty bonus and achievement bonus remain metadata-only because the published adjustment-factor and milestone qualification gates are not yet represented directly in the template bonus basis.",
+          "Achievement bonus remains metadata-only because the published eligible-policy-year milestone gates and annualised-premium payout basis are not yet represented directly in the template bonus basis.",
           "Advanced Death selection, Monthly Protection Charge, Advanced Death Benefit with Life Benefit Rider, accidental/dependent medical/retrenchment benefits, multiple-life handling, and change-of-life-assured administration remain metadata-only for this product.",
           "Regular withdrawal, partial-withdrawal limit and minimum-account-value constraints, premium holiday state handling, and non-SGD/premium-term variants remain metadata-only for this product."
         ],
@@ -77482,6 +78485,185 @@
                 "page": 4,
                 "section": "Initial Bonus",
                 "excerpt": "Initial Bonus While the policy is in force, an initial bonus will be paid in the first two (2) policy years upon receipt of each regular premium. Initial bonus = Applicable initial bonus rate (based on annualised regular"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-policy-years-3-10",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (Policy Years 3-10)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 3,
+            "endPolicyYear": 10,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.007
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.007
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.007
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.007
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 0.0075
+              }
+            ],
+            "adjustmentFactorConfig": {
+              "formula": "paid-regular-premium-less-partial-withdrawal-over-annualised-premium",
+              "withdrawalAccountIds": [
+                "accumulation"
+              ]
+            },
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 3 to the end of policy year 10.",
+              "During the premium payment term, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus partial withdrawals from the Accumulation Units Account, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Loyalty Bonus / Achievement Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the third policy anniversary. During premium payment term, loyalty bonus will be paid in accor"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-policy-years-11-15",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (Policy Years 11-15)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": 15,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.0092
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.0092
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.0098
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.0099
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 0.0099
+              }
+            ],
+            "adjustmentFactorConfig": {
+              "formula": "paid-regular-premium-less-partial-withdrawal-over-annualised-premium",
+              "withdrawalAccountIds": [
+                "accumulation"
+              ]
+            },
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 11 to the end of the premium payment term.",
+              "During the premium payment term, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus partial withdrawals from the Accumulation Units Account, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Loyalty Bonus / Achievement Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the third policy anniversary. During premium payment term, loyalty bonus will be paid in accor"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-after-mip",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (After Premium Payment Term)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 16,
+            "endPolicyYear": null,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": null,
+                "maxAnnualPremium": 11999.99,
+                "rate": 0.0092
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 12000,
+                "maxAnnualPremium": 23999.99,
+                "rate": 0.0092
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 24000,
+                "maxAnnualPremium": 35999.99,
+                "rate": 0.0098
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 36000,
+                "maxAnnualPremium": 47999.99,
+                "rate": 0.0099
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 48000,
+                "maxAnnualPremium": null,
+                "rate": 0.0099
+              }
+            ],
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value after the premium payment term using the policy year 11 onward loyalty bonus rate table without the adjustment-factor multiplier."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Loyalty Bonus / Achievement Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the third policy anniversary. During premium payment term, loyalty bonus will be paid in accor"
               }
             ]
           }
@@ -77844,7 +79026,7 @@
           "Recurring single premium stays blocked during premium holiday until regular premium resumes at the committed commencement-date amount."
         ],
         "unsupportedItems": [
-          "Loyalty bonus and achievement bonus remain metadata-only because the published adjustment-factor and milestone qualification gates are not yet represented directly in the template bonus basis.",
+          "Achievement bonus remains metadata-only because the published eligible-policy-year milestone gates and annualised-premium payout basis are not yet represented directly in the template bonus basis.",
           "Advanced Death payout handling beyond the modeled Monthly Protection Charge, together with Advanced Death Benefit with Life Benefit Rider, accidental/dependent medical/retrenchment benefits, multiple-life handling, and change-of-life-assured administration, remains metadata-only for this product.",
           "Regular withdrawal, partial-withdrawal limit and minimum-account-value constraints, premium holiday state handling, and non-SGD/premium-term variants remain metadata-only for this product."
         ],
@@ -77931,11 +79113,12 @@
       "tokio-premium-shortfall-charge-regular-premium-reduction",
       "tokio-premium-increase-restores-shortfall-charge-cessation",
       "tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only",
+      "branch:tokio-loyalty-bonus-adjustment-factor",
       "branch:tokio-goluxe-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts",
       "kernel:distribution-mode-assumption"
     ],
     "metadataOnlyBehaviors": [
-      "tokio-goluxe-loyalty-and-achievement-bonuses",
+      "tokio-goluxe-achievement-bonus-qualification",
       "tokio-goluxe-advanced-death-payout-handling",
       "tokio-goluxe-multiple-life-last-life-settlement",
       "tokio-goluxe-change-of-life-assured-administration",
@@ -77943,8 +79126,8 @@
       "tokio-goluxe-non-sgd-policy-currencies"
     ],
     "warnings": [
-      "#goLuxe is cataloged as a supported V1 product. The SGD / 15-year minimum-contribution corridors model regular-premium routing, initial bonus allocation, initial and policy charges, top-up and recurring-single-premium routing / charges, partial-withdrawal and premium-shortfall charges, surrender mechanics, and reinvest-default distribution support with the published $50 minimum cash-payout threshold and 30-day record-date lead time; the Advanced Death variant also models the accrued Monthly Protection Charge corridor from insured-life inputs.",
-      "Loyalty bonus and achievement bonus qualification, advanced-death payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, change-of-life-assured administration, regular-withdrawal rules, and non-SGD policy currencies remain informational only."
+      "#goLuxe is cataloged as a supported V1 product. The SGD / 15-year minimum-contribution corridors model regular-premium routing, initial bonus allocation, annual loyalty bonus with the published bounded adjustment-factor formula in policy years 4 to 10 and the flat post-window rates thereafter, initial and policy charges, top-up and recurring-single-premium routing / charges, partial-withdrawal and premium-shortfall charges, surrender mechanics, and reinvest-default distribution support with the published $50 minimum cash-payout threshold and 30-day record-date lead time; the Advanced Death variant also models the accrued Monthly Protection Charge corridor from insured-life inputs.",
+      "Achievement bonus qualification, advanced-death payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, change-of-life-assured administration, regular-withdrawal rules, and non-SGD policy currencies remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -78112,6 +79295,85 @@
                 "page": 2,
                 "section": "Initial Bonus Rates",
                 "excerpt": "Initial bonus rates on a per annum basis are set out below: Minimum Contribution Annualised Regular Period Premium Band 15 years 1 4.50% 2 6.00% 3 8.50% 4 11.00% 5 12.50% The initial bonus will be allocated to the policy"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-policy-years-4-10",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (Policy Years 4-10)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 4,
+            "endPolicyYear": 10,
+            "rate": 0.005,
+            "amount": null,
+            "tieredRates": [],
+            "adjustmentFactorConfig": {
+              "formula": "paid-regular-premium-less-partial-withdrawal-over-annualised-premium",
+              "withdrawalAccountIds": [
+                "accumulation"
+              ]
+            },
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 4 to the end of policy year 10.",
+              "During the first 10 policy years, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus partial withdrawals from the Accumulation Units Account, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Loyalty Bonus / Achievement Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the fourth policy anniversary. Loyalty bonus will be paid in accordance to the formula below d"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-policy-years-11-15",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (Policy Years 11-15)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": 15,
+            "rate": 0.005,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from policy year 11 to the end of the minimum contribution period without the adjustment-factor multiplier."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Loyalty Bonus / Achievement Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the fourth policy anniversary. Loyalty bonus will be paid in accordance to the formula below d"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-after-mip",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (After Minimum Contribution Period)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 16,
+            "endPolicyYear": null,
+            "rate": 0.003,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value after the minimum contribution period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Loyalty Bonus / Achievement Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the fourth policy anniversary. Loyalty bonus will be paid in accordance to the formula below d"
               }
             ]
           }
@@ -78458,7 +79720,7 @@
           "Recurring single premium stays blocked during premium holiday until regular premium resumes at the committed commencement-date amount."
         ],
         "unsupportedItems": [
-          "Loyalty bonus and achievement bonus remain metadata-only because the published adjustment-factor and first-ten-policy-years qualification gates are not yet represented directly in the template bonus basis.",
+          "Achievement bonus remains metadata-only because the published first-ten-policy-years qualification gates and annualised-premium payout basis are not yet represented directly in the template bonus basis.",
           "Advanced Death selection, Monthly Protection Charge, multiple-life last-life settlement, and change-of-life-assured administration remain metadata-only for this product.",
           "Regular withdrawal, partial-withdrawal limit caps, and non-SGD policy currencies remain metadata-only for this product."
         ],
@@ -78679,6 +79941,85 @@
                 "page": 2,
                 "section": "Initial Bonus Rates",
                 "excerpt": "Initial bonus rates on a per annum basis are set out below: Minimum Contribution Annualised Regular Period Premium Band 15 years 1 4.50% 2 6.00% 3 8.50% 4 11.00% 5 12.50% The initial bonus will be allocated to the policy"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-policy-years-4-10",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (Policy Years 4-10)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 4,
+            "endPolicyYear": 10,
+            "rate": 0.005,
+            "amount": null,
+            "tieredRates": [],
+            "adjustmentFactorConfig": {
+              "formula": "paid-regular-premium-less-partial-withdrawal-over-annualised-premium",
+              "withdrawalAccountIds": [
+                "accumulation"
+              ]
+            },
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 4 to the end of policy year 10.",
+              "During the first 10 policy years, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus partial withdrawals from the Accumulation Units Account, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Loyalty Bonus / Achievement Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the fourth policy anniversary. Loyalty bonus will be paid in accordance to the formula below d"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-policy-years-11-15",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (Policy Years 11-15)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 11,
+            "endPolicyYear": 15,
+            "rate": 0.005,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value from policy year 11 to the end of the minimum contribution period without the adjustment-factor multiplier."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Loyalty Bonus / Achievement Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the fourth policy anniversary. Loyalty bonus will be paid in accordance to the formula below d"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus-after-mip",
+            "type": "loyalty",
+            "label": "Loyalty Bonus (After Minimum Contribution Period)",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "accumulation"
+            ],
+            "startPolicyYear": 16,
+            "endPolicyYear": null,
+            "rate": 0.003,
+            "amount": null,
+            "tieredRates": [],
+            "notes": [
+              "Models the published annual loyalty bonus on the Accumulation Units Account value after the minimum contribution period."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Loyalty Bonus / Achievement Bonus",
+                "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the fourth policy anniversary. Loyalty bonus will be paid in accordance to the formula below d"
               }
             ]
           }
@@ -79076,7 +80417,7 @@
           "Recurring single premium stays blocked during premium holiday until regular premium resumes at the committed commencement-date amount."
         ],
         "unsupportedItems": [
-          "Loyalty bonus and achievement bonus remain metadata-only because the published adjustment-factor and first-ten-policy-years qualification gates are not yet represented directly in the template bonus basis.",
+          "Achievement bonus remains metadata-only because the published first-ten-policy-years qualification gates and annualised-premium payout basis are not yet represented directly in the template bonus basis.",
           "Advanced Death payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, and change-of-life-assured administration remain metadata-only for this product.",
           "Regular withdrawal, partial-withdrawal limit caps, and non-SGD policy currencies remain metadata-only for this product."
         ],

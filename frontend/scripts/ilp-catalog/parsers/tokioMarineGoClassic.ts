@@ -80,6 +80,7 @@ function snippetNear(document: ExtractedPdfDocument, pageNumber: number, keyword
 function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
   const page1 = sourceRef(1, 'Initial Bonus', snippetNear(document, 1, 'Initial Bonus', 18))
   const page2 = sourceRef(2, 'Initial Bonus Rates', snippetNear(document, 2, 'Initial bonus rates on a per annum basis', 20))
+  const loyaltyPage = sourceRef(2, 'Loyalty Bonus / Additional Bonus', snippetNear(document, 2, 'Loyalty Bonus', 32))
 
   return [
     {
@@ -98,6 +99,43 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
         'Allocated to the Initial Units Account upon each regular premium received in the first three policy years.',
       ],
       sourceRefs: [page1, page2],
+    },
+    {
+      id: 'loyalty-bonus-during-mip',
+      type: 'loyalty',
+      label: 'Loyalty Bonus (During Premium Payment Term)',
+      mode: 'annual-rate',
+      appliesTo: ['accumulation'],
+      startPolicyYear: 4,
+      endPolicyYear: 25,
+      rate: 0.005,
+      amount: null,
+      tieredRates: [],
+      adjustmentFactorConfig: {
+        formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+        withdrawalAccountIds: ['accumulation'],
+      },
+      notes: [
+        'Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 4 to the end of the premium payment term.',
+        'During the premium payment term, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus partial withdrawals from the Accumulation Units Account, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1.',
+      ],
+      sourceRefs: [loyaltyPage],
+    },
+    {
+      id: 'loyalty-bonus-after-mip',
+      type: 'loyalty',
+      label: 'Loyalty Bonus (After Premium Payment Term)',
+      mode: 'annual-rate',
+      appliesTo: ['accumulation'],
+      startPolicyYear: 26,
+      endPolicyYear: null,
+      rate: 0.005,
+      amount: null,
+      tieredRates: [],
+      notes: [
+        'Models the published annual loyalty bonus on the Accumulation Units Account value after the premium payment term without the adjustment-factor multiplier.',
+      ],
+      sourceRefs: [loyaltyPage],
     },
   ]
 }
@@ -272,7 +310,7 @@ function buildVariant(
         : []),
     ],
     unsupportedItems: [
-      'Loyalty Bonus and Additional Bonus remain metadata-only because their annual qualification and adjustment-factor formulas need stateful bonus tracking beyond the current engine.',
+      'Additional Bonus remains metadata-only because its annual qualification gates remain outside the current executable bonus set.',
       ...(isAdvancedDeath
         ? [
             'Advanced Death payout handling beyond the modeled Monthly Protection Charge, premium-holiday lapse behavior, regular withdrawal, credit-card charge, multiple-life last-life settlement, change-of-life-assured administration, and non-SGD or non-25-year corridors remain metadata-only.',
@@ -307,11 +345,11 @@ export function parseTokioMarineGoClassic(context: ParseContext): IlpCatalogProd
       'tokio-top-up-premium-charge',
       'tokio-recurring-single-premium-charge',
       'tokio-initial-account-surrender-charge',
+      'branch:tokio-loyalty-bonus-adjustment-factor',
       'kernel:distribution-mode-assumption',
       'branch:tokio-goclassic-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction',
     ],
     metadataOnlyBehaviors: [
-      'tokio-goclassic-loyalty-bonus-adjustment-factor',
       'tokio-goclassic-additional-bonus-qualification',
       'tokio-goclassic-advanced-death-payout-handling',
       'tokio-goclassic-multiple-life-last-life-settlement',
@@ -321,9 +359,9 @@ export function parseTokioMarineGoClassic(context: ParseContext): IlpCatalogProd
       'tokio-goclassic-credit-card-charge',
     ],
     warnings: [
-      '#goClassic is cataloged as a supported V1 product. The parser captures split SGD / premium-payment-term-25 Basic Death and Advanced Death corridors with executable regular-premium routing, published initial bonus tiers, fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the 25-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
+      '#goClassic is cataloged as a supported V1 product. The parser captures split SGD / premium-payment-term-25 Basic Death and Advanced Death corridors with executable regular-premium routing, published initial bonus tiers, annual loyalty bonus with the published bounded adjustment-factor formula during the premium payment term and the flat post-term rate thereafter, fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the 25-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
       'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
-      'Loyalty Bonus and Additional Bonus annual qualification and adjustment-factor handling, regular-withdrawal administration, premium-holiday lapse behavior, credit-card charge, multiple-life last-life settlement, change-of-life-assured administration, and other non-SGD or non-25-year corridors remain informational only.',
+      'Additional Bonus annual qualification, regular-withdrawal administration, premium-holiday lapse behavior, credit-card charge, multiple-life last-life settlement, change-of-life-assured administration, and other non-SGD or non-25-year corridors remain informational only.',
       'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published first-two-policy-years accrual, policy-year-3 settlement, policy-value valuation basis, and irreversible downgrade after failed deduction.',
     ],
     archived: false,

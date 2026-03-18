@@ -26,11 +26,14 @@ describe('parseTokioMarineGoClassic', () => {
     expect(product.supportStatus).toBe('supported')
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
+    expect(product.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
     expect(product.modeledEconomics).toContain('branch:tokio-goclassic-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('tokio-goclassic-advanced-death-payout-handling')
     expect(product.metadataOnlyBehaviors).toContain('tokio-goclassic-multiple-life-last-life-settlement')
     expect(product.metadataOnlyBehaviors).toContain('tokio-goclassic-change-of-life-assured-administration')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-goclassic-additional-bonus-qualification')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-goclassic-loyalty-bonus-adjustment-factor')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-goclassic-advanced-death-payout-and-change-of-life-assured-handling')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-goclassic-dividend-payout-threshold-and-record-date-instructions')
 
@@ -66,6 +69,15 @@ describe('parseTokioMarineGoClassic', () => {
       { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.44 },
       { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.47 },
     ])
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus-during-mip')).toEqual(
+      expect.objectContaining({
+        rate: 0.005,
+        adjustmentFactorConfig: {
+          formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+          withdrawalAccountIds: ['accumulation'],
+        },
+      }),
+    )
     expect(basicVariant?.feeRules).toEqual([])
     expect(basicVariant?.eventChargeRules).toEqual([
       expect.objectContaining({ id: 'top-up-premium-charge', appliesTo: ['accumulation'], rate: 0.05 }),

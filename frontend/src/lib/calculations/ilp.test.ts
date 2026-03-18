@@ -1852,6 +1852,105 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(row, 'core').close).toBeCloseTo(120_240, 2)
   })
 
+  it('applies loyalty bonus adjustment factors from paid regular premiums and partial withdrawals', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 1_000,
+      monthsAlreadyPaid: 0,
+      currentPolicyYear: 1,
+      accounts: [{
+        id: 'accumulation',
+        label: 'Accumulation Account',
+        feeRate: 0,
+        currentValue: 10_000,
+        contributionShare: 1,
+        subjectToEec: false,
+        postMipFeeRate: null,
+        contributionRules: [
+          { phase: 'during-icp', contributionShare: 1 },
+          { phase: 'after-icp', contributionShare: 1 },
+        ],
+      }],
+      mipLength: 15,
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [{
+        id: 'tokio-loyalty-bonus',
+        type: 'loyalty',
+        label: 'Tokio Loyalty Bonus',
+        mode: 'annual-rate',
+        rate: 0.01,
+        amount: 0,
+        appliesTo: ['accumulation'],
+        startPolicyYear: 1,
+        endPolicyYear: null,
+        adjustmentFactorConfig: {
+          formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+          withdrawalAccountIds: ['accumulation'],
+        },
+      }],
+      chargeRules: [],
+    })
+
+    const fullPremiumResult = projectIlpPolicy(policy, 'mid')
+    expect(accountRow(fullPremiumResult.rows[0], 'accumulation').bonusCredit).toBeCloseTo(100, 2)
+
+    const reducedFactorResult = projectIlpPolicy({
+      ...policy,
+      policyEvents: [
+        { id: 'holiday', type: 'premium-holiday', startPolicyMonth: 7, durationMonths: 6 },
+        { id: 'withdrawal', type: 'partial-withdrawal', startPolicyMonth: 9, durationMonths: 1, amount: 3_000, accountId: 'accumulation' },
+      ],
+    }, 'mid')
+    expect(accountRow(reducedFactorResult.rows[0], 'accumulation').bonusCredit).toBeCloseTo(25, 2)
+  })
+
+  it('floors loyalty bonus adjustment factors at zero when withdrawals exceed paid regular premiums', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 1_000,
+      monthsAlreadyPaid: 0,
+      currentPolicyYear: 1,
+      accounts: [{
+        id: 'accumulation',
+        label: 'Accumulation Account',
+        feeRate: 0,
+        currentValue: 10_000,
+        contributionShare: 1,
+        subjectToEec: false,
+        postMipFeeRate: null,
+        contributionRules: [
+          { phase: 'during-icp', contributionShare: 1 },
+          { phase: 'after-icp', contributionShare: 1 },
+        ],
+      }],
+      mipLength: 15,
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [{
+        id: 'tokio-loyalty-bonus',
+        type: 'loyalty',
+        label: 'Tokio Loyalty Bonus',
+        mode: 'annual-rate',
+        rate: 0.01,
+        amount: 0,
+        appliesTo: ['accumulation'],
+        startPolicyYear: 1,
+        endPolicyYear: null,
+        adjustmentFactorConfig: {
+          formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+          withdrawalAccountIds: ['accumulation'],
+        },
+      }],
+      chargeRules: [],
+      policyEvents: [
+        { id: 'holiday', type: 'premium-holiday', startPolicyMonth: 2, durationMonths: 11 },
+        { id: 'withdrawal', type: 'partial-withdrawal', startPolicyMonth: 3, durationMonths: 1, amount: 5_000, accountId: 'accumulation' },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+    expect(accountRow(result.rows[0], 'accumulation').bonusCredit).toBe(0)
+  })
+
   it('splits premium-allocation and one-time bonuses evenly across target accounts', () => {
     const accounts: IlpAccount[] = [
       IUA_ACCOUNT,

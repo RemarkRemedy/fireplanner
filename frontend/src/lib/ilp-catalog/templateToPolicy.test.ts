@@ -5557,6 +5557,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.accounts).toEqual([
       expect.objectContaining({ id: 'initial', feeRate: 0.03, postMipFeeRate: 0 }),
@@ -5601,11 +5602,19 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'reinvest',
       source: 'catalog-default',
     })
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-loyalty-and-achievement-bonuses')
+    expect(seed.bonuses.find((bonus) => bonus.id === 'loyalty-bonus-policy-years-4-10')).toEqual(expect.objectContaining({
+      rate: 0.005,
+      adjustmentFactorConfig: {
+        formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+        withdrawalAccountIds: ['accumulation'],
+      },
+    }))
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-achievement-bonus-qualification')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-advanced-death-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-multiple-life-last-life-settlement')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-change-of-life-assured-administration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-regular-withdrawal-facility')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goluxe-loyalty-and-achievement-bonuses')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain(
       'tokio-goluxe-advanced-death-payout-handling-and-life-assured-administration',
     )
@@ -5626,6 +5635,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-goluxe-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.accounts).toEqual([
@@ -5695,7 +5705,7 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'reinvest',
       source: 'catalog-default',
     })
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-loyalty-and-achievement-bonuses')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-achievement-bonus-qualification')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-advanced-death-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-multiple-life-last-life-settlement')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-change-of-life-assured-administration')
@@ -5720,6 +5730,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.bonuses.find((bonus) => bonus.label === 'Initial Bonus')?.tieredRates).toEqual([
       { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.5 },
@@ -5787,9 +5798,17 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'reinvest',
       source: 'catalog-default',
     })
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goaffluence-loyalty-and-achievement-bonuses')
+    expect(seed.bonuses.find((bonus) => bonus.id === 'loyalty-bonus-policy-years-3-10')).toEqual(expect.objectContaining({
+      adjustmentFactorConfig: {
+        formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+        withdrawalAccountIds: ['accumulation'],
+      },
+    }))
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goaffluence-achievement-bonus-qualification')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goaffluence-regular-withdrawal-and-partial-withdrawal-constraints')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goaffluence-dividend-payout-threshold-record-date-regular-withdrawal-and-partial-withdrawal-constraints')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goaffluence-loyalty-bonus-adjustment-factor')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goaffluence-loyalty-and-achievement-bonuses')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
   })
@@ -5804,6 +5823,7 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-goaffluence-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
@@ -5842,6 +5862,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-affluence-atfuture-zero-partial-withdrawal-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-affluence-atfuture-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
     expect(seed.bonuses.find((bonus) => bonus.label === 'Initial Bonus')?.tieredRates).toEqual([
@@ -5893,6 +5914,12 @@ describe('templateVariantToPolicySeed', () => {
       expect.objectContaining({ id: 'recurring-single-premium-charge', rate: 0.05 }),
       expect.objectContaining({ id: 'partial-withdrawal-charge', rate: 0 }),
     ])
+    expect(seed.bonuses.find((bonus) => bonus.id === 'loyalty-bonus-policy-years-3-10')).toEqual(expect.objectContaining({
+      adjustmentFactorConfig: {
+        formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+        withdrawalAccountIds: ['accumulation'],
+      },
+    }))
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['initial', 'accumulation', 'topup'],
@@ -5908,7 +5935,6 @@ describe('templateVariantToPolicySeed', () => {
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
     })
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-loyalty-bonus-adjustment-factor')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-advanced-death-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-life-benefit-rider')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-regular-withdrawal-behavior')
@@ -5919,6 +5945,7 @@ describe('templateVariantToPolicySeed', () => {
     )
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-premium-holiday-state-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-non-sgd-or-non-15-year-variants')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-loyalty-bonus-adjustment-factor')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-advanced-death-payout-and-life-assured-administration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-advanced-death-payout-life-benefit-rider-and-life-assured-administration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-regular-withdrawal-and-partial-withdrawal-constraints')
@@ -5938,6 +5965,7 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-affluence-atfuture-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
@@ -5975,6 +6003,7 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-affluence-atfuture-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
@@ -6014,11 +6043,13 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goclassic-loyalty-bonus-adjustment-factor')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goclassic-additional-bonus-qualification')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goclassic-advanced-death-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goclassic-multiple-life-last-life-settlement')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goclassic-change-of-life-assured-administration')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goclassic-loyalty-bonus-adjustment-factor')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goclassic-advanced-death-payout-and-change-of-life-assured-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goclassic-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.accounts).toEqual([
@@ -6048,6 +6079,13 @@ describe('templateVariantToPolicySeed', () => {
       { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.44 },
       { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.47 },
     ])
+    expect(seed.bonuses.find((bonus) => bonus.id === 'loyalty-bonus-during-mip')).toEqual(expect.objectContaining({
+      rate: 0.005,
+      adjustmentFactorConfig: {
+        formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+        withdrawalAccountIds: ['accumulation'],
+      },
+    }))
     expect(seed.chargeRules).toEqual([])
     expect(seed.eventChargeRules).toEqual([
       expect.objectContaining({ id: 'top-up-premium-charge', appliesTo: ['accumulation'], rate: 0.05 }),
@@ -6087,6 +6125,7 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-goclassic-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction')
     expect(seed.chargeRules).toEqual([
       expect.objectContaining({
@@ -6516,10 +6555,11 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-atlas-loyalty-bonus-adjustment-factor')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-atlas-advanced-death-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-atlas-multiple-life-last-life-settlement')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-atlas-change-of-life-assured-administration')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-atlas-loyalty-bonus-adjustment-factor')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-atlas-advanced-death-payout-and-life-assured-administration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-atlas-change-of-life-assured-option')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-atlas-dividend-payout-threshold-and-record-date-instructions')
@@ -6550,6 +6590,13 @@ describe('templateVariantToPolicySeed', () => {
       { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.14 },
       { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.195 },
     ])
+    expect(seed.bonuses.find((bonus) => bonus.id === 'loyalty-bonus-during-mip')).toEqual(expect.objectContaining({
+      rate: 0.003,
+      adjustmentFactorConfig: {
+        formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+        withdrawalAccountIds: ['accumulation'],
+      },
+    }))
     expect(seed.chargeRules).toEqual([])
     expect(seed.eventChargeRules).toEqual([
       expect.objectContaining({ id: 'top-up-premium-charge', appliesTo: ['accumulation'], rate: 0.05 }),
@@ -6588,6 +6635,7 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-atlas-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction')
     expect(seed.chargeRules).toEqual([
       expect.objectContaining({

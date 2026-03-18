@@ -268,6 +268,10 @@ export const ilpBonusRuleSchema = z.object({
     maxAccountValue: z.number().min(0).nullable().optional(),
     rate: z.number().min(0).max(1),
   })).max(10).optional(),
+  adjustmentFactorConfig: z.object({
+    formula: z.literal('paid-regular-premium-less-partial-withdrawal-over-annualised-premium'),
+    withdrawalAccountIds: z.array(z.string().min(1)).min(1).max(10),
+  }).optional(),
   suspensionRules: z.array(z.object({
     trigger: z.enum(['premium-holiday', 'partial-withdrawal', 'regular-premium-reduction', 'scheduled-payout']),
     suspensionMonths: z.number().int().min(1).max(120),

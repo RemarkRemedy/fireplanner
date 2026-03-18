@@ -291,6 +291,12 @@ function mapTemplateBonus(
     requiresPremiumsPaidUpToDate: bonus.requiresPremiumsPaidUpToDate,
     requiredRegularPremiumPaymentFrequency: bonus.requiredRegularPremiumPaymentFrequency,
     tieredRates: bonus.tieredRates.map((tier) => ({ ...tier })),
+    adjustmentFactorConfig: bonus.adjustmentFactorConfig
+      ? {
+          formula: bonus.adjustmentFactorConfig.formula,
+          withdrawalAccountIds: [...bonus.adjustmentFactorConfig.withdrawalAccountIds],
+        }
+      : undefined,
     suspensionRules: bonus.suspensionRules?.map((rule) => ({ ...rule })) ?? [
       ...(bonus.notes.some((note) => note.toLowerCase().includes('partial withdrawal'))
         ? [{ trigger: 'partial-withdrawal' as const, suspensionMonths: 12 }]
