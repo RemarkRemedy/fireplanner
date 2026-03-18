@@ -420,10 +420,10 @@ function buildVariant(
           ]
         : hasLifeBenefitRider
           ? [
-              'Advanced Death Benefit and Life Benefit Rider payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, oldest/youngest-life rider-term and Monthly Protection Charge recalculation, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+              'Advanced Death Benefit and Life Benefit Rider payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, multiple-life last-life settlement, oldest/youngest-life rider-term and Monthly Protection Charge recalculation, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
             ]
           : [
-              'Advanced Death Benefit payout handling beyond the modeled Monthly Protection Charge, Advanced Death Benefit with Life Benefit Rider selection, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+              'Advanced Death Benefit payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, Advanced Death Benefit with Life Benefit Rider selection, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
             ]),
       'Partial-withdrawal limit gates and credit-card charge remain metadata-only for this product.',
     ],
@@ -476,6 +476,7 @@ export function parseTokioMarineHarvestFlexi(context: ParseContext): IlpCatalogP
       'tokio-premium-increase-restores-shortfall-charge-cessation',
       'tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only',
       'branch:tokio-harvest-flexi-advanced-death-monthly-protection-charge',
+      'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [

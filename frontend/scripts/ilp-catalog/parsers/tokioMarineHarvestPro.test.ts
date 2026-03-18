@@ -30,6 +30,7 @@ describe('parseTokioMarineHarvestPro', () => {
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(product.modeledEconomics).toContain('tokio-admin-charge-on-initial-account')
     expect(product.modeledEconomics).toContain('branch:tokio-harvest-pro-advanced-death-monthly-protection-charge-accrual')
+    expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.modeledEconomics).not.toContain('tokio-explicit-charge-waiver-for-partial-withdrawal-and-shortfall-events')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-dividend-payout-threshold-and-record-date-instructions')
@@ -195,13 +196,13 @@ describe('parseTokioMarineHarvestPro', () => {
       'The Advanced Death variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window, policy-year-4 lump-sum settlement, and the published sum-at-risk valuation across the Initial Units Account and Accumulation Units Account after you enter the insured-life details and current net premium base.',
     )
     expect(advancedVariant?.unsupportedItems).toContain(
-      'Advanced Death payout handling beyond the modeled Monthly Protection Charge, Advanced Death with Life Benefit Rider selection, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+      'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, Advanced Death with Life Benefit Rider selection, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
     )
     expect(riderVariant?.warnings).toContain(
       'The Advanced Death with Life Benefit Rider variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window, policy-year-4 lump-sum settlement, and the published sum-at-risk valuation across the Initial Units Account and Accumulation Units Account after you enter the insured-life details and current net premium base through the policy anniversary immediately after age 99.',
     )
     expect(riderVariant?.unsupportedItems).toContain(
-      'Advanced Death and Life Benefit Rider payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, oldest/youngest-life rider-term and Monthly Protection Charge recalculation, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+      'Advanced Death and Life Benefit Rider payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, multiple-life last-life settlement, oldest/youngest-life rider-term and Monthly Protection Charge recalculation, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
     )
     expect(basicVariant?.warnings).toContain(
       'Harvest Pro keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',

@@ -15429,6 +15429,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'branch:tokio-wealth-flexi-advanced-death-monthly-protection-charge',
+      'kernel:current-death-benefit-estimate',
     ],
     description: 'Tokio Marine Wealth Flexi advanced-death supported baseline proving Monthly Protection Charge handling from insured-life inputs.',
   },
@@ -15500,6 +15501,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'branch:tokio-harvest-flexi-advanced-death-monthly-protection-charge',
+      'kernel:current-death-benefit-estimate',
     ],
     description: 'Tokio Marine Harvest Flexi advanced-death supported baseline proving Monthly Protection Charge handling from insured-life inputs.',
   },
@@ -15576,6 +15578,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'branch:tokio-harvest-pro-advanced-death-monthly-protection-charge-accrual',
+      'kernel:current-death-benefit-estimate',
     ],
     description: 'Tokio Marine Harvest Pro advanced-death supported baseline proving accrued Monthly Protection Charge handling.',
   },
@@ -15943,6 +15946,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'branch:tokio-wealth-max-ii-advanced-death-monthly-protection-charge-accrual',
+      'kernel:current-death-benefit-estimate',
     ],
     description: 'Tokio Marine Wealth Max (II) advanced-death supported baseline proving accrued Monthly Protection Charge handling.',
   },
@@ -16104,6 +16108,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'branch:tokio-wealth-pro-ii-advanced-death-monthly-protection-charge-accrual',
+      'kernel:current-death-benefit-estimate',
     ],
     description: 'Tokio Marine Wealth Pro (II) advanced-death supported baseline proving accrued Monthly Protection Charge handling.',
   },

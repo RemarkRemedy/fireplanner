@@ -28,6 +28,7 @@ describe('parseTokioMarineHarvestFlexi', () => {
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(product.modeledEconomics).toContain('tokio-admin-charge-on-accumulation-account')
     expect(product.modeledEconomics).toContain('branch:tokio-harvest-flexi-advanced-death-monthly-protection-charge')
+    expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-advanced-death-payout-handling')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-harvest-flexi-benefit-payout-handling')
@@ -155,7 +156,7 @@ describe('parseTokioMarineHarvestFlexi', () => {
       'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
     )
     expect(advancedVariant?.unsupportedItems).toContain(
-      'Advanced Death Benefit payout handling beyond the modeled Monthly Protection Charge, Advanced Death Benefit with Life Benefit Rider selection, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+      'Advanced Death Benefit payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, Advanced Death Benefit with Life Benefit Rider selection, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
     )
     expect(riderVariant?.feeRules).toEqual(
       expect.arrayContaining([
@@ -179,7 +180,7 @@ describe('parseTokioMarineHarvestFlexi', () => {
       'The Advanced Death with Life Benefit Rider variant also models the published Monthly Protection Charge after you enter the insured-life details and current net premium base through the policy anniversary immediately after age 99.',
     )
     expect(riderVariant?.unsupportedItems).toContain(
-      'Advanced Death Benefit and Life Benefit Rider payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, oldest/youngest-life rider-term and Monthly Protection Charge recalculation, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+      'Advanced Death Benefit and Life Benefit Rider payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, multiple-life last-life settlement, oldest/youngest-life rider-term and Monthly Protection Charge recalculation, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
     )
     expect(basicVariant?.warnings).toContain(
       'Harvest Flexi keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',

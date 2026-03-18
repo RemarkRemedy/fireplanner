@@ -4,6 +4,7 @@ import {
   analyzeIlpPolicy,
   buildComparisonTable,
   computeBlendedReturn,
+  computeCurrentDeathBenefitEstimate,
   computeNpvAnalysis,
   computeOpportunityCost,
   computeSummaryMetrics,
@@ -7772,6 +7773,472 @@ describe('computeSummaryMetrics', () => {
           allocation: 'pro-rata-by-value',
         },
       ],
+    })
+
+    const summary = computeSummaryMetrics(policy, projectIlpPolicy(policy, 'mid'))
+
+    expect(summary.currentDeathBenefitEstimate).toBeUndefined()
+  })
+
+  it('adds a Tokio advanced-death current death-benefit estimate during MIP from the higher of 101% tracked value or net premium plus top-up value', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 36,
+      currentPolicyYear: 4,
+      mipLength: 10,
+      postMipYears: 0,
+      accounts: [
+        {
+          id: 'initial',
+          label: 'Initial Units Account',
+          feeRate: 0,
+          currentValue: 20_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'accumulation',
+          label: 'Accumulation Units Account',
+          feeRate: 0,
+          currentValue: 20_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'topup',
+          label: 'Top-up Units Account',
+          feeRate: 0,
+          currentValue: 5_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'tokio-mpc',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'during-mip',
+          appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          fallbackAppliesTo: ['topup', 'initial'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+          },
+          requiresManualInput: true,
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 50_000,
+      },
+      catalogSource: {
+        productId: 'tokio-marine-harvest-pro',
+        productName: 'Harvest Pro',
+        variantId: 'sgd-mip-10-advanced-death',
+        variantLabel: 'SGD / MIP 10 (Advanced Death)',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate'],
+        metadataOnlyBehaviors: ['tokio-harvest-pro-advanced-death-payout-handling'],
+      },
+      funds: [ZERO_RETURN_FUND],
+    })
+
+    const summary = computeSummaryMetrics(policy, projectIlpPolicy(policy, 'mid'))
+
+    expect(summary.currentDeathBenefitEstimate).toBe(55_000)
+  })
+
+  it('falls back to 101% tracked account value plus top-up value after MIP on Tokio advanced-death corridors without the rider extension', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 180,
+      currentPolicyYear: 16,
+      mipLength: 15,
+      postMipYears: 0,
+      accounts: [
+        {
+          id: 'initial',
+          label: 'Initial Units Account',
+          feeRate: 0,
+          currentValue: 20_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'accumulation',
+          label: 'Accumulation Units Account',
+          feeRate: 0,
+          currentValue: 20_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'topup',
+          label: 'Top-up Units Account',
+          feeRate: 0,
+          currentValue: 5_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'tokio-mpc',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'during-mip',
+          appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          fallbackAppliesTo: ['topup', 'initial'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+          },
+          requiresManualInput: true,
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 52,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 70_000,
+      },
+      catalogSource: {
+        productId: 'tokio-marine-wealth-max-ii',
+        productName: 'Wealth Max (II)',
+        variantId: 'sgd-mip-15-advanced-death',
+        variantLabel: 'SGD / MIP 15 (Advanced Death)',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate'],
+        metadataOnlyBehaviors: ['tokio-wealth-max-ii-advanced-death-payout-handling'],
+      },
+      funds: [ZERO_RETURN_FUND],
+    })
+
+    const currentValueByAccount = new Map(policy.accounts.map((account) => [account.id, account.currentValue]))
+    const totalCurrentValue = policy.accounts.reduce((sum, account) => sum + account.currentValue, 0)
+
+    expect(computeCurrentDeathBenefitEstimate(policy, currentValueByAccount, totalCurrentValue)).toBeCloseTo(45_400, 2)
+  })
+
+  it('extends the Tokio net-premium floor after MIP while the life-benefit rider corridor is still active', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 180,
+      currentPolicyYear: 16,
+      mipLength: 15,
+      postMipYears: 0,
+      accounts: [
+        {
+          id: 'initial',
+          label: 'Initial Units Account',
+          feeRate: 0,
+          currentValue: 20_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'accumulation',
+          label: 'Accumulation Units Account',
+          feeRate: 0,
+          currentValue: 20_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'topup',
+          label: 'Top-up Units Account',
+          feeRate: 0,
+          currentValue: 5_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'tokio-mpc',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          fallbackAppliesTo: ['topup', 'initial'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+          },
+          requiresManualInput: true,
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 60,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 70_000,
+      },
+      catalogSource: {
+        productId: 'tokio-marine-wealth-pro-ii',
+        productName: 'Wealth Pro (II)',
+        variantId: 'sgd-mip-10-advanced-death-life-benefit-rider',
+        variantLabel: 'SGD / MIP 10 (Advanced Death Life Benefit Rider)',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate'],
+        metadataOnlyBehaviors: ['tokio-wealth-pro-ii-advanced-death-payout-handling'],
+      },
+      funds: [ZERO_RETURN_FUND],
+    })
+
+    const currentValueByAccount = new Map(policy.accounts.map((account) => [account.id, account.currentValue]))
+    const totalCurrentValue = policy.accounts.reduce((sum, account) => sum + account.currentValue, 0)
+
+    expect(computeCurrentDeathBenefitEstimate(policy, currentValueByAccount, totalCurrentValue)).toBe(75_000)
+  })
+
+  it('falls back to 101% tracked account value plus top-up value after the Tokio life-benefit rider age cap', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 180,
+      currentPolicyYear: 16,
+      mipLength: 15,
+      postMipYears: 0,
+      accounts: [
+        {
+          id: 'accumulation',
+          label: 'Accumulation Units Account',
+          feeRate: 0,
+          currentValue: 40_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'topup',
+          label: 'Top-up Units Account',
+          feeRate: 0,
+          currentValue: 5_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'tokio-mpc',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['accumulation'],
+          fallbackAppliesTo: ['topup'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+          },
+          requiresManualInput: true,
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 100,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 70_000,
+      },
+      catalogSource: {
+        productId: 'tokio-marine-wealth-flexi',
+        productName: 'Wealth Flexi',
+        variantId: 'sgd-mip-10-advanced-death-life-benefit-rider',
+        variantLabel: 'SGD / MIP 10 (Advanced Death Life Benefit Rider)',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate'],
+        metadataOnlyBehaviors: ['tokio-wealth-flexi-advanced-death-payout-handling'],
+      },
+      funds: [ZERO_RETURN_FUND],
+    })
+
+    const currentValueByAccount = new Map(policy.accounts.map((account) => [account.id, account.currentValue]))
+    const totalCurrentValue = policy.accounts.reduce((sum, account) => sum + account.currentValue, 0)
+
+    expect(computeCurrentDeathBenefitEstimate(policy, currentValueByAccount, totalCurrentValue)).toBeCloseTo(45_400, 2)
+  })
+
+  it('does not expose a Tokio current death-benefit estimate when that kernel is not modeled for the catalog variant', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 36,
+      currentPolicyYear: 4,
+      mipLength: 15,
+      postMipYears: 0,
+      accounts: [
+        {
+          id: 'initial',
+          label: 'Initial Units Account',
+          feeRate: 0,
+          currentValue: 20_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'accumulation',
+          label: 'Accumulation Units Account',
+          feeRate: 0,
+          currentValue: 20_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'topup',
+          label: 'Top-up Units Account',
+          feeRate: 0,
+          currentValue: 5_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'tokio-mpc',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'during-mip',
+          appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          fallbackAppliesTo: ['topup', 'initial'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+          },
+          requiresManualInput: true,
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 50_000,
+      },
+      catalogSource: {
+        productId: 'tokio-marine-goluxe',
+        productName: '#goLuxe',
+        variantId: 'sgd-mip-15-advanced-death',
+        variantLabel: 'SGD / MIP 15 (Advanced Death)',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['branch:tokio-goluxe-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts'],
+        metadataOnlyBehaviors: ['tokio-goluxe-advanced-death-payout-handling'],
+      },
+      funds: [ZERO_RETURN_FUND],
     })
 
     const summary = computeSummaryMetrics(policy, projectIlpPolicy(policy, 'mid'))

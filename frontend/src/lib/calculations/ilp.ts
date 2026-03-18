@@ -2795,11 +2795,18 @@ function computeCurrentValueSnapshot(
   }
 }
 
-function computeCurrentDeathBenefitEstimate(
+export function computeCurrentDeathBenefitEstimate(
   input: IlpPolicyInput,
   currentValueByAccount: Map<string, number>,
   totalCurrentValue: number,
 ): number | undefined {
+  if (
+    input.catalogSource?.modeledEconomics != null
+    && !input.catalogSource.modeledEconomics.includes('kernel:current-death-benefit-estimate')
+  ) {
+    return undefined
+  }
+
   if (input.catalogSource?.productId?.startsWith('hsbc-life-wealth-focus-flexi-')) {
     const scheduledPayout = input.scheduledPayoutAssumption
     if (
@@ -2932,6 +2939,35 @@ function computeCurrentDeathBenefitEstimate(
         }
 
         const estimate = Math.max(totalCurrentValue, Math.max(0, profile.currentSumAssured))
+        supportedEstimate = supportedEstimate == null
+          ? estimate
+          : Math.max(supportedEstimate, estimate)
+        break
+      }
+      case 'tokio-mpc-net-premium-floor': {
+        if (profile.currentNetRegularPremiumBase == null) {
+          continue
+        }
+
+        if (rule.activeWindow === 'during-mip' && !hasFiniteMip(input)) {
+          continue
+        }
+
+        const protectedAccountIds = rule.assuranceValueAppliesTo ?? rule.appliesTo
+        const protectedAccountValue = sumBalancesForAccounts(currentValueByAccount, protectedAccountIds)
+        const supplementalAccountValue = Math.max(0, totalCurrentValue - protectedAccountValue)
+        const valueFloorEstimate = supplementalAccountValue + (protectedAccountValue * TOKIO_MPC_PROTECTED_BASE_FLOOR_MULTIPLIER)
+        const isWithinNetPremiumCorridor = rule.activeWindow === 'policy-term'
+          ? (rule.assuranceConfig.maxAgeNextBirthday == null
+            || profile.currentAgeNextBirthday <= rule.assuranceConfig.maxAgeNextBirthday)
+          : (hasFiniteMip(input) && input.currentPolicyYear <= input.mipLength)
+        const estimate = isWithinNetPremiumCorridor
+          ? supplementalAccountValue + Math.max(
+            protectedAccountValue * TOKIO_MPC_PROTECTED_BASE_FLOOR_MULTIPLIER,
+            Math.max(0, profile.currentNetRegularPremiumBase),
+          )
+          : valueFloorEstimate
+
         supportedEstimate = supportedEstimate == null
           ? estimate
           : Math.max(supportedEstimate, estimate)

@@ -509,10 +509,10 @@ function buildVariant(
           ]
         : hasLifeBenefitRider
           ? [
-              'Advanced Death and Life Benefit Rider payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, oldest/youngest-life rider-term and Monthly Protection Charge recalculation, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+              'Advanced Death and Life Benefit Rider payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, multiple-life last-life settlement, oldest/youngest-life rider-term and Monthly Protection Charge recalculation, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
             ]
           : [
-              'Advanced Death payout handling beyond the modeled Monthly Protection Charge, Advanced Death with Life Benefit Rider selection, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+              'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, Advanced Death with Life Benefit Rider selection, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
             ]),
       'Involuntary unemployment and hospitalisation benefit waiver remains metadata-only for this product.',
     ],
@@ -556,6 +556,7 @@ export function parseTokioMarineWealthProIi(context: ParseContext): IlpCatalogPr
       'tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only',
       'tokio-explicit-charge-waiver-for-partial-withdrawal-and-shortfall-events',
       'branch:tokio-wealth-pro-ii-advanced-death-monthly-protection-charge-accrual',
+      'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [

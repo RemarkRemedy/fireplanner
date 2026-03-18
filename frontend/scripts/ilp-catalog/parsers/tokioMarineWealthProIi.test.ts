@@ -30,6 +30,7 @@ describe('parseTokioMarineWealthProIi', () => {
     expect(product.modeledEconomics).toContain('tokio-admin-charge-on-initial-account')
     expect(product.modeledEconomics).toContain('tokio-explicit-charge-waiver-for-partial-withdrawal-and-shortfall-events')
     expect(product.modeledEconomics).toContain('branch:tokio-wealth-pro-ii-advanced-death-monthly-protection-charge-accrual')
+    expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-dividend-payout-threshold-and-record-date-instructions')
     expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-pro-ii-advanced-death-payout-handling')
@@ -198,13 +199,13 @@ describe('parseTokioMarineWealthProIi', () => {
       'The Advanced Death variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window, policy-year-4 lump-sum settlement, and the published sum-at-risk valuation across the Initial Units Account and Accumulation Units Account after you enter the insured-life details and current net premium base.',
     )
     expect(advancedVariant?.unsupportedItems).toContain(
-      'Advanced Death payout handling beyond the modeled Monthly Protection Charge, Advanced Death with Life Benefit Rider selection, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+      'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, Advanced Death with Life Benefit Rider selection, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
     )
     expect(riderVariant?.warnings).toContain(
       'The Advanced Death with Life Benefit Rider variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window, policy-year-4 lump-sum settlement, and the published sum-at-risk valuation across the Initial Units Account and Accumulation Units Account after you enter the insured-life details and current net premium base through the policy anniversary immediately after age 99.',
     )
     expect(riderVariant?.unsupportedItems).toContain(
-      'Advanced Death and Life Benefit Rider payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, oldest/youngest-life rider-term and Monthly Protection Charge recalculation, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+      'Advanced Death and Life Benefit Rider payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, multiple-life last-life settlement, oldest/youngest-life rider-term and Monthly Protection Charge recalculation, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
     )
     expect(basicVariant?.eecTable).toEqual([1, 1, 1, 0.99, 0.99, 0.96, 0.93, 0.89, 0.8, 0.1])
     expect(advancedVariant?.eecTable).toEqual([1, 1, 1, 0.99, 0.99, 0.96, 0.93, 0.89, 0.8, 0.1])
