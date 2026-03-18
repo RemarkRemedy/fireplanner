@@ -28,11 +28,13 @@ import { AnimatedNumber } from '@/components/shared/AnimatedNumber'
 import { QuickProjectionChart } from '@/components/shared/QuickProjectionChart'
 import {
   computeQuickEstimate,
+  computeQuickEstimateRange,
   buildHealthInputs,
   parseUrlParams,
   buildSearchParams,
   type QuickEstimateInputs,
 } from '@/lib/calculations/quickEstimate'
+import { QuickEstimateRange } from '@/components/shared/QuickEstimateRange'
 import { computeHealthRatios, type HealthRatioResult } from '@/lib/calculations/healthCheck'
 import { QUICK_ESTIMATE_DEFAULTS } from '@/lib/data/quickEstimateDefaults'
 import { HOUSEHOLD_PLAN_STORAGE_KEY } from '@/stores/useHouseholdPlanStore'
@@ -182,6 +184,7 @@ export function QuickEstimateForm({ compact = false, syncUrlParams = false, onHa
 
   // ── Compute results ──────────────────────────────────────────────────────
   const result = useMemo(() => computeQuickEstimate(inputs), [inputs])
+  const range = useMemo(() => computeQuickEstimateRange(inputs), [inputs])
   const hasInput = monthlyIncome > 0
 
   // Notify parent when results are available
@@ -304,23 +307,11 @@ export function QuickEstimateForm({ compact = false, syncUrlParams = false, onHa
         <div className={`space-y-4 ${compact ? '' : 'border-t pt-6'}`}>
           {result.status === 'ok' && (
             <>
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground">You can retire in</p>
-                <p className={compact ? 'text-3xl font-bold tracking-tight' : 'text-4xl font-bold tracking-tight'}>
-                  <AnimatedNumber
-                    value={Math.round(result.yearsToFire)}
-                    format={(n) => `${Math.round(n)} years`}
-                  />
-                </p>
-                <p className="text-lg text-muted-foreground">
-                  at age{' '}
-                  <AnimatedNumber
-                    value={Math.round(result.fireAge)}
-                    format={(n) => String(Math.round(n))}
-                    className="font-semibold text-foreground"
-                  />
-                </p>
-              </div>
+              <QuickEstimateRange
+                optimisticAge={Math.round(range.optimistic.fireAge)}
+                conservativeAge={Math.round(range.conservative.fireAge)}
+                conservativeUnreachable={range.conservative.status === 'unreachable'}
+              />
               <div className="grid grid-cols-3 gap-3 text-center text-sm">
                 <div>
                   <p className="text-muted-foreground">FIRE Number</p>
