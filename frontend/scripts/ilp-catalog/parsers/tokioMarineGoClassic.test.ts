@@ -28,6 +28,10 @@ describe('parseTokioMarineGoClassic', () => {
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
     expect(product.modeledEconomics).toContain('branch:tokio-goclassic-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-goclassic-advanced-death-payout-handling')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-goclassic-multiple-life-last-life-settlement')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-goclassic-change-of-life-assured-administration')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-goclassic-advanced-death-payout-and-change-of-life-assured-handling')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-goclassic-dividend-payout-threshold-and-record-date-instructions')
 
     const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-25')
@@ -117,7 +121,7 @@ describe('parseTokioMarineGoClassic', () => {
       'The Advanced Death variant also models the published Monthly Protection Charge, including the first-two-policy-years accrual window, policy-year-3 lump-sum settlement, policy-value valuation basis, and the irreversible downgrade to Basic Death after failed Accumulation Units Account deduction.',
     )
     expect(advancedVariant?.unsupportedItems).toContain(
-      'Advanced Death payout handling beyond the modeled Monthly Protection Charge, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.',
+      'Advanced Death payout handling beyond the modeled Monthly Protection Charge, premium-holiday lapse behavior, regular withdrawal, credit-card charge, multiple-life last-life settlement, change-of-life-assured administration, and non-SGD or non-25-year corridors remain metadata-only.',
     )
     expect(basicVariant?.eecTable).toEqual([
       1, 1, 0.95, 0.93, 0.91, 0.89, 0.87, 0.85, 0.83, 0.8,

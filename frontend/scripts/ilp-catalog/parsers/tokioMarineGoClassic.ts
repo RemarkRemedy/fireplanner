@@ -134,7 +134,7 @@ function buildTokioMpcFeeRule(
       'The sum at risk is the published net premium less 101% of policy value, using Initial plus Accumulation Units Account value for the valuation basis.',
       'The first two policy years accrue and are deducted in one lump sum in the third policy year.',
       'If the Accumulation Units Account cannot fully fund MPC due, future Advanced Death MPC stops permanently while the unpaid balance remains collectible as indebtedness.',
-      'Advanced Death payout handling beyond the modeled MPC and change-of-life-assured administration remain metadata-only.',
+      'Advanced Death payout handling beyond the modeled MPC, multiple-life last-life settlement, and change-of-life-assured administration remain metadata-only.',
     ],
     sourceRefs: [optionPage, chargePage, tablePage],
   }
@@ -275,10 +275,10 @@ function buildVariant(
       'Loyalty Bonus and Additional Bonus remain metadata-only because their annual qualification and adjustment-factor formulas need stateful bonus tracking beyond the current engine.',
       ...(isAdvancedDeath
         ? [
-            'Advanced Death payout handling beyond the modeled Monthly Protection Charge, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.',
+            'Advanced Death payout handling beyond the modeled Monthly Protection Charge, premium-holiday lapse behavior, regular withdrawal, credit-card charge, multiple-life last-life settlement, change-of-life-assured administration, and non-SGD or non-25-year corridors remain metadata-only.',
           ]
         : [
-            'Advanced Death Benefit selection, Monthly Protection Charge, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.',
+            'Advanced Death Benefit selection, Monthly Protection Charge, premium-holiday lapse behavior, regular withdrawal, credit-card charge, multiple-life last-life settlement, change-of-life-assured administration, and non-SGD or non-25-year corridors remain metadata-only.',
           ]),
     ],
     sourceRefs: [page1, page2, page4, page5, page8, page9, page10, page14],
@@ -313,7 +313,9 @@ export function parseTokioMarineGoClassic(context: ParseContext): IlpCatalogProd
     metadataOnlyBehaviors: [
       'tokio-goclassic-loyalty-bonus-adjustment-factor',
       'tokio-goclassic-additional-bonus-qualification',
-      'tokio-goclassic-advanced-death-payout-and-change-of-life-assured-handling',
+      'tokio-goclassic-advanced-death-payout-handling',
+      'tokio-goclassic-multiple-life-last-life-settlement',
+      'tokio-goclassic-change-of-life-assured-administration',
       'tokio-goclassic-premium-holiday-lapse-state',
       'tokio-goclassic-regular-withdrawal-facility',
       'tokio-goclassic-credit-card-charge',
@@ -321,7 +323,7 @@ export function parseTokioMarineGoClassic(context: ParseContext): IlpCatalogProd
     warnings: [
       '#goClassic is cataloged as a supported V1 product. The parser captures split SGD / premium-payment-term-25 Basic Death and Advanced Death corridors with executable regular-premium routing, published initial bonus tiers, fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the 25-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
       'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
-      'Loyalty Bonus and Additional Bonus annual qualification and adjustment-factor handling, regular-withdrawal administration, premium-holiday lapse behavior, credit-card charge, and other non-SGD or non-25-year corridors remain informational only.',
+      'Loyalty Bonus and Additional Bonus annual qualification and adjustment-factor handling, regular-withdrawal administration, premium-holiday lapse behavior, credit-card charge, multiple-life last-life settlement, change-of-life-assured administration, and other non-SGD or non-25-year corridors remain informational only.',
       'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published first-two-policy-years accrual, policy-year-3 settlement, policy-value valuation basis, and irreversible downgrade after failed deduction.',
     ],
     archived: false,
