@@ -171,6 +171,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-abundance-dividend-payout-threshold')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-abundance-dividend-cash-payout-routing-fallback-and-execution')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-abundance-dividend-bank-routing')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-abundance-regular-withdrawal-facility')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-abundance-life-replacement-eligibility-and-underwriting')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-abundance-life-replacement-cover-reset-and-rider-termination')
