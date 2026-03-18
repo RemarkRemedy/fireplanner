@@ -41,6 +41,25 @@ export interface QuickEstimateResult {
   trajectory: { age: number; balance: number; phase: 'accumulation' | 'decumulation' }[]
 }
 
+export interface QuickEstimateRange {
+  optimistic: QuickEstimateResult
+  conservative: QuickEstimateResult
+}
+
+const RANGE_RETURN_SPREAD = 0.01 // +/- 1% for optimistic/conservative bounds
+
+export function computeQuickEstimateRange(inputs: QuickEstimateInputs): QuickEstimateRange {
+  const optimistic = computeQuickEstimate({
+    ...inputs,
+    expectedReturn: inputs.expectedReturn + RANGE_RETURN_SPREAD,
+  })
+  const conservative = computeQuickEstimate({
+    ...inputs,
+    expectedReturn: inputs.expectedReturn - RANGE_RETURN_SPREAD,
+  })
+  return { optimistic, conservative }
+}
+
 export interface QuickHealthInputs {
   cashSavings: number
   outstandingDebt: number
