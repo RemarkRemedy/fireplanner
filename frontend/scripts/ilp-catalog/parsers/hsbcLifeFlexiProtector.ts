@@ -153,7 +153,7 @@ function buildVariant(document: ExtractedPdfDocument, coverOption: CoverOption):
       activeWindow: 'policy-term',
       notes: [
         `Models the monthly ${coverLabel} death / TI insurance charge using the existing HSBC assurance formula after entering the insured-life details and current basic-sum-assured / supplementary-premium-base inputs.`,
-        'The calculator models the monthly deduction path only; TPD payout treatment and later underwritten sum-assured changes remain informational only.',
+        'The calculator models the monthly deduction path only; TI / TPD claim caps, staged TPD payout treatment, claim-currency settlement, post-claim continuation, and later underwritten sum-assured changes remain informational only.',
       ],
       sourceRefs: [page4, page16],
     },
@@ -253,7 +253,9 @@ function buildVariant(document: ExtractedPdfDocument, coverOption: CoverOption):
       'Dividend cash payout remains a manual assumption surface and still depends on fund-level dividend declaration.',
     ],
     unsupportedItems: [
-      'TPD payout treatment, terminal-illness claim limits, and cross-policy benefit caps remain informational only.',
+      'Terminal Illness and TPD cross-policy benefit caps remain informational only.',
+      'TPD staged Activities-of-Daily-Living payout handling remains informational only.',
+      'TI / TPD claim-currency settlement and post-claim policy-continuation handling remain informational only.',
       'Premium Holiday activation, top-up / recurring-single-premium suspension, lapse-state no-benefit periods, and premium-holiday resumption rules remain informational only.',
       'Policy reinstatement backpay, health evidence, approval timing, and post-reinstatement charge continuation remain informational only.',
       'Guaranteed Insurability Option milestone eligibility, health conditions, issue-time product availability, and cross-policy / sum-assured limits remain informational only.',
@@ -292,7 +294,9 @@ export function parseHsbcLifeFlexiProtector({ document, sourceChecksumSha256 }: 
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'hsbc-life-flexi-protector-tpd-payout-structure',
+      'hsbc-life-flexi-protector-ti-and-tpd-cross-policy-benefit-caps',
+      'hsbc-life-flexi-protector-tpd-staged-adl-payout',
+      'hsbc-life-flexi-protector-ti-and-tpd-claim-currency-and-post-claim-continuation',
       'hsbc-life-flexi-protector-premium-holiday-lapse-and-no-claim-state',
       'hsbc-life-flexi-protector-reinstatement-and-backpay',
       'hsbc-life-flexi-protector-gio-milestone-eligibility-and-health-conditions',
@@ -306,7 +310,7 @@ export function parseHsbcLifeFlexiProtector({ document, sourceChecksumSha256 }: 
     ],
     warnings: [
       'HSBC Life Flexi Protector is cataloged as a supported V1 product. The parser captures explicit SGD open-ended Choice Cover and Max Cover variants with the published regular-premium charge schedule, the year-5-onward 102% regular-premium allocation uplift, the tiered Additional Bonus Units, the fixed S$5 monthly administration fee, the Choice/Max death and terminal-illness insurance-charge corridor, the 5% top-up / recurring-single-premium charge path, and the nil withdrawal/redemption-fee path.',
-      'TPD claim treatment, Premium Holiday lapse / no-claim state, reinstatement, Guaranteed Insurability Option milestone / cross-policy limits, Life Replacement Option underwriting / cover resets, regular-withdrawal facility controls, policy-change / fund-switch approvals, and USD payment-frequency / RSP constraints remain informational only.',
+      'TI / TPD claim caps, staged TPD payout handling, claim-currency / post-claim continuation, Premium Holiday lapse / no-claim state, reinstatement, Guaranteed Insurability Option milestone / cross-policy limits, Life Replacement Option underwriting / cover resets, regular-withdrawal facility controls, policy-change / fund-switch approvals, and USD payment-frequency / RSP constraints remain informational only.',
       'Structured extraction validated against the HSBC Life Flexi Protector product summary text layer.',
     ],
     archived: false,
