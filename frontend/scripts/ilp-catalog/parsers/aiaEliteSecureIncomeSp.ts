@@ -233,11 +233,11 @@ export function parseAiaEliteSecureIncomeSp(context: ParseContext): IlpCatalogPr
       'aia-elite-secure-income-sp-accidental-death-benefit',
       'aia-elite-secure-income-sp-terminal-illness-benefit',
       'aia-elite-secure-income-sp-fund-management-charge',
-      'aia-elite-secure-income-sp-reinstatement',
+      'aia-elite-secure-income-sp-reinstatement-payout-continuity',
       'aia-elite-secure-income-sp-no-fund-switching',
     ],
     warnings: [
-      'AIA Elite Secure Income - Single Premium is cataloged as a supported V1 product. The parser captures the published 5% single-premium charge, manual annual supplementary charge input, 3% top-up premium charge, full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel; payout selection, principal tracking, protection benefits, and fund-level charges remain informational only.',
+      'AIA Elite Secure Income - Single Premium is cataloged as a supported V1 product. The parser captures the published 5% single-premium charge, manual annual supplementary charge input, 3% top-up premium charge, full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel; payout selection, principal tracking, protection benefits, reinstatement effects on payout continuity, and fund-level charges remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

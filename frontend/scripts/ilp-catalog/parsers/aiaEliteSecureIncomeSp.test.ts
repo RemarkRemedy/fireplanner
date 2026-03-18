@@ -106,6 +106,8 @@ describe('parseAiaEliteSecureIncomeSp', () => {
     ])
     expect(product.metadataOnlyBehaviors).toContain('aia-elite-secure-income-sp-secure-monthly-income-election')
     expect(product.metadataOnlyBehaviors).toContain('aia-elite-secure-income-sp-single-premium-principal-tracking')
+    expect(product.metadataOnlyBehaviors).toContain('aia-elite-secure-income-sp-reinstatement-payout-continuity')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-reinstatement')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-single-premium-charge')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-supplementary-charge')
 
@@ -177,6 +179,7 @@ describe('parseAiaEliteSecureIncomeSp', () => {
       'Secure Monthly Income amount, payout age, and payout period selection remain manual-assumption inputs in V1.',
     )
     expect(variant.unsupportedItems).toContain('Single-premium principal tracking remains informational only in V1.')
+    expect(variant.unsupportedItems).toContain('Reinstatement effects on payout continuity remain informational only.')
     expect(variant.sourceRefs.find((ref) => ref.page === 7)?.excerpt).toContain(
       'Approximate excerpt; keyword "Reinstatement" not found on page.',
     )

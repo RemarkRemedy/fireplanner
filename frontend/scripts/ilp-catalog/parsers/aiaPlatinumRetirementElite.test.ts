@@ -113,6 +113,8 @@ describe('parseAiaPlatinumRetirementElite', () => {
     ])
     expect(product.metadataOnlyBehaviors).toContain('aia-platinum-retirement-elite-single-premium-corridor')
     expect(product.metadataOnlyBehaviors).toContain('aia-platinum-retirement-elite-power-up-bonus')
+    expect(product.metadataOnlyBehaviors).toContain('aia-platinum-retirement-elite-premium-holiday-and-reinstatement-payout-continuity')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-retirement-elite-reinstatement-and-payout-continuity')
 
     expect(product.variants).toHaveLength(1)
     const variant = product.variants[0]
@@ -158,6 +160,7 @@ describe('parseAiaPlatinumRetirementElite', () => {
       }),
     ])
     expect(variant.eecTable).toEqual([0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05, 0])
+    expect(variant.unsupportedItems).toContain('Reinstatement and premium-holiday effects on payout continuity remain informational only.')
   })
 
   it.skipIf(!existsSync(SOURCE_PATH))('matches the live source PDF when the local corpus is available', async () => {

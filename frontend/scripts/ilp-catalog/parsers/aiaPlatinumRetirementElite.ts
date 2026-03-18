@@ -275,10 +275,10 @@ export function parseAiaPlatinumRetirementElite({ document, sourceChecksumSha256
       'aia-platinum-retirement-elite-fund-management-charge',
       'aia-platinum-retirement-elite-top-up-eligibility-gating',
       'aia-platinum-retirement-elite-fund-switching',
-      'aia-platinum-retirement-elite-reinstatement-and-payout-continuity',
+      'aia-platinum-retirement-elite-premium-holiday-and-reinstatement-payout-continuity',
     ],
     warnings: [
-      'AIA Platinum Retirement Elite is cataloged as a supported V1 product. The parser captures the regular-pay 5-year corridor, the regular-premium supplementary charge, the withdrawal / surrender schedules, and scheduled payout capability once a manual payout assumption is supplied, while the single-pay corridor, payout-election inputs, Power-up Bonus adjustment, protection benefits, and fund-level charges remain informational only.',
+      'AIA Platinum Retirement Elite is cataloged as a supported V1 product. The parser captures the regular-pay 5-year corridor, the regular-premium supplementary charge, the withdrawal / surrender schedules, and scheduled payout capability once a manual payout assumption is supplied, while the single-pay corridor, payout-election inputs, Power-up Bonus adjustment, protection benefits, premium-holiday and reinstatement effects on payout continuity, and fund-level charges remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(document)],
