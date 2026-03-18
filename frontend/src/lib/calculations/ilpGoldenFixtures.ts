@@ -12,6 +12,7 @@ export type GoldenCoverageTag =
   | 'baseline'
   | 'event-heavy'
   | 'ocf-stress'
+  | 'kernel:automatic-lapse-on-account-depletion'
   | 'kernel:cumulative-free-partial-withdrawal-pool'
   | 'kernel:lapse-reinstatement-payout-state'
   | 'kernel:scheduled-payout-manual-assumption'
@@ -4943,12 +4944,27 @@ function manulifeSmartRetireSumEventHeavyPolicy(
 ): IlpPolicyInput {
   return manulifeSmartRetireSumBasePolicy(snapshot, 'sgd-mip-8-flexi-5', id, MANULIFE_BALANCED_FUNDS, {
     name: 'Golden Manulife SmartRetire (V) - Sum (SGD / MIP 8 Flexi 5 Event Heavy)',
+    monthlyContribution: 100,
+    accounts: [
+      {
+        id: 'policy',
+        label: 'Policy Account',
+        feeRate: 0,
+        currentValue: 500,
+        contributionShare: 1,
+        subjectToEec: true,
+        postMipFeeRate: null,
+        contributionRules: [
+          { phase: 'during-icp', contributionShare: 1 },
+        ],
+      },
+    ],
     policyEvents: [
       {
         id: 'holiday-1',
         type: 'premium-holiday',
         startPolicyMonth: 37,
-        durationMonths: 3,
+        durationMonths: 12,
       },
       {
         id: 'top-up-1',
@@ -4956,13 +4972,14 @@ function manulifeSmartRetireSumEventHeavyPolicy(
         startPolicyMonth: 41,
         durationMonths: 1,
         amount: 8_000,
+        accountId: 'policy',
       },
       {
         id: 'withdrawal-1',
         type: 'partial-withdrawal',
         startPolicyMonth: 46,
         durationMonths: 1,
-        amount: 3_500,
+        amount: 8_000,
         accountId: 'policy',
       },
     ],
@@ -5048,12 +5065,27 @@ function manulifeSmartRetireIncomeEventHeavyPolicy(
 ): IlpPolicyInput {
   return manulifeSmartRetireIncomeBasePolicy(snapshot, 'sgd-mip-8-flexi-5', id, MANULIFE_BALANCED_FUNDS, {
     name: 'Golden Manulife SmartRetire (V) - Income (SGD / MIP 8 Flexi 5 Event Heavy)',
+    monthlyContribution: 100,
+    accounts: [
+      {
+        id: 'policy',
+        label: 'Policy Account',
+        feeRate: 0,
+        currentValue: 500,
+        contributionShare: 1,
+        subjectToEec: true,
+        postMipFeeRate: null,
+        contributionRules: [
+          { phase: 'during-icp', contributionShare: 1 },
+        ],
+      },
+    ],
     policyEvents: [
       {
         id: 'holiday-1',
         type: 'premium-holiday',
         startPolicyMonth: 37,
-        durationMonths: 3,
+        durationMonths: 12,
       },
       {
         id: 'top-up-1',
@@ -5061,13 +5093,14 @@ function manulifeSmartRetireIncomeEventHeavyPolicy(
         startPolicyMonth: 41,
         durationMonths: 1,
         amount: 8_000,
+        accountId: 'policy',
       },
       {
         id: 'withdrawal-1',
         type: 'partial-withdrawal',
         startPolicyMonth: 46,
         durationMonths: 1,
-        amount: 3_500,
+        amount: 8_000,
         accountId: 'policy',
       },
     ],
@@ -11838,11 +11871,12 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'event-heavy',
+      'kernel:automatic-lapse-on-account-depletion',
       'branch:manulife-smartretire-v-zero-top-up-charge',
       'branch:manulife-smartretire-v-premium-shortfall-charge',
       'branch:manulife-smartretire-v-withdrawal-and-surrender-charge',
     ],
-    description: 'Manulife SmartRetire (V) - Sum event-heavy scenario covering premium holiday, zero-charge top-up, and partial withdrawal during the MIP charge corridor.',
+    description: 'Manulife SmartRetire (V) - Sum event-heavy scenario covering premium holiday, zero-charge top-up, partial withdrawal during the MIP charge corridor, and annual-state lapse after projected account-value depletion.',
     integrityChecks: [
       {
         description: 'event-heavy policy records annual contribution above scheduled premium from the seeded top-up event',
@@ -11851,6 +11885,18 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       {
         description: 'event-heavy policy records annual withdrawals in projection output',
         test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+      {
+        description: 'event-heavy policy enters a zero-value tail that suppresses future contributions and withdrawals after depletion',
+        test: (_, artifact) => {
+          const depletionIndex = artifact.expected.projections.mid.rows.findIndex((row) => row.combinedValue <= 0.01)
+          return depletionIndex >= 0
+            && artifact.expected.projections.mid.rows.slice(depletionIndex + 1).every((row) => (
+              row.annualContribution <= 0.01
+              && row.annualWithdrawals <= 0.01
+              && row.combinedValue <= 0.01
+            ))
+        },
       },
     ],
   },
@@ -11930,11 +11976,12 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'event-heavy',
+      'kernel:automatic-lapse-on-account-depletion',
       'branch:manulife-smartretire-v-zero-top-up-charge',
       'branch:manulife-smartretire-v-premium-shortfall-charge',
       'branch:manulife-smartretire-v-withdrawal-and-surrender-charge',
     ],
-    description: 'Manulife SmartRetire (V) - Income event-heavy scenario covering premium holiday, zero-charge top-up, partial withdrawal, and supported scheduled-redemption.',
+    description: 'Manulife SmartRetire (V) - Income event-heavy scenario covering premium holiday, zero-charge top-up, partial withdrawal, supported scheduled-redemption, and annual-state lapse after projected account-value depletion.',
     integrityChecks: [
       {
         description: 'event-heavy policy records annual contribution above scheduled premium from the seeded top-up event',
@@ -11943,6 +11990,18 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       {
         description: 'event-heavy policy records annual withdrawals in projection output',
         test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+      {
+        description: 'event-heavy policy enters a zero-value tail that suppresses future contributions and withdrawals after depletion',
+        test: (_, artifact) => {
+          const depletionIndex = artifact.expected.projections.mid.rows.findIndex((row) => row.combinedValue <= 0.01)
+          return depletionIndex >= 0
+            && artifact.expected.projections.mid.rows.slice(depletionIndex + 1).every((row) => (
+              row.annualContribution <= 0.01
+              && row.annualWithdrawals <= 0.01
+              && row.combinedValue <= 0.01
+            ))
+        },
       },
     ],
   },

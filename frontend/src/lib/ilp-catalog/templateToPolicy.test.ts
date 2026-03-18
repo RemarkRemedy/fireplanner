@@ -7198,11 +7198,12 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-smartretire-v-welcome-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-smartretire-v-loyalty-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:automatic-lapse-on-account-depletion')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-target-retirement-sum-withdrawal')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-post-mip-death-benefit-corridor')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-amount-owed-deductions-and-claim-handling')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-lapse-and-cover-termination')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-sum-lapse-and-cover-termination')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-reinstatement-underwriting-and-exclusion-resets')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-sum-reinstatement')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-sum-benefit-payout-handling')
@@ -7218,6 +7219,9 @@ describe('templateVariantToPolicySeed', () => {
       }),
     ])
     expect(seed.chargeRules).toEqual([])
+    expect(seed.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: true,
+    })
     expect(seed.bonuses.find((bonus) => bonus.id === 'welcome-bonus')?.tieredRates).toEqual([
       { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.005 },
       { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.01 },
@@ -7277,11 +7281,12 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-smartretire-v-welcome-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-smartretire-v-loyalty-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:automatic-lapse-on-account-depletion')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-post-mip-death-benefit-corridor')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-amount-owed-deductions-and-claim-handling')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-lapse-and-cover-termination')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-income-lapse-and-cover-termination')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-reinstatement-underwriting-and-exclusion-resets')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-income-reinstatement')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-income-benefit-payout-handling')
@@ -7297,6 +7302,9 @@ describe('templateVariantToPolicySeed', () => {
       }),
     ])
     expect(seed.chargeRules).toEqual([])
+    expect(seed.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: true,
+    })
     expect(seed.bonuses.find((bonus) => bonus.id === 'welcome-bonus')?.tieredRates).toEqual([
       { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.005 },
       { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.01 },

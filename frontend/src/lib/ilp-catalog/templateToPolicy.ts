@@ -343,6 +343,11 @@ export function templateVariantToPolicySeed(
     mipBasis: variant.mipBasis,
     exitChargeBasis: variant.exitChargeBasis,
     assuranceProfile: undefined,
+    policyStateSupport: variant.policyStateSupport
+      ? {
+          automaticLapseOnAccountValueDepletion: variant.policyStateSupport.automaticLapseOnAccountValueDepletion,
+        }
+      : undefined,
     scheduledPayoutSupport: variant.scheduledPayoutSupport
       ? {
           mode: variant.scheduledPayoutSupport.mode,

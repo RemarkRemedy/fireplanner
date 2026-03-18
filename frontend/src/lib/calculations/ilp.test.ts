@@ -464,6 +464,116 @@ describe('projectIlpPolicy', () => {
     expect(result.rows.map((row) => row.annualWithdrawals)).toEqual([0, 600, 600])
   })
 
+  it('marks the policy as lapsed after account-value depletion and suppresses future contributions', () => {
+    const policy = makeOpenEndedPolicy({
+      monthlyContribution: 100,
+      postMipYears: 3,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 50,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+      ],
+      policyStateSupport: {
+        automaticLapseOnAccountValueDepletion: true,
+      },
+      chargeRules: [
+        {
+          id: 'depletion-charge',
+          label: 'Depletion Charge',
+          basis: 'fixed-annual',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 100,
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      policyEvents: [
+        {
+          id: 'holiday-year-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 13,
+          durationMonths: 12,
+          repayMissedPremiums: false,
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows.map((row) => row.policyState)).toEqual(['in-force', 'lapsed', 'lapsed'])
+    expect(result.rows.map((row) => row.annualContribution)).toEqual([0, 0, 0])
+    expect(result.rows.map((row) => row.combinedValue)).toEqual([0, 0, 0])
+  })
+
+  it('suppresses scheduled payouts after an automatic lapse on account-value depletion', () => {
+    const policy = makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      postMipYears: 3,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 50,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+      ],
+      policyStateSupport: {
+        automaticLapseOnAccountValueDepletion: true,
+      },
+      scheduledPayoutSupport: {
+        mode: 'manual-assumption',
+        accountId: 'policy',
+        source: 'policy-redemption',
+      },
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        source: 'manual-assumption',
+        accountId: 'policy',
+        startPolicyYear: 3,
+        durationYears: 2,
+        annualPayoutAmount: 250,
+      },
+      chargeRules: [
+        {
+          id: 'depletion-charge',
+          label: 'Depletion Charge',
+          basis: 'fixed-annual',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 100,
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows.map((row) => row.policyState)).toEqual(['in-force', 'lapsed', 'lapsed'])
+    expect(result.rows.map((row) => row.scheduledPayoutState)).toEqual(['inactive', 'lapsed', 'lapsed'])
+    expect(result.rows.map((row) => row.annualWithdrawals)).toEqual([0, 0, 0])
+  })
+
   it('keeps scheduled payout redemptions out of partial-withdrawal event charges', () => {
     const policy = makeOpenEndedPolicy({
       monthlyContribution: 0,

@@ -82,6 +82,10 @@ export interface IlpScheduledPayoutSupport {
   payoutStateSupport?: IlpScheduledPayoutStateSupport
 }
 
+export interface IlpPolicyStateSupport {
+  automaticLapseOnAccountValueDepletion: boolean
+}
+
 export type IlpScheduledPayoutAssumption =
   | {
       mode: 'disabled'
@@ -351,6 +355,7 @@ export interface IlpPolicyInput {
   icpMonths?: number
   mipBasis?: 'finite' | 'open-ended'
   assuranceProfile?: IlpAssuranceProfile
+  policyStateSupport?: IlpPolicyStateSupport
   scheduledPayoutSupport?: IlpScheduledPayoutSupport
   scheduledPayoutAssumption?: IlpScheduledPayoutAssumption
   distributionSupport?: IlpDistributionSupport
@@ -391,6 +396,7 @@ export interface IlpAccountYearRow {
 export interface IlpYearRow {
   year: number
   policyYear: number
+  policyState: 'in-force' | 'lapsed'
   scheduledPayoutState: 'inactive' | 'lapsed' | IlpScheduledPayoutState
   annualContribution: number
   annualWithdrawals: number
@@ -4138,11 +4144,13 @@ export function projectIlpPolicy(
   const openingBalancesByPolicyYear = new Map<number, Map<string, number>>()
   let freeAmountPoolUsedByRule = new Map<string, number>()
   const assuranceRelevantAccountIds = getAssuranceRelevantAccountIds(normalized)
+  let isPolicyLapsed = false
 
   for (let year = 1; year <= totalYears; year += 1) {
     const policyYear = input.currentPolicyYear + year
     const isPostMip = isPostMipPolicyYear(input, policyYear)
     const context = buildCashflowYearContext(normalized, year)
+    const policyState: IlpYearRow['policyState'] = isPolicyLapsed ? 'lapsed' : 'in-force'
     const scheduledContributionForYear = (isPostMip && !hasAfterMipContributionRules(input))
       ? 0
       : Math.max(0, annualContribution - getRegularPremiumReductionForYear(normalized, context.range))
@@ -4154,6 +4162,46 @@ export function projectIlpPolicy(
       input.accounts.map((account) => [account.id, previousClose.get(account.id) ?? getEffectiveCurrentValue(account, initialSinglePremiumState)]),
     )
     openingBalancesByPolicyYear.set(policyYear, new Map(openBalances))
+
+    if (policyState === 'lapsed') {
+      const combinedValue = Array.from(openBalances.values()).reduce((sum, value) => sum + value, 0)
+      const scheduledPayoutState = resolveScheduledPayoutStateForYear(normalized, context) === 'inactive'
+        ? 'inactive'
+        : 'lapsed'
+      const eecReferenceYear = getEecReferenceYear(input, context)
+      const eecRate = getExitChargeBasis(input) === 'initial-single-premium-base'
+        ? lookupEecRate(eecReferenceYear, input.eecTable)
+        : (isPostMip ? 0 : lookupEecRate(eecReferenceYear, input.eecTable))
+      const eecCharge = computeExitChargeAmount(input, eecRate, openBalances)
+
+      rows.push({
+        year,
+        policyYear,
+        policyState,
+        scheduledPayoutState,
+        annualContribution: 0,
+        annualWithdrawals: 0,
+        accounts: input.accounts.map((account) => ({
+          accountId: account.id,
+          open: openBalances.get(account.id) ?? account.currentValue,
+          contributionAmount: 0,
+          grossFee: 0,
+          bonusCredit: 0,
+          netFee: 0,
+          withdrawalAmount: 0,
+          close: openBalances.get(account.id) ?? account.currentValue,
+        })),
+        combinedValue,
+        eecRate,
+        eecCharge,
+        surrenderValue: combinedValue - eecCharge,
+        cumulativePremiums,
+        cumulativeGrossFees,
+        cumulativeBonuses,
+      })
+      continue
+    }
+
     const scheduledRegularContributionByAccount = resolveContributionByAccount(normalized, context, scheduledContributionForYear)
     // Annual-contribution charges stay on scheduled regular premiums only.
     // Premium-holiday repayments still count as paid regular premium for assurance bases,
@@ -4329,6 +4377,7 @@ export function projectIlpPolicy(
     rows.push({
       year,
       policyYear,
+      policyState,
       scheduledPayoutState,
       annualContribution: contributionForYear,
       annualWithdrawals,
@@ -4341,6 +4390,13 @@ export function projectIlpPolicy(
       cumulativeGrossFees: cumulativeGrossFees,
       cumulativeBonuses: cumulativeBonuses,
     })
+
+    if (
+      input.policyStateSupport?.automaticLapseOnAccountValueDepletion
+      && combinedValue <= CONTRIBUTION_TOLERANCE
+    ) {
+      isPolicyLapsed = true
+    }
 
     const assuranceWithdrawalsThisYear = sumWithdrawalsForAccounts(baseWithdrawalByAccount, assuranceRelevantAccountIds)
     assuranceRegularPremiumBase = Math.max(

@@ -7,6 +7,7 @@ import {
   ilpDistributionAssumptionSchema,
   ilpDistributionSupportSchema,
   ilpFundSchema,
+  ilpPolicyStateSupportSchema,
   ilpScheduledPayoutAssumptionSchema,
   ilpScheduledPayoutSupportSchema,
 } from '@/lib/validation/ilpSchema'
@@ -23,6 +24,7 @@ export const ilpPolicySeedSchema = z.object({
   icpMonths: z.number().int().min(0).max(1_200).optional(),
   mipBasis: z.enum(['finite', 'open-ended']).optional(),
   assuranceProfile: ilpAssuranceProfileSchema.optional(),
+  policyStateSupport: ilpPolicyStateSupportSchema.optional(),
   scheduledPayoutSupport: ilpScheduledPayoutSupportSchema.optional(),
   scheduledPayoutAssumption: ilpScheduledPayoutAssumptionSchema.optional(),
   distributionSupport: ilpDistributionSupportSchema.optional(),

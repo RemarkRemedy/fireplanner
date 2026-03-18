@@ -195,6 +195,10 @@ export const ilpScheduledPayoutStateSupportSchema = z.object({
   stateAfterReinstatement: ilpScheduledPayoutStateSchema.optional(),
 })
 
+export const ilpPolicyStateSupportSchema = z.object({
+  automaticLapseOnAccountValueDepletion: z.boolean(),
+})
+
 export const ilpScheduledPayoutSupportSchema = z.object({
   mode: z.literal('manual-assumption'),
   accountId: z.string().min(1),
@@ -863,6 +867,7 @@ export const ilpPolicySchema = z.object({
   icpMonths: z.number().int().min(0).max(1_200).optional(),
   mipBasis: z.enum(['finite', 'open-ended']).optional(),
   assuranceProfile: ilpAssuranceProfileSchema.optional(),
+  policyStateSupport: ilpPolicyStateSupportSchema.optional(),
   scheduledPayoutSupport: ilpScheduledPayoutSupportSchema.optional(),
   scheduledPayoutAssumption: ilpScheduledPayoutAssumptionSchema.optional(),
   distributionSupport: ilpDistributionSupportSchema.optional(),

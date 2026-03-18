@@ -242,6 +242,9 @@ function buildVariant(
     bonuses: buildBonuses(variantDefinition, page4, page5, page8),
     feeRules: [],
     eventChargeRules,
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: true,
+    },
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['policy'],
@@ -258,7 +261,7 @@ function buildVariant(
     },
     eecTable: [...variantDefinition.withdrawalAndSurrenderChargeSchedule],
     warnings: [
-      `${variantDefinition.label} is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the welcome-bonus and loyalty-bonus mechanics, the current-state MIP death-benefit estimate, and the reinvest-default distribution-mode assumption surface.`,
+      `${variantDefinition.label} is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the welcome-bonus and loyalty-bonus mechanics, the current-state MIP death-benefit estimate, annual-state lapse / termination after projected account-value depletion, and the reinvest-default distribution-mode assumption surface.`,
       'Target Retirement Sum withdrawal, optional regular-income drawdown elections, hybrid death-benefit / COI mechanics, waiver-of-premium on TPD, COI refund at target retirement age, and fund-level management charges remain outside the current engine.',
       'Withdrawals of accumulated reinvested dividends remain informational only.',
     ],
@@ -269,7 +272,6 @@ function buildVariant(
       'Waiver of Premium benefit on TPD and its separate COI table remain informational only.',
       'Refund of Cost of Insurance at target retirement age remains informational only.',
       'Flexi-start regular-premium variation and change-of-basic-sum-insured mechanics remain informational only.',
-      'Policy lapse when account value can no longer cover monthly deductions remains informational only.',
       'Reinstatement underwriting, approval, premium-allocation carry-forward, and exclusion resets after reinstatement remain informational only.',
       'Withdrawals of accumulated reinvested dividends remain informational only.',
       'Fund-level management charges, fund switching, premium redirection, and automatic fund rebalancing remain informational only.',
@@ -298,6 +300,7 @@ export function parseManulifeSmartRetireSum({ document, sourceChecksumSha256 }: 
       'branch:manulife-smartretire-v-welcome-bonus',
       'branch:manulife-smartretire-v-loyalty-bonus',
       'kernel:current-death-benefit-estimate',
+      'kernel:automatic-lapse-on-account-depletion',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
@@ -308,14 +311,13 @@ export function parseManulifeSmartRetireSum({ document, sourceChecksumSha256 }: 
       'manulife-smartretire-v-sum-waiver-of-premium-benefit',
       'manulife-smartretire-v-sum-coi-refund',
       'manulife-smartretire-v-sum-flexi-start-premium-variation',
-      'manulife-smartretire-v-sum-lapse-and-cover-termination',
       'manulife-smartretire-v-sum-reinstatement-underwriting-and-exclusion-resets',
       'manulife-smartretire-v-sum-reinvested-dividend-withdrawal',
       'manulife-smartretire-v-sum-fund-management-charge',
       'manulife-smartretire-v-sum-fund-switching-and-redirection',
     ],
     warnings: [
-      'Manulife SmartRetire (V) - Sum is cataloged as a supported V1 product for the regular-pay corridors. The parser captures the published administrative-charge path, MIP withdrawal / surrender schedule, premium-shortfall charge before Flexi Start, prevailing 0% top-up charge, welcome-bonus and loyalty-bonus mechanics, the current-state MIP death-benefit estimate, and the reinvest-default distribution-mode assumption surface, while retirement-sum withdrawal handling, optional drawdown elections, later death-benefit corridors, hybrid COI mechanics, TPD waiver, COI refund, lapse-triggered cover termination, reinstatement underwriting and exclusion resets, and fund-level charges remain outside the current engine.',
+      'Manulife SmartRetire (V) - Sum is cataloged as a supported V1 product for the regular-pay corridors. The parser captures the published administrative-charge path, MIP withdrawal / surrender schedule, premium-shortfall charge before Flexi Start, prevailing 0% top-up charge, welcome-bonus and loyalty-bonus mechanics, the current-state MIP death-benefit estimate, annual-state lapse / termination after projected account-value depletion, and the reinvest-default distribution-mode assumption surface, while retirement-sum withdrawal handling, optional drawdown elections, later death-benefit corridors, hybrid COI mechanics, TPD waiver, COI refund, reinstatement underwriting and exclusion resets, and fund-level charges remain outside the current engine.',
     ],
     archived: false,
     variants: VARIANTS.map((variantDefinition) => buildVariant(document, variantDefinition)),

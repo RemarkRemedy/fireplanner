@@ -231,6 +231,10 @@ export interface IlpTemplateDistributionSupport {
   sourceRefs: IlpCatalogSourceRef[]
 }
 
+export interface IlpTemplatePolicyStateSupport {
+  automaticLapseOnAccountValueDepletion: boolean
+}
+
 export interface IlpTemplateVariant {
   id: string
   currency: IlpCatalogCurrency
@@ -241,6 +245,7 @@ export interface IlpTemplateVariant {
   bonuses: IlpTemplateBonus[]
   feeRules: IlpTemplateFeeRule[]
   eventChargeRules: IlpTemplateEventChargeRule[]
+  policyStateSupport?: IlpTemplatePolicyStateSupport
   scheduledPayoutSupport?: IlpTemplateScheduledPayoutSupport
   distributionSupport?: IlpTemplateDistributionSupport
   eecTable: number[]

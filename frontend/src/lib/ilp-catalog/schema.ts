@@ -299,6 +299,10 @@ export const ilpTemplateDistributionSupportSchema = z.object({
   sourceRefs: z.array(ilpCatalogSourceRefSchema).min(1),
 })
 
+export const ilpTemplatePolicyStateSupportSchema = z.object({
+  automaticLapseOnAccountValueDepletion: z.boolean(),
+})
+
 export const ilpTemplateVariantSchema = z.object({
   id: z.string().min(1),
   currency: z.enum(['SGD', 'USD']),
@@ -309,6 +313,7 @@ export const ilpTemplateVariantSchema = z.object({
   bonuses: z.array(ilpTemplateBonusSchema).max(40),
   feeRules: z.array(ilpTemplateFeeRuleSchema).max(20),
   eventChargeRules: z.array(ilpTemplateEventChargeRuleSchema).max(20),
+  policyStateSupport: ilpTemplatePolicyStateSupportSchema.optional(),
   scheduledPayoutSupport: ilpTemplateScheduledPayoutSupportSchema.optional(),
   distributionSupport: ilpTemplateDistributionSupportSchema.optional(),
   eecTable: z.array(z.number().min(0).max(1)).max(100),
