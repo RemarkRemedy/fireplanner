@@ -59,7 +59,7 @@ export function NetWorthCard({
           <Link
             to="/inputs#section-cpf"
             className="text-sm text-white/80 hover:text-white/80 transition-colors underline underline-offset-2"
-            onClick={(e) => e.stopPropagation()}
+            onPointerUp={(e) => e.stopPropagation()}
           >
             Include CPF and property for the full picture
           </Link>

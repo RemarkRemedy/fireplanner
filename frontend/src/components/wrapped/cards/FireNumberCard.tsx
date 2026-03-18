@@ -34,7 +34,7 @@ export function FireNumberCard({ value, hasCustomExpenses, gradient, direction }
           <Link
             to="/inputs#section-expenses"
             className="text-sm text-white/80 hover:text-white/80 transition-colors underline underline-offset-2"
-            onClick={(e) => e.stopPropagation()}
+            onPointerUp={(e) => e.stopPropagation()}
           >
             Based on estimated expenses. Refine your spending for accuracy.
           </Link>

@@ -8,7 +8,7 @@ import type { WrappedCardKey } from '@/lib/wrapped/gradients'
 import type { WrappedData } from '@/hooks/useWrappedData'
 import type { ReactNode } from 'react'
 
-interface CardRenderer {
+export interface CardRenderer {
   key: WrappedCardKey
   render: (data: WrappedData, gradient: string, direction: number) => ReactNode
 }
@@ -68,19 +68,14 @@ export function WrappedStoryContainer({ cardRenderers }: WrappedStoryContainerPr
     return () => window.removeEventListener('keydown', handleKey)
   }, [goForward, goBack, handleClose])
 
-  // Browser back button closes overlay instead of leaving app
-  useEffect(() => {
-    history.pushState({ wrappedOverlay: true }, '')
-    const handlePopState = () => {
-      navigate('/projection', { replace: true })
-    }
-    window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
-  }, [navigate])
-
   // Swipe + tap navigation via pointer events
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     pointerStart.current = { x: e.clientX, y: e.clientY, time: Date.now() }
+  }, [])
+
+  // Clear stale pointer state if system gesture interrupts a swipe
+  const handlePointerCancel = useCallback(() => {
+    pointerStart.current = null
   }, [])
 
   const handlePointerUp = useCallback(
@@ -116,6 +111,7 @@ export function WrappedStoryContainer({ cardRenderers }: WrappedStoryContainerPr
   )
 
   const currentCard = data.cards[currentIndex]
+  if (!currentCard) return null
   const renderer = cardRenderers.find((r) => r.key === currentCard.key)
 
   return (
@@ -127,6 +123,7 @@ export function WrappedStoryContainer({ cardRenderers }: WrappedStoryContainerPr
         className="absolute inset-0"
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
       >
         <AnimatePresence mode="wait" custom={direction}>
           <div key={currentCard.key}>

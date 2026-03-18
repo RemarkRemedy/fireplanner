@@ -70,7 +70,7 @@ export function PeakCard({ value, age, gradient, direction }: PeakCardProps) {
         <Link
           to="/inputs#section-allocation"
           className="text-sm text-white/80 hover:text-white/80 transition-colors underline underline-offset-2"
-          onClick={(e) => e.stopPropagation()}
+          onPointerUp={(e) => e.stopPropagation()}
         >
           Customize your returns and allocation
         </Link>

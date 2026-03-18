@@ -11,11 +11,12 @@ interface ChartPoint {
 interface TrajectoryCardProps {
   chartData: ChartPoint[]
   retirementAge: number
+  hasFireAge: boolean
   gradient: string
   direction: number
 }
 
-export function TrajectoryCard({ chartData, retirementAge, gradient, direction }: TrajectoryCardProps) {
+export function TrajectoryCard({ chartData, retirementAge, hasFireAge, gradient, direction }: TrajectoryCardProps) {
   const hasData = chartData.length > 0
 
   return (
@@ -59,7 +60,7 @@ export function TrajectoryCard({ chartData, retirementAge, gradient, direction }
                 stroke="rgba(255,255,255,0.7)"
                 strokeDasharray="4 4"
                 label={{
-                  value: 'FIRE',
+                  value: hasFireAge ? 'FIRE' : 'Retire',
                   position: 'top',
                   fill: 'rgba(255,255,255,0.9)',
                   fontSize: 11,

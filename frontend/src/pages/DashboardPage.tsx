@@ -28,6 +28,7 @@ import { EstateProjectionPanel } from '@/components/dashboard/EstateProjectionPa
 import { ExpenseTrackerCard } from '@/components/email/ExpenseTrackerCard'
 import { useExpenseTrackerDwell } from '@/hooks/useExpenseTrackerDwell'
 import { useExpenseTracker } from '@/hooks/useExpenseTracker'
+import { trackEvent } from '@/lib/analytics'
 import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { BucketVisualization } from '@/components/dashboard/BucketVisualization'
@@ -77,6 +78,7 @@ export function DashboardPage() {
           <Link
             to="/wrapped"
             className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 px-3 py-1 text-xs font-medium text-white hover:from-indigo-600 hover:to-purple-700 transition-all shadow-sm"
+            onClick={() => trackEvent('wrapped_entry_clicked', { source: 'dashboard' })}
           >
             <Sparkles className="h-3 w-3" />
             Your FIRE Story

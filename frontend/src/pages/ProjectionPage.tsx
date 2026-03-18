@@ -83,6 +83,7 @@ export function ProjectionPage() {
   const navigate = useNavigate()
   const currentSnapshot = useMetricsSnapshot()
   const deltaProcessed = useRef(false)
+  const mountedRef = useRef(true)
   const nudgeSectionRef = useRef<HTMLDivElement>(null)
   const { result: healthResult } = useHealthCheck()
 
@@ -96,12 +97,15 @@ export function ProjectionPage() {
       if (fireAge != null && fireAge < 60) {
         // Celebratory confetti burst for early FIRE achievers
         const end = Date.now() + 2000
+        let rafId = 0
         const frame = () => {
+          if (!mountedRef.current) return
           confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0, y: 0.6 } })
           confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1, y: 0.6 } })
-          if (Date.now() < end) requestAnimationFrame(frame)
+          if (Date.now() < end) rafId = requestAnimationFrame(frame)
         }
-        frame()
+        rafId = requestAnimationFrame(frame)
+        return () => { mountedRef.current = false; cancelAnimationFrame(rafId) }
       }
 
       toast('Your plan is ready!', {

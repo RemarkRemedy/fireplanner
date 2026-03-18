@@ -56,7 +56,7 @@ export function SummaryCard({ data, gradient, direction }: SummaryCardProps) {
         <Link
           to="/inputs"
           className="flex items-center justify-center gap-2 bg-white text-slate-900 font-semibold rounded-full py-3 px-6 hover:bg-white/90 transition-colors"
-          onClick={(e) => e.stopPropagation()}
+          onPointerUp={(e) => e.stopPropagation()}
         >
           Refine your plan
           <ArrowRight className="h-4 w-4" />
@@ -64,7 +64,7 @@ export function SummaryCard({ data, gradient, direction }: SummaryCardProps) {
         <Link
           to="/projection"
           className="flex items-center justify-center gap-2 bg-white/10 text-white font-medium rounded-full py-3 px-6 hover:bg-white/20 transition-colors"
-          onClick={(e) => e.stopPropagation()}
+          onPointerUp={(e) => e.stopPropagation()}
         >
           View full projection
         </Link>

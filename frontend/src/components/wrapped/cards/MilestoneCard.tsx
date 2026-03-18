@@ -56,7 +56,7 @@ export function MilestoneCard({ fireAge, yearsToFire, gradient, direction }: Mil
         <Link
           to="/inputs#section-personal"
           className="text-sm text-white/80 hover:text-white/80 transition-colors underline underline-offset-2"
-          onClick={(e) => e.stopPropagation()}
+          onPointerUp={(e) => e.stopPropagation()}
         >
           Adjust your retirement age to see how it shifts
         </Link>

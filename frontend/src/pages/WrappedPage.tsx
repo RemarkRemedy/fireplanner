@@ -1,4 +1,4 @@
-import { WrappedStoryContainer } from '@/components/wrapped/WrappedStoryContainer'
+import { WrappedStoryContainer, type CardRenderer } from '@/components/wrapped/WrappedStoryContainer'
 import { IntroCard } from '@/components/wrapped/cards/IntroCard'
 import { NetWorthCard } from '@/components/wrapped/cards/NetWorthCard'
 import { FireNumberCard } from '@/components/wrapped/cards/FireNumberCard'
@@ -7,14 +7,6 @@ import { MilestoneCard } from '@/components/wrapped/cards/MilestoneCard'
 import { TrajectoryCard } from '@/components/wrapped/cards/TrajectoryCard'
 import { PeakCard } from '@/components/wrapped/cards/PeakCard'
 import { SummaryCard } from '@/components/wrapped/cards/SummaryCard'
-import type { WrappedData } from '@/hooks/useWrappedData'
-import type { WrappedCardKey } from '@/lib/wrapped/gradients'
-import type { ReactNode } from 'react'
-
-interface CardRenderer {
-  key: WrappedCardKey
-  render: (data: WrappedData, gradient: string, direction: number) => ReactNode
-}
 
 const cardRenderers: CardRenderer[] = [
   {
@@ -81,6 +73,7 @@ const cardRenderers: CardRenderer[] = [
       <TrajectoryCard
         chartData={data.trajectory.chartData}
         retirementAge={data.trajectory.retirementAge}
+        hasFireAge={data.trajectory.hasFireAge}
         gradient={gradient}
         direction={direction}
       />

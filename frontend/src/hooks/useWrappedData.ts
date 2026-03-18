@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
 import { useDashboardMetrics } from '@/hooks/useDashboardMetrics'
 import { useDashboardCharts } from '@/hooks/useDashboardCharts'
-import { useProjection } from '@/hooks/useProjection'
 import { useFireCalculations } from '@/hooks/useFireCalculations'
 import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { buildCardSequence } from '@/lib/wrapped/gradients'
+import { DEFAULT_ANNUAL_EXPENSES } from '@/lib/data/setupDefaults'
 import type { WrappedCardConfig } from '@/lib/wrapped/gradients'
 
 interface ChartPoint {
@@ -40,6 +40,7 @@ interface WrappedMilestone {
 interface WrappedTrajectory {
   chartData: ChartPoint[]
   retirementAge: number
+  hasFireAge: boolean
 }
 
 interface WrappedPeak {
@@ -84,7 +85,6 @@ export interface WrappedData {
 export function useWrappedData(): WrappedData {
   const dashMetrics = useDashboardMetrics()
   const { accumulationData } = useDashboardCharts()
-  const { summary: projSummary } = useProjection()
   const { metrics } = useFireCalculations()
   const { profile } = useHouseholdRuntimeInputs()
 
@@ -92,9 +92,9 @@ export function useWrappedData(): WrappedData {
     const liquid = profile.liquidNetWorth
     const cpf = profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
     const property = metrics?.propertyEquity ?? 0
-    const totalNW = dashMetrics.totalNetWorth ?? liquid + cpf
+    const totalNW = dashMetrics.totalNetWorth ?? (liquid + cpf + property)
 
-    // Find peak from chart data
+    // Find peak from accumulation chart data (real-terms, consistent basis)
     let peakValue = totalNW
     let peakAge = profile.currentAge
     for (const pt of accumulationData) {
@@ -104,41 +104,39 @@ export function useWrappedData(): WrappedData {
       }
     }
 
-    // Override with projection summary if available (more accurate)
-    if (projSummary) {
-      peakValue = projSummary.peakTotalNW
-      peakAge = projSummary.peakTotalNWAge
-    }
-
     const cards = buildCardSequence()
 
     // Refinement hints: detect if user has gone beyond defaults
     const hasCpfData = cpf > 0
     const hasProperty = property > 0
-    const hasCustomExpenses = profile.annualExpenses !== 48000
+    const hasCustomExpenses = profile.annualExpenses !== DEFAULT_ANNUAL_EXPENSES
     const hasCustomIncome = profile.annualIncome > 0
+
+    const fireAge = dashMetrics.fireAge ?? null
 
     return {
       ready: true,
       intro: {
         currentAge: profile.currentAge,
-        displayName: 'there',
+        displayName: 'there', // No user account system; intentional placeholder
       },
       netWorth: { total: totalNW, liquid, cpf, property },
       fireNumber: { value: dashMetrics.fireNumber ?? 0 },
       progress: { percent: dashMetrics.progress ?? 0 },
       milestone: {
-        fireAge: dashMetrics.fireAge ?? null,
+        fireAge,
         yearsToFire: dashMetrics.yearsToFire ?? null,
       },
       trajectory: {
         chartData: accumulationData,
-        retirementAge: dashMetrics.fireAge ?? profile.retirementAge,
+        retirementAge: fireAge ?? profile.retirementAge,
+        hasFireAge: fireAge != null,
       },
       peak: { value: peakValue, age: peakAge },
       summary: {
-        terminalNW: projSummary?.terminalTotalNW ?? 0,
+        terminalNW: 0,
         depleted: dashMetrics.portfolioDepletedAge != null &&
+          dashMetrics.lifeExpectancy != null &&
           dashMetrics.portfolioDepletedAge < dashMetrics.lifeExpectancy,
         depletedAge: dashMetrics.portfolioDepletedAge ?? null,
         lifeExpectancy: dashMetrics.lifeExpectancy,
@@ -152,5 +150,5 @@ export function useWrappedData(): WrappedData {
         hasProperty,
       },
     }
-  }, [dashMetrics, accumulationData, projSummary, metrics, profile])
+  }, [dashMetrics, accumulationData, metrics, profile])
 }
