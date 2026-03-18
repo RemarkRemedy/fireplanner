@@ -1,6 +1,7 @@
 import { getMomSalary } from '@/lib/data/momSalary'
 import { calculateFireNumber, calculateYearsToFire } from './fire'
 import { QUICK_ESTIMATE_DEFAULTS } from '@/lib/data/quickEstimateDefaults'
+import { SINGSTAT_MEDIAN_MONTHLY_EXPENSES } from '@/lib/data/expenseBenchmarks'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -73,16 +74,13 @@ export type MirrorInsightData =
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** SingStat HES 2023 median monthly household expenditure, SGD */
-const MEDIAN_MONTHLY_EXPENSES = 5200
-
 /**
  * Derive a median savings rate for a given age using MOM salary data
  * and a fixed expense baseline from SingStat HES 2023.
  */
 export function getMedianSavingsRate(age: number): number {
   const medianAnnualSalary = getMomSalary(age, 'degree')
-  const annualExpenses = MEDIAN_MONTHLY_EXPENSES * 12
+  const annualExpenses = SINGSTAT_MEDIAN_MONTHLY_EXPENSES * 12
   if (medianAnnualSalary <= 0) return 0
   return Math.max(0, (medianAnnualSalary - annualExpenses) / medianAnnualSalary)
 }
@@ -166,7 +164,7 @@ export function computeMirrorInsights(inputs: MirrorInsightInputs): MirrorInsigh
   // Moment 3: CPF Runway
   // -----------------------------------------------------------------------
   const cpfYears = annualExpenses > 0 ? totalCpf / annualExpenses : 0
-  const cpfStrong = cpfYears >= 3
+  const cpfStrong = cpfYears >= 5
 
   const moment3: MirrorInsightData = {
     id: 'cpf-runway',
@@ -179,9 +177,9 @@ export function computeMirrorInsights(inputs: MirrorInsightInputs): MirrorInsigh
   // -----------------------------------------------------------------------
   const propValue = hasProperty ? propertyValue : 0
   const nwTotal = totalLiquid + totalCpf + propValue
-  const propertyPercent = nwTotal > 0 ? (propValue / nwTotal) * 100 : 0
-  const liquidPercent = nwTotal > 0 ? (totalLiquid / nwTotal) * 100 : 0
-  const cpfPercent = nwTotal > 0 ? (totalCpf / nwTotal) * 100 : 0
+  const propertyPercent = nwTotal > 0 ? Math.round((propValue / nwTotal) * 100) : 0
+  const liquidPercent = nwTotal > 0 ? Math.round((totalLiquid / nwTotal) * 100) : 0
+  const cpfPercent = nwTotal > 0 ? Math.round((totalCpf / nwTotal) * 100) : 0
 
   const moment4: MirrorInsightData = {
     id: 'net-worth',

@@ -21,6 +21,7 @@ import { grossUpFromTakeHome } from '@/lib/calculations/grossUp'
 import { estimateCpfBalances } from '@/lib/calculations/cpf'
 import { SG_EXPENSE_BENCHMARKS } from '@/lib/data/expenseBenchmarks'
 import { NumberInput } from '@/components/shared/NumberInput'
+import { QUICK_ESTIMATE_DEFAULTS } from '@/lib/data/quickEstimateDefaults'
 import { computeMirrorInsights, type MirrorInsightData, type MirrorId } from '@/lib/calculations/mirrorInsights'
 import { MirrorMoment } from '@/components/setup/MirrorMoment'
 import { useConfetti } from '@/components/setup/SetupConfetti'
@@ -303,7 +304,6 @@ const MIRROR_TRIGGERS: Record<string, MirrorId> = {
   cpf: 'cpf-runway',
   'property-details': 'net-worth',
   'property-planning': 'net-worth',
-  'property-toggle': 'net-worth',
 }
 // Moment 5 (full-snapshot) fires on the review screen, handled separately
 
@@ -687,6 +687,19 @@ export function SetupPage() {
     dispatch({ type: 'SET_FIELD', field, value })
   }, [])
 
+  // CPF estimate — moved above mirror logic so buildMirrorInputs can reference it
+  const cpfEstimate = useMemo(() => {
+    const age = (state.values.currentAge as number) ?? 30
+    const monthlyInc = (state.values.monthlyIncome as number) ?? 0
+    const incType = (state.values.incomeType as 'take-home' | 'gross') ?? 'take-home'
+    const grossMo = incType === 'take-home' ? grossUpFromTakeHome(monthlyInc, age) : monthlyInc
+    const bonus = (state.values.hasBonusAws ? (state.values.bonusMonths as number) : 0) ?? 0
+    const grossAnnual = grossMo * (12 + bonus)
+    const residency = (state.values.residency as 'citizen' | 'pr' | 'foreigner') ?? 'citizen'
+    const oaMortgage = state.values.usedOaForMortgage ? (state.values.oaMortgageAmount as number) : undefined
+    return estimateCpfBalances(age, grossAnnual, residency, undefined, oaMortgage)
+  }, [state.values.currentAge, state.values.monthlyIncome, state.values.incomeType, state.values.hasBonusAws, state.values.bonusMonths, state.values.residency, state.values.usedOaForMortgage, state.values.oaMortgageAmount])
+
   const handleNextInner = useCallback(() => {
     const currentPos = activeScreenIndices.indexOf(state.screenIndex)
     const screenDef = visibleScreenDefs[state.screenIndex]
@@ -703,14 +716,16 @@ export function SetupPage() {
   /** Build mirror insight inputs from current setup state values. */
   const buildMirrorInputs = useCallback(() => {
     const hasIncome = state.values.hasIncome !== false
+    // Use CPF estimate when in estimate mode (the default); fall back to manual values
+    const useEstimate = state.values.cpfMode !== 'know'
     return {
       currentAge: (state.values.currentAge as number) ?? 30,
       retirementAge: (state.values.retirementAge as number) ?? 55,
       monthlyIncome: hasIncome ? ((state.values.monthlyIncome as number) ?? 0) : 0,
       monthlyExpenses: (state.values.monthlyExpenses as number) ?? 0,
       currentSavings: (state.values.liquidNetWorth as number) ?? 0,
-      cpfOA: (state.values.cpfOA as number) ?? 0,
-      cpfSA: (state.values.cpfSA as number) ?? 0,
+      cpfOA: useEstimate ? cpfEstimate.oa : ((state.values.cpfOA as number) ?? 0),
+      cpfSA: useEstimate ? cpfEstimate.sa : ((state.values.cpfSA as number) ?? 0),
       hasCpf: state.values.residency !== 'foreigner',
       propertyValue: state.values.ownsProperty === 'owns'
         ? ((state.values.propertyValue as number) ?? 0)
@@ -719,10 +734,10 @@ export function SetupPage() {
           : 0,
       hasProperty: state.values.ownsProperty === 'owns' || state.values.ownsProperty === 'planning',
       hasIncome,
-      expectedReturn: 0.05,
-      swr: 0.035,
+      expectedReturn: QUICK_ESTIMATE_DEFAULTS.nominalReturn,
+      swr: QUICK_ESTIMATE_DEFAULTS.swr,
     }
-  }, [state.values])
+  }, [state.values, cpfEstimate])
 
   const handleNext = useCallback(() => {
     const screenDef = visibleScreenDefs[state.screenIndex]
@@ -757,7 +772,9 @@ export function SetupPage() {
     const m5 = insights.find((i) => i.id === 'full-snapshot')
     if (m5 && !m5.suppressed) {
       moment5Shown.current = true
-      // Defer state updates to avoid synchronous setState-in-effect lint rule
+      // Defer state updates to avoid "cannot update during render" warnings that can
+      // happen if the effect triggers while React is still processing other updates.
+      // moment5Shown.current ensures this effect only ever executes once when isReview becomes true.
       queueMicrotask(() => {
         setActiveMirror(m5)
         setShownMirrors((prev) => new Set(prev).add('full-snapshot'))
@@ -862,19 +879,6 @@ export function SetupPage() {
     window.addEventListener('beforeunload', handler)
     return () => window.removeEventListener('beforeunload', handler)
   }, [planType])
-
-  // CPF estimate — must be above all early returns (React hooks rule)
-  const cpfEstimate = useMemo(() => {
-    const age = (state.values.currentAge as number) ?? 30
-    const monthlyInc = (state.values.monthlyIncome as number) ?? 0
-    const incType = (state.values.incomeType as 'take-home' | 'gross') ?? 'take-home'
-    const grossMo = incType === 'take-home' ? grossUpFromTakeHome(monthlyInc, age) : monthlyInc
-    const bonus = (state.values.hasBonusAws ? (state.values.bonusMonths as number) : 0) ?? 0
-    const grossAnnual = grossMo * (12 + bonus)
-    const residency = (state.values.residency as 'citizen' | 'pr' | 'foreigner') ?? 'citizen'
-    const oaMortgage = state.values.usedOaForMortgage ? (state.values.oaMortgageAmount as number) : undefined
-    return estimateCpfBalances(age, grossAnnual, residency, undefined, oaMortgage)
-  }, [state.values.currentAge, state.values.monthlyIncome, state.values.incomeType, state.values.hasBonusAws, state.values.bonusMonths, state.values.residency, state.values.usedOaForMortgage, state.values.oaMortgageAmount])
 
   // Partner CPF estimate
   const partnerCpfEstimate = useMemo(() => {
