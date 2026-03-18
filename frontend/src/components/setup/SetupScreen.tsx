@@ -30,6 +30,8 @@ interface SetupScreenProps {
   submitLabel?: string
   /** Custom content rendered between fields and buttons */
   children?: React.ReactNode
+  /** True when currentAge < 25 — enables gamified copy */
+  isYoung?: boolean
 }
 
 interface FieldRendererProps {
@@ -230,6 +232,7 @@ export function SetupScreen({
   totalSteps,
   submitLabel = 'Continue',
   children,
+  isYoung,
 }: SetupScreenProps) {
   const [requiredErrors, setRequiredErrors] = useState<Set<string>>(new Set())
 
@@ -288,7 +291,7 @@ export function SetupScreen({
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>
-            Step {currentStep} of {totalSteps}
+            {isYoung ? 'Level' : 'Step'} {currentStep} of {totalSteps}
           </span>
         </div>
         <progress
