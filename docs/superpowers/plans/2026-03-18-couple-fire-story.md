@@ -535,7 +535,53 @@ cd /Users/tj/TJDevelopment/fireplanner-wrapped && git add frontend/src/component
 
 ---
 
-## Task 8: Wire `WrappedPage` to select renderers by mode
+## Task 8: Add "Skip to summary" button to story container
+
+**Files:**
+- Modify: `frontend/src/components/wrapped/WrappedStoryContainer.tsx`
+
+This applies to both individual and couple stories. Users can skip the narrative and jump to the summary card.
+
+- [ ] **Step 1: Read `WrappedStoryContainer.tsx`**
+
+- [ ] **Step 2: Add skip button**
+
+Between the close button and the navigation hints, add:
+```tsx
+{/* Skip to summary — lets users jump to the final card */}
+{currentIndex < total - 1 && (
+  <button
+    className="absolute bottom-8 right-4 z-10 text-white/60 hover:text-white text-xs transition-colors"
+    onPointerUp={(e) => {
+      e.stopPropagation()
+      if (isTransitioning.current) return
+      isTransitioning.current = true
+      setDirection(1)
+      setCurrentIndex(total - 1)
+      setTimeout(() => { isTransitioning.current = false }, 350)
+    }}
+  >
+    Skip to summary
+  </button>
+)}
+```
+
+Uses `onPointerUp` with `stopPropagation` (consistent with the C2 fix from the deep review). Respects the `isTransitioning` guard.
+
+- [ ] **Step 3: Type-check**
+
+Run: `cd /Users/tj/TJDevelopment/fireplanner-wrapped/frontend && npx tsc --noEmit -p tsconfig.app.json`
+Expected: Clean
+
+- [ ] **Step 4: Commit**
+
+```bash
+cd /Users/tj/TJDevelopment/fireplanner-wrapped && git add frontend/src/components/wrapped/WrappedStoryContainer.tsx && git commit -m "feat: add skip to summary button on FIRE story cards"
+```
+
+---
+
+## Task 9: Wire `WrappedPage` to select renderers by mode
 
 **Files:**
 - Modify: `frontend/src/pages/WrappedPage.tsx`
@@ -584,7 +630,7 @@ cd /Users/tj/TJDevelopment/fireplanner-wrapped && git add frontend/src/pages/Wra
 
 ---
 
-## Task 9: Integration verification
+## Task 10: Integration verification
 
 - [ ] **Step 1: Type-check full project**
 

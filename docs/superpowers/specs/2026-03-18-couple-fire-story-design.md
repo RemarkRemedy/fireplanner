@@ -227,6 +227,29 @@ Field named `couple` (not `household`) to avoid collision with the `'household'`
 - **Peak age conversion for partner:** Peak age from `accumulationData` is anchored to self's current age. Partner's age at peak = peakAge - ageDelta.
 - **One partner has passed (in projection):** If household rows show a null age for one adult at peak time, show only the living partner's age.
 
+## Post-Setup Flow Integration
+
+The FIRE Story and the Setup Engagement feature (mirror moments) share the post-setup emotional moment. Resolution:
+
+### Mobile (viewport < 768px): Story IS the payoff
+- `handleConfirm` in SetupPage navigates to `/wrapped` instead of `/projection`
+- Mirror Moments 1-4 still fire during setup screens
+- Moment 5 (full snapshot) is SKIPPED on mobile — the FIRE Story covers it more richly
+- The story's summary card (last card) has "Refine your plan" and "View full projection" CTAs
+
+### Desktop (viewport >= 768px): Projection page with story CTA
+- `handleConfirm` navigates to `/projection` as before (toast + confetti if FIRE age < 60)
+- Moment 5 fires on the review screen (full snapshot insight)
+- "See your FIRE Story" sparkle button on projection page (already exists)
+
+### Skip to Summary
+All story cards except the last one show a "Skip to summary" text button (bottom-right, subtle). Tapping it jumps directly to the summary card. This respects users who want the data without the narrative.
+
+### Implementation
+- `WrappedStoryContainer.tsx`: Add "Skip to summary" button that sets `currentIndex` to `total - 1`
+- `SetupPage.tsx` `handleConfirm`: `navigate(window.innerWidth < 768 ? '/wrapped' : '/projection')`
+- Setup engagement spec: Moment 5 conditionally skipped when `window.innerWidth < 768`
+
 ## Out of Scope
 - Survivor spending model. Separate feature per CLAUDE.md.
 - Proper per-adult expense attribution (currently 50/50 for shared). Will upgrade when available.
