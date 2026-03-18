@@ -38,6 +38,8 @@ describe('parseManulifeInvestreadyGrowth', () => {
     ])
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-growth-post-flexi-premium-variation')
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-growth-ti-acceleration-limits-and-claim-timing')
+    expect(product.metadataOnlyBehaviors).toContain('manulife-investready-growth-reinstatement-underwriting-and-pre-existing-condition-exclusions')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-growth-reinstatement')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-growth-benefit-payout-handling')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-growth-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-growth-annual-premium-bonus')
@@ -46,6 +48,7 @@ describe('parseManulifeInvestreadyGrowth', () => {
       'sgd-mip-20-flexi-10',
     ])
     expect(product.warnings.some((warning) => warning.includes('amount-owed deductions'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('pre-existing-condition exclusions'))).toBe(true)
 
     const firstVariant = product.variants[0]
     expect(firstVariant?.mipLength).toBe(15)

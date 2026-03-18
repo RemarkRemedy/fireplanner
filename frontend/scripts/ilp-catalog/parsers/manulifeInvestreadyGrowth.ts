@@ -323,11 +323,11 @@ export function parseManulifeInvestreadyGrowth(context: ParseContext): IlpCatalo
       'manulife-investready-growth-fund-management-charge',
       'manulife-investready-growth-fund-switching-and-redirection',
       'manulife-investready-growth-life-insured-change',
-      'manulife-investready-growth-reinstatement',
+      'manulife-investready-growth-reinstatement-underwriting-and-pre-existing-condition-exclusions',
       'manulife-investready-growth-post-flexi-premium-variation',
     ],
     warnings: [
-      'Manulife InvestReady Growth is cataloged as a supported V1 corridor. The parser captures the accumulated-minimum-premium administrative-charge path, the paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the current-state death-benefit estimate from that same floor, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal and full-surrender charge schedules, and the reinvest-default distribution-mode assumption surface with the published S$40 minimum cash-payout threshold, while bonus mechanics, partial-withdrawal flexibility, terminal-illness acceleration limits, amount-owed deductions, claim-notification valuation timing, post-claim continuation, and fund-level charges remain informational only.',
+      'Manulife InvestReady Growth is cataloged as a supported V1 corridor. The parser captures the accumulated-minimum-premium administrative-charge path, the paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the current-state death-benefit estimate from that same floor, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal and full-surrender charge schedules, and the reinvest-default distribution-mode assumption surface with the published S$40 minimum cash-payout threshold, while bonus mechanics, partial-withdrawal flexibility, terminal-illness acceleration limits, amount-owed deductions, claim-notification valuation timing, post-claim continuation, reinstatement underwriting and pre-existing-condition exclusions, and fund-level charges remain informational only.',
     ],
     archived: false,
     variants: [
