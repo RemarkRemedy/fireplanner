@@ -27,6 +27,7 @@ const ComparePage = lazy(() => import('@/pages/ComparePage').then(m => ({ defaul
 const StampDutyCalculatorPage = lazy(() => import('@/pages/StampDutyCalculatorPage').then(m => ({ default: m.StampDutyCalculatorPage })))
 const SrsCalculatorPage = lazy(() => import('@/pages/SrsCalculatorPage').then(m => ({ default: m.SrsCalculatorPage })))
 const AdminEmailsPage = lazy(() => import('@/pages/AdminEmailsPage').then(m => ({ default: m.AdminEmailsPage })))
+const WrappedPage = lazy(() => import('@/pages/WrappedPage').then(m => ({ default: m.WrappedPage })))
 
 function PageLoader() {
   return (
@@ -125,6 +126,7 @@ export const router = createBrowserRouter([
       { path: '/compare', element: page(ComparePage) },
       { path: '/stamp-duty-calculator', element: page(StampDutyCalculatorPage) },
       { path: '/srs-calculator', element: page(SrsCalculatorPage) },
+      { path: '/wrapped', element: page(WrappedPage) },
       // Redirects: old input pages → /inputs with section anchors
       { path: '/profile', element: <Navigate to="/inputs#section-personal" replace /> },
       { path: '/income', element: <Navigate to="/inputs#section-income" replace /> },

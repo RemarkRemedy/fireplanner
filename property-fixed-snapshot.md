@@ -1,0 +1,1395 @@
+- generic [ref=e3]:
+  - region "Notifications alt+T"
+  - complementary [ref=e4]:
+    - generic [ref=e5]: FIRE Planner
+    - generic [ref=e6]:
+      - button "Simple" [ref=e7] [cursor=pointer]
+      - button "Advanced" [ref=e8] [cursor=pointer]
+    - navigation [ref=e9]:
+      - generic [ref=e10]:
+        - generic [ref=e11]: START
+        - link "Start Here" [ref=e13] [cursor=pointer]:
+          - /url: /
+          - img [ref=e14]
+          - text: Start Here
+      - generic [ref=e17]:
+        - generic [ref=e18]: INPUTS
+        - generic [ref=e19]:
+          - button "Personal Customized" [ref=e20] [cursor=pointer]:
+            - img [ref=e21]
+            - text: Personal
+            - generic "Customized" [ref=e24]
+          - button "Income Customized" [ref=e25] [cursor=pointer]:
+            - img [ref=e26]
+            - text: Income
+            - generic "Customized" [ref=e28]
+          - button "Expenses Customized" [ref=e29] [cursor=pointer]:
+            - img [ref=e30]
+            - text: Expenses
+            - generic "Customized" [ref=e33]
+          - button "Healthcare" [ref=e34] [cursor=pointer]:
+            - img [ref=e35]
+            - text: Healthcare
+          - button "Goals" [ref=e38] [cursor=pointer]:
+            - img [ref=e39]
+            - text: Goals
+          - button "Net Worth Customized" [ref=e42] [cursor=pointer]:
+            - img [ref=e43]
+            - text: Net Worth
+            - generic "Customized" [ref=e46]
+          - button "CPF Using defaults" [ref=e47] [cursor=pointer]:
+            - img [ref=e48]
+            - text: CPF
+            - generic "Using defaults" [ref=e50]
+          - button "Property Customized" [ref=e51] [cursor=pointer]:
+            - img [ref=e52]
+            - text: Property
+            - generic "Customized" [ref=e55]
+          - button "Allocation Customized" [ref=e56] [cursor=pointer]:
+            - img [ref=e57]
+            - text: Allocation
+            - generic "Customized" [ref=e60]
+          - button "FIRE Settings Using defaults" [ref=e61] [cursor=pointer]:
+            - img [ref=e62]
+            - text: FIRE Settings
+            - generic "Using defaults" [ref=e66]
+      - generic [ref=e67]:
+        - generic [ref=e68]: PLAN
+        - link "Projection" [ref=e70] [cursor=pointer]:
+          - /url: /projection
+          - img [ref=e71]
+          - text: Projection
+      - generic [ref=e73]:
+        - generic [ref=e74]: EXPLORE
+        - link "Withdrawal Strategies" [ref=e76] [cursor=pointer]:
+          - /url: /withdrawal
+          - img [ref=e77]
+          - text: Withdrawal Strategies
+      - generic [ref=e80]:
+        - generic [ref=e81]: ANALYSIS
+        - link "Stress Test" [ref=e83] [cursor=pointer]:
+          - /url: /stress-test
+          - img [ref=e84]
+          - text: Stress Test
+      - generic [ref=e86]:
+        - generic [ref=e87]: RESULTS
+        - link "Dashboard" [ref=e89] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e90]
+          - text: Dashboard
+      - generic [ref=e95]:
+        - generic [ref=e96]: REFERENCE
+        - generic [ref=e97]:
+          - link "Reference Guide" [ref=e98] [cursor=pointer]:
+            - /url: /reference
+            - img [ref=e99]
+            - text: Reference Guide
+          - link "Checklist" [ref=e101] [cursor=pointer]:
+            - /url: /checklist
+            - img [ref=e102]
+            - text: Checklist
+    - generic [ref=e105]:
+      - button "Scenarios" [ref=e106] [cursor=pointer]:
+        - img [ref=e107]
+        - text: Scenarios
+      - generic [ref=e111]:
+        - button "Export" [ref=e112] [cursor=pointer]:
+          - img [ref=e113]
+          - text: Export
+        - button "Excel" [ref=e116] [cursor=pointer]:
+          - img [ref=e117]
+          - text: Excel
+        - button "Import" [ref=e120] [cursor=pointer]:
+          - img [ref=e121]
+          - text: Import
+        - button "Share" [ref=e124] [cursor=pointer]:
+          - img [ref=e125]
+          - text: Share
+      - button "Help & FAQ ?" [ref=e131] [cursor=pointer]:
+        - img [ref=e132]
+        - text: Help & FAQ
+        - generic [ref=e135]: "?"
+      - generic [ref=e136]:
+        - button "Light theme" [ref=e137] [cursor=pointer]:
+          - img [ref=e138]
+        - button "Dark theme" [ref=e144] [cursor=pointer]:
+          - img [ref=e145]
+        - button "System theme" [ref=e147] [cursor=pointer]:
+          - img [ref=e148]
+  - generic [ref=e150]:
+    - main [ref=e152]:
+      - generic [ref=e153]:
+        - generic [ref=e154]:
+          - img [ref=e155]
+          - generic [ref=e157]:
+            - text: Beta
+            - generic [ref=e158]: · Thanks for trying FIRE Planner! We're actively improving based on user feedback.
+            - link "Follow updates on Telegram" [ref=e159] [cursor=pointer]:
+              - /url: https://t.me/sgfireplannerann
+            - text: ·
+            - link "Share feedback on Reddit" [ref=e160] [cursor=pointer]:
+              - /url: https://www.reddit.com/r/singaporefi/comments/1rcdnl3/i_built_a_free_singapore_fire_calculator_cpf_srs/
+          - button "Dismiss beta banner" [ref=e161] [cursor=pointer]:
+            - img [ref=e162]
+        - generic [ref=e165]:
+          - heading "Couple Inputs" [level=1] [ref=e166]
+          - generic [ref=e169]:
+            - heading "People & Household Configured Roster setup, member naming, and who this plan covers." [level=3] [ref=e170]:
+              - button "People & Household Configured Roster setup, member naming, and who this plan covers." [expanded] [ref=e171] [cursor=pointer]:
+                - generic [ref=e172]:
+                  - generic [ref=e173]:
+                    - generic [ref=e174]: People & Household
+                    - generic [ref=e175]: Configured
+                  - paragraph [ref=e176]: Roster setup, member naming, and who this plan covers.
+                - img [ref=e177]
+            - region "People & Household Configured Roster setup, member naming, and who this plan covers." [ref=e179]:
+              - generic [ref=e182]:
+                - generic [ref=e183]:
+                  - generic [ref=e185]:
+                    - generic [ref=e186]:
+                      - generic [ref=e187]:
+                        - text: Your name
+                        - textbox "Your name" [ref=e188]:
+                          - /placeholder: You
+                          - text: TJ
+                      - generic [ref=e189]:
+                        - text: Your age
+                        - spinbutton [ref=e190]: "32"
+                    - generic [ref=e191]:
+                      - generic [ref=e192]:
+                        - generic [ref=e193]: Include a second planning adult
+                        - generic [ref=e194]: Add a partner now, or start with one adult and dependents only.
+                      - switch "Include partner" [checked] [ref=e195] [cursor=pointer]
+                    - generic [ref=e196]:
+                      - generic [ref=e197]:
+                        - text: Partner name
+                        - textbox "Partner name" [ref=e198]:
+                          - /placeholder: Partner
+                          - text: Chloe
+                      - generic [ref=e199]:
+                        - text: Partner age
+                        - spinbutton [ref=e200]: "28"
+                  - generic [ref=e202]:
+                    - generic [ref=e203]:
+                      - generic [ref=e204]:
+                        - generic [ref=e205]: Dependents
+                        - generic [ref=e206]: Add any children or supported family members you want to track from the start.
+                      - button "Add dependent" [ref=e207] [cursor=pointer]
+                    - generic [ref=e208]: No dependents added yet.
+                - generic [ref=e209]:
+                  - generic [ref=e211]: Adult Planning Details
+                  - generic [ref=e212]:
+                    - generic [ref=e213]:
+                      - generic [ref=e214]:
+                        - generic [ref=e215]:
+                          - generic [ref=e216]:
+                            - heading "TJ" [level=3] [ref=e217]
+                            - generic [ref=e218]: TJ (You)
+                          - paragraph [ref=e219]: Controls retirement timing and member-specific defaults used across income, healthcare, CPF, and milestones.
+                        - button "Selected for editing" [ref=e220] [cursor=pointer]
+                      - generic [ref=e221]:
+                        - generic [ref=e222]:
+                          - text: Retirement Age
+                          - spinbutton [ref=e223]: "65"
+                        - generic [ref=e224]:
+                          - text: Life Expectancy
+                          - spinbutton [ref=e225]: "90"
+                        - generic [ref=e226]:
+                          - generic [ref=e227]:
+                            - text: Life Stage
+                            - button "More information" [ref=e228]: i
+                          - combobox [ref=e229] [cursor=pointer]:
+                            - generic: Pre-FIRE
+                            - img [ref=e230]
+                        - generic [ref=e232]:
+                          - text: Marital Status
+                          - combobox [ref=e233] [cursor=pointer]:
+                            - generic: Single
+                            - img [ref=e234]
+                        - generic [ref=e236]:
+                          - text: Residency Status
+                          - combobox [ref=e237] [cursor=pointer]:
+                            - generic: Singapore Citizen
+                            - img [ref=e238]
+                    - generic [ref=e240]:
+                      - generic [ref=e241]:
+                        - generic [ref=e242]:
+                          - generic [ref=e243]:
+                            - heading "Chloe" [level=3] [ref=e244]
+                            - generic [ref=e245]: Chloe
+                          - paragraph [ref=e246]: Controls retirement timing and member-specific defaults used across income, healthcare, CPF, and milestones.
+                        - button "Edit this adult" [ref=e247] [cursor=pointer]
+                      - generic [ref=e248]:
+                        - generic [ref=e249]:
+                          - text: Retirement Age
+                          - spinbutton [ref=e250]: "65"
+                        - generic [ref=e251]:
+                          - text: Life Expectancy
+                          - spinbutton [ref=e252]: "90"
+                        - generic [ref=e253]:
+                          - generic [ref=e254]:
+                            - text: Life Stage
+                            - button "More information" [ref=e255]: i
+                          - combobox [ref=e256] [cursor=pointer]:
+                            - generic: Pre-FIRE
+                            - img [ref=e257]
+                        - generic [ref=e259]:
+                          - text: Marital Status
+                          - combobox [ref=e260] [cursor=pointer]:
+                            - generic: Single
+                            - img [ref=e261]
+                        - generic [ref=e263]:
+                          - text: Residency Status
+                          - combobox [ref=e264] [cursor=pointer]:
+                            - generic: Singapore Citizen
+                            - img [ref=e265]
+                - generic [ref=e267]:
+                  - generic [ref=e269]: Dependent Planning Details
+                  - generic [ref=e271]: Add a dependent above to define ownership and support timing.
+          - generic [ref=e274]:
+            - heading "Income & Work Configured Per-adult salary models, streams, life events, and tax relief inputs." [level=3] [ref=e275]:
+              - button "Income & Work Configured Per-adult salary models, streams, life events, and tax relief inputs." [expanded] [ref=e276] [cursor=pointer]:
+                - generic [ref=e277]:
+                  - generic [ref=e278]:
+                    - generic [ref=e279]: Income & Work
+                    - generic [ref=e280]: Configured
+                  - paragraph [ref=e281]: Per-adult salary models, streams, life events, and tax relief inputs.
+                - img [ref=e282]
+            - tablist [ref=e287]:
+              - tab "TJ" [selected] [ref=e288] [cursor=pointer]
+              - tab "Chloe" [ref=e289] [cursor=pointer]
+            - region "Income & Work Configured Per-adult salary models, streams, life events, and tax relief inputs." [ref=e290]:
+              - generic [ref=e293]:
+                - generic [ref=e294]:
+                  - img [ref=e295]
+                  - generic [ref=e297]:
+                    - generic [ref=e298]: Contributing $15,300 to SRS could save ~$2,754/yr in tax.
+                    - button "Show tax planning →" [ref=e299] [cursor=pointer]
+                  - button "Dismiss suggestion" [ref=e300] [cursor=pointer]:
+                    - img [ref=e301]
+                - generic [ref=e304]:
+                  - generic [ref=e307]:
+                    - text: TJ's Salary Model
+                    - generic [ref=e308]: TJ (You)
+                  - generic [ref=e309]:
+                    - generic [ref=e310]:
+                      - generic [ref=e311]:
+                        - text: Model
+                        - combobox [ref=e312] [cursor=pointer]:
+                          - generic: Simple
+                          - img [ref=e313]
+                      - generic [ref=e315]:
+                        - generic [ref=e316]: Annual salary
+                        - generic [ref=e317]:
+                          - generic [ref=e318]: $
+                          - textbox "Annual salary" [ref=e319]: 120,000
+                      - generic [ref=e320]:
+                        - generic [ref=e321]: Growth rate
+                        - generic [ref=e322]:
+                          - spinbutton "Growth rate" [ref=e323]: "3.0"
+                          - generic [ref=e324]: "%"
+                      - generic [ref=e325]:
+                        - generic [ref=e326]: Bonus months
+                        - spinbutton "Bonus months" [ref=e328]: "0"
+                    - generic [ref=e329]:
+                      - generic [ref=e330]:
+                        - generic [ref=e331]: Employer CPF contributions
+                        - generic [ref=e332]: Keep this on for salaried employment so household CPF projections stay aligned with take-home pay.
+                      - switch [checked] [ref=e333] [cursor=pointer]
+                    - generic [ref=e334]: "Projected salary at retirement: $318,280"
+                - generic [ref=e335]:
+                  - generic [ref=e337]:
+                    - generic [ref=e338]:
+                      - text: Income Streams
+                      - button "More information" [ref=e339]: i
+                    - button "Add stream" [ref=e340] [cursor=pointer]
+                  - generic [ref=e342]: No non-salary income streams yet.
+                - generic [ref=e343]:
+                  - tablist [ref=e345]:
+                    - tab "TJ" [ref=e346] [cursor=pointer]
+                    - tab "Chloe" [ref=e347] [cursor=pointer]
+                    - tab "Joint" [selected] [ref=e348] [cursor=pointer]
+                  - paragraph [ref=e349]: Switches the projection view only — inputs are always edited per person below.
+                - generic [ref=e350]:
+                  - generic [ref=e352]:
+                    - paragraph [ref=e353]:
+                      - text: Peak Earning
+                      - button "More information" [ref=e354]: i
+                    - paragraph [ref=e355]: $690,806 (age 69)
+                  - generic [ref=e357]:
+                    - paragraph [ref=e358]: Lifetime Earnings
+                    - paragraph [ref=e359]: $16,318,357
+                  - generic [ref=e361]:
+                    - paragraph [ref=e362]: Avg Savings Rate
+                    - paragraph [ref=e363]: 67.54%
+                  - generic [ref=e365]:
+                    - paragraph [ref=e366]: Total CPF Contributions
+                    - paragraph [ref=e367]: $1,199,040
+                  - generic [ref=e369]:
+                    - paragraph [ref=e370]:
+                      - text: Income Replacement Ratio
+                      - button "More information" [ref=e371]: i
+                    - paragraph [ref=e372]: 11.45%
+                - generic [ref=e373]:
+                  - generic [ref=e375]: Joint Income Projection
+                  - generic [ref=e377]:
+                    - table [ref=e379]:
+                      - rowgroup [ref=e380]:
+                        - row "Age Salary Rental Invest. Gross SG Tax CPF (Emp) Net Savings Cumul. CPF OA CPF SA CPF RA CPF MA" [ref=e381]:
+                          - columnheader "Age" [ref=e382]
+                          - columnheader "Salary" [ref=e383]
+                          - columnheader "Rental" [ref=e384]
+                          - columnheader "Invest." [ref=e385]
+                          - columnheader "Gross" [ref=e386]
+                          - columnheader "SG Tax" [ref=e387]
+                          - columnheader "CPF (Emp)" [ref=e388]
+                          - columnheader "Net" [ref=e389]
+                          - columnheader "Savings" [ref=e390]
+                          - columnheader "Cumul." [ref=e391]
+                          - columnheader "CPF OA" [ref=e392]
+                          - columnheader "CPF SA" [ref=e393]
+                          - columnheader "CPF RA" [ref=e394]
+                          - columnheader "CPF MA" [ref=e395]
+                      - rowgroup [ref=e396]:
+                        - row "32 $216,000 - - $216,000 $13,470 $19,200 $183,330 $117,306 $117,306 $22,356 $6,053 $0 $7,834" [ref=e397]:
+                          - cell "32" [ref=e398]
+                          - cell "$216,000" [ref=e399]
+                          - cell "-" [ref=e400]
+                          - cell "-" [ref=e401]
+                          - cell "$216,000" [ref=e402]
+                          - cell "$13,470" [ref=e403]
+                          - cell "$19,200" [ref=e404]
+                          - cell "$183,330" [ref=e405]
+                          - cell "$117,306" [ref=e406]
+                          - cell "$117,306" [ref=e407]
+                          - cell "$22,356" [ref=e408]
+                          - cell "$6,053" [ref=e409]
+                          - cell "$0" [ref=e410]
+                          - cell "$7,834" [ref=e411]
+                        - row "33 $222,480 - - $222,480 $14,540 $19,200 $188,740 $121,065 $238,371 $45,271 $12,576 $0 $15,981" [ref=e412]:
+                          - cell "33" [ref=e413]
+                          - cell "$222,480" [ref=e414]
+                          - cell "-" [ref=e415]
+                          - cell "-" [ref=e416]
+                          - cell "$222,480" [ref=e417]
+                          - cell "$14,540" [ref=e418]
+                          - cell "$19,200" [ref=e419]
+                          - cell "$188,740" [ref=e420]
+                          - cell "$121,065" [ref=e421]
+                          - cell "$238,371" [ref=e422]
+                          - cell "$45,271" [ref=e423]
+                          - cell "$12,576" [ref=e424]
+                          - cell "$0" [ref=e425]
+                          - cell "$15,981" [ref=e426]
+                    - button "Show all 63 rows" [ref=e427] [cursor=pointer]
+                - generic [ref=e428]:
+                  - generic [ref=e430]: TJ's SRS
+                  - generic [ref=e431]:
+                    - generic [ref=e432]:
+                      - generic [ref=e433]:
+                        - generic [ref=e434]: SRS balance
+                        - generic [ref=e435]:
+                          - generic [ref=e436]: $
+                          - textbox "SRS balance" [ref=e437]: "0"
+                      - generic [ref=e438]:
+                        - generic [ref=e439]: SRS annual contribution
+                        - generic [ref=e440]:
+                          - generic [ref=e441]: $
+                          - textbox "SRS annual contribution" [ref=e442]: "0"
+                      - generic [ref=e443]:
+                        - generic [ref=e444]: SRS return
+                        - generic [ref=e445]:
+                          - spinbutton "SRS return" [ref=e446]: "4.0"
+                          - generic [ref=e447]: "%"
+                      - generic [ref=e448]:
+                        - generic [ref=e449]: SRS drawdown start age
+                        - spinbutton "SRS drawdown start age" [ref=e451]: "63"
+                    - generic [ref=e452]:
+                      - generic [ref=e453]:
+                        - generic [ref=e454]: Keep SRS contributions after FIRE
+                        - generic [ref=e455]: Use this when you want post-FIRE earned income to continue funding the selected adult's SRS account.
+                      - switch [ref=e456] [cursor=pointer]
+                - generic [ref=e457]:
+                  - generic [ref=e459]: TJ's Tax Reliefs
+                  - generic [ref=e461]:
+                    - generic [ref=e462]:
+                      - generic [ref=e463]:
+                        - generic [ref=e464]: Personal Tax Reliefs
+                        - button "More information" [ref=e465]: i
+                      - tablist [ref=e467]:
+                        - tab "Simple" [selected] [ref=e468] [cursor=pointer]
+                        - tab "Detailed" [ref=e469] [cursor=pointer]
+                    - generic [ref=e470]:
+                      - generic [ref=e471]: Personal reliefs
+                      - generic [ref=e472]:
+                        - generic [ref=e473]: $
+                        - textbox "Personal reliefs" [ref=e474]: 20,000
+                    - generic [ref=e475]:
+                      - text: Auto-calculated deductions
+                      - generic [ref=e476]:
+                        - generic [ref=e477]:
+                          - generic [ref=e478]: Central Provident Fund (CPF) Relief (Employee)
+                          - button "More information" [ref=e479]: i
+                        - generic [ref=e480]: $19,200
+                    - generic [ref=e481]:
+                      - generic [ref=e482]:
+                        - generic [ref=e483]: Total Tax Deductions
+                        - button "More information" [ref=e484]: i
+                      - generic [ref=e485]: $39,200
+                - generic [ref=e486]:
+                  - generic [ref=e488]:
+                    - generic [ref=e489]: TJ's Life Events
+                    - generic [ref=e490]:
+                      - switch [ref=e491] [cursor=pointer]
+                      - generic [ref=e492]: Enabled
+                  - generic [ref=e494]: Enable life events to model breaks, pay cuts, caregiving, or other household-specific disruptions.
+          - generic [ref=e497]:
+            - heading "Spending, Healthcare & Goals Configured Shared spending, private spending, healthcare, goals, and retirement draws." [level=3] [ref=e498]:
+              - button "Spending, Healthcare & Goals Configured Shared spending, private spending, healthcare, goals, and retirement draws." [expanded] [ref=e499] [cursor=pointer]:
+                - generic [ref=e500]:
+                  - generic [ref=e501]:
+                    - generic [ref=e502]: Spending, Healthcare & Goals
+                    - generic [ref=e503]: Configured
+                  - paragraph [ref=e504]: Shared spending, private spending, healthcare, goals, and retirement draws.
+                - img [ref=e505]
+            - generic [ref=e508]:
+              - tablist [ref=e510]:
+                - tab "TJ" [selected] [ref=e511] [cursor=pointer]
+                - tab "Chloe" [ref=e512] [cursor=pointer]
+              - generic [ref=e513]: + shared
+            - region "Spending, Healthcare & Goals Configured Shared spending, private spending, healthcare, goals, and retirement draws." [ref=e514]:
+              - generic [ref=e517]:
+                - generic [ref=e518]:
+                  - generic [ref=e520]:
+                    - generic [ref=e521]:
+                      - text: Spending Items
+                      - button "More information" [ref=e522]: i
+                    - generic [ref=e523]:
+                      - button "Add living cost" [ref=e524] [cursor=pointer]
+                      - button "Add adjustment" [ref=e525] [cursor=pointer]
+                  - generic [ref=e526]:
+                    - generic [ref=e527]:
+                      - generic [ref=e528]:
+                        - textbox [ref=e529]: Base living expenses
+                        - button "Remove" [ref=e530] [cursor=pointer]
+                      - generic [ref=e531]:
+                        - generic [ref=e532]:
+                          - text: Kind
+                          - combobox [ref=e533] [cursor=pointer]:
+                            - generic: Base living
+                            - img [ref=e534]
+                        - generic [ref=e536]:
+                          - text: Owner
+                          - combobox [ref=e537] [cursor=pointer]:
+                            - generic: TJ (You)
+                            - img [ref=e538]
+                        - generic [ref=e540]:
+                          - text: Age based on
+                          - combobox [ref=e541] [cursor=pointer]:
+                            - generic: TJ (You)
+                            - img [ref=e542]
+                        - generic [ref=e544]:
+                          - text: Periodicity
+                          - combobox [disabled] [ref=e545]:
+                            - generic: Annual
+                            - img [ref=e546]
+                        - generic [ref=e548]:
+                          - generic [ref=e549]: Amount
+                          - generic [ref=e550]:
+                            - generic [ref=e551]: $
+                            - textbox "Amount" [ref=e552]: 12,012
+                        - generic [ref=e553]:
+                          - text: Growth
+                          - combobox [ref=e554] [cursor=pointer]:
+                            - generic: Inflation-linked
+                            - img [ref=e555]
+                        - generic [ref=e557]:
+                          - generic [ref=e558]: Start age
+                          - spinbutton "Start age" [disabled] [ref=e560]: "32"
+                        - generic [ref=e561]:
+                          - generic [ref=e562]: End age
+                          - spinbutton "End age" [disabled] [ref=e564]: "90"
+                      - paragraph [ref=e565]: Periodicity and age range are derived from the plan setup. Edit the person's age and life expectancy to change these.
+                    - generic [ref=e566]:
+                      - generic [ref=e567]:
+                        - textbox [ref=e568]: Chloe's personal expenses
+                        - button "Remove" [ref=e569] [cursor=pointer]
+                      - generic [ref=e570]:
+                        - generic [ref=e571]:
+                          - text: Kind
+                          - combobox [ref=e572] [cursor=pointer]:
+                            - generic: Base living
+                            - img [ref=e573]
+                        - generic [ref=e575]:
+                          - text: Owner
+                          - combobox [ref=e576] [cursor=pointer]:
+                            - generic: Chloe
+                            - img [ref=e577]
+                        - generic [ref=e579]:
+                          - text: Age based on
+                          - combobox [ref=e580] [cursor=pointer]:
+                            - generic: Chloe
+                            - img [ref=e581]
+                        - generic [ref=e583]:
+                          - text: Periodicity
+                          - combobox [disabled] [ref=e584]:
+                            - generic: Annual
+                            - img [ref=e585]
+                        - generic [ref=e587]:
+                          - generic [ref=e588]: Amount
+                          - generic [ref=e589]:
+                            - generic [ref=e590]: $
+                            - textbox "Amount" [ref=e591]: 6,012
+                        - generic [ref=e592]:
+                          - text: Growth
+                          - combobox [ref=e593] [cursor=pointer]:
+                            - generic: Inflation-linked
+                            - img [ref=e594]
+                        - generic [ref=e596]:
+                          - generic [ref=e597]: Start age
+                          - spinbutton "Start age" [disabled] [ref=e599]: "28"
+                        - generic [ref=e600]:
+                          - generic [ref=e601]: End age
+                          - spinbutton "End age" [disabled] [ref=e603]: "90"
+                      - paragraph [ref=e604]: Periodicity and age range are derived from the plan setup. Edit the person's age and life expectancy to change these.
+                    - generic [ref=e605]:
+                      - generic [ref=e606]:
+                        - textbox [ref=e607]: Additional joint expenses
+                        - button "Remove" [ref=e608] [cursor=pointer]
+                      - generic [ref=e609]:
+                        - generic [ref=e610]:
+                          - text: Kind
+                          - combobox [ref=e611] [cursor=pointer]:
+                            - generic: Base living
+                            - img [ref=e612]
+                        - generic [ref=e614]:
+                          - text: Owner
+                          - combobox [ref=e615] [cursor=pointer]:
+                            - generic: Shared
+                            - img [ref=e616]
+                        - generic [ref=e618]:
+                          - text: Age based on
+                          - combobox [ref=e619] [cursor=pointer]:
+                            - generic: TJ (You)
+                            - img [ref=e620]
+                        - generic [ref=e622]:
+                          - text: Periodicity
+                          - combobox [disabled] [ref=e623]:
+                            - generic: Annual
+                            - img [ref=e624]
+                        - generic [ref=e626]:
+                          - generic [ref=e627]: Amount
+                          - generic [ref=e628]:
+                            - generic [ref=e629]: $
+                            - textbox "Amount" [ref=e630]: 48,000
+                        - generic [ref=e631]:
+                          - text: Growth
+                          - combobox [ref=e632] [cursor=pointer]:
+                            - generic: Inflation-linked
+                            - img [ref=e633]
+                        - generic [ref=e635]:
+                          - generic [ref=e636]: Start age
+                          - spinbutton "Start age" [disabled] [ref=e638]: "32"
+                        - generic [ref=e639]:
+                          - generic [ref=e640]: End age
+                          - spinbutton "End age" [disabled] [ref=e642]: "90"
+                      - paragraph [ref=e643]: Periodicity and age range are derived from the plan setup. Edit the person's age and life expectancy to change these.
+                - generic [ref=e644]:
+                  - generic [ref=e646]:
+                    - generic [ref=e647]: Parent Support
+                    - button "Add parent support" [ref=e648] [cursor=pointer]
+                  - generic [ref=e650]: Add explicit parent-support rows so the household plan can show who carries that obligation.
+                - generic [ref=e651]:
+                  - generic [ref=e653]: TJ's Healthcare
+                  - generic [ref=e655]:
+                    - generic [ref=e656]:
+                      - generic [ref=e657]: Enable healthcare planning
+                      - generic [ref=e658]: Use this to model ISP choices, out-of-pocket spending, and MediSave top-ups for the selected adult.
+                    - switch [ref=e659] [cursor=pointer]
+                - generic [ref=e660]:
+                  - generic [ref=e662]:
+                    - generic [ref=e663]: Retirement Withdrawals
+                    - button "Add withdrawal" [ref=e664] [cursor=pointer]
+                  - generic [ref=e666]: Add one-off retirement spending events that should hit a specific adult or the shared household pool.
+                - generic [ref=e667]:
+                  - generic [ref=e670]:
+                    - text: Financial Goals
+                    - button "More information" [ref=e671]: i
+                  - generic [ref=e672]:
+                    - generic [ref=e673]:
+                      - paragraph [ref=e674]: "Quick add from templates:"
+                      - generic [ref=e675]:
+                        - button "Wedding" [ref=e676] [cursor=pointer]:
+                          - img [ref=e677]
+                          - text: Wedding
+                        - button "Children's Education" [ref=e679] [cursor=pointer]:
+                          - img [ref=e680]
+                          - text: Children's Education
+                        - button "Home Downpayment" [ref=e683] [cursor=pointer]:
+                          - img [ref=e684]
+                          - text: Home Downpayment
+                        - button "Car Purchase" [ref=e687] [cursor=pointer]:
+                          - img [ref=e688]
+                          - text: Car Purchase
+                        - button "Sabbatical Travel" [ref=e692] [cursor=pointer]:
+                          - img [ref=e693]
+                          - text: Sabbatical Travel
+                        - button "Home Renovation" [ref=e695] [cursor=pointer]:
+                          - img [ref=e696]
+                          - text: Home Renovation
+                        - button "New Baby" [ref=e700] [cursor=pointer]:
+                          - img [ref=e701]
+                          - text: New Baby
+                    - paragraph [ref=e704]: No financial goals planned. Add milestone expenses that could impact your savings timeline.
+                    - button "Add custom goal" [ref=e705] [cursor=pointer]:
+                      - img
+                      - text: Add custom goal
+          - generic [ref=e708]:
+            - heading "Assets & Net Worth Configured Household Liquid assets, CPF balances, SRS, and household balance-sheet coverage." [level=3] [ref=e709]:
+              - button "Assets & Net Worth Configured Household Liquid assets, CPF balances, SRS, and household balance-sheet coverage." [expanded] [ref=e710] [cursor=pointer]:
+                - generic [ref=e711]:
+                  - generic [ref=e712]:
+                    - generic [ref=e713]: Assets & Net Worth
+                    - generic [ref=e714]: Configured
+                    - generic [ref=e715]: Household
+                  - paragraph [ref=e716]: Liquid assets, CPF balances, SRS, and household balance-sheet coverage.
+                - img [ref=e717]
+            - region "Assets & Net Worth Configured Household Liquid assets, CPF balances, SRS, and household balance-sheet coverage." [ref=e719]:
+              - generic [ref=e722]:
+                - generic [ref=e723]:
+                  - generic [ref=e725]:
+                    - text: Liquid Net Worth
+                    - button "More information" [ref=e726]: i
+                  - generic [ref=e728]:
+                    - generic [ref=e729]:
+                      - generic [ref=e730]: TJ (You)
+                      - generic [ref=e731]:
+                        - generic [ref=e732]: $
+                        - textbox "TJ (You)" [ref=e733]: 200,000
+                    - generic [ref=e734]:
+                      - generic [ref=e735]: Chloe
+                      - generic [ref=e736]:
+                        - generic [ref=e737]: $
+                        - textbox "Chloe" [ref=e738]: "0"
+                - generic [ref=e739]:
+                  - generic [ref=e741]:
+                    - generic [ref=e742]:
+                      - text: Locked Assets
+                      - button "More information" [ref=e743]: i
+                    - button "Add locked asset" [ref=e744] [cursor=pointer]
+                  - generic [ref=e746]: No locked assets. Add endowments, bonds, or other assets that mature at a future age.
+          - generic [ref=e749]:
+            - heading "CPF Needs review TJ's CPF settings, balances, fallback rules, and projection helpers." [level=3] [ref=e750]:
+              - button "CPF Needs review TJ's CPF settings, balances, fallback rules, and projection helpers." [expanded] [ref=e751] [cursor=pointer]:
+                - generic [ref=e752]:
+                  - generic [ref=e753]:
+                    - generic [ref=e754]: CPF
+                    - generic [ref=e755]: Needs review
+                  - paragraph [ref=e756]: TJ's CPF settings, balances, fallback rules, and projection helpers.
+                - img [ref=e757]
+            - tablist [ref=e762]:
+              - tab "TJ" [selected] [ref=e763] [cursor=pointer]
+              - tab "Chloe" [ref=e764] [cursor=pointer]
+            - region "CPF Needs review TJ's CPF settings, balances, fallback rules, and projection helpers." [ref=e765]:
+              - generic [ref=e767]:
+                - generic [ref=e768]:
+                  - generic [ref=e770]: Current CPF Status
+                  - generic [ref=e771]:
+                    - generic [ref=e772]:
+                      - button "Estimate from age & salary" [ref=e773] [cursor=pointer]
+                      - button "More information" [ref=e774]: i
+                    - generic [ref=e775]:
+                      - heading "Current CPF Balances" [level=4] [ref=e776]
+                      - generic [ref=e777]:
+                        - generic [ref=e778]:
+                          - generic [ref=e779]: Ordinary (OA)
+                          - generic [ref=e780]:
+                            - generic [ref=e781]: $
+                            - textbox "Ordinary (OA)" [ref=e782]: "0"
+                        - generic [ref=e783]:
+                          - generic [ref=e784]: Special (SA)
+                          - generic [ref=e785]:
+                            - generic [ref=e786]: $
+                            - textbox "Special (SA)" [ref=e787]: "0"
+                        - generic [ref=e788]:
+                          - generic [ref=e789]: MediSave (MA)
+                          - generic [ref=e790]:
+                            - generic [ref=e791]: $
+                            - textbox "MediSave (MA)" [ref=e792]: "0"
+                        - generic [ref=e793]:
+                          - generic [ref=e794]: Total
+                          - generic [ref=e795]: $0
+                - generic [ref=e796]:
+                  - generic [ref=e798]: Voluntary Top-Ups
+                  - generic [ref=e799]:
+                    - generic [ref=e800]:
+                      - generic [ref=e801]:
+                        - generic [ref=e802]:
+                          - text: Annual SA Top-Up (Retirement Sum Top-Up)
+                          - button "More information" [ref=e803]: i
+                        - generic [ref=e804]:
+                          - generic [ref=e805]: $
+                          - textbox "Annual SA Top-Up (Retirement Sum Top-Up) More information" [ref=e806]: "0"
+                      - generic [ref=e807]:
+                        - generic [ref=e808]:
+                          - text: Annual MediSave (MA) Top-Up
+                          - button "More information" [ref=e809]: i
+                        - generic [ref=e810]:
+                          - generic [ref=e811]: $
+                          - textbox "Annual MediSave (MA) Top-Up More information" [ref=e812]: "0"
+                      - generic [ref=e813]:
+                        - generic [ref=e814]:
+                          - text: Annual Ordinary Account (OA) Top-Up
+                          - button "More information" [ref=e815]: i
+                        - generic [ref=e816]:
+                          - generic [ref=e817]: $
+                          - textbox "Annual Ordinary Account (OA) Top-Up More information" [ref=e818]: "0"
+                    - paragraph [ref=e819]: Top-ups are applied pre-retirement only and reduce your annual liquid savings.
+                - generic [ref=e820]:
+                  - generic [ref=e822]: CPF Planning
+                  - generic [ref=e823]:
+                    - generic [ref=e824]:
+                      - heading "Projected Retirement Sums (BRS/FRS/ERS) at Age 55 More information" [level=4] [ref=e825]:
+                        - text: Projected Retirement Sums (BRS/FRS/ERS) at Age 55
+                        - button "More information" [ref=e826]: i
+                      - generic [ref=e827]:
+                        - generic [ref=e828]:
+                          - generic [ref=e829]: Basic (BRS)
+                          - generic [ref=e830]: $243,114
+                          - generic [ref=e831]: "2026: $110,200"
+                        - generic [ref=e832]:
+                          - generic [ref=e833]: Full (FRS)
+                          - generic [ref=e834]: $486,228
+                          - generic [ref=e835]: "2026: $220,400"
+                        - generic [ref=e836]:
+                          - generic [ref=e837]: Enhanced (ERS)
+                          - generic [ref=e838]: $972,455
+                          - generic [ref=e839]: "2026: $440,800"
+                    - generic [ref=e840]:
+                      - heading "CPF LIFE Monthly Payouts (from age 65) More information" [level=4] [ref=e841]:
+                        - text: CPF LIFE Monthly Payouts (from age 65)
+                        - button "More information" [ref=e842]: i
+                      - table [ref=e844]:
+                        - rowgroup [ref=e845]:
+                          - row "Basic (~5.4%) Standard (~6.3%) Escalating (~4.8%, +2%/yr)" [ref=e846]:
+                            - columnheader [ref=e847]
+                            - columnheader "Basic (~5.4%)" [ref=e848]:
+                              - text: Basic
+                              - generic [ref=e849]: (~5.4%)
+                            - columnheader "Standard (~6.3%)" [ref=e850]:
+                              - text: Standard
+                              - generic [ref=e851]: (~6.3%)
+                            - columnheader "Escalating (~4.8%, +2%/yr)" [ref=e852]:
+                              - text: Escalating
+                              - generic [ref=e853]: (~4.8%, +2%/yr)
+                        - rowgroup [ref=e854]:
+                          - row "Basic (BRS) ($359,868) $1,619/mo $1,889/mo $1,439/mo" [ref=e855]:
+                            - cell "Basic (BRS) ($359,868)" [ref=e856]
+                            - cell "$1,619/mo" [ref=e857]
+                            - cell "$1,889/mo" [ref=e858]
+                            - cell "$1,439/mo" [ref=e859]
+                          - row "Full (FRS) ($719,736) $3,239/mo $3,779/mo $2,879/mo" [ref=e860]:
+                            - cell "Full (FRS) ($719,736)" [ref=e861]
+                            - cell "$3,239/mo" [ref=e862]
+                            - cell "$3,779/mo" [ref=e863]
+                            - cell "$2,879/mo" [ref=e864]
+                          - row "Enhanced (ERS) ($1,439,471) $6,478/mo $7,557/mo $5,758/mo" [ref=e865]:
+                            - cell "Enhanced (ERS) ($1,439,471)" [ref=e866]
+                            - cell "$6,478/mo" [ref=e867]
+                            - cell "$7,557/mo" [ref=e868]
+                            - cell "$5,758/mo" [ref=e869]
+                    - generic [ref=e870]:
+                      - heading "CPF LIFE Configuration More information" [level=4] [ref=e871]:
+                        - text: CPF LIFE Configuration
+                        - button "More information" [ref=e872]: i
+                      - generic [ref=e873]:
+                        - generic [ref=e874]:
+                          - text: Start Age (65-75)
+                          - spinbutton [ref=e875]: "65"
+                        - generic [ref=e876]:
+                          - text: Plan Type
+                          - combobox [ref=e877] [cursor=pointer]:
+                            - generic: Standard (~6.3%)
+                            - img [ref=e878]
+                        - generic [ref=e880]:
+                          - text: Retirement Sum
+                          - combobox [ref=e881] [cursor=pointer]:
+                            - generic: Full Retirement Sum ($486,228)
+                            - img [ref=e882]
+                      - generic [ref=e884]:
+                        - text: "Projected annual payout:"
+                        - generic [ref=e885]: $45,997/yr
+                        - generic [ref=e886]: ($3,833/mo)
+          - generic [ref=e889]:
+            - heading "Property Configured Household Ownership-scoped homes, mortgages, and housing decisions." [level=3] [ref=e890]:
+              - button "Property Configured Household Ownership-scoped homes, mortgages, and housing decisions." [expanded] [ref=e891] [cursor=pointer]:
+                - generic [ref=e892]:
+                  - generic [ref=e893]:
+                    - generic [ref=e894]: Property
+                    - generic [ref=e895]: Configured
+                    - generic [ref=e896]: Household
+                  - paragraph [ref=e897]: Ownership-scoped homes, mortgages, and housing decisions.
+                - img [ref=e898]
+            - region "Property Configured Household Ownership-scoped homes, mortgages, and housing decisions." [ref=e900]:
+              - generic [ref=e904]:
+                - generic [ref=e906]:
+                  - generic [ref=e907]: Property Ownership & Housing Plans
+                  - button "Add property" [ref=e908] [cursor=pointer]
+                - generic [ref=e909]:
+                  - generic [ref=e910]:
+                    - generic [ref=e911]:
+                      - generic [ref=e912]:
+                        - textbox [ref=e913]: 1st property
+                        - generic [ref=e914]: Shared
+                      - button "Remove" [ref=e915] [cursor=pointer]
+                    - generic [ref=e916]:
+                      - generic [ref=e917]:
+                        - text: Owner
+                        - combobox [ref=e918] [cursor=pointer]:
+                          - generic: Shared
+                          - img [ref=e919]
+                      - generic [ref=e921]:
+                        - generic [ref=e922]: Share (%)
+                        - spinbutton "Share (%)" [ref=e924]: "100"
+                      - generic [ref=e925]:
+                        - text: Property type
+                        - combobox [ref=e926] [cursor=pointer]:
+                          - generic: HDB
+                          - img [ref=e927]
+                      - generic [ref=e929]:
+                        - text: Residency for ABSD
+                        - combobox [ref=e930] [cursor=pointer]:
+                          - generic: Singapore citizen
+                          - img [ref=e931]
+                      - generic [ref=e933]:
+                        - generic [ref=e934]: Existing properties
+                        - spinbutton "Existing properties" [ref=e936]: "0"
+                      - generic [ref=e937]:
+                        - generic [ref=e938]:
+                          - generic [ref=e939]: Currently owned
+                          - generic [ref=e940]: Turn this off to model a future purchase or a placeholder property without an active mortgage today.
+                        - switch [checked] [ref=e941] [cursor=pointer]
+                    - generic [ref=e942]:
+                      - generic [ref=e943]:
+                        - heading "Existing Home & Mortgage" [level=3] [ref=e944]
+                        - button "More information" [ref=e945]: i
+                      - generic [ref=e946]:
+                        - generic [ref=e947]:
+                          - generic [ref=e948]: Existing property value
+                          - generic [ref=e949]:
+                            - generic [ref=e950]: $
+                            - textbox "Existing property value" [ref=e951]: 1,200,000
+                        - generic [ref=e952]:
+                          - generic [ref=e953]: Mortgage balance
+                          - generic [ref=e954]:
+                            - generic [ref=e955]: $
+                            - textbox "Mortgage balance" [ref=e956]: "0"
+                        - generic [ref=e957]:
+                          - generic [ref=e958]: Monthly payment
+                          - generic [ref=e959]:
+                            - generic [ref=e960]: $
+                            - textbox "Monthly payment" [ref=e961]: "0"
+                        - generic [ref=e962]:
+                          - generic [ref=e963]: Existing mortgage rate
+                          - generic [ref=e964]:
+                            - spinbutton "Existing mortgage rate" [ref=e965]: "3.5"
+                            - generic [ref=e966]: "%"
+                        - generic [ref=e967]:
+                          - generic [ref=e968]: Mortgage years left
+                          - spinbutton "Mortgage years left" [ref=e970]: "25"
+                        - generic [ref=e971]:
+                          - generic [ref=e972]: CPF monthly for housing
+                          - generic [ref=e973]:
+                            - generic [ref=e974]: $
+                            - textbox "CPF monthly for housing" [ref=e975]: "0"
+                        - generic [ref=e976]:
+                          - generic [ref=e977]: Existing lease years
+                          - spinbutton "Existing lease years" [ref=e979]: "99"
+                        - generic [ref=e980]:
+                          - generic [ref=e981]: Existing appreciation rate
+                          - generic [ref=e982]:
+                            - spinbutton "Existing appreciation rate" [ref=e983]: "3.0"
+                            - generic [ref=e984]: "%"
+                        - generic [ref=e985]:
+                          - generic [ref=e986]:
+                            - generic [ref=e987]: Apply Bala lease decay
+                            - generic [ref=e988]: Use this for leasehold assets when you want the model to degrade resale value as the remaining lease shortens.
+                          - switch [ref=e989] [cursor=pointer]
+                    - generic [ref=e990]:
+                      - generic [ref=e991]:
+                        - heading "HDB Monetization" [level=3] [ref=e992]
+                        - button "More information" [ref=e993]: i
+                      - generic [ref=e994]:
+                        - generic [ref=e995]:
+                          - text: Flat type
+                          - combobox [ref=e996] [cursor=pointer]:
+                            - generic: 4-room
+                            - img [ref=e997]
+                        - generic [ref=e999]:
+                          - text: Monetization strategy
+                          - combobox [ref=e1000] [cursor=pointer]:
+                            - generic: None
+                            - img [ref=e1001]
+                        - generic [ref=e1003]:
+                          - generic [ref=e1004]: CPF used for housing
+                          - generic [ref=e1005]:
+                            - generic [ref=e1006]: $
+                            - textbox "CPF used for housing" [ref=e1007]: "0"
+                    - generic [ref=e1008]:
+                      - generic [ref=e1009]:
+                        - heading "Downsizing Scenario" [level=3] [ref=e1010]
+                        - button "More information" [ref=e1011]: i
+                      - generic [ref=e1013]:
+                        - text: Scenario
+                        - combobox [ref=e1014] [cursor=pointer]:
+                          - generic: None
+                          - img [ref=e1015]
+                    - generic [ref=e1017]:
+                      - generic [ref=e1018]:
+                        - generic [ref=e1019]: Property Projection
+                        - generic [ref=e1020]: (nominal $)
+                      - table [ref=e1022]:
+                        - rowgroup [ref=e1023]:
+                          - row "Age Property Value Lease Left Mortgage Payment (Cash) Net Equity Notes" [ref=e1024]:
+                            - columnheader "Age" [ref=e1025]
+                            - columnheader "Property Value" [ref=e1026]
+                            - columnheader "Lease Left" [ref=e1027]
+                            - columnheader "Mortgage" [ref=e1028]
+                            - columnheader "Payment (Cash)" [ref=e1029]
+                            - columnheader "Net Equity" [ref=e1030]
+                            - columnheader "Notes" [ref=e1031]
+                        - rowgroup [ref=e1032]:
+                          - row "32 $1,200,000 99yr $0 $0 $1,200,000" [ref=e1033]:
+                            - cell "32" [ref=e1034]
+                            - cell "$1,200,000" [ref=e1035]
+                            - cell "99yr" [ref=e1036]
+                            - cell "$0" [ref=e1037]
+                            - cell "$0" [ref=e1038]
+                            - cell "$1,200,000" [ref=e1039]
+                            - cell [ref=e1040]
+                          - row "65 $3,182,802 66yr $0 $0 $3,182,802" [ref=e1041]:
+                            - cell "65" [ref=e1042]
+                            - cell "$3,182,802" [ref=e1043]
+                            - cell "66yr" [ref=e1044]
+                            - cell "$0" [ref=e1045]
+                            - cell "$0" [ref=e1046]
+                            - cell "$3,182,802" [ref=e1047]
+                            - cell [ref=e1048]
+                          - row "90 $6,664,081 41yr $0 $0 $6,664,081" [ref=e1049]:
+                            - cell "90" [ref=e1050]
+                            - cell "$6,664,081" [ref=e1051]
+                            - cell "41yr" [ref=e1052]
+                            - cell "$0" [ref=e1053]
+                            - cell "$0" [ref=e1054]
+                            - cell "$6,664,081" [ref=e1055]
+                            - cell [ref=e1056]
+                      - button "Show full schedule (59 years)" [ref=e1057] [cursor=pointer]:
+                        - img [ref=e1058]
+                        - text: Show full schedule (59 years)
+                  - generic [ref=e1060]:
+                    - generic [ref=e1061]:
+                      - generic [ref=e1062]:
+                        - textbox [ref=e1063]: Household property
+                        - generic [ref=e1064]: Shared
+                      - button "Remove" [ref=e1065] [cursor=pointer]
+                    - generic [ref=e1066]:
+                      - generic [ref=e1067]:
+                        - text: Owner
+                        - combobox [ref=e1068] [cursor=pointer]:
+                          - generic: Shared
+                          - img [ref=e1069]
+                      - generic [ref=e1071]:
+                        - generic [ref=e1072]: Share (%)
+                        - spinbutton "Share (%)" [ref=e1074]: "50"
+                      - generic [ref=e1075]:
+                        - text: Property type
+                        - combobox [ref=e1076] [cursor=pointer]:
+                          - generic: HDB
+                          - img [ref=e1077]
+                      - generic [ref=e1079]:
+                        - text: Residency for ABSD
+                        - combobox [ref=e1080] [cursor=pointer]:
+                          - generic: Singapore citizen
+                          - img [ref=e1081]
+                      - generic [ref=e1083]:
+                        - generic [ref=e1084]: Existing properties
+                        - spinbutton "Existing properties" [ref=e1086]: "1"
+                      - generic [ref=e1087]:
+                        - generic [ref=e1088]:
+                          - generic [ref=e1089]: Currently owned
+                          - generic [ref=e1090]: Turn this off to model a future purchase or a placeholder property without an active mortgage today.
+                        - switch [checked] [ref=e1091] [cursor=pointer]
+                    - generic [ref=e1092]:
+                      - generic [ref=e1093]:
+                        - heading "Existing Home & Mortgage" [level=3] [ref=e1094]
+                        - button "More information" [ref=e1095]: i
+                      - generic [ref=e1096]:
+                        - generic [ref=e1097]:
+                          - generic [ref=e1098]: Existing property value
+                          - generic [ref=e1099]:
+                            - generic [ref=e1100]: $
+                            - textbox "Existing property value" [ref=e1101]: 850,000
+                        - generic [ref=e1102]:
+                          - generic [ref=e1103]: Mortgage balance
+                          - generic [ref=e1104]:
+                            - generic [ref=e1105]: $
+                            - textbox "Mortgage balance" [ref=e1106]: 300,000
+                        - generic [ref=e1107]:
+                          - generic [ref=e1108]: Monthly payment
+                          - generic [ref=e1109]:
+                            - generic [ref=e1110]: $
+                            - textbox "Monthly payment" [ref=e1111]: 1,900
+                        - generic [ref=e1112]:
+                          - generic [ref=e1113]: Existing mortgage rate
+                          - generic [ref=e1114]:
+                            - spinbutton "Existing mortgage rate" [ref=e1115]: "3.0"
+                            - generic [ref=e1116]: "%"
+                        - generic [ref=e1117]:
+                          - generic [ref=e1118]: Mortgage years left
+                          - spinbutton "Mortgage years left" [ref=e1120]: "20"
+                        - generic [ref=e1121]:
+                          - generic [ref=e1122]: CPF monthly for housing
+                          - generic [ref=e1123]:
+                            - generic [ref=e1124]: $
+                            - textbox "CPF monthly for housing" [ref=e1125]: "600"
+                        - generic [ref=e1126]:
+                          - generic [ref=e1127]: Existing lease years
+                          - spinbutton "Existing lease years" [ref=e1129]: "93"
+                        - generic [ref=e1130]:
+                          - generic [ref=e1131]: Existing appreciation rate
+                          - generic [ref=e1132]:
+                            - spinbutton "Existing appreciation rate" [ref=e1133]: "2.0"
+                            - generic [ref=e1134]: "%"
+                        - generic [ref=e1135]:
+                          - generic [ref=e1136]:
+                            - generic [ref=e1137]: Apply Bala lease decay
+                            - generic [ref=e1138]: Use this for leasehold assets when you want the model to degrade resale value as the remaining lease shortens.
+                          - switch [checked] [ref=e1139] [cursor=pointer]
+                    - generic [ref=e1140]:
+                      - generic [ref=e1141]:
+                        - heading "HDB Monetization" [level=3] [ref=e1142]
+                        - button "More information" [ref=e1143]: i
+                      - generic [ref=e1144]:
+                        - generic [ref=e1145]:
+                          - text: Flat type
+                          - combobox [ref=e1146] [cursor=pointer]:
+                            - generic: 4-room
+                            - img [ref=e1147]
+                        - generic [ref=e1149]:
+                          - text: Monetization strategy
+                          - combobox [ref=e1150] [cursor=pointer]:
+                            - generic: None
+                            - img [ref=e1151]
+                        - generic [ref=e1153]:
+                          - generic [ref=e1154]: CPF used for housing
+                          - generic [ref=e1155]:
+                            - generic [ref=e1156]: $
+                            - textbox "CPF used for housing" [ref=e1157]: "0"
+                    - generic [ref=e1158]:
+                      - generic [ref=e1159]:
+                        - heading "Downsizing Scenario" [level=3] [ref=e1160]
+                        - button "More information" [ref=e1161]: i
+                      - generic [ref=e1163]:
+                        - text: Scenario
+                        - combobox [ref=e1164] [cursor=pointer]:
+                          - generic: None
+                          - img [ref=e1165]
+                    - generic [ref=e1167]:
+                      - generic [ref=e1168]:
+                        - generic [ref=e1169]: Property Projection
+                        - generic [ref=e1170]: (nominal $)
+                      - table [ref=e1172]:
+                        - rowgroup [ref=e1173]:
+                          - row "Age Value (Raw) Value (Lease-Adj) Lease Left Mortgage Payment (Cash) Payment (CPF) Net Equity Notes" [ref=e1174]:
+                            - columnheader "Age" [ref=e1175]
+                            - columnheader "Value (Raw)" [ref=e1176]
+                            - columnheader "Value (Lease-Adj)" [ref=e1177]
+                            - columnheader "Lease Left" [ref=e1178]
+                            - columnheader "Mortgage" [ref=e1179]
+                            - columnheader "Payment (Cash)" [ref=e1180]
+                            - columnheader "Payment (CPF)" [ref=e1181]
+                            - columnheader "Net Equity" [ref=e1182]
+                            - columnheader "Notes" [ref=e1183]
+                        - rowgroup [ref=e1184]:
+                          - row "32 $850,000 $850,000 93yr $300,000 $15,600 $7,200 $275,000" [ref=e1185]:
+                            - cell "32" [ref=e1186]
+                            - cell "$850,000" [ref=e1187]
+                            - cell "$850,000" [ref=e1188]
+                            - cell "93yr" [ref=e1189]
+                            - cell "$300,000" [ref=e1190]
+                            - cell "$15,600" [ref=e1191]
+                            - cell "$7,200" [ref=e1192]
+                            - cell "$275,000" [ref=e1193]
+                            - cell [ref=e1194]
+                          - row "52 $1,263,055 $1,166,897 73yr $0 $0 $0 $583,448 Mortgage paid off" [ref=e1195]:
+                            - cell "52" [ref=e1196]
+                            - cell "$1,263,055" [ref=e1197]
+                            - cell "$1,166,897" [ref=e1198]
+                            - cell "73yr" [ref=e1199]
+                            - cell "$0" [ref=e1200]
+                            - cell "$0" [ref=e1201]
+                            - cell "$0" [ref=e1202]
+                            - cell "$583,448" [ref=e1203]
+                            - cell "Mortgage paid off" [ref=e1204]
+                          - row "65 $1,633,897 $1,378,390 60yr $0 $0 $0 $689,195" [ref=e1205]:
+                            - cell "65" [ref=e1206]
+                            - cell "$1,633,897" [ref=e1207]
+                            - cell "$1,378,390" [ref=e1208]
+                            - cell "60yr" [ref=e1209]
+                            - cell "$0" [ref=e1210]
+                            - cell "$0" [ref=e1211]
+                            - cell "$0" [ref=e1212]
+                            - cell "$689,195" [ref=e1213]
+                            - cell [ref=e1214]
+                          - row "90 $2,680,581 $1,516,789 35yr $0 $0 $0 $758,395" [ref=e1215]:
+                            - cell "90" [ref=e1216]
+                            - cell "$2,680,581" [ref=e1217]
+                            - cell "$1,516,789" [ref=e1218]
+                            - cell "35yr" [ref=e1219]
+                            - cell "$0" [ref=e1220]
+                            - cell "$0" [ref=e1221]
+                            - cell "$0" [ref=e1222]
+                            - cell "$758,395" [ref=e1223]
+                            - cell [ref=e1224]
+                      - button "Show full schedule (59 years)" [ref=e1225] [cursor=pointer]:
+                        - img [ref=e1226]
+                        - text: Show full schedule (59 years)
+          - generic [ref=e1230]:
+            - heading "Allocation Configured Household Portfolio templates, glide paths, and household-aware portfolio assumptions." [level=3] [ref=e1231]:
+              - button "Allocation Configured Household Portfolio templates, glide paths, and household-aware portfolio assumptions." [expanded] [ref=e1232] [cursor=pointer]:
+                - generic [ref=e1233]:
+                  - generic [ref=e1234]:
+                    - generic [ref=e1235]: Allocation
+                    - generic [ref=e1236]: Configured
+                    - generic [ref=e1237]: Household
+                  - paragraph [ref=e1238]: Portfolio templates, glide paths, and household-aware portfolio assumptions.
+                - img [ref=e1239]
+            - region "Allocation Configured Household Portfolio templates, glide paths, and household-aware portfolio assumptions." [ref=e1241]:
+              - generic [ref=e1244]:
+                - generic [ref=e1246]:
+                  - paragraph [ref=e1247]: Allocation stays global, not member-specific.
+                  - paragraph [ref=e1248]: Use this surface for the shared portfolio template and glide path that the household analysis reads. Defaults follow the first adult's timeline instead of the legacy profile store.
+                - generic [ref=e1249]:
+                  - generic [ref=e1251]:
+                    - text: Portfolio Allocation
+                    - button "More information" [ref=e1252]: i
+                  - generic [ref=e1253]:
+                    - generic [ref=e1254]:
+                      - generic [ref=e1255]:
+                        - text: Current Template
+                        - combobox [ref=e1256] [cursor=pointer]:
+                          - generic: Balanced (60/40)
+                          - img [ref=e1257]
+                      - generic [ref=e1259]:
+                        - text: Target Template
+                        - combobox [ref=e1260] [cursor=pointer]:
+                          - generic: Conservative (30/70)
+                          - img [ref=e1261]
+                    - table [ref=e1264]:
+                      - rowgroup [ref=e1265]:
+                        - row "Asset Class Current % Target % Expected Return Risk (Std Dev)" [ref=e1266]:
+                          - columnheader "Asset Class" [ref=e1267]
+                          - columnheader "Current %" [ref=e1268]
+                          - columnheader "Target %" [ref=e1269]
+                          - columnheader "Expected Return" [ref=e1270]
+                          - columnheader "Risk (Std Dev)" [ref=e1271]
+                      - rowgroup [ref=e1272]:
+                        - row "US Equities (S&P 500) 30.0 15.0 7.0% 15.5%" [ref=e1273]:
+                          - cell "US Equities (S&P 500)" [ref=e1274]
+                          - cell "30.0" [ref=e1275]:
+                            - spinbutton [ref=e1276]: "30.0"
+                          - cell "15.0" [ref=e1277]:
+                            - spinbutton [ref=e1278]: "15.0"
+                          - cell "7.0%" [ref=e1279]
+                          - cell "15.5%" [ref=e1280]
+                        - row "SG Equities (STI) 10.0 5.0 7.0% 18.0%" [ref=e1281]:
+                          - cell "SG Equities (STI)" [ref=e1282]
+                          - cell "10.0" [ref=e1283]:
+                            - spinbutton [ref=e1284]: "10.0"
+                          - cell "5.0" [ref=e1285]:
+                            - spinbutton [ref=e1286]: "5.0"
+                          - cell "7.0%" [ref=e1287]
+                          - cell "18.0%" [ref=e1288]
+                        - row "Intl Equities (MSCI World) 10.0 5.0 7.1% 16.0%" [ref=e1289]:
+                          - cell "Intl Equities (MSCI World)" [ref=e1290]
+                          - cell "10.0" [ref=e1291]:
+                            - spinbutton [ref=e1292]: "10.0"
+                          - cell "5.0" [ref=e1293]:
+                            - spinbutton [ref=e1294]: "5.0"
+                          - cell "7.1%" [ref=e1295]
+                          - cell "16.0%" [ref=e1296]
+                        - row "Bonds (10-yr Treasury) 30.0 50.0 3.0% 5.5%" [ref=e1297]:
+                          - cell "Bonds (10-yr Treasury)" [ref=e1298]
+                          - cell "30.0" [ref=e1299]:
+                            - spinbutton [ref=e1300]: "30.0"
+                          - cell "50.0" [ref=e1301]:
+                            - spinbutton [ref=e1302]: "50.0"
+                          - cell "3.0%" [ref=e1303]
+                          - cell "5.5%" [ref=e1304]
+                        - row "REITs 5.0 5.0 5.0% 18.5%" [ref=e1305]:
+                          - cell "REITs" [ref=e1306]
+                          - cell "5.0" [ref=e1307]:
+                            - spinbutton [ref=e1308]: "5.0"
+                          - cell "5.0" [ref=e1309]:
+                            - spinbutton [ref=e1310]: "5.0"
+                          - cell "5.0%" [ref=e1311]
+                          - cell "18.5%" [ref=e1312]
+                        - row "Gold 5.0 5.0 3.0% 15.0%" [ref=e1313]:
+                          - cell "Gold" [ref=e1314]
+                          - cell "5.0" [ref=e1315]:
+                            - spinbutton [ref=e1316]: "5.0"
+                          - cell "5.0" [ref=e1317]:
+                            - spinbutton [ref=e1318]: "5.0"
+                          - cell "3.0%" [ref=e1319]
+                          - cell "15.0%" [ref=e1320]
+                        - row "Cash (T-Bills) 10.0 15.0 1.4% 1.0%" [ref=e1321]:
+                          - cell "Cash (T-Bills)" [ref=e1322]
+                          - cell "10.0" [ref=e1323]:
+                            - spinbutton [ref=e1324]: "10.0"
+                          - cell "15.0" [ref=e1325]:
+                            - spinbutton [ref=e1326]: "15.0"
+                          - cell "1.4%" [ref=e1327]
+                          - cell "1.0%" [ref=e1328]
+                      - rowgroup [ref=e1329]:
+                        - row "Total 100.0% ✓ 100.0% ✓" [ref=e1330]:
+                          - cell "Total" [ref=e1331]
+                          - cell "100.0% ✓" [ref=e1332]
+                          - cell "100.0% ✓" [ref=e1333]
+                          - cell [ref=e1334]
+                          - cell [ref=e1335]
+                - generic [ref=e1336]:
+                  - generic [ref=e1338]:
+                    - generic [ref=e1339]:
+                      - text: Household Glide Path
+                      - button "More information" [ref=e1340]: i
+                    - switch [checked] [ref=e1341] [cursor=pointer]
+                  - generic [ref=e1342]:
+                    - paragraph [ref=e1343]: Age timeline follows TJ.
+                    - generic [ref=e1344]:
+                      - generic [ref=e1345]:
+                        - text: Method
+                        - combobox [ref=e1346] [cursor=pointer]:
+                          - generic: Linear
+                          - img [ref=e1347]
+                      - generic [ref=e1349]:
+                        - generic [ref=e1350]: Start age
+                        - spinbutton "Start age" [ref=e1352]: "60"
+                      - generic [ref=e1353]:
+                        - generic [ref=e1354]: End age
+                        - spinbutton "End age" [ref=e1356]: "75"
+          - generic [ref=e1359]:
+            - heading "FIRE Settings Needs review Household Household-level assumptions, return settings, and normalized analysis controls." [level=3] [ref=e1360]:
+              - button "FIRE Settings Needs review Household Household-level assumptions, return settings, and normalized analysis controls." [expanded] [ref=e1361] [cursor=pointer]:
+                - generic [ref=e1362]:
+                  - generic [ref=e1363]:
+                    - generic [ref=e1364]: FIRE Settings
+                    - generic [ref=e1365]: Needs review
+                    - generic [ref=e1366]: Household
+                  - paragraph [ref=e1367]: Household-level assumptions, return settings, and normalized analysis controls.
+                - img [ref=e1368]
+            - region "FIRE Settings Needs review Household Household-level assumptions, return settings, and normalized analysis controls." [ref=e1370]:
+              - generic [ref=e1372]:
+                - generic [ref=e1373]:
+                  - generic [ref=e1374]:
+                    - generic [ref=e1376]: Household FIRE Targets
+                    - generic [ref=e1377]:
+                      - generic [ref=e1378]:
+                        - text: FIRE type
+                        - combobox [ref=e1379] [cursor=pointer]:
+                          - generic: Regular
+                          - img [ref=e1380]
+                      - generic [ref=e1382]:
+                        - generic [ref=e1383]: Safe withdrawal rate
+                        - generic [ref=e1384]:
+                          - spinbutton "Safe withdrawal rate" [ref=e1385]: "3.6"
+                          - generic [ref=e1386]: "%"
+                      - generic [ref=e1387]:
+                        - text: FIRE number basis
+                        - combobox [ref=e1388] [cursor=pointer]:
+                          - generic: At FIRE age
+                          - img [ref=e1389]
+                  - generic [ref=e1391]:
+                    - generic [ref=e1393]:
+                      - text: Returns & Inflation
+                      - button "More information" [ref=e1394]: i
+                    - generic [ref=e1395]:
+                      - generic [ref=e1396]:
+                        - button "From allocation" [ref=e1397] [cursor=pointer]
+                        - button "Manual" [ref=e1398] [cursor=pointer]
+                      - generic [ref=e1399]:
+                        - generic [ref=e1400]:
+                          - generic [ref=e1401]: Expected nominal return
+                          - generic [ref=e1402]:
+                            - spinbutton "Expected nominal return" [disabled] [ref=e1403]: "7.0"
+                            - generic [ref=e1404]: "%"
+                        - generic [ref=e1405]:
+                          - generic [ref=e1406]: Inflation rate
+                          - generic [ref=e1407]:
+                            - spinbutton "Inflation rate" [ref=e1408]: "2.5"
+                            - generic [ref=e1409]: "%"
+                        - generic [ref=e1410]:
+                          - generic [ref=e1411]: Expense ratio
+                          - generic [ref=e1412]:
+                            - spinbutton "Expense ratio" [ref=e1413]: "0.3"
+                            - generic [ref=e1414]: "%"
+                        - generic [ref=e1415]:
+                          - text: Rebalancing frequency
+                          - combobox [ref=e1416] [cursor=pointer]:
+                            - generic: Annual
+                            - img [ref=e1417]
+                  - generic [ref=e1419]:
+                    - generic [ref=e1421]:
+                      - generic [ref=e1422]:
+                        - text: Cash Reserve & Retirement Buffers
+                        - button "More information" [ref=e1423]: i
+                      - switch [ref=e1424] [cursor=pointer]
+                    - generic [ref=e1427]:
+                      - generic [ref=e1428]:
+                        - generic [ref=e1429]: Retirement cash bucket
+                        - generic [ref=e1430]: Use a dedicated cash bucket for early-retirement sequence-risk protection.
+                      - switch [ref=e1431] [cursor=pointer]
+                - generic [ref=e1433]:
+                  - generic [ref=e1434]:
+                    - text: Withdrawal Strategy
+                    - paragraph [ref=e1435]:
+                      - text: Used in Projection and Stress Test.
+                      - link "Compare all strategies" [ref=e1436] [cursor=pointer]:
+                        - /url: /withdrawal
+                  - combobox "Withdrawal Strategy" [ref=e1437] [cursor=pointer]:
+                    - generic: Constant Dollar (4% Rule)
+                    - img [ref=e1438]
+          - generic [ref=e1441]:
+            - heading "Continue validating the household plan" [level=3] [ref=e1442]
+            - paragraph [ref=e1443]: Projection and Stress Test already read the normalized household slice. Use them now that the manual household editor covers the full launch scope.
+            - generic [ref=e1444]:
+              - link "View Projection" [ref=e1445] [cursor=pointer]:
+                - /url: /projection
+                - text: View Projection
+                - img
+              - link "Stress Test" [ref=e1446] [cursor=pointer]:
+                - /url: /stress-test
+                - text: Stress Test
+                - img
+      - paragraph [ref=e1448]: This tool is for educational and planning purposes only. It does not constitute financial advice. Results are estimates based on historical data and assumptions that may not reflect future outcomes. Your financial data stays in your browser and is never sent to any server. Email addresses submitted for notifications are stored separately. Not affiliated with CPF Board or any government agency.
+    - generic [ref=e1449]:
+      - generic [ref=e1450]:
+        - generic [ref=e1451]:
+          - generic [ref=e1452]: "FIRE Age:"
+          - generic [ref=e1453]: "42"
+        - generic [ref=e1454]:
+          - generic [ref=e1455]: "Years to FIRE:"
+          - generic [ref=e1456]: 10 yrs
+        - generic [ref=e1457]:
+          - generic [ref=e1458]: "FIRE Number:"
+          - generic [ref=e1459]: "$2,547,047 (proj: $1,852,727)"
+        - generic [ref=e1460]:
+          - generic [ref=e1461]: "Progress:"
+          - generic [ref=e1462]: 8%
+        - generic [ref=e1463]:
+          - generic [ref=e1464]: "MC Success:"
+          - generic [ref=e1465]: 100.0%
+        - generic [ref=e1466]:
+          - generic [ref=e1467]: "Backtest:"
+          - generic [ref=e1468]: 100.0%
+      - button "Change stats position" [ref=e1470] [cursor=pointer]:
+        - img [ref=e1471]

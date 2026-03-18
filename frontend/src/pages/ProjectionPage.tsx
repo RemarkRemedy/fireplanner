@@ -19,7 +19,8 @@ import { Button } from '@/components/ui/button'
 import { formatCurrency, formatCompactCurrency } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { AlertTriangle, HeartPulse, PartyPopper } from 'lucide-react'
+import { AlertTriangle, HeartPulse, PartyPopper, Sparkles } from 'lucide-react'
+import confetti from 'canvas-confetti'
 import { toast } from 'sonner'
 import { NWChartView } from '@/components/projection/NWChartView'
 import { Maximize2 } from 'lucide-react'
@@ -82,21 +83,38 @@ export function ProjectionPage() {
   const navigate = useNavigate()
   const currentSnapshot = useMetricsSnapshot()
   const deltaProcessed = useRef(false)
+  const mountedRef = useRef(true)
   const nudgeSectionRef = useRef<HTMLDivElement>(null)
   const { result: healthResult } = useHealthCheck()
 
-  // Show welcome toast after completing guided setup
+  // Show welcome toast (+ confetti if FIRE age < 60) after completing guided setup
   useEffect(() => {
     const justCompleted = sessionStorage.getItem('fireplanner-setup-just-completed')
     if (justCompleted) {
       sessionStorage.removeItem('fireplanner-setup-just-completed')
+
+      const fireAge = currentSnapshot.fireAge
+      if (fireAge != null && fireAge < 60) {
+        // Celebratory confetti burst for early FIRE achievers
+        const end = Date.now() + 2000
+        let rafId = 0
+        const frame = () => {
+          if (!mountedRef.current) return
+          confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0, y: 0.6 } })
+          confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1, y: 0.6 } })
+          if (Date.now() < end) rafId = requestAnimationFrame(frame)
+        }
+        rafId = requestAnimationFrame(frame)
+        return () => { mountedRef.current = false; cancelAnimationFrame(rafId) }
+      }
+
       toast('Your plan is ready!', {
         description: 'Use the sidebar to explore inputs, stress tests, and more. Refine cards on this page let you fine-tune specific sections.',
         duration: 8000,
         icon: <PartyPopper className="h-4 w-4" />,
       })
     }
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- runs once on mount
 
   useEffect(() => {
     if (deltaProcessed.current || !location.state?.showDelta) return
@@ -678,7 +696,17 @@ export function ProjectionPage() {
       <div>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold">Year-by-Year Projection</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold">Year-by-Year Projection</h1>
+              <Link
+                to="/wrapped"
+                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 px-3 py-1 text-xs font-medium text-white hover:from-indigo-600 hover:to-purple-700 transition-all shadow-sm"
+                onClick={() => trackEvent('wrapped_entry_clicked', { source: 'projection' })}
+              >
+                <Sparkles className="h-3 w-3" />
+                Your FIRE Story
+              </Link>
+            </div>
             <p className="text-muted-foreground text-sm">
               Single-path projection showing income, portfolio growth, and FIRE progress.
               Verify your inputs produce sensible numbers before running Monte Carlo analysis.

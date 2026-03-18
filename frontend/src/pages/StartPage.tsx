@@ -16,7 +16,7 @@ import {
 import { useUIStore } from '@/stores/useUIStore'
 import { HOUSEHOLD_PLAN_STORAGE_KEY, useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { Target, TrendingUp, CheckCircle, ArrowRight, Info, RotateCcw, Play } from 'lucide-react'
-import { clearFireplannerData } from '@/components/shared/DemoBadge'
+import { clearFireplannerData, isDemoActive } from '@/components/shared/DemoBadge'
 import type { HouseholdPlanType } from '@/lib/household/types'
 import { PlanTypeSelector } from '@/components/household/PlanTypeSelector'
 import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
@@ -239,38 +239,36 @@ export function StartPage() {
 function ReturningUserView({ handleRedoSetup }: { handleRedoSetup: () => void }) {
   const completeness = usePlanCompleteness()
 
-  // Count sections that need attention (not-added or using-defaults)
-  const needsAttentionCount = completeness.filter(
-    (r) => r.status === 'not-added' || r.status === 'using-defaults'
-  ).length
-  // Count completed sections (provided, provided-basic, or not-applicable)
+  // Sections fully refined (via nudge or manual edit beyond basic setup) or not applicable
   const refinedCount = completeness.filter(
-    (r) => r.status === 'provided' || r.status === 'provided-basic' || r.status === 'not-applicable'
+    (r) => r.status === 'provided' || r.status === 'not-applicable'
   ).length
   const totalCount = completeness.length
-  const allRefined = needsAttentionCount === 0
+  const allRefined = refinedCount >= totalCount
+  const hasRefinedAny = completeness.some((r) => r.status === 'provided')
   const progressPercent = totalCount > 0 ? Math.round((refinedCount / totalCount) * 100) : 100
+  const isDemo = useMemo(() => isDemoActive(), [])
 
   // Adaptive CTA: guide user to their highest-value next step
   const primaryCta = useMemo(() => {
-    // Stage A: most sections still need attention — show them their projection first
-    if (needsAttentionCount > totalCount / 2) {
+    // Stage A: just completed setup, hasn't refined any section beyond basic defaults
+    if (!hasRefinedAny || refinedCount <= 2) {
       return { label: 'View your projection', to: '/projection' }
     }
-    // Stage B: some sections refined but gaps remain — surface health check
+    // Stage B: some refinement but not fully explored
     if (!allRefined) {
       return { label: 'Check your financial health', to: '/health-check' }
     }
-    // Stage C: everything refined — dashboard is home base
+    // Stage C: everything refined
     return { label: 'Continue to Dashboard', to: '/dashboard' }
-  }, [needsAttentionCount, totalCount, allRefined])
+  }, [refinedCount, allRefined, hasRefinedAny])
 
   return (
     <div className="space-y-8">
       <div className="py-8">
         <h1 className="text-3xl font-bold">Singapore FIRE Planner</h1>
         <p className="text-muted-foreground mt-2 text-base">
-          Welcome back. Your plan is ready.
+          {isDemo ? 'You are exploring the demo plan.' : 'Welcome back. Your plan is ready.'}
         </p>
       </div>
 
@@ -288,10 +286,19 @@ function ReturningUserView({ handleRedoSetup }: { handleRedoSetup: () => void })
       {!allRefined && (
         <div className="mx-auto max-w-md space-y-2">
           <div className="flex justify-between text-sm text-muted-foreground">
-            <span>Plan completeness: {refinedCount}/{totalCount} sections refined</span>
+            <span id="completeness-label">
+              Plan completeness: {refinedCount}/{totalCount} sections refined
+            </span>
             <span>{progressPercent}%</span>
           </div>
-          <div className="h-2 rounded-full bg-muted overflow-hidden" role="progressbar" aria-valuenow={progressPercent} aria-valuemin={0} aria-valuemax={100} aria-label="Plan completeness">
+          <div
+            className="h-2 rounded-full bg-muted overflow-hidden"
+            role="progressbar"
+            aria-valuenow={progressPercent}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-labelledby="completeness-label"
+          >
             <div
               className="h-full rounded-full bg-primary transition-all duration-500"
               style={{ width: `${progressPercent}%` }}
@@ -357,3 +364,4 @@ function ReturningUserView({ handleRedoSetup }: { handleRedoSetup: () => void })
     </div>
   )
 }
+

@@ -731,9 +731,12 @@ export function SetupPage() {
 
     applySetupDraft(draft, planType)
 
-    // Mark setup as completed in UIStore
+    // Mark setup as completed in UIStore and sync section toggles
     setUIField('setupCompleted', true)
     setUIField('setupPopulatedSections', derivePopulatedSections(state.values))
+    setUIField('cpfEnabled', state.values.residency !== 'foreigner')
+    setUIField('propertyEnabled', state.values.ownsProperty !== 'no')
+    setUIField('healthcareEnabled', state.values.healthcareEnabled as boolean)
 
     // Disable blocker before navigating
     completingRef.current = true

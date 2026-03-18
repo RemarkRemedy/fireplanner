@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
-import { Info, FlaskConical } from 'lucide-react'
+import { Info, FlaskConical, Sparkles } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { StatusPanel } from '@/components/dashboard/StatusPanel'
 import { WhatIfPanel } from '@/components/dashboard/WhatIfPanel'
@@ -28,6 +28,7 @@ import { EstateProjectionPanel } from '@/components/dashboard/EstateProjectionPa
 import { ExpenseTrackerCard } from '@/components/email/ExpenseTrackerCard'
 import { useExpenseTrackerDwell } from '@/hooks/useExpenseTrackerDwell'
 import { useExpenseTracker } from '@/hooks/useExpenseTracker'
+import { trackEvent } from '@/lib/analytics'
 import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { BucketVisualization } from '@/components/dashboard/BucketVisualization'
@@ -72,7 +73,17 @@ export function DashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">FIRE Dashboard</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">FIRE Dashboard</h1>
+          <Link
+            to="/wrapped"
+            className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 px-3 py-1 text-xs font-medium text-white hover:from-indigo-600 hover:to-purple-700 transition-all shadow-sm"
+            onClick={() => trackEvent('wrapped_entry_clicked', { source: 'dashboard' })}
+          >
+            <Sparkles className="h-3 w-3" />
+            Your FIRE Story
+          </Link>
+        </div>
         <p className="text-muted-foreground text-sm">
           Your financial independence snapshot. All metrics are computed from your profile, income, and allocation settings.
         </p>

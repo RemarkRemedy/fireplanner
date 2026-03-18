@@ -3,6 +3,8 @@
 // --- Income & Expenses ---
 export const DEFAULT_MONTHLY_INCOME = 4800
 export const DEFAULT_MONTHLY_EXPENSES = 2500
+/** Store default for annual expenses (used to detect if user has customized expenses) */
+export const DEFAULT_ANNUAL_EXPENSES = 48000
 export const DEFAULT_RETIREMENT_AGE = 55
 export const DEFAULT_STARTING_AGE = 30
 export const DEFAULT_LIQUID_NET_WORTH = 50000
