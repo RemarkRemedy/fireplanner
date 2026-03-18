@@ -24,6 +24,7 @@ const RetirementCalculatorPage = lazy(() => import('@/pages/RetirementCalculator
 const HealthCheckPage = lazy(() => import('@/pages/HealthCheckPage').then(m => ({ default: m.HealthCheckPage })))
 const CpfPlannerPage = lazy(() => import('@/pages/CpfPlannerPage').then(m => ({ default: m.CpfPlannerPage })))
 const ComparePage = lazy(() => import('@/pages/ComparePage').then(m => ({ default: m.ComparePage })))
+const AdminEmailsPage = lazy(() => import('@/pages/AdminEmailsPage').then(m => ({ default: m.AdminEmailsPage })))
 
 function PageLoader() {
   return (
@@ -98,6 +99,8 @@ export const router = createBrowserRouter([
       { path: '/refine/*', element: <Navigate to="/projection" replace /> },
     ],
   },
+  // Admin (outside PlannerRouteShell, no store dependencies)
+  { path: '/admin/emails', element: page(AdminEmailsPage) },
   // Quick estimate redirects to retirement calculator (which now has the actual calculator)
   { path: '/quick-estimate', element: <Navigate to="/retirement-calculator" replace /> },
   // Main app routes (inside PlannerRouteShell)
