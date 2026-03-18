@@ -38,6 +38,9 @@ describe('parseManulifeSmartRetireIncome', () => {
     ])
     expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-post-mip-death-benefit-corridor')
     expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-amount-owed-deductions-and-claim-handling')
+    expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-lapse-and-cover-termination')
+    expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-reinstatement-underwriting-and-exclusion-resets')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-income-reinstatement')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-income-benefit-payout-handling')
     expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-coi-refund')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-income-welcome-bonus')
@@ -45,6 +48,7 @@ describe('parseManulifeSmartRetireIncome', () => {
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-income-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-reinvested-dividend-withdrawal')
     expect(product.warnings.some((warning) => warning.includes('current-state MIP death-benefit estimate'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('lapse-triggered cover termination'))).toBe(true)
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-mip-8-flexi-3',
       'sgd-mip-8-flexi-5',
@@ -188,5 +192,7 @@ describe('parseManulifeSmartRetireIncome', () => {
     ])
     expect(lastVariant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus')?.startPolicyYear).toBe(13)
     expect(lastVariant?.warnings).toContain('Withdrawals of accumulated reinvested dividends remain informational only.')
+    expect(firstVariant?.unsupportedItems).toContain('Policy lapse when account value can no longer cover monthly deductions remains informational only.')
+    expect(firstVariant?.unsupportedItems).toContain('Reinstatement underwriting, approval, premium-allocation carry-forward, and exclusion resets after reinstatement remain informational only.')
   }, 30_000)
 })
