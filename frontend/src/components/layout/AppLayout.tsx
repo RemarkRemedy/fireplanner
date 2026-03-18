@@ -7,6 +7,7 @@ import { FireStatsStrip } from './FireStatsStrip'
 import { SaveIndicator } from './SaveIndicator'
 import { PlanUrlHandler } from '@/components/shared/PlanUrlHandler'
 import { useUIStore } from '@/stores/useUIStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { cn } from '@/lib/utils'
 import { tryUndo } from '@/lib/undo'
 import { BetaBanner } from '@/components/shared/BetaBanner'
@@ -152,9 +153,10 @@ export function AppLayout() {
   const isBottom = statsPosition === 'bottom'
   const isTop = statsPosition === 'top'
 
-  // Hide sidebar on start page for new users — reduces "this is complex" signal
+  // Hide sidebar on start page only for genuinely new users (no data at all)
   const setupCompleted = useUIStore((s) => s.setupCompleted)
-  const hideSidebar = location.pathname === '/' && !setupCompleted
+  const hasExistingPlan = useHouseholdPlanStore((s) => s.householdPlanRevision > 0)
+  const hideSidebar = location.pathname === '/' && !setupCompleted && !hasExistingPlan
 
   return (
     <div className="flex min-h-dvh md:h-screen md:overflow-hidden">
