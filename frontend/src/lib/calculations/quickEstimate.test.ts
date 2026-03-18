@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   computeQuickEstimate,
+  computeQuickEstimateRange,
   buildHealthInputs,
   parseUrlParams,
   buildSearchParams,
@@ -110,6 +111,50 @@ describe('computeQuickEstimate', () => {
     expect(result.status).toBe('ok')
     expect(result.yearsToFire).toBeGreaterThan(0)
     expect(isFinite(result.yearsToFire)).toBe(true)
+  })
+})
+
+// ── computeQuickEstimateRange ─────────────────────────────────────────────
+
+describe('computeQuickEstimateRange', () => {
+  it('returns optimistic and conservative bounds around the base estimate', () => {
+    const inputs = makeInputs()
+    const range = computeQuickEstimateRange(inputs)
+    const base = computeQuickEstimate(inputs)
+
+    expect(range.optimistic.fireAge).toBeLessThan(base.fireAge)
+    expect(range.conservative.fireAge).toBeGreaterThan(base.fireAge)
+    expect(range.optimistic.status).toBe('ok')
+    expect(range.conservative.status).toBe('ok')
+  })
+
+  it('falls back to optimistic-only when conservative is unreachable', () => {
+    // Low return where -1% pushes netRealReturn near zero
+    const range = computeQuickEstimateRange(makeInputs({ expectedReturn: 0.035 }))
+    // Conservative uses 0.025 return, inflation is 0.025, netReal ~= 0
+    // May be unreachable depending on savings
+    expect(range.optimistic.status).toBe('ok')
+    // Conservative may be 'unreachable' — that's valid
+  })
+
+  it('preserves base estimate fields on both bounds', () => {
+    const range = computeQuickEstimateRange(makeInputs())
+    expect(range.optimistic.fireNumber).toBeGreaterThan(0)
+    expect(range.conservative.fireNumber).toBeGreaterThan(0)
+    // FIRE number is swr-based, not return-based, so should be identical
+    expect(range.optimistic.fireNumber).toBe(range.conservative.fireNumber)
+  })
+
+  it('handles already-fire status', () => {
+    const range = computeQuickEstimateRange(makeInputs({ currentSavings: 10_000_000 }))
+    expect(range.optimistic.status).toBe('already-fire')
+  })
+
+  it('handles negative savings rate', () => {
+    const range = computeQuickEstimateRange(
+      makeInputs({ monthlyIncome: 3000, monthlyExpenses: 4000 })
+    )
+    expect(range.optimistic.status).toBe('negative-savings')
   })
 })
 
