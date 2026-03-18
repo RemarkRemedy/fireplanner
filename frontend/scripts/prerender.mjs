@@ -258,6 +258,22 @@ const routes = [
       </ul>
     `,
   },
+  {
+    path: '/srs-calculator',
+    title: 'SRS Calculator Singapore: Tax Savings, Contribution Cap, and Projected Balance',
+    heading: 'SRS Tax Savings Calculator',
+    description: 'Free SRS calculator for Singapore. See how much tax you save with SRS contributions, project your balance at 63, and compare SRS vs CPF SA top-up.',
+    bodyHtml: `
+      <p>Calculate your annual tax savings from SRS contributions, project your SRS balance at age 63, and compare SRS vs CPF SA top-up (RSTU) to see which gives you more benefit.</p>
+      <p>SRS contribution cap: $15,300 for citizens/PRs, $35,700 for foreigners. Withdrawals from age 63 are taxed at 50% of the amount.</p>
+      <ul>
+        <li><a href="/">Start full retirement planning</a></li>
+        <li><a href="/cpf-planner">CPF retirement planner</a></li>
+        <li><a href="/stamp-duty-calculator">Stamp duty calculator</a></li>
+        <li><a href="/retirement-calculator">Singapore retirement calculator</a></li>
+      </ul>
+    `,
+  },
 ]
 
 const template = readFileSync(join(distDir, 'index.html'), 'utf-8')
