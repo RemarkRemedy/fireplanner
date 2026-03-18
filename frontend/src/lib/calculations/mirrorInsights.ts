@@ -171,9 +171,13 @@ export function computeMirrorInsights(inputs: MirrorInsightInputs): MirrorInsigh
   const cpfYears = annualExpenses > 0 ? totalCpf / annualExpenses : 0
   const cpfStrong = cpfYears >= 5
 
+  // Suppress for foreigners (no CPF) and for young users with near-zero CPF
+  // (showing "0 years of expenses" is discouraging when they've barely started working)
+  const cpfTooLow = cpfYears < 0.5
+
   const moment3: MirrorInsightData = {
     id: 'cpf-runway',
-    suppressed: !hasCpf,
+    suppressed: !hasCpf || cpfTooLow,
     data: { cpfYears, cpfStrong },
   }
 
