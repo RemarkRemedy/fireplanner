@@ -167,6 +167,23 @@ export function WrappedStoryContainer({ cardRenderers }: WrappedStoryContainerPr
         <X className="h-6 w-6" />
       </button>
 
+      {/* Skip to summary — lets users jump to the final card */}
+      {currentIndex < total - 1 && currentIndex > 0 && (
+        <button
+          className="absolute bottom-8 right-4 z-10 text-white/60 hover:text-white text-xs transition-colors"
+          onPointerUp={(e) => {
+            e.stopPropagation()
+            if (isTransitioning.current) return
+            isTransitioning.current = true
+            setDirection(1)
+            setCurrentIndex(total - 1)
+            setTimeout(() => { isTransitioning.current = false }, 350)
+          }}
+        >
+          Skip to summary
+        </button>
+      )}
+
       {/* Navigation hints (visible on first card only) */}
       {currentIndex === 0 && (
         <div className="absolute bottom-8 left-0 right-0 z-10 flex justify-center">
