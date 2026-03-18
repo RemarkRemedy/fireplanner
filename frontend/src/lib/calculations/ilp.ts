@@ -2996,6 +2996,25 @@ export function computeCurrentDeathBenefitEstimate(
           : Math.max(supportedEstimate, estimate)
         break
       }
+      case 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium': {
+        if (
+          profile.currentLockedInPolicyValue == null
+          || profile.currentAdjustedSinglePremium == null
+        ) {
+          continue
+        }
+
+        const estimate = Math.max(
+          totalCurrentValue,
+          Math.max(0, profile.currentLockedInPolicyValue),
+          Math.max(0, profile.currentAdjustedSinglePremium),
+        )
+
+        supportedEstimate = supportedEstimate == null
+          ? estimate
+          : Math.max(supportedEstimate, estimate)
+        break
+      }
       default:
         break
     }

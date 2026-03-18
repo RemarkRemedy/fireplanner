@@ -13278,6 +13278,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
       'kernel:tokio-locked-in-protection-state',
       'branch:tokio-marine-goelite-secure-zero-single-premium-charge',

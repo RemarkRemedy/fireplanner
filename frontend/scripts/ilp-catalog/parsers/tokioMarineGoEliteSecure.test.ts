@@ -173,7 +173,7 @@ function expectSecureMpcVariantShape(variant: ReturnType<typeof parseTokioMarine
     'Models the published Monthly Protection Charge deducted monthly in advance from the Single Premium Units Account value while the policy remains in force.',
     'The sum at risk is the published death benefit less the Single Premium Units Account value, where the death-benefit floor is the higher of the Locked-in Policy Value and Adjusted Single Premium.',
     'The engine uses an annual approximation of the published monthiversary locked-in-value updates and proportional partial-withdrawal reductions to Locked-in Policy Value and Adjusted Single Premium.',
-    'Change-of-life-assured administration and payout handling beyond the modeled Monthly Protection Charge remain metadata-only.',
+    'Change-of-life-assured administration and payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge remain metadata-only.',
   ])
   expect(mpcRule?.sourceRefs.map((sourceRef) => sourceRef.page)).toEqual([1, 2, 5, 7, 11])
   expect(mpcRule?.sourceRefs.find((sourceRef) => sourceRef.page === 1)?.excerpt).toContain('#goElite Secure')
@@ -185,7 +185,7 @@ function expectSecureMpcVariantShape(variant: ReturnType<typeof parseTokioMarine
     'partial-withdrawal-charge',
   ])
   expect(variant.warnings).toHaveLength(3)
-  expect(variant.warnings[0]).toContain('adjusted-single-premium protection-state kernel')
+  expect(variant.warnings[0]).toContain('current death-benefit estimate plus Monthly Protection Charge')
   expect(variant.warnings[1]).toContain('Recurring single premium and top-up availability only after one policy year')
   expect(variant.warnings[2]).toContain('minimum residual Single Premium Units Account rules')
 }
@@ -207,6 +207,7 @@ describe('parseTokioMarineGoEliteSecure', () => {
       'branch:tokio-marine-goelite-secure-zero-single-premium-charge',
       'branch:tokio-marine-goelite-secure-establishment-charge',
       'branch:tokio-marine-goelite-secure-administrative-charge',
+      'kernel:current-death-benefit-estimate',
       'kernel:tokio-locked-in-protection-state',
       'branch:tokio-marine-goelite-secure-recurring-single-and-top-up-charge',
       'branch:tokio-marine-goelite-secure-zero-partial-withdrawal-charge',
@@ -221,7 +222,7 @@ describe('parseTokioMarineGoEliteSecure', () => {
     expect(product.metadataOnlyBehaviors).toContain('tokio-marine-goelite-secure-death-benefit')
     expect(product.warnings).toEqual([
       expect.stringContaining('supported V1 product'),
-      expect.stringContaining('death-benefit floor logic across Locked-in Policy Value and Adjusted Single Premium'),
+      expect.stringContaining('current death-benefit estimate and Monthly Protection Charge use the published death-benefit floor logic'),
     ])
 
     expect(product.variants).toHaveLength(2)
@@ -308,7 +309,7 @@ describe('parseTokioMarineGoEliteSecure', () => {
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-secure-adjusted-single-premium')
     expect(product.warnings).toEqual([
       expect.stringContaining('supported V1 product'),
-      expect.stringContaining('death-benefit floor logic across Locked-in Policy Value and Adjusted Single Premium'),
+      expect.stringContaining('current death-benefit estimate and Monthly Protection Charge use the published death-benefit floor logic'),
     ])
     const mpcRule = product.variants[0].feeRules.find((rule) => rule.id === 'monthly-protection-charge')
     expect(mpcRule).toBeDefined()

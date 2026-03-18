@@ -4718,6 +4718,165 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[0], 'policy').grossFee).toBeCloseTo(expectedYearOneCharge, 6)
   })
 
+  it('adds a #goElite Secure current death-benefit estimate from the higher locked-in or adjusted-single-premium floor when both manual inputs are known', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 0,
+      initialSinglePremium: 100_000,
+      monthsAlreadyPaid: 24,
+      currentPolicyYear: 3,
+      mipBasis: 'open-ended',
+      mipLength: null,
+      postMipYears: 1,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Single Premium Units Account',
+          feeRate: 0,
+          currentValue: 30_000,
+          contributionShare: 1,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'tokio-goelite-secure-mpc',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          assuranceValueAppliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+            tokioProtectionState: {
+              mode: 'locked-in-policy-value-with-adjusted-single-premium',
+              trackedValueAccountIds: ['policy'],
+              withdrawalReductionAccountIds: ['policy'],
+            },
+          },
+          requiresManualInput: true,
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 45,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentLockedInPolicyValue: 70_000,
+        currentAdjustedSinglePremium: 100_000,
+      },
+      catalogSource: {
+        productId: 'tokio-marine-goelite-secure',
+        productName: '#goElite Secure',
+        variantId: 'sgd-open-ended-cash',
+        variantLabel: 'SGD / Open-ended (Cash)',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: [
+          'kernel:tokio-locked-in-protection-state',
+          'kernel:current-death-benefit-estimate',
+        ],
+        metadataOnlyBehaviors: ['tokio-marine-goelite-secure-death-benefit'],
+      },
+    })
+
+    const summary = computeSummaryMetrics(policy, projectIlpPolicy(policy, 'mid'))
+
+    expect(summary.currentDeathBenefitEstimate).toBe(100_000)
+  })
+
+  it('omits a #goElite Secure current death-benefit estimate when either manual death-benefit floor input is unavailable', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 0,
+      initialSinglePremium: 100_000,
+      monthsAlreadyPaid: 24,
+      currentPolicyYear: 3,
+      mipBasis: 'open-ended',
+      mipLength: null,
+      postMipYears: 1,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Single Premium Units Account',
+          feeRate: 0,
+          contributionShare: 1,
+          currentValue: 30_000,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'tokio-goelite-secure-mpc',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          assuranceValueAppliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+            tokioProtectionState: {
+              mode: 'locked-in-policy-value-with-adjusted-single-premium',
+              trackedValueAccountIds: ['policy'],
+              withdrawalReductionAccountIds: ['policy'],
+            },
+          },
+          requiresManualInput: true,
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 45,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentLockedInPolicyValue: 70_000,
+      },
+      catalogSource: {
+        productId: 'tokio-marine-goelite-secure',
+        productName: '#goElite Secure',
+        variantId: 'sgd-open-ended-cash',
+        variantLabel: 'SGD / Open-ended (Cash)',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: [
+          'kernel:tokio-locked-in-protection-state',
+          'kernel:current-death-benefit-estimate',
+        ],
+        metadataOnlyBehaviors: ['tokio-marine-goelite-secure-death-benefit'],
+      },
+    })
+
+    const summary = computeSummaryMetrics(policy, projectIlpPolicy(policy, 'mid'))
+
+    expect(summary.currentDeathBenefitEstimate).toBeUndefined()
+  })
+
   it('projects the next-year Prudential Assure II combined assurance charge from the current worked-example state', () => {
     const result = projectIlpPolicy(makeDefaultPolicy({
       monthlyContribution: 0,

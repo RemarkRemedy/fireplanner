@@ -7788,6 +7788,7 @@ describe('templateVariantToPolicySeed', () => {
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:tokio-locked-in-protection-state')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-goelite-secure-establishment-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-goelite-secure-surrender-charge')
@@ -7801,6 +7802,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.exitChargeBasis).toBe('initial-single-premium-base')
     expect(seed.eecTable).toEqual([0.07, 0.056, 0.042, 0.028, 0.014, 0])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('establishment charges'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('current death-benefit estimate plus Monthly Protection Charge'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current locked-in value and adjusted single premium manually'))).toBe(true)
     expect(seed.accounts.find((account) => account.id === 'policy')?.feeRate).toBe(0.01)
     expect(seed.distributionSupport).toEqual({
