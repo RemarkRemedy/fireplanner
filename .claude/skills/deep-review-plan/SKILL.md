@@ -47,14 +47,18 @@ If invoked and there is no plan to review, ask the user which plan file to revie
    - Is the scope realistic (does the plan underestimate complexity)?
    - Are edge cases acknowledged (empty states, zero values, missing data)?
 
-   **Agent 3 — Codex MCP** (use `mcp__codex-cli__codex` tool):
+   **Agent 3 — Codex MCP** (wrap in a background Agent that calls `mcp__codex-cli__codex`):
+   MCP tools must be called from inside an Agent wrapper with `run_in_background: true`
+   for true parallelism. The wrapper agent calls the Codex MCP tool with the review prompt.
    Send the plan content and ask codex to review for issues. Prompt:
    "Review this implementation plan for a Singapore FIRE retirement planner.
    Check for: logical flaws in the approach, missing steps, incorrect assumptions
    about existing code, scope creep, and any steps that contradict each other.
    The plan: [plan content]"
 
-   **Agent 4 — Gemini** (use `mcp__gemini-cli__ask-gemini` tool, model: `gemini-3-flash-preview`):
+   **Agent 4 — Gemini** (wrap in a background Agent that calls `mcp__gemini__ask-gemini`):
+   MCP tools must be called from inside an Agent wrapper with `run_in_background: true`
+   for true parallelism. The wrapper agent calls the Gemini MCP tool with the review prompt.
    Send the plan content to Gemini for an independent review. Prompt:
    "Review this implementation plan for a TypeScript/React retirement planner app.
    Look for: logical flaws, missing steps, contradictions between steps, unrealistic

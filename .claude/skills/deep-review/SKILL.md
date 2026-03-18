@@ -45,12 +45,16 @@ If invoked and there are no `.ts`/`.tsx` changes, say "No code changes to review
    match what the plan specified? Are there deviations, missing steps, or extras that
    weren't planned? If no plan file exists, focus on CLAUDE.md coding standards only.
 
-   **Agent 4 — Codex MCP** (use `mcp__codex-cli__codex` tool):
+   **Agent 4 — Codex MCP** (wrap in a background Agent that calls `mcp__codex-cli__codex`):
+   MCP tools must be called from inside an Agent wrapper with `run_in_background: true`
+   for true parallelism. The wrapper agent calls the Codex MCP tool with the review prompt.
    Send the list of changed files and ask codex to review for bugs, logic errors,
    and improvements. Prompt: "Review these files for bugs, logic errors, type safety
    issues, and convention violations: [file list]. Read each file and report findings."
 
-   **Agent 5 — Gemini** (use `mcp__gemini-cli__ask-gemini` tool, model: `gemini-3-flash-preview`):
+   **Agent 5 — Gemini** (wrap in a background Agent that calls `mcp__gemini__ask-gemini`):
+   MCP tools must be called from inside an Agent wrapper with `run_in_background: true`
+   for true parallelism. The wrapper agent calls the Gemini MCP tool with the review prompt.
    Send the list of changed files using @ syntax for file inclusion. Prompt:
    "Review these changed files for bugs, logic errors, missed edge cases, and
    potential regressions. Focus on issues the other reviewers might miss —
