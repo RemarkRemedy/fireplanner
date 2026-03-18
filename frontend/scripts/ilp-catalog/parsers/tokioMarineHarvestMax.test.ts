@@ -30,11 +30,13 @@ describe('parseTokioMarineHarvestMax', () => {
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-max-credit-card-charge')
     expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-max-advanced-death-payout-handling')
-    expect(product.metadataOnlyBehaviors).toContain(
-      'tokio-harvest-max-multiple-life-and-capital-guarantee-option-administration',
-    )
+    expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-max-multiple-life-last-life-settlement')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-max-capital-guarantee-option-and-life-benefit-rider-handling')
     expect(product.metadataOnlyBehaviors).toContain(
       'tokio-harvest-max-change-of-life-assured-and-life-replacement-administration',
+    )
+    expect(product.metadataOnlyBehaviors).not.toContain(
+      'tokio-harvest-max-multiple-life-and-capital-guarantee-option-administration',
     )
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-harvest-max-dividend-payout-threshold-and-record-date-instructions')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-harvest-max-life-replacement-option')
@@ -176,13 +178,13 @@ describe('parseTokioMarineHarvestMax', () => {
     expect(advancedVariant?.distributionSupport).toEqual(basicVariant?.distributionSupport)
     expect(advancedVariant?.eventChargeRules).toEqual(basicVariant?.eventChargeRules)
     expect(basicVariant?.unsupportedItems).toContain(
-      'Advanced Death selection, Monthly Protection Charge, and multiple-life / capital-guarantee option administration remain metadata-only for this product.',
+      'Advanced Death selection, Monthly Protection Charge, multiple-life last-life settlement, and capital-guarantee / Life Benefit Rider handling remain metadata-only for this product.',
     )
     expect(basicVariant?.unsupportedItems).toContain(
       'Credit-card charge and add/remove/change-of-life-assured (life-replacement) administration remain metadata-only for this product.',
     )
     expect(advancedVariant?.unsupportedItems).toContain(
-      'Advanced Death payout handling beyond the modeled Monthly Protection Charge and multiple-life / capital-guarantee option administration remain metadata-only for this product.',
+      'Advanced Death payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, and capital-guarantee / Life Benefit Rider handling remain metadata-only for this product.',
     )
     expect(advancedVariant?.unsupportedItems).toContain(
       'Credit-card charge and add/remove/change-of-life-assured (life-replacement) administration remain metadata-only for this product.',

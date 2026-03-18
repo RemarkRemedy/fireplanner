@@ -4557,11 +4557,13 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-max-credit-card-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-max-advanced-death-payout-handling')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
-      'tokio-harvest-max-multiple-life-and-capital-guarantee-option-administration',
-    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-max-multiple-life-last-life-settlement')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-max-capital-guarantee-option-and-life-benefit-rider-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
       'tokio-harvest-max-change-of-life-assured-and-life-replacement-administration',
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain(
+      'tokio-harvest-max-multiple-life-and-capital-guarantee-option-administration',
     )
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain(
       'tokio-harvest-max-dividend-payout-threshold-and-record-date-instructions',
@@ -4695,11 +4697,13 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-harvest-max-advanced-death-monthly-protection-charge-accrual')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-max-credit-card-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-max-advanced-death-payout-handling')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
-      'tokio-harvest-max-multiple-life-and-capital-guarantee-option-administration',
-    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-max-multiple-life-last-life-settlement')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-max-capital-guarantee-option-and-life-benefit-rider-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
       'tokio-harvest-max-change-of-life-assured-and-life-replacement-administration',
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain(
+      'tokio-harvest-max-multiple-life-and-capital-guarantee-option-administration',
     )
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
