@@ -306,6 +306,9 @@ const MIRROR_TRIGGERS: Record<string, MirrorId> = {
   'property-planning': 'net-worth',
 }
 // Moment 5 (full-snapshot) fires on the review screen, handled separately
+// Note: property-toggle is NOT in the map because "owns"/"planning" users haven't
+// entered a value yet. For "no property" users, the net-worth mirror is triggered
+// conditionally in handleNext below (since their property data is already complete).
 
 // ---------------------------------------------------------------------------
 // Reducer
@@ -741,7 +744,12 @@ export function SetupPage() {
 
   const handleNext = useCallback(() => {
     const screenDef = visibleScreenDefs[state.screenIndex]
-    const mirrorId = screenDef ? MIRROR_TRIGGERS[screenDef.id] : undefined
+    // For "no property" users on the toggle screen, trigger net-worth mirror
+    // (their property data is complete — value is definitively 0)
+    const mirrorId = screenDef
+      ? (MIRROR_TRIGGERS[screenDef.id]
+        ?? (screenDef.id === 'property-toggle' && state.values.ownsProperty === 'no' ? 'net-worth' as MirrorId : undefined))
+      : undefined
     if (mirrorId && !shownMirrors.has(mirrorId)) {
       const insights = computeMirrorInsights(buildMirrorInputs())
       const mirror = insights.find((i) => i.id === mirrorId)
