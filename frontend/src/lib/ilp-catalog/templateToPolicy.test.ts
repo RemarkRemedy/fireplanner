@@ -4699,6 +4699,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-harvest-max-advanced-death-monthly-protection-charge-accrual')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-max-credit-card-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-max-advanced-death-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-max-multiple-life-last-life-settlement')
@@ -4715,6 +4716,7 @@ describe('templateVariantToPolicySeed', () => {
           id: 'monthly-protection-charge',
           basis: 'assurance-sum-at-risk',
           appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
           fallbackAppliesTo: ['topup', 'initial'],
           assuranceConfig: {
             formula: 'tokio-mpc-net-premium-floor',

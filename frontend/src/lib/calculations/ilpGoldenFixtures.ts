@@ -15669,6 +15669,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'branch:tokio-harvest-max-advanced-death-monthly-protection-charge-accrual',
+      'kernel:current-death-benefit-estimate',
     ],
     description: 'Tokio Marine Harvest Max advanced-death supported baseline proving accrued Monthly Protection Charge handling.',
   },

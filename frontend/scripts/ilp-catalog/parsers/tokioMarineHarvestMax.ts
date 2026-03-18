@@ -265,6 +265,7 @@ function buildTokioMpcFeeRule(
     rate: 0,
     amount: 0,
     appliesTo: ['accumulation'],
+    assuranceValueAppliesTo: ['initial', 'accumulation'],
     fallbackAppliesTo: ['topup', 'initial'],
     activeWindow: 'during-mip',
     assuranceConfig: {
@@ -487,7 +488,7 @@ function buildVariant(
     unsupportedItems: [
       ...(isAdvancedDeath
         ? [
-            'Advanced Death payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, and capital-guarantee / Life Benefit Rider handling remain metadata-only for this product.',
+            'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, multiple-life last-life settlement, and capital-guarantee / Life Benefit Rider handling remain metadata-only for this product.',
           ]
         : [
             'Advanced Death selection, Monthly Protection Charge, multiple-life last-life settlement, and capital-guarantee / Life Benefit Rider handling remain metadata-only for this product.',
@@ -548,6 +549,7 @@ export function parseTokioMarineHarvestMax(context: ParseContext): IlpCatalogPro
       'tokio-premium-increase-restores-shortfall-charge-cessation',
       'tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only',
       'branch:tokio-harvest-max-advanced-death-monthly-protection-charge-accrual',
+      'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [

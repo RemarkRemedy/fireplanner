@@ -27,6 +27,7 @@ describe('parseTokioMarineHarvestMax', () => {
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('tokio-admin-charge-on-initial-account')
     expect(product.modeledEconomics).toContain('branch:tokio-harvest-max-advanced-death-monthly-protection-charge-accrual')
+    expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-max-credit-card-charge')
     expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-max-advanced-death-payout-handling')
@@ -133,6 +134,7 @@ describe('parseTokioMarineHarvestMax', () => {
           id: 'monthly-protection-charge',
           basis: 'assurance-sum-at-risk',
           appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
           fallbackAppliesTo: ['topup', 'initial'],
           assuranceConfig: {
             formula: 'tokio-mpc-net-premium-floor',
@@ -184,7 +186,7 @@ describe('parseTokioMarineHarvestMax', () => {
       'Credit-card charge and add/remove/change-of-life-assured (life-replacement) administration remain metadata-only for this product.',
     )
     expect(advancedVariant?.unsupportedItems).toContain(
-      'Advanced Death payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, and capital-guarantee / Life Benefit Rider handling remain metadata-only for this product.',
+      'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, multiple-life last-life settlement, and capital-guarantee / Life Benefit Rider handling remain metadata-only for this product.',
     )
     expect(advancedVariant?.unsupportedItems).toContain(
       'Credit-card charge and add/remove/change-of-life-assured (life-replacement) administration remain metadata-only for this product.',
