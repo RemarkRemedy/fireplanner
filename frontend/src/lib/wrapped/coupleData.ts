@@ -39,12 +39,16 @@ export function computePerAdultNetWorth(
     total += row.oaBalance + row.saBalance + row.maBalance + row.raBalance
   }
 
-  // Property equity
+  // Property equity (owned + 50% of shared properties, clamped to non-negative)
   for (const propertyId of compiledPlan.propertyOrder) {
     const prop = compiledPlan.propertiesById[propertyId]
-    if (!prop || prop.owner !== adult.owner || !prop.ownsProperty) continue
-    const equity = prop.existingPropertyValue - prop.existingMortgageBalance
-    total += equity * (prop.ownershipPercent ?? 1)
+    if (!prop || !prop.ownsProperty) continue
+    const isOwned = prop.owner === adult.owner
+    const isShared = prop.owner === 'shared'
+    if (!isOwned && !isShared) continue
+    const equity = Math.max(0, prop.existingPropertyValue - prop.existingMortgageBalance)
+    const share = isShared ? 0.5 : (prop.ownershipPercent ?? 1)
+    total += equity * share
   }
 
   return total

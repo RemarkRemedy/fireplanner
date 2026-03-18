@@ -16,7 +16,6 @@ import { CoupleMilestoneCard } from '@/components/wrapped/cards/CoupleMilestoneC
 import { CoupleTrajectoryCard } from '@/components/wrapped/cards/CoupleTrajectoryCard'
 import { CouplePeakCard } from '@/components/wrapped/cards/CouplePeakCard'
 import { CoupleSummaryCard } from '@/components/wrapped/cards/CoupleSummaryCard'
-import { useWrappedData } from '@/hooks/useWrappedData'
 
 const individualCardRenderers: CardRenderer[] = [
   {
@@ -201,6 +200,7 @@ const coupleCardRenderers: CardRenderer[] = [
         age={data.peak.age}
         ageDelta={data.couple?.ageDelta ?? 0}
         names={data.couple?.names ?? ['You', 'Partner']}
+        partnerLifeExpectancy={data.couple?.partnerLifeExpectancy ?? 85}
         gradient={gradient}
         direction={direction}
       />
@@ -219,7 +219,8 @@ const coupleCardRenderers: CardRenderer[] = [
 ]
 
 export function WrappedPage() {
-  const { mode } = useWrappedData()
-  const renderers = mode === 'couple' ? coupleCardRenderers : individualCardRenderers
-  return <WrappedStoryContainer cardRenderers={renderers} />
+  return <WrappedStoryContainer
+    individualCardRenderers={individualCardRenderers}
+    coupleCardRenderers={coupleCardRenderers}
+  />
 }

@@ -9,13 +9,14 @@ interface CouplePeakCardProps {
   age: number
   ageDelta: number
   names: [string, string]
+  partnerLifeExpectancy: number
   gradient: string
   direction: number
 }
 
-export function CouplePeakCard({ value, age, ageDelta, names: _names, gradient, direction }: CouplePeakCardProps) {
+export function CouplePeakCard({ value, age, ageDelta, names: _names, partnerLifeExpectancy, gradient, direction }: CouplePeakCardProps) {
   const partnerAge = age - ageDelta
-  const showBothAges = partnerAge <= 90
+  const showBothAges = partnerAge > 0 && partnerAge <= partnerLifeExpectancy
 
   return (
     <WrappedCard gradient={gradient} direction={direction}>

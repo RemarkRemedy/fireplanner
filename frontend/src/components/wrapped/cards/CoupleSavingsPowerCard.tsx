@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { WrappedCard, staggerChild } from '@/components/wrapped/WrappedCard'
 import { AnimatedNumber } from '@/components/shared/AnimatedNumber'
-import { formatCompactCurrency } from '@/lib/utils'
+import { formatCompactCurrency, formatPercent } from '@/lib/utils'
 
 interface CoupleSavingsPowerCardProps {
   combinedSavings: number
@@ -55,7 +55,7 @@ export function CoupleSavingsPowerCard({
           )}
           {partnerPct > 0 && (
             <motion.div
-              className="h-full bg-fuchsia-400 rounded-r-full"
+              className="h-full bg-fuchsia-300 rounded-r-full"
               initial={{ width: 0 }}
               animate={{ width: `${partnerPct}%` }}
               transition={{ duration: 0.8, delay: 0.7, ease: 'easeOut' }}
@@ -68,14 +68,14 @@ export function CoupleSavingsPowerCard({
             {names[0]} {formatCompactCurrency(selfSavings)}
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-fuchsia-400" />
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-fuchsia-300" />
             {names[1]} {formatCompactCurrency(partnerSavings)}
           </span>
         </div>
       </motion.div>
 
       <motion.p variants={staggerChild} className="text-lg md:text-xl text-white/90 max-w-sm">
-        Together you're putting away {Math.round(savingsRate)}% of your household income. That's the engine driving your FIRE timeline.
+        Together you're putting away {formatPercent(savingsRate, 0)} of your household income. That's the engine driving your FIRE timeline.
       </motion.p>
     </WrappedCard>
   )

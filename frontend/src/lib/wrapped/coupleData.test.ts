@@ -228,6 +228,46 @@ describe('computePerAdultNetWorth', () => {
     })
     expect(computePerAdultNetWorth(adult, plan)).toBe(10_000)
   })
+
+  it('clamps negative property equity to zero (W4)', () => {
+    const adult = makeAdult({ id: 'a1', owner: 'self', liquidNetWorth: 50_000 })
+    const plan = makeCompiledPlan({
+      cpfByAdultId: {},
+      propertyOrder: ['p1'],
+      propertiesById: {
+        p1: {
+          id: 'p1',
+          owner: 'self',
+          ownsProperty: true,
+          existingPropertyValue: 400_000,
+          existingMortgageBalance: 600_000,
+          ownershipPercent: 1,
+        } as CompiledHouseholdPlan['propertiesById'][string],
+      },
+    })
+    // Underwater property: equity = max(0, 400k - 600k) = 0
+    expect(computePerAdultNetWorth(adult, plan)).toBe(50_000)
+  })
+
+  it('includes 50% of shared-ownership properties (W5)', () => {
+    const adult = makeAdult({ id: 'a1', owner: 'self', liquidNetWorth: 0 })
+    const plan = makeCompiledPlan({
+      cpfByAdultId: {},
+      propertyOrder: ['p1'],
+      propertiesById: {
+        p1: {
+          id: 'p1',
+          owner: 'shared',
+          ownsProperty: true,
+          existingPropertyValue: 1_000_000,
+          existingMortgageBalance: 400_000,
+          ownershipPercent: 1,
+        } as CompiledHouseholdPlan['propertiesById'][string],
+      },
+    })
+    // Shared property: (1M - 400k) * 0.5 = 300k
+    expect(computePerAdultNetWorth(adult, plan)).toBe(300_000)
+  })
 })
 
 // ---------------------------------------------------------------------------

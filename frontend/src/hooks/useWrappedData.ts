@@ -7,7 +7,7 @@ import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { buildCardSequence } from '@/lib/wrapped/gradients'
-import { detectCoupleMode } from '@/lib/wrapped/coupleData'
+import { detectCoupleMode, computePerAdultNetWorth, computePerAdultSavings } from '@/lib/wrapped/coupleData'
 import { computePerAdultFireAge } from '@/lib/household/computePerAdultFireAge'
 import { DEFAULT_ANNUAL_EXPENSES } from '@/lib/data/setupDefaults'
 import type { WrappedCardConfig } from '@/lib/wrapped/gradients'
@@ -76,6 +76,7 @@ export interface CoupleData {
   perPersonFireAge: [number | null, number | null]
   combinedSavings: number
   ageDelta: number
+  partnerLifeExpectancy: number
 }
 
 export interface WrappedData {
@@ -103,22 +104,16 @@ export function useWrappedData(): WrappedData {
   const dashMetrics = useDashboardMetrics()
   const { accumulationData } = useDashboardCharts()
   const { metrics } = useFireCalculations()
-  const { profile } = useHouseholdRuntimeInputs()
+  const { profile, normalized } = useHouseholdRuntimeInputs()
   const plan = useHouseholdPlanStore((s) => s.plan)
-  const allocation = useAllocationStore((s) => ({
-    currentWeights: s.currentWeights,
-    targetWeights: s.targetWeights,
-    returnOverrides: s.returnOverrides,
-    glidePathConfig: s.glidePathConfig,
-    validationErrors: s.validationErrors,
-  }))
-  const simulation = useSimulationStore((s) => ({
-    selectedStrategy: s.selectedStrategy,
-    strategyParams: s.strategyParams,
-    withdrawalBasis: s.withdrawalBasis,
-  }))
-
-  const { isCoupleMode, selfAdult, partnerAdult } = detectCoupleMode(plan.adults)
+  const currentWeights = useAllocationStore((s) => s.currentWeights)
+  const targetWeights = useAllocationStore((s) => s.targetWeights)
+  const returnOverrides = useAllocationStore((s) => s.returnOverrides)
+  const glidePathConfig = useAllocationStore((s) => s.glidePathConfig)
+  const allocationValidationErrors = useAllocationStore((s) => s.validationErrors)
+  const selectedStrategy = useSimulationStore((s) => s.selectedStrategy)
+  const strategyParams = useSimulationStore((s) => s.strategyParams)
+  const withdrawalBasis = useSimulationStore((s) => s.withdrawalBasis)
 
   return useMemo(() => {
     const liquid = profile.liquidNetWorth
@@ -136,6 +131,9 @@ export function useWrappedData(): WrappedData {
       }
     }
 
+    // Detect couple mode inside useMemo to avoid unstable object refs in deps
+    const { isCoupleMode, selfAdult, partnerAdult } = detectCoupleMode(plan.adults)
+
     const mode = isCoupleMode ? 'couple' : 'individual'
     const cards = buildCardSequence(mode)
 
@@ -151,24 +149,37 @@ export function useWrappedData(): WrappedData {
       ? Math.round(rawFireAge)
       : null
 
-    // Couple data computation
+    // Couple data computation using canonical helpers
+    const compiledPlan = normalized.compiledPlan
+    const allocation = {
+      currentWeights,
+      targetWeights,
+      returnOverrides,
+      glidePathConfig,
+      validationErrors: allocationValidationErrors,
+    }
+    const simulation = { selectedStrategy, strategyParams, withdrawalBasis }
+
     let couple: CoupleData | undefined = undefined
     if (isCoupleMode && selfAdult && partnerAdult) {
-      const selfNW = selfAdult.liquidNetWorth +
-        (selfAdult.cpf?.balances?.oa ?? 0) +
-        (selfAdult.cpf?.balances?.sa ?? 0) +
-        (selfAdult.cpf?.balances?.ma ?? 0)
-      const partnerNW = partnerAdult.liquidNetWorth +
-        (partnerAdult.cpf?.balances?.oa ?? 0) +
-        (partnerAdult.cpf?.balances?.sa ?? 0) +
-        (partnerAdult.cpf?.balances?.ma ?? 0)
+      // Use canonical helpers for NW (includes CPF RA + property equity)
+      const selfNW = computePerAdultNetWorth(selfAdult, compiledPlan)
+      const partnerNW = computePerAdultNetWorth(partnerAdult, compiledPlan)
 
-      const selfFireAge = computePerAdultFireAge(plan, selfAdult.id, allocation, simulation)
-      const partnerFireAge = computePerAdultFireAge(plan, partnerAdult.id, allocation, simulation)
-
-      const selfSavings = selfAdult.annualIncome - selfAdult.annualExpenses
-      const partnerSavings = partnerAdult.annualIncome - partnerAdult.annualExpenses
+      // Use canonical helpers for savings (respects shared splits + timing)
+      const selfSavings = computePerAdultSavings(compiledPlan, selfAdult.owner)
+      const partnerSavings = computePerAdultSavings(compiledPlan, partnerAdult.owner)
       const combinedSavings = selfSavings + partnerSavings
+
+      // Per-adult FIRE age with Infinity guard + life expectancy cap
+      const rawSelfFireAge = computePerAdultFireAge(plan, selfAdult.id, allocation, simulation)
+      const rawPartnerFireAge = computePerAdultFireAge(plan, partnerAdult.id, allocation, simulation)
+      const selfFireAge = rawSelfFireAge != null && Number.isFinite(rawSelfFireAge) && rawSelfFireAge <= selfAdult.lifeExpectancy
+        ? Math.round(rawSelfFireAge)
+        : null
+      const partnerFireAge = rawPartnerFireAge != null && Number.isFinite(rawPartnerFireAge) && rawPartnerFireAge <= partnerAdult.lifeExpectancy
+        ? Math.round(rawPartnerFireAge)
+        : null
 
       couple = {
         names: [selfAdult.displayName, partnerAdult.displayName],
@@ -178,6 +189,7 @@ export function useWrappedData(): WrappedData {
         perPersonFireAge: [selfFireAge, partnerFireAge],
         combinedSavings,
         ageDelta: selfAdult.currentAge - partnerAdult.currentAge,
+        partnerLifeExpectancy: partnerAdult.lifeExpectancy,
       }
     }
 
@@ -231,5 +243,7 @@ export function useWrappedData(): WrappedData {
       },
       couple,
     }
-  }, [dashMetrics, accumulationData, metrics, profile, isCoupleMode, selfAdult, partnerAdult, plan, allocation, simulation])
+  }, [dashMetrics, accumulationData, metrics, profile, normalized, plan,
+    currentWeights, targetWeights, returnOverrides, glidePathConfig, allocationValidationErrors,
+    selectedStrategy, strategyParams, withdrawalBasis])
 }

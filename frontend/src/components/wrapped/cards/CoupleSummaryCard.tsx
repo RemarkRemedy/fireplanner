@@ -23,8 +23,8 @@ export function CoupleSummaryCard({ data, gradient, direction }: CoupleSummaryCa
   const stats = [
     { label: 'Household NW', value: formatCompactCurrency(data.netWorth.total) },
     { label: 'FIRE number', value: formatCompactCurrency(data.fireNumber.value) },
-    ...(data.couple ? [{ label: 'Combined savings', value: `${formatCompactCurrency(data.couple.combinedSavings)}/yr` }] : []),
-    ...(bothFreeAge != null ? [{ label: 'Both free by', value: `${bothFreeAge}` }] : []),
+    { label: 'Combined savings', value: `${formatCompactCurrency(data.couple?.combinedSavings ?? 0)}/yr` },
+    { label: 'Both free by', value: bothFreeAge != null ? `${bothFreeAge}` : 'N/A' },
     { label: 'Peak NW', value: formatCompactCurrency(data.peak.value) },
     { label: 'Savings rate', value: formatPercent(data.summary.savingsRate, 0) },
   ]

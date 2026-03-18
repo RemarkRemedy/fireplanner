@@ -8,9 +8,10 @@ interface CoupleProgressCardProps {
 }
 
 export function CoupleProgressCard({ percent, gradient, direction }: CoupleProgressCardProps) {
-  const displayPct = Math.round(percent * 100)
+  const clampedPercent = Math.max(0, Math.min(percent, 1))
+  const displayPct = Math.round(clampedPercent * 100)
   const circumference = 2 * Math.PI * 90
-  const strokeOffset = circumference * (1 - Math.min(percent, 1))
+  const strokeOffset = circumference * (1 - clampedPercent)
 
   return (
     <WrappedCard gradient={gradient} direction={direction}>

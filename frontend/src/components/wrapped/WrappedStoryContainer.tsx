@@ -14,11 +14,13 @@ export interface CardRenderer {
 }
 
 interface WrappedStoryContainerProps {
-  cardRenderers: CardRenderer[]
+  individualCardRenderers: CardRenderer[]
+  coupleCardRenderers: CardRenderer[]
 }
 
-export function WrappedStoryContainer({ cardRenderers }: WrappedStoryContainerProps) {
+export function WrappedStoryContainer({ individualCardRenderers, coupleCardRenderers }: WrappedStoryContainerProps) {
   const data = useWrappedData()
+  const cardRenderers = data.mode === 'couple' ? coupleCardRenderers : individualCardRenderers
   const navigate = useNavigate()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [direction, setDirection] = useState(1)
@@ -171,7 +173,7 @@ export function WrappedStoryContainer({ cardRenderers }: WrappedStoryContainerPr
       {currentIndex < total - 1 && currentIndex > 0 && (
         <button
           className="absolute bottom-8 right-4 z-10 text-white/60 hover:text-white text-xs transition-colors"
-          onPointerUp={(e) => {
+          onClick={(e) => {
             e.stopPropagation()
             if (isTransitioning.current) return
             isTransitioning.current = true

@@ -37,7 +37,7 @@ export function CoupleNetWorthCard({
         {total > 0 && (
           <>
             <BreakdownBar label={names[0]} value={perPersonNW[0]} total={total} color="bg-indigo-400" />
-            <BreakdownBar label={names[1]} value={perPersonNW[1]} total={total} color="bg-fuchsia-400" />
+            <BreakdownBar label={names[1]} value={perPersonNW[1]} total={total} color="bg-fuchsia-300" />
           </>
         )}
       </motion.div>

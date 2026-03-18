@@ -60,8 +60,8 @@ export function CoupleMilestoneCard({
   direction,
 }: CoupleMilestoneCardProps) {
   const [fireAge1, fireAge2] = perPersonFireAge
-  const yearsToFire1 = fireAge1 != null ? fireAge1 - ages[0] : null
-  const yearsToFire2 = fireAge2 != null ? fireAge2 - ages[1] : null
+  const yearsToFire1 = fireAge1 != null ? Math.max(0, fireAge1 - ages[0]) : null
+  const yearsToFire2 = fireAge2 != null ? Math.max(0, fireAge2 - ages[1]) : null
   const hasSomeData = fireAge1 != null || fireAge2 != null
 
   return (
@@ -89,7 +89,7 @@ export function CoupleMilestoneCard({
                     {fireAge1}
                   </motion.span>
                   <span className="text-sm text-white/70">
-                    {yearsToFire1 === 0 ? 'Now!' : `${yearsToFire1}y away`}
+                    {yearsToFire1 === 0 ? 'Achieved!' : `${yearsToFire1}y away`}
                   </span>
                 </>
               ) : (
@@ -115,7 +115,7 @@ export function CoupleMilestoneCard({
                     {fireAge2}
                   </motion.span>
                   <span className="text-sm text-white/70">
-                    {yearsToFire2 === 0 ? 'Now!' : `${yearsToFire2}y away`}
+                    {yearsToFire2 === 0 ? 'Achieved!' : `${yearsToFire2}y away`}
                   </span>
                 </>
               ) : (

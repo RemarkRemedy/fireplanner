@@ -38,10 +38,13 @@ vi.mock('@/stores/useSimulationStore', () => ({
     }),
 }))
 
+let mockPerAdultNetWorth = (_adult: unknown, _plan: unknown): number => 0
+let mockPerAdultSavings = (_plan: unknown, _owner: unknown): number => 0
+
 vi.mock('@/lib/wrapped/coupleData', () => ({
   detectCoupleMode: () => mockCoupleDetection,
-  computePerAdultNetWorth: () => 0,
-  computePerAdultSavings: () => 0,
+  computePerAdultNetWorth: (adult: unknown, plan: unknown) => mockPerAdultNetWorth(adult, plan),
+  computePerAdultSavings: (plan: unknown, owner: unknown) => mockPerAdultSavings(plan, owner),
 }))
 
 vi.mock('@/lib/household/computePerAdultFireAge', () => ({
@@ -125,6 +128,13 @@ vi.mock('@/hooks/useFireCalculations', () => ({
 vi.mock('@/hooks/useHouseholdRuntimeInputs', () => ({
   useHouseholdRuntimeInputs: () => ({
     profile: mockProfile,
+    normalized: {
+      compiledPlan: {
+        cpfByAdultId: {},
+        propertyOrder: [],
+        propertiesById: {},
+      },
+    },
   }),
 }))
 
@@ -180,6 +190,8 @@ function resetMocks() {
     { age: 50, value: 1_200_000 },
     { age: 60, value: 900_000 },
   )
+  mockPerAdultNetWorth = () => 0
+  mockPerAdultSavings = () => 0
 }
 
 beforeEach(() => {
@@ -422,31 +434,34 @@ describe('useWrappedData', () => {
       expect(coupleResult.current.cards.map((c) => c.key)).toContain('savingsPower')
     })
 
-    it('couple mode computes per-person net worth from liquid + CPF balances', () => {
+    it('couple mode delegates per-person NW to computePerAdultNetWorth', () => {
       const self = makeSelfAdult()
       const partner = makePartnerAdult()
       mockCoupleDetection.isCoupleMode = true
       mockCoupleDetection.selfAdult = self
       mockCoupleDetection.partnerAdult = partner
+      // Mock canonical helper returns (includes CPF RA + property equity)
+      mockPerAdultNetWorth = (adult) =>
+        (adult as { owner: string }).owner === 'self' ? 300_000 : 230_000
 
       const { result } = renderHook(() => useWrappedData())
       const couple = result.current.couple!
-      // self: 200K liquid + 50K OA + 30K SA + 20K MA = 300K
       expect(couple.perPersonNW[0]).toBe(300_000)
-      // partner: 150K liquid + 40K OA + 25K SA + 15K MA = 230K
       expect(couple.perPersonNW[1]).toBe(230_000)
     })
 
-    it('couple mode computes savings and ageDelta', () => {
+    it('couple mode delegates savings to computePerAdultSavings and computes ageDelta', () => {
       const self = makeSelfAdult()
       const partner = makePartnerAdult()
       mockCoupleDetection.isCoupleMode = true
       mockCoupleDetection.selfAdult = self
       mockCoupleDetection.partnerAdult = partner
+      // Mock canonical helper returns (respects shared splits + timing)
+      mockPerAdultSavings = (_plan, owner) =>
+        (owner as string) === 'self' ? 60_000 : 45_000
 
       const { result } = renderHook(() => useWrappedData())
       const couple = result.current.couple!
-      // self savings: 100K - 40K = 60K; partner: 80K - 35K = 45K
       expect(couple.perPersonSavings).toEqual([60_000, 45_000])
       expect(couple.combinedSavings).toBe(105_000)
       expect(couple.ageDelta).toBe(2) // 30 - 28
