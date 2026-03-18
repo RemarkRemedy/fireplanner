@@ -1,5 +1,5 @@
 import { getMomSalary } from '@/lib/data/momSalary'
-import { calculateFireNumber, calculateYearsToFire } from './fire'
+import { calculateFireNumber, calculateYearsToFire, projectPortfolioAtRetirement } from './fire'
 import { QUICK_ESTIMATE_DEFAULTS } from '@/lib/data/quickEstimateDefaults'
 import { SINGSTAT_MEDIAN_MONTHLY_EXPENSES } from '@/lib/data/expenseBenchmarks'
 
@@ -145,7 +145,12 @@ export function computeMirrorInsights(inputs: MirrorInsightInputs): MirrorInsigh
 
   // Future value of current savings + annual savings over years to retirement
   const yearsToGo = Math.max(0, retirementAge - currentAge)
-  const futureValue = calculateFutureValue(totalLiquid + totalCpf, annualSavings, netRealReturn, yearsToGo)
+  const futureValue = projectPortfolioAtRetirement({
+    currentNW: totalLiquid + totalCpf,
+    annualSavings,
+    netRealReturn,
+    yearsToRetirement: yearsToGo,
+  })
 
   const moment2: MirrorInsightData = {
     id: 'savings-rate',
@@ -197,9 +202,9 @@ export function computeMirrorInsights(inputs: MirrorInsightInputs): MirrorInsigh
   // -----------------------------------------------------------------------
   // Moment 5: Full Snapshot
   // -----------------------------------------------------------------------
-  const yearsToFire = calculateYearsToFire(netRealReturn, annualSavings, totalLiquid + totalCpf, fireNumber)
-  const fireReachable = isFinite(yearsToFire) && yearsToFire <= QUICK_ESTIMATE_DEFAULTS.maxYearsToFire
-  const fireAge = fireReachable ? Math.round(currentAge + yearsToFire) : 0
+  // Reuse baseYears from Moment 1 (same args: netRealReturn, annualSavings, totalLiquid + totalCpf, fireNumber)
+  const fireReachable = isFinite(baseYears) && baseYears <= QUICK_ESTIMATE_DEFAULTS.maxYearsToFire
+  const fireAge = fireReachable ? Math.round(currentAge + baseYears) : 0
 
   const topInsight = deriveTopInsight(inputs, savingsRatePercent, cpfYears, yearsPerExtra500)
 
@@ -219,22 +224,6 @@ export function computeMirrorInsights(inputs: MirrorInsightInputs): MirrorInsigh
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
-
-function calculateFutureValue(
-  presentValue: number,
-  annualContribution: number,
-  rate: number,
-  years: number
-): number {
-  if (years <= 0) return presentValue
-  if (Math.abs(rate) < 1e-10) {
-    return Math.max(0, presentValue + annualContribution * years)
-  }
-  const growthFactor = Math.pow(1 + rate, years)
-  const fvLump = presentValue * growthFactor
-  const fvAnnuity = annualContribution * (growthFactor - 1) / rate
-  return Math.max(0, fvLump + fvAnnuity)
-}
 
 function deriveTopInsight(
   inputs: MirrorInsightInputs,
