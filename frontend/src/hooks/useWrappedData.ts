@@ -210,7 +210,12 @@ export function useWrappedData(): WrappedData {
         currentAge: profile.currentAge,
         displayName,
       },
-      netWorth: { total: totalNW, liquid, cpf, property },
+      netWorth: {
+        // In couple mode, use sum of per-person NW (includes property equity)
+        // to keep bars and header on the same basis
+        total: couple ? couple.perPersonNW[0] + couple.perPersonNW[1] : totalNW,
+        liquid, cpf, property,
+      },
       fireNumber: { value: dashMetrics.fireNumber ?? 0 },
       progress: { percent: dashMetrics.progress ?? 0 },
       milestone: {
