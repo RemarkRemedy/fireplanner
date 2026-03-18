@@ -15798,6 +15798,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'branch:tokio-goluxe-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts',
+      'kernel:current-death-benefit-estimate',
     ],
     description: 'Tokio Marine #goLuxe advanced-death supported baseline proving accrued Monthly Protection Charge handling across the Initial and Accumulation Units Accounts.',
   },
@@ -15859,6 +15860,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'branch:tokio-goaffluence-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts',
+      'kernel:current-death-benefit-estimate',
     ],
     description: 'Tokio Marine #goAffluence advanced-death supported baseline proving accrued Monthly Protection Charge handling across the Initial and Accumulation Units Accounts.',
   },

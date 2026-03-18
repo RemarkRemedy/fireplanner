@@ -385,7 +385,7 @@ function buildVariant(
       'This partial template models regular-premium routing through year 15, the published initial charge and policy charge through account fee rates, top-up routing, recurring single premium routing, the published surrender charge on the Initial Units Account, the published partial-withdrawal and premium-shortfall charge schedules, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
       ...(isAdvancedDeath
         ? [
-            'The Advanced Death variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window, policy-year-4 lump-sum settlement, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base.',
+            'The Advanced Death variant also models the published current death-benefit estimate, Monthly Protection Charge, including the first-three-policy-years accrual window, policy-year-4 lump-sum settlement, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base.',
           ]
         : []),
       'Recurring single premium stays blocked during premium holiday until regular premium resumes at the committed commencement-date amount.',
@@ -394,7 +394,7 @@ function buildVariant(
       'Achievement bonus remains metadata-only because the published first-ten-policy-years qualification gates and annualised-premium payout basis are not yet represented directly in the template bonus basis.',
       ...(isAdvancedDeath
         ? [
-            'Advanced Death payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, and change-of-life-assured administration remain metadata-only for this product.',
+            'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, multiple-life last-life settlement, and change-of-life-assured administration remain metadata-only for this product.',
           ]
         : [
             'Advanced Death selection, Monthly Protection Charge, multiple-life last-life settlement, and change-of-life-assured administration remain metadata-only for this product.',
@@ -436,6 +436,7 @@ export function parseTokioMarineGoLuxe(context: ParseContext): IlpCatalogProduct
       'tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only',
       'branch:tokio-loyalty-bonus-adjustment-factor',
       'branch:tokio-goluxe-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts',
+      'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
@@ -447,8 +448,8 @@ export function parseTokioMarineGoLuxe(context: ParseContext): IlpCatalogProduct
       'tokio-goluxe-non-sgd-policy-currencies',
     ],
     warnings: [
-      '#goLuxe is cataloged as a supported V1 product. The SGD / 15-year minimum-contribution corridors model regular-premium routing, initial bonus allocation, annual loyalty bonus with the published bounded adjustment-factor formula in policy years 4 to 10 and the flat post-window rates thereafter, initial and policy charges, top-up and recurring-single-premium routing / charges, partial-withdrawal and premium-shortfall charges, surrender mechanics, and reinvest-default distribution support with the published $50 minimum cash-payout threshold and 30-day record-date lead time; the Advanced Death variant also models the accrued Monthly Protection Charge corridor from insured-life inputs.',
-      'Achievement bonus qualification, advanced-death payout handling beyond the modeled Monthly Protection Charge, multiple-life last-life settlement, change-of-life-assured administration, regular-withdrawal rules, and non-SGD policy currencies remain informational only.',
+      '#goLuxe is cataloged as a supported V1 product. The SGD / 15-year minimum-contribution corridors model regular-premium routing, initial bonus allocation, annual loyalty bonus with the published bounded adjustment-factor formula in policy years 4 to 10 and the flat post-window rates thereafter, initial and policy charges, top-up and recurring-single-premium routing / charges, partial-withdrawal and premium-shortfall charges, surrender mechanics, and reinvest-default distribution support with the published $50 minimum cash-payout threshold and 30-day record-date lead time; the Advanced Death variant also models the published current death-benefit estimate and accrued Monthly Protection Charge corridor from insured-life inputs.',
+      'Achievement bonus qualification, advanced-death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, multiple-life last-life settlement, change-of-life-assured administration, regular-withdrawal rules, and non-SGD policy currencies remain informational only.',
     ],
     archived: false,
     variants: [

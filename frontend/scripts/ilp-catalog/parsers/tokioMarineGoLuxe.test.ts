@@ -29,6 +29,7 @@ describe('parseTokioMarineGoLuxe', () => {
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(product.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
     expect(product.modeledEconomics).toContain('branch:tokio-goluxe-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
+    expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-achievement-bonus-qualification')
     expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-advanced-death-payout-handling')
@@ -136,5 +137,11 @@ describe('parseTokioMarineGoLuxe', () => {
         }),
       }),
     ])
+    expect(advancedVariant?.warnings).toContain(
+      'The Advanced Death variant also models the published current death-benefit estimate, Monthly Protection Charge, including the first-three-policy-years accrual window, policy-year-4 lump-sum settlement, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base.',
+    )
+    expect(advancedVariant?.unsupportedItems).toContain(
+      'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, multiple-life last-life settlement, and change-of-life-assured administration remain metadata-only for this product.',
+    )
   }, 30_000)
 })

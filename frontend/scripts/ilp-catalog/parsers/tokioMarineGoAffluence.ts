@@ -414,7 +414,7 @@ function buildVariant(
       'This partial template models regular-premium routing through the 15-year payment term, the published initial bonus tiers, the year-scaled initial charge schedule, the policy charge premium-base multiplier basis, top-up routing, recurring single premium routing, the published 15-year surrender charge table, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
       ...(isAdvancedDeath
         ? [
-            'The Advanced Death variant also models the published Monthly Protection Charge, including the first-two-policy-years accrual window, policy-year-3 lump-sum settlement, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base.',
+            'The Advanced Death variant also models the published current death-benefit estimate, Monthly Protection Charge, including the first-two-policy-years accrual window, policy-year-3 lump-sum settlement, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base.',
           ]
         : []),
       'Recurring single premium stays blocked during premium holiday until regular premium resumes at the committed commencement-date amount.',
@@ -423,7 +423,7 @@ function buildVariant(
       'Achievement bonus remains metadata-only because the published eligible-policy-year milestone gates and annualised-premium payout basis are not yet represented directly in the template bonus basis.',
       ...(isAdvancedDeath
         ? [
-            'Advanced Death payout handling beyond the modeled Monthly Protection Charge, together with Advanced Death Benefit with Life Benefit Rider, accidental/dependent medical/retrenchment benefits, multiple-life handling, and change-of-life-assured administration, remains metadata-only for this product.',
+            'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, together with Advanced Death Benefit with Life Benefit Rider, accidental/dependent medical/retrenchment benefits, multiple-life handling, and change-of-life-assured administration, remains metadata-only for this product.',
           ]
         : [
             'Advanced Death selection, Monthly Protection Charge, Advanced Death Benefit with Life Benefit Rider, accidental/dependent medical/retrenchment benefits, multiple-life handling, and change-of-life-assured administration remain metadata-only for this product.',
@@ -460,6 +460,7 @@ export function parseTokioMarineGoAffluence(context: ParseContext): IlpCatalogPr
       'tokio-initial-account-surrender-charge',
       'branch:tokio-loyalty-bonus-adjustment-factor',
       'branch:tokio-goaffluence-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts',
+      'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
@@ -469,9 +470,9 @@ export function parseTokioMarineGoAffluence(context: ParseContext): IlpCatalogPr
       'tokio-goaffluence-premium-holiday-and-non-sgd-or-non-15-year-variants',
     ],
     warnings: [
-      '#goAffluence is cataloged as a supported V1 product. The SGD / 15-year premium-payment corridors model regular-premium routing, initial bonus allocation, annual loyalty bonus with the published bounded adjustment-factor formula during the premium payment term and the flat post-term rate table thereafter, initial and policy charges, top-up and recurring-single-premium routing / charges, surrender mechanics, and reinvest-default distribution support; the Advanced Death variant also models the accrued Monthly Protection Charge corridor from insured-life inputs.',
+      '#goAffluence is cataloged as a supported V1 product. The SGD / 15-year premium-payment corridors model regular-premium routing, initial bonus allocation, annual loyalty bonus with the published bounded adjustment-factor formula during the premium payment term and the flat post-term rate table thereafter, initial and policy charges, top-up and recurring-single-premium routing / charges, surrender mechanics, and reinvest-default distribution support; the Advanced Death variant also models the published current death-benefit estimate and accrued Monthly Protection Charge corridor from insured-life inputs.',
       'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
-      'Achievement bonus qualification, advanced-death payout handling beyond the modeled Monthly Protection Charge, regular-withdrawal administration, partial-withdrawal limit and minimum-account-value constraints, and premium-holiday / non-SGD / non-15-year variants remain informational only.',
+      'Achievement bonus qualification, advanced-death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, regular-withdrawal administration, partial-withdrawal limit and minimum-account-value constraints, and premium-holiday / non-SGD / non-15-year variants remain informational only.',
     ],
     archived: false,
     variants: [

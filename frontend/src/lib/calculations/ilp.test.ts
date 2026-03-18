@@ -8151,7 +8151,7 @@ describe('computeSummaryMetrics', () => {
     expect(computeCurrentDeathBenefitEstimate(policy, currentValueByAccount, totalCurrentValue)).toBeCloseTo(45_400, 2)
   })
 
-  it('does not expose a Tokio current death-benefit estimate when that kernel is not modeled for the catalog variant', () => {
+  it('adds a #goLuxe current death-benefit estimate from the Tokio net-premium floor corridor', () => {
     const policy = makeDefaultPolicy({
       currency: 'SGD',
       monthlyContribution: 0,
@@ -8235,7 +8235,10 @@ describe('computeSummaryMetrics', () => {
         supportStatus: 'supported',
         economicsStatus: 'supported',
         structureStatus: 'structured',
-        modeledEconomics: ['branch:tokio-goluxe-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts'],
+        modeledEconomics: [
+          'branch:tokio-goluxe-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts',
+          'kernel:current-death-benefit-estimate',
+        ],
         metadataOnlyBehaviors: ['tokio-goluxe-advanced-death-payout-handling'],
       },
       funds: [ZERO_RETURN_FUND],
@@ -8243,7 +8246,105 @@ describe('computeSummaryMetrics', () => {
 
     const summary = computeSummaryMetrics(policy, projectIlpPolicy(policy, 'mid'))
 
-    expect(summary.currentDeathBenefitEstimate).toBeUndefined()
+    expect(summary.currentDeathBenefitEstimate).toBe(55_000)
+  })
+
+  it('adds a #goAffluence current death-benefit estimate from the Tokio net-premium floor corridor', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'SGD',
+      monthlyContribution: 0,
+      monthsAlreadyPaid: 36,
+      currentPolicyYear: 4,
+      mipLength: 15,
+      postMipYears: 0,
+      accounts: [
+        {
+          id: 'initial',
+          label: 'Initial Units Account',
+          feeRate: 0,
+          currentValue: 20_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'accumulation',
+          label: 'Accumulation Units Account',
+          feeRate: 0,
+          currentValue: 20_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'after-mip', contributionShare: 1 },
+          ],
+        },
+        {
+          id: 'topup',
+          label: 'Top-up Units Account',
+          feeRate: 0,
+          currentValue: 5_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: 0,
+          contributionRules: [
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      bonuses: [],
+      chargeRules: [
+        {
+          id: 'tokio-mpc',
+          label: 'Monthly Protection Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'during-mip',
+          appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          fallbackAppliesTo: ['topup', 'initial'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+          },
+          requiresManualInput: true,
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: 50_000,
+      },
+      catalogSource: {
+        productId: 'tokio-marine-goaffluence',
+        productName: '#goAffluence',
+        variantId: 'sgd-mip-15-advanced-death',
+        variantLabel: 'SGD / MIP 15 (Advanced Death)',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: [
+          'branch:tokio-goaffluence-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts',
+          'kernel:current-death-benefit-estimate',
+        ],
+        metadataOnlyBehaviors: ['tokio-goaffluence-advanced-death-payout-life-benefit-rider-and-life-assured-administration'],
+      },
+      funds: [ZERO_RETURN_FUND],
+    })
+
+    const summary = computeSummaryMetrics(policy, projectIlpPolicy(policy, 'mid'))
+
+    expect(summary.currentDeathBenefitEstimate).toBe(55_000)
   })
 
   it('adds a Wealth Focus current death-benefit estimate from paid regular premiums and account balances', () => {

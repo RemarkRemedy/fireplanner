@@ -5648,6 +5648,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-goluxe-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.accounts).toEqual([
       expect.objectContaining({ id: 'initial', feeRate: 0.03, postMipFeeRate: 0 }),
@@ -5724,7 +5725,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain(
       'tokio-goluxe-advanced-death-payout-handling-and-life-assured-administration',
     )
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('Advanced Death variant also models the published Monthly Protection Charge'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('published current death-benefit estimate, Monthly Protection Charge'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
   })
@@ -5836,6 +5837,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-goaffluence-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -5858,7 +5860,7 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('Advanced Death variant also models the published Monthly Protection Charge'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('published current death-benefit estimate, Monthly Protection Charge'))).toBe(true)
   })
 
   it('maps Tokio Marine Affluence@Future into a supported seed with capped initial-charge and deferred policy-charge rules', () => {
