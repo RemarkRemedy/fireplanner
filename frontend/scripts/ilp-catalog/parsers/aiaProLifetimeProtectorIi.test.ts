@@ -128,6 +128,8 @@ describe('parseAiaProLifetimeProtectorIi', () => {
     expect(product.metadataOnlyBehaviors).toContain('aia-pro-lifetime-protector-ii-premium-holiday-charge-fixed-monthly')
     expect(product.metadataOnlyBehaviors).toContain('aia-pro-lifetime-protector-ii-death-benefit-max-option')
     expect(product.metadataOnlyBehaviors).toContain('aia-pro-lifetime-protector-ii-no-lapse-privilege')
+    expect(product.metadataOnlyBehaviors).toContain('aia-pro-lifetime-protector-ii-reinstatement-underwriting-and-extra-mortality')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-pro-lifetime-protector-ii-reinstatement')
 
     expect(product.variants).toHaveLength(2)
 

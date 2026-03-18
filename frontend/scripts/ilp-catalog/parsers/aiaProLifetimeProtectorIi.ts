@@ -231,7 +231,7 @@ function buildVariant(document: ExtractedPdfDocument, deathBenefitOption: DeathB
       'Partial-withdrawal eligibility timing, minimum withdrawal amount, and minimum residual policy-value rules remain informational only.',
       'Insured-amount variation, milestone-event increase option, regular-premium variation, and premium-frequency change handling remain informational only.',
       'AIA Vitality PowerUp Dollar, optional riders, fund switching, automatic fund switching, automatic fund re-balancing, and fund-level management charges remain informational only.',
-      'Reinstatement underwriting, extra-mortality revisions, and termination-side protection payouts remain informational only.',
+      'Reinstatement underwriting and extra-mortality revisions remain informational only.',
       `The ${coverLabel} death-benefit payout settlement itself remains metadata-only beyond the modeled Benefit Charge corridor.`,
     ],
     sourceRefs: [page1, page2, page3, page4, page5, page6, page13],
@@ -275,7 +275,7 @@ export function parseAiaProLifetimeProtectorIi({ document, sourceChecksumSha256 
       'aia-pro-lifetime-protector-ii-optional-riders',
       'aia-pro-lifetime-protector-ii-fund-switching-and-rebalancing',
       'aia-pro-lifetime-protector-ii-fund-management-charge',
-      'aia-pro-lifetime-protector-ii-reinstatement',
+      'aia-pro-lifetime-protector-ii-reinstatement-underwriting-and-extra-mortality',
       'aia-pro-lifetime-protector-ii-termination-limits',
     ],
     warnings: [

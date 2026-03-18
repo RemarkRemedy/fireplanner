@@ -970,6 +970,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-pro-lifetime-protector-ii-plus-benefit-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-pro-lifetime-protector-ii-premium-holiday-charge-fixed-monthly')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-pro-lifetime-protector-ii-reinstatement-underwriting-and-extra-mortality')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-pro-lifetime-protector-ii-reinstatement')
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
