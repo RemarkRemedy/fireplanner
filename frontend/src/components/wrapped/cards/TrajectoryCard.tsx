@@ -33,7 +33,7 @@ export function TrajectoryCard({ chartData, retirementAge, gradient, direction }
           transition={{ duration: 0.8, delay: 0.4 }}
         >
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+            <AreaChart data={chartData} margin={{ top: 24, right: 10, bottom: 10, left: 10 }}>
               <defs>
                 <linearGradient id="wrappedFill" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="white" stopOpacity={0.4} />
