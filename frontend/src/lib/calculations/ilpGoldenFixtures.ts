@@ -15061,6 +15061,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'branch:tokio-atlas-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction',
+      'kernel:current-death-benefit-estimate',
     ],
     description: 'TM Atlas Wealth advanced-death supported baseline proving published MPC accrual, settlement, and disable-on-failure behavior.',
   },
@@ -15112,6 +15113,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'branch:tokio-goclassic-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction',
+      'kernel:current-death-benefit-estimate',
     ],
     description: 'Tokio Marine #goClassic advanced-death supported baseline proving accrued Monthly Protection Charge handling and permanent disable-on-failure behavior from insured-life inputs.',
   },
