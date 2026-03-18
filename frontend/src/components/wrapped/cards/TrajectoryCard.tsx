@@ -20,7 +20,7 @@ export function TrajectoryCard({ chartData, retirementAge, gradient, direction }
 
   return (
     <WrappedCard gradient={gradient} direction={direction}>
-      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white/60 font-medium">
+      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white font-medium">
         Your wealth trajectory
       </motion.p>
 
@@ -42,13 +42,13 @@ export function TrajectoryCard({ chartData, retirementAge, gradient, direction }
               </defs>
               <XAxis
                 dataKey="age"
-                tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }}
+                tick={{ fill: 'rgba(255,255,255,0.9)', fontSize: 12 }}
                 axisLine={false}
                 tickLine={false}
                 interval="preserveStartEnd"
               />
               <YAxis
-                tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }}
+                tick={{ fill: 'rgba(255,255,255,0.9)', fontSize: 12 }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v: number) => formatCompactCurrency(v)}
@@ -56,12 +56,12 @@ export function TrajectoryCard({ chartData, retirementAge, gradient, direction }
               />
               <ReferenceLine
                 x={retirementAge}
-                stroke="rgba(255,255,255,0.3)"
+                stroke="rgba(255,255,255,0.7)"
                 strokeDasharray="4 4"
                 label={{
                   value: 'Retire',
                   position: 'top',
-                  fill: 'rgba(255,255,255,0.5)',
+                  fill: 'rgba(255,255,255,0.9)',
                   fontSize: 11,
                 }}
               />
@@ -79,7 +79,7 @@ export function TrajectoryCard({ chartData, retirementAge, gradient, direction }
           </ResponsiveContainer>
         </motion.div>
       ) : (
-        <motion.p variants={staggerChild} className="text-white/60">
+        <motion.p variants={staggerChild} className="text-white/90">
           Add your financial details to see your trajectory.
         </motion.p>
       )}

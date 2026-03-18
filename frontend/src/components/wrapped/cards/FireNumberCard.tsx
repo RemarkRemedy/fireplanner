@@ -14,7 +14,7 @@ interface FireNumberCardProps {
 export function FireNumberCard({ value, hasCustomExpenses, gradient, direction }: FireNumberCardProps) {
   return (
     <WrappedCard gradient={gradient} direction={direction}>
-      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white/60 font-medium">
+      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white font-medium">
         Your FIRE number
       </motion.p>
       <motion.div variants={staggerChild}>
@@ -25,7 +25,7 @@ export function FireNumberCard({ value, hasCustomExpenses, gradient, direction }
           delay={300}
         />
       </motion.div>
-      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white/70 max-w-sm">
+      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white/90 max-w-sm">
         That's what financial freedom costs. When your net worth hits this, work becomes optional.
       </motion.p>
 
@@ -33,7 +33,7 @@ export function FireNumberCard({ value, hasCustomExpenses, gradient, direction }
         <motion.div variants={staggerChild}>
           <Link
             to="/inputs#section-expenses"
-            className="text-sm text-white/50 hover:text-white/80 transition-colors underline underline-offset-2"
+            className="text-sm text-white/80 hover:text-white/80 transition-colors underline underline-offset-2"
             onClick={(e) => e.stopPropagation()}
           >
             Based on estimated expenses. Refine your spending for accuracy.

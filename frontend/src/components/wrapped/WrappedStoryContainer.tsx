@@ -98,7 +98,7 @@ export function WrappedStoryContainer({ cardRenderers }: WrappedStoryContainerPr
 
       {/* Close button */}
       <button
-        className="absolute top-6 right-4 z-20 text-white/70 hover:text-white transition-colors p-2"
+        className="absolute top-6 right-4 z-20 text-white/90 hover:text-white transition-colors p-2"
         onClick={(e) => {
           e.stopPropagation()
           handleClose()
@@ -111,7 +111,7 @@ export function WrappedStoryContainer({ cardRenderers }: WrappedStoryContainerPr
       {/* Navigation hints (visible on first card only) */}
       {currentIndex === 0 && (
         <div className="absolute bottom-8 left-0 right-0 z-10 flex justify-center">
-          <p className="text-white/40 text-sm animate-pulse">Tap to continue</p>
+          <p className="text-white/80 text-sm animate-pulse">Tap to continue</p>
         </div>
       )}
     </div>

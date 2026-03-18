@@ -25,7 +25,7 @@ export function SummaryCard({ data, gradient, direction }: SummaryCardProps) {
 
   return (
     <WrappedCard gradient={gradient} direction={direction}>
-      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white/60 font-medium">
+      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white font-medium">
         Your FIRE snapshot
       </motion.p>
 
@@ -39,7 +39,7 @@ export function SummaryCard({ data, gradient, direction }: SummaryCardProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 + i * 0.1, duration: 0.3 }}
             >
-              <p className="text-xs text-white/50 uppercase tracking-wider">{stat.label}</p>
+              <p className="text-xs text-white/80 uppercase tracking-wider">{stat.label}</p>
               <p className="text-xl md:text-2xl font-bold mt-1">{stat.value}</p>
             </motion.div>
           ))}

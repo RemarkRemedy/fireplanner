@@ -11,13 +11,13 @@ interface IntroCardProps {
 export function IntroCard({ currentAge, displayName, gradient, direction }: IntroCardProps) {
   return (
     <WrappedCard gradient={gradient} direction={direction}>
-      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white/60 font-medium">
+      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white font-medium">
         Hey {displayName}
       </motion.p>
       <motion.h1 variants={staggerChild} className="text-3xl md:text-5xl font-bold leading-tight">
         Let's look at your financial future.
       </motion.h1>
-      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white/70">
+      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white/90">
         You're {currentAge} years old. Here's where you're headed.
       </motion.p>
     </WrappedCard>

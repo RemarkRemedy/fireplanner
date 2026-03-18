@@ -14,7 +14,7 @@ export function MilestoneCard({ fireAge, yearsToFire, gradient, direction }: Mil
 
   return (
     <WrappedCard gradient={gradient} direction={direction}>
-      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white/60 font-medium">
+      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white font-medium">
         {hasFireAge ? 'Financial freedom at' : 'Your FIRE milestone'}
       </motion.p>
 
@@ -29,7 +29,7 @@ export function MilestoneCard({ fireAge, yearsToFire, gradient, direction }: Mil
             >
               {fireAge}
             </motion.span>
-            <span className="text-2xl md:text-3xl text-white/60">years old</span>
+            <span className="text-2xl md:text-3xl text-white">years old</span>
           </motion.div>
 
           <motion.p variants={staggerChild} className="text-xl md:text-2xl text-white/80">
@@ -45,7 +45,7 @@ export function MilestoneCard({ fireAge, yearsToFire, gradient, direction }: Mil
           <motion.p variants={staggerChild} className="text-2xl md:text-3xl font-semibold text-white/90">
             Not calculated yet
           </motion.p>
-          <motion.p variants={staggerChild} className="text-lg text-white/60">
+          <motion.p variants={staggerChild} className="text-lg text-white">
             Add your income and savings details to see when you'll reach FIRE.
           </motion.p>
         </>
@@ -54,7 +54,7 @@ export function MilestoneCard({ fireAge, yearsToFire, gradient, direction }: Mil
       <motion.div variants={staggerChild}>
         <Link
           to="/inputs#section-personal"
-          className="text-sm text-white/50 hover:text-white/80 transition-colors underline underline-offset-2"
+          className="text-sm text-white/80 hover:text-white/80 transition-colors underline underline-offset-2"
           onClick={(e) => e.stopPropagation()}
         >
           Adjust your retirement age to see how it shifts

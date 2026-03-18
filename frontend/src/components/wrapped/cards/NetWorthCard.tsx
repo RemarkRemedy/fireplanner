@@ -27,7 +27,7 @@ export function NetWorthCard({
 }: NetWorthCardProps) {
   return (
     <WrappedCard gradient={gradient} direction={direction}>
-      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white/60 font-medium">
+      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white font-medium">
         Your net worth today
       </motion.p>
       <motion.div variants={staggerChild}>
@@ -58,7 +58,7 @@ export function NetWorthCard({
         <motion.div variants={staggerChild}>
           <Link
             to="/inputs#section-cpf"
-            className="text-sm text-white/50 hover:text-white/80 transition-colors underline underline-offset-2"
+            className="text-sm text-white/80 hover:text-white/80 transition-colors underline underline-offset-2"
             onClick={(e) => e.stopPropagation()}
           >
             Include CPF and property for the full picture
@@ -83,7 +83,7 @@ function BreakdownBar({
   const pct = total > 0 ? Math.round((value / total) * 100) : 0
   return (
     <div className="space-y-1">
-      <div className="flex justify-between text-sm text-white/70">
+      <div className="flex justify-between text-sm text-white/90">
         <span>{label}</span>
         <span>{formatCompactCurrency(value)}</span>
       </div>

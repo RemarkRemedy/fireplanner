@@ -14,7 +14,7 @@ export function ProgressCard({ percent, gradient, direction }: ProgressCardProps
 
   return (
     <WrappedCard gradient={gradient} direction={direction}>
-      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white/60 font-medium">
+      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white font-medium">
         Your progress
       </motion.p>
 
@@ -58,7 +58,7 @@ export function ProgressCard({ percent, gradient, direction }: ProgressCardProps
         </div>
       </motion.div>
 
-      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white/70">
+      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white/90">
         {displayPct >= 100
           ? "You've reached financial independence!"
           : displayPct >= 75

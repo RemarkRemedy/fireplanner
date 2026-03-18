@@ -14,7 +14,7 @@ interface PeakCardProps {
 export function PeakCard({ value, age, gradient, direction }: PeakCardProps) {
   return (
     <WrappedCard gradient={gradient} direction={direction}>
-      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white/60 font-medium">
+      <motion.p variants={staggerChild} className="text-lg md:text-xl text-white font-medium">
         Your peak net worth
       </motion.p>
 
@@ -28,7 +28,7 @@ export function PeakCard({ value, age, gradient, direction }: PeakCardProps) {
       </motion.div>
 
       <motion.div variants={staggerChild} className="flex items-baseline gap-2">
-        <span className="text-xl md:text-2xl text-white/60">at age</span>
+        <span className="text-xl md:text-2xl text-white">at age</span>
         <motion.span
           className="text-3xl md:text-4xl font-bold"
           initial={{ opacity: 0 }}
@@ -48,7 +48,7 @@ export function PeakCard({ value, age, gradient, direction }: PeakCardProps) {
           <motion.path
             d="M0,60 L60,40 L120,25 L150,8 L180,25 L240,40 L300,60"
             fill="none"
-            stroke="rgba(255,255,255,0.3)"
+            stroke="rgba(255,255,255,0.7)"
             strokeWidth="2"
             initial={{ pathLength: 0 }}
             animate={{ pathLength: 1 }}
@@ -69,7 +69,7 @@ export function PeakCard({ value, age, gradient, direction }: PeakCardProps) {
       <motion.div variants={staggerChild}>
         <Link
           to="/inputs#section-allocation"
-          className="text-sm text-white/50 hover:text-white/80 transition-colors underline underline-offset-2"
+          className="text-sm text-white/80 hover:text-white/80 transition-colors underline underline-offset-2"
           onClick={(e) => e.stopPropagation()}
         >
           Customize your returns and allocation
