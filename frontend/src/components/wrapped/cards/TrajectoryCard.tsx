@@ -59,7 +59,7 @@ export function TrajectoryCard({ chartData, retirementAge, gradient, direction }
                 stroke="rgba(255,255,255,0.7)"
                 strokeDasharray="4 4"
                 label={{
-                  value: 'Retire',
+                  value: 'FIRE',
                   position: 'top',
                   fill: 'rgba(255,255,255,0.9)',
                   fontSize: 11,

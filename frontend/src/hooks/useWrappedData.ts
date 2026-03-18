@@ -133,7 +133,7 @@ export function useWrappedData(): WrappedData {
       },
       trajectory: {
         chartData: accumulationData,
-        retirementAge: profile.retirementAge,
+        retirementAge: dashMetrics.fireAge ?? profile.retirementAge,
       },
       peak: { value: peakValue, age: peakAge },
       summary: {
