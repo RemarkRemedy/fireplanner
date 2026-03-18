@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
@@ -22,26 +22,34 @@ export function WrappedStoryContainer({ cardRenderers }: WrappedStoryContainerPr
   const navigate = useNavigate()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [direction, setDirection] = useState(1)
+  const isTransitioning = useRef(false)
+  const pointerStart = useRef<{ x: number; y: number; time: number } | null>(null)
 
   const total = data.cards.length
 
+  const handleClose = useCallback(() => {
+    navigate('/projection', { replace: true })
+  }, [navigate])
+
   const goForward = useCallback(() => {
-    if (currentIndex < total - 1) {
-      setDirection(1)
-      setCurrentIndex((i) => i + 1)
+    if (isTransitioning.current) return
+    if (currentIndex >= total - 1) {
+      handleClose()
+      return
     }
-  }, [currentIndex, total])
+    isTransitioning.current = true
+    setDirection(1)
+    setCurrentIndex((i) => i + 1)
+    setTimeout(() => { isTransitioning.current = false }, 350)
+  }, [currentIndex, total, handleClose])
 
   const goBack = useCallback(() => {
-    if (currentIndex > 0) {
-      setDirection(-1)
-      setCurrentIndex((i) => i - 1)
-    }
+    if (currentIndex <= 0 || isTransitioning.current) return
+    isTransitioning.current = true
+    setDirection(-1)
+    setCurrentIndex((i) => i - 1)
+    setTimeout(() => { isTransitioning.current = false }, 350)
   }, [currentIndex])
-
-  const handleClose = useCallback(() => {
-    navigate('/projection')
-  }, [navigate])
 
   // Keyboard navigation
   useEffect(() => {
@@ -60,10 +68,42 @@ export function WrappedStoryContainer({ cardRenderers }: WrappedStoryContainerPr
     return () => window.removeEventListener('keydown', handleKey)
   }, [goForward, goBack, handleClose])
 
-  // Tap zones
-  const handleTap = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
+  // Browser back button closes overlay instead of leaving app
+  useEffect(() => {
+    history.pushState({ wrappedOverlay: true }, '')
+    const handlePopState = () => {
+      navigate('/projection', { replace: true })
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [navigate])
+
+  // Swipe + tap navigation via pointer events
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    pointerStart.current = { x: e.clientX, y: e.clientY, time: Date.now() }
+  }, [])
+
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      if (!pointerStart.current) return
+      const dx = e.clientX - pointerStart.current.x
+      const dy = e.clientY - pointerStart.current.y
+      const dt = Date.now() - pointerStart.current.time
+      pointerStart.current = null
+
+      // Swipe: horizontal > 50px, more horizontal than vertical, under 500ms
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) && dt < 500) {
+        if (dx < 0) goForward()
+        else goBack()
+        return
+      }
+
+      // No-navigate zone: lower 40% of summary card (CTAs live there)
       const rect = e.currentTarget.getBoundingClientRect()
+      const yRatio = (e.clientY - rect.top) / rect.height
+      if (currentIndex === total - 1 && yRatio > 0.6) return
+
+      // Tap zones: left 30% = back, right 70% = forward
       const x = e.clientX - rect.left
       const ratio = x / rect.width
       if (ratio < 0.3) {
@@ -72,7 +112,7 @@ export function WrappedStoryContainer({ cardRenderers }: WrappedStoryContainerPr
         goForward()
       }
     },
-    [goBack, goForward]
+    [goBack, goForward, currentIndex, total]
   )
 
   const currentCard = data.cards[currentIndex]
@@ -83,7 +123,11 @@ export function WrappedStoryContainer({ cardRenderers }: WrappedStoryContainerPr
       className="fixed inset-0 z-50 bg-black overflow-hidden select-none"
       style={{ height: '100dvh' }}
     >
-      <div className="absolute inset-0" onClick={handleTap}>
+      <div
+        className="absolute inset-0"
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+      >
         <AnimatePresence mode="wait" custom={direction}>
           <div key={currentCard.key}>
             {renderer?.render(data, currentCard.gradient, direction)}
@@ -111,7 +155,7 @@ export function WrappedStoryContainer({ cardRenderers }: WrappedStoryContainerPr
       {/* Navigation hints (visible on first card only) */}
       {currentIndex === 0 && (
         <div className="absolute bottom-8 left-0 right-0 z-10 flex justify-center">
-          <p className="text-white/80 text-sm animate-pulse">Tap to continue</p>
+          <p className="text-white/80 text-sm animate-pulse">Tap or swipe to continue</p>
         </div>
       )}
     </div>
