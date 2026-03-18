@@ -40,10 +40,20 @@ describe('parseTokioMarineAffluenceAtFuture', () => {
     expect(product.modeledEconomics).toContain('branch:tokio-marine-affluence-atfuture-zero-partial-withdrawal-charge')
     expect(product.modeledEconomics).toContain('branch:tokio-marine-affluence-atfuture-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-advanced-death-payout-and-life-assured-administration')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-advanced-death-payout-handling')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-life-benefit-rider')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-regular-withdrawal-behavior')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-minimum-account-value-enforcement')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-multiple-life-last-life-settlement')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-change-of-life-assured-and-life-replacement-administration')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-premium-holiday-state-handling')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-non-sgd-or-non-15-year-variants')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-advanced-death-payout-and-life-assured-administration')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-advanced-death-payout-life-benefit-rider-and-life-assured-administration')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-dividend-payout-threshold-record-date-regular-withdrawal-and-partial-withdrawal-constraints')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-regular-withdrawal-and-partial-withdrawal-constraints')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-regular-withdrawal-and-partial-withdrawal-constraints')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-change-of-life-assured-and-multiple-life-handling')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-premium-holiday-and-non-sgd-or-non-25-year-variants')
 
     const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15')
     const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15-advanced-death')
@@ -188,7 +198,7 @@ describe('parseTokioMarineAffluenceAtFuture', () => {
       'The Advanced Death with Life Benefit Rider variant also models the published Monthly Protection Charge, including the first-two-policy-years accrual window, policy-year-3 lump-sum settlement, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base through the policy anniversary immediately after age 99.',
     )
     expect(riderVariant?.unsupportedItems).toContain(
-      'Advanced Death and Life Benefit Rider payout handling beyond the modeled Monthly Protection Charge, multiple-life handling, and change-of-life-assured administration remain metadata-only for this product.',
+      'Advanced Death payout handling beyond the modeled Monthly Protection Charge, Life Benefit Rider termination / fallback handling, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
     )
   }, 30_000)
 })

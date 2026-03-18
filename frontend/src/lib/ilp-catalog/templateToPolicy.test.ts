@@ -5903,9 +5903,21 @@ describe('templateVariantToPolicySeed', () => {
       source: 'distribution-paying-funds',
     })
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-loyalty-bonus-adjustment-factor')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-advanced-death-payout-and-life-assured-administration')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-advanced-death-payout-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-life-benefit-rider')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-regular-withdrawal-behavior')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-minimum-account-value-enforcement')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-multiple-life-last-life-settlement')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-affluence-atfuture-change-of-life-assured-and-life-replacement-administration',
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-premium-holiday-state-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-non-sgd-or-non-15-year-variants')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-advanced-death-payout-and-life-assured-administration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-advanced-death-payout-life-benefit-rider-and-life-assured-administration')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-regular-withdrawal-and-partial-withdrawal-constraints')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-regular-withdrawal-and-partial-withdrawal-constraints')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-change-of-life-assured-and-multiple-life-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-premium-holiday-and-non-sgd-or-non-25-year-variants')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-dividend-payout-threshold-record-date-regular-withdrawal-and-partial-withdrawal-constraints')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
   })
