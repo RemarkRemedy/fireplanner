@@ -1943,6 +1943,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-tiq-invest-zero-recurring-single-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-recurring-single-premium-routing')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-tiq-invest-grace-period-funding')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('etiqa-tiq-invest-grace-period-reinstatement')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('etiqa-tiq-invest-single-premium-principal-tracking')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('etiqa-tiq-invest-recurring-top-up-enrollment')
     expect(seed.accounts.find((account) => account.id === 'policy')?.contributionRules).toEqual([

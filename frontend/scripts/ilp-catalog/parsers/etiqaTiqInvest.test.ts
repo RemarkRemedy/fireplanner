@@ -33,11 +33,12 @@ describe('parseEtiqaTiqInvest', () => {
       'branch:etiqa-tiq-invest-zero-partial-withdrawal-charge',
       'tokio-recurring-single-premium-routing',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('etiqa-tiq-invest-grace-period-reinstatement')
+    expect(product.metadataOnlyBehaviors).toContain('etiqa-tiq-invest-grace-period-funding')
+    expect(product.metadataOnlyBehaviors).not.toContain('etiqa-tiq-invest-grace-period-reinstatement')
     expect(product.metadataOnlyBehaviors).not.toContain('etiqa-tiq-invest-single-premium-principal-tracking')
     expect(product.metadataOnlyBehaviors).not.toContain('etiqa-tiq-invest-recurring-top-up-enrollment')
     expect(product.warnings).toContain(
-      'Tiq Invest is cataloged as a supported V1 product. The parser captures the published zero-charge initial subscription, zero-charge ad-hoc and recurring top-up path, zero-charge withdrawal path, and the 0.75% annual management charge through the open-ended no-MIP basis, while protection benefits, fund-switching administration, and grace-period handling remain informational only.',
+      'Tiq Invest is cataloged as a supported V1 product. The parser captures the published zero-charge initial subscription, zero-charge ad-hoc and recurring top-up path, zero-charge withdrawal path, and the 0.75% annual management charge through the open-ended no-MIP basis, while protection benefits, fund-switching administration, and grace-period funding remain informational only.',
     )
 
     expect(product.variants).toHaveLength(1)
