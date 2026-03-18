@@ -82,8 +82,9 @@ export function getMirrorCopy(
       }
     }
     default: {
-      // Exhaustive check — will fail to compile if a new MirrorId is added without a case
-      return insight satisfies never
+      // Exhaustive check — compile error if a new MirrorId is added without a case
+      const _exhaustive: never = insight
+      throw new Error(`Unhandled mirror insight: ${(_exhaustive as { id: string }).id}`)
     }
   }
 }

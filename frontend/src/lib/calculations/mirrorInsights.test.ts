@@ -109,8 +109,18 @@ describe('computeMirrorInsights', () => {
   it('moment 5 (fullSnapshot) computes a fireAge', () => {
     const insights = computeMirrorInsights(makeInsightInputs())
     const m5 = insights.find((i) => i.id === 'full-snapshot')!
+    expect(m5.suppressed).toBe(false)
     expect(m5.data.fireAge).toBeGreaterThan(0)
     expect(m5.data.fireNumber).toBeGreaterThan(0)
     expect(m5.data.topInsight).toBeTruthy()
+  })
+
+  it('moment 5 (fullSnapshot) is suppressed when FIRE is unreachable', () => {
+    const insights = computeMirrorInsights(
+      makeInsightInputs({ monthlyIncome: 1000, monthlyExpenses: 4000, currentSavings: 0, cpfOA: 0, cpfSA: 0 })
+    )
+    const m5 = insights.find((i) => i.id === 'full-snapshot')!
+    expect(m5.suppressed).toBe(true)
+    expect(m5.data.fireAge).toBe(0)
   })
 })
