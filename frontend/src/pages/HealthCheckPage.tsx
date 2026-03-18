@@ -3,11 +3,11 @@ import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useHealthCheckInputs } from '@/hooks/useHealthCheckInputs'
 import { computeHealthRatios, type HealthCheckResult } from '@/lib/calculations/healthCheck'
 import { computeInsuranceNeeds, type InsuranceNeedsResult } from '@/lib/calculations/insuranceNeeds'
-import { useTaxOptimization } from '@/hooks/useTaxOptimization'
+// import { useTaxOptimization } from '@/hooks/useTaxOptimization' // advisory gap — re-enable when flag is on
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { RatioGroup } from '@/components/health/RatioGroup'
-import { TaxOptimizationPanel } from '@/components/health/TaxOptimizationPanel'
+// import { TaxOptimizationPanel } from '@/components/health/TaxOptimizationPanel' // advisory gap
 import { HEALTH_RATIOS } from '@/lib/data/healthBenchmarks'
 import { MONEYSENSE_AREAS, MONEYSENSE_DISCLAIMER, getLifeStageGuides } from '@/lib/data/moneySenseGuide'
 import { cn } from '@/lib/utils'
@@ -71,7 +71,7 @@ export function HealthCheckPage() {
     return computeInsuranceNeeds(inputs.insuranceInputs)
   }, [inputs])
 
-  const taxOptimization = useTaxOptimization(validAdultId)
+  // const taxOptimization = useTaxOptimization(validAdultId) // advisory gap
 
   const lifeStageGuides = getLifeStageGuides(currentAge)
 
@@ -129,13 +129,7 @@ export function HealthCheckPage() {
             />
           ))}
 
-          {/* Tax Optimisation */}
-          {taxOptimization?.isReady && (
-            <TaxOptimizationPanel
-              result={taxOptimization.result}
-              residencyStatus={selectedAdult?.residencyStatus ?? 'citizen'}
-            />
-          )}
+          {/* Tax Optimisation — gated behind advisory gap flag */}
 
           {/* Detailed ratio reference (collapsed) */}
           <Accordion type="single" collapsible>

@@ -32,6 +32,7 @@ import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { BucketVisualization } from '@/components/dashboard/BucketVisualization'
 import { AnnualReviewBanner } from '@/components/shared/AnnualReviewBanner'
+import { isAdvisoryGapEnabled } from '@/lib/household/featureFlag'
 
 const INDIVIDUAL_KEY_SECTIONS: { id: SectionId; label: string }[] = [
   { id: 'section-personal', label: 'Personal Details' },
@@ -77,7 +78,7 @@ export function DashboardPage() {
         </p>
       </div>
 
-      <AnnualReviewBanner />
+      {isAdvisoryGapEnabled() && <AnnualReviewBanner />}
 
       <PlanCompleteness onOpenDrawer={setDrawerFlowId} />
 
@@ -178,6 +179,7 @@ export function DashboardPage() {
 // Internal component: all existing joint-view panels, extracted to avoid duplication
 // between the couple (Tabs) and individual (plain) render paths.
 function JointPanels({ metrics, isEligible }: { metrics: ReturnType<typeof useDashboardMetrics>; isEligible: boolean }) {
+  const advisoryGapEnabled = isAdvisoryGapEnabled()
   return (
     <>
       <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '0ms' }}>
@@ -198,24 +200,32 @@ function JointPanels({ metrics, isEligible }: { metrics: ReturnType<typeof useDa
       <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
         <StrategyCard />
       </div>
-      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '210ms' }}>
-        <GuardrailDashboard />
-      </div>
-      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '220ms' }}>
-        <ExpenseSwrPanel />
-      </div>
+      {advisoryGapEnabled && (
+        <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '210ms' }}>
+          <GuardrailDashboard />
+        </div>
+      )}
+      {advisoryGapEnabled && (
+        <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '220ms' }}>
+          <ExpenseSwrPanel />
+        </div>
+      )}
       <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '260ms' }}>
         <PassiveIncomePanel />
       </div>
-      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
-        <BucketVisualization />
-      </div>
+      {advisoryGapEnabled && (
+        <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+          <BucketVisualization />
+        </div>
+      )}
       <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '340ms' }}>
         <CashFlowPanel />
       </div>
-      <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '420ms' }}>
-        <EstateProjectionPanel />
-      </div>
+      {advisoryGapEnabled && (
+        <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '420ms' }}>
+          <EstateProjectionPanel />
+        </div>
+      )}
       <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '460ms' }}>
         <RiskDashboard />
       </div>

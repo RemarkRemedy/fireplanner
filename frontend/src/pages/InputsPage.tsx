@@ -29,6 +29,7 @@ import { ProtectionSection } from '@/components/household/ProtectionSection'
 import { SectionIntro } from '@/components/inputs/SectionIntro'
 import { ExpenseItemiser } from '@/components/inputs/ExpenseItemiser'
 import { BucketAllocator } from '@/components/inputs/BucketAllocator'
+import { isAdvisoryGapEnabled } from '@/lib/household/featureFlag'
 
 const HOUSEHOLD_PLAN_LABELS = {
   individual: 'Individual',
@@ -178,6 +179,7 @@ export function InputsPage() {
     path: '/inputs',
   })
 
+  const advisoryGapEnabled = isAdvisoryGapEnabled()
   const plan = useHouseholdPlanStore((state) => state.plan)
   const cpfEnabled = useUIStore((state) => state.cpfEnabled)
 
@@ -343,7 +345,7 @@ export function InputsPage() {
         >
           <HouseholdAssumptionsSection mode="assumptions" />
           <WithdrawalStrategyCard />
-          <ExpenseItemiser />
+          {advisoryGapEnabled && <ExpenseItemiser />}
         </HouseholdPrototypeSection>
       ),
     },
@@ -360,7 +362,7 @@ export function InputsPage() {
         >
           <SectionIntro sectionId="section-allocation" />
           <HouseholdAssumptionsSection mode="allocation" />
-          <BucketAllocator />
+          {advisoryGapEnabled && <BucketAllocator />}
         </HouseholdPrototypeSection>
       ),
     },
