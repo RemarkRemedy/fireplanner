@@ -4550,9 +4550,18 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-admin-charge-on-initial-account')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-max-credit-card-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-max-advanced-death-payout-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-harvest-max-multiple-life-and-capital-guarantee-option-administration',
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-harvest-max-change-of-life-assured-and-life-replacement-administration',
+    )
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain(
       'tokio-harvest-max-dividend-payout-threshold-and-record-date-instructions',
     )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-harvest-max-life-replacement-option')
     expect(seed.accounts.find((account) => account.id === 'initial')?.contributionRules).toEqual([
       { phase: 'during-icp', contributionShare: 1 },
       { phase: 'after-mip', contributionShare: 1 },
@@ -4679,6 +4688,14 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-harvest-max-advanced-death-monthly-protection-charge-accrual')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-max-credit-card-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-max-advanced-death-payout-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-harvest-max-multiple-life-and-capital-guarantee-option-administration',
+    )
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
+      'tokio-harvest-max-change-of-life-assured-and-life-replacement-administration',
+    )
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -4701,6 +4718,7 @@ describe('templateVariantToPolicySeed', () => {
       ]),
     )
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-harvest-max-dividend-payout-threshold-and-record-date-instructions')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-harvest-max-life-replacement-option')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('first-three-policy-years accrual window'))).toBe(true)
   })
 

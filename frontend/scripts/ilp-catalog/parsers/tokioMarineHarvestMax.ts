@@ -487,12 +487,12 @@ function buildVariant(
     unsupportedItems: [
       ...(isAdvancedDeath
         ? [
-            'Advanced Death payout handling beyond the modeled Monthly Protection Charge, together with multiple-life and capital-guarantee option administration, remains metadata-only for this product.',
+            'Advanced Death payout handling beyond the modeled Monthly Protection Charge and multiple-life / capital-guarantee option administration remain metadata-only for this product.',
           ]
         : [
-            'Advanced Death selection, Monthly Protection Charge, and multiple-life and capital-guarantee option administration remain metadata-only for this product.',
+            'Advanced Death selection, Monthly Protection Charge, and multiple-life / capital-guarantee option administration remain metadata-only for this product.',
           ]),
-      'Credit-card charge and add/remove/change-life-assured administration remain metadata-only for this product.',
+      'Credit-card charge and add/remove/change-of-life-assured (life-replacement) administration remain metadata-only for this product.',
     ],
     sourceRefs: [
       page1,
@@ -552,7 +552,9 @@ export function parseTokioMarineHarvestMax(context: ParseContext): IlpCatalogPro
     ],
     metadataOnlyBehaviors: [
       'tokio-harvest-max-credit-card-charge',
-      'tokio-harvest-max-life-replacement-option',
+      'tokio-harvest-max-advanced-death-payout-handling',
+      'tokio-harvest-max-multiple-life-and-capital-guarantee-option-administration',
+      'tokio-harvest-max-change-of-life-assured-and-life-replacement-administration',
     ],
     warnings: [
       'Structured extraction validated against the Harvest Max product summary text layer.',
