@@ -31,7 +31,8 @@ export type MirrorId =
   | 'full-snapshot'
 
 interface SavingsPowerData {
-  yearsPerExtra500: number
+  yearsPerExtra10Pct: number
+  boostMonthly: number
 }
 
 interface SavingsRateData {
@@ -120,17 +121,22 @@ export function computeMirrorInsights(inputs: MirrorInsightInputs): MirrorInsigh
   // Moment 1: Savings Power
   // -----------------------------------------------------------------------
   const baseYears = calculateYearsToFire(netRealReturn, annualSavings, totalLiquid + totalCpf, fireNumber)
-  const boostedAnnualSavings = annualSavings + 500 * 12
+  const boostAmount = annualIncome * 0.10
+  const boostedAnnualSavings = annualSavings + boostAmount
   const boostedYears = calculateYearsToFire(netRealReturn, boostedAnnualSavings, totalLiquid + totalCpf, fireNumber)
-  const yearsPerExtra500 = isFinite(baseYears) && isFinite(boostedYears)
+  const yearsPerExtra10Pct = isFinite(baseYears) && isFinite(boostedYears)
     ? Math.max(0, baseYears - boostedYears)
     : 0
+  const boostMonthly = Math.round(boostAmount / 12)
   const savingsPowerSuppressed = !hasIncome || monthlyIncome <= 0
 
   const moment1: MirrorInsightData = {
     id: 'savings-power',
     suppressed: savingsPowerSuppressed,
-    data: { yearsPerExtra500: savingsPowerSuppressed ? 0 : yearsPerExtra500 },
+    data: {
+      yearsPerExtra10Pct: savingsPowerSuppressed ? 0 : yearsPerExtra10Pct,
+      boostMonthly: savingsPowerSuppressed ? 0 : boostMonthly,
+    },
   }
 
   // -----------------------------------------------------------------------
@@ -210,7 +216,7 @@ export function computeMirrorInsights(inputs: MirrorInsightInputs): MirrorInsigh
   const fireReachable = isFinite(baseYears) && baseYears <= QUICK_ESTIMATE_DEFAULTS.maxYearsToFire
   const fireAge = fireReachable ? Math.round(currentAge + baseYears) : 0
 
-  const topInsight = deriveTopInsight(inputs, savingsRatePercent, cpfYears, yearsPerExtra500)
+  const topInsight = deriveTopInsight(inputs, savingsRatePercent, cpfYears, yearsPerExtra10Pct)
 
   const moment5: MirrorInsightData = {
     id: 'full-snapshot',
@@ -233,7 +239,7 @@ function deriveTopInsight(
   inputs: MirrorInsightInputs,
   savingsRatePercent: number,
   cpfYears: number,
-  yearsPerExtra500: number
+  yearsPerExtra10Pct: number
 ): string {
   // Pick the most impactful insight to highlight
   if (savingsRatePercent >= 50) {
@@ -242,8 +248,8 @@ function deriveTopInsight(
   if (inputs.hasCpf && cpfYears >= 5) {
     return `Your CPF alone covers ${cpfYears.toFixed(1)} years of expenses.`
   }
-  if (yearsPerExtra500 >= 2) {
-    return `An extra $500/mo could move your FIRE date by ${yearsPerExtra500.toFixed(1)} years.`
+  if (yearsPerExtra10Pct >= 2) {
+    return `An extra 10% of your income saved could move your FIRE date by ${yearsPerExtra10Pct.toFixed(1)} years.`
   }
   if (inputs.hasProperty && inputs.propertyValue > 0) {
     return 'Your property is a significant part of your net worth.'

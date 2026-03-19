@@ -23,7 +23,7 @@ import { SG_EXPENSE_BENCHMARKS } from '@/lib/data/expenseBenchmarks'
 import { NumberInput } from '@/components/shared/NumberInput'
 import { QUICK_ESTIMATE_DEFAULTS } from '@/lib/data/quickEstimateDefaults'
 import { computeMirrorInsights, type MirrorInsightData, type MirrorId } from '@/lib/calculations/mirrorInsights'
-import { MirrorMoment } from '@/components/setup/MirrorMoment'
+import { MirrorMoment, InlineMirrorInsight, AutoDismissMirror } from '@/components/setup/MirrorMoment'
 import { useConfetti } from '@/components/setup/SetupConfetti'
 
 // ---------------------------------------------------------------------------
@@ -295,29 +295,20 @@ const SCREENS: (NudgeFlowScreen & {
 ]
 
 /**
- * Map of screen IDs that trigger a mirror moment after completion.
- * Mirror moments fire once per setup session, for primary adult screens only.
+ * Achievement triggers — only savings-rate fires as an auto-dismiss overlay.
+ * All other moments are now inline insights (rendered below form fields).
+ * Moment 5 (full-snapshot) fires on the review screen, handled separately.
  */
-const MIRROR_TRIGGERS: Record<string, MirrorId> = {
-  income: 'savings-power',
+const ACHIEVEMENT_TRIGGERS: Record<string, MirrorId> = {
   expenses: 'savings-rate',
-  cpf: 'cpf-runway',
-  'property-details': 'net-worth',
-  'property-planning': 'net-worth',
 }
-// Moment 5 (full-snapshot) fires on the review screen, handled separately
 
-/** Resolve mirror ID for a screen, with special handling for property-toggle. */
-function getMirrorIdForScreen(
+/** Resolve achievement mirror ID for a screen (auto-dismiss overlay). */
+function getAchievementIdForScreen(
   screenDef: { id: string } | undefined,
-  values: Record<string, unknown>,
 ): MirrorId | undefined {
   if (!screenDef) return undefined
-  const mapped = MIRROR_TRIGGERS[screenDef.id]
-  if (mapped) return mapped
-  // "No property" users skip detail screens, so trigger net-worth here
-  if (screenDef.id === 'property-toggle' && values.ownsProperty === 'no') return 'net-worth'
-  return undefined
+  return ACHIEVEMENT_TRIGGERS[screenDef.id]
 }
 
 // ---------------------------------------------------------------------------
@@ -691,6 +682,7 @@ export function SetupPage() {
   const totalSteps = activeScreenIndices.length
 
   const [activeMirror, setActiveMirror] = useState<MirrorInsightData | null>(null)
+  const [autoDismissMirror, setAutoDismissMirror] = useState<MirrorInsightData | null>(null)
   const [shownMirrors, setShownMirrors] = useState<Set<MirrorId>>(new Set())
   const fireConfetti = useConfetti()
 
@@ -752,27 +744,62 @@ export function SetupPage() {
     }
   }, [state.values, cpfEstimate])
 
+  // Compute inline insight for the current screen (reactive, no tap needed)
+  const inlineInsight = useMemo((): MirrorInsightData | null => {
+    const screen = visibleScreenDefs[state.screenIndex]
+    if (!screen) return null
+    const screenId = screen.id
+
+    // expenses screen: show savings-power (needs both income + expenses)
+    if (screenId === 'expenses') {
+      const hasIncome = state.values.hasIncome !== false
+      const monthlyInc = (state.values.monthlyIncome as number) ?? 0
+      const monthlyExp = (state.values.monthlyExpenses as number) ?? 0
+      if (!hasIncome || monthlyInc <= 0 || monthlyExp <= 0) return null
+      const insights = computeMirrorInsights(buildMirrorInputs())
+      const m = insights.find((i) => i.id === 'savings-power')
+      return m && !m.suppressed ? m : null
+    }
+
+    // cpf screen: show cpf-runway
+    if (screenId === 'cpf') {
+      const insights = computeMirrorInsights(buildMirrorInputs())
+      const m = insights.find((i) => i.id === 'cpf-runway')
+      return m && !m.suppressed ? m : null
+    }
+
+    // property screens: show net-worth
+    if (screenId === 'property-details' || screenId === 'property-planning' ||
+        (screenId === 'property-toggle' && state.values.ownsProperty === 'no')) {
+      const insights = computeMirrorInsights(buildMirrorInputs())
+      const m = insights.find((i) => i.id === 'net-worth')
+      return m && !m.suppressed ? m : null
+    }
+
+    return null
+  }, [state.screenIndex, visibleScreenDefs, state.values, buildMirrorInputs])
+
   const handleNext = useCallback(() => {
     const screenDef = visibleScreenDefs[state.screenIndex]
-    const mirrorId = getMirrorIdForScreen(screenDef, state.values)
-    if (mirrorId && !shownMirrors.has(mirrorId)) {
+    const achievementId = getAchievementIdForScreen(screenDef)
+
+    // Check for savings-rate achievement on expenses screen
+    if (achievementId === 'savings-rate' && !shownMirrors.has('savings-rate')) {
       const insights = computeMirrorInsights(buildMirrorInputs())
-      const mirror = insights.find((i) => i.id === mirrorId)
-      if (mirror && !mirror.suppressed) {
-        setActiveMirror(mirror)
-        setShownMirrors((prev) => new Set(prev).add(mirrorId))
-        // Fire confetti for under-25 on moment 2 (benchmark win)
-        if (isYoung && mirrorId === 'savings-rate' && mirror.id === 'savings-rate' && mirror.data.showBenchmark) {
-          fireConfetti()
-        }
-        return
+      const mirror = insights.find((i) => i.id === 'savings-rate')
+      if (mirror && !mirror.suppressed && mirror.id === 'savings-rate' && mirror.data.showBenchmark) {
+        setShownMirrors((prev) => new Set(prev).add('savings-rate'))
+        setAutoDismissMirror(mirror)
+        fireConfetti()
+        return // Auto-dismiss overlay will call handleNextInner after 2s
       }
     }
-    handleNextInner()
-  }, [state.screenIndex, visibleScreenDefs, shownMirrors, isYoung, handleNextInner, fireConfetti, buildMirrorInputs])
 
-  const handleMirrorContinue = useCallback(() => {
-    setActiveMirror(null)
+    handleNextInner()
+  }, [state.screenIndex, visibleScreenDefs, shownMirrors, handleNextInner, fireConfetti, buildMirrorInputs])
+
+  const handleAutoDismiss = useCallback(() => {
+    setAutoDismissMirror(null)
     handleNextInner()
   }, [handleNextInner])
 
@@ -1002,6 +1029,7 @@ export function SetupPage() {
               <p className="mt-2 text-xs italic">A rough estimate works fine. You can refine it later.</p>
             </div>
           </details>
+          {inlineInsight && <InlineMirrorInsight insight={inlineInsight} isYoung={isYoung} />}
         </>
       )
     }
@@ -1070,37 +1098,40 @@ export function SetupPage() {
     }
     if (isCpfScreen) {
       return (
-        <CpfSetupInput
-          age={(state.values.currentAge as number) ?? 30}
-          showRA={((state.values.currentAge as number) ?? 30) >= 55}
-          mode={(state.values.cpfMode as 'estimate' | 'know') ?? 'estimate'}
-          onModeChange={(m) => handleChange('cpfMode', m)}
-          estimate={{ total: cpfEstimate.total, split: cpfEstimate }}
-          mortgage={{
-            used: (state.values.usedOaForMortgage as boolean) ?? false,
-            amount: (state.values.oaMortgageAmount as number) ?? 0,
-          }}
-          onMortgageChange={(m) => {
-            handleChange('usedOaForMortgage', m.used)
-            handleChange('oaMortgageAmount', m.amount)
-          }}
-          manual={{
-            entryMode: 'breakdown',
-            total: 0,
-            oa: (state.values.cpfOA as number) ?? 0,
-            sa: (state.values.cpfSA as number) ?? 0,
-            ma: (state.values.cpfMA as number) ?? 0,
-            ra: (state.values.cpfRA as number) ?? 0,
-          }}
-          onManualChange={(updates) => {
-            if (updates.entryMode !== undefined) handleChange('cpfEntryMode', updates.entryMode)
-            if (updates.total !== undefined) handleChange('cpfTotal', updates.total)
-            if (updates.oa !== undefined) handleChange('cpfOA', updates.oa)
-            if (updates.sa !== undefined) handleChange('cpfSA', updates.sa)
-            if (updates.ma !== undefined) handleChange('cpfMA', updates.ma)
-            if (updates.ra !== undefined) handleChange('cpfRA', updates.ra)
-          }}
-        />
+        <>
+          <CpfSetupInput
+            age={(state.values.currentAge as number) ?? 30}
+            showRA={((state.values.currentAge as number) ?? 30) >= 55}
+            mode={(state.values.cpfMode as 'estimate' | 'know') ?? 'estimate'}
+            onModeChange={(m) => handleChange('cpfMode', m)}
+            estimate={{ total: cpfEstimate.total, split: cpfEstimate }}
+            mortgage={{
+              used: (state.values.usedOaForMortgage as boolean) ?? false,
+              amount: (state.values.oaMortgageAmount as number) ?? 0,
+            }}
+            onMortgageChange={(m) => {
+              handleChange('usedOaForMortgage', m.used)
+              handleChange('oaMortgageAmount', m.amount)
+            }}
+            manual={{
+              entryMode: 'breakdown',
+              total: 0,
+              oa: (state.values.cpfOA as number) ?? 0,
+              sa: (state.values.cpfSA as number) ?? 0,
+              ma: (state.values.cpfMA as number) ?? 0,
+              ra: (state.values.cpfRA as number) ?? 0,
+            }}
+            onManualChange={(updates) => {
+              if (updates.entryMode !== undefined) handleChange('cpfEntryMode', updates.entryMode)
+              if (updates.total !== undefined) handleChange('cpfTotal', updates.total)
+              if (updates.oa !== undefined) handleChange('cpfOA', updates.oa)
+              if (updates.sa !== undefined) handleChange('cpfSA', updates.sa)
+              if (updates.ma !== undefined) handleChange('cpfMA', updates.ma)
+              if (updates.ra !== undefined) handleChange('cpfRA', updates.ra)
+            }}
+          />
+          {inlineInsight && <InlineMirrorInsight insight={inlineInsight} isYoung={isYoung} />}
+        </>
       )
     }
     if (currentScreen.id === 'partner-income') {
@@ -1162,18 +1193,12 @@ export function SetupPage() {
         />
       )
     }
+    // Property screens: show inline insight (net-worth) below standard fields
+    if (inlineInsight && (currentScreen.id === 'property-details' || currentScreen.id === 'property-planning' || currentScreen.id === 'property-toggle')) {
+      return <InlineMirrorInsight insight={inlineInsight} isYoung={isYoung} />
+    }
     return null
   })()
-
-  if (activeMirror) {
-    return (
-      <MirrorMoment
-        insight={activeMirror}
-        isYoung={isYoung}
-        onContinue={handleMirrorContinue}
-      />
-    )
-  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -1194,6 +1219,16 @@ export function SetupPage() {
       >
         {customChildren}
       </SetupScreen>
+
+      {/* Dynamic dependents list — rendered below SetupScreen when on dependents screen */}
+      {/* Auto-dismiss achievement overlay (savings-rate benchmark win) */}
+      {autoDismissMirror && (
+        <AutoDismissMirror
+          insight={autoDismissMirror}
+          isYoung={isYoung}
+          onDismiss={handleAutoDismiss}
+        />
+      )}
 
       {/* Dynamic dependents list — rendered below SetupScreen when on dependents screen */}
       {isDependentsScreen && hasDependents && (

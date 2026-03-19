@@ -1,5 +1,31 @@
-import type { MirrorInsightData } from './mirrorInsights'
+import type { MirrorInsightData, MirrorId } from './mirrorInsights'
 import { formatCurrency } from '@/lib/utils'
+
+export interface MethodologyTooltip {
+  text: string
+  source?: string
+}
+
+export function getMethodologyTooltip(
+  id: MirrorId,
+  data?: { showBenchmark?: boolean }
+): MethodologyTooltip {
+  switch (id) {
+    case 'savings-power':
+      return { text: 'We add 10% of your gross annual income to your current savings and recalculate your projected FIRE age.' }
+    case 'savings-rate':
+      if (data?.showBenchmark) {
+        return { text: 'Compared against the median savings rate for your age group.', source: 'MOM Median Salary 2024, SingStat HES 2023' }
+      }
+      return { text: 'Projected using your monthly savings compounded at the expected real return.' }
+    case 'cpf-runway':
+      return { text: 'Your CPF OA + SA divided by your annual expenses.' }
+    case 'net-worth':
+      return { text: 'Liquid assets + CPF balances + property equity (value minus mortgage).' }
+    case 'full-snapshot':
+      return { text: 'Estimated using your savings rate, net worth, expected returns, and a 4% safe withdrawal rate.' }
+  }
+}
 
 export function getMirrorCopy(
   insight: MirrorInsightData,
@@ -7,12 +33,13 @@ export function getMirrorCopy(
 ): { headline: string; detail: string } {
   switch (insight.id) {
     case 'savings-power': {
-      const { yearsPerExtra500 } = insight.data
-      const formattedYears = yearsPerExtra500.toFixed(1)
+      const { yearsPerExtra10Pct, boostMonthly } = insight.data
+      const formattedYears = yearsPerExtra10Pct.toFixed(1)
+      const formattedBoost = formatCurrency(boostMonthly)
       return {
         headline: isYoung
-          ? `Every extra $500/month you save? That's ${formattedYears} fewer years of work. Not bad.`
-          : `Every extra $500/month saved moves your FIRE date forward by ~${formattedYears} years.`,
+          ? `Setting aside an extra ${formattedBoost}/month? That's ${formattedYears} fewer years of work.`
+          : `Setting aside an extra ${formattedBoost}/month (10% of your income) could move your FIRE date ~${formattedYears} years earlier.`,
         detail: '',
       }
     }
