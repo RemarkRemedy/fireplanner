@@ -12,7 +12,7 @@ export function getMirrorCopy(
       return {
         headline: isYoung
           ? `Every extra $500/month you save? That's ${formattedYears} fewer years of work. Not bad.`
-          : `At your income, every $500/month saved moves your FIRE date forward by ~${formattedYears} years.`,
+          : `Every extra $500/month saved moves your FIRE date forward by ~${formattedYears} years.`,
         detail: '',
       }
     }
