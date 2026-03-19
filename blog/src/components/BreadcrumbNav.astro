@@ -1,0 +1,47 @@
+---
+interface Crumb {
+  label: string;
+  href?: string;
+}
+
+interface Props {
+  crumbs: Crumb[];
+}
+
+const { crumbs } = Astro.props;
+const items = [{ label: 'Home', href: '/' }, { label: 'Blog', href: '/blog' }, ...crumbs];
+---
+
+<nav aria-label="Breadcrumb" class="not-prose mb-6">
+  <ol class="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+    {items.map((crumb, i) => (
+      <li class="flex items-center gap-1.5">
+        {i > 0 && (
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        )}
+        {crumb.href ? (
+          <a href={crumb.href} class="transition-colors hover:text-primary">
+            {crumb.label}
+          </a>
+        ) : (
+          <span class="text-foreground">{crumb.label}</span>
+        )}
+      </li>
+    ))}
+  </ol>
+</nav>
+
+<!-- Breadcrumb JSON-LD -->
+<script
+  type="application/ld+json"
+  set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((crumb, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: crumb.label,
+      item: crumb.href ? new URL(crumb.href, 'https://sgfireplanner.com').href : undefined,
+    })),
+  })}
+/>

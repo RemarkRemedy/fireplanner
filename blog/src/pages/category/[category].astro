@@ -1,0 +1,60 @@
+---
+import { getCollection } from 'astro:content';
+import BlogList from '../../layouts/BlogList.astro';
+import BlogCard from '../../components/BlogCard.astro';
+import CategoryFilter from '../../components/CategoryFilter.astro';
+import BreadcrumbNav from '../../components/BreadcrumbNav.astro';
+
+export function getStaticPaths() {
+  const categories = [
+    'cpf', 'srs', 'investing', 'insurance', 'property',
+    'fire-strategies', 'tax', 'brokerage', 'robo-advisors',
+    'savings', 'comparisons', 'guides',
+  ];
+  return categories.map((category) => ({
+    params: { category },
+    props: { category },
+  }));
+}
+
+const { category } = Astro.props;
+const displayName = category.replace('-', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+const filteredPosts = allPosts
+  .filter((post) => post.data.category === category)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const categories = [...new Set(allPosts.map((p) => p.data.category))].sort();
+---
+
+<BlogList
+  title={`${displayName} Articles`}
+  description={`Articles about ${displayName.toLowerCase()} for Singapore residents.`}
+>
+  <BreadcrumbNav crumbs={[{ label: displayName }]} />
+
+  <h1 class="mb-2 text-3xl font-bold tracking-tight text-foreground">{displayName}</h1>
+  <p class="mb-6 text-muted-foreground">
+    {filteredPosts.length} article{filteredPosts.length !== 1 ? 's' : ''} about {displayName.toLowerCase()}.
+  </p>
+
+  <CategoryFilter categories={categories} activeCategory={category} />
+
+  <div class="grid gap-4">
+    {filteredPosts.map((post) => (
+      <BlogCard
+        title={post.data.title}
+        description={post.data.description}
+        pubDate={post.data.pubDate}
+        category={post.data.category}
+        slug={post.id}
+        readingTime={post.data.readingTime}
+      />
+    ))}
+  </div>
+
+  {filteredPosts.length === 0 && (
+    <p class="py-12 text-center text-muted-foreground">No articles in this category yet.</p>
+  )}
+</BlogList>
