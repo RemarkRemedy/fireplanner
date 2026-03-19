@@ -111,29 +111,27 @@ const individualCardRenderers: CardRenderer[] = [
   },
 ]
 
+/** Couple renderers only run when data.mode === 'couple', so data.couple is always defined. */
+function requireCouple(data: import('@/hooks/useWrappedData').WrappedData) {
+  const c = data.couple
+  if (!c) throw new Error('Couple data missing in couple card renderer')
+  return c
+}
+
 const coupleCardRenderers: CardRenderer[] = [
   {
     key: 'intro',
-    render: (data, gradient, direction) => (
-      <CoupleIntroCard
-        names={data.couple?.names ?? ['You', 'Partner']}
-        ages={data.couple?.ages ?? [30, 30]}
-        gradient={gradient}
-        direction={direction}
-      />
-    ),
+    render: (data, gradient, direction) => {
+      const c = requireCouple(data)
+      return <CoupleIntroCard names={c.names} ages={c.ages} gradient={gradient} direction={direction} />
+    },
   },
   {
     key: 'netWorth',
-    render: (data, gradient, direction) => (
-      <CoupleNetWorthCard
-        total={data.netWorth.total}
-        perPersonNW={data.couple?.perPersonNW ?? [0, 0]}
-        names={data.couple?.names ?? ['You', 'Partner']}
-        gradient={gradient}
-        direction={direction}
-      />
-    ),
+    render: (data, gradient, direction) => {
+      const c = requireCouple(data)
+      return <CoupleNetWorthCard total={data.netWorth.total} perPersonNW={c.perPersonNW} names={c.names} gradient={gradient} direction={direction} />
+    },
   },
   {
     key: 'fireNumber',
@@ -147,16 +145,10 @@ const coupleCardRenderers: CardRenderer[] = [
   },
   {
     key: 'savingsPower',
-    render: (data, gradient, direction) => (
-      <CoupleSavingsPowerCard
-        combinedSavings={data.couple?.combinedSavings ?? 0}
-        perPersonSavings={data.couple?.perPersonSavings ?? [0, 0]}
-        names={data.couple?.names ?? ['You', 'Partner']}
-        savingsRate={data.summary.savingsRate}
-        gradient={gradient}
-        direction={direction}
-      />
-    ),
+    render: (data, gradient, direction) => {
+      const c = requireCouple(data)
+      return <CoupleSavingsPowerCard combinedSavings={c.combinedSavings} perPersonSavings={c.perPersonSavings} names={c.names} savingsRate={c.combinedSavingsRate} gradient={gradient} direction={direction} />
+    },
   },
   {
     key: 'progress',
@@ -170,40 +162,24 @@ const coupleCardRenderers: CardRenderer[] = [
   },
   {
     key: 'milestone',
-    render: (data, gradient, direction) => (
-      <CoupleMilestoneCard
-        names={data.couple?.names ?? ['You', 'Partner']}
-        perPersonFireAge={data.couple?.perPersonFireAge ?? [null, null]}
-        ages={data.couple?.ages ?? [30, 30]}
-        gradient={gradient}
-        direction={direction}
-      />
-    ),
+    render: (data, gradient, direction) => {
+      const c = requireCouple(data)
+      return <CoupleMilestoneCard names={c.names} perPersonFireAge={c.perPersonFireAge} ages={c.ages} gradient={gradient} direction={direction} />
+    },
   },
   {
     key: 'trajectory',
-    render: (data, gradient, direction) => (
-      <CoupleTrajectoryCard
-        chartData={data.trajectory.chartData}
-        retirementAge={data.trajectory.retirementAge}
-        perPersonFireAge={data.couple?.perPersonFireAge ?? [null, null]}
-        gradient={gradient}
-        direction={direction}
-      />
-    ),
+    render: (data, gradient, direction) => {
+      const c = requireCouple(data)
+      return <CoupleTrajectoryCard chartData={data.trajectory.chartData} retirementAge={data.trajectory.retirementAge} perPersonFireAge={c.perPersonFireAge} gradient={gradient} direction={direction} />
+    },
   },
   {
     key: 'peak',
-    render: (data, gradient, direction) => (
-      <CouplePeakCard
-        value={data.peak.value}
-        age={data.peak.age}
-        ageDelta={data.couple?.ageDelta ?? 0}
-        partnerLifeExpectancy={data.couple?.partnerLifeExpectancy ?? 85}
-        gradient={gradient}
-        direction={direction}
-      />
-    ),
+    render: (data, gradient, direction) => {
+      const c = requireCouple(data)
+      return <CouplePeakCard value={data.peak.value} age={data.peak.age} ageDelta={c.ageDelta} partnerLifeExpectancy={c.partnerLifeExpectancy} gradient={gradient} direction={direction} />
+    },
   },
   {
     key: 'summary',

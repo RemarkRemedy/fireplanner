@@ -7,7 +7,7 @@ import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { buildCardSequence } from '@/lib/wrapped/gradients'
-import { detectCoupleMode, computePerAdultNetWorth, computePerAdultSavings } from '@/lib/wrapped/coupleData'
+import { detectCoupleMode, computePerAdultNetWorth, computePerAdultSavings, computeHouseholdIncome } from '@/lib/wrapped/coupleData'
 import { computePerAdultFireAge } from '@/lib/household/computePerAdultFireAge'
 import { DEFAULT_ANNUAL_EXPENSES } from '@/lib/data/setupDefaults'
 import type { WrappedCardConfig } from '@/lib/wrapped/gradients'
@@ -54,7 +54,6 @@ interface WrappedPeak {
 }
 
 interface WrappedSummary {
-  terminalNW: number
   depleted: boolean
   depletedAge: number | null
   lifeExpectancy: number
@@ -75,6 +74,7 @@ export interface CoupleData {
   perPersonSavings: [number, number]
   perPersonFireAge: [number | null, number | null]
   combinedSavings: number
+  combinedSavingsRate: number
   ageDelta: number
   partnerLifeExpectancy: number
 }
@@ -170,6 +170,8 @@ export function useWrappedData(): WrappedData {
       const selfSavings = computePerAdultSavings(compiledPlan, selfAdult.owner)
       const partnerSavings = computePerAdultSavings(compiledPlan, partnerAdult.owner)
       const combinedSavings = selfSavings + partnerSavings
+      const householdIncome = computeHouseholdIncome(compiledPlan)
+      const combinedSavingsRate = householdIncome > 0 ? combinedSavings / householdIncome : 0
 
       // Per-adult FIRE age with Infinity guard + life expectancy cap
       const rawSelfFireAge = computePerAdultFireAge(plan, selfAdult.id, allocation, simulation)
@@ -188,15 +190,16 @@ export function useWrappedData(): WrappedData {
         perPersonSavings: [selfSavings, partnerSavings],
         perPersonFireAge: [selfFireAge, partnerFireAge],
         combinedSavings,
+        combinedSavingsRate,
         ageDelta: selfAdult.currentAge - partnerAdult.currentAge,
         partnerLifeExpectancy: partnerAdult.lifeExpectancy,
       }
     }
 
-    // Override display name for couple mode
+    // Display name: couple gets "Alice & Bob", individual gets name or fallback
     const displayName = isCoupleMode && selfAdult && partnerAdult
       ? `${selfAdult.displayName} & ${partnerAdult.displayName}`
-      : 'there'
+      : (selfAdult?.displayName || 'there')
 
     // Override retirement age for couple mode: when both are free
     const coupleRetirementAge = couple?.perPersonFireAge[0] != null && couple?.perPersonFireAge[1] != null
@@ -231,7 +234,6 @@ export function useWrappedData(): WrappedData {
       },
       peak: { value: peakValue, age: peakAge },
       summary: {
-        terminalNW: 0,
         depleted: dashMetrics.portfolioDepletedAge != null &&
           dashMetrics.lifeExpectancy != null &&
           dashMetrics.portfolioDepletedAge < dashMetrics.lifeExpectancy,

@@ -146,7 +146,7 @@ export function WrappedStoryContainer({ individualCardRenderers, coupleCardRende
         onPointerCancel={handlePointerCancel}
       >
         <AnimatePresence mode="wait" custom={direction}>
-          <div key={currentCard.key}>
+          <div key={currentIndex}>
             {renderer?.render(data, currentCard.gradient, direction)}
           </div>
         </AnimatePresence>

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { HouseholdPlan } from '@/lib/household/types'
-import type { AllocationState, SimulationState } from '@/lib/types'
+import type { AllocationState, SimulationState, ProfileState, IncomeState, PropertyState } from '@/lib/types'
 
 // Mock all pipeline dependencies
 vi.mock('@/lib/household/planSlice', () => ({
@@ -56,9 +56,9 @@ describe('computePerAdultFireAge', () => {
   it('returns null when buildProjectionParams returns null (validation errors)', () => {
     const mockSlice = { id: 'slice' } as unknown as HouseholdPlan
     const mockAges = { currentAge: 30, retirementAge: 55, lifeExpectancy: 85 }
-    const mockProfile = { currentAge: 30 } as any
-    const mockIncome = {} as any
-    const mockProperty = {} as any
+    const mockProfile = { currentAge: 30 } as unknown as ProfileState
+    const mockIncome = {} as unknown as IncomeState
+    const mockProperty = {} as unknown as PropertyState
 
     vi.mocked(buildSplitAdultPlanSlice).mockReturnValue({
       slice: mockSlice,
@@ -85,12 +85,12 @@ describe('computePerAdultFireAge', () => {
   it('returns fireAge when full pipeline succeeds', () => {
     const mockSlice = { id: 'slice' } as unknown as HouseholdPlan
     const mockAges = { currentAge: 30, retirementAge: 55, lifeExpectancy: 85 }
-    const mockProfile = { currentAge: 30 } as any
-    const mockIncome = {} as any
-    const mockProperty = {} as any
-    const mockIncomeParams = { currentAge: 30 } as any
-    const mockProjectionRows = [{ age: 30 }] as any
-    const mockFireMetrics = { fireAge: 48, fireNumber: 1200000 } as any
+    const mockProfile = { currentAge: 30 } as unknown as ProfileState
+    const mockIncome = {} as unknown as IncomeState
+    const mockProperty = {} as unknown as PropertyState
+    const mockIncomeParams = { currentAge: 30 } as unknown as ReturnType<typeof buildProjectionParams>
+    const mockProjectionRows = [{ age: 30 }] as unknown as ReturnType<typeof generateIncomeProjection>
+    const mockFireMetrics = { fireAge: 48, fireNumber: 1200000 } as unknown as Record<string, unknown>
 
     vi.mocked(buildSplitAdultPlanSlice).mockReturnValue({
       slice: mockSlice,
@@ -104,9 +104,9 @@ describe('computePerAdultFireAge', () => {
     vi.mocked(buildProjectionParams).mockReturnValue(mockIncomeParams)
     vi.mocked(generateIncomeProjection).mockReturnValue(mockProjectionRows)
     vi.mocked(buildFullProjectionParams).mockReturnValue({
-      params: {} as any,
+      params: {},
       fireMetrics: mockFireMetrics,
-    })
+    } as unknown as ReturnType<typeof buildFullProjectionParams>)
 
     const result = computePerAdultFireAge(mockPlan, 'a1', mockAllocation, mockSimulation)
 

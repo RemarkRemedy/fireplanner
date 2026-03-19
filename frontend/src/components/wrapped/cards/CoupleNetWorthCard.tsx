@@ -35,10 +35,10 @@ export function CoupleNetWorthCard({
 
       {/* Per-person breakdown bars */}
       <motion.div variants={staggerChild} className="w-full max-w-xs space-y-3 mt-4">
-        {total > 0 && (
+        {(perPersonNW[0] !== 0 || perPersonNW[1] !== 0) && (
           <>
-            <BreakdownBar label={names[0]} value={perPersonNW[0]} total={total} color="bg-indigo-400" />
-            <BreakdownBar label={names[1]} value={perPersonNW[1]} total={total} color="bg-fuchsia-300" />
+            <BreakdownBar label={names[0]} value={Math.max(0, perPersonNW[0])} total={Math.abs(perPersonNW[0]) + Math.abs(perPersonNW[1])} color="bg-indigo-400" />
+            <BreakdownBar label={names[1]} value={Math.max(0, perPersonNW[1])} total={Math.abs(perPersonNW[0]) + Math.abs(perPersonNW[1])} color="bg-fuchsia-300" />
           </>
         )}
       </motion.div>

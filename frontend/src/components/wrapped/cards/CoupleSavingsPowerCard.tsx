@@ -24,9 +24,12 @@ export function CoupleSavingsPowerCard({
 }: CoupleSavingsPowerCardProps) {
   const selfSavings = perPersonSavings[0]
   const partnerSavings = perPersonSavings[1]
-  const totalAbs = Math.max(1, Math.abs(selfSavings) + Math.abs(partnerSavings))
-  const selfPct = Math.max(0, selfSavings) / totalAbs * 100
-  const partnerPct = Math.max(0, partnerSavings) / totalAbs * 100
+  // Clamp negatives to 0 for bar widths — the combined number above shows the true total
+  const clampedSelf = Math.max(0, selfSavings)
+  const clampedPartner = Math.max(0, partnerSavings)
+  const totalPositive = Math.max(1, clampedSelf + clampedPartner)
+  const selfPct = clampedSelf / totalPositive * 100
+  const partnerPct = clampedPartner / totalPositive * 100
 
   return (
     <WrappedCard gradient={gradient} direction={direction}>

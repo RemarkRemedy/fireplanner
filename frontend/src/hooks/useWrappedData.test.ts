@@ -40,15 +40,19 @@ vi.mock('@/stores/useSimulationStore', () => ({
 
 let mockPerAdultNetWorth = (_adult: unknown, _plan: unknown): number => 0
 let mockPerAdultSavings = (_plan: unknown, _owner: unknown): number => 0
+let mockHouseholdIncome = (_plan: unknown): number => 120_000
 
 vi.mock('@/lib/wrapped/coupleData', () => ({
   detectCoupleMode: () => mockCoupleDetection,
   computePerAdultNetWorth: (adult: unknown, plan: unknown) => mockPerAdultNetWorth(adult, plan),
   computePerAdultSavings: (plan: unknown, owner: unknown) => mockPerAdultSavings(plan, owner),
+  computeHouseholdIncome: (plan: unknown) => mockHouseholdIncome(plan),
 }))
 
+let mockPerAdultFireAge: (plan: unknown, adultId: unknown, alloc: unknown, sim: unknown) => number | null = () => 50
+
 vi.mock('@/lib/household/computePerAdultFireAge', () => ({
-  computePerAdultFireAge: () => 50,
+  computePerAdultFireAge: (...args: unknown[]) => mockPerAdultFireAge(args[0], args[1], args[2], args[3]),
 }))
 
 // --- Mocks for upstream hooks ---
@@ -192,6 +196,8 @@ function resetMocks() {
   )
   mockPerAdultNetWorth = () => 0
   mockPerAdultSavings = () => 0
+  mockHouseholdIncome = () => 120_000
+  mockPerAdultFireAge = () => 50
 }
 
 beforeEach(() => {
@@ -476,6 +482,80 @@ describe('useWrappedData', () => {
 
       const { result } = renderHook(() => useWrappedData())
       expect(result.current.intro.displayName).toBe('Alice & Bob')
+    })
+
+    it('individual mode uses selfAdult displayName, not hardcoded "there"', () => {
+      const self = makeSelfAdult()
+      mockCoupleDetection.isCoupleMode = false
+      mockCoupleDetection.selfAdult = self
+      mockCoupleDetection.partnerAdult = undefined
+
+      const { result } = renderHook(() => useWrappedData())
+      expect(result.current.intro.displayName).toBe('Alice')
+    })
+
+    it('perPersonFireAge is null when computePerAdultFireAge returns null', () => {
+      const self = makeSelfAdult()
+      const partner = makePartnerAdult()
+      mockCoupleDetection.isCoupleMode = true
+      mockCoupleDetection.selfAdult = self
+      mockCoupleDetection.partnerAdult = partner
+      mockPerAdultFireAge = () => null
+
+      const { result } = renderHook(() => useWrappedData())
+      expect(result.current.couple!.perPersonFireAge).toEqual([null, null])
+    })
+
+    it('perPersonFireAge is null when computePerAdultFireAge returns Infinity', () => {
+      const self = makeSelfAdult()
+      const partner = makePartnerAdult()
+      mockCoupleDetection.isCoupleMode = true
+      mockCoupleDetection.selfAdult = self
+      mockCoupleDetection.partnerAdult = partner
+      mockPerAdultFireAge = () => Infinity
+
+      const { result } = renderHook(() => useWrappedData())
+      expect(result.current.couple!.perPersonFireAge).toEqual([null, null])
+    })
+
+    it('perPersonFireAge is null when age exceeds lifeExpectancy', () => {
+      const self = makeSelfAdult()
+      const partner = makePartnerAdult()
+      mockCoupleDetection.isCoupleMode = true
+      mockCoupleDetection.selfAdult = self
+      mockCoupleDetection.partnerAdult = partner
+      // lifeExpectancy is 85 for both adults
+      mockPerAdultFireAge = () => 90
+
+      const { result } = renderHook(() => useWrappedData())
+      expect(result.current.couple!.perPersonFireAge).toEqual([null, null])
+    })
+
+    it('partnerLifeExpectancy is passed through from partner adult', () => {
+      const self = makeSelfAdult()
+      const partner = makePartnerAdult()
+      partner.lifeExpectancy = 90
+      mockCoupleDetection.isCoupleMode = true
+      mockCoupleDetection.selfAdult = self
+      mockCoupleDetection.partnerAdult = partner
+
+      const { result } = renderHook(() => useWrappedData())
+      expect(result.current.couple!.partnerLifeExpectancy).toBe(90)
+    })
+
+    it('combinedSavingsRate uses household income, not dashboard metric', () => {
+      const self = makeSelfAdult()
+      const partner = makePartnerAdult()
+      mockCoupleDetection.isCoupleMode = true
+      mockCoupleDetection.selfAdult = self
+      mockCoupleDetection.partnerAdult = partner
+      mockPerAdultSavings = (_plan, owner) =>
+        (owner as string) === 'self' ? 60_000 : 40_000
+      mockHouseholdIncome = () => 200_000
+
+      const { result } = renderHook(() => useWrappedData())
+      // (60K + 40K) / 200K = 0.5
+      expect(result.current.couple!.combinedSavingsRate).toBeCloseTo(0.5)
     })
   })
 })

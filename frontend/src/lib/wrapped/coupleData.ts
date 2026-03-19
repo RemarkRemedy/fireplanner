@@ -2,6 +2,17 @@ import type { CompiledHouseholdPlan } from '@/lib/household/compileHouseholdPlan
 import type { AdultOwner, PlanningAdult } from '@/lib/household/types'
 import { sumActiveExpensesByOwner, sumActiveIncomeByOwner } from '@/lib/household/breakdownUtils'
 
+/**
+ * Compute total household income across both adults: self + partner + shared.
+ */
+export function computeHouseholdIncome(
+  compiledPlan: CompiledHouseholdPlan,
+): number {
+  return sumActiveIncomeByOwner(compiledPlan, 'self')
+    + sumActiveIncomeByOwner(compiledPlan, 'partner')
+    + sumActiveIncomeByOwner(compiledPlan, 'shared')
+}
+
 export interface CoupleDetection {
   isCoupleMode: boolean
   selfAdult: PlanningAdult | undefined
@@ -39,7 +50,8 @@ export function computePerAdultNetWorth(
     total += row.oaBalance + row.saBalance + row.maBalance + row.raBalance
   }
 
-  // Property equity (owned + 50% of shared properties, clamped to non-negative)
+  // Property equity: ownershipPercent already represents the per-person share
+  // (defaults to 0.5 for shared properties, 1.0 for owned — see assetPropertyDefaults.ts)
   for (const propertyId of compiledPlan.propertyOrder) {
     const prop = compiledPlan.propertiesById[propertyId]
     if (!prop || !prop.ownsProperty) continue
@@ -48,15 +60,19 @@ export function computePerAdultNetWorth(
     if (!isOwned && !isShared) continue
     const equity = Math.max(0, prop.existingPropertyValue - prop.existingMortgageBalance)
     const ownershipShare = prop.ownershipPercent ?? 1
-    const share = isShared ? ownershipShare * 0.5 : ownershipShare
-    total += equity * share
+    total += equity * ownershipShare
   }
 
   return total
 }
 
 /**
- * Compute annual savings for one owner: (owned income + 50% shared income) - (owned expenses + 50% shared expenses).
+ * Compute annual savings allocated to one adult:
+ *   (owned income + 50% shared income) - (owned expenses + 50% shared expenses)
+ *
+ * The 50% split of shared items is an allocation for display purposes. Calling
+ * this for both 'self' and 'partner' then summing gives the correct household
+ * total (100% of shared items are captured across both calls).
  *
  * Uses the real breakdownUtils functions which account for timing windows,
  * dependents, healthcare, and property costs.
