@@ -1,5 +1,5 @@
-// exit_intent triggers the expense tracker modal when the cursor leaves the viewport (useExitIntent hook)
-export const VALID_SOURCES = ['post_simulation', 'landing_page', 'exit_intent', 'contextual_nudge', 'expense_tracker', 'cpf_planner', 'compare_page'] as const
+// exit_intent triggers the feedback modal when the cursor leaves the viewport (useExitIntent hook)
+export const VALID_SOURCES = ['post_simulation', 'landing_page', 'exit_intent', 'contextual_nudge', 'expense_tracker', 'cpf_planner', 'compare_page', 'feedback'] as const
 export const VALID_FEATURES = ['cpf_optimization', 'couples_planning', 'insurance_gap', 'general', 'expense_tracker', 'portfolio_integration'] as const
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 export const EMAIL_MAX_LENGTH = 254
@@ -49,3 +49,10 @@ export const PRIMARY_DEVICE_OPTIONS: { value: PrimaryDevice; label: string }[] =
   { value: 'both', label: 'Both' },
   { value: 'unknown', label: 'Not sure' },
 ]
+
+// --- Feedback (exit intent modal) ---
+
+export const FEEDBACK_SESSION_KEY = 'fireplanner-feedback-modal-shown-session'
+export const FEEDBACK_DISMISSED_KEY = 'fireplanner-feedback-modal-dismissed'
+export const FEEDBACK_SUBMITTED_FLAG = 'fireplanner-feedback-submitted'
+export const FEEDBACK_MAX_LENGTH = 2000

@@ -111,15 +111,23 @@ export function useExpenseTrackerSignup() {
     }
   }, [email, expenseTrackingStatus, primaryDevice, status])
 
+  // Allow external callers (e.g. exit intent modal) to mark the user as signed up
+  // so isEligible updates immediately without a page reload.
+  const markSignedUp = useCallback(() => {
+    setStatus('success')
+    submittedRef.current = true
+    setFlag(EXPENSE_TRACKER_SIGNED_UP_FLAG)
+  }, [])
+
   return useMemo(() => ({
     email, setEmail,
     expenseTrackingStatus, setExpenseTrackingStatus,
     primaryDevice, setPrimaryDevice,
     status, errorMsg,
-    submit, markTouched,
+    submit, markTouched, markSignedUp,
     isSignedUp: status === 'success',
     formTouched: formTouchedRef,
-  }), [email, expenseTrackingStatus, primaryDevice, status, errorMsg, submit, markTouched])
+  }), [email, expenseTrackingStatus, primaryDevice, status, errorMsg, submit, markTouched, markSignedUp])
 }
 
 export type ExpenseTrackerSignupHook = ReturnType<typeof useExpenseTrackerSignup>
