@@ -771,7 +771,7 @@ export function ProjectionPage() {
             </Tabs>
             <p className="text-xs text-muted-foreground">
               {isPerAdult
-                ? 'Per-adult view: shared items split 50/50. Strategy parameters reflect household settings.'
+                ? 'Rough estimate: shared items split 50/50, each projected independently. Individual totals won\'t sum to the Joint figure because a combined portfolio compounds faster than two separate halves.'
                 : 'Switches the projection view only.'}
             </p>
           </div>
