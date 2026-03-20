@@ -3,7 +3,9 @@ import {
   computeMirrorInsights,
   getMedianSavingsRate,
   type MirrorInsightInputs,
+  type MirrorId,
 } from './mirrorInsights'
+import { getMethodologyTooltip } from './mirrorCopy'
 
 function makeInsightInputs(overrides: Partial<MirrorInsightInputs> = {}): MirrorInsightInputs {
   return {
@@ -44,11 +46,20 @@ describe('computeMirrorInsights', () => {
     expect(insights).toHaveLength(5)
   })
 
-  it('moment 1 (savingsPower) always has positive yearsPerExtra500', () => {
+  it('moment 1 (savingsPower) has positive yearsPerExtra10Pct and boostMonthly', () => {
     const insights = computeMirrorInsights(makeInsightInputs())
     const m1 = insights.find((i) => i.id === 'savings-power')!
     expect(m1).toBeDefined()
-    expect(m1.data.yearsPerExtra500).toBeGreaterThan(0)
+    expect(m1.data.yearsPerExtra10Pct).toBeGreaterThan(0)
+    expect(m1.data.boostMonthly).toBeGreaterThan(0)
+  })
+
+  it('moment 1 boost scales with income', () => {
+    const lowIncome = computeMirrorInsights(makeInsightInputs({ monthlyIncome: 3000 }))
+    const highIncome = computeMirrorInsights(makeInsightInputs({ monthlyIncome: 15000 }))
+    const m1Low = lowIncome.find((i) => i.id === 'savings-power')!
+    const m1High = highIncome.find((i) => i.id === 'savings-power')!
+    expect(m1High.data.boostMonthly).toBeGreaterThan(m1Low.data.boostMonthly)
   })
 
   it('moment 2 shows benchmark when savings rate beats median', () => {
@@ -122,5 +133,26 @@ describe('computeMirrorInsights', () => {
     const m5 = insights.find((i) => i.id === 'full-snapshot')!
     expect(m5.suppressed).toBe(true)
     expect(m5.data.fireAge).toBe(0)
+  })
+})
+
+describe('getMethodologyTooltip', () => {
+  const allIds: MirrorId[] = ['savings-power', 'savings-rate', 'cpf-runway', 'net-worth', 'full-snapshot']
+
+  it('returns non-empty text for every MirrorId', () => {
+    for (const id of allIds) {
+      const tooltip = getMethodologyTooltip(id)
+      expect(tooltip.text).toBeTruthy()
+    }
+  })
+
+  it('returns source for savings-rate with benchmark', () => {
+    const tooltip = getMethodologyTooltip('savings-rate', { showBenchmark: true })
+    expect(tooltip.source).toBeTruthy()
+  })
+
+  it('returns no source for savings-rate without benchmark', () => {
+    const tooltip = getMethodologyTooltip('savings-rate', { showBenchmark: false })
+    expect(tooltip.source).toBeUndefined()
   })
 })

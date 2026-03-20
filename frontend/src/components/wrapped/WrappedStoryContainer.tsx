@@ -14,11 +14,13 @@ export interface CardRenderer {
 }
 
 interface WrappedStoryContainerProps {
-  cardRenderers: CardRenderer[]
+  individualCardRenderers: CardRenderer[]
+  coupleCardRenderers: CardRenderer[]
 }
 
-export function WrappedStoryContainer({ cardRenderers }: WrappedStoryContainerProps) {
+export function WrappedStoryContainer({ individualCardRenderers, coupleCardRenderers }: WrappedStoryContainerProps) {
   const data = useWrappedData()
+  const cardRenderers = data.mode === 'couple' ? coupleCardRenderers : individualCardRenderers
   const navigate = useNavigate()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [direction, setDirection] = useState(1)
@@ -144,7 +146,7 @@ export function WrappedStoryContainer({ cardRenderers }: WrappedStoryContainerPr
         onPointerCancel={handlePointerCancel}
       >
         <AnimatePresence mode="wait" custom={direction}>
-          <div key={currentCard.key}>
+          <div key={currentIndex}>
             {renderer?.render(data, currentCard.gradient, direction)}
           </div>
         </AnimatePresence>
@@ -166,6 +168,23 @@ export function WrappedStoryContainer({ cardRenderers }: WrappedStoryContainerPr
       >
         <X className="h-6 w-6" />
       </button>
+
+      {/* Skip to summary — lets users jump to the final card */}
+      {currentIndex < total - 1 && currentIndex > 0 && (
+        <button
+          className="absolute bottom-8 right-4 z-10 text-white/60 hover:text-white text-xs transition-colors"
+          onClick={(e) => {
+            e.stopPropagation()
+            if (isTransitioning.current) return
+            isTransitioning.current = true
+            setDirection(1)
+            setCurrentIndex(total - 1)
+            setTimeout(() => { isTransitioning.current = false }, 350)
+          }}
+        >
+          Skip to summary
+        </button>
+      )}
 
       {/* Navigation hints (visible on first card only) */}
       {currentIndex === 0 && (

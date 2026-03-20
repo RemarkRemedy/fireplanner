@@ -4,6 +4,7 @@ export const WRAPPED_GRADIENTS = {
   netWorth: 'linear-gradient(to bottom right, #1A1040, #2D1B69)',
   fireNumber: 'linear-gradient(to bottom right, #2D1B69, #4A1060)',
   progress: 'linear-gradient(to bottom right, #4A1060, #6B1030)',
+  savingsPower: 'linear-gradient(to bottom right, #3B1060, #5A1040)',
   milestone: 'linear-gradient(to bottom right, #6B1030, #7C2400)',
   trajectory: 'linear-gradient(to bottom right, #7C2400, #5C3D00)',
   peak: 'linear-gradient(to bottom right, #1A3A2A, #0D2B1F)',
@@ -18,17 +19,10 @@ export interface WrappedCardConfig {
   gradient: string
 }
 
-/** Build the ordered 8-card sequence. */
-export function buildCardSequence(): WrappedCardConfig[] {
-  const keys: WrappedCardKey[] = [
-    'intro',
-    'netWorth',
-    'fireNumber',
-    'progress',
-    'milestone',
-    'trajectory',
-    'peak',
-    'summary',
-  ]
+/** Build the ordered card sequence. Individual = 8 cards, couple = 9 (adds savingsPower). */
+export function buildCardSequence(mode: 'individual' | 'couple' = 'individual'): WrappedCardConfig[] {
+  const keys: WrappedCardKey[] = mode === 'couple'
+    ? ['intro', 'netWorth', 'fireNumber', 'savingsPower', 'progress', 'milestone', 'trajectory', 'peak', 'summary']
+    : ['intro', 'netWorth', 'fireNumber', 'progress', 'milestone', 'trajectory', 'peak', 'summary']
   return keys.map((key) => ({ key, gradient: WRAPPED_GRADIENTS[key] }))
 }
