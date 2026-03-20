@@ -1,11 +1,10 @@
 import { useEffect, useRef } from 'react'
-import { readSessionFlag, setSessionFlag, readStorageValue } from '@/lib/storageFlags'
+import { readSessionFlag, setSessionFlag, readStorageValue, readFlag } from '@/lib/storageFlags'
 import {
   FEEDBACK_SESSION_KEY,
   FEEDBACK_DISMISSED_KEY,
   FEEDBACK_SUBMITTED_FLAG,
 } from '@/lib/validation/emailConstants'
-import { readFlag } from '@/lib/storageFlags'
 
 const DISMISS_SUPPRESS_DAYS = 14
 
@@ -21,11 +20,15 @@ function isDismissedRecently(): boolean {
  * Detects exit intent (mouse leaving viewport upward) and calls onOpen
  * to show the feedback modal. Fires once per session. Desktop only.
  * Suppressed for 14 days after dismiss or if already submitted feedback.
+ *
+ * @param onOpen - Must be referentially stable (wrap in useCallback)
+ * @param enabled - Pass false to suppress (e.g. when another modal is open)
  */
-export function useExitIntent(onOpen: () => void) {
+export function useExitIntent(onOpen: () => void, enabled = true) {
   const firedRef = useRef(false)
 
   useEffect(() => {
+    if (!enabled) return
     if (firedRef.current) return
     if (readSessionFlag(FEEDBACK_SESSION_KEY)) return
     if (isDismissedRecently()) return
@@ -41,5 +44,5 @@ export function useExitIntent(onOpen: () => void) {
 
     document.documentElement.addEventListener('mouseleave', handler)
     return () => document.documentElement.removeEventListener('mouseleave', handler)
-  }, [onOpen])
+  }, [onOpen, enabled])
 }
