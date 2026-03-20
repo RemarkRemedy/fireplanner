@@ -18,25 +18,6 @@ vi.mock('@/stores/useHouseholdPlanStore', () => ({
     selector({ plan: mockPlan }),
 }))
 
-vi.mock('@/stores/useAllocationStore', () => ({
-  useAllocationStore: (selector: (s: Record<string, unknown>) => unknown) =>
-    selector({
-      currentWeights: [0.6, 0.4],
-      targetWeights: [0.6, 0.4],
-      returnOverrides: [null, null],
-      glidePathConfig: { enabled: false },
-      validationErrors: {},
-    }),
-}))
-
-vi.mock('@/stores/useSimulationStore', () => ({
-  useSimulationStore: (selector: (s: Record<string, unknown>) => unknown) =>
-    selector({
-      selectedStrategy: 'constant-dollar',
-      strategyParams: {},
-      withdrawalBasis: 'total',
-    }),
-}))
 
 let mockPerAdultNetWorth = (_adult: unknown, _plan: unknown): number => 0
 let mockPerAdultSavings = (_plan: unknown, _owner: unknown): number => 0
@@ -49,11 +30,6 @@ vi.mock('@/lib/wrapped/coupleData', () => ({
   computeHouseholdIncome: (plan: unknown) => mockHouseholdIncome(plan),
 }))
 
-let mockPerAdultFireAge: (plan: unknown, adultId: unknown, alloc: unknown, sim: unknown) => number | null = () => 50
-
-vi.mock('@/lib/household/computePerAdultFireAge', () => ({
-  computePerAdultFireAge: (...args: unknown[]) => mockPerAdultFireAge(args[0], args[1], args[2], args[3]),
-}))
 
 // --- Mocks for upstream hooks ---
 
@@ -197,7 +173,6 @@ function resetMocks() {
   mockPerAdultNetWorth = () => 0
   mockPerAdultSavings = () => 0
   mockHouseholdIncome = () => 120_000
-  mockPerAdultFireAge = () => 50
 }
 
 beforeEach(() => {
@@ -494,38 +469,39 @@ describe('useWrappedData', () => {
       expect(result.current.intro.displayName).toBe('Alice')
     })
 
-    it('perPersonFireAge is null when computePerAdultFireAge returns null', () => {
+    it('perPersonFireAge derived from joint FIRE age + age delta', () => {
+      const self = makeSelfAdult() // age 30
+      const partner = makePartnerAdult() // age 28
+      mockCoupleDetection.isCoupleMode = true
+      mockCoupleDetection.selfAdult = self
+      mockCoupleDetection.partnerAdult = partner
+      mockDashMetrics.fireAge = 45 // self's age at joint FIRE
+
+      const { result } = renderHook(() => useWrappedData())
+      // Self FIRE age = joint FIRE age = 45
+      // Partner FIRE age = 28 + (45 - 30) = 43
+      expect(result.current.couple!.perPersonFireAge).toEqual([45, 43])
+    })
+
+    it('perPersonFireAge is null when joint FIRE age is null', () => {
       const self = makeSelfAdult()
       const partner = makePartnerAdult()
       mockCoupleDetection.isCoupleMode = true
       mockCoupleDetection.selfAdult = self
       mockCoupleDetection.partnerAdult = partner
-      mockPerAdultFireAge = () => null
+      mockDashMetrics.fireAge = null as unknown as number
 
       const { result } = renderHook(() => useWrappedData())
       expect(result.current.couple!.perPersonFireAge).toEqual([null, null])
     })
 
-    it('perPersonFireAge is null when computePerAdultFireAge returns Infinity', () => {
-      const self = makeSelfAdult()
+    it('perPersonFireAge is null when joint FIRE age exceeds lifeExpectancy', () => {
+      const self = makeSelfAdult() // lifeExpectancy 85
       const partner = makePartnerAdult()
       mockCoupleDetection.isCoupleMode = true
       mockCoupleDetection.selfAdult = self
       mockCoupleDetection.partnerAdult = partner
-      mockPerAdultFireAge = () => Infinity
-
-      const { result } = renderHook(() => useWrappedData())
-      expect(result.current.couple!.perPersonFireAge).toEqual([null, null])
-    })
-
-    it('perPersonFireAge is null when age exceeds lifeExpectancy', () => {
-      const self = makeSelfAdult()
-      const partner = makePartnerAdult()
-      mockCoupleDetection.isCoupleMode = true
-      mockCoupleDetection.selfAdult = self
-      mockCoupleDetection.partnerAdult = partner
-      // lifeExpectancy is 85 for both adults
-      mockPerAdultFireAge = () => 90
+      mockDashMetrics.fireAge = 90 // exceeds self's lifeExpectancy of 85
 
       const { result } = renderHook(() => useWrappedData())
       expect(result.current.couple!.perPersonFireAge).toEqual([null, null])

@@ -4,11 +4,8 @@ import { useDashboardCharts } from '@/hooks/useDashboardCharts'
 import { useFireCalculations } from '@/hooks/useFireCalculations'
 import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
-import { useAllocationStore } from '@/stores/useAllocationStore'
-import { useSimulationStore } from '@/stores/useSimulationStore'
 import { buildCardSequence } from '@/lib/wrapped/gradients'
 import { detectCoupleMode, computePerAdultNetWorth, computePerAdultSavings, computeHouseholdIncome } from '@/lib/wrapped/coupleData'
-import { computePerAdultFireAge } from '@/lib/household/computePerAdultFireAge'
 import { DEFAULT_ANNUAL_EXPENSES } from '@/lib/data/setupDefaults'
 import type { WrappedCardConfig } from '@/lib/wrapped/gradients'
 
@@ -106,14 +103,6 @@ export function useWrappedData(): WrappedData {
   const { metrics } = useFireCalculations()
   const { profile, normalized } = useHouseholdRuntimeInputs()
   const plan = useHouseholdPlanStore((s) => s.plan)
-  const currentWeights = useAllocationStore((s) => s.currentWeights)
-  const targetWeights = useAllocationStore((s) => s.targetWeights)
-  const returnOverrides = useAllocationStore((s) => s.returnOverrides)
-  const glidePathConfig = useAllocationStore((s) => s.glidePathConfig)
-  const allocationValidationErrors = useAllocationStore((s) => s.validationErrors)
-  const selectedStrategy = useSimulationStore((s) => s.selectedStrategy)
-  const strategyParams = useSimulationStore((s) => s.strategyParams)
-  const withdrawalBasis = useSimulationStore((s) => s.withdrawalBasis)
 
   return useMemo(() => {
     const liquid = profile.liquidNetWorth
@@ -151,14 +140,6 @@ export function useWrappedData(): WrappedData {
 
     // Couple data computation using canonical helpers
     const compiledPlan = normalized.compiledPlan
-    const allocation = {
-      currentWeights,
-      targetWeights,
-      returnOverrides,
-      glidePathConfig,
-      validationErrors: allocationValidationErrors,
-    }
-    const simulation = { selectedStrategy, strategyParams, withdrawalBasis }
 
     let couple: CoupleData | undefined = undefined
     if (isCoupleMode && selfAdult && partnerAdult) {
@@ -173,14 +154,13 @@ export function useWrappedData(): WrappedData {
       const householdIncome = computeHouseholdIncome(compiledPlan)
       const combinedSavingsRate = householdIncome > 0 ? combinedSavings / householdIncome : 0
 
-      // Per-adult FIRE age with Infinity guard + life expectancy cap
-      const rawSelfFireAge = computePerAdultFireAge(plan, selfAdult.id, allocation, simulation)
-      const rawPartnerFireAge = computePerAdultFireAge(plan, partnerAdult.id, allocation, simulation)
-      const selfFireAge = rawSelfFireAge != null && Number.isFinite(rawSelfFireAge) && rawSelfFireAge <= selfAdult.lifeExpectancy
-        ? Math.round(rawSelfFireAge)
-        : null
-      const partnerFireAge = rawPartnerFireAge != null && Number.isFinite(rawPartnerFireAge) && rawPartnerFireAge <= partnerAdult.lifeExpectancy
-        ? Math.round(rawPartnerFireAge)
+      // Per-adult FIRE age derived from the joint projection (authoritative source).
+      // The household reaches FIRE together, so we use the joint FIRE age (self's age)
+      // and offset by the age delta to get the partner's age at that point.
+      const yearsToFire = fireAge != null ? fireAge - selfAdult.currentAge : null
+      const selfFireAge = fireAge
+      const partnerFireAge = yearsToFire != null
+        ? partnerAdult.currentAge + yearsToFire
         : null
 
       couple = {
@@ -250,7 +230,5 @@ export function useWrappedData(): WrappedData {
       },
       couple,
     }
-  }, [dashMetrics, accumulationData, metrics, profile, normalized, plan,
-    currentWeights, targetWeights, returnOverrides, glidePathConfig, allocationValidationErrors,
-    selectedStrategy, strategyParams, withdrawalBasis])
+  }, [dashMetrics, accumulationData, metrics, profile, normalized, plan])
 }
