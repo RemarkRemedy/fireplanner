@@ -31,7 +31,12 @@ const STATS_ROUTES = ['/inputs', '/projection', '/withdrawal', '/stress-test', '
 
 function AppLayoutBannerArea() {
   const { isEligible } = useExpenseTracker()
-  return isEligible ? <ExpenseTrackerBanner /> : <BetaBanner />
+  return (
+    <>
+      <BetaBanner />
+      {isEligible && <ExpenseTrackerBanner />}
+    </>
+  )
 }
 
 function AppLayoutFooterCta() {
