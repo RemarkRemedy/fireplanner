@@ -41,6 +41,7 @@ export function WrappedStoryContainer({ cardRenderers }: WrappedStoryContainerPr
   const total = data.cards.length
 
   const handleClose = useCallback(() => {
+    sessionStorage.setItem('fireplanner-wrapped-just-viewed', '1')
     navigate('/projection', { replace: true })
   }, [navigate])
 

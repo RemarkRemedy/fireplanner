@@ -57,6 +57,7 @@ export function SummaryCard({ data, gradient, direction }: SummaryCardProps) {
           to="/projection"
           className="flex items-center justify-center gap-2 bg-white text-slate-900 font-semibold rounded-full py-3 px-6 hover:bg-white/90 transition-colors"
           onPointerUp={(e) => e.stopPropagation()}
+          onClick={() => sessionStorage.setItem('fireplanner-wrapped-just-viewed', '1')}
         >
           See your full projection
           <ArrowRight className="h-4 w-4" />
