@@ -37,7 +37,7 @@ export function ExitIntentModal({ open, onClose }: ExitIntentModalProps) {
   const [status, setStatus] = useState<Status>('idle')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  // W2: Reset form state when modal opens
+  // Reset form state when modal opens
   const prevOpen = useRef(open)
   useEffect(() => {
     if (open && !prevOpen.current) {
@@ -113,7 +113,7 @@ export function ExitIntentModal({ open, onClose }: ExitIntentModalProps) {
           has_email: hasValidEmail,
           expense_tracker_interest: wantExpenseTracker,
         })
-        // W4: Update live state so banner/CTAs hide immediately
+        // Update live state so banner/CTAs hide immediately
         if (wantExpenseTracker && hasValidEmail) {
           signup.markSignedUp()
         }
@@ -131,7 +131,7 @@ export function ExitIntentModal({ open, onClose }: ExitIntentModalProps) {
     }
   }, [message, trimmedEmail, wantExpenseTracker, hasValidEmail, status, location.pathname, signup])
 
-  // W7: Update title/description based on state
+  // Update title/description based on submission state
   const title = status === 'success' ? 'Thanks!' : 'Before you go...'
   const description = status === 'success'
     ? (wantExpenseTracker

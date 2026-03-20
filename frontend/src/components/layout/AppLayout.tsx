@@ -59,7 +59,9 @@ function AppLayoutFooterCta() {
 
 function ExitIntentTrigger({ onOpen }: { onOpen: () => void }) {
   const { modalOpen: expenseModalOpen } = useExpenseTracker()
-  useExitIntent(onOpen, !expenseModalOpen)
+  const location = useLocation()
+  const suppressed = expenseModalOpen || location.pathname === '/wrapped'
+  useExitIntent(onOpen, !suppressed)
   return null
 }
 
