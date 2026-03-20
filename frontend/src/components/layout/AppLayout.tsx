@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { trackEvent } from '@/lib/analytics'
 import { Toaster } from 'sonner'
@@ -22,6 +22,7 @@ import { DemoBadge } from '@/components/shared/DemoBadge'
 // Lazy-load components that aren't needed for first paint
 const HelpPanel = lazy(() => import('./HelpPanel').then(m => ({ default: m.HelpPanel })))
 const ExpenseTrackerModal = lazy(() => import('@/components/email/ExpenseTrackerModal').then(m => ({ default: m.ExpenseTrackerModal })))
+const ExitIntentModal = lazy(() => import('@/components/shared/ExitIntentModal').then(m => ({ default: m.ExitIntentModal })))
 const MobileShareFab = lazy(() => import('@/components/shared/MobileShareFab').then(m => ({ default: m.MobileShareFab })))
 const MobileHelpSheet = lazy(() => import('./MobileHelpSheet').then(m => ({ default: m.MobileHelpSheet })))
 
@@ -56,8 +57,8 @@ function AppLayoutFooterCta() {
   )
 }
 
-function ExitIntentTrigger() {
-  useExitIntent()
+function ExitIntentTrigger({ onOpen }: { onOpen: () => void }) {
+  useExitIntent(onOpen)
   return null
 }
 
@@ -81,6 +82,8 @@ export function AppLayout() {
   const navigate = useNavigate()
   const isDesktop = useIsDesktop()
   const companionMode = isCompanionMode()
+  const [exitIntentOpen, setExitIntentOpen] = useState(false)
+  const openExitIntent = useCallback(() => setExitIntentOpen(true), [])
 
   // Strip trailing slashes so Umami and React Router see consistent paths
   // (Cloudflare Pages adds trailing slashes to pre-rendered routes)
@@ -204,7 +207,12 @@ export function AppLayout() {
             <ExpenseTrackerModal />
           </Suspense>
         )}
-        {!companionMode && <ExitIntentTrigger />}
+        {!companionMode && <ExitIntentTrigger onOpen={openExitIntent} />}
+        {!companionMode && (
+          <Suspense fallback={null}>
+            <ExitIntentModal open={exitIntentOpen} onClose={() => setExitIntentOpen(false)} />
+          </Suspense>
+        )}
 
         {/* Mobile FABs: Share + Help */}
         {!isDesktop && (
