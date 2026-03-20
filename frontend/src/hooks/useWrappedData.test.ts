@@ -398,7 +398,7 @@ describe('useWrappedData', () => {
       expect(result.current.couple!.ages).toEqual([30, 28])
     })
 
-    it('individual mode returns 8 cards, couple mode returns 9', () => {
+    it('individual mode returns 8 cards, couple mode returns 8 (swaps peak for savingsPower)', () => {
       // Individual
       mockCoupleDetection.isCoupleMode = false
       const { result: indResult } = renderHook(() => useWrappedData())
@@ -411,8 +411,9 @@ describe('useWrappedData', () => {
       mockCoupleDetection.selfAdult = self
       mockCoupleDetection.partnerAdult = partner
       const { result: coupleResult } = renderHook(() => useWrappedData())
-      expect(coupleResult.current.cards).toHaveLength(9)
+      expect(coupleResult.current.cards).toHaveLength(8)
       expect(coupleResult.current.cards.map((c) => c.key)).toContain('savingsPower')
+      expect(coupleResult.current.cards.map((c) => c.key)).not.toContain('peak')
     })
 
     it('couple mode delegates per-person NW to computePerAdultNetWorth', () => {

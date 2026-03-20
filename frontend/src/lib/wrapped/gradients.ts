@@ -19,10 +19,12 @@ export interface WrappedCardConfig {
   gradient: string
 }
 
-/** Build the ordered card sequence. Individual = 8 cards, couple = 9 (adds savingsPower). */
+/** Build the ordered card sequence. Individual = 8 cards, couple = 8 (swaps peak for savingsPower).
+ * Peak is excluded from couple mode because the data source (useDashboardCharts) runs a
+ * single-person model that doesn't reflect the full household projection. */
 export function buildCardSequence(mode: 'individual' | 'couple' = 'individual'): WrappedCardConfig[] {
   const keys: WrappedCardKey[] = mode === 'couple'
-    ? ['intro', 'netWorth', 'fireNumber', 'savingsPower', 'progress', 'milestone', 'trajectory', 'peak', 'summary']
+    ? ['intro', 'netWorth', 'fireNumber', 'savingsPower', 'progress', 'milestone', 'trajectory', 'summary']
     : ['intro', 'netWorth', 'fireNumber', 'progress', 'milestone', 'trajectory', 'peak', 'summary']
   return keys.map((key) => ({ key, gradient: WRAPPED_GRADIENTS[key] }))
 }

@@ -21,7 +21,6 @@ const COUPLE_KEYS: WrappedCardKey[] = [
   'progress',
   'milestone',
   'trajectory',
-  'peak',
   'summary',
 ]
 
@@ -54,11 +53,12 @@ describe('buildCardSequence', () => {
     expect(keys).not.toContain('savingsPower')
   })
 
-  it('couple mode returns 9 cards with savingsPower after fireNumber', () => {
+  it('couple mode returns 8 cards with savingsPower, without peak', () => {
     const sequence = buildCardSequence('couple')
     const keys = sequence.map((c) => c.key)
     expect(keys).toEqual(COUPLE_KEYS)
-    expect(keys).toHaveLength(9)
+    expect(keys).toHaveLength(8)
+    expect(keys).not.toContain('peak')
   })
 
   it('each card config has a gradient that matches WRAPPED_GRADIENTS', () => {
