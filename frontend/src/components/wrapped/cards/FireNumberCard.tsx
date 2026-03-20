@@ -2,7 +2,6 @@ import { motion } from 'framer-motion'
 import { WrappedCard, staggerChild } from '@/components/wrapped/WrappedCard'
 import { AnimatedNumber } from '@/components/shared/AnimatedNumber'
 import { formatCompactCurrency } from '@/lib/utils'
-import { Link } from 'react-router-dom'
 
 interface FireNumberCardProps {
   value: number
@@ -30,15 +29,9 @@ export function FireNumberCard({ value, hasCustomExpenses, gradient, direction }
       </motion.p>
 
       {!hasCustomExpenses && (
-        <motion.div variants={staggerChild}>
-          <Link
-            to="/inputs#section-expenses"
-            className="text-sm text-white/80 hover:text-white/80 transition-colors underline underline-offset-2"
-            onPointerUp={(e) => e.stopPropagation()}
-          >
-            Based on estimated expenses. Refine your spending for accuracy.
-          </Link>
-        </motion.div>
+        <motion.p variants={staggerChild} className="text-sm text-white/60 italic">
+          Tip: refine your spending later for a more accurate number.
+        </motion.p>
       )}
     </WrappedCard>
   )

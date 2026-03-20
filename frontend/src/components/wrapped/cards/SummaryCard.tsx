@@ -1,6 +1,4 @@
 import { motion } from 'framer-motion'
-import { Link } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
 import { WrappedCard, staggerChild } from '@/components/wrapped/WrappedCard'
 import { formatCompactCurrency, formatPercent } from '@/lib/utils'
 import type { WrappedData } from '@/hooks/useWrappedData'
@@ -52,22 +50,10 @@ export function SummaryCard({ data, gradient, direction }: SummaryCardProps) {
         </motion.p>
       )}
 
-      <motion.div variants={staggerChild} className="flex flex-col gap-3 mt-2 w-full max-w-sm">
-        <Link
-          to="/inputs"
-          className="flex items-center justify-center gap-2 bg-white text-slate-900 font-semibold rounded-full py-3 px-6 hover:bg-white/90 transition-colors"
-          onPointerUp={(e) => e.stopPropagation()}
-        >
-          Refine your plan
-          <ArrowRight className="h-4 w-4" />
-        </Link>
-        <Link
-          to="/projection"
-          className="flex items-center justify-center gap-2 bg-white/10 text-white font-medium rounded-full py-3 px-6 hover:bg-white/20 transition-colors"
-          onPointerUp={(e) => e.stopPropagation()}
-        >
-          View full projection
-        </Link>
+      <motion.div variants={staggerChild} className="flex flex-col gap-2 mt-2 w-full max-w-sm text-center">
+        <p className="text-sm text-white/70">
+          Next steps: refine your inputs, then view the full projection to explore your timeline in detail.
+        </p>
       </motion.div>
     </WrappedCard>
   )

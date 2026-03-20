@@ -2,7 +2,6 @@ import { motion } from 'framer-motion'
 import { WrappedCard, staggerChild } from '@/components/wrapped/WrappedCard'
 import { AnimatedNumber } from '@/components/shared/AnimatedNumber'
 import { formatCompactCurrency } from '@/lib/utils'
-import { Link } from 'react-router-dom'
 
 interface NetWorthCardProps {
   total: number
@@ -55,15 +54,9 @@ export function NetWorthCard({
       </motion.div>
 
       {(!hasCpfData || !hasProperty) && (
-        <motion.div variants={staggerChild}>
-          <Link
-            to="/inputs#section-cpf"
-            className="text-sm text-white/80 hover:text-white/80 transition-colors underline underline-offset-2"
-            onPointerUp={(e) => e.stopPropagation()}
-          >
-            Include CPF and property for the full picture
-          </Link>
-        </motion.div>
+        <motion.p variants={staggerChild} className="text-sm text-white/60 italic">
+          Tip: include CPF and property later for the full picture.
+        </motion.p>
       )}
     </WrappedCard>
   )
