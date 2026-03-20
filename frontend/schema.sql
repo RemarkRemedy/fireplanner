@@ -32,3 +32,16 @@ CREATE TABLE IF NOT EXISTS expense_tracker_signups (
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_expense_tracker_email ON expense_tracker_signups(email);
 CREATE INDEX IF NOT EXISTS idx_expense_tracker_ip_rate ON expense_tracker_signups(ip_hash, created_at);
+
+-- User feedback (exit intent modal)
+CREATE TABLE IF NOT EXISTS feedback (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  message TEXT NOT NULL,
+  email TEXT,
+  interested_in_expense_tracker INTEGER NOT NULL DEFAULT 0,
+  page_path TEXT NOT NULL,
+  ip_hash TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_feedback_ip_rate ON feedback(ip_hash, created_at);
