@@ -26,8 +26,7 @@ export function CoupleSummaryCard({ data, gradient, direction }: CoupleSummaryCa
     { label: 'FIRE number', value: formatCompactCurrency(data.fireNumber.value) },
     { label: 'Combined savings', value: `${formatCompactCurrency(data.couple?.combinedSavings ?? 0)}/yr` },
     { label: 'Both free by', value: bothFreeAge != null ? `${bothFreeAge}` : 'N/A' },
-    { label: 'Peak NW', value: formatCompactCurrency(data.peak.value) },
-    { label: 'Savings rate', value: formatPercent(data.summary.savingsRate, 0) },
+    { label: 'Savings rate', value: formatPercent(data.couple?.combinedSavingsRate ?? data.summary.savingsRate, 0) },
   ]
 
   return (
