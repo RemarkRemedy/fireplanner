@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion'
 import { WrappedCard, staggerChild } from '@/components/wrapped/WrappedCard'
-import { Link } from 'react-router-dom'
 
 interface MilestoneCardProps {
   fireAge: number | null
@@ -52,15 +51,9 @@ export function MilestoneCard({ fireAge, yearsToFire, gradient, direction }: Mil
         </>
       )}
 
-      <motion.div variants={staggerChild}>
-        <Link
-          to="/inputs#section-personal"
-          className="text-sm text-white/80 hover:text-white/80 transition-colors underline underline-offset-2"
-          onPointerUp={(e) => e.stopPropagation()}
-        >
-          Adjust your retirement age to see how it shifts
-        </Link>
-      </motion.div>
+      <motion.p variants={staggerChild} className="text-sm text-white/60 italic">
+        Tip: try adjusting your retirement age later to see how it shifts.
+      </motion.p>
     </WrappedCard>
   )
 }

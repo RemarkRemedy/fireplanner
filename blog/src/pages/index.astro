@@ -1,0 +1,40 @@
+---
+import { getCollection } from 'astro:content';
+import BlogList from '../layouts/BlogList.astro';
+import BlogCard from '../components/BlogCard.astro';
+import CategoryFilter from '../components/CategoryFilter.astro';
+
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+const sortedPosts = allPosts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const categories = [...new Set(allPosts.map((p) => p.data.category))].sort();
+---
+
+<BlogList
+  title="Singapore Personal Finance Blog"
+  description="Articles on CPF, SRS, investing, property, and FIRE strategies for Singapore residents."
+>
+  <h1 class="mb-2 text-3xl font-bold tracking-tight text-foreground">Blog</h1>
+  <p class="mb-6 text-muted-foreground">
+    Practical guides on CPF, SRS, investing, property, and FIRE strategies for Singapore.
+  </p>
+
+  <CategoryFilter categories={categories} />
+
+  <div class="grid gap-4">
+    {sortedPosts.map((post) => (
+      <BlogCard
+        title={post.data.title}
+        description={post.data.description}
+        pubDate={post.data.pubDate}
+        category={post.data.category}
+        slug={post.id}
+        readingTime={post.data.readingTime}
+      />
+    ))}
+  </div>
+
+  {sortedPosts.length === 0 && (
+    <p class="py-12 text-center text-muted-foreground">No articles yet. Check back soon.</p>
+  )}
+</BlogList>

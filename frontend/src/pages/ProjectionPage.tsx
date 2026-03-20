@@ -116,6 +116,19 @@ export function ProjectionPage() {
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps -- runs once on mount
 
+  // Show nudge-oriented toast after arriving from wrapped story
+  useEffect(() => {
+    const fromWrapped = sessionStorage.getItem('fireplanner-wrapped-just-viewed')
+    if (fromWrapped) {
+      sessionStorage.removeItem('fireplanner-wrapped-just-viewed')
+      toast('Now make it yours.', {
+        description: 'Your story was based on quick estimates. Use the refinement cards to dial in your real numbers.',
+        duration: 8000,
+        icon: <Sparkles className="h-4 w-4" />,
+      })
+    }
+  }, [])
+
   useEffect(() => {
     if (deltaProcessed.current || !location.state?.showDelta) return
     const stored = sessionStorage.getItem('fireplanner-delta-before')

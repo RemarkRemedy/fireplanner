@@ -1,0 +1,35 @@
+---
+interface Props {
+  categories: string[];
+  activeCategory?: string;
+}
+
+const { categories, activeCategory } = Astro.props;
+---
+
+<nav aria-label="Category filter" class="mb-8 flex flex-wrap gap-2">
+  <a
+    href="/blog"
+    class:list={[
+      'rounded-full px-3 py-1.5 text-sm font-medium transition-colors',
+      !activeCategory
+        ? 'bg-primary text-primary-foreground'
+        : 'bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary',
+    ]}
+  >
+    All
+  </a>
+  {categories.map((cat) => (
+    <a
+      href={`/blog/category/${cat}`}
+      class:list={[
+        'rounded-full px-3 py-1.5 text-sm font-medium capitalize transition-colors',
+        activeCategory === cat
+          ? 'bg-primary text-primary-foreground'
+          : 'bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary',
+      ]}
+    >
+      {cat.replace('-', ' ')}
+    </a>
+  ))}
+</nav>

@@ -54,19 +54,13 @@ export function SummaryCard({ data, gradient, direction }: SummaryCardProps) {
 
       <motion.div variants={staggerChild} className="flex flex-col gap-3 mt-2 w-full max-w-sm">
         <Link
-          to="/inputs"
+          to="/projection"
           className="flex items-center justify-center gap-2 bg-white text-slate-900 font-semibold rounded-full py-3 px-6 hover:bg-white/90 transition-colors"
           onPointerUp={(e) => e.stopPropagation()}
+          onClick={() => sessionStorage.setItem('fireplanner-wrapped-just-viewed', '1')}
         >
-          Refine your plan
+          See your full projection
           <ArrowRight className="h-4 w-4" />
-        </Link>
-        <Link
-          to="/projection"
-          className="flex items-center justify-center gap-2 bg-white/10 text-white font-medium rounded-full py-3 px-6 hover:bg-white/20 transition-colors"
-          onPointerUp={(e) => e.stopPropagation()}
-        >
-          View full projection
         </Link>
       </motion.div>
     </WrappedCard>

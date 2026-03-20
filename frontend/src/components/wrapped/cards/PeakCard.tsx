@@ -2,7 +2,6 @@ import { motion } from 'framer-motion'
 import { WrappedCard, staggerChild } from '@/components/wrapped/WrappedCard'
 import { AnimatedNumber } from '@/components/shared/AnimatedNumber'
 import { formatCompactCurrency } from '@/lib/utils'
-import { Link } from 'react-router-dom'
 
 interface PeakCardProps {
   value: number
@@ -66,15 +65,9 @@ export function PeakCard({ value, age, gradient, direction }: PeakCardProps) {
         </svg>
       </motion.div>
 
-      <motion.div variants={staggerChild}>
-        <Link
-          to="/inputs#section-allocation"
-          className="text-sm text-white/80 hover:text-white/80 transition-colors underline underline-offset-2"
-          onPointerUp={(e) => e.stopPropagation()}
-        >
-          Customize your returns and allocation
-        </Link>
-      </motion.div>
+      <motion.p variants={staggerChild} className="text-sm text-white/60 italic">
+        Tip: customize your returns and allocation later for a tailored projection.
+      </motion.p>
     </WrappedCard>
   )
 }
