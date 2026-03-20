@@ -1,11 +1,11 @@
 ---
 import type { CollectionEntry } from 'astro:content';
+import BaseLayout from './BaseLayout.astro';
 import BlogHead from '../components/BlogHead.astro';
 import BreadcrumbNav from '../components/BreadcrumbNav.astro';
 import TOC from '../components/TOC.astro';
 import Disclaimer from '../components/Disclaimer.astro';
 import RelatedPosts from '../components/RelatedPosts.astro';
-import '../styles/global.css';
 
 interface Props {
   post: CollectionEntry<'blog'>;
@@ -22,8 +22,8 @@ const formattedDate = pubDate.toLocaleDateString('en-SG', {
 });
 ---
 
-<html lang="en">
-  <head>
+<BaseLayout title={title}>
+  <Fragment slot="head">
     <BlogHead
       title={title}
       description={description}
@@ -34,112 +34,59 @@ const formattedDate = pubDate.toLocaleDateString('en-SG', {
       slug={post.id}
       noindex={noindex}
     />
-  </head>
-  <body class="bg-background text-foreground">
-    <!-- Dark mode init -->
-    <script is:inline>
-      if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
-      }
-    </script>
+  </Fragment>
 
-    <!-- Header -->
-    <header class="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div class="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
-        <a href="/" class="text-lg font-bold text-foreground" style="font-family: 'Syne', sans-serif;">
-          SG FIRE Planner
-        </a>
-        <nav class="flex items-center gap-4">
-          <a href="/blog" class="text-sm text-muted-foreground transition-colors hover:text-primary">Blog</a>
-          <a href="/" class="text-sm text-muted-foreground transition-colors hover:text-primary">Planner</a>
-          <button
-            id="theme-toggle"
-            class="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            aria-label="Toggle theme"
-          >
-            <svg class="dark:hidden" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-            <svg class="hidden dark:block" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
-          </button>
-        </nav>
+  <BreadcrumbNav crumbs={[
+    { label: category.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()), href: `/blog/category/${category}` },
+    { label: title },
+  ]} />
+
+  <article>
+    <header class="mb-8">
+      <h1 class="mb-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+        {title}
+      </h1>
+      <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+        <span>{author}</span>
+        <span>&middot;</span>
+        <time datetime={pubDate.toISOString()}>{formattedDate}</time>
+        {readingTime && (
+          <>
+            <span>&middot;</span>
+            <span>{readingTime} min read</span>
+          </>
+        )}
+        {updatedDate && (
+          <>
+            <span>&middot;</span>
+            <span>Updated {updatedDate.toLocaleDateString('en-SG', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+          </>
+        )}
+      </div>
+      <div class="mt-3 flex flex-wrap gap-1.5">
+        {tags.map((tag) => (
+          <span class="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
+            {tag}
+          </span>
+        ))}
       </div>
     </header>
 
-    <!-- Article -->
-    <main class="mx-auto max-w-4xl px-4 py-8">
-      <BreadcrumbNav crumbs={[
-        { label: category.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()), href: `/blog/category/${category}` },
-        { label: title },
-      ]} />
+    <TOC headings={headings} />
 
-      <article>
-        <header class="mb-8">
-          <h1 class="mb-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            {title}
-          </h1>
-          <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <span>{author}</span>
-            <span>&middot;</span>
-            <time datetime={pubDate.toISOString()}>{formattedDate}</time>
-            {readingTime && (
-              <>
-                <span>&middot;</span>
-                <span>{readingTime} min read</span>
-              </>
-            )}
-            {updatedDate && (
-              <>
-                <span>&middot;</span>
-                <span>Updated {updatedDate.toLocaleDateString('en-SG', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
-              </>
-            )}
-          </div>
-          <div class="mt-3 flex flex-wrap gap-1.5">
-            {tags.map((tag) => (
-              <span class="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
-                {tag}
-              </span>
-            ))}
-          </div>
-        </header>
+    <Disclaimer />
 
-        <TOC headings={headings} />
+    <div class="prose prose-slate max-w-none dark:prose-invert prose-headings:scroll-mt-20 prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
+      <slot />
+    </div>
 
-        <Disclaimer />
+    <Disclaimer />
+  </article>
 
-        <div class="prose prose-slate max-w-none dark:prose-invert prose-headings:scroll-mt-20 prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
-          <slot />
-        </div>
-
-        <Disclaimer />
-      </article>
-
-      <RelatedPosts
-        currentSlug={post.id}
-        category={category}
-        tags={tags}
-        allPosts={allPosts}
-      />
-    </main>
-
-    <!-- Footer -->
-    <footer class="border-t border-border py-8">
-      <div class="mx-auto max-w-4xl px-4 text-center text-sm text-muted-foreground">
-        <p>&copy; {new Date().getFullYear()} SG FIRE Planner. For educational purposes only, not financial advice.</p>
-        <div class="mt-2 flex justify-center gap-4">
-          <a href="/" class="transition-colors hover:text-primary">Planner</a>
-          <a href="/blog" class="transition-colors hover:text-primary">Blog</a>
-          <a href="/privacy" class="transition-colors hover:text-primary">Privacy</a>
-          <a href="/blog/rss.xml" class="transition-colors hover:text-primary">RSS</a>
-        </div>
-      </div>
-    </footer>
-
-    <!-- Theme toggle script -->
-    <script is:inline>
-      document.getElementById('theme-toggle')?.addEventListener('click', () => {
-        const isDark = document.documentElement.classList.toggle('dark');
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
-      });
-    </script>
-  </body>
-</html>
+  <RelatedPosts
+    currentSlug={post.id}
+    category={category}
+    tags={tags}
+    allPosts={allPosts}
+  />
+</BaseLayout>
