@@ -1,4 +1,4 @@
-// exit_intent triggers the expense tracker modal when the cursor leaves the viewport (useExitIntent hook)
+// exit_intent triggers the feedback modal when the cursor leaves the viewport (useExitIntent hook)
 export const VALID_SOURCES = ['post_simulation', 'landing_page', 'exit_intent', 'contextual_nudge', 'expense_tracker', 'cpf_planner', 'compare_page', 'feedback'] as const
 export const VALID_FEATURES = ['cpf_optimization', 'couples_planning', 'insurance_gap', 'general', 'expense_tracker', 'portfolio_integration'] as const
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/

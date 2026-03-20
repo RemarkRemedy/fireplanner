@@ -58,7 +58,8 @@ function AppLayoutFooterCta() {
 }
 
 function ExitIntentTrigger({ onOpen }: { onOpen: () => void }) {
-  useExitIntent(onOpen)
+  const { modalOpen: expenseModalOpen } = useExpenseTracker()
+  useExitIntent(onOpen, !expenseModalOpen)
   return null
 }
 

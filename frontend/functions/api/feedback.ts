@@ -75,18 +75,17 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       .bind(message.trim(), email, expenseInterest ? 1 : 0, pagePath, ipHash)
       .run()
 
-    // Cross-write to email_signups if email provided (fire-and-forget)
-    if (email) {
-      const source = expenseInterest ? 'feedback' : 'feedback'
-      const featureInterest = expenseInterest ? 'expense_tracker' : null
+    // Cross-write to email_signups only when user opted into expense tracker.
+    // Feedback-only emails are for reply purposes and should not be enrolled.
+    if (email && expenseInterest) {
       context.waitUntil(
         context.env.DB.prepare(
           `INSERT INTO email_signups (email, source, feature_interest, ip_hash) VALUES (?, ?, ?, ?)
            ON CONFLICT(email) DO UPDATE SET
-             feature_interest = COALESCE(feature_interest, excluded.feature_interest),
+             feature_interest = 'expense_tracker',
              updated_at = CURRENT_TIMESTAMP`
         )
-          .bind(email, source, featureInterest, ipHash)
+          .bind(email, 'feedback', 'expense_tracker', ipHash)
           .run()
           .catch((err) => console.error('Cross-write to email_signups failed:', err))
       )
