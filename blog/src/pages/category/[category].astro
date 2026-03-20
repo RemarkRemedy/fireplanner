@@ -18,7 +18,7 @@ export function getStaticPaths() {
 }
 
 const { category } = Astro.props;
-const displayName = category.replace('-', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+const displayName = category.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
 
 const allPosts = await getCollection('blog', ({ data }) => !data.draft);
 const filteredPosts = allPosts
