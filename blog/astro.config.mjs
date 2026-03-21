@@ -6,7 +6,6 @@ import tailwind from '@astrojs/tailwind';
 export default defineConfig({
   site: 'https://sgfireplanner.com',
   base: '/blog',
-  outDir: '../frontend/dist/blog',
   integrations: [
     mdx(),
     sitemap(),
