@@ -50,8 +50,8 @@ const faqSchema = {
 
 export function RetirementPlannerPage() {
   usePageMeta({
-    title: 'Singapore Retirement Planner — CPF, SRS & FIRE Planning',
-    description: 'Plan retirement in Singapore with CPF, CPF LIFE, taxes, property, Monte Carlo stress tests, and withdrawal analysis in one free planner.',
+    title: 'Singapore FIRE Retirement Planner: CPF, SRS & Property in One Free Tool',
+    description: 'Free FIRE retirement planner for Singapore. Model CPF, SRS, property equity, taxes, and 12 withdrawal strategies. See when you can retire and how to make your money last.',
     path: '/retirement-planner',
   })
 

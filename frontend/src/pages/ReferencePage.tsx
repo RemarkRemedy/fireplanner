@@ -634,7 +634,7 @@ function useFaqSchema() {
 }
 
 export function ReferencePage() {
-  usePageMeta({ title: 'Reference Guide — SG FIRE Planner', description: 'Comprehensive reference for Singapore retirement planning: CPF contribution rates, income tax brackets, withdrawal strategy formulas, Monte Carlo methodology, and data sources.', path: '/reference' })
+  usePageMeta({ title: 'CPF Rates, BRS/FRS/ERS, Tax Brackets & Withdrawal Strategy Guide (2026)', description: 'CPF contribution rates by age, BRS/FRS/ERS amounts, OA/SA/MA allocation, CPF LIFE payout tables, income tax brackets, SRS rules, and 12 withdrawal strategy formulas. Updated for 2026.', path: '/reference' })
   useFaqSchema()
   const location = useLocation()
   const hashId = location.hash.slice(1)

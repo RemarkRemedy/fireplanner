@@ -65,9 +65,9 @@ const webAppSchema = {
 
 export function CpfPlannerPage() {
   usePageMeta({
-    title: 'CPF Retirement Planner: Estimate Your CPF Balances, BRS/FRS/ERS, and CPF LIFE Payout',
+    title: 'CPF Projection Calculator: OA/SA/MA Balances, BRS/FRS/ERS & CPF LIFE Payout',
     description:
-      'Free CPF retirement calculator for Singapore. Estimate your OA/SA/MA balances at 55, compare BRS/FRS/ERS tiers, and see your projected CPF LIFE monthly payout.',
+      'Free CPF projection calculator. Estimate your OA, SA, MA balances at 55, compare BRS/FRS/ERS tiers, project CPF LIFE monthly payout, and see how CPF fits your retirement plan.',
     path: '/cpf-planner',
   })
 
@@ -96,7 +96,7 @@ export function CpfPlannerPage() {
       {/* Hero Section */}
       <section className="text-center space-y-4 pt-8">
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
-          CPF Retirement Planner
+          CPF Projection Calculator
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           Your Central Provident Fund builds a retirement foundation, but for most Singaporeans, CPF LIFE alone

@@ -21,9 +21,9 @@ const BASE_URL = 'https://sgfireplanner.com'
 const routes = [
   {
     path: '/retirement-planner',
-    title: 'Singapore Retirement Planner — CPF, SRS & FIRE Planning',
-    heading: 'Singapore Retirement Planner',
-    description: 'Plan retirement in Singapore with CPF, CPF LIFE, taxes, property, Monte Carlo stress tests, and withdrawal analysis in one free planner.',
+    title: 'Singapore FIRE Retirement Planner: CPF, SRS & Property in One Free Tool',
+    heading: 'Singapore FIRE Retirement Planner',
+    description: 'Free FIRE retirement planner for Singapore. Model CPF, SRS, property equity, taxes, and 12 withdrawal strategies. See when you can retire and how to make your money last.',
     bodyHtml: `
       <p>Build a Singapore retirement plan that covers CPF, CPF LIFE, SRS, spending, portfolio withdrawals, and downside scenarios.</p>
       <p>Use the planner to answer when you can retire, how much CPF supports your retirement income, and how resilient your drawdown plan is.</p>
@@ -36,9 +36,9 @@ const routes = [
   },
   {
     path: '/retirement-calculator',
-    title: 'Singapore Retirement Calculator — Estimate CPF-Aware Retirement Needs',
-    heading: 'Singapore Retirement Calculator',
-    description: 'Use this free Singapore retirement calculator to estimate your retirement target, timeline, CPF support, and required withdrawals.',
+    title: 'FIRE Calculator Singapore: Find Your Retirement Number and Timeline',
+    heading: 'FIRE Calculator for Singapore',
+    description: 'Free FIRE calculator for Singapore. Calculate your FIRE number, estimate your retirement age, and project your net worth with CPF, SRS, and investment returns built in.',
     bodyHtml: `
       <p>Estimate how much you may need for retirement in Singapore, then validate the result with CPF timing, withdrawal assumptions, and market stress tests.</p>
       <p>This calculator is designed to turn a quick estimate into a full plan instead of stopping at a single portfolio target.</p>
@@ -166,9 +166,9 @@ const routes = [
   },
   {
     path: '/reference',
-    title: 'Singapore Retirement Planning Guide \u2014 CPF, Tax, Withdrawal Strategies',
+    title: 'CPF Rates, BRS/FRS/ERS, Tax Brackets & Withdrawal Strategy Guide (2026)',
     heading: 'Singapore Retirement Planning Reference Guide',
-    description: 'Comprehensive reference for Singapore retirement planning: CPF contribution rates, income tax brackets, withdrawal strategy formulas, Monte Carlo methodology, and data sources.',
+    description: 'CPF contribution rates by age, BRS/FRS/ERS amounts, OA/SA/MA allocation, CPF LIFE payout tables, income tax brackets, SRS rules, and 12 withdrawal strategy formulas. Updated for 2026.',
     bodyHtml: `
       <p>A detailed reference guide covering everything behind the planner\u2019s calculations:</p>
       <ul>
@@ -211,9 +211,9 @@ const routes = [
   },
   {
     path: '/cpf-planner',
-    title: 'CPF Retirement Planner: Estimate Your CPF Balances, BRS/FRS/ERS, and CPF LIFE Payout',
-    heading: 'CPF Retirement Planner',
-    description: 'Free CPF retirement calculator for Singapore. Estimate your OA/SA/MA balances at 55, compare BRS/FRS/ERS tiers, and see your projected CPF LIFE monthly payout.',
+    title: 'CPF Projection Calculator: OA/SA/MA Balances, BRS/FRS/ERS & CPF LIFE Payout',
+    heading: 'CPF Projection Calculator',
+    description: 'Free CPF projection calculator. Estimate your OA, SA, MA balances at 55, compare BRS/FRS/ERS tiers, project CPF LIFE monthly payout, and see how CPF fits your retirement plan.',
     bodyHtml: `
       <p>Estimate your CPF balances at age 55 and see how much CPF LIFE will pay you each month. Then find out if CPF alone covers your retirement expenses, or if your portfolio needs to fill the gap.</p>
       <p>2026 Retirement Sums: BRS $110,200 / FRS $220,400 / ERS $440,800</p>
