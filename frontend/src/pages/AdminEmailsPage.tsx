@@ -26,6 +26,15 @@ interface ExpenseSignup {
   created_at: string
 }
 
+interface FeedbackEntry {
+  id: number
+  message: string
+  email: string | null
+  interested_in_expense_tracker: number
+  page_path: string
+  created_at: string
+}
+
 type SortDir = 'asc' | 'desc'
 
 function useSort<T>(data: T[], defaultKey: keyof T & string) {
@@ -129,12 +138,14 @@ export function AdminEmailsPage() {
   const [keyInput, setKeyInput] = useState('')
   const [emailSignups, setEmailSignups] = useState<EmailSignup[]>([])
   const [expenseSignups, setExpenseSignups] = useState<ExpenseSignup[]>([])
+  const [feedback, setFeedback] = useState<FeedbackEntry[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [activeTab, setActiveTab] = useState<'email' | 'expense'>('email')
+  const [activeTab, setActiveTab] = useState<'email' | 'expense' | 'feedback'>('email')
 
   const emailSort = useSort<EmailSignup>(emailSignups, 'created_at')
   const expenseSort = useSort<ExpenseSignup>(expenseSignups, 'created_at')
+  const feedbackSort = useSort<FeedbackEntry>(feedback, 'created_at')
 
   const fetchData = useCallback(async (key: string) => {
     setLoading(true)
@@ -156,6 +167,7 @@ export function AdminEmailsPage() {
       const data = await res.json()
       setEmailSignups(data.emailSignups || [])
       setExpenseSignups(data.expenseSignups || [])
+      setFeedback(data.feedback || [])
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Network error')
     } finally {
@@ -171,7 +183,7 @@ export function AdminEmailsPage() {
   }
 
   // Auto-fetch if key is already in session
-  if (adminKey && emailSignups.length === 0 && expenseSignups.length === 0 && !loading && !error) {
+  if (adminKey && emailSignups.length === 0 && expenseSignups.length === 0 && feedback.length === 0 && !loading && !error) {
     fetchData(adminKey)
   }
 
@@ -231,6 +243,7 @@ export function AdminEmailsPage() {
               setAdminKey('')
               setEmailSignups([])
               setExpenseSignups([])
+              setFeedback([])
             }}
           >
             Logout
@@ -245,7 +258,7 @@ export function AdminEmailsPage() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Email Signups</CardTitle>
@@ -264,6 +277,15 @@ export function AdminEmailsPage() {
             <p className="text-3xl font-bold">{expenseSignups.length}</p>
             <StatPills counts={countBy(expenseSignups, 'primary_device')} label="By device" />
             <StatPills counts={countBy(expenseSignups, 'expense_tracking_status')} label="By tracking status" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Feedback</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-3xl font-bold">{feedback.length}</p>
+            <StatPills counts={countBy(feedback, 'page_path')} label="By page" />
           </CardContent>
         </Card>
       </div>
@@ -291,6 +313,17 @@ export function AdminEmailsPage() {
           }`}
         >
           Expense Tracker ({expenseSignups.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('feedback')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'feedback'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Feedback ({feedback.length})
         </button>
       </div>
 
@@ -401,6 +434,57 @@ export function AdminEmailsPage() {
                     <td className="py-1.5 px-2 text-xs">{row.source_surface}</td>
                     <td className="py-1.5 px-2 text-xs text-muted-foreground truncate max-w-[150px]">{row.page_path}</td>
                     <td className="py-1.5 px-2 tabular-nums text-xs text-muted-foreground whitespace-nowrap">{formatDate(row.submitted_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Feedback Table */}
+      {activeTab === 'feedback' && (
+        <div>
+          <div className="flex justify-end mb-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                exportCsv(
+                  ['ID', 'Message', 'Email', 'Expense Interest', 'Page', 'Created'],
+                  feedback.map((r) => [
+                    String(r.id), r.message, r.email || '', r.interested_in_expense_tracker ? 'Yes' : 'No',
+                    r.page_path, r.created_at,
+                  ]),
+                  'feedback.csv',
+                )
+              }
+            >
+              <Download className="h-4 w-4 mr-1" />
+              Export CSV
+            </Button>
+          </div>
+          <div className="overflow-x-auto border rounded-lg">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50">
+                <tr>
+                  <SortHeader<FeedbackEntry> label="#" field="id" {...feedbackSort} onSort={feedbackSort.toggleSort} />
+                  <SortHeader<FeedbackEntry> label="Message" field="message" {...feedbackSort} onSort={feedbackSort.toggleSort} />
+                  <SortHeader<FeedbackEntry> label="Email" field="email" {...feedbackSort} onSort={feedbackSort.toggleSort} />
+                  <SortHeader<FeedbackEntry> label="Page" field="page_path" {...feedbackSort} onSort={feedbackSort.toggleSort} />
+                  <SortHeader<FeedbackEntry> label="Created" field="created_at" {...feedbackSort} onSort={feedbackSort.toggleSort} />
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {feedbackSort.sorted.map((row) => (
+                  <tr key={row.id} className="hover:bg-muted/30">
+                    <td className="py-1.5 px-2 tabular-nums text-muted-foreground">{row.id}</td>
+                    <td className="py-1.5 px-2 text-xs max-w-[400px]">
+                      <p className="whitespace-pre-wrap break-words">{row.message}</p>
+                    </td>
+                    <td className="py-1.5 px-2 font-mono text-xs">{row.email || <span className="text-muted-foreground/40">none</span>}</td>
+                    <td className="py-1.5 px-2 text-xs text-muted-foreground truncate max-w-[150px]">{row.page_path}</td>
+                    <td className="py-1.5 px-2 tabular-nums text-xs text-muted-foreground whitespace-nowrap">{formatDate(row.created_at)}</td>
                   </tr>
                 ))}
               </tbody>
