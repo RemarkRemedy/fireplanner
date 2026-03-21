@@ -4,8 +4,7 @@ import sitemap from '@astrojs/sitemap';
 import tailwind from '@astrojs/tailwind';
 
 export default defineConfig({
-  site: 'https://sgfireplanner.com',
-  base: '/blog',
+  site: 'https://sgfireplanner.com/blog',
   integrations: [
     mdx(),
     sitemap(),
