@@ -10,13 +10,14 @@ import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { trackEvent } from '@/lib/analytics'
 import { useExpenseTracker } from '@/hooks/useExpenseTracker'
-import { setStorageValue, setFlag } from '@/lib/storageFlags'
+import { setStorageValue, setFlag, setSessionFlag } from '@/lib/storageFlags'
 import {
   EMAIL_RE,
   EMAIL_MAX_LENGTH,
   FEEDBACK_MAX_LENGTH,
   FEEDBACK_DISMISSED_KEY,
   FEEDBACK_SUBMITTED_FLAG,
+  EXPENSE_TRACKER_MODAL_SESSION_KEY,
 } from '@/lib/validation/emailConstants'
 
 interface ExitIntentModalProps {
@@ -108,6 +109,8 @@ export function ExitIntentModal({ open, onClose }: ExitIntentModalProps) {
       if (res.ok) {
         setStatus('success')
         setFlag(FEEDBACK_SUBMITTED_FLAG)
+        // Suppress expense tracker modal for the rest of this session
+        setSessionFlag(EXPENSE_TRACKER_MODAL_SESSION_KEY)
         trackEvent('feedback_submit_success', {
           page: location.pathname,
           has_email: hasValidEmail,
