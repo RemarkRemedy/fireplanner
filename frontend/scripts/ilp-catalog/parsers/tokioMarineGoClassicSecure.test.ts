@@ -26,9 +26,13 @@ describe('parseTokioMarineGoClassicSecure', () => {
     expect(product.supportStatus).toBe('supported')
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
+    expect(product.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
+    expect(product.modeledEconomics).toContain('branch:tokio-additional-bonus-current-year-qualification')
     expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.modeledEconomics).toContain('kernel:tokio-locked-in-protection-state')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-goclassic-secure-loyalty-bonus-adjustment-factor')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-goclassic-secure-additional-bonus-qualification')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-goclassic-secure-dividend-payout-threshold-and-record-date-instructions')
 
     expect(product.variants).toHaveLength(2)
@@ -63,6 +67,25 @@ describe('parseTokioMarineGoClassicSecure', () => {
       { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.44 },
       { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.47 },
     ])
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus-during-mip')).toEqual(
+      expect.objectContaining({
+        rate: 0.005,
+        adjustmentFactorConfig: {
+          formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+          withdrawalAccountIds: ['accumulation'],
+        },
+      }),
+    )
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'additional-bonus')).toEqual(
+      expect.objectContaining({
+        rate: 0.002,
+        qualificationRules: [
+          { trigger: 'premium-holiday', disqualifyInReferenceYear: true },
+          { trigger: 'regular-premium-reduction', disqualifyInReferenceYear: true },
+          { trigger: 'partial-withdrawal', disqualifyInReferenceYear: true },
+        ],
+      }),
+    )
     expect(basicVariant?.feeRules).toEqual([])
     expect(basicVariant?.eventChargeRules).toEqual([
       expect.objectContaining({ id: 'top-up-premium-charge', appliesTo: ['accumulation'], rate: 0.05 }),
@@ -129,10 +152,13 @@ describe('parseTokioMarineGoClassicSecure', () => {
       ]),
     )
     expect(product.warnings).toContain(
-      'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published current death-benefit estimate, Locked-in Policy Value floor, policy-year-3 MPC settlement of years 1-2 accruals, and irreversible downgrade after failed deduction through the locked-in-value protection-state kernel.',
+      'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published current death-benefit estimate, Locked-in Policy Value floor, policy-year-3 MPC settlement of years 1-2 accruals, irreversible downgrade after failed deduction, and a manual current Locked-in Policy Value snapshot through the locked-in-value protection-state kernel.',
+    )
+    expect(basicVariant?.unsupportedItems).not.toContain(
+      'Loyalty Bonus and Additional Bonus remain metadata-only because their annual qualification and adjustment-factor formulas need stateful bonus tracking beyond the current engine.',
     )
     expect(advancedVariant?.unsupportedItems).toContain(
-      'Full death-benefit payout handling beyond the modeled current death-benefit estimate, change-of-life-assured administration, and the exact published monthiversary ratchet timing remain outside the current engine boundary.',
+      'Full death-benefit payout handling beyond the modeled current death-benefit estimate, change-of-life-assured administration, and exact future monthiversary ratchet timing remain outside the current engine boundary.',
     )
   }, 30_000)
 })

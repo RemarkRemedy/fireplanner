@@ -2,6 +2,7 @@ import path from 'node:path'
 import type {
   IlpCatalogProduct,
   IlpCatalogSourceRef,
+  IlpTemplateBonus,
   IlpTemplateEventChargeRule,
   IlpTemplateFeeRule,
   IlpTemplateVariant,
@@ -43,6 +44,12 @@ const INITIAL_CHARGE_RATE_SCHEDULE = Array.from({ length: MIP_LENGTH }, (_, inde
     rate: Number((0.0065 * policyYear).toFixed(4)),
   }
 })
+
+const INITIAL_BONUS_SUM_ASSURED_TIERS = [
+  { minSumAssured: 100_000, maxSumAssured: 199_000, year1Rate: 0.01, year2Rate: 0.02, year3Rate: 0.03, year4Rate: 0.05 },
+  { minSumAssured: 200_000, maxSumAssured: 299_000, year1Rate: 0.02, year2Rate: 0.03, year3Rate: 0.04, year4Rate: 0.06 },
+  { minSumAssured: 300_000, maxSumAssured: null, year1Rate: 0.03, year2Rate: 0.04, year3Rate: 0.05, year4Rate: 0.07 },
+] as const
 
 function normalizeWhitespace(text: string): string {
   return text.replace(/\s+/g, ' ').trim()
@@ -111,6 +118,114 @@ function buildFeeRules(document: ExtractedPdfDocument): IlpTemplateFeeRule[] {
         'If the Accumulation Units Account is insufficient, the remaining deduction falls back to the Initial Units Account and/or Top-up Units Account.',
       ],
       sourceRefs: [page14],
+    },
+  ]
+}
+
+function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
+  const page3 = sourceRef(3, 'Initial Bonus', snippetNear(document, 3, 'Initial Bonus', 24))
+  const page4 = sourceRef(4, 'Initial Bonus Rates', snippetNear(document, 4, 'Initial Bonus', 28))
+
+  return [
+    {
+      id: 'initial-bonus-policy-year-1',
+      type: 'sign-up',
+      label: 'Initial Bonus (Policy Year 1)',
+      mode: 'premium-allocation',
+      annualPremiumTierBasis: 'initial-basic-sum-assured-at-issue',
+      appliesTo: ['initial'],
+      startPolicyYear: 1,
+      endPolicyYear: 1,
+      rate: 0,
+      amount: null,
+      tieredRates: INITIAL_BONUS_SUM_ASSURED_TIERS.map((tier) => ({
+        currency: 'SGD',
+        minAnnualPremium: null,
+        maxAnnualPremium: null,
+        minSumAssured: tier.minSumAssured,
+        maxSumAssured: tier.maxSumAssured,
+        rate: tier.year1Rate,
+      })),
+      notes: [
+        'Models the published Initial Bonus credited on each regular premium received in policy year 1 for the SGD 10-year minimum contribution corridor.',
+        'The applicable rate band depends on the initial Basic Sum Assured as at commencement date and therefore needs that manual issue-date input in V1.',
+      ],
+      sourceRefs: [page3, page4],
+    },
+    {
+      id: 'initial-bonus-policy-year-2',
+      type: 'sign-up',
+      label: 'Initial Bonus (Policy Year 2)',
+      mode: 'premium-allocation',
+      annualPremiumTierBasis: 'initial-basic-sum-assured-at-issue',
+      appliesTo: ['initial'],
+      startPolicyYear: 2,
+      endPolicyYear: 2,
+      rate: 0,
+      amount: null,
+      tieredRates: INITIAL_BONUS_SUM_ASSURED_TIERS.map((tier) => ({
+        currency: 'SGD',
+        minAnnualPremium: null,
+        maxAnnualPremium: null,
+        minSumAssured: tier.minSumAssured,
+        maxSumAssured: tier.maxSumAssured,
+        rate: tier.year2Rate,
+      })),
+      notes: [
+        'Models the published Initial Bonus credited on each regular premium received in policy year 2 for the SGD 10-year minimum contribution corridor.',
+        'The applicable rate band depends on the initial Basic Sum Assured as at commencement date and therefore needs that manual issue-date input in V1.',
+      ],
+      sourceRefs: [page3, page4],
+    },
+    {
+      id: 'initial-bonus-policy-year-3',
+      type: 'sign-up',
+      label: 'Initial Bonus (Policy Year 3)',
+      mode: 'premium-allocation',
+      annualPremiumTierBasis: 'initial-basic-sum-assured-at-issue',
+      appliesTo: ['initial'],
+      startPolicyYear: 3,
+      endPolicyYear: 3,
+      rate: 0,
+      amount: null,
+      tieredRates: INITIAL_BONUS_SUM_ASSURED_TIERS.map((tier) => ({
+        currency: 'SGD',
+        minAnnualPremium: null,
+        maxAnnualPremium: null,
+        minSumAssured: tier.minSumAssured,
+        maxSumAssured: tier.maxSumAssured,
+        rate: tier.year3Rate,
+      })),
+      notes: [
+        'Models the published Initial Bonus credited on each regular premium received in policy year 3 for the SGD 10-year minimum contribution corridor.',
+        'The applicable rate band depends on the initial Basic Sum Assured as at commencement date and therefore needs that manual issue-date input in V1.',
+      ],
+      sourceRefs: [page3, page4],
+    },
+    {
+      id: 'initial-bonus-policy-year-4',
+      type: 'sign-up',
+      label: 'Initial Bonus (Policy Year 4)',
+      mode: 'premium-allocation',
+      annualPremiumTierBasis: 'initial-basic-sum-assured-at-issue',
+      appliesTo: ['initial'],
+      startPolicyYear: 4,
+      endPolicyYear: 4,
+      rate: 0,
+      amount: null,
+      tieredRates: INITIAL_BONUS_SUM_ASSURED_TIERS.map((tier) => ({
+        currency: 'SGD',
+        minAnnualPremium: null,
+        maxAnnualPremium: null,
+        minSumAssured: tier.minSumAssured,
+        maxSumAssured: tier.maxSumAssured,
+        rate: tier.year4Rate,
+      })),
+      notes: [
+        'Models the published Initial Bonus credited on each regular premium received in policy year 4 for the SGD 10-year minimum contribution corridor.',
+        'The applicable rate band depends on the initial Basic Sum Assured as at commencement date and therefore needs that manual issue-date input in V1.',
+      ],
+      sourceRefs: [page3, page4],
     },
   ]
 }
@@ -257,7 +372,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
         sourceRefs: [page1, page8, page14],
       },
     ],
-    bonuses: [],
+    bonuses: buildBonuses(document),
     feeRules: buildFeeRules(document),
     eventChargeRules,
     distributionSupport: {
@@ -291,14 +406,18 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
-      '#goAssure is cataloged as a supported V1 corridor. The parser captures the SGD 10-year cash corridor: three-account regular-premium / top-up routing, the published initial-charge schedule, the premium-base policy charge during MIP, recurring-single-premium and top-up charges, the partial-withdrawal charge schedule, the premium-shortfall charge schedules, the 10-year surrender-charge table, and the manual distribution-mode assumption surface.',
+      '#goAssure is cataloged as a supported V1 corridor. The parser captures the SGD 10-year cash corridor: three-account regular-premium / top-up routing, the published Initial Bonus corridor for policy years 1 to 4 via manual initial basic sum assured at issue bands, the published initial-charge schedule, the premium-base policy charge during MIP, recurring-single-premium and top-up charges, the partial-withdrawal charge schedule, the premium-shortfall charge schedules, the 10-year surrender-charge table, the current-state death-benefit estimate before and after Protection Age via manual current Protection Age / amount-owing / basic-sum-assured inputs, the current terminal-illness snapshot as the lower of that current death corridor and a manual remaining aggregate TI cap, the current TPD benefit estimate before Protection Age via the same current death corridor plus a manual current TPD acceleration ratio and remaining aggregate TPD cap, and the manual distribution-mode assumption surface.',
       'Dividend cash payouts are partially modeled through the manual distribution-mode assumption surface: during the minimum contribution period, Initial Units Account dividends stay reinvested while Accumulation Units Account and Top-up Units Account dividends may be paid in cash; after the minimum contribution period, Initial Units Account dividends join the cash-payout corridor; distribution-option changes should be submitted at least 30 days before the Record Date; and the published $50 per-dividend minimum payout threshold remains informational only.',
-      'Initial Bonus, Loyalty Bonus, Achievement Bonus, Wellness Bonus, waiver mechanics, Monthly Protection Charge, Guaranteed Extra Protection, and protection-side claim behavior remain outside the current engine.',
+      'Wellness Bonus, waiver mechanics, Monthly Protection Charge, Guaranteed Extra Protection, and broader protection-side claim behavior remain outside the current engine. On the modeled 10-year minimum-contribution corridor, the published Loyalty Bonus is N.A. and Achievement Bonus is 0.00%, so they are not carried as active residual mechanics in V1.',
+      'The modeled Initial Bonus corridor still needs the initial basic sum assured at issue because the commencement-date sum-assured bands are not reconstructed from current state in V1.',
+      'The current-state death-benefit estimate needs manual current Protection Age, current amount owing, and, after Protection Age, current basic sum assured inputs because protection-age elections and withdrawal-adjusted basic-sum-assured history are not reconstructed in V1.',
+      'The current terminal-illness snapshot also needs a manual remaining aggregate TI cap because cross-policy TI-limit usage is not reconstructed from history in V1.',
+      'The current TPD benefit estimate before Protection Age also needs a manual current TPD acceleration ratio plus a manual remaining aggregate TPD cap because the TPD rider sum assured and cross-policy TPD-limit usage are not reconstructed from history in V1.',
     ],
     unsupportedItems: [
-      'Initial Bonus, Loyalty Bonus, Achievement Bonus, and Wellness Bonus remain informational only.',
+      'Wellness Bonus remains informational only.',
       'Waiver of Partial Withdrawal Charge and/or Premium Shortfall Charge remains informational only.',
-      'Monthly Protection Charge, sum-at-risk formulas, protection-age transitions, and Guaranteed Extra Protection remain informational only.',
+      'Monthly Protection Charge, sum-at-risk formulas, Guaranteed Extra Protection, terminal-illness claim admission / exclusions / settlement, post-TPD continuation state, and broader protection-side claim behavior remain informational only.',
       'Credit-card charge, administrative charge nil surface, policy-currency-change charge nil surface, and third-party charges remain informational only.',
       'The published $50 per-dividend minimum payout threshold, plus detailed dividend-payment processing and settlement handling, remain informational only.',
     ],
@@ -319,28 +438,28 @@ export function parseTokioMarineGoAssure(context: ParseContext): IlpCatalogProdu
     structureStatus: 'structured',
     economicsStatus: 'supported',
     modeledEconomics: [
+      'branch:tokio-marine-goassure-initial-bonus',
       'branch:tokio-marine-goassure-initial-charge',
       'branch:tokio-marine-goassure-policy-charge',
       'branch:tokio-marine-goassure-recurring-single-and-top-up-charge',
       'branch:tokio-marine-goassure-partial-withdrawal-charge',
       'branch:tokio-marine-goassure-premium-shortfall-charge',
       'branch:tokio-marine-goassure-surrender-charge',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-tpd-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-marine-goassure-initial-bonus',
-      'tokio-marine-goassure-loyalty-bonus',
-      'tokio-marine-goassure-achievement-bonus',
       'tokio-marine-goassure-wellness-bonus',
       'tokio-marine-goassure-waiver-of-partial-withdrawal-and-shortfall-charge',
       'tokio-marine-goassure-monthly-protection-charge',
       'tokio-marine-goassure-guaranteed-extra-protection',
-      'tokio-marine-goassure-protection-benefits',
       'tokio-marine-goassure-dividend-payout-threshold',
       'tokio-marine-goassure-third-party-charges',
     ],
     warnings: [
-      '#goAssure is cataloged as a supported V1 product. The parser captures the SGD 10-year cash corridor charge surfaces and distribution-mode assumption support, including phase-specific dividend cash-payout account eligibility and the 30-day record-date instruction lead time, while the published $50 per-dividend minimum payout threshold, bonuses, waiver mechanics, Monthly Protection Charge, and protection-side claim behavior remain informational only.',
+      '#goAssure is cataloged as a supported V1 product. The parser captures the SGD 10-year cash corridor charge surfaces, the policy-year-1-to-4 Initial Bonus corridor via manual initial basic sum assured at issue bands, the current-state death-benefit estimate before and after Protection Age via manual current Protection Age / amount-owing / basic-sum-assured inputs, the current terminal-illness snapshot as the lower of that current death corridor and a manual remaining aggregate TI cap, the current TPD benefit estimate before Protection Age via the same current death corridor plus a manual current TPD acceleration ratio and remaining aggregate TPD cap, and distribution-mode assumption support, including phase-specific dividend cash-payout account eligibility and the 30-day record-date instruction lead time, while the published $50 per-dividend minimum payout threshold, Wellness Bonus, waiver mechanics, Monthly Protection Charge, terminal-illness claim admission / exclusions / settlement, post-TPD continuation state, and broader protection-side claim behavior remain informational only.',
     ],
     archived: false,
     variants: [

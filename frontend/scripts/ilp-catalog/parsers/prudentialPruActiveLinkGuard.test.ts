@@ -29,6 +29,9 @@ describe('parsePrudentialPruActiveLinkGuard', () => {
       'branch:pruactive-linkguard-premium-year-premium-charge',
       'branch:pruactive-linkguard-administration-charge',
       'branch:pruactive-linkguard-combined-assurance-charge',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-tpd-benefit-estimate',
       'branch:pruactive-linkguard-top-up-premium-charge',
       'branch:pruactive-linkguard-zero-partial-withdrawal-charge',
     ])
@@ -85,7 +88,19 @@ describe('parsePrudentialPruActiveLinkGuard', () => {
       }),
     ])
     expect(cashVariant?.warnings).toContain(
-      'Optional retention of the Multiplier benefit after age 50, No Lapse Period debt carry, surrender-charge-on-allocated-premiums, and non-core rider charges remain informational only.',
+      'Post-age-50 current death, terminal-illness, and initial TPD estimates also need the retained Multiplier benefit status. Later staged TPD payouts also need the current remaining TPD balance. No Lapse Period debt carry, surrender-charge-on-allocated-premiums, and non-core rider charges remain informational only.',
+    )
+    expect(cashVariant?.warnings).toContain(
+      'The current death-benefit estimate is modeled after entering the current sum assured, current amount owing, and, after age 50, the retained Multiplier benefit status.',
+    )
+    expect(cashVariant?.warnings).toContain(
+      'The current Accelerated Terminal Illness estimate is modeled after entering the current sum assured, current amount owing, whether the current Accelerated TI payout still matches the death-benefit corridor, and, after age 50, the retained Multiplier benefit status.',
+    )
+    expect(cashVariant?.warnings).toContain(
+      'The current Total and Permanent Disability estimate is modeled as the payable-now staged claim amount after entering whether the present TPD claim still matches the death-benefit corridor, whether the currently payable stage is the initial lump sum or the later balance lump sum, and, for later-stage claims, the current remaining TPD balance.',
+    )
+    expect(cashVariant?.unsupportedItems).not.toContain(
+      'The current death-benefit estimate is modeled after entering the current sum assured, current amount owing, and, after age 50, the retained Multiplier benefit status.',
     )
   }, 30_000)
 })

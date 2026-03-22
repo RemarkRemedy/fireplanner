@@ -25,10 +25,13 @@ describe('parsePrudentialPruVantageAssureSp', () => {
     expect(product.supportStatus).toBe('supported')
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('branch:assure-sp-combined-assurance')
+    expect(product.modeledEconomics).toContain('branch:assure-sp-single-premium-allocation-enhancement')
     expect(product.modeledEconomics).toContain('branch:assure-sp-loyalty-bonus')
     expect(product.modeledEconomics).toContain('branch:assure-sp-first-free-withdrawal')
+    expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
+    expect(product.modeledEconomics).toContain('kernel:current-accidental-disability-benefit-estimate')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(product.metadataOnlyBehaviors).toContain('pruvantage-assure-sp-single-premium-allocation-enhancement')
+    expect(product.metadataOnlyBehaviors).toContain('pruvantage-assure-sp-death-claim-exclusions')
 
     expect(product.variants).toHaveLength(1)
     expect(product.variants[0]).toMatchObject({
@@ -91,6 +94,19 @@ describe('parsePrudentialPruVantageAssureSp', () => {
     )
     expect(product.variants[0].bonuses).toEqual([
       expect.objectContaining({
+        id: 'single-premium-allocation-enhancement',
+        mode: 'premium-allocation',
+        annualPremiumTierBasis: 'initial-single-premium-at-issue',
+        appliesTo: ['iia'],
+        startPolicyYear: 1,
+        endPolicyYear: 1,
+        tieredRates: [
+          { currency: 'SGD', minAnnualPremium: 50_000, maxAnnualPremium: 149_999.99, rate: 0 },
+          { currency: 'SGD', minAnnualPremium: 150_000, maxAnnualPremium: 399_999.99, rate: 0.005 },
+          { currency: 'SGD', minAnnualPremium: 400_000, maxAnnualPremium: null, rate: 0.01 },
+        ],
+      }),
+      expect.objectContaining({
         id: 'loyalty-bonus',
         mode: 'annual-rate',
         appliesTo: ['iia'],
@@ -122,5 +138,20 @@ describe('parsePrudentialPruVantageAssureSp', () => {
       sourceRefs: expect.any(Array),
     })
     expect(product.variants[0].eecTable).toEqual([0.12, 0.105, 0.09, 0.075, 0.06, 0.045, 0.03, 0.015])
+    expect(product.variants[0].warnings).toContain(
+      'Enter current sum assured, current Wealth Assure Value, and current amount owing before trusting the current-state death-benefit estimate.',
+    )
+    expect(product.variants[0].warnings).toContain(
+      'The payable-now accidental-disability snapshot is modeled from the same current corridor once the current accidental-disability payout stage is filled.',
+    )
+    expect(product.variants[0].warnings).not.toContain(
+      'The enhanced single-premium allocation tiers remain informational only in V1.',
+    )
+    expect(product.variants[0].unsupportedItems).toContain(
+      'The current-state death-benefit estimate needs a manual current amount owing input because outstanding debt is not reconstructed from history in V1.',
+    )
+    expect(product.variants[0].unsupportedItems).not.toContain(
+      'Enhanced single-premium allocation tiers (100% / 100.5% / 101%) remain informational only.',
+    )
   }, 30_000)
 })

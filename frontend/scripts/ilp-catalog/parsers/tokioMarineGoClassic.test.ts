@@ -27,13 +27,14 @@ describe('parseTokioMarineGoClassic', () => {
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
     expect(product.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
+    expect(product.modeledEconomics).toContain('branch:tokio-additional-bonus-current-year-qualification')
     expect(product.modeledEconomics).toContain('branch:tokio-goclassic-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction')
+    expect(product.modeledEconomics).toContain('branch:tokio-current-only-multi-life-life-state')
     expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toContain('tokio-goclassic-advanced-death-payout-handling')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-goclassic-multiple-life-last-life-settlement')
     expect(product.metadataOnlyBehaviors).toContain('tokio-goclassic-change-of-life-assured-administration')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-goclassic-additional-bonus-qualification')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-goclassic-additional-bonus-qualification')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-goclassic-loyalty-bonus-adjustment-factor')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-goclassic-advanced-death-payout-and-change-of-life-assured-handling')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-goclassic-dividend-payout-threshold-and-record-date-instructions')
@@ -79,6 +80,16 @@ describe('parseTokioMarineGoClassic', () => {
         },
       }),
     )
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'additional-bonus')).toEqual(
+      expect.objectContaining({
+        rate: 0.002,
+        qualificationRules: [
+          { trigger: 'premium-holiday', disqualifyInReferenceYear: true },
+          { trigger: 'regular-premium-reduction', disqualifyInReferenceYear: true },
+          { trigger: 'partial-withdrawal', disqualifyInReferenceYear: true },
+        ],
+      }),
+    )
     expect(basicVariant?.feeRules).toEqual([])
     expect(basicVariant?.eventChargeRules).toEqual([
       expect.objectContaining({ id: 'top-up-premium-charge', appliesTo: ['accumulation'], rate: 0.05 }),
@@ -109,6 +120,9 @@ describe('parseTokioMarineGoClassic', () => {
     expect(product.warnings).toContain(
       'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
     )
+    expect(basicVariant?.unsupportedItems).not.toContain(
+      'Additional Bonus remains metadata-only because its annual qualification gates remain outside the current executable bonus set.',
+    )
     expect(advancedVariant?.feeRules).toEqual([
       expect.objectContaining({
         id: 'monthly-protection-charge',
@@ -134,7 +148,7 @@ describe('parseTokioMarineGoClassic', () => {
       'The Advanced Death variant also models the published current death-benefit estimate, Monthly Protection Charge, including the first-two-policy-years accrual window, policy-year-3 lump-sum settlement, policy-value valuation basis, and the irreversible downgrade to Basic Death after failed Accumulation Units Account deduction.',
     )
     expect(advancedVariant?.unsupportedItems).toContain(
-      'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, premium-holiday lapse behavior, regular withdrawal, credit-card charge, multiple-life last-life settlement, change-of-life-assured administration, and non-SGD or non-25-year corridors remain metadata-only.',
+      'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and change-of-life-assured administration remain metadata-only.',
     )
     expect(basicVariant?.eecTable).toEqual([
       1, 1, 0.95, 0.93, 0.91, 0.89, 0.87, 0.85, 0.83, 0.8,
