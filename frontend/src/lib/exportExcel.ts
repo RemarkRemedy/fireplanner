@@ -122,7 +122,7 @@ function addLegacyWorkbook(
     for (const event of income.lifeEvents) {
       incomeRows.push([
         `${event.name} (ages ${event.startAge}-${event.endAge})`,
-        `Income impact: ${formatCurrency(event.incomeImpact)}`,
+        `Income during event: ${formatPercent(event.incomeImpact)}`,
       ])
     }
   }

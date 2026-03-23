@@ -1294,7 +1294,8 @@ export function IncomeSection({ selectedAdultId }: IncomeSectionProps) {
                       })}
                     />
                     <PercentInput
-                      label="Income impact"
+                      label="Income during event"
+                      tooltip="Percentage of normal income kept during this event. 0% = no income, 50% = half income, 100% = unchanged."
                       value={event.incomeImpact}
                       onChange={(value) => updateSelectedAdult({
                         lifeEvents: selectedAdult.lifeEvents.map((entry) => (
