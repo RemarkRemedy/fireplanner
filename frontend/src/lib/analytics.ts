@@ -77,6 +77,8 @@ type AnalyticsEvent =
   | 'wrapped_card_viewed'
   | 'feedback_modal_dismiss'
   | 'feedback_submit_success'
+  | 'feedback_fab_open'
+  | 'feedback_fab_submit'
 
 export function trackEvent(event: AnalyticsEvent, data?: Record<string, string | number | boolean>) {
   if (isCompanionMode()) return

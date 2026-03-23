@@ -25,6 +25,7 @@ const ExpenseTrackerModal = lazy(() => import('@/components/email/ExpenseTracker
 const ExitIntentModal = lazy(() => import('@/components/shared/ExitIntentModal').then(m => ({ default: m.ExitIntentModal })))
 const MobileShareFab = lazy(() => import('@/components/shared/MobileShareFab').then(m => ({ default: m.MobileShareFab })))
 const MobileHelpSheet = lazy(() => import('./MobileHelpSheet').then(m => ({ default: m.MobileHelpSheet })))
+const FeedbackFab = lazy(() => import('@/components/shared/FeedbackFab').then(m => ({ default: m.FeedbackFab })))
 
 // Pages that show the stats strip (inputs and analysis pages, not start/reference)
 const STATS_ROUTES = ['/inputs', '/projection', '/withdrawal', '/stress-test', '/dashboard', '/planner', '/health-check']
@@ -231,6 +232,11 @@ export function AppLayout() {
         )}
       </ExpenseTrackerProvider>
       <DemoBadge />
+      {!companionMode && !hideSidebar && (
+        <Suspense fallback={null}>
+          <FeedbackFab />
+        </Suspense>
+      )}
     </div>
   )
 }
