@@ -32,7 +32,9 @@ export function FeedbackFab() {
 
   const handleClose = useCallback(() => {
     setOpen(false)
-  }, [])
+    // Reset loading state so user can retry if they closed during a hung request
+    if (status === 'loading') setStatus('idle')
+  }, [status])
 
   const handleSubmit = useCallback(async () => {
     if (status === 'loading') return
@@ -49,24 +51,30 @@ export function FeedbackFab() {
       return
     }
     const trimmedEmail = email.trim().toLowerCase()
-    if (trimmedEmail && !EMAIL_RE.test(trimmedEmail)) {
-      setStatus('error')
-      setErrorMsg('Please enter a valid email address.')
-      return
-    }
-    if (trimmedEmail.length > EMAIL_MAX_LENGTH) {
-      setStatus('error')
-      setErrorMsg('Email is too long.')
-      return
+    if (trimmedEmail) {
+      if (trimmedEmail.length > EMAIL_MAX_LENGTH) {
+        setStatus('error')
+        setErrorMsg('Email is too long.')
+        return
+      }
+      if (!EMAIL_RE.test(trimmedEmail)) {
+        setStatus('error')
+        setErrorMsg('Please enter a valid email address.')
+        return
+      }
     }
 
     setStatus('loading')
     setErrorMsg(null)
 
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10_000)
+
     try {
       const res = await fetch('/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           message: trimmedMessage,
           email: trimmedEmail || null,
@@ -74,10 +82,11 @@ export function FeedbackFab() {
           pagePath: location.pathname,
         }),
       })
+      clearTimeout(timeoutId)
 
       if (res.ok) {
         setStatus('success')
-        trackEvent('feedback_fab_submit', { page: location.pathname, has_email: !!trimmedEmail })
+        trackEvent('feedback_fab_success', { page: location.pathname, has_email: !!trimmedEmail })
       } else if (res.status === 429) {
         setStatus('error')
         setErrorMsg('Too many requests. Please try again later.')
@@ -86,9 +95,11 @@ export function FeedbackFab() {
         setStatus('error')
         setErrorMsg((data as { error?: string }).error ?? 'Something went wrong.')
       }
-    } catch {
+    } catch (err) {
+      clearTimeout(timeoutId)
+      const isTimeout = err instanceof DOMException && err.name === 'AbortError'
       setStatus('error')
-      setErrorMsg('Network error. Please check your connection.')
+      setErrorMsg(isTimeout ? 'Request timed out. Please try again.' : 'Network error. Please check your connection.')
     }
   }, [message, email, status, location.pathname])
 
@@ -143,6 +154,10 @@ export function FeedbackFab() {
       >
         {status === 'loading' ? 'Sending...' : 'Send feedback'}
       </Button>
+
+      <p className="text-xs text-muted-foreground text-center">
+        Anonymous unless you include your email.
+      </p>
     </div>
   )
 
@@ -174,9 +189,11 @@ export function FeedbackFab() {
       <button
         onClick={handleOpen}
         aria-label="Send feedback"
-        className="fixed z-40 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors bottom-[10.5rem] right-4 md:bottom-6 md:right-6 h-10 w-10 md:h-11 md:w-11 flex items-center justify-center"
+        title="Send feedback"
+        className="fixed z-40 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors bottom-[10.5rem] right-4 md:bottom-6 md:right-6 h-10 w-10 md:h-auto md:w-auto md:px-4 md:py-2.5 md:gap-2 flex items-center justify-center"
       >
-        <MessageSquare className="h-5 w-5" />
+        <MessageSquare className="h-5 w-5 shrink-0" />
+        <span className="hidden md:inline text-sm font-medium">Feedback</span>
       </button>
       {modal}
     </>

@@ -78,7 +78,7 @@ type AnalyticsEvent =
   | 'feedback_modal_dismiss'
   | 'feedback_submit_success'
   | 'feedback_fab_open'
-  | 'feedback_fab_submit'
+  | 'feedback_fab_success'
 
 export function trackEvent(event: AnalyticsEvent, data?: Record<string, string | number | boolean>) {
   if (isCompanionMode()) return
