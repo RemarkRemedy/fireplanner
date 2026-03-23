@@ -61,7 +61,7 @@ export function MobileShareFab() {
   }
 
   return (
-    <div className="fixed bottom-28 right-4 z-40 md:hidden">
+    <div className="fixed bottom-[7.25rem] right-4 z-40 md:hidden">
       <Popover open={tooltipOpen} onOpenChange={(v) => { if (!v) handleDismiss() }}>
         <PopoverAnchor asChild>
           <Button

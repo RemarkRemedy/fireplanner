@@ -174,7 +174,7 @@ export function FeedbackFab() {
       <button
         onClick={handleOpen}
         aria-label="Send feedback"
-        className="fixed z-40 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors bottom-[10.5rem] right-4 md:bottom-6 md:right-6 h-10 w-10 flex items-center justify-center"
+        className="fixed z-40 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors bottom-[10.5rem] right-4 md:bottom-6 md:right-6 h-10 w-10 md:h-11 md:w-11 flex items-center justify-center"
       >
         <MessageSquare className="h-5 w-5" />
       </button>
