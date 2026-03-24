@@ -7,7 +7,6 @@ import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import type {
   AllocationState,
   FireMetrics,
-  IncomeProjectionRow,
   IncomeState,
   ProfileState,
   PropertyState,
@@ -53,14 +52,8 @@ export interface WhatIfMetricsResult {
 
 type TimingOverride = Pick<ProfileState, 'currentAge' | 'retirementAge' | 'lifeExpectancy'>
 
-export function resolveEffectiveIncome(
-  profile: Pick<ProfileState, 'annualIncome'>,
-  projection: IncomeProjectionRow[] | null | undefined,
-): number {
-  return projection && projection.length > 0
-    ? projection[0].totalGross
-    : profile.annualIncome
-}
+import { resolveEffectiveIncome } from '@/lib/calculations/effectiveIncome'
+export { resolveEffectiveIncome }
 
 export function buildBaseInputsFromEffectiveIncome(
   profile: ProfileState,

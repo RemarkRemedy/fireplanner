@@ -17,8 +17,8 @@ import { getRetirementSumAmount } from '@/lib/calculations/cpf'
 import {
   buildBaseInputsFromEffectiveIncome,
   computeMetricSnapshot,
-  resolveEffectiveIncome,
 } from '@/hooks/useWhatIfMetrics'
+import { resolveEffectiveIncome } from '@/lib/calculations/effectiveIncome'
 
 /** Derive CPF housing params from property store (single source of truth) */
 export function deriveCpfHousingFromProperty(property: { mortgageCpfMonthly: number; existingMortgageRemainingYears: number; ownershipPercent?: number }) {
