@@ -2,6 +2,7 @@ import { buildSplitAdultPlanSlice } from '@/lib/household/planSlice'
 import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
 import { buildProjectionParams, buildFullProjectionParams } from '@/lib/calculations/projectionParams'
 import { generateIncomeProjection } from '@/lib/calculations/income'
+import { computeBaseProjection } from '@/lib/calculations/effectiveIncome'
 import type { HouseholdPlan } from '@/lib/household/types'
 import type { AllocationState, SimulationState } from '@/lib/types'
 
@@ -38,6 +39,7 @@ export function computePerAdultFireAge(
   if (!incomeParams) return null
 
   const incomeProjection = generateIncomeProjection(incomeParams)
+  const baseIncomeProjection = computeBaseProjection(incomeParams) ?? undefined
 
   const { fireMetrics } = buildFullProjectionParams({
     profile,
@@ -47,6 +49,7 @@ export function computePerAdultFireAge(
     simulation,
     ages: adultAges,
     incomeProjection,
+    baseIncomeProjection,
   })
 
   return fireMetrics.fireAge ?? null
