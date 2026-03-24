@@ -9,6 +9,7 @@ import { calculateAllFireMetrics } from '@/lib/calculations/fire'
 import { computeCashReserveOffset } from '@/lib/calculations/cashReserve'
 import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { computeLbsProceeds, getPropertyRentalIncome } from '@/lib/calculations/hdb'
+import { resolveEffectiveIncome, computeBaseProjection } from '@/lib/calculations/effectiveIncome'
 import {
   validateAllocationField,
   validateIncomeField,
@@ -212,6 +213,8 @@ function buildScenarioProjectionParams(core: ScenarioCoreStores): ProjectionPara
   const incomeProjection = generateIncomeProjection(incomeParams)
   if (incomeProjection.length === 0) return null
 
+  const baseProjection = computeBaseProjection(incomeParams)
+
   const ownershipPct = property.ownershipPercent ?? 1
 
   const assetReturns = getEffectiveReturns(allocation.returnOverrides)
@@ -224,7 +227,7 @@ function buildScenarioProjectionParams(core: ScenarioCoreStores): ProjectionPara
     effectiveReturn = calculatePortfolioReturn(allocation.currentWeights, assetReturns)
   }
 
-  const effectiveIncome = incomeProjection[0]?.totalGross ?? profile.annualIncome
+  const effectiveIncome = resolveEffectiveIncome(profile, incomeProjection, baseProjection)
   const cpfTotal = profile.cpfOA + profile.cpfSA + profile.cpfMA + profile.cpfRA
   const propertyEquityForFire = property.ownsProperty
     ? Math.max(0, property.existingPropertyValue - property.existingMortgageBalance) * ownershipPct
