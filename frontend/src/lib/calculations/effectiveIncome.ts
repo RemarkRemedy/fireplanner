@@ -54,6 +54,46 @@ export function resolveEffectiveIncome(
 }
 
 /**
+ * Resolve post-retirement passive income, optionally using the undisrupted baseline.
+ * Extracts passive income (government, rental, investment, business, SRS withdrawal)
+ * from the first retired row and deflates to today's dollars.
+ *
+ * When baseProjection is provided, returns the higher of with-events and
+ * without-events values, using the undisrupted baseline as reference.
+ */
+export function resolveEffectivePostRetirementIncome(
+  projection: IncomeProjectionRow[],
+  baseProjection: IncomeProjectionRow[] | null | undefined,
+  currentAge: number,
+  inflation: number,
+): number | undefined {
+  const extractPassive = (rows: IncomeProjectionRow[]): number | undefined => {
+    const firstRetired = rows.find((r) => r.isRetired)
+    if (!firstRetired) return undefined
+    const passiveNominal = firstRetired.governmentIncome
+      + firstRetired.rentalIncome
+      + firstRetired.investmentIncome
+      + firstRetired.businessIncome
+      + firstRetired.srsWithdrawal
+    const yearsToRetired = firstRetired.age - currentAge
+    return yearsToRetired > 0 && inflation > 0
+      ? passiveNominal / Math.pow(1 + inflation, yearsToRetired)
+      : passiveNominal
+  }
+
+  const withEvents = extractPassive(projection)
+  if (withEvents === undefined) return undefined
+
+  if (!baseProjection || baseProjection.length === 0) return withEvents
+
+  const withoutEvents = extractPassive(baseProjection)
+  if (withoutEvents === undefined) return withEvents
+
+  // Use the undisrupted baseline — life events can only reduce post-retirement income
+  return Math.max(withEvents, withoutEvents)
+}
+
+/**
  * Compute a base income projection with life events disabled.
  *
  * This is used as the "baseline" projection for amortized income loss calculations:

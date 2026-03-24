@@ -18,7 +18,7 @@ import {
   buildBaseInputsFromEffectiveIncome,
   computeMetricSnapshot,
 } from '@/hooks/useWhatIfMetrics'
-import { resolveEffectiveIncome } from '@/lib/calculations/effectiveIncome'
+import { resolveEffectiveIncome, resolveEffectivePostRetirementIncome } from '@/lib/calculations/effectiveIncome'
 
 /** Derive CPF housing params from property store (single source of truth) */
 export function deriveCpfHousingFromProperty(property: { mortgageCpfMonthly: number; existingMortgageRemainingYears: number; ownershipPercent?: number }) {
@@ -197,22 +197,12 @@ export function buildFullProjectionParams(
   const ownershipPct = property.ownershipPercent ?? 1
   const effectiveIncome = resolveEffectiveIncome(profile, incomeProjection, ctx.baseIncomeProjection)
 
-  // Extract passive post-retirement income from first retired row, deflated to today's dollars.
-  let postRetirementIncome: number | undefined
-  if (incomeProjection) {
-    const firstRetiredRow = incomeProjection.find((r) => r.isRetired)
-    if (firstRetiredRow) {
-      const passiveNominal = firstRetiredRow.governmentIncome
-        + firstRetiredRow.rentalIncome
-        + firstRetiredRow.investmentIncome
-        + firstRetiredRow.businessIncome
-        + firstRetiredRow.srsWithdrawal
-      const yearsToRetired = firstRetiredRow.age - ages.currentAge
-      postRetirementIncome = yearsToRetired > 0 && profile.inflation > 0
-        ? passiveNominal / Math.pow(1 + profile.inflation, yearsToRetired)
-        : passiveNominal
-    }
-  }
+  const postRetirementIncome = resolveEffectivePostRetirementIncome(
+    incomeProjection ?? [],
+    ctx.baseIncomeProjection,
+    ages.currentAge,
+    profile.inflation,
+  )
 
   const { fireMetrics } = computeMetricSnapshot(
     buildBaseInputsFromEffectiveIncome(
