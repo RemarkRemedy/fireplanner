@@ -7,7 +7,6 @@ import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import type {
   AllocationState,
   FireMetrics,
-  IncomeProjectionRow,
   IncomeState,
   ProfileState,
   PropertyState,
@@ -53,14 +52,8 @@ export interface WhatIfMetricsResult {
 
 type TimingOverride = Pick<ProfileState, 'currentAge' | 'retirementAge' | 'lifeExpectancy'>
 
-export function resolveEffectiveIncome(
-  profile: Pick<ProfileState, 'annualIncome'>,
-  projection: IncomeProjectionRow[] | null | undefined,
-): number {
-  return projection && projection.length > 0
-    ? projection[0].totalGross
-    : profile.annualIncome
-}
+import { resolveEffectiveIncome, computeBaseProjection } from '@/lib/calculations/effectiveIncome'
+export { resolveEffectiveIncome }
 
 export function buildBaseInputsFromEffectiveIncome(
   profile: ProfileState,
@@ -142,6 +135,7 @@ export function getBaseInputs(
   const projection = projectionParams
     ? generateIncomeProjection(projectionParams)
     : null
+  const baseProjection = projectionParams ? computeBaseProjection(projectionParams) : null
 
   // Extract passive post-retirement income from first retired row, deflated to today's dollars.
   // Excludes salary (employment income defeats the FIRE concept).
@@ -165,7 +159,7 @@ export function getBaseInputs(
     profile,
     allocation,
     property,
-    resolveEffectiveIncome(profile, projection),
+    resolveEffectiveIncome(profile, projection, baseProjection),
     { currentAge, retirementAge, lifeExpectancy },
     postRetirementIncome,
   )

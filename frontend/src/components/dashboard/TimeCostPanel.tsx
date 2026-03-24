@@ -8,6 +8,7 @@ import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { generateIncomeProjection } from '@/lib/calculations/income'
+import { resolveEffectiveIncome, computeBaseProjection } from '@/lib/calculations/effectiveIncome'
 import { calculateOneTimeCost, calculateRecurringCost, type TimeCostBaseInput } from '@/lib/calculations/timeCost'
 import { formatCurrency, cn } from '@/lib/utils'
 import { buildProjectionParams } from '@/hooks/useIncomeProjection'
@@ -32,7 +33,8 @@ export function TimeCostPanel() {
     const projectionParams = buildProjectionParams(profile, income, property)
     if (projectionParams) {
       const projection = generateIncomeProjection(projectionParams)
-      if (projection.length > 0) effectiveIncome = projection[0].totalGross
+      const baseProjection = computeBaseProjection(projectionParams)
+      effectiveIncome = resolveEffectiveIncome(profile, projection, baseProjection)
     }
 
     let expectedReturn = profile.expectedReturn

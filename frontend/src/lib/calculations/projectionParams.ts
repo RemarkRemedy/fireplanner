@@ -17,8 +17,8 @@ import { getRetirementSumAmount } from '@/lib/calculations/cpf'
 import {
   buildBaseInputsFromEffectiveIncome,
   computeMetricSnapshot,
-  resolveEffectiveIncome,
 } from '@/hooks/useWhatIfMetrics'
+import { resolveEffectiveIncome } from '@/lib/calculations/effectiveIncome'
 
 /** Derive CPF housing params from property store (single source of truth) */
 export function deriveCpfHousingFromProperty(property: { mortgageCpfMonthly: number; existingMortgageRemainingYears: number; ownershipPercent?: number }) {
@@ -154,6 +154,8 @@ export interface FullProjectionContext {
   simulation: Pick<SimulationState, 'selectedStrategy' | 'strategyParams' | 'withdrawalBasis'>
   ages: { currentAge: number; retirementAge: number; lifeExpectancy: number }
   incomeProjection: IncomeProjectionRow[]
+  /** Base income projection without life events, for amortization. */
+  baseIncomeProjection?: IncomeProjectionRow[]
   /** Pre-computed healthcare cash outlay per year (summed across all adults).
    *  Passed through to ProjectionParams.healthcareCashOutlayByYear. */
   healthcareCashOutlayByYear?: number[]
@@ -193,7 +195,7 @@ export function buildFullProjectionParams(
     : null
 
   const ownershipPct = property.ownershipPercent ?? 1
-  const effectiveIncome = resolveEffectiveIncome(profile, incomeProjection)
+  const effectiveIncome = resolveEffectiveIncome(profile, incomeProjection, ctx.baseIncomeProjection)
 
   // Extract passive post-retirement income from first retired row, deflated to today's dollars.
   let postRetirementIncome: number | undefined

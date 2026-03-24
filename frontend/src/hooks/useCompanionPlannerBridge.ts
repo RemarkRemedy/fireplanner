@@ -4,6 +4,7 @@ import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useSimulationStore } from '@/stores/useSimulationStore'
 import { generateIncomeProjection } from '@/lib/calculations/income'
+import { resolveEffectiveIncome, computeBaseProjection } from '@/lib/calculations/effectiveIncome'
 import { resolveDeterministicExpectedReturn } from '@/lib/analysis/deterministicAssumptions'
 import { buildProjectionParams, useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import { useAnalysisPortfolio } from '@/hooks/useAnalysisPortfolio'
@@ -183,7 +184,8 @@ export function useCompanionPlannerBridge({
     if (!projectionParams) return annualIncome
 
     const projection = generateIncomeProjection(projectionParams)
-    return projection[0]?.totalGross ?? annualIncome
+    const baseProjection = computeBaseProjection(projectionParams)
+    return resolveEffectiveIncome({ annualIncome }, projection, baseProjection)
   }, [annualIncome, income, profile, property])
 
   const [bootstrapStatus, setBootstrapStatus] = useState<CompanionBootstrapStatus>(() =>

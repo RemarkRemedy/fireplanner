@@ -48,6 +48,7 @@ import { buildSplitAdultPlanSlice } from '@/lib/household/planSlice'
 import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
 import { buildProjectionParams, buildFullProjectionParams } from '@/lib/calculations/projectionParams'
 import { generateIncomeProjection } from '@/lib/calculations/income'
+import { computeBaseProjection } from '@/lib/calculations/effectiveIncome'
 import { generateProjection } from '@/lib/calculations/projection'
 import { NudgeSidebar } from '@/components/projection/NudgeSidebar'
 import { useHealthCheck } from '@/hooks/useHealthCheck'
@@ -315,6 +316,7 @@ export function ProjectionPage() {
     )
     if (!incomeParams) return null
     const incomeProjection = generateIncomeProjection(incomeParams)
+    const baseIncomeProjection = computeBaseProjection(incomeParams) ?? undefined
 
     // Build full projection using the canonical builder
     const { params, fireMetrics } = buildFullProjectionParams({
@@ -325,6 +327,7 @@ export function ProjectionPage() {
       simulation,
       ages: adultAges,
       incomeProjection,
+      baseIncomeProjection,
     })
 
     const { rows, summary } = generateProjection(params)
