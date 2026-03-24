@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { resolveEffectiveIncome, computeBaseProjection } from './effectiveIncome'
+import { resolveEffectiveIncome, computeBaseProjection, resolveEffectivePostRetirementIncome } from './effectiveIncome'
 import type { IncomeProjectionRow } from '@/lib/types'
 import type { IncomeProjectionParams } from '@/lib/calculations/income'
 
@@ -198,5 +198,83 @@ describe('computeBaseProjection', () => {
     expect(rowAtEventAge).toBeDefined()
     // With life events disabled, salary at 40 should be higher than 0
     expect(rowAtEventAge!.salary).toBeGreaterThan(0)
+  })
+})
+
+// ============================================================
+// resolveEffectivePostRetirementIncome
+// ============================================================
+
+/** Build a minimal IncomeProjectionRow for post-retirement income tests */
+const retiredRow = (
+  age: number,
+  passive: { gov?: number; rental?: number; investment?: number; business?: number; srs?: number },
+  isRetired = true,
+): IncomeProjectionRow =>
+  ({
+    age,
+    isRetired,
+    totalGross: 0,
+    governmentIncome: passive.gov ?? 0,
+    rentalIncome: passive.rental ?? 0,
+    investmentIncome: passive.investment ?? 0,
+    businessIncome: passive.business ?? 0,
+    srsWithdrawal: passive.srs ?? 0,
+  } as IncomeProjectionRow)
+
+describe('resolveEffectivePostRetirementIncome', () => {
+  it('returns undefined when no retired rows exist', () => {
+    const working = [retiredRow(35, { gov: 1000 }, false), retiredRow(36, { gov: 1000 }, false)]
+    expect(resolveEffectivePostRetirementIncome(working, null, 35, 0.025)).toBeUndefined()
+  })
+
+  it('returns deflated passive income when no base projection provided', () => {
+    // Retire at age 65, currentAge 35 => 30 years of inflation
+    const projection = [retiredRow(65, { gov: 12000, rental: 6000 })]
+    const result = resolveEffectivePostRetirementIncome(projection, null, 35, 0.025)
+    const expectedNominal = 18000
+    const expected = expectedNominal / Math.pow(1.025, 30)
+    expect(result).toBeCloseTo(expected, 5)
+  })
+
+  it('returns the higher value (undisrupted baseline) when base projection provided', () => {
+    const currentAge = 35
+    // With-events: life event reduces CPF payout, retirement at 65
+    const withEvents = [retiredRow(65, { gov: 6000 })]
+    // Without-events: full CPF payout
+    const withoutEvents = [retiredRow(65, { gov: 12000 })]
+    const resultWith = 6000 / Math.pow(1.025, 30)
+    const resultWithout = 12000 / Math.pow(1.025, 30)
+    const result = resolveEffectivePostRetirementIncome(withEvents, withoutEvents, currentAge, 0.025)
+    expect(result).toBeCloseTo(Math.max(resultWith, resultWithout), 5)
+    expect(result).toBeCloseTo(resultWithout, 5)
+  })
+
+  it('handles zero inflation (no deflation applied)', () => {
+    const projection = [retiredRow(65, { rental: 24000 })]
+    const result = resolveEffectivePostRetirementIncome(projection, null, 35, 0)
+    // yearsToRetired=30, inflation=0 => condition false => passiveNominal returned as-is
+    expect(result).toBe(24000)
+  })
+
+  it('returns with-events value when it equals without-events (no distortion)', () => {
+    const projection = [retiredRow(65, { gov: 12000 })]
+    const base = [retiredRow(65, { gov: 12000 })]
+    const result = resolveEffectivePostRetirementIncome(projection, base, 35, 0.025)
+    const expected = 12000 / Math.pow(1.025, 30)
+    expect(result).toBeCloseTo(expected, 5)
+  })
+
+  it('returns with-events value when base projection is empty', () => {
+    const projection = [retiredRow(65, { srs: 9000 })]
+    const result = resolveEffectivePostRetirementIncome(projection, [], 35, 0.025)
+    const expected = 9000 / Math.pow(1.025, 30)
+    expect(result).toBeCloseTo(expected, 5)
+  })
+
+  it('sums all 5 passive income fields correctly', () => {
+    const projection = [retiredRow(65, { gov: 1000, rental: 2000, investment: 3000, business: 4000, srs: 5000 })]
+    const result = resolveEffectivePostRetirementIncome(projection, null, 35, 0)
+    expect(result).toBe(15000)
   })
 })

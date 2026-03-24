@@ -8,8 +8,6 @@ import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { useIncomeProjection } from '@/hooks/useIncomeProjection'
 import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
 import { buildFullProjectionParams } from '@/lib/calculations/projectionParams'
-import { buildProjectionParams } from '@/hooks/useIncomeProjection'
-import { computeBaseProjection } from '@/lib/calculations/effectiveIncome'
 
 interface ProjectionResult {
   fireMetrics: FireMetrics | null
@@ -36,20 +34,12 @@ export function useProjection(): ProjectionResult {
     () => buildHouseholdRuntimeLegacyInputs(plan, normalized.compiledPlan),
     [normalized.compiledPlan, plan]
   )
-  const { projection: incomeProjection, hasErrors: incomeHasErrors, errors: incomeErrors } = useIncomeProjection()
+  const { projection: incomeProjection, baseIncomeProjection, hasErrors: incomeHasErrors, errors: incomeErrors } = useIncomeProjection()
 
   return useMemo(() => {
     if (incomeHasErrors || !incomeProjection) {
       return { fireMetrics: null, rows: null, summary: null, params: null, hasErrors: true, errors: incomeErrors }
     }
-
-    // Compute base projection (life events disabled) for amortized income loss
-    const incomeParams = buildProjectionParams(
-      { ...profile, currentAge: normalized.currentAge, retirementAge: normalized.retirementAge, lifeExpectancy: normalized.lifeExpectancy },
-      income,
-      property,
-    )
-    const baseIncomeProjection = incomeParams ? computeBaseProjection(incomeParams) ?? undefined : undefined
 
     const { params, fireMetrics } = buildFullProjectionParams({
       profile,
@@ -63,7 +53,7 @@ export function useProjection(): ProjectionResult {
         lifeExpectancy: normalized.lifeExpectancy,
       },
       incomeProjection,
-      baseIncomeProjection,
+      baseIncomeProjection: baseIncomeProjection ?? undefined,
       healthcareCashOutlayByYear,
     })
 
@@ -72,6 +62,7 @@ export function useProjection(): ProjectionResult {
     return { fireMetrics, rows, summary, params, hasErrors: false, errors: {} }
   }, [
     incomeProjection,
+    baseIncomeProjection,
     incomeHasErrors,
     incomeErrors,
     profile,

@@ -195,6 +195,8 @@ export interface CompiledHouseholdPlan extends NormalizedHouseholdPlan {
   householdWithdrawalNeedByYear: number[]
   portfolioAdjustments: HouseholdPortfolioAdjustment[]
   incomeByAdultId: Record<string, IncomeProjectionRow[]>
+  /** Per-adult base projections with life events disabled (for amortized income loss). */
+  baseIncomeByAdultId: Record<string, IncomeProjectionRow[]>
   cpfByAdultId: Record<string, CompiledCpfProjectionSlot>
   healthcareByAdultId: Record<string, CompiledHealthcareSlot>
   rows: HouseholdYearRow[]
@@ -936,6 +938,29 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
     })
   ) as Record<string, IncomeProjectionRow[]>
 
+  // Compute per-adult base projections (life events disabled) for amortized income loss.
+  // If an adult has no life events, reuse their primary projection to avoid redundant work.
+  const baseProjectionsByAdultId = Object.fromEntries(
+    normalized.adultOrder.map((adultId) => {
+      const adult = normalized.adultsById[adultId]
+      if (!adult.lifeEventsEnabled || adult.lifeEvents.length === 0) {
+        return [adultId, adultProjectionsById[adultId]]
+      }
+      // Pass fresh warning arrays — base projection is internal, its warnings should not surface to users
+      return [
+        adultId,
+        buildAdultIncomeProjection(
+          { ...adult, lifeEventsEnabled: false },
+          normalized,
+          resolvedTiming,
+          [],
+          new Set<string>(),
+          primaryProperty,
+        ),
+      ]
+    })
+  ) as Record<string, IncomeProjectionRow[]>
+
   const cpfByAdultId = Object.fromEntries(
     normalized.adultOrder.map((adultId) => {
       const adult = normalized.adultsById[adultId]
@@ -1391,6 +1416,7 @@ export function compileHouseholdPlan(plan: HouseholdPlan): CompiledHouseholdPlan
     householdWithdrawalNeedByYear,
     portfolioAdjustments: sortAdjustments(portfolioAdjustments),
     incomeByAdultId: adultProjectionsById,
+    baseIncomeByAdultId: baseProjectionsByAdultId,
     cpfByAdultId,
     healthcareByAdultId,
     rows,

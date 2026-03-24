@@ -4,7 +4,8 @@ import { useNormalizedLegacyAnalysisContext } from '@/hooks/useIncomeProjection'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { buildHouseholdRuntimeLegacyInputs } from '@/lib/household/runtimeLegacyInputs'
-import { computeMetricSnapshot, getBaseInputs } from '@/hooks/useWhatIfMetrics'
+import { computeMetricSnapshot } from '@/lib/calculations/fireInputs'
+import { getBaseInputs } from '@/hooks/useWhatIfMetrics'
 
 interface FireCalculationsResult {
   metrics: FireMetrics | null

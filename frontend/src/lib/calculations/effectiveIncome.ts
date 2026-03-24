@@ -15,6 +15,14 @@ import { generateIncomeProjection } from '@/lib/calculations/income'
  * other income disruption evenly across the working career instead of treating
  * the reduced current-year income as permanent.
  *
+ * **Known approximation:** The average loss is computed in nominal terms.
+ * Disruptions later in the career have higher nominal amounts (due to inflation
+ * and salary growth), so they are slightly overweighted in the average. For a
+ * more precise result, each year's loss would need to be deflated to real terms
+ * before averaging. The current approximation matches the pattern in
+ * `useDisruptionImpact.ts:288` (search for `baseWorking.length`) and is
+ * acceptable for a steady-state metric.
+ *
  * @param profile - Only annualIncome is used as a fallback.
  * @param projection - Full projection including life event impacts.
  * @param baseProjection - Optional projection with life events disabled (baseline).
@@ -51,6 +59,46 @@ export function resolveEffectiveIncome(
   const baseRow0 = baseProjection[0].totalGross
 
   return Math.max(0, baseRow0 - avgAnnualLoss)
+}
+
+/**
+ * Resolve post-retirement passive income, optionally using the undisrupted baseline.
+ * Extracts passive income (government, rental, investment, business, SRS withdrawal)
+ * from the first retired row and deflates to today's dollars.
+ *
+ * When baseProjection is provided, returns the higher of with-events and
+ * without-events values, using the undisrupted baseline as reference.
+ */
+export function resolveEffectivePostRetirementIncome(
+  projection: IncomeProjectionRow[],
+  baseProjection: IncomeProjectionRow[] | null | undefined,
+  currentAge: number,
+  inflation: number,
+): number | undefined {
+  const extractPassive = (rows: IncomeProjectionRow[]): number | undefined => {
+    const firstRetired = rows.find((r) => r.isRetired)
+    if (!firstRetired) return undefined
+    const passiveNominal = firstRetired.governmentIncome
+      + firstRetired.rentalIncome
+      + firstRetired.investmentIncome
+      + firstRetired.businessIncome
+      + firstRetired.srsWithdrawal
+    const yearsToRetired = firstRetired.age - currentAge
+    return yearsToRetired > 0 && inflation > 0
+      ? passiveNominal / Math.pow(1 + inflation, yearsToRetired)
+      : passiveNominal
+  }
+
+  const withEvents = extractPassive(projection)
+  if (withEvents === undefined) return undefined
+
+  if (!baseProjection || baseProjection.length === 0) return withEvents
+
+  const withoutEvents = extractPassive(baseProjection)
+  if (withoutEvents === undefined) return withEvents
+
+  // Use the undisrupted baseline — life events can only reduce post-retirement income
+  return Math.max(withEvents, withoutEvents)
 }
 
 /**
