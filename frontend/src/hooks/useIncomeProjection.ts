@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import type { IncomeProjectionRow, IncomeSummaryStats } from '@/lib/types'
 import { generateIncomeProjection, calculateIncomeSummary, mergePerAdultProjections } from '@/lib/calculations/income'
+import { computeBaseProjection } from '@/lib/calculations/effectiveIncome'
 export { buildProjectionParams, deriveCpfHousingFromProperty } from '@/lib/calculations/projectionParams'
 import { buildProjectionParams } from '@/lib/calculations/projectionParams'
 import {
@@ -206,6 +207,8 @@ export function useNormalizedLegacyAnalysisContext(
 
 interface IncomeProjectionResult {
   projection: IncomeProjectionRow[] | null
+  /** Base projection with life events disabled (for amortized income loss). Null when no life events. */
+  baseIncomeProjection: IncomeProjectionRow[] | null
   summary: IncomeSummaryStats | null
   hasErrors: boolean
   errors: Record<string, string>
@@ -246,16 +249,16 @@ export function useIncomeProjection(): IncomeProjectionResult {
     const allErrors = { ...crossStoreErrors }
 
     if (hasValidationErrors || Object.keys(allErrors).length > 0) {
-      return { projection: null, summary: null, hasErrors: true, errors: allErrors }
+      return { projection: null, baseIncomeProjection: null, summary: null, hasErrors: true, errors: allErrors }
     }
 
     let projection: IncomeProjectionRow[]
+    let baseIncomeProjection: IncomeProjectionRow[] | null = null
 
     if (isMultiAdult && compiledPlan.incomeByAdultId) {
       // Multi-adult: merge per-adult projections (each computed with correct
       // per-person CPF ceilings, SRS caps, tax brackets, BHS limits, etc.)
-      projection = mergePerAdultProjections({
-        perAdultProjections: compiledPlan.incomeByAdultId,
+      const mergeArgs = {
         adultOrder: compiledPlan.adultOrder,
         referenceCurrentAge: normalized.currentAge,
         referenceRetirementYearOffset: normalized.householdRetirementYearOffset,
@@ -263,6 +266,15 @@ export function useIncomeProjection(): IncomeProjectionResult {
         inflation: profile.inflation,
         lockedAssets: profile.lockedAssets,
         expenseAdjustments: profile.expenseAdjustments,
+      }
+      projection = mergePerAdultProjections({
+        perAdultProjections: compiledPlan.incomeByAdultId,
+        ...mergeArgs,
+      })
+      // Merge per-adult base projections (life events disabled) for amortized income loss
+      baseIncomeProjection = mergePerAdultProjections({
+        perAdultProjections: compiledPlan.baseIncomeByAdultId,
+        ...mergeArgs,
       })
     } else {
       // Single adult: use the existing single-pass projection engine
@@ -277,14 +289,15 @@ export function useIncomeProjection(): IncomeProjectionResult {
         property,
       )
       if (!projectionParams) {
-        return { projection: null, summary: null, hasErrors: true, errors: allErrors }
+        return { projection: null, baseIncomeProjection: null, summary: null, hasErrors: true, errors: allErrors }
       }
       projection = generateIncomeProjection(projectionParams)
+      baseIncomeProjection = computeBaseProjection(projectionParams) ?? null
     }
 
     const summary = calculateIncomeSummary(projection, profile.annualExpenses)
 
-    return { projection, summary, hasErrors: false, errors: {} }
+    return { projection, baseIncomeProjection, summary, hasErrors: false, errors: {} }
   }, [
     isMultiAdult,
     compiledPlan,
