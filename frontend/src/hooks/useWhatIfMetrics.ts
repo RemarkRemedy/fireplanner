@@ -52,7 +52,7 @@ export interface WhatIfMetricsResult {
 
 type TimingOverride = Pick<ProfileState, 'currentAge' | 'retirementAge' | 'lifeExpectancy'>
 
-import { resolveEffectiveIncome } from '@/lib/calculations/effectiveIncome'
+import { resolveEffectiveIncome, computeBaseProjection } from '@/lib/calculations/effectiveIncome'
 export { resolveEffectiveIncome }
 
 export function buildBaseInputsFromEffectiveIncome(
@@ -135,6 +135,7 @@ export function getBaseInputs(
   const projection = projectionParams
     ? generateIncomeProjection(projectionParams)
     : null
+  const baseProjection = projectionParams ? computeBaseProjection(projectionParams) : null
 
   // Extract passive post-retirement income from first retired row, deflated to today's dollars.
   // Excludes salary (employment income defeats the FIRE concept).
@@ -158,7 +159,7 @@ export function getBaseInputs(
     profile,
     allocation,
     property,
-    resolveEffectiveIncome(profile, projection),
+    resolveEffectiveIncome(profile, projection, baseProjection),
     { currentAge, retirementAge, lifeExpectancy },
     postRetirementIncome,
   )
