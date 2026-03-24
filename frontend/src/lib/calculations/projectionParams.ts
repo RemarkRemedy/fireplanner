@@ -17,7 +17,7 @@ import { getRetirementSumAmount } from '@/lib/calculations/cpf'
 import {
   buildBaseInputsFromEffectiveIncome,
   computeMetricSnapshot,
-} from '@/hooks/useWhatIfMetrics'
+} from '@/lib/calculations/fireInputs'
 import { resolveEffectiveIncome, resolveEffectivePostRetirementIncome } from '@/lib/calculations/effectiveIncome'
 
 /** Derive CPF housing params from property store (single source of truth) */
