@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { projectPortfolioAtRetirement } from '@/lib/calculations/fire'
 import { calculatePortfolioReturn, getEffectiveReturns } from '@/lib/calculations/portfolio'
 import { generateIncomeProjection } from '@/lib/calculations/income'
+import { resolveEffectiveIncome, computeBaseProjection } from '@/lib/calculations/effectiveIncome'
 import { useAllocationStore } from '@/stores/useAllocationStore'
 import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { getEffectiveExpenses } from '@/lib/calculations/expenses'
@@ -52,7 +53,8 @@ export function useOneMoreYear(): OneMoreYearResult {
     const projectionParams = buildProjectionParams(profile, income, property)
     if (projectionParams) {
       const projection = generateIncomeProjection(projectionParams)
-      if (projection.length > 0) effectiveIncome = projection[0].totalGross
+      const baseProjection = computeBaseProjection(projectionParams)
+      effectiveIncome = resolveEffectiveIncome(profile, projection, baseProjection)
     }
 
     // Expected return
