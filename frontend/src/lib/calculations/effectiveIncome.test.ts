@@ -237,17 +237,16 @@ describe('resolveEffectivePostRetirementIncome', () => {
     expect(result).toBeCloseTo(expected, 5)
   })
 
-  it('returns the higher value (undisrupted baseline) when base projection provided', () => {
+  it('returns the with-events value (conservative) when base projection provided', () => {
     const currentAge = 35
     // With-events: life event reduces CPF payout, retirement at 65
     const withEvents = [retiredRow(65, { gov: 6000 })]
     // Without-events: full CPF payout
     const withoutEvents = [retiredRow(65, { gov: 12000 })]
     const resultWith = 6000 / Math.pow(1.025, 30)
-    const resultWithout = 12000 / Math.pow(1.025, 30)
     const result = resolveEffectivePostRetirementIncome(withEvents, withoutEvents, currentAge, 0.025)
-    expect(result).toBeCloseTo(Math.max(resultWith, resultWithout), 5)
-    expect(result).toBeCloseTo(resultWithout, 5)
+    // Uses the disrupted value (lower passive income) for a more conservative FIRE number
+    expect(result).toBeCloseTo(resultWith, 5)
   })
 
   it('handles zero inflation (no deflation applied)', () => {

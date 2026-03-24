@@ -94,11 +94,11 @@ export function resolveEffectivePostRetirementIncome(
 
   if (!baseProjection || baseProjection.length === 0) return withEvents
 
-  const withoutEvents = extractPassive(baseProjection)
-  if (withoutEvents === undefined) return withEvents
-
-  // Use the undisrupted baseline — life events can only reduce post-retirement income
-  return Math.max(withEvents, withoutEvents)
+  // Use the actual projected value (with life event effects).
+  // A career break reduces CPF/SRS accumulation, genuinely lowering
+  // post-retirement passive income. Using the disrupted value produces
+  // a higher (more conservative) FIRE number — safer for planning.
+  return withEvents
 }
 
 /**
