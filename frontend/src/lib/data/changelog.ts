@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 /** Newest first. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: '2026-03-24',
+    category: 'fix',
+    title: 'Life event income amortization',
+    description:
+      'Temporary career breaks and life events no longer distort your FIRE metrics. Previously, a career break at your current age made the formula treat your reduced income as permanent. Now the income impact is spread across your full working career, giving a more accurate FIRE age and retirement portfolio estimate.',
+    affectedSections: ['section-projection', 'section-dashboard'],
+    insight:
+      'The engine runs your income projection twice (with and without life events), computes the average annual loss, and subtracts it from your baseline income. This works for both individual and couple plans, and also smooths post-retirement passive income distortions.',
+  },
+  {
     date: '2026-03-17',
     category: 'feature',
     title: 'Guided Setup Flow',
