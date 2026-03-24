@@ -15,6 +15,14 @@ import { generateIncomeProjection } from '@/lib/calculations/income'
  * other income disruption evenly across the working career instead of treating
  * the reduced current-year income as permanent.
  *
+ * **Known approximation:** The average loss is computed in nominal terms.
+ * Disruptions later in the career have higher nominal amounts (due to inflation
+ * and salary growth), so they are slightly overweighted in the average. For a
+ * more precise result, each year's loss would need to be deflated to real terms
+ * before averaging. The current approximation matches the pattern in
+ * `useDisruptionImpact.ts:288` (search for `baseWorking.length`) and is
+ * acceptable for a steady-state metric.
+ *
  * @param profile - Only annualIncome is used as a fallback.
  * @param projection - Full projection including life event impacts.
  * @param baseProjection - Optional projection with life events disabled (baseline).
