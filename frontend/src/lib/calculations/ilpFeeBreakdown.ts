@@ -1,4 +1,4 @@
-import type { IlpProjectionResult, IlpYearRow, ReturnScenario } from '@/lib/calculations/ilp'
+import type { IlpFund, IlpProjectionResult, IlpYearRow, ReturnScenario } from '@/lib/calculations/ilp'
 
 export interface IlpFeeBreakdownRow {
   policyYear: number
@@ -8,7 +8,11 @@ export interface IlpFeeBreakdownRow {
   additionalCharges: number
   assuranceCharges: number
   eventCharges: number
+  /** Implicit fund management fee (OCF applied to opening account values). Not charged as a line item but reduces investment returns. */
+  implicitFundFee: number
   grossFee: number
+  /** Gross fee including the implicit fund management fee. */
+  totalGrossFee: number
   bonusCredits: number
   netFee: number
   eecCharge: number
@@ -17,16 +21,20 @@ export interface IlpFeeBreakdownRow {
   cumulativeGrossFees: number
   cumulativeBonuses: number
   cumulativeNetFees: number
+  cumulativeImplicitFundFees: number
 }
 
 export interface IlpFeeBreakdownResult {
   rows: IlpFeeBreakdownRow[]
+  blendedOcf: number
   totals: {
     accountFee: number
     additionalCharges: number
     assuranceCharges: number
     eventCharges: number
+    implicitFundFee: number
     grossFee: number
+    totalGrossFee: number
     bonusCredits: number
     netFee: number
   }
@@ -39,18 +47,27 @@ function aggregateAccountField(
   return yearRow.accounts.reduce((sum, account) => sum + account[field], 0)
 }
 
+function computeBlendedOcf(funds: IlpFund[]): number {
+  return funds.reduce((sum, fund) => sum + fund.allocation * fund.ocf, 0)
+}
+
 export function buildFeeBreakdown(
   projection: IlpProjectionResult,
+  funds?: IlpFund[],
 ): IlpFeeBreakdownResult {
   let cumulativeGrossFees = 0
   let cumulativeBonuses = 0
+  let cumulativeImplicitFundFees = 0
+  const blendedOcf = funds ? computeBlendedOcf(funds) : 0
 
   const totals = {
     accountFee: 0,
     additionalCharges: 0,
     assuranceCharges: 0,
     eventCharges: 0,
+    implicitFundFee: 0,
     grossFee: 0,
+    totalGrossFee: 0,
     bonusCredits: 0,
     netFee: 0,
   }
@@ -64,14 +81,21 @@ export function buildFeeBreakdown(
     const bonusCredits = aggregateAccountField(yearRow, 'bonusCredit')
     const netFee = grossFee - bonusCredits
 
+    // Implicit fund fee: OCF applied to opening account values for the year
+    const openingValue = yearRow.accounts.reduce((sum, account) => sum + account.open, 0)
+    const implicitFundFee = openingValue * blendedOcf
+
     cumulativeGrossFees += grossFee
     cumulativeBonuses += bonusCredits
+    cumulativeImplicitFundFees += implicitFundFee
 
     totals.accountFee += accountFee
     totals.additionalCharges += additionalCharges
     totals.assuranceCharges += assuranceCharges
     totals.eventCharges += eventCharges
+    totals.implicitFundFee += implicitFundFee
     totals.grossFee += grossFee
+    totals.totalGrossFee += grossFee + implicitFundFee
     totals.bonusCredits += bonusCredits
     totals.netFee += netFee
 
@@ -83,7 +107,9 @@ export function buildFeeBreakdown(
       additionalCharges,
       assuranceCharges,
       eventCharges,
+      implicitFundFee,
       grossFee,
+      totalGrossFee: grossFee + implicitFundFee,
       bonusCredits,
       netFee,
       eecCharge: yearRow.eecCharge,
@@ -92,10 +118,11 @@ export function buildFeeBreakdown(
       cumulativeGrossFees,
       cumulativeBonuses,
       cumulativeNetFees: cumulativeGrossFees - cumulativeBonuses,
+      cumulativeImplicitFundFees,
     }
   })
 
-  return { rows, totals }
+  return { rows, blendedOcf, totals }
 }
 
 export function pickProjection(

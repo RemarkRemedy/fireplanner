@@ -10,28 +10,32 @@ interface PolicySetupGateProps {
   seed: IlpPolicySeed
   onConfirm: (adjustedSeed: IlpPolicySeed) => void
   onCancel: () => void
+  /** When true, hides existing-holder fields (policy year, months paid) and shows only premium + editable horizon. */
+  prospect?: boolean
 }
 
-export function PolicySetupGate({ seed, onConfirm, onCancel }: PolicySetupGateProps) {
+export function PolicySetupGate({ seed, onConfirm, onCancel, prospect }: PolicySetupGateProps) {
   const isSinglePremium = (seed.initialSinglePremium ?? 0) > 0 || seed.monthlyContribution === 0
   const [monthlyContribution, setMonthlyContribution] = useState(seed.monthlyContribution)
   const [initialSinglePremium, setInitialSinglePremium] = useState(seed.initialSinglePremium ?? 0)
-  const [currentPolicyYear, setCurrentPolicyYear] = useState(seed.currentPolicyYear)
-  const [monthsAlreadyPaid, setMonthsAlreadyPaid] = useState(seed.monthsAlreadyPaid)
+  const [currentPolicyYear, setCurrentPolicyYear] = useState(prospect ? 1 : seed.currentPolicyYear)
+  const [monthsAlreadyPaid, setMonthsAlreadyPaid] = useState(prospect ? 0 : seed.monthsAlreadyPaid)
+  const [postMipYears, setPostMipYears] = useState(seed.postMipYears ?? 10)
+
+  const horizonYears = seed.mipLength != null
+    ? seed.mipLength + postMipYears - (currentPolicyYear - 1)
+    : postMipYears
 
   function handleConfirm() {
     onConfirm({
       ...seed,
       monthlyContribution,
       initialSinglePremium: isSinglePremium ? initialSinglePremium : seed.initialSinglePremium,
-      currentPolicyYear,
-      monthsAlreadyPaid,
+      currentPolicyYear: prospect ? 1 : currentPolicyYear,
+      monthsAlreadyPaid: prospect ? 0 : monthsAlreadyPaid,
+      postMipYears,
     })
   }
-
-  const horizonYears = seed.mipLength != null
-    ? seed.mipLength + (seed.postMipYears ?? 0) - (currentPolicyYear - 1)
-    : (seed.postMipYears ?? 20)
 
   return (
     <Card className="border-primary/30">
@@ -45,9 +49,13 @@ export function PolicySetupGate({ seed, onConfirm, onCancel }: PolicySetupGatePr
         </div>
 
         <div className="space-y-1">
-          <p className="text-sm font-medium">Confirm your policy details</p>
+          <p className="text-sm font-medium">
+            {prospect ? 'Set your assumptions' : 'Confirm your policy details'}
+          </p>
           <p className="text-xs text-muted-foreground">
-            These values affect every fee calculation. You can fine-tune other settings after.
+            {prospect
+              ? 'Enter your expected premium and how far ahead to project.'
+              : 'These values affect every fee calculation. You can fine-tune other settings after.'}
           </p>
         </div>
 
@@ -67,26 +75,42 @@ export function PolicySetupGate({ seed, onConfirm, onCancel }: PolicySetupGatePr
               currency={seed.currency}
             />
           )}
-          <NumberInput
-            label="Current Policy Year"
-            value={currentPolicyYear}
-            onChange={setCurrentPolicyYear}
-            integer
-            min={1}
-          />
-          <NumberInput
-            label="Months Already Paid"
-            value={monthsAlreadyPaid}
-            onChange={setMonthsAlreadyPaid}
-            integer
-            min={0}
-          />
-          <div className="flex items-end">
-            <div className="space-y-1 text-sm">
-              <div className="text-muted-foreground">Projection horizon</div>
-              <div className="font-medium">{horizonYears} years</div>
-            </div>
-          </div>
+          {prospect ? (
+            <NumberInput
+              label="Projection Horizon"
+              value={horizonYears}
+              onChange={(v) => {
+                const mip = seed.mipLength ?? 0
+                setPostMipYears(Math.max(0, v - mip))
+              }}
+              integer
+              min={seed.mipLength ?? 1}
+              suffix="years"
+            />
+          ) : (
+            <>
+              <NumberInput
+                label="Current Policy Year"
+                value={currentPolicyYear}
+                onChange={setCurrentPolicyYear}
+                integer
+                min={1}
+              />
+              <NumberInput
+                label="Months Already Paid"
+                value={monthsAlreadyPaid}
+                onChange={setMonthsAlreadyPaid}
+                integer
+                min={0}
+              />
+              <div className="flex items-end">
+                <div className="space-y-1 text-sm">
+                  <div className="text-muted-foreground">Projection horizon</div>
+                  <div className="font-medium">{horizonYears} years</div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-3">

@@ -698,6 +698,12 @@ export interface IlpSummaryMetrics {
   totalFeesCharged: number
   totalBonusesReceived: number
   netFeeDrag: number
+  /** Gross fees discounted at inflation rate (today's purchasing power). */
+  realGrossFees: number
+  /** Bonuses discounted at inflation rate (today's purchasing power). */
+  realBonuses: number
+  /** Net fee drag discounted at inflation rate (today's purchasing power). */
+  realNetFeeDrag: number
   currentSurrenderValue: number
   cancelNowPenalty: number
   currentDeathBenefitEstimate?: number
@@ -11922,6 +11928,20 @@ export function computeSummaryMetrics(
   initialSinglePremiumState?: IlpInitialSinglePremiumState,
 ): IlpSummaryMetrics {
   const mipEndRow = projection.rows[getMipEndProjectionIndex(input)]
+  const horizonEndRow = projection.rows[projection.rows.length - 1]
+
+  // Compute inflation-adjusted (real) NPV of fees and bonuses over the full horizon
+  let realGrossFees = 0
+  let realBonuses = 0
+  for (const row of projection.rows) {
+    const inflationFactor = Math.pow(1 + input.inflationRate, row.year)
+    const previousRow = projection.rows[row.year - 2]
+    const grossFeesThisYear = row.cumulativeGrossFees - (previousRow?.cumulativeGrossFees ?? 0)
+    const bonusesThisYear = row.cumulativeBonuses - (previousRow?.cumulativeBonuses ?? 0)
+    realGrossFees += grossFeesThisYear / inflationFactor
+    realBonuses += bonusesThisYear / inflationFactor
+  }
+
   const currentValueSnapshot = computeCurrentValueSnapshot(input, initialSinglePremiumState)
   const currentDeathBenefitEstimate = computeCurrentDeathBenefitEstimate(
     input,
@@ -11970,10 +11990,13 @@ export function computeSummaryMetrics(
   )
 
   return applyCurrentAdmittedTpdClaimState(input, applyCurrentAdmittedTiClaimState(input, {
-    totalPremiumsPaid: mipEndRow.cumulativePremiums,
-    totalFeesCharged: mipEndRow.cumulativeGrossFees,
-    totalBonusesReceived: mipEndRow.cumulativeBonuses,
-    netFeeDrag: mipEndRow.cumulativeGrossFees - mipEndRow.cumulativeBonuses,
+    totalPremiumsPaid: horizonEndRow.cumulativePremiums,
+    totalFeesCharged: horizonEndRow.cumulativeGrossFees,
+    totalBonusesReceived: horizonEndRow.cumulativeBonuses,
+    netFeeDrag: horizonEndRow.cumulativeGrossFees - horizonEndRow.cumulativeBonuses,
+    realGrossFees,
+    realBonuses,
+    realNetFeeDrag: realGrossFees - realBonuses,
     currentSurrenderValue: currentValueSnapshot.totalCurrentValue - currentValueSnapshot.cancelNowPenalty,
     cancelNowPenalty: currentValueSnapshot.cancelNowPenalty,
     currentDeathBenefitEstimate,
@@ -12044,6 +12067,9 @@ export function computeCurrentOnlySummaryMetrics(
     totalFeesCharged: 0,
     totalBonusesReceived: 0,
     netFeeDrag: 0,
+    realGrossFees: 0,
+    realBonuses: 0,
+    realNetFeeDrag: 0,
     currentSurrenderValue: currentValueSnapshot.totalCurrentValue - currentValueSnapshot.cancelNowPenalty,
     cancelNowPenalty: currentValueSnapshot.cancelNowPenalty,
     currentDeathBenefitEstimate,

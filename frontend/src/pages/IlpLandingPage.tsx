@@ -34,7 +34,7 @@ export function IlpLandingPage() {
         {/* Mode 1: Prospects — opens product picker, then navigates to story mode */}
         <button type="button" onClick={() => setPickerOpen(true)} className="group text-left">
           <Card className="h-full transition-colors group-hover:border-primary group-hover:shadow-sm">
-            <CardContent className="flex h-full flex-col gap-4 pt-6">
+            <CardContent className="flex h-full flex-col gap-4 p-6">
               <BarChart3 className="h-8 w-8 text-primary" />
               <div className="flex-1 space-y-2">
                 <h2 className="text-lg font-semibold">I'm considering an ILP</h2>
@@ -55,7 +55,7 @@ export function IlpLandingPage() {
         {/* Mode 2: Existing holders */}
         <Link to="/ilp/exit" className="group">
           <Card className="h-full transition-colors group-hover:border-primary group-hover:shadow-sm">
-            <CardContent className="flex h-full flex-col gap-4 pt-6">
+            <CardContent className="flex h-full flex-col gap-4 p-6">
               <Calculator className="h-8 w-8 text-primary" />
               <div className="flex-1 space-y-2">
                 <h2 className="text-lg font-semibold">I have an ILP</h2>
@@ -76,7 +76,7 @@ export function IlpLandingPage() {
         {/* Mode 3: Researchers */}
         <Link to="/ilp/compare" className="group">
           <Card className="h-full transition-colors group-hover:border-primary group-hover:shadow-sm">
-            <CardContent className="flex h-full flex-col gap-4 pt-6">
+            <CardContent className="flex h-full flex-col gap-4 p-6">
               <Search className="h-8 w-8 text-primary" />
               <div className="flex-1 space-y-2">
                 <h2 className="text-lg font-semibold">I'm researching</h2>

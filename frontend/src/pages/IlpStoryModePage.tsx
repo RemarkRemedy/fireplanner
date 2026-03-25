@@ -156,7 +156,7 @@ export function IlpStoryModePage() {
   }
 
   // --- Step 1: Variant selection (if multiple variants) ---
-  if (!existingPolicy && !effectiveSeed && !storyPolicy) {
+  if (!effectiveSeed && !storyPolicy) {
     if (catalogProduct.variants.length > 1 && !selectedVariant) {
       return (
         <div className="flex min-h-[50vh] flex-col items-center justify-center px-4">
@@ -174,7 +174,7 @@ export function IlpStoryModePage() {
   }
 
   // --- Step 2: Setup gate (confirm premium etc.) ---
-  if (effectiveSeed && !storyPolicy && !existingPolicy) {
+  if (effectiveSeed && !storyPolicy) {
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center px-4">
         <div className="w-full max-w-lg space-y-4">
@@ -184,6 +184,7 @@ export function IlpStoryModePage() {
           </p>
           <PolicySetupGate
             seed={effectiveSeed!}
+            prospect
             onConfirm={(adjustedSeed) => {
               // Build the policy from the seed
               const result = addPolicyFromSeed(adjustedSeed)

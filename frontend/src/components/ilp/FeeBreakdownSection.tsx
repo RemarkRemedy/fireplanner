@@ -30,6 +30,7 @@ const FEE_CATEGORIES = [
   { key: 'additionalCharges', label: 'Additional', description: 'Premium-based charges, fixed annual policy fees, cumulative-premium charges, and other recurring charge rules that are not tied to specific events.' },
   { key: 'assuranceCharges', label: 'Assurance/COI', description: 'Cost-of-insurance charges for death, terminal illness, TPD, and accidental death coverage. These increase with age and are deducted from account value.' },
   { key: 'eventCharges', label: 'Event', description: 'Charges triggered by specific actions: partial withdrawals, premium holidays, premium reductions, or top-ups. May include early exit charges on event amounts.' },
+  { key: 'implicitFundFee', label: 'Fund Mgt (OCF)', description: 'Ongoing fund management charges deducted inside the fund NAV. Not charged as a visible line item, but reduces your investment returns every year. Based on the weighted OCF of your selected funds.' },
 ] as const
 
 type FeeCategoryKey = typeof FEE_CATEGORIES[number]['key']
@@ -46,7 +47,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
   const [scenario, setScenario] = useState<ReturnScenario>('mid')
   const colors = useChartColors()
   const projection = analysis.projections[scenario]
-  const breakdown = useMemo(() => buildFeeBreakdown(projection), [projection])
+  const breakdown = useMemo(() => buildFeeBreakdown(projection, policy.funds), [projection, policy.funds])
   const mipEndIndex = getMipEndProjectionIndex(policy)
 
   const categoryColors: Record<FeeCategoryKey, string> = {
@@ -54,6 +55,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
     additionalCharges: colors.warning,
     assuranceCharges: colors.danger,
     eventCharges: colors.muted,
+    implicitFundFee: colors.info ?? '#8b5cf6',
   }
 
   const stackedBarData = breakdown.rows.map((row) => ({
@@ -62,6 +64,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
     additionalCharges: row.additionalCharges,
     assuranceCharges: row.assuranceCharges,
     eventCharges: row.eventCharges,
+    implicitFundFee: row.implicitFundFee,
     bonusCredits: -row.bonusCredits,
   }))
 
@@ -119,6 +122,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                   <Bar dataKey="additionalCharges" stackId="fees" fill={categoryColors.additionalCharges} />
                   <Bar dataKey="assuranceCharges" stackId="fees" fill={categoryColors.assuranceCharges} />
                   <Bar dataKey="eventCharges" stackId="fees" fill={categoryColors.eventCharges} />
+                  <Bar dataKey="implicitFundFee" stackId="fees" fill={categoryColors.implicitFundFee} />
                   <Bar dataKey="bonusCredits" stackId="fees" fill={colors.success} />
                 </BarChart>
               </ResponsiveContainer>
@@ -179,6 +183,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground" title="Premium-based, fixed annual, and other recurring charges">Additional</th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground" title="Cost-of-insurance for death/TI/TPD coverage">Assurance</th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground" title="Charges triggered by withdrawals, premium holidays, etc.">Event</th>
+                    <th className="px-2 py-2 text-right font-medium text-muted-foreground" title="Ongoing fund charges deducted inside fund NAV">Fund Mgt</th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">Gross Fee</th>
                     <th className="px-2 py-2 text-right font-medium text-emerald-700 dark:text-emerald-400" title="Power-up, loyalty, allocation, and other bonus credits">Bonus</th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">Net Fee</th>
@@ -215,7 +220,8 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                         <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.additionalCharges, policy.currency)}</td>
                         <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.assuranceCharges, policy.currency)}</td>
                         <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.eventCharges, policy.currency)}</td>
-                        <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(row.grossFee, policy.currency)}</td>
+                        <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.implicitFundFee, policy.currency)}</td>
+                        <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(row.totalGrossFee, policy.currency)}</td>
                         <td className="px-2 py-2 text-right tabular-nums text-emerald-700 dark:text-emerald-400">{formatIlpCurrency(row.bonusCredits, policy.currency)}</td>
                         <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(row.netFee, policy.currency)}</td>
                         <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.withdrawals, policy.currency)}</td>
@@ -231,7 +237,8 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                     <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(breakdown.totals.additionalCharges, policy.currency)}</td>
                     <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(breakdown.totals.assuranceCharges, policy.currency)}</td>
                     <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(breakdown.totals.eventCharges, policy.currency)}</td>
-                    <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(breakdown.totals.grossFee, policy.currency)}</td>
+                    <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(breakdown.totals.implicitFundFee, policy.currency)}</td>
+                    <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(breakdown.totals.totalGrossFee, policy.currency)}</td>
                     <td className="px-2 py-2 text-right tabular-nums text-emerald-700 dark:text-emerald-400">{formatIlpCurrency(breakdown.totals.bonusCredits, policy.currency)}</td>
                     <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(breakdown.totals.netFee, policy.currency)}</td>
                     <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(breakdown.rows.reduce((s, r) => s + r.withdrawals, 0), policy.currency)}</td>
