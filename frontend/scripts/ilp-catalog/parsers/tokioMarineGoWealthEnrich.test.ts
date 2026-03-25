@@ -30,13 +30,27 @@ describe('parseTokioMarineGoWealthEnrich', () => {
       'branch:tokio-marine-gowealth-enrich-establishment-charge',
       'branch:tokio-marine-gowealth-enrich-administrative-charge',
       'branch:tokio-marine-gowealth-enrich-recurring-single-and-top-up-charge',
+      'kernel:minimum-recurring-single-premium-start-month',
+      'kernel:minimum-recurring-single-premium-amount',
+      'kernel:top-up-start-policy-month-block',
+      'kernel:top-up-amount-gate-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
       'branch:tokio-marine-gowealth-enrich-single-premium-partial-withdrawal-charge',
       'branch:tokio-marine-gowealth-enrich-surrender-charge',
+      'branch:tokio-marine-gowealth-enrich-loyalty-bonus',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ])
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-gowealth-enrich-loyalty-bonus')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-gowealth-enrich-death-benefit')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-gowealth-enrich-establishment-charge')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-gowealth-enrich-surrender-charge')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-gowealth-enrich-dividend-payout-threshold')
+    expect(product.warnings[0]).toContain('resident-corridor current-state death benefit as 105% of the Single Premium Units Account value plus 100% of the Top-up Units Account value less current amounts owing')
+    expect(product.warnings[0]).toContain('resident-corridor current accidental-death estimate before age 75 as 120% of the Single Premium Units Account value plus 100% of the Top-up Units Account value less current amounts owing')
+    expect(product.warnings[0]).toContain('published S$500 minimum one-off partial withdrawal amount plus the 10%-of-initial-single-premium minimum remaining Single Premium Units Account floor')
+    expect(product.warnings[0]).toContain('non-resident 101% death-benefit corridor, accidental-death claim gates and cap aggregation, principal-floor handling')
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended-cash'])
 
     const variant = product.variants[0]
@@ -58,6 +72,33 @@ describe('parseTokioMarineGoWealthEnrich', () => {
         contributionRules: [
           { phase: 'top-up', targetAccountId: 'topup', contributionShare: 1 },
         ],
+      }),
+    ])
+    expect(variant?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumRecurringSinglePremiumStartPolicyMonth: 13,
+      minimumRecurringSinglePremiumMonthlyAmount: 100,
+      minimumTopUpStartPolicyMonth: 13,
+      minimumTopUpAmount: 1_000,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'initial-single-premium',
+          accountId: 'policy',
+          minimumValueRate: 0.1,
+        },
+      ],
+    })
+    expect(variant?.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'loyalty-bonus',
+        type: 'loyalty',
+        mode: 'annual-rate',
+        appliesTo: ['policy'],
+        startPolicyYear: 1,
+        endPolicyYear: null,
+        rate: 0.0022,
       }),
     ])
     expect(variant?.feeRules).toEqual([
@@ -97,6 +138,8 @@ describe('parseTokioMarineGoWealthEnrich', () => {
       ]),
       sourceRefs: expect.any(Array),
     })
+    expect(variant?.unsupportedItems).toContain('The resident-corridor current accidental-death estimate also needs manual current age and current amount owing inputs; the age-75 cut-off is modeled, while residency and Singapore-location claim gates, the 180-day death timing rule, and aggregate accidental-death cap handling remain informational only.')
+    expect(variant?.unsupportedItems).toContain('The non-resident 101% death-benefit corridor remains informational only.')
     expect(variant?.eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'recurring-single-premium-charge',

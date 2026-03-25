@@ -15,7 +15,8 @@ import { PolicyTabs } from '@/components/ilp/PolicyTabs'
 import { ProjectionTable } from '@/components/ilp/ProjectionTable'
 import { SummaryCards } from '@/components/ilp/SummaryCards'
 import { usePageMeta } from '@/hooks/usePageMeta'
-import { analyzeAllPolicies } from '@/lib/calculations/ilp'
+import type { IlpProjectedPolicyAnalysis } from '@/lib/calculations/ilp'
+import { analyzeAllPolicies, isProjectedAnalysisEligible } from '@/lib/calculations/ilp'
 import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
 import { templateVariantToPolicySeed } from '@/lib/ilp-catalog/templateToPolicy'
 import { ilpPolicySchema } from '@/lib/validation/ilpSchema'
@@ -111,21 +112,25 @@ export function IlpReviewPage() {
     policies.map((policy) => {
       const parsed = ilpPolicySchema.safeParse(policy)
       return {
-        policy,
+        policy: parsed.success ? parsed.data : policy,
         issues: parsed.success ? [] : parsed.error.issues.map((issue) => issue.message),
         valid: parsed.success,
+        projectedEligible: parsed.success && isProjectedAnalysisEligible(parsed.data),
       }
     })
   ), [policies])
 
   const analysisResult = useMemo(() => {
-    const validPolicies = policyEntries.filter((entry) => entry.valid).map((entry) => entry.policy)
-    if (validPolicies.length === 0) {
+    const analyzablePolicies = policyEntries
+      .filter((entry) => entry.valid)
+      .map((entry) => entry.policy)
+
+    if (analyzablePolicies.length === 0) {
       return { analysis: null, error: null }
     }
 
     try {
-      return { analysis: analyzeAllPolicies(validPolicies), error: null }
+      return { analysis: analyzeAllPolicies(analyzablePolicies), error: null }
     } catch (error) {
       return {
         analysis: null,
@@ -139,12 +144,17 @@ export function IlpReviewPage() {
     ?? null
   const selectedPolicy = selectedEntry?.policy ?? null
   const selectedAnalysis = analysisResult.analysis?.policies.find((analysis) => analysis.policyId === selectedPolicy?.id) ?? null
+  const selectedProjectedAnalysis = selectedAnalysis?.mode === 'projected' ? selectedAnalysis : null
+  const selectedCurrentOnlyAnalysis = selectedAnalysis?.mode === 'current-only' ? selectedAnalysis : null
   const fallbackAnalysis = analysisResult.analysis?.policies[0] ?? null
-  const displayAnalysis = selectedAnalysis ?? fallbackAnalysis
-  const displayPolicy = displayAnalysis
-    ? policyEntries.find((entry) => entry.policy.id === displayAnalysis.policyId)?.policy ?? null
-    : null
+  const displayAnalysis = selectedProjectedAnalysis ?? selectedCurrentOnlyAnalysis ?? fallbackAnalysis
+  const displayPolicy = selectedCurrentOnlyAnalysis != null
+    ? selectedPolicy
+    : (displayAnalysis
+      ? policyEntries.find((entry) => entry.policy.id === displayAnalysis.policyId)?.policy ?? null
+      : null)
   const excludedCount = policyEntries.filter((entry) => !entry.valid).length
+  const currentOnlyCount = policyEntries.filter((entry) => entry.valid && !entry.projectedEligible).length
 
   if (policies.length === 0) {
     return (
@@ -225,9 +235,19 @@ export function IlpReviewPage() {
       {excludedCount > 0 && (
         <Alert>
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>{excludedCount} policy excluded from comparison</AlertTitle>
+          <AlertTitle>{excludedCount} {excludedCount === 1 ? 'policy' : 'policies'} excluded from analysis</AlertTitle>
           <AlertDescription>
-            Invalid policies stay editable below, but only valid policies are included in the charts and comparison table so the page remains usable while you edit.
+            Invalid policies stay editable below, but analysis surfaces only include policies that currently pass validation.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {currentOnlyCount > 0 && (
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>{currentOnlyCount} {currentOnlyCount === 1 ? 'policy stays' : 'policies stay'} in current-snapshot mode</AlertTitle>
+          <AlertDescription>
+            Mature finite-MIP policies now stay in comparison rows and summary cards, but projection charts, NPV, and decision panels remain limited to projection-eligible policies.
           </AlertDescription>
         </Alert>
       )}
@@ -251,7 +271,7 @@ export function IlpReviewPage() {
 
       {selectedPolicy && displayAnalysis && displayPolicy ? (
         <>
-          {selectedAnalysis == null && (
+          {selectedProjectedAnalysis == null && selectedCurrentOnlyAnalysis == null && (
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Showing analysis for another valid policy</AlertTitle>
@@ -260,12 +280,25 @@ export function IlpReviewPage() {
               </AlertDescription>
             </Alert>
           )}
+          {displayAnalysis.mode === 'current-only' && (
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Current snapshot only</AlertTitle>
+              <AlertDescription>
+                This mature finite-MIP policy currently supports today&apos;s value and benefit metrics plus comparison rows only. Projection, NPV, and opportunity-cost panels remain intentionally unavailable in V1.
+              </AlertDescription>
+            </Alert>
+          )}
           <SummaryCards policy={displayPolicy} analysis={displayAnalysis} />
-          <FeeWaterfallChart policy={displayPolicy} analysis={displayAnalysis} />
-          <DecisionPanel policy={displayPolicy} analysis={displayAnalysis} />
-          <NpvTimelineChart analyses={analysisResult.analysis?.policies ?? [displayAnalysis]} />
-          <ProjectionTable policy={displayPolicy} analysis={displayAnalysis} />
-          <OpportunityCostCard policy={displayPolicy} analysis={displayAnalysis} />
+          {displayAnalysis.mode === 'projected' && (
+            <>
+              <FeeWaterfallChart policy={displayPolicy} analysis={displayAnalysis} />
+              <DecisionPanel policy={displayPolicy} analysis={displayAnalysis} />
+              <NpvTimelineChart analyses={analysisResult.analysis?.policies.filter((analysis): analysis is IlpProjectedPolicyAnalysis => analysis.mode === 'projected') ?? []} />
+              <ProjectionTable policy={displayPolicy} analysis={displayAnalysis} />
+              <OpportunityCostCard policy={displayPolicy} analysis={displayAnalysis} />
+            </>
+          )}
         </>
       ) : selectedPolicy ? (
         <Alert variant="destructive">

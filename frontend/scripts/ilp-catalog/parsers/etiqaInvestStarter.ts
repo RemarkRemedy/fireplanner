@@ -146,6 +146,8 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
         postMipFeeRate: null,
         subjectToEec: true,
         contributionRules: [
+          { phase: 'during-icp', targetAccountId: 'portfolio', contributionShare: 1 },
+          { phase: 'after-icp', targetAccountId: 'portfolio', contributionShare: 1 },
           { phase: 'top-up', targetAccountId: 'portfolio', contributionShare: 1 },
         ],
         sourceRefs: [page1, page3, page13],
@@ -154,14 +156,19 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     bonuses: [],
     feeRules,
     eventChargeRules,
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: true,
+    },
     eecTable: [...SHORTFALL_AND_EXIT_SCHEDULE],
     warnings: [
-      'Invest starter is cataloged as a supported V1 product. The parser captures the policy charge, premium-holiday shortfall charge and refund, partial-withdrawal charge, surrender charge horizon, and regular-premium / top-up cashflow structure.',
-      'The three-year policy charge refund and one-time reward remain informational only in V1.',
+      'Invest starter is cataloged as a supported V1 product. The parser captures the policy charge, the current-due three-year policy-charge refund through manual trailing-36-month average-account-value and refund-status inputs, premium-holiday shortfall charge and refund, annual-state lapse after projected account-value depletion during premium holiday, partial-withdrawal charge, surrender charge horizon, regular-premium / top-up cashflow structure, the current-state death benefit as the higher of account value or the 105%-of-net-premiums-and-top-ups floor after manual current amount owing, the current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap, and the current admitted-state TI payable amount through the published full-termination TI corridor after manual claim-amount entry.',
+      'Future three-year policy charge refund qualification and one-time reward remain informational only in V1.',
       'Dividend reinvestment is automatic at the sub-fund level and is therefore treated as part of accumulation value rather than as a separate user election.',
     ],
     unsupportedItems: [
-      'Policy charge refund every three years remains informational only.',
+      'The current-state death and terminal-illness snapshot needs manual current amount owing and remaining aggregate TI cap inputs because debt and cross-policy TI cap usage are not reconstructed from history in V1.',
+      'The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, but claim exclusions and insurer-side settlement mechanics remain informational only.',
+      'Future three-year policy charge refund qualification and crediting, including the preceding-36-month no-partial-withdrawal test and rolling monthly account-value history outside the manual current refund inputs, remain informational only.',
       'One-time reward for linked insurance purchases remains informational only.',
       'Change of life insured remains informational only.',
       'Optional protection riders remain informational only.',
@@ -183,7 +190,11 @@ export function parseEtiqaInvestStarter(context: ParseContext): IlpCatalogProduc
     structureStatus: 'structured',
     economicsStatus: 'supported',
     modeledEconomics: [
+      'kernel:automatic-lapse-on-account-depletion',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:invest-starter-policy-charge',
+      'branch:invest-starter-current-policy-charge-refund-credit',
       'branch:invest-starter-premium-shortfall-charge',
       'branch:invest-starter-premium-shortfall-refund',
       'branch:invest-starter-partial-withdrawal-charge',
@@ -197,7 +208,7 @@ export function parseEtiqaInvestStarter(context: ParseContext): IlpCatalogProduc
       'invest-starter-optional-protection-riders',
     ],
     warnings: [
-      'Invest starter is cataloged as a supported V1 product. The regular-premium cashflow, top-up routing, policy charge, premium-holiday shortfall charge/refund, and first-five-year withdrawal / surrender charge schedules are modeled, while the three-year policy charge refund, one-time reward, change-of-life-insured, and optional protection riders remain informational only.',
+      'Invest starter is cataloged as a supported V1 product. The current-state death benefit as the higher of account value or the 105%-of-net-premiums-and-top-ups floor after manual current amount owing, the current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap, the current admitted-state TI payable amount through the published full-termination TI corridor after manual claim-amount entry, the current-due three-year policy-charge refund through manual trailing-36-month average-account-value and refund-status inputs, the regular-premium cashflow, top-up routing, policy charge, premium-holiday shortfall charge/refund, annual-state lapse after projected account-value depletion during premium holiday, and first-five-year withdrawal / surrender charge schedules are modeled, while terminal-illness claim exclusions / settlement mechanics, future three-year policy-charge refund qualification and crediting, one-time reward, change-of-life-insured, and optional protection riders remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

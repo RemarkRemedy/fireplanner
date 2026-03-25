@@ -30,14 +30,25 @@ describe('parsePrudentialPrulinkInvestGrowth', () => {
       'branch:prulink-investgrowth-premium-assurance-charge',
       'branch:prulink-investgrowth-top-up-charge',
       'branch:prulink-investgrowth-top-up-assurance-charge',
+      'kernel:top-up-amount-gate-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
+      'kernel:current-death-benefit-estimate',
     ])
     expect(product.metadataOnlyBehaviors).toEqual([
-      'prulink-investgrowth-death-benefit',
       'prulink-investgrowth-e-top-up-charge',
       'prulink-investgrowth-withdrawals',
       'prulink-investgrowth-fund-switching',
       'prulink-investgrowth-minimum-premium-schedule',
     ])
+    expect(product.variants[0]?.unsupportedItems).toContain(
+      'Terminal-illness claim handling and death-benefit exclusions remain informational only beyond the modeled current ordinary death-benefit estimate.',
+    )
+    expect(product.variants[0]?.unsupportedItems).not.toContain(
+      'Death and terminal-illness benefit formulas remain informational only.',
+    )
+    expect(product.warnings[0]).toContain('the published S$2,000 one-off top-up minimum')
+    expect(product.warnings[0]).toContain('the published S$1,000 one-off withdrawal minimum and residual-account floor')
+    expect(product.warnings[0]).toContain('current-state death benefit as the higher of policy value or 110% of total premiums plus top-ups less withdrawals')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-open-ended-cash',
       'sgd-open-ended-srs',
@@ -63,6 +74,14 @@ describe('parsePrudentialPrulinkInvestGrowth', () => {
       expect.objectContaining({ id: 'top-up-premium-charge', trigger: 'top-up', rate: 0.03 }),
       expect.objectContaining({ id: 'top-up-assurance-charge', trigger: 'top-up', rate: 0.015 }),
     ])
+    expect(cashVariant?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumTopUpAmount: 2_000,
+      minimumPartialWithdrawalAmount: 1_000,
+      partialWithdrawalMinimumRemainingValueRules: [
+        { activeWindow: 'policy-term', basis: 'policy-value', minimumValue: 1_000 },
+      ],
+    })
 
     const srsVariant = product.variants.find((variant) => variant.id === 'sgd-open-ended-srs')
     expect(srsVariant?.feeRules).toEqual([

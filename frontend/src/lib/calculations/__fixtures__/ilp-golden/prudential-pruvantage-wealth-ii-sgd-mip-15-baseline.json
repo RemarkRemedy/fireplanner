@@ -8,7 +8,16 @@
     "supportStatus": "supported",
     "description": "Baseline in-force PRUVantage Wealth II SGD / MIP 15 scenario.",
     "coverageTags": [
-      "baseline"
+      "baseline",
+      "kernel:current-death-benefit-estimate",
+      "kernel:current-accidental-death-benefit-estimate",
+      "kernel:current-accidental-disability-benefit-estimate",
+      "branch:pru-holiday-refund",
+      "branch:pru-holiday-fallback",
+      "branch:pru-top-up-charge",
+      "branch:pru-free-withdrawal",
+      "branch:pru-charged-withdrawal",
+      "kernel:distribution-mode-assumption"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "PRUVantage Wealth II Product Summary.pdf",
@@ -455,6 +464,9 @@
       "economicsStatus": "supported",
       "structureStatus": "structured",
       "modeledEconomics": [
+        "kernel:current-death-benefit-estimate",
+        "kernel:current-accidental-death-benefit-estimate",
+        "kernel:current-accidental-disability-benefit-estimate",
         "branch:pru-holiday-refund",
         "branch:pru-holiday-fallback",
         "branch:pru-top-up-charge",
@@ -463,16 +475,22 @@
         "kernel:distribution-mode-assumption"
       ],
       "metadataOnlyBehaviors": [
-        "premium-pass",
-        "wealth-share",
-        "secondary-life-ownership-options"
+        "pruvantage-wealth-ii-accidental-death-and-claim-exclusions",
+        "premium-pass-wealth-share-secondary-life-options"
       ]
     },
     "catalogWarnings": [
-      "This template focuses on fee drag, exit economics, and Growth Account dividend elections through the manual distribution-mode kernel. Protection and ownership features are retained as warnings only.",
+      "This template captures fee drag, exit economics, the current-state death-benefit estimate as the higher of the 101%-of-paid-regular-premiums floor net Growth/Flex withdrawals or current Growth/Flex account value plus Additional Investment Account value after manual current amount owing, the current accidental-death estimate as the higher of the 105%-of-paid-regular-premiums floor net Growth/Flex withdrawals or current Growth/Flex account value plus Additional Investment Account value after manual current amount owing when cash dividend payouts are not active, a payable-now accidental-disability snapshot from that same corridor once the current accidental-disability payout stage is filled, and Growth Account dividend-election support through the manual distribution-mode kernel. Accidental-death pre-existing-condition / suicide exclusions, later accidental-disability release timing, Premium Pass, Wealth Share, and secondary-life options remain informational only.",
       "Set the actual Growth/Flex regular-premium split before trusting the fee-drag output. The seeded draft defaults to 50/50.",
       "Growth Account dividend payout is only allowed after 10 years from the cover start date once 10 years of premiums have been paid.",
+      "The current-state death-benefit estimate is modeled as the higher of the 101%-of-paid-regular-premiums floor net Growth/Flex withdrawals or current Growth/Flex account value, plus Additional Investment Account value, after manual current amount owing.",
+      "The current accidental-death estimate is modeled as the higher of the 105%-of-paid-regular-premiums floor net Growth/Flex withdrawals or current Growth/Flex account value, plus Additional Investment Account value, after manual current amount owing when cash dividend payouts are not active.",
+      "The payable-now accidental-disability snapshot is modeled from the same current corridor once the current accidental-disability payout stage is filled.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.",
+      "The current-state death-benefit estimate needs a manual current amount owing input because current debt is not reconstructed from history in V1.",
+      "Cash dividend-payout history from the Growth Account is not reconstructed from today’s static snapshot, so the current-state death and accidental-death estimates are omitted whenever manual cash payout mode is active.",
+      "Accidental-death pre-existing-condition / suicide exclusions and other death-claim settlement mechanics remain informational only beyond the modeled current ordinary and accidental-death benefit estimates.",
+      "Accidental-disability deferment timing, staged later-balance release, disability-status revalidation, pre-existing-condition / suicide exclusions, and broader claim settlement mechanics remain informational only beyond the modeled payable-now accidental-disability snapshot.",
       "Premium Pass, Wealth Share, and secondary-life/ownership options remain informational only."
     ]
   },

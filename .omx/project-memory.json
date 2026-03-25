@@ -1,0 +1,33 @@
+{
+  "directives": [
+    {
+      "directive": "For ILP autopilot-loop work, lock to one canonical worktree per lane. After any killed vitest run, lost PTY/session, or aborted turn, run a mandatory interruption audit before more edits: inspect git diff for touched files, inspect exact edited blocks, rerun touched tests, then rerun the real gate. Do not silently switch worktrees or continue patching through an interrupted verification state.",
+      "priority": "high",
+      "context": "Structural fix after repeated loop churn from interrupted vitest sessions and worktree drift.",
+      "timestamp": "2026-03-16T11:43:34.144Z"
+    },
+    {
+      "directive": "When using subagents in Codex, reuse existing agents where possible and close them promptly after their sidecar task is integrated. Do not leave idle agents alive, because the thread limit can block needed delegation later.",
+      "priority": "high",
+      "timestamp": "2026-03-17T09:40:49.896Z"
+    },
+    {
+      "directive": "When the subagent pool is saturated or has hit the max thread limit, always reuse an existing relevant agent before spawning a new one, and close idle agents promptly after integrating their result.",
+      "priority": "high",
+      "context": "User explicitly requested this after repeated agent-limit saturation during the ILP metadata-only lane.",
+      "timestamp": "2026-03-17T09:48:35.721Z"
+    },
+    {
+      "directive": "Agent handling rule: once the pool has ever hit the limit, reuse existing relevant agents first. Keep at most 1-2 live sidecars, keep the blocking edit local, reuse briefly, then close decisively after integrating the result. Do not leave idle agents alive.",
+      "priority": "high",
+      "context": "User clarified the correct operational policy after repeated agent-pool saturation during the ILP metadata-only lane.",
+      "timestamp": "2026-03-17T09:57:59.836Z"
+    },
+    {
+      "directive": "Treat the UI background-agent count as authoritative for saturation risk. If agent IDs return not_found but the UI still shows occupied slots, assume a UI/tool mismatch and avoid claiming the pool is free or spawning unnecessary replacements.",
+      "priority": "high",
+      "context": "User explicitly corrected mistaken assumptions about agent liveness when the UI still showed background agents.",
+      "timestamp": "2026-03-17T09:57:59.863Z"
+    }
+  ]
+}

@@ -10,7 +10,23 @@
     "coverageTags": [
       "ocf-stress",
       "branch:great-eastern-wa4-loyalty-bonus",
-      "branch:great-eastern-wa4-surrender-charge"
+      "branch:great-eastern-wa4-surrender-charge",
+      "kernel:protected-base-assurance",
+      "kernel:current-death-benefit-estimate",
+      "kernel:current-ti-benefit-estimate",
+      "kernel:current-tpd-benefit-estimate",
+      "branch:great-eastern-wa4-welcome-bonus",
+      "branch:great-eastern-wa4-premium-bonus",
+      "branch:great-eastern-wa4-policy-fee-rate",
+      "branch:great-eastern-wa4-fixed-policy-fee",
+      "branch:great-eastern-wa4-insurance-charge",
+      "branch:great-eastern-wa4-premium-holiday-charge",
+      "branch:great-eastern-wa4-premium-holiday-charge-refund",
+      "branch:great-eastern-wa4-top-up-premium-charge",
+      "branch:great-eastern-wa4-partial-withdrawal-charge",
+      "kernel:top-up-amount-gate-block",
+      "kernel:premium-holiday-top-up-block",
+      "kernel:top-up-paid-up-to-date-block"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "PS(EN)_GREAT Wealth Advantage 4_(SG)_v2.0.pdf",
@@ -466,6 +482,9 @@
       "structureStatus": "structured",
       "modeledEconomics": [
         "kernel:protected-base-assurance",
+        "kernel:current-death-benefit-estimate",
+        "kernel:current-ti-benefit-estimate",
+        "kernel:current-tpd-benefit-estimate",
         "branch:great-eastern-wa4-welcome-bonus",
         "branch:great-eastern-wa4-premium-bonus",
         "branch:great-eastern-wa4-loyalty-bonus",
@@ -476,7 +495,10 @@
         "branch:great-eastern-wa4-premium-holiday-charge-refund",
         "branch:great-eastern-wa4-top-up-premium-charge",
         "branch:great-eastern-wa4-partial-withdrawal-charge",
-        "branch:great-eastern-wa4-surrender-charge"
+        "branch:great-eastern-wa4-surrender-charge",
+        "kernel:top-up-amount-gate-block",
+        "kernel:premium-holiday-top-up-block",
+        "kernel:top-up-paid-up-to-date-block"
       ],
       "metadataOnlyBehaviors": [
         "great-eastern-wa4-tpd-continuation-event",
@@ -487,19 +509,22 @@
       ]
     },
     "catalogWarnings": [
-      "GREAT Wealth Advantage 4 is cataloged as a supported V1 corridor. The parser captures the published bonus path, policy fee, monthly insurance charge, premium-holiday charge, the premium-holiday-charge refund path, top-up charge, and partial-withdrawal / surrender schedules, while application-gated mechanics such as TPD continuation events, change-of-life-assured handling, and AFR administration remain metadata only.",
-      "GREAT Wealth Advantage 4 is modeled as a supported V1 corridor. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, monthly insurance charge, premium-holiday charge, the premium-holiday-charge refund path, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.",
+      "GREAT Wealth Advantage 4 is cataloged as a supported V1 corridor. The parser captures the published bonus path, policy fee, monthly insurance charge, the current-state death / terminal-illness / TPD benefit estimate as the higher of policy value or the 101%-of-paid-premiums floor after partial withdrawals including withdrawal charges and current amount owing, with TPD capped by a manual remaining aggregate TPD cap, the current admitted-state TI payable amount through the published full-termination TI corridor after manual claim-amount entry, an admitted-and-settled TI claim as a current policy-termination state, premium-holiday charge, the premium-holiday-charge refund path, the published S$1,000 single-premium top-up minimum, premium-holiday and paid-up-to-date top-up blocking, and partial-withdrawal / surrender schedules, while TPD continuation-event state, terminal-illness exclusions / settlement / broader post-claim continuation, and administrative gating on premium reductions, change of life assured, and AFR remain informational only beyond the modeled current death / terminal-illness / TPD benefit estimate.",
+      "GREAT Wealth Advantage 4 is modeled as a supported V1 corridor. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, monthly insurance charge, the current-state death / terminal-illness / TPD benefit estimate as the higher of policy value or the 101% paid-premium floor after partial withdrawals including withdrawal charges and current amount owing, with TPD capped by a manual remaining aggregate TPD cap, premium-holiday charge, the premium-holiday-charge refund path, the published S$1,000 single-premium top-up minimum, premium-holiday and paid-up-to-date top-up blocking, and the published partial-withdrawal / surrender charge schedules.",
       "This high-annualised-premium variant assumes the additional S$5 monthly policy fee does not apply throughout the modeled path unless you manually switch variants after a premium change.",
-      "Administrative gating on top-ups, premium reductions, change of life assured, and AFR remains informational only.",
+      "The current-state death / terminal-illness / TPD benefit estimate needs a manual current amount owing input because current debt is not reconstructed from history in V1.",
+      "The current-state TPD estimate needs a manual remaining aggregate TPD cap input because Great Eastern’s S$5,000,000 aggregate TPD limit is not reconstructed across policies and riders in V1.",
+      "The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state, but TPD continuation-event state plus terminal-illness exclusions, settlement, and broader post-claim continuation remain informational only.",
+      "Administrative gating on premium reductions, change of life assured, and AFR remains informational only.",
       "Prevailing-annualised-premium transitions across the S$6,000 fixed-fee threshold are not modeled dynamically; switch variants manually if the threshold changes after a premium reduction."
     ]
   },
   "expected": {
     "summary": {
       "totalPremiumsPaid": 134400,
-      "totalFeesCharged": 4104.15,
-      "totalBonusesReceived": 228.96,
-      "netFeeDrag": 3875.19,
+      "totalFeesCharged": 4104.47,
+      "totalBonusesReceived": 0,
+      "netFeeDrag": 4104.47,
       "currentSurrenderValue": 37800,
       "cancelNowPenalty": 4200
     },
@@ -551,34 +576,34 @@
           "exitYear": 4,
           "policyYear": 15,
           "eecRate": 0.07,
-          "eecCharge": 6218.87,
-          "pvEec": 4744.34,
-          "npvGrossFees": 3423.56,
-          "npvBonuses": 174.67,
-          "totalNpvFees": 7993.23,
-          "netSurrenderValue": 82622.08,
+          "eecCharge": 6201.96,
+          "pvEec": 4731.45,
+          "npvGrossFees": 3423.8,
+          "npvBonuses": 0,
+          "totalNpvFees": 8155.25,
+          "netSurrenderValue": 82397.53,
           "totalContributions": 134400
         }
       ],
       "bestExitYear": 1,
       "bestExitNpvFees": 4674.42,
       "holdToMip": {
-        "npvGrossFees": 3423.56,
-        "npvBonuses": 174.67,
-        "totalNpvFees": 7993.23,
-        "finalValue": 88840.94,
+        "npvGrossFees": 3423.8,
+        "npvBonuses": 0,
+        "totalNpvFees": 8155.25,
+        "finalValue": 88599.5,
         "totalContributions": 134400
       }
     },
     "opportunityCost": {
       "alternativePortfolioValue": 92171.54,
-      "ilpValueAtHorizon": 88840.94,
-      "difference": 3330.6,
+      "ilpValueAtHorizon": 88599.5,
+      "difference": 3572.04,
       "atBestExit": {
         "exitYear": 1,
         "alternativeValue": 90630.75,
-        "ilpValueAtHorizon": 88840.94,
-        "difference": 1789.81
+        "ilpValueAtHorizon": 88599.5,
+        "difference": 2031.26
       }
     },
     "projections": {
@@ -665,23 +690,23 @@
             "policyYear": 15,
             "annualContribution": 9600,
             "annualWithdrawals": 0,
-            "combinedValue": 80217.46,
+            "combinedValue": 80002.21,
             "eecRate": 0.07,
-            "eecCharge": 5615.22,
-            "surrenderValue": 74602.24,
+            "eecCharge": 5600.15,
+            "surrenderValue": 74402.05,
             "cumulativePremiums": 134400,
-            "cumulativeGrossFees": 3978.66,
-            "cumulativeBonuses": 211.54,
+            "cumulativeGrossFees": 3978.94,
+            "cumulativeBonuses": 0,
             "accounts": [
               {
                 "accountId": "policy",
                 "open": 70514.4,
                 "contributionAmount": 9600,
-                "grossFee": 1234.25,
-                "bonusCredit": 211.54,
-                "netFee": 1022.71,
+                "grossFee": 1234.53,
+                "bonusCredit": 0,
+                "netFee": 1234.53,
                 "withdrawalAmount": 0,
-                "close": 80217.46
+                "close": 80002.21
               }
             ]
           }
@@ -770,23 +795,23 @@
             "policyYear": 15,
             "annualContribution": 9600,
             "annualWithdrawals": 0,
-            "combinedValue": 88840.94,
+            "combinedValue": 88599.5,
             "eecRate": 0.07,
-            "eecCharge": 6218.87,
-            "surrenderValue": 82622.08,
+            "eecCharge": 6201.96,
+            "surrenderValue": 82397.53,
             "cumulativePremiums": 134400,
-            "cumulativeGrossFees": 4104.15,
-            "cumulativeBonuses": 228.96,
+            "cumulativeGrossFees": 4104.47,
+            "cumulativeBonuses": 0,
             "accounts": [
               {
                 "accountId": "policy",
                 "open": 76318.94,
                 "contributionAmount": 9600,
-                "grossFee": 1302.49,
-                "bonusCredit": 228.96,
-                "netFee": 1073.53,
+                "grossFee": 1302.8,
+                "bonusCredit": 0,
+                "netFee": 1302.8,
                 "withdrawalAmount": 0,
-                "close": 88840.94
+                "close": 88599.5
               }
             ]
           }
@@ -875,23 +900,23 @@
             "policyYear": 15,
             "annualContribution": 9600,
             "annualWithdrawals": 0,
-            "combinedValue": 97145.73,
+            "combinedValue": 96879.06,
             "eecRate": 0.07,
-            "eecCharge": 6800.2,
-            "surrenderValue": 90345.52,
+            "eecCharge": 6781.53,
+            "surrenderValue": 90097.53,
             "cumulativePremiums": 134400,
-            "cumulativeGrossFees": 4219.19,
-            "cumulativeBonuses": 245.27,
+            "cumulativeGrossFees": 4219.54,
+            "cumulativeBonuses": 0,
             "accounts": [
               {
                 "accountId": "policy",
                 "open": 81756.12,
                 "contributionAmount": 9600,
-                "grossFee": 1366.11,
-                "bonusCredit": 245.27,
-                "netFee": 1120.84,
+                "grossFee": 1366.46,
+                "bonusCredit": 0,
+                "netFee": 1366.46,
                 "withdrawalAmount": 0,
-                "close": 97145.73
+                "close": 96879.06
               }
             ]
           }

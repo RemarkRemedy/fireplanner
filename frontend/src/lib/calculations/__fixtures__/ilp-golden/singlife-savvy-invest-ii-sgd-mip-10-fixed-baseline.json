@@ -10,11 +10,18 @@
     "coverageTags": [
       "baseline",
       "kernel:distribution-mode-assumption",
+      "kernel:current-death-benefit-estimate",
+      "kernel:current-ti-benefit-estimate",
       "branch:singlife-savvy-invest-ii-welcome-bonus",
       "branch:singlife-savvy-invest-ii-regular-premium-allocation-uplift",
       "branch:singlife-savvy-invest-ii-loyalty-bonus",
+      "branch:singlife-savvy-invest-ii-cost-of-insurance",
       "branch:singlife-savvy-invest-ii-administrative-charge",
-      "branch:singlife-savvy-invest-ii-supplementary-charge"
+      "branch:singlife-savvy-invest-ii-supplementary-charge",
+      "branch:singlife-savvy-invest-ii-zero-top-up-charge",
+      "branch:singlife-savvy-invest-ii-partial-withdrawal-charge",
+      "branch:singlife-savvy-invest-ii-surrender-charge",
+      "branch:singlife-savvy-invest-ii-premium-shortfall-charge"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "SinglifeSavvyInvestII_PS_Dec25.pdf",
@@ -29,6 +36,13 @@
     "monthsAlreadyPaid": 96,
     "currentPolicyYear": 9,
     "icpMonths": 1,
+    "assuranceProfile": {
+      "currentAgeNextBirthday": 45,
+      "sex": "female",
+      "smokerStatus": "non-smoker",
+      "currentNetRegularPremiumBase": 96000,
+      "currentNetSupplementaryPremiumBase": 0
+    },
     "mipLength": 10,
     "postMipYears": 0,
     "eecTable": [
@@ -215,6 +229,24 @@
     ],
     "chargeRules": [
       {
+        "id": "cost-of-insurance",
+        "label": "Cost of Insurance (Death / TI)",
+        "basis": "assurance-sum-at-risk",
+        "activeWindow": "policy-term",
+        "appliesTo": [
+          "policy"
+        ],
+        "rate": 0,
+        "amount": 0,
+        "assuranceConfig": {
+          "formula": "singlife-savvy-invest-ii-death-ti",
+          "monthlyModalFactor": 0.083333,
+          "maxAgeNextBirthday": 120
+        },
+        "requiresManualInput": false,
+        "allocation": "pro-rata-by-value"
+      },
+      {
         "id": "administrative-charge",
         "label": "Administrative Charge",
         "basis": "account-value",
@@ -224,6 +256,7 @@
         ],
         "rate": 0.006,
         "amount": 0,
+        "requiresManualInput": false,
         "allocation": "equal-split"
       },
       {
@@ -238,6 +271,7 @@
         ],
         "rate": 0.019,
         "amount": 0,
+        "requiresManualInput": false,
         "allocation": "equal-split"
       }
     ],
@@ -254,6 +288,7 @@
         ],
         "rate": 0,
         "amount": 0,
+        "requiresManualInput": false,
         "allocation": "equal-split"
       },
       {
@@ -320,6 +355,7 @@
           }
         ],
         "amount": 0,
+        "requiresManualInput": false,
         "allocation": "equal-split"
       },
       {
@@ -386,6 +422,7 @@
           }
         ],
         "amount": 0,
+        "requiresManualInput": false,
         "allocation": "equal-split"
       }
     ],
@@ -402,36 +439,36 @@
         "branch:singlife-savvy-invest-ii-welcome-bonus",
         "branch:singlife-savvy-invest-ii-regular-premium-allocation-uplift",
         "branch:singlife-savvy-invest-ii-loyalty-bonus",
+        "branch:singlife-savvy-invest-ii-cost-of-insurance",
         "branch:singlife-savvy-invest-ii-administrative-charge",
         "branch:singlife-savvy-invest-ii-supplementary-charge",
         "branch:singlife-savvy-invest-ii-zero-top-up-charge",
         "branch:singlife-savvy-invest-ii-partial-withdrawal-charge",
         "branch:singlife-savvy-invest-ii-surrender-charge",
         "branch:singlife-savvy-invest-ii-premium-shortfall-charge",
+        "kernel:current-death-benefit-estimate",
+        "kernel:current-ti-benefit-estimate",
         "kernel:distribution-mode-assumption"
       ],
       "metadataOnlyBehaviors": [
-        "singlife-savvy-invest-ii-life-stage-benefit",
-        "singlife-savvy-invest-ii-cost-of-insurance",
-        "singlife-savvy-invest-ii-protection-benefits",
+        "singlife-savvy-invest-ii-life-stage-benefit-eligibility-and-limit-overrides",
         "singlife-savvy-invest-ii-change-of-life-assured",
         "singlife-savvy-invest-ii-appendix-b-withdrawal-limits",
-        "singlife-savvy-invest-ii-flexible-and-other-mip-corridors",
         "singlife-savvy-invest-ii-fund-management-and-switching"
       ]
     },
     "catalogWarnings": [
-      "Singlife Savvy Invest II is cataloged as a supported V1 product for the SGD / 10 years (Fixed) corridor. The parser captures welcome bonus tiers, regular-premium allocation uplifts, loyalty-bonus windows, administrative and supplementary charges, the currently nil top-up charge, the Appendix A surrender / withdrawal / premium-shortfall schedules, and reinvest-default distribution support.",
-      "Life Stage Benefit waivers, cost of insurance, protection-side benefits, allowable partial-withdrawal limits, and other MIP corridors remain informational only.",
+      "Singlife Savvy Invest II is cataloged as a supported V1 product for the published SGD / 3 years (Fixed), 5 years (Fixed), 5 years (Flexible), 10 years (Fixed), 10 years (Flexible), and 20 years (Flexible) corridors. The parser captures the corridor-specific welcome bonus tiers and Appendix A surrender / withdrawal / premium-shortfall schedules, plus the shared regular-premium allocation uplifts, loyalty-bonus windows, guaranteed cost-of-insurance formula after you enter insured-life details and current premium bases, administrative and supplementary charges, the currently nil top-up charge, the current-state death and terminal-illness benefit amount as the higher of 101% of total basic regular premiums paid plus top-ups less withdrawals or account value less manual current amount owing, and reinvest-default distribution support.",
+      "Qualifying Life Stage Benefit withdrawals can be represented in V1 with event-level charge and loyalty-bonus-suspension waivers, while benefit timing, proof, use-count, and allowable partial-withdrawal limits from Appendix B remain informational only beyond the modeled current ordinary death and terminal-illness benefit amount. An admitted-and-settled terminal-illness claim is supported as a current policy-termination state.",
       "Structured extraction validated against the Singlife Savvy Invest II product summary text layer.",
-      "This supported template models the SGD / 10 years (Fixed) corridor only.",
-      "This supported template models the welcome bonus tiers, the 100% / 102% / 105% regular-premium allocation ladder, the published loyalty-bonus payment windows, the 0.60% administrative charge, the first-10-policy-years 1.90% supplementary charge, the currently nil top-up charge, the Appendix A surrender / withdrawal / premium-shortfall schedules, and the reinvest-default distribution-mode assumption surface.",
-      "Life Stage Benefit, cost of insurance, and other minimum-investment-period variants remain informational only in V1.",
+      "This supported template models the SGD / 10 years (Fixed) corridor.",
+      "This supported template models the welcome bonus tiers, the 100% / 102% / 105% regular-premium allocation ladder, the published loyalty-bonus payment windows, the guaranteed cost-of-insurance formula after insured-life details and current premium bases are entered, the 0.60% administrative charge, the first-10-policy-years 1.90% supplementary charge, the currently nil top-up charge, the current-state death and terminal-illness benefit amount as the higher of 101% of total basic regular premiums paid plus top-ups less withdrawals or account value less manual current amount owing, the Appendix A surrender / withdrawal / premium-shortfall schedules, and the reinvest-default distribution-mode assumption surface.",
+      "Qualifying Life Stage Benefit withdrawals can be represented in V1 with event-level charge and loyalty-bonus-suspension waivers, while benefit timing, proof, use-count, and Appendix B allowable partial-withdrawal-limit overrides remain informational only. An admitted-and-settled terminal-illness claim is supported as a current policy-termination state.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption, and payouts below the published minimum annual cash-payout amount of $40 remain reinvested.",
-      "Life Stage Benefit penalty waivers, timing windows, and allowable partial-withdrawal-limit overrides remain informational only.",
-      "Cost of Insurance and all death / terminal-illness protection payouts remain informational only because they depend on sum at risk, attained age, gender, smoking status, and claim-state handling.",
+      "Life Stage Benefit timing windows, use-count limits, and Appendix B allowable partial-withdrawal-limit overrides remain informational only.",
+      "The current-state death-benefit estimate needs a manual current amount owing input because indebtedness is not reconstructed from history in V1.",
+      "The current-state terminal-illness benefit amount is modeled as an early payout of the current death-benefit estimate after manual current amount owing, and an admitted-and-settled terminal-illness claim is supported as a current policy-termination state, but pre-settlement claim admission, exclusions, and other post-claim policy effects remain informational only.",
       "Change of Life Assured and rider continuity effects remain informational only.",
-      "Flexible MIP variants, other fixed MIP variants, and other annualised-premium corridors remain informational only.",
       "Allowable partial withdrawal amount limits from Appendix B remain informational only.",
       "Fund switching, fund-level annual management charges, and future non-guaranteed top-up-charge changes remain informational only."
     ]
@@ -439,9 +476,9 @@
   "expected": {
     "summary": {
       "totalPremiumsPaid": 108000,
-      "totalFeesCharged": 930,
+      "totalFeesCharged": 974.73,
       "totalBonusesReceived": 0,
-      "netFeeDrag": 930,
+      "netFeeDrag": 974.73,
       "currentSurrenderValue": 25500,
       "cancelNowPenalty": 4500
     },
@@ -457,34 +494,34 @@
           "exitYear": 1,
           "policyYear": 10,
           "eecRate": 0.1,
-          "eecCharge": 4172.23,
-          "pvEec": 3899.28,
-          "npvGrossFees": 869.16,
+          "eecCharge": 4167.52,
+          "pvEec": 3894.88,
+          "npvGrossFees": 910.96,
           "npvBonuses": 0,
-          "totalNpvFees": 4768.44,
-          "netSurrenderValue": 37550.1,
+          "totalNpvFees": 4805.84,
+          "netSurrenderValue": 37507.7,
           "totalContributions": 108000
         }
       ],
       "bestExitYear": 1,
-      "bestExitNpvFees": 4768.44,
+      "bestExitNpvFees": 4805.84,
       "holdToMip": {
-        "npvGrossFees": 869.16,
+        "npvGrossFees": 910.96,
         "npvBonuses": 0,
-        "totalNpvFees": 4768.44,
-        "finalValue": 41722.34,
+        "totalNpvFees": 4805.84,
+        "finalValue": 41675.22,
         "totalContributions": 108000
       }
     },
     "opportunityCost": {
       "alternativePortfolioValue": 39285,
-      "ilpValueAtHorizon": 41722.34,
-      "difference": -2437.34,
+      "ilpValueAtHorizon": 41675.22,
+      "difference": -2390.22,
       "atBestExit": {
         "exitYear": 1,
-        "alternativeValue": 37550.1,
-        "ilpValueAtHorizon": 41722.34,
-        "difference": -4172.23
+        "alternativeValue": 37507.7,
+        "ilpValueAtHorizon": 41675.22,
+        "difference": -4167.52
       }
     },
     "projections": {
@@ -496,23 +533,23 @@
             "policyYear": 10,
             "annualContribution": 12000,
             "annualWithdrawals": 900,
-            "combinedValue": 40960.7,
+            "combinedValue": 40914.5,
             "eecRate": 0.1,
-            "eecCharge": 4096.07,
-            "surrenderValue": 36864.63,
+            "eecCharge": 4091.45,
+            "surrenderValue": 36823.05,
             "cumulativePremiums": 108000,
-            "cumulativeGrossFees": 930,
+            "cumulativeGrossFees": 974.98,
             "cumulativeBonuses": 0,
             "accounts": [
               {
                 "accountId": "policy",
                 "open": 30000,
                 "contributionAmount": 12000,
-                "grossFee": 930,
+                "grossFee": 974.98,
                 "bonusCredit": 0,
-                "netFee": 930,
+                "netFee": 974.98,
                 "withdrawalAmount": 900,
-                "close": 40960.7
+                "close": 40914.5
               }
             ]
           }
@@ -526,23 +563,23 @@
             "policyYear": 10,
             "annualContribution": 12000,
             "annualWithdrawals": 900,
-            "combinedValue": 41722.34,
+            "combinedValue": 41675.22,
             "eecRate": 0.1,
-            "eecCharge": 4172.23,
-            "surrenderValue": 37550.1,
+            "eecCharge": 4167.52,
+            "surrenderValue": 37507.7,
             "cumulativePremiums": 108000,
-            "cumulativeGrossFees": 930,
+            "cumulativeGrossFees": 974.73,
             "cumulativeBonuses": 0,
             "accounts": [
               {
                 "accountId": "policy",
                 "open": 30000,
                 "contributionAmount": 12000,
-                "grossFee": 930,
+                "grossFee": 974.73,
                 "bonusCredit": 0,
-                "netFee": 930,
+                "netFee": 974.73,
                 "withdrawalAmount": 900,
-                "close": 41722.34
+                "close": 41675.22
               }
             ]
           }
@@ -556,23 +593,23 @@
             "policyYear": 10,
             "annualContribution": 12000,
             "annualWithdrawals": 900,
-            "combinedValue": 42385.13,
+            "combinedValue": 42337.24,
             "eecRate": 0.1,
-            "eecCharge": 4238.51,
-            "surrenderValue": 38146.62,
+            "eecCharge": 4233.72,
+            "surrenderValue": 38103.51,
             "cumulativePremiums": 108000,
-            "cumulativeGrossFees": 930,
+            "cumulativeGrossFees": 974.51,
             "cumulativeBonuses": 0,
             "accounts": [
               {
                 "accountId": "policy",
                 "open": 30000,
                 "contributionAmount": 12000,
-                "grossFee": 930,
+                "grossFee": 974.51,
                 "bonusCredit": 0,
-                "netFee": 930,
+                "netFee": 974.51,
                 "withdrawalAmount": 900,
-                "close": 42385.13
+                "close": 42337.24
               }
             ]
           }

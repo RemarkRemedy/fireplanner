@@ -25,6 +25,9 @@ interface AiaInvestEasyConfig {
   metadataOnlyBehaviors: string[]
   warnings: string[]
   unsupportedItems: string[]
+  minimumTopUpAmount?: number
+  minimumPartialWithdrawalAmount?: number
+  partialWithdrawalMinimumPolicyValue?: number
 }
 
 function normalizeWhitespace(text: string): string {
@@ -120,6 +123,57 @@ function buildVariant(document: ExtractedPdfDocument, config: AiaInvestEasyConfi
     },
   ]
 
+  if (config.partialWithdrawalMinimumPolicyValue != null) {
+    eventChargeRules.push({
+      id: 'partial-withdrawal-charge',
+      label: 'Partial Withdrawal Charge',
+      trigger: 'partial-withdrawal',
+      basis: 'event-amount',
+      appliesTo: ['policy'],
+      rate: 0,
+      amount: 0,
+      activeWindow: 'policy-term',
+      allocation: 'equal-split',
+      notes: [
+        'No policy-level partial withdrawal charge is stated in the summary.',
+        `V1 blocks explicit one-off partial withdrawals that would leave policy value below the published S$${config.partialWithdrawalMinimumPolicyValue.toLocaleString('en-SG')} residual floor.`,
+        config.minimumPartialWithdrawalAmount != null
+          ? `V1 also blocks explicit one-off partial withdrawals below the published S$${config.minimumPartialWithdrawalAmount.toLocaleString('en-SG')} minimum amount.`
+          : 'Minimum withdrawal amount remains informational only in V1.',
+        'Fund-sale routing and free-look timing remain informational only in V1.',
+      ],
+      sourceRefs: [page2, page3],
+    })
+  }
+
+  const policyStateSupport = (() => {
+    const support: NonNullable<IlpTemplateVariant['policyStateSupport']> = {}
+
+    if (config.minimumTopUpAmount != null) {
+      support.automaticLapseOnAccountValueDepletion = false
+      support.minimumTopUpAmount = config.minimumTopUpAmount
+    }
+
+    if (config.partialWithdrawalMinimumPolicyValue != null) {
+      support.automaticLapseOnAccountValueDepletion = false
+      if (config.minimumPartialWithdrawalAmount != null) {
+        support.minimumPartialWithdrawalAmount = config.minimumPartialWithdrawalAmount
+      }
+      support.partialWithdrawalMinimumRemainingValueRules = [
+        {
+          activeWindow: 'policy-term',
+          basis: 'policy-value',
+          minimumValue: config.partialWithdrawalMinimumPolicyValue,
+        },
+      ]
+    } else if (config.minimumPartialWithdrawalAmount != null) {
+      support.automaticLapseOnAccountValueDepletion = false
+      support.minimumPartialWithdrawalAmount = config.minimumPartialWithdrawalAmount
+    }
+
+    return Object.keys(support).length === 0 ? undefined : support
+  })()
+
   return {
     id: config.variantId,
     currency: 'SGD',
@@ -143,6 +197,7 @@ function buildVariant(document: ExtractedPdfDocument, config: AiaInvestEasyConfi
     bonuses: [],
     feeRules,
     eventChargeRules,
+    policyStateSupport,
     eecTable: [],
     warnings: [
       ...config.warnings,

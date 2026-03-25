@@ -186,12 +186,12 @@ function buildVariant(document: ExtractedPdfDocument, variantId: VariantId): Ilp
     eventChargeRules,
     eecTable: [],
     warnings: [
-      `${variantWarningLabel} is cataloged as a supported V1 corridor. The parser captures the quote-driven premium-charge surface through manual input, the quote-driven wrap-fee surface through manual input, the published 0.2% p.a. policy fee, the quote-driven top-up premium-charge surface through manual input, and the nil policy-level withdrawal / surrender charge path through the open-ended basis.`,
+      `${variantWarningLabel} is cataloged as a supported V1 corridor. The parser captures the quote-driven premium-charge surface through manual input, the quote-driven wrap-fee surface through manual input, the published 0.2% p.a. policy fee, the current-state death-benefit estimate as total investment value, the current-state accidental-death estimate as the higher of total investment value or a manual current basic sum assured before age 80 next birthday, the quote-driven top-up premium-charge surface through manual input, and the nil policy-level withdrawal / surrender charge path through the open-ended basis.`,
       `Enter the actual premium-charge and wrap-fee percentages from the issued ${premiumDocumentLabel} before trusting the analysis.`,
     ],
     unsupportedItems: [
       'Regular-premium cash corridor remains informational only because the early-surrender deductions are shown only in the policy illustration rather than as a published fixed catalog schedule.',
-      'Death-benefit and accidental-death-benefit payout handling remain informational only, including basic-sum-assured state tracking for recurrent single premium.',
+      'Accidental-death claim admission, exclusions, settlement timing, and basic-sum-assured history after future withdrawals remain informational only beyond the modeled current ordinary and accidental-death benefit estimates.',
       'SRS return-destination handling on withdrawals and surrender remains informational only.',
       'Fund switching, premium-apportionment changes, and minimum-transaction guards remain informational only.',
       'Post-issue fee changes, newly introduced fees, and fund-level charges remain informational only.',
@@ -213,6 +213,8 @@ export function parseGreatEasternPrestigePortfolio(context: ParseContext): IlpCa
     structureStatus: 'structured',
     economicsStatus: 'supported',
     modeledEconomics: [
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
       'branch:great-eastern-prestige-portfolio-premium-charge-manual-input',
       'branch:great-eastern-prestige-portfolio-recurrent-single-premium-charge-manual-input',
       'branch:great-eastern-prestige-portfolio-wrap-fee-manual-input',
@@ -224,8 +226,8 @@ export function parseGreatEasternPrestigePortfolio(context: ParseContext): IlpCa
     metadataOnlyBehaviors: [
       'great-eastern-prestige-portfolio-regular-premium-corridor',
       'great-eastern-prestige-portfolio-regular-premium-surrender-deductions',
-      'great-eastern-prestige-portfolio-death-and-accidental-death-benefits',
-      'great-eastern-prestige-portfolio-basic-sum-assured-state',
+      'great-eastern-prestige-portfolio-accidental-death-claim-exclusions',
+      'great-eastern-prestige-portfolio-basic-sum-assured-history',
       'great-eastern-prestige-portfolio-srs-return-destination',
       'great-eastern-prestige-portfolio-fund-switching',
       'great-eastern-prestige-portfolio-minimum-transaction-guards',
@@ -233,8 +235,8 @@ export function parseGreatEasternPrestigePortfolio(context: ParseContext): IlpCa
       'great-eastern-prestige-portfolio-fund-level-fees',
     ],
     warnings: [
-      'Prestige Portfolio is cataloged as a supported V1 corridor for the single-premium cash, single-premium SRS, and recurrent-single-premium SRS paths. The parser captures the quote-driven premium-charge and wrap-fee surfaces through manual input, the published 0.2% p.a. policy fee, the quote-driven top-up and recurrent-single-premium charge paths through manual input, and the nil policy-level withdrawal / surrender charge path through the open-ended basis.',
-      'Protection-side benefits, basic-sum-assured state tracking, and the regular-premium cash corridor with policy-illustration-specific surrender deductions remain informational only.',
+      'Prestige Portfolio is cataloged as a supported V1 corridor for the single-premium cash, single-premium SRS, and recurrent-single-premium SRS paths. The parser captures the quote-driven premium-charge and wrap-fee surfaces through manual input, the published 0.2% p.a. policy fee, the current-state death-benefit estimate as total investment value, the current-state accidental-death estimate as the higher of total investment value or a manual current basic sum assured before age 80 next birthday, the quote-driven top-up and recurrent-single-premium charge paths through manual input, and the nil policy-level withdrawal / surrender charge path through the open-ended basis.',
+      'Accidental-death claim admission, exclusions, settlement timing, basic-sum-assured history after future withdrawals, and the regular-premium cash corridor with policy-illustration-specific surrender deductions remain informational only beyond the modeled current ordinary and accidental-death benefit estimates.',
     ],
     archived: false,
     variants: [

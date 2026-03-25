@@ -10,7 +10,38 @@
     "coverageTags": [
       "baseline",
       "branch:tokio-wealth-pro-ii-advanced-death-monthly-protection-charge-accrual",
-      "kernel:current-death-benefit-estimate"
+      "kernel:current-death-benefit-estimate",
+      "tokio-initial-vs-accumulation-regular-premium-routing",
+      "tokio-initial-bonus-tiered-premium-allocation",
+      "tokio-performance-investment-bonus",
+      "tokio-loyalty-bonus",
+      "tokio-power-up-bonus",
+      "tokio-top-up-routing",
+      "kernel:top-up-start-policy-month-block",
+      "kernel:top-up-amount-gate-block",
+      "tokio-post-mip-regular-premium-routing-back-to-initial-account",
+      "tokio-recurring-single-premium-routing",
+      "kernel:minimum-recurring-single-premium-start-month",
+      "kernel:minimum-recurring-single-premium-amount",
+      "kernel:committed-premium-rsp-resumption-gate",
+      "tokio-recurring-single-premium-manual-resumption-after-premium-holiday",
+      "tokio-regular-premium-reduction-consumes-recurring-single-premium-first",
+      "tokio-initial-charge-on-initial-account",
+      "tokio-policy-charge-on-accumulation-account",
+      "tokio-admin-charge-on-initial-account",
+      "tokio-top-up-premium-charge",
+      "tokio-recurring-single-premium-charge",
+      "tokio-initial-account-surrender-charge",
+      "tokio-accumulation-partial-withdrawal-charge",
+      "tokio-premium-shortfall-charge-non-payment",
+      "tokio-premium-shortfall-charge-regular-premium-reduction",
+      "tokio-premium-increase-restores-shortfall-charge-cessation",
+      "tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only",
+      "tokio-explicit-charge-waiver-for-partial-withdrawal-and-shortfall-events",
+      "kernel:free-withdrawal-event-cap",
+      "kernel:manual-charge-waiver-grant-limits",
+      "branch:tokio-current-only-multi-life-life-state",
+      "kernel:distribution-mode-assumption"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "TML_UNZS_TPDN_CIZ_Summary.pdf",
@@ -435,6 +466,12 @@
         "appliesTo": [
           "accumulation"
         ],
+        "manualWaiverMode": "capped-free-event",
+        "manualWaiverGrantGroup": "tokio-wealth-pro-ii-manual-charge-waiver",
+        "manualWaiverMaxGrantCount": 3,
+        "freeEventCount": 3,
+        "freeEventMaxAmountRate": 0.15,
+        "freeEventMaxAmountBasis": "open-balance",
         "rate": 0,
         "rateSchedule": [
           {
@@ -490,6 +527,9 @@
           "topup",
           "initial"
         ],
+        "manualWaiverGrantGroup": "tokio-wealth-pro-ii-manual-charge-waiver",
+        "manualWaiverMaxGrantCount": 3,
+        "manualWaiverMaxOverlapMonths": 12,
         "rate": 0,
         "rateSchedule": [
           {
@@ -547,6 +587,9 @@
           "topup",
           "initial"
         ],
+        "manualWaiverGrantGroup": "tokio-wealth-pro-ii-manual-charge-waiver",
+        "manualWaiverMaxGrantCount": 3,
+        "manualWaiverMaxOverlapMonths": 12,
         "rate": 0,
         "rateSchedule": [
           {
@@ -608,8 +651,13 @@
         "tokio-loyalty-bonus",
         "tokio-power-up-bonus",
         "tokio-top-up-routing",
+        "kernel:top-up-start-policy-month-block",
+        "kernel:top-up-amount-gate-block",
         "tokio-post-mip-regular-premium-routing-back-to-initial-account",
         "tokio-recurring-single-premium-routing",
+        "kernel:minimum-recurring-single-premium-start-month",
+        "kernel:minimum-recurring-single-premium-amount",
+        "kernel:committed-premium-rsp-resumption-gate",
         "tokio-recurring-single-premium-manual-resumption-after-premium-holiday",
         "tokio-regular-premium-reduction-consumes-recurring-single-premium-first",
         "tokio-initial-charge-on-initial-account",
@@ -624,37 +672,39 @@
         "tokio-premium-increase-restores-shortfall-charge-cessation",
         "tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only",
         "tokio-explicit-charge-waiver-for-partial-withdrawal-and-shortfall-events",
+        "kernel:free-withdrawal-event-cap",
+        "kernel:manual-charge-waiver-grant-limits",
         "branch:tokio-wealth-pro-ii-advanced-death-monthly-protection-charge-accrual",
+        "branch:tokio-current-only-multi-life-life-state",
         "kernel:current-death-benefit-estimate",
         "kernel:distribution-mode-assumption"
       ],
       "metadataOnlyBehaviors": [
         "tokio-wealth-pro-ii-advanced-death-payout-handling",
-        "tokio-wealth-pro-ii-multiple-life-last-life-settlement",
         "tokio-wealth-pro-ii-change-of-life-assured-and-life-replacement-administration"
       ]
     },
     "catalogWarnings": [
       "Structured extraction validated against the Wealth Pro (II) product summary text layer.",
       "Wealth Pro (II) is modeled with the published initial setup charge, policy investment charge, and admin charge tied to the commencement-date premium commitment.",
-      "Basic Death keeps Monthly Protection Charge metadata-only, the Advanced Death variant models the published first-three-policy-years accrual window and policy-year-4 lump-sum settlement after you enter the insured-life details and current net premium base, and the Advanced Death with Life Benefit Rider variant extends that same Monthly Protection Charge corridor through the policy anniversary immediately after age 99 for the single-life corridor.",
+      "Basic Death keeps Monthly Protection Charge metadata-only, the Advanced Death variant models the published first-three-policy-years accrual window and policy-year-4 lump-sum settlement after you enter the insured-life details and current net premium base with static current multi-life last-life handling, and the Advanced Death with Life Benefit Rider variant extends that same Monthly Protection Charge corridor through the policy anniversary immediately after age 99 with oldest-life MPC rating and youngest-life rider age gating on the same static current multi-life surface.",
       "Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge.",
       "Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.",
       "Regular premiums paid after the minimum investment period are modeled back into the Initial Units Account in line with the product summary.",
       "Dividend cash payouts are modeled through the manual distribution-mode assumption surface: only Accumulation Units Account and Top-up Units Account dividends may be paid in cash during the minimum investment period, Initial Units Account dividends join after the minimum investment period, payouts below SGD 50 remain reinvested, and cash-payout elections should be made at least 30 days before the record date.",
-      "Use the charge waiver toggle on qualifying premium holidays, regular-premium reductions, or partial withdrawals only after Tokio has approved the involuntary unemployment or hospitalisation waiver.",
-      "The Advanced Death and single-life Advanced Death with Life Benefit Rider variants both model the published first-three-policy-years Monthly Protection Charge accrual and policy-year-4 lump-sum catch-up before normal monthly-in-advance deductions resume.",
+      "Use the charge waiver toggle on qualifying premium holidays, regular-premium reductions, or partial withdrawals only after Tokio has approved the involuntary unemployment or hospitalisation benefit. The engine now honors the published up-to-15%-of-Accumulation-Units-Account withdrawal cap, the up-to-12-month premium-shortfall-charge waiver cap, and the shared three-grants-per-lifetime limit when related approved events share the same chargeWaiverGrantId.",
+      "The Advanced Death and Advanced Death with Life Benefit Rider variants both model the published first-three-policy-years Monthly Protection Charge accrual and policy-year-4 lump-sum catch-up before normal monthly-in-advance deductions resume.",
       "This supported template models the SGD / MIP 10 (Advanced Death) corridor only.",
       "This supported template models regular-premium routing through year 10, top-up routing, recurring single premium routing, the published initial setup charge, policy investment charge, admin charge, surrender charge on the Initial Units Account, and the published partial-withdrawal charge schedule.",
       "This supported template also models the published premium shortfall charge for non-payment periods and regular-premium reductions, including the higher-charge rule when both overlap.",
-      "The Advanced Death variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window, policy-year-4 lump-sum settlement, and the published sum-at-risk valuation across the Initial Units Account and Accumulation Units Account after you enter the insured-life details and current net premium base.",
+      "The Advanced Death variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window, policy-year-4 lump-sum settlement, static current multi-life last-life handling, and the published sum-at-risk valuation across the Initial Units Account and Accumulation Units Account after you enter the insured-life details and current net premium base.",
       "Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the restart month.",
       "Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD variant.",
       "The phase-specific dividend cash-payout account restrictions are modeled through the manual distribution-mode assumption surface, together with the published SGD 50 minimum payout threshold and 30-day record-date lead time.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption, and payouts below the published minimum annual cash-payout amount of S$50 remain reinvested.",
       "Cash payout elections for dividend-paying funds should be submitted at least 30 days before the record date.",
-      "Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, Advanced Death with Life Benefit Rider selection, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.",
-      "Involuntary unemployment and hospitalisation benefit waiver remains metadata-only for this product."
+      "Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, Advanced Death with Life Benefit Rider selection, and change-of-life-assured / life-replacement administration remain metadata-only for this product.",
+      "Involuntary unemployment and hospitalisation benefit approval timing, proof, exclusions, first-assured coverage, and Tokio’s discretionary variation of benefit grant counts remain informational only beyond the modeled explicit chargeWaived plus optional shared chargeWaiverGrantId event path."
     ]
   },
   "expected": {

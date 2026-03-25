@@ -26,6 +26,8 @@ describe('parseEtiqaInvestSmartVista', () => {
     expect(product.supportStatus).toBe('supported')
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-smart-vista-startup-bonus',
       'branch:etiqa-smart-vista-special-bonus',
       'branch:etiqa-smart-vista-loyalty-bonus',
@@ -33,12 +35,24 @@ describe('parseEtiqaInvestSmartVista', () => {
       'branch:etiqa-smart-vista-insurance-charge',
       'branch:etiqa-smart-vista-top-up-premium-charge',
       'branch:etiqa-smart-vista-startup-bonus-recovery',
+      'branch:etiqa-smart-vista-premium-shortfall-charge',
+      'branch:etiqa-smart-vista-premium-shortfall-refund',
+      'branch:etiqa-smart-vista-partial-withdrawal-charge',
       'branch:etiqa-smart-vista-surrender-charge',
       'branch:etiqa-smart-vista-top-up-account-routing',
+      'kernel:premium-holiday-top-up-block',
+      'kernel:top-up-amount-gate-block',
+      'kernel:free-withdrawal-event-cap',
+      'kernel:partial-withdrawal-amount-increment-block',
+      'kernel:partial-withdrawal-maximum-amount-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
+      'kernel:monthly-rate-bonus-crediting',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('etiqa-smart-vista-premium-shortfall-charge')
+    expect(product.metadataOnlyBehaviors).toContain('etiqa-smart-vista-free-partial-withdrawal-benefit-administration')
+    expect(product.metadataOnlyBehaviors).not.toContain('etiqa-smart-vista-premium-free-period-gated-shortfall-charge-after-policy-year-3')
     expect(product.metadataOnlyBehaviors).not.toContain('etiqa-smart-vista-insurance-charge')
     expect(product.metadataOnlyBehaviors).toContain('etiqa-smart-vista-shariah-fund-availability')
+    expect(product.warnings[0]).toContain('current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap')
     expect(product.warnings).toContain(
       'Only Shariah-compliant ILP Sub-Funds are available for subscription, switching, premium redirection, and redemptions under this policy.',
     )
@@ -46,10 +60,35 @@ describe('parseEtiqaInvestSmartVista', () => {
 
     const term10 = product.variants.find((variant) => variant.id === 'sgd-mip-10')
     expect(term10).toBeDefined()
+    expect(term10?.unsupportedItems).toContain('The current-state death and terminal-illness snapshot needs manual current amount owing and remaining aggregate TI cap inputs because debt and cross-policy TI cap usage are not reconstructed from history in V1.')
     expect(term10).toMatchObject({
       currency: 'SGD',
       mipLength: 10,
     })
+    expect(term10?.policyStateSupport).toEqual(expect.objectContaining({
+      automaticLapseOnAccountValueDepletion: false,
+      blockTopUpsDuringPremiumHoliday: true,
+      minimumTopUpAmount: 2_500,
+      topUpAmountIncrement: 100,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalAmountIncrement: 100,
+      partialWithdrawalMaximumAmountRules: [
+        {
+          activeWindow: 'during-mip',
+          accountId: 'regular',
+          basis: 'cumulative-paid-regular-premium-less-prior-gross-withdrawals',
+          maximumValueRate: 0.5,
+        },
+      ],
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'account-value',
+          accountId: 'regular',
+          minimumValue: 1_000,
+        },
+      ],
+    }))
     expect(term10?.feeRules).toEqual([
       expect.objectContaining({
         id: 'policy-charge-during-premium-term',
@@ -122,8 +161,10 @@ describe('parseEtiqaInvestSmartVista', () => {
         }),
         expect.objectContaining({
           id: 'loyalty-bonus',
+          mode: 'monthly-rate',
           startPolicyYear: 11,
           rate: 0.001,
+          suspensionRules: [{ trigger: 'partial-withdrawal', suspensionMonths: 12, startOffsetMonths: 1 }],
         }),
       ]),
     )

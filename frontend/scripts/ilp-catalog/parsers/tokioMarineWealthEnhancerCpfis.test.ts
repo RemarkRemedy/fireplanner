@@ -30,9 +30,11 @@ describe('parseTokioMarineWealthEnhancerCpfis', () => {
       'branch:tokio-marine-wealth-enhancer-cpfis-zero-top-up-charge',
       'branch:tokio-marine-wealth-enhancer-cpfis-zero-recurring-single-premium-charge',
       'branch:tokio-marine-wealth-enhancer-cpfis-zero-partial-withdrawal-charge',
+      'kernel:current-death-benefit-estimate',
       'tokio-recurring-single-premium-routing',
     ])
     expect(product.metadataOnlyBehaviors).toContain('tokio-marine-wealth-enhancer-cpfis-single-premium-policy-value-tracking')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-wealth-enhancer-cpfis-death-benefit')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-wealth-enhancer-cpfis-partial-withdrawal')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-wealth-enhancer-cpfis-full-surrender')
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended-cpf'])
@@ -46,7 +48,12 @@ describe('parseTokioMarineWealthEnhancerCpfis', () => {
         id: 'policy',
         contributionRules: [
           { phase: 'during-icp', targetAccountId: 'policy', contributionShare: 1 },
-          { phase: 'top-up', targetAccountId: 'policy', contributionShare: 1 },
+        ],
+      }),
+      expect.objectContaining({
+        id: 'topup',
+        contributionRules: [
+          { phase: 'top-up', targetAccountId: 'topup', contributionShare: 1 },
         ],
       }),
     ])
@@ -63,6 +70,7 @@ describe('parseTokioMarineWealthEnhancerCpfis', () => {
         id: 'top-up-premium-charge',
         trigger: 'top-up',
         basis: 'event-amount',
+        appliesTo: ['topup'],
         activeWindow: 'policy-term',
         rate: 0,
       }),
@@ -70,6 +78,7 @@ describe('parseTokioMarineWealthEnhancerCpfis', () => {
         id: 'recurring-single-premium-charge',
         trigger: 'recurring-single-premium',
         basis: 'event-amount-with-overlap-months',
+        appliesTo: ['topup'],
         activeWindow: 'policy-term',
         rate: 0,
       }),
@@ -82,5 +91,6 @@ describe('parseTokioMarineWealthEnhancerCpfis', () => {
       }),
     ])
     expect(variant?.warnings).toContain('Administrative charge is not applicable and switching is published as free, but switching behavior itself remains outside the current calculator surface.')
+    expect(variant?.warnings[0]).toContain('current ordinary death-benefit estimate as 105% of the single premium policy value and 100% of the top-up premium policy value')
   }, 30_000)
 })

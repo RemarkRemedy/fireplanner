@@ -9,7 +9,17 @@
     "description": "Baseline in-force PRUVantage Assure II SGD / MIP 10 scenario.",
     "coverageTags": [
       "baseline",
-      "branch:assure-ii-pre-70-assurance"
+      "branch:assure-ii-pre-70-assurance",
+      "branch:assure-ii-post-70-charge-tail",
+      "branch:assure-ii-manual-reduction-resumption",
+      "kernel:current-death-benefit-estimate",
+      "kernel:current-accidental-disability-benefit-estimate",
+      "branch:pru-holiday-refund",
+      "branch:pru-holiday-fallback",
+      "branch:pru-top-up-charge",
+      "branch:pru-free-withdrawal",
+      "branch:pru-charged-withdrawal",
+      "kernel:distribution-mode-assumption"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "PRUVantage Assure II Product Summary.pdf",
@@ -515,6 +525,8 @@
         "branch:assure-ii-pre-70-assurance",
         "branch:assure-ii-post-70-charge-tail",
         "branch:assure-ii-manual-reduction-resumption",
+        "kernel:current-death-benefit-estimate",
+        "kernel:current-accidental-disability-benefit-estimate",
         "branch:pru-holiday-refund",
         "branch:pru-holiday-fallback",
         "branch:pru-top-up-charge",
@@ -523,16 +535,21 @@
         "kernel:distribution-mode-assumption"
       ],
       "metadataOnlyBehaviors": [
+        "pruvantage-assure-ii-death-claim-exclusions",
         "premium-pass-wealth-share-change-of-life-assured-options"
       ]
     },
     "catalogWarnings": [
-      "This template captures account routing, welcome/loyalty bonuses, premium-holiday mechanics, exit charges, Assure II assurance charges from Prudential Appendix A after you enter the insured-life details, Wealth Assure Value, and current sum assured, plus Growth Account dividend-election support through the manual distribution-mode kernel. Manual reduction/resumption events for sum assured and Wealth Assure Value are modeled as user-entered resulting states. Premium Pass / Wealth Share / change-of-life-assured options remain informational only.",
+      "This template captures account routing, welcome/loyalty bonuses, premium-holiday mechanics, exit charges, the current-state death-benefit estimate as the higher of current sum assured, current Wealth Assure Value, or current Growth/Flex account value plus Additional Investment Account value after manual current amount owing, a payable-now accidental-disability snapshot from that same corridor once the current accidental-disability payout stage is filled, Assure II assurance charges from Prudential Appendix A after you enter the insured-life details, Wealth Assure Value, and current sum assured, plus Growth Account dividend-election support through the manual distribution-mode kernel. Manual reduction/resumption events for sum assured and Wealth Assure Value are modeled as user-entered resulting states. Premium Pass / Wealth Share / change-of-life-assured options and claim exclusions remain informational only.",
       "Set the actual Growth/Flex regular-premium split before trusting the fee-drag output. The seeded draft defaults to 50/50.",
       "Growth Account dividend payout is only allowed after 10 years from the cover start date once 10 years of premiums have been paid.",
       "Enter insured-life details, current sum assured, and current Wealth Assure Value to activate the modeled assurance charges.",
+      "The current-state death-benefit estimate is modeled as the higher of current sum assured, current Wealth Assure Value, or current Growth/Flex account value, plus Additional Investment Account value, after manual current amount owing.",
+      "The payable-now accidental-disability snapshot is modeled from the same current corridor once the current accidental-disability payout stage is filled.",
       "Manual reduction or resumption events for sum assured / Wealth Assure Value require explicit resulting-state inputs.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.",
+      "The current-state death-benefit estimate needs a manual current amount owing input because outstanding debt is not reconstructed from history in V1.",
+      "Accidental-disability deferment timing, staged later-balance release, disability-status revalidation, suicide and pre-existing-condition exclusions, and broader claim settlement mechanics remain informational only beyond the modeled payable-now accidental-disability snapshot.",
       "Premium Pass, Wealth Share, and change-of-life-assured features remain informational only."
     ]
   },

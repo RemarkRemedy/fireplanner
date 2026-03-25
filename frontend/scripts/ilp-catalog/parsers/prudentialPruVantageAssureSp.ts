@@ -120,6 +120,29 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
 
   const bonuses: IlpTemplateBonus[] = [
     {
+      id: 'single-premium-allocation-enhancement',
+      type: 'sign-up',
+      label: 'Single Premium Allocation Enhancement',
+      mode: 'premium-allocation',
+      annualPremiumTierBasis: 'initial-single-premium-at-issue',
+      appliesTo: ['iia'],
+      startPolicyYear: 1,
+      endPolicyYear: 1,
+      rate: 0,
+      amount: null,
+      tieredRates: SINGLE_PREMIUM_ALLOCATION_TIERS.map((tier) => ({
+        currency: 'SGD',
+        minAnnualPremium: tier.minSinglePremium,
+        maxAnnualPremium: tier.maxSinglePremium,
+        rate: roundRate(Math.max(0, tier.allocationRate - 1)),
+      })),
+      notes: [
+        'Models the published initial single-premium allocation enhancement tiers for the SGD corridor.',
+        'The enhancement is credited only on the original initial single premium and therefore uses the original single-premium input at issue in V1.',
+      ],
+      sourceRefs: [page7],
+    },
+    {
       id: 'loyalty-bonus',
       type: 'loyalty',
       label: 'Loyalty Bonus',
@@ -227,15 +250,15 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: [...WITHDRAWAL_AND_SURRENDER_SCHEDULE],
     warnings: [
-      'This supported template models administration charges, Appendix A combined assurance charges, the recurring 8-year Loyalty Bonus on the Initial Investment Account, top-up premium charges, Initial Investment Account withdrawal / surrender charge schedules including the first-withdrawal 10%-of-original-single-premium free cap, and reinvest-default distribution support.',
-      'The enhanced single-premium allocation tiers remain informational only in V1.',
+      'This supported template models administration charges, Appendix A combined assurance charges, the recurring 8-year Loyalty Bonus on the Initial Investment Account, the current-state death-benefit estimate as the higher of current sum assured, current Wealth Assure Value, or Initial Investment Account value plus Additional Investment Account value after manual current amount owing, top-up premium charges, Initial Investment Account withdrawal / surrender charge schedules including the first-withdrawal 10%-of-original-single-premium free cap, and reinvest-default distribution support.',
+      'The payable-now accidental-disability snapshot is modeled from the same current corridor once the current accidental-disability payout stage is filled.',
       'Enter insured-life details and use the current net regular premium base field as the current net single-premium base to activate the modeled assurance charge path.',
-      'The current ILP engine does not yet model the published 100.5% / 101% single-premium allocation enhancements, so high-tier initial allocations remain conservative in V1.',
+      'Enter current sum assured, current Wealth Assure Value, and current amount owing before trusting the current-state death-benefit estimate.',
     ],
     unsupportedItems: [
-      `Enhanced single-premium allocation tiers (${SINGLE_PREMIUM_ALLOCATION_TIERS.map((tier) => formatPercent(tier.allocationRate)).join(' / ')}) remain informational only.`,
       'Change of life assured and sum assured / Wealth Assure Value reduction-resumption options remain informational only.',
-      'The published dividend payout election remains informational only insofar as the policy-specific payout yield remains a manual assumption in V1.',
+      'The current-state death-benefit estimate needs a manual current amount owing input because outstanding debt is not reconstructed from history in V1.',
+      'Accidental-disability deferment timing, staged later-balance release, disability-status revalidation, suicide and pre-existing-condition exclusions, and broader claim settlement mechanics remain informational only beyond the modeled payable-now accidental-disability snapshot.',
     ],
     sourceRefs: [page3, page7, page7Dividend, page8, page12, page13, page16, page17, page18, page22],
   }
@@ -256,7 +279,10 @@ export function parsePrudentialPruVantageAssureSp(context: ParseContext): IlpCat
     modeledEconomics: [
       'branch:assure-sp-administration-charge',
       'branch:assure-sp-combined-assurance',
+      'branch:assure-sp-single-premium-allocation-enhancement',
       'branch:assure-sp-loyalty-bonus',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-disability-benefit-estimate',
       'branch:assure-sp-top-up-charge',
       'branch:assure-sp-first-free-withdrawal',
       'branch:assure-sp-charged-withdrawal',
@@ -264,13 +290,12 @@ export function parsePrudentialPruVantageAssureSp(context: ParseContext): IlpCat
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'pruvantage-assure-sp-single-premium-allocation-enhancement',
       'pruvantage-assure-sp-change-of-life-assured',
       'pruvantage-assure-sp-sum-assured-wealth-assure-reduction-resumption',
-      'pruvantage-assure-sp-dividend-payout-yield-assumption',
+      'pruvantage-assure-sp-death-claim-exclusions',
     ],
     warnings: [
-      'PRUVantage Assure (SP) is cataloged as a supported V1 product. The parser captures the two-account structure, administration charge, combined Appendix A assurance charge, the recurring 8-year loyalty bonus on the Initial Investment Account, top-up premium charge, Initial Investment Account withdrawal / surrender charge schedules including the first-withdrawal free cap tied to original single premium, and reinvest-default distribution support, while the enhanced single-premium allocation tiers and policy-specific dividend-yield election remain informational only.',
+      'PRUVantage Assure (SP) is cataloged as a supported V1 product. The parser captures the two-account structure, administration charge, combined Appendix A assurance charge, the published single-premium allocation enhancement tiers on the original initial single premium, the recurring 8-year loyalty bonus on the Initial Investment Account, the current-state death-benefit estimate as the higher of current sum assured, current Wealth Assure Value, or Initial Investment Account value plus Additional Investment Account value after manual current amount owing, a payable-now accidental-disability snapshot from that same corridor once the current accidental-disability payout stage is filled, top-up premium charge, Initial Investment Account withdrawal / surrender charge schedules including the first-withdrawal free cap tied to original single premium, and reinvest-default distribution support, while later accidental-disability release timing and change-of-life-assured / reduction-resumption mechanics remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

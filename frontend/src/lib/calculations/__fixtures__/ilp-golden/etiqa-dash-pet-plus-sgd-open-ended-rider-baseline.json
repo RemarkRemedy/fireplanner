@@ -9,9 +9,13 @@
     "description": "Etiqa Dash PET Plus baseline scenario covering the supported zero-charge rider corridor, management charge, and cash-payout distribution assumption.",
     "coverageTags": [
       "baseline",
+      "kernel:current-death-benefit-estimate",
+      "kernel:current-ti-benefit-estimate",
       "kernel:distribution-mode-assumption",
       "branch:etiqa-dash-pet-plus-zero-single-premium-charge",
-      "branch:etiqa-dash-pet-plus-management-charge"
+      "branch:etiqa-dash-pet-plus-management-charge",
+      "branch:etiqa-dash-pet-plus-zero-top-up-charge",
+      "branch:etiqa-dash-pet-plus-zero-partial-withdrawal-charge"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "EIP_Dash PET Plus_Summary.pdf",
@@ -142,11 +146,11 @@
         "branch:etiqa-dash-pet-plus-management-charge",
         "branch:etiqa-dash-pet-plus-zero-top-up-charge",
         "branch:etiqa-dash-pet-plus-zero-partial-withdrawal-charge",
+        "kernel:current-death-benefit-estimate",
+        "kernel:current-ti-benefit-estimate",
         "kernel:distribution-mode-assumption"
       ],
       "metadataOnlyBehaviors": [
-        "etiqa-dash-pet-plus-death-benefit",
-        "etiqa-dash-pet-plus-terminal-illness-benefit",
         "etiqa-dash-pet-plus-yearly-renewability",
         "etiqa-dash-pet-plus-basic-policy-dependency",
         "etiqa-dash-pet-plus-paynow-transfer-charge",
@@ -158,14 +162,15 @@
       ]
     },
     "catalogWarnings": [
-      "Dash PET Plus is cataloged as a supported V1 rider. The parser captures the zero-charge rider subscription, zero-charge top-up and withdrawal path, the 0.75% annual management charge through the open-ended rider basis, and reinvest-default distribution support, while protection formulas, yearly renewability, basic-policy dependency, payout-method fees, and Basic-policy crediting remain informational only.",
-      "Dash PET Plus is cataloged as a supported V1 rider. The parser captures the zero-charge rider subscription, zero-charge top-up and withdrawal path, the 0.75% annual management charge through the open-ended rider basis, and reinvest-default distribution support.",
+      "Dash PET Plus is cataloged as a supported V1 rider. The parser captures the zero-charge rider subscription, zero-charge top-up and withdrawal path, the 0.75% annual management charge through the open-ended rider basis, reinvest-default distribution support, the current-state death benefit as the higher of rider account value or the 105%-of-paid-premiums floor after rider withdrawals and current amounts owing, the current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap, and the current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today through the published partial-TI continuation corridor after manual claim-amount and residual-death input, while yearly renewability, basic-policy dependency, payout-method fees, Basic-policy crediting, and claim exclusions / insurer-side settlement mechanics remain informational only.",
+      "Dash PET Plus is cataloged as a supported V1 rider. The parser captures the zero-charge rider subscription, zero-charge top-up and withdrawal path, the 0.75% annual management charge through the open-ended rider basis, the current-state death benefit as the higher of rider account value or the 105%-of-paid-premiums floor after rider withdrawals and current amounts owing, the current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap, the current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today through the published partial-TI continuation corridor after manual claim-amount and residual-death input, and reinvest-default distribution support.",
       "This is a yearly renewable rider attached to a basic policy; rider renewability and basic-policy dependency remain informational only in V1.",
       "This open-ended rider product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.",
       "Open-ended products use a default 20-year review horizon in V1; adjust the horizon if you want a different analysis window.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.",
       "Enter the one-time gross initial single premium lump sum in Policy Details if you want the upfront single-premium deduction to seed the starting policy value honestly.",
-      "Death benefit, terminal-illness benefit, and the 105% premium floor remain informational only.",
+      "The current-state death and terminal-illness snapshot needs manual current amount owing and remaining aggregate TI cap inputs because rider debt and cross-policy TI cap usage are not reconstructed from history in V1.",
+      "The current admitted-state TI payable amount and residual death-benefit estimate after a TI claim today are supported through the published partial-TI continuation corridor after manual claim-amount and residual-death input, but claim exclusions and insurer-side settlement mechanics remain informational only.",
       "Yearly renewability, basic-policy attachment gating, and unilateral rider termination notice remain informational only.",
       "PayNow transfer charges remain informational only because they depend on payout method rather than the rider ledger.",
       "Fund-level management fees remain informational only because they depend on the selected ILP sub-fund.",

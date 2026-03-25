@@ -18,6 +18,20 @@ const MIP_LENGTH = 10
 
 const INITIAL_ACCOUNT_CHARGE_RATE = 0.024
 
+const BOOSTER_BONUS_TIERS = [
+  { currency: 'SGD' as const, minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.2 },
+  { currency: 'SGD' as const, minAnnualPremium: 12_000, maxAnnualPremium: 35_999.99, rate: 0.38 },
+  { currency: 'SGD' as const, minAnnualPremium: 36_000, maxAnnualPremium: null, rate: 0.42 },
+]
+
+const PREMIUM_SHORTFALL_CHARGE_SCHEDULE = [
+  { startPolicyYear: 3, endPolicyYear: 3, rate: 0.8 },
+  { startPolicyYear: 4, endPolicyYear: 4, rate: 0.68 },
+  { startPolicyYear: 5, endPolicyYear: 5, rate: 0.58 },
+  { startPolicyYear: 6, endPolicyYear: 6, rate: 0.55 },
+  { startPolicyYear: 7, endPolicyYear: 7, rate: 0.45 },
+] as const
+
 const REDEMPTION_FEE_SCHEDULE = [
   { startPolicyYear: 3, endPolicyYear: 3, rate: 0.8 },
   { startPolicyYear: 4, endPolicyYear: 4, rate: 0.68 },
@@ -70,6 +84,7 @@ function snippetNear(document: ExtractedPdfDocument, pageNumber: number, keyword
 function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page1 = sourceRef(1, 'Plan overview and death benefit', snippetNear(document, 1, 'FWD Invest Flexi VII', 18))
   const page3 = sourceRef(3, 'Bonus overview and support benefits', snippetNear(document, 3, 'Booster Bonus', 22))
+  const page4 = sourceRef(4, 'Loyalty Bonus and Support Benefit', snippetNear(document, 4, 'Loyalty Bonus', 28))
   const page5 = sourceRef(5, 'Regular premium and missed-premium behavior', snippetNear(document, 5, 'Regular Premium', 26))
   const page6 = sourceRef(6, 'Top-up premium and initial account charge', snippetNear(document, 6, 'Top-up premium', 26))
   const page7 = sourceRef(7, 'Initial account charge and premium shortfall charge', snippetNear(document, 7, 'Initial account charge', 28))
@@ -80,6 +95,24 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page13 = sourceRef(13, 'Regular withdrawal and change of person insured', snippetNear(document, 13, 'Regular withdrawal', 18))
 
   const bonuses: IlpTemplateBonus[] = [
+    {
+      id: 'booster-bonus',
+      type: 'sign-up',
+      label: 'Booster Bonus',
+      mode: 'premium-allocation',
+      appliesTo: ['initial'],
+      startPolicyYear: 1,
+      endPolicyYear: 1,
+      annualPremiumTierBasis: 'committed-annual-premium-at-issue',
+      rate: null,
+      amount: null,
+      tieredRates: BOOSTER_BONUS_TIERS.map((tier) => ({ ...tier })),
+      notes: [
+        'Applied on each regular premium received during the first policy year, using the published Annualised Regular Premium band at issue.',
+        'Top-up premiums do not earn Booster Bonus; loyalty-bonus and repayment-restoration mechanics remain informational only in V1.',
+      ],
+      sourceRefs: [page3],
+    },
     {
       id: 'annual-premium-bonus',
       type: 'allocation',
@@ -98,6 +131,48 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
         'Repayment and restoration interactions remain informational only in V1.',
       ],
       sourceRefs: [page3],
+    },
+    {
+      id: 'loyalty-bonus-y11-to-y20',
+      type: 'loyalty',
+      label: 'Loyalty Bonus (Policy Years 11-20)',
+      mode: 'annual-rate',
+      appliesTo: ['initial'],
+      startPolicyYear: 11,
+      endPolicyYear: 20,
+      rate: 0.015,
+      amount: null,
+      tieredRates: [],
+      notes: [
+        'Applied annually on the initial units account value from policy years 11 to 20.',
+        'Manual policy-repayment events credited into the initial units account can model the published Loyalty Bonus restoration on repayment amounts for the current policy year.',
+        'Pending-transaction timing and repayment-allocation waterfalls remain informational only in V1.',
+      ],
+      restorationRules: [
+        { trigger: 'policy-repayment', basis: 'repaid-premium' },
+      ],
+      sourceRefs: [page3, page4],
+    },
+    {
+      id: 'loyalty-bonus-y21-plus',
+      type: 'loyalty',
+      label: 'Loyalty Bonus (Policy Year 21+)',
+      mode: 'annual-rate',
+      appliesTo: ['initial'],
+      startPolicyYear: 21,
+      endPolicyYear: null,
+      rate: 0.005,
+      amount: null,
+      tieredRates: [],
+      notes: [
+        'Applied annually on the initial units account value from policy year 21 onward.',
+        'Manual policy-repayment events credited into the initial units account can model the published Loyalty Bonus restoration on repayment amounts for the current policy year.',
+        'Pending-transaction timing and repayment-allocation waterfalls remain informational only in V1.',
+      ],
+      restorationRules: [
+        { trigger: 'policy-repayment', basis: 'repaid-premium' },
+      ],
+      sourceRefs: [page3, page4],
     },
   ]
 
@@ -139,13 +214,13 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       activeWindow: 'policy-term',
       requiresManualInput: true,
       assuranceConfig: {
-        formula: 'fwd-invest-flexi-elite-death',
+        formula: 'fwd-invest-repayment-inclusive-death',
         monthlyModalFactor: 1 / 12,
         maxAgeNextBirthday: 99,
       },
       notes: [
-        'Requires insured-life details and the current net regular-premium, top-up-premium, and repayment bases before the calculator can model the monthly insurance charge.',
-        'Models the published Appendix B attained-age / sex / smoker insurance charge using the higher of 105% of policy value or 101% of paid premium and repayment bases less withdrawals and terminal-illness advances, minus policy value.',
+        'Requires insured-life details and the current net regular-premium, supplementary / top-up, and repayment bases before the calculator can model the monthly insurance charge.',
+        'Models the published Appendix B attained-age / sex / smoker insurance charge on the 101% paid-premium-and-repayment protected base, net of policy value.',
         'The charge is deducted from the initial units account first, with accumulation units account fallback if the initial account is insufficient.',
       ],
       sourceRefs: [page1, page7],
@@ -165,9 +240,48 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       allocation: 'equal-split',
       notes: [
         'Models the published 5% premium charge on each accepted top-up premium.',
-        'Top-up repayment precedence, year-2 eligibility, and the total top-up cap remain informational only in V1.',
+        'V1 blocks top-ups below the published S$3,000 minimum, before policy month 13, and until missed-premium, prior initial-account withdrawal, and regular-premium-reduction obligations are fully cleared through repayment events.',
+        'The exact repayment-allocation waterfall and the total top-up cap remain informational only in V1.',
       ],
       sourceRefs: [page6, page8],
+    },
+    {
+      id: 'premium-shortfall-charge',
+      label: 'Premium Shortfall Charge',
+      trigger: 'premium-holiday',
+      basis: 'annual-premium-with-overlap-months',
+      appliesTo: ['initial'],
+      fallbackAppliesTo: ['accumulation'],
+      rate: 0,
+      amount: 0,
+      rateSchedule: PREMIUM_SHORTFALL_CHARGE_SCHEDULE.map((tier) => ({ ...tier })),
+      activeWindow: 'during-mip',
+      allocation: 'equal-split',
+      notes: [
+        'Models the published monthly premium shortfall charge on unpaid regular premium during policy years 3 to 7 after the grace period.',
+        'Mark the premium-holiday event with an insurer-approved charge waiver when Support Benefit approval or an already-admitted Premium Pause Waiver applies for that missed-premium period.',
+        'Mark the same premium-holiday event as charge-refunded when the charge was deducted first and later refunded after admitted Support Benefit approval.',
+        'Automatic 12-month Premium Pause Waiver activation, month accounting, and repayment-allocation waterfalls remain informational only in V1.',
+      ],
+      sourceRefs: [page7, page9],
+    },
+    {
+      id: 'premium-shortfall-charge-refund',
+      label: 'Premium Shortfall Charge Refund',
+      trigger: 'premium-holiday',
+      basis: 'source-event-charge-refund',
+      appliesTo: ['initial'],
+      rate: 1,
+      amount: 0,
+      activeWindow: 'during-mip',
+      allocation: 'equal-split',
+      sourceChargeRuleId: 'premium-shortfall-charge',
+      notes: [
+        'Models the published retrospective refund of deducted premium shortfall charge after admitted Support Benefit approval.',
+        'Use the same premium-holiday event and mark it as charge-refunded when the charge was deducted between the qualifying event date and notification date and later refunded.',
+        'Automatic Premium Pause Waiver activation, waiting-period gating, and repayment-allocation waterfalls remain informational only in V1.',
+      ],
+      sourceRefs: [page4, page9],
     },
     {
       id: 'initial-account-redemption-fee',
@@ -183,7 +297,8 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       notes: [
         'Models the published initial-units-account redemption fee schedule during the 10-year minimum investment term.',
         'Accumulation-units-account withdrawals remain charge-free in the published summary.',
-        'The first-two-policy-year lockout, minimum withdrawal amount, and minimum account-value rules remain informational only.',
+        'V1 blocks authored initial-units-account withdrawals before policy month 25 and enforces the published minimum-account-value floor on explicit one-off partial-withdrawal events.',
+        'Minimum withdrawal amount, regular-withdrawal elections, and broader withdrawal administration remain informational only.',
       ],
       sourceRefs: [page9, page12],
     },
@@ -224,19 +339,36 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     feeRules,
     eventChargeRules,
     eecTable: [...SURRENDER_CHARGE_SCHEDULE],
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      minimumTopUpAmount: 3_000,
+      minimumTopUpStartPolicyMonth: 13,
+      minimumPartialWithdrawalStartPolicyMonthByAccount: [
+        { accountId: 'initial', startPolicyMonth: 25 },
+      ],
+      partialWithdrawalMinimumRemainingValueRules: [
+        { activeWindow: 'during-mip', basis: 'account-value', accountId: 'initial', minimumValue: 3_000 },
+        { activeWindow: 'after-mip', basis: 'policy-value', minimumValue: 3_000 },
+      ],
+      topUpRepaymentClearance: {
+        includeMissedPremiums: true,
+        priorOffsetRules: [
+          { trigger: 'partial-withdrawal', accountIds: ['initial'] },
+          { trigger: 'regular-premium-reduction' },
+        ],
+      },
+    },
     warnings: [
-      'FWD Invest Flexi VII (SGD / 10-year minimum investment term) is cataloged as a supported V1 product. The parser captures the published fixed-premium-base initial-account charge, the annual-premium bonus under the annual premium-frequency assumption, the Appendix B insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.',
-      'Premium shortfall charge remains informational only because the automatic 12-month Premium Pause Waiver cannot be expressed exactly in the current event kernel without overstating chargeable missed-premium months.',
-      'Booster Bonus, Loyalty Bonus, repayment waterfalls, payment-frequency changes after issue, and withdrawal eligibility gates remain outside the current engine.',
+      'FWD Invest Flexi VII (SGD / 10-year minimum investment term) is cataloged as a supported V1 product. The parser captures the published Booster Bonus, fixed-premium-base initial-account charge, annual-premium bonus under the annual premium-frequency assumption, the Appendix B insurance charge with manual repayment-base input, the 5% top-up premium charge with blocking below the published S$3,000 minimum, before policy month 13, and aggregate repayment-clearance gating for missed premiums, prior initial-account withdrawals, and regular-premium-reduction differences, the premium shortfall charge corridor with admitted-state charge-waiver and retrospective charge-refund support on premium-holiday events, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.',
+      'Automatic 12-month Premium Pause Waiver activation, Support Benefit approval history, and repayment-allocation waterfalls remain outside the current engine.',
+      'Repayment-allocation waterfalls, payment-frequency changes after issue, and broader withdrawal administration remain outside the current engine beyond the modeled initial-account policy-month-25 gate and S$3,000 minimum-account-value floor for explicit one-off partial withdrawals.',
     ],
     unsupportedItems: [
-      'Premium shortfall charge remains informational only because the automatic 12-month Premium Pause Waiver on missed premiums is not modeled exactly in V1.',
-      'Support Benefit approvals and premium-shortfall-charge refund / waiver behavior remain informational only.',
-      'Booster Bonus, Loyalty Bonus, and repayment-driven bonus restoration remain informational only.',
+      'Automatic 12-month Premium Pause Waiver activation and month accounting, Support Benefit approval history, and broader premium-shortfall recovery behavior remain informational only beyond the modeled admitted-state charge-waived / charge-refunded premium-holiday path.',
       'Changing the regular premium payment frequency after issue remains informational only.',
-      'Top-up repayment precedence for missed premiums, prior withdrawals, and prior regular-premium reductions remains informational only.',
+      'The exact repayment-allocation waterfall and total top-up cap remain informational only beyond the modeled aggregate top-up-clearance gate and the published S$3,000 minimum top-up amount.',
       'Regular-premium reduction and restoration mechanics from policy year 8 onward remain informational only.',
-      'Initial-units-account withdrawal lockout in the first two policy years, minimum withdrawal requirements, minimum account-value gates, and regular-withdrawal elections remain informational only.',
+      'Minimum withdrawal requirements, regular-withdrawal elections, and broader withdrawal administration remain informational only beyond the modeled initial-units-account policy-month-25 gate and S$3,000 minimum-account-value floor.',
       'Policy closure charge, change-of-person-insured handling, switching-fee review rights, and fund-level management charges remain informational only.',
     ],
     sourceRefs: [page1, page3, page5, page6, page7, page8, page9, page10, page12, page13],
@@ -256,32 +388,37 @@ export function parseFwdInvestFlexiVii(context: ParseContext): IlpCatalogProduct
     structureStatus: 'structured',
     economicsStatus: 'supported',
     modeledEconomics: [
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'kernel:protected-base-assurance',
+      'branch:fwd-invest-flexi-vii-booster-bonus',
       'branch:fwd-invest-flexi-vii-annual-premium-bonus',
+      'branch:fwd-invest-flexi-vii-loyalty-bonus',
       'branch:fwd-invest-flexi-vii-initial-account-charge',
       'branch:fwd-invest-flexi-vii-insurance-charge',
+      'branch:fwd-invest-flexi-vii-premium-shortfall-charge',
       'branch:fwd-invest-flexi-vii-top-up-premium-charge',
       'branch:fwd-invest-flexi-vii-initial-account-redemption-fee',
       'branch:fwd-invest-flexi-vii-initial-account-surrender-charge',
+      'kernel:top-up-amount-gate-block',
+      'kernel:top-up-start-policy-month-block',
+      'kernel:top-up-repayment-clearance-block',
+      'kernel:partial-withdrawal-start-policy-month-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
     ],
     metadataOnlyBehaviors: [
-      'fwd-invest-flexi-vii-premium-shortfall-charge',
       'fwd-invest-flexi-vii-premium-pause-waiver',
       'fwd-invest-flexi-vii-support-benefit-waiver-and-refund',
-      'fwd-invest-flexi-vii-booster-bonus',
-      'fwd-invest-flexi-vii-loyalty-bonus',
-      'fwd-invest-flexi-vii-repayment-bonus-restoration',
-      'fwd-invest-flexi-vii-top-up-repayment-waterfall',
       'fwd-invest-flexi-vii-regular-premium-reduction-and-restoration',
-      'fwd-invest-flexi-vii-withdrawal-eligibility-gates',
+      'fwd-invest-flexi-vii-minimum-withdrawal-and-regular-withdrawal-administration',
       'fwd-invest-flexi-vii-policy-closure-charge',
       'fwd-invest-flexi-vii-change-of-person-insured',
       'fwd-invest-flexi-vii-fund-switching',
       'fwd-invest-flexi-vii-fund-level-charges',
     ],
     warnings: [
-      'FWD Invest Flexi VII is cataloged as a supported V1 product. The current parser covers the published fixed-premium-base initial-account charge, Appendix B insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule through the existing two-account and surrender kernels.',
-      'Premium shortfall / Premium Pause Waiver behavior, bonuses, repayment waterfalls, and broader withdrawal / premium-flexibility behavior remain metadata-only.',
+      'FWD Invest Flexi VII is cataloged as a supported V1 product. The current parser covers the published current-state ordinary death benefit as the higher of 105% of policy value or the 101% protected premium-and-repayment base, the current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap subject to the published S$2 million per-life limit, Booster Bonus, Loyalty Bonus, the fixed-premium-base initial-account charge, Appendix B insurance charge with manual repayment-base input, the premium shortfall charge corridor with admitted-state charge-waiver and retrospective charge-refund support on premium-holiday events, the 5% top-up premium charge with blocking below the published S$3,000 minimum, before policy month 13, and aggregate repayment-clearance gating for missed premiums, prior initial-account withdrawals, and regular-premium-reduction differences, the initial-units-account redemption-fee schedule, the initial-units-account policy-month-25 one-off partial-withdrawal gate with the published S$3,000 minimum-account-value floor, and the initial-units-account surrender-charge schedule through the existing two-account and surrender kernels.',
+      'Automatic Premium Pause Waiver activation, Support Benefit approval history, the exact repayment-allocation waterfall, and broader withdrawal / premium-flexibility behavior remain metadata-only.',
     ],
     archived: false,
     variants: [

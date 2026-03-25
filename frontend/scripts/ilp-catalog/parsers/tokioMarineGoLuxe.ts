@@ -160,6 +160,29 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
       ],
       sourceRefs: [loyaltyPage],
     },
+    {
+      id: 'achievement-bonus',
+      type: 'custom',
+      label: 'Achievement Bonus',
+      mode: 'annual-rate',
+      appliesTo: ['accumulation'],
+      startPolicyYear: 30,
+      endPolicyYear: 40,
+      cadenceYears: 5,
+      rate: 0.05,
+      amount: null,
+      tieredRates: [],
+      qualificationRules: [
+        { trigger: 'premium-holiday', disqualifyThroughPolicyYear: 10 },
+        { trigger: 'regular-premium-reduction', disqualifyThroughPolicyYear: 10 },
+        { trigger: 'partial-withdrawal', disqualifyThroughPolicyYear: 10 },
+      ],
+      notes: [
+        'Models the published 5.0% achievement bonus on the Accumulation Units Account value at policy years 30, 35, and 40.',
+        'The bonus is disqualified if any premium holiday, regular-premium reduction, or partial withdrawal from the Accumulation Units Account occurs during the first 10 policy years.',
+      ],
+      sourceRefs: [loyaltyPage],
+    },
   ]
 }
 
@@ -350,6 +373,52 @@ function buildVariant(
     bonuses: buildBonuses(document),
     feeRules,
     eventChargeRules,
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPremiumHolidayStartPolicyMonth: 37,
+      minimumRecurringSinglePremiumStartPolicyMonth: 13,
+      minimumRecurringSinglePremiumMonthlyAmount: 50,
+      minimumPartialWithdrawalStartPolicyMonthByAccount: [
+        { accountId: 'accumulation', startPolicyMonth: 37 },
+        { accountId: 'topup', startPolicyMonth: 37 },
+        { accountId: 'initial', startPolicyMonth: 181 },
+      ],
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalMaximumAmountRules: [
+        {
+          activeWindow: 'during-mip',
+          accountId: 'accumulation',
+          basis: 'account-value-less-prior-withdrawals',
+          startPolicyYear: 6,
+          endPolicyYear: 6,
+          maximumValueRate: 0.3,
+        },
+        {
+          activeWindow: 'during-mip',
+          accountId: 'accumulation',
+          basis: 'account-value-less-prior-withdrawals',
+          startPolicyYear: 7,
+          endPolicyYear: 7,
+          maximumValueRate: 0.4,
+        },
+        {
+          activeWindow: 'during-mip',
+          accountId: 'accumulation',
+          basis: 'account-value-less-prior-withdrawals',
+          startPolicyYear: 8,
+          endPolicyYear: 15,
+          maximumValueRate: 0.5,
+        },
+      ],
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'policy-value',
+          minimumValue: 3_000,
+        },
+      ],
+      requiresCommencementPremiumForRecurringSinglePremiumResumption: true,
+    },
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['initial', 'accumulation', 'topup'],
@@ -381,25 +450,26 @@ function buildVariant(
     },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
-      `This partial template models the SGD / minimum-contribution-period-15 (${isAdvancedDeath ? 'Advanced Death' : 'Basic Death'}) corridor only.`,
-      'This partial template models regular-premium routing through year 15, the published initial charge and policy charge through account fee rates, top-up routing, recurring single premium routing, the published surrender charge on the Initial Units Account, the published partial-withdrawal and premium-shortfall charge schedules, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
+      `This ${isAdvancedDeath ? 'supported' : 'partial'} template models the SGD / minimum-contribution-period-15 (${isAdvancedDeath ? 'Advanced Death' : 'Basic Death'}) corridor only.`,
+      `This ${isAdvancedDeath ? 'supported' : 'partial'} template models regular-premium routing through year 15, the published initial charge and policy charge through account fee rates, top-up routing, recurring single premium routing, the published surrender charge on the Initial Units Account, the published one-off partial-withdrawal corridor with the Accumulation Units Account cap schedule during the minimum contribution period, the published premium-shortfall charge schedules, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.`,
+      'Explicit one-off partial withdrawals before the published policy-year start months, below the published S$500 minimum, above the published year-banded Accumulation Units Account limit during the minimum contribution period, or leaving policy value below the published S$3,000 minimum account value are blocked on the seeded/runtime path.',
       ...(isAdvancedDeath
         ? [
-            'The Advanced Death variant also models the published current death-benefit estimate, Monthly Protection Charge, including the first-three-policy-years accrual window, policy-year-4 lump-sum settlement, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base.',
+            'The Advanced Death variant also models the published current death-benefit estimate, Monthly Protection Charge, including the first-three-policy-years accrual window, policy-year-4 lump-sum settlement, static current multi-life last-life handling, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base.',
           ]
         : []),
-      'Recurring single premium stays blocked during premium holiday until regular premium resumes at the committed commencement-date amount.',
+      'Recurring single premium events before policy month 13 or below the published monthly-equivalent minimum of S$50 are blocked; insurer-defined increase / reduction minimums remain informational only.',
+      'Recurring single premium stays blocked during premium holiday until an explicit recurring-single-premium resumption is entered and the regular premium amount is restored to the committed commencement-date amount.',
     ],
     unsupportedItems: [
-      'Achievement bonus remains metadata-only because the published first-ten-policy-years qualification gates and annualised-premium payout basis are not yet represented directly in the template bonus basis.',
       ...(isAdvancedDeath
         ? [
-            'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, multiple-life last-life settlement, and change-of-life-assured administration remain metadata-only for this product.',
+            'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, and change-of-life-assured administration remain metadata-only for this product.',
           ]
         : [
-            'Advanced Death selection, Monthly Protection Charge, multiple-life last-life settlement, and change-of-life-assured administration remain metadata-only for this product.',
+            'Advanced Death selection, Monthly Protection Charge, and change-of-life-assured administration remain metadata-only for this product.',
           ]),
-      'Regular withdrawal, partial-withdrawal limit caps, and non-SGD policy currencies remain metadata-only for this product.',
+      'Regular withdrawal, selected-fund minimum-holding rules, and non-SGD policy currencies remain metadata-only for this product.',
     ],
     sourceRefs: [page1, page2, page4, page5, page6, page8, page9, page10, page15, page16],
   }
@@ -423,6 +493,10 @@ export function parseTokioMarineGoLuxe(context: ParseContext): IlpCatalogProduct
       'tokio-top-up-routing',
       'tokio-recurring-single-premium-routing',
       'tokio-recurring-single-premium-manual-resumption-after-premium-holiday',
+      'kernel:minimum-premium-holiday-start-month',
+      'kernel:minimum-recurring-single-premium-start-month',
+      'kernel:minimum-recurring-single-premium-amount',
+      'kernel:committed-premium-rsp-resumption-gate',
       'tokio-regular-premium-reduction-consumes-recurring-single-premium-first',
       'tokio-initial-charge-on-initial-account',
       'tokio-policy-charge-on-accumulation-account',
@@ -430,26 +504,29 @@ export function parseTokioMarineGoLuxe(context: ParseContext): IlpCatalogProduct
       'tokio-recurring-single-premium-charge',
       'tokio-initial-account-surrender-charge',
       'tokio-accumulation-partial-withdrawal-charge',
+      'kernel:partial-withdrawal-maximum-amount-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
       'tokio-premium-shortfall-charge-premium-holiday',
       'tokio-premium-shortfall-charge-regular-premium-reduction',
       'tokio-premium-increase-restores-shortfall-charge-cessation',
       'tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only',
       'branch:tokio-loyalty-bonus-adjustment-factor',
+      'branch:tokio-goluxe-achievement-bonus-qualification-window',
       'branch:tokio-goluxe-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts',
+      'branch:tokio-current-only-multi-life-life-state',
       'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-goluxe-achievement-bonus-qualification',
       'tokio-goluxe-advanced-death-payout-handling',
-      'tokio-goluxe-multiple-life-last-life-settlement',
       'tokio-goluxe-change-of-life-assured-administration',
       'tokio-goluxe-regular-withdrawal-facility',
       'tokio-goluxe-non-sgd-policy-currencies',
     ],
     warnings: [
-      '#goLuxe is cataloged as a supported V1 product. The SGD / 15-year minimum-contribution corridors model regular-premium routing, initial bonus allocation, annual loyalty bonus with the published bounded adjustment-factor formula in policy years 4 to 10 and the flat post-window rates thereafter, initial and policy charges, top-up and recurring-single-premium routing / charges, partial-withdrawal and premium-shortfall charges, surrender mechanics, and reinvest-default distribution support with the published $50 minimum cash-payout threshold and 30-day record-date lead time; the Advanced Death variant also models the published current death-benefit estimate and accrued Monthly Protection Charge corridor from insured-life inputs.',
-      'Achievement bonus qualification, advanced-death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, multiple-life last-life settlement, change-of-life-assured administration, regular-withdrawal rules, and non-SGD policy currencies remain informational only.',
+      '#goLuxe is cataloged as a supported V1 product. The SGD / 15-year minimum-contribution corridors model regular-premium routing, initial bonus allocation, annual loyalty bonus with the published bounded adjustment-factor formula in policy years 4 to 10 and the flat post-window rates thereafter, the achievement bonus at policy years 30 / 35 / 40 with the published first-ten-policy-years qualification gates, initial and policy charges, top-up and recurring-single-premium routing / charges, the commencement-date recurring-single-premium resumption gate after premium holiday, partial-withdrawal and premium-shortfall charges, surrender mechanics, and reinvest-default distribution support with the published $50 minimum cash-payout threshold and 30-day record-date lead time; the Advanced Death variant also models the published current death-benefit estimate and accrued Monthly Protection Charge corridor from insured-life inputs with static current multi-life last-life handling.',
+      'Recurring single premium stays blocked after a premium-holiday event until an explicit recurring-single-premium resumption is entered and the regular premium amount is restored to the commencement-date amount.',
+      'Advanced-death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, change-of-life-assured administration, regular-withdrawal rules, and non-SGD policy currencies remain informational only.',
     ],
     archived: false,
     variants: [

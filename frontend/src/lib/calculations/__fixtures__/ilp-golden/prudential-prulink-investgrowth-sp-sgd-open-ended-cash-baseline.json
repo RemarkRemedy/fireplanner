@@ -10,8 +10,13 @@
     "coverageTags": [
       "baseline",
       "kernel:distribution-mode-assumption",
+      "kernel:current-death-benefit-estimate",
       "branch:prulink-investgrowth-sp-single-premium-charge",
-      "branch:prulink-investgrowth-sp-premium-assurance-charge"
+      "branch:prulink-investgrowth-sp-premium-assurance-charge",
+      "branch:prulink-investgrowth-sp-top-up-charge",
+      "branch:prulink-investgrowth-sp-top-up-assurance-charge",
+      "kernel:top-up-amount-gate-block",
+      "kernel:partial-withdrawal-minimum-remaining-value-block"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "PRULink InvestGrowth (SP) Product Summary.pdf",
@@ -142,27 +147,30 @@
         "branch:prulink-investgrowth-sp-premium-assurance-charge",
         "branch:prulink-investgrowth-sp-top-up-charge",
         "branch:prulink-investgrowth-sp-top-up-assurance-charge",
+        "kernel:top-up-amount-gate-block",
+        "kernel:partial-withdrawal-minimum-remaining-value-block",
+        "kernel:current-death-benefit-estimate",
         "kernel:distribution-mode-assumption"
       ],
       "metadataOnlyBehaviors": [
-        "prulink-investgrowth-sp-death-benefit",
         "prulink-investgrowth-sp-e-top-up-charge",
         "prulink-investgrowth-sp-withdrawals",
         "prulink-investgrowth-sp-fund-switching"
       ]
     },
     "catalogWarnings": [
-      "PRULink InvestGrowth (SP) is cataloged as a supported V1 product. The parser captures the published initial single-premium charge, premium-event assurance-charge path for initial and standard top-up premiums, and cash-corridor Direct Income support through the manual distribution-mode kernel, while e-top-up treatment, withdrawals, and fund-switching remain outside the current engine.",
+      "PRULink InvestGrowth (SP) is cataloged as a supported V1 product. The parser captures the published initial single-premium charge, premium-event assurance-charge path for initial and standard top-up premiums, the published S$2,000 one-off top-up minimum, the published S$1,000 one-off withdrawal minimum and residual-account floor, the current-state death benefit as the higher of policy value or 110% of total premiums plus top-ups less withdrawals, and cash-corridor Direct Income support through the manual distribution-mode kernel, while e-top-up treatment, broader withdrawal administration, fund-switching, and cash Direct Income payout history in death-benefit calculations remain outside the current engine.",
       "This cash-funded variant uses the published 3% premium-charge and 1.5% premium-event assurance-charge path.",
       "This open-ended product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.",
+      "The current-state death benefit is modeled as the higher of policy value or 110% of total premiums plus top-ups less withdrawals; the published S$2,000 one-off top-up minimum plus the published S$1,000 one-off withdrawal minimum and residual-account floor are also executable, while active cash Direct Income payout history still needs manual review.",
       "The Direct Income option is modeled through manual distribution-mode support for the cash-funded corridor.",
       "Open-ended products use a default 20-year review horizon in V1; adjust the horizon if you want a different analysis window.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.",
       "Enter the one-time gross initial single premium lump sum in Policy Details if you want the upfront single-premium deduction to seed the starting policy value honestly.",
-      "Death and terminal-illness benefit formulas remain informational only.",
+      "Terminal-illness claim handling, death-benefit exclusions, and cash Direct Income payout history remain informational only beyond the modeled current ordinary death-benefit estimate.",
       "Single-premium principal tracking remains informational only in V1.",
       "e-top-up reduced premium-charge and assurance-charge treatment remains informational only.",
-      "Withdrawal administration and fund-switching mechanics remain informational only."
+      "Broader withdrawal administration and fund-switching mechanics remain informational only."
     ]
   },
   "expected": {

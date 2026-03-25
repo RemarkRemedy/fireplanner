@@ -30,14 +30,20 @@ describe('parsePrudentialPrulinkInvestGrowthSp', () => {
       'branch:prulink-investgrowth-sp-premium-assurance-charge',
       'branch:prulink-investgrowth-sp-top-up-charge',
       'branch:prulink-investgrowth-sp-top-up-assurance-charge',
+      'kernel:top-up-amount-gate-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
+      'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ])
+    expect(product.metadataOnlyBehaviors).not.toContain('prulink-investgrowth-sp-death-benefit')
     expect(product.metadataOnlyBehaviors).toEqual([
-      'prulink-investgrowth-sp-death-benefit',
       'prulink-investgrowth-sp-e-top-up-charge',
       'prulink-investgrowth-sp-withdrawals',
       'prulink-investgrowth-sp-fund-switching',
     ])
+    expect(product.warnings[0]).toContain('the published S$2,000 one-off top-up minimum')
+    expect(product.warnings[0]).toContain('the published S$1,000 one-off withdrawal minimum and residual-account floor')
+    expect(product.warnings[0]).toContain('current-state death benefit as the higher of policy value or 110% of total premiums plus top-ups less withdrawals')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-open-ended-cash',
       'sgd-open-ended-srs',
@@ -53,6 +59,14 @@ describe('parsePrudentialPrulinkInvestGrowthSp', () => {
       expect.objectContaining({ id: 'top-up-premium-charge', trigger: 'top-up', rate: 0.03 }),
       expect.objectContaining({ id: 'top-up-assurance-charge', trigger: 'top-up', rate: 0.015 }),
     ])
+    expect(cashVariant?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumTopUpAmount: 2_000,
+      minimumPartialWithdrawalAmount: 1_000,
+      partialWithdrawalMinimumRemainingValueRules: [
+        { activeWindow: 'policy-term', basis: 'policy-value', minimumValue: 1_000 },
+      ],
+    })
     expect(cashVariant?.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['policy'],
@@ -74,6 +88,12 @@ describe('parsePrudentialPrulinkInvestGrowthSp', () => {
     ])
     expect(srsVariant?.distributionSupport).toBeUndefined()
     expect(srsVariant?.unsupportedItems).toContain('Direct Income option mechanics remain informational only.')
+    expect(cashVariant?.unsupportedItems).toContain(
+      'Terminal-illness claim handling, death-benefit exclusions, and cash Direct Income payout history remain informational only beyond the modeled current ordinary death-benefit estimate.',
+    )
+    expect(cashVariant?.unsupportedItems).not.toContain(
+      'Terminal-illness benefit formulas and cash Direct Income payout history in death-benefit calculations remain informational only.',
+    )
 
     const cpfVariant = product.variants.find((variant) => variant.id === 'sgd-open-ended-cpf')
     expect(cpfVariant?.feeRules).toEqual([

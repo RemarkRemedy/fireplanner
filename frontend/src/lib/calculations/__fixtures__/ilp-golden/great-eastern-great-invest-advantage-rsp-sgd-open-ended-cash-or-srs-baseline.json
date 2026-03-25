@@ -9,7 +9,11 @@
     "description": "Baseline GREAT Invest Advantage (RSP) cash/SRS scenario proving the supported recurrent-premium charge corridor.",
     "coverageTags": [
       "baseline",
-      "branch:great-eastern-gia-rsp-recurrent-single-premium-charge"
+      "kernel:current-death-benefit-estimate",
+      "kernel:current-ti-benefit-estimate",
+      "branch:great-eastern-gia-rsp-recurrent-single-premium-charge",
+      "branch:great-eastern-gia-rsp-top-up-premium-charge",
+      "branch:great-eastern-gia-rsp-open-ended-zero-surrender-charge"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "PS(EN)_GREAT Invest Advantage (RSP)_(SG)_v3.0.pdf",
@@ -117,20 +121,20 @@
       "modeledEconomics": [
         "branch:great-eastern-gia-rsp-recurrent-single-premium-charge",
         "branch:great-eastern-gia-rsp-top-up-premium-charge",
-        "branch:great-eastern-gia-rsp-open-ended-zero-surrender-charge"
+        "branch:great-eastern-gia-rsp-open-ended-zero-surrender-charge",
+        "kernel:current-death-benefit-estimate",
+        "kernel:current-ti-benefit-estimate"
       ],
       "metadataOnlyBehaviors": [
-        "great-eastern-gia-rsp-death-benefit",
-        "great-eastern-gia-rsp-terminal-illness-benefit",
         "great-eastern-gia-rsp-srs-cpfis-surrender-destination"
       ]
     },
     "catalogWarnings": [
-      "GREAT Invest Advantage (RSP) is cataloged as a supported V1 product. The parser captures the published recurrent-premium charge path, top-up premium charge, and explicit no-surrender-charge structure through the open-ended no-MIP basis, while protection benefits and surrender-destination handling remain informational only.",
+      "GREAT Invest Advantage (RSP) is cataloged as a supported V1 product. The parser captures the published recurrent-premium charge path, top-up premium charge, the current-state death and terminal-illness benefit amount as the higher of 110% of recurrent single premiums plus top-ups less partial surrenders or account value less manual current amount owing, and the explicit no-surrender-charge structure through the open-ended no-MIP basis, while terminal-illness claim admission / exclusions / settlement and surrender-destination handling remain informational only.",
       "This Cash / SRS variant assumes the published 3% premium-charge path for recurrent premiums and top-ups.",
       "This open-ended recurrent-single-premium product uses the no-MIP basis; ongoing premiums continue until the user changes them or the review horizon ends.",
       "Open-ended products use a default 20-year review horizon in V1; adjust the horizon if you want a different analysis window.",
-      "Death and terminal-illness benefit formulas remain informational only.",
+      "The current-state terminal-illness benefit amount is modeled as the same amount as the current death-benefit estimate after manual current amount owing, but terminal-illness claim admission, exclusions, settlement, and policy termination remain informational only.",
       "Fund-switching and minimum-transaction guards remain informational only."
     ]
   },

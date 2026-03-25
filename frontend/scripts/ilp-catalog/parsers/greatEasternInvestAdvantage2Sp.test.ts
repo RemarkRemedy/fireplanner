@@ -28,8 +28,19 @@ describe('parseGreatEasternInvestAdvantage2Sp', () => {
       'branch:great-eastern-gia2-sp-initial-single-premium-charge',
       'branch:great-eastern-gia2-sp-top-up-premium-charge',
       'branch:great-eastern-gia2-sp-open-ended-zero-surrender-charge',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
     ])
+    expect(product.metadataOnlyBehaviors).not.toContain('great-eastern-gia2-sp-death-benefit')
     expect(product.metadataOnlyBehaviors).not.toContain('great-eastern-gia2-sp-single-premium-principal-tracking')
+    expect(product.metadataOnlyBehaviors).not.toContain('great-eastern-gia2-sp-terminal-illness-benefit')
+    expect(product.variants[0]?.unsupportedItems).toContain(
+      'The current-state terminal-illness benefit amount is modeled as the same amount as the current death-benefit estimate after manual current amount owing, but terminal-illness claim admission, exclusions, settlement, and policy termination remain informational only.',
+    )
+    expect(product.variants[0]?.unsupportedItems).not.toContain(
+      'Death and terminal-illness benefit formulas remain informational only.',
+    )
+    expect(product.warnings[0]).toContain('current-state death and terminal-illness benefit amount as the higher of 110% of single premium plus top-ups less partial surrenders or account value less manual current amount owing')
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended-cash-or-srs'])
 
     const variant = product.variants[0]

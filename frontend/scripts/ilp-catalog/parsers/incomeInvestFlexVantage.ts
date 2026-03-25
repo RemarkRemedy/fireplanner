@@ -35,6 +35,25 @@ const PREMIUM_HOLIDAY_CHARGE: Record<MipTerm, number[]> = {
   20: [1, 1, 0.9, 0.75, 0.65, 0.6, 0.55, 0.5, 0.45, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4],
 }
 
+const PREMIUM_HOLIDAY_FREE_MONTHS_AFTER_FIFTH_ANNIVERSARY: Record<MipTerm, number> = {
+  5: 0,
+  10: 60,
+  15: 60,
+  20: 120,
+}
+
+const MINIMUM_REGULAR_PREMIUM_BY_FREQUENCY: Record<MipTerm, {
+  annual: number
+  'semi-annual': number
+  quarterly: number
+  monthly: number
+}> = {
+  5: { annual: 9_600, 'semi-annual': 4_800, quarterly: 2_400, monthly: 800 },
+  10: { annual: 6_000, 'semi-annual': 3_000, quarterly: 1_500, monthly: 500 },
+  15: { annual: 3_600, 'semi-annual': 1_800, quarterly: 900, monthly: 300 },
+  20: { annual: 2_400, 'semi-annual': 1_200, quarterly: 600, monthly: 200 },
+}
+
 const INVESTMENT_BONUS_TIERS: Record<MipTerm, IlpTemplateBonusTier[]> = {
   5: [
     { currency: 'SGD', minAnnualPremium: 9_600, maxAnnualPremium: null, rate: 0.04 },
@@ -88,6 +107,18 @@ function buildRateSchedule(values: readonly number[]): Array<{ startPolicyYear: 
     endPolicyYear: index + 1,
     rate: roundRate(rate),
   }))
+}
+
+function buildPremiumHolidayFreeWindow(term: MipTerm): Pick<IlpTemplateVariant['eventChargeRules'][number], 'freeLifetimeMonths' | 'freeLifetimeMonthsStartPolicyYear'> | {} {
+  const months = PREMIUM_HOLIDAY_FREE_MONTHS_AFTER_FIFTH_ANNIVERSARY[term]
+  if (months <= 0) {
+    return {}
+  }
+
+  return {
+    freeLifetimeMonths: months,
+    freeLifetimeMonthsStartPolicyYear: 5,
+  }
 }
 
 function buildBonuses(term: MipTerm, page2: IlpCatalogSourceRef, page3: IlpCatalogSourceRef): IlpTemplateBonus[] {
@@ -155,10 +186,26 @@ function buildBonuses(term: MipTerm, page2: IlpCatalogSourceRef, page3: IlpCatal
       rate: 0.005,
       amount: null,
       tieredRates: [],
+      qualificationRules: [
+        {
+          trigger: 'partial-withdrawal',
+          accountIds: ['policy'],
+          disqualifyIfAnyInLookbackMonths: 12,
+        },
+      ],
+      preservedValueRules: [
+        {
+          trigger: 'partial-withdrawal',
+          basis: 'event-amount',
+          accountIds: ['policy'],
+          requiresBonusSuspensionWaived: true,
+        },
+      ],
       notes: [
         'Annual loyalty bonus from the 10th policy anniversary or the end of MIP, whichever is later.',
         'If any partial withdrawal is made in the prior 12 months, loyalty bonus eligibility is lost.',
-        'Withdrawals under the Life Events Withdrawal Benefit are not modeled separately in V1.',
+        'Qualifying Life Events Withdrawal Benefit withdrawals entered with the bonus-suspension waiver preserve the modeled loyalty-bonus basis after the withdrawal.',
+        'Life Events Withdrawal Benefit eligibility timing, documentary proof, and usage limits remain manual.',
       ],
       sourceRefs: [page3],
     },
@@ -171,6 +218,7 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
   const page3 = sourceRef(3, 'Loyalty bonus, top-ups, and death / TI benefit', snippetNear(document, 3, 'Death and Terminal Illness', 18))
   const page4 = sourceRef(4, 'Secondary insured and life events withdrawal benefit', snippetNear(document, 4, 'Secondary Insured Option', 18))
   const page5 = sourceRef(5, 'Premium holiday and partial withdrawal', snippetNear(document, 5, 'Premium Holiday', 18))
+  const page6 = sourceRef(6, 'Minimum regular premium', snippetNear(document, 6, '8.2.1 Minimum regular premium', 16))
   const page7 = sourceRef(7, 'Policy fee and insurance cover charge', snippetNear(document, 7, 'Policy Fee', 18))
   const page15 = sourceRef(15, 'Declaration and reinvesting of distributions', snippetNear(document, 15, 'Declaration and Reinvesting of Distributions', 18))
   const page17 = sourceRef(17, 'Appendix 1 death and TI insurance cover charge', snippetNear(document, 17, 'Appendix 1', 18))
@@ -252,12 +300,14 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
         basis: 'annual-premium-with-overlap-months',
         appliesTo: ['policy'],
         rate: 0,
+        ...buildPremiumHolidayFreeWindow(term),
         rateSchedule: buildRateSchedule(PREMIUM_HOLIDAY_CHARGE[term]),
         amount: 0,
         activeWindow: 'during-mip',
         allocation: 'equal-split',
         notes: [
           'Applied monthly during premium holiday based on the published annualised-regular-premium percentages.',
+          'From the 5th policy anniversary, premium holiday can continue without charge for the published MIP-specific free-month window before the charge table applies again.',
         ],
         sourceRefs: [page7, page21],
       },
@@ -274,7 +324,7 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
         allocation: 'equal-split',
         notes: [
           'Applied to partial withdrawals during the minimum investment period.',
-          'Qualifying Life Events Withdrawal Benefit withdrawals can be represented by setting both chargeWaived and bonusSuspensionWaived on the event.',
+          'Qualifying Life Events Withdrawal Benefit withdrawals can be represented by setting both chargeWaived and bonusSuspensionWaived on the event so the charge is waived and the modeled loyalty-bonus basis is preserved.',
           'Users must manually stay within the published 10% of prevailing policy value cap, once-per-life-event rule, three-use maximum, and documentary-proof timing conditions.',
         ],
         sourceRefs: [page4, page5, page21],
@@ -295,18 +345,27 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
       sourceRefs: [page15],
     },
     eecTable: [...SURRENDER_CHARGE[term]],
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      minimumRegularPremiumVariationStartPolicyMonth: 49,
+      minimumRegularPremiumAmountByFrequency: {
+        ...MINIMUM_REGULAR_PREMIUM_BY_FREQUENCY[term],
+      },
+      blockRegularPremiumVariationDuringPremiumHoliday: true,
+    },
     warnings: [
-      'Invest Flex Vantage is cataloged as a supported V1 product. The parser captures the policy fee, death / TI insurance cover charge after the 2nd policy anniversary once insured-life inputs are supplied, regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support.',
-      'Qualifying Life Events Withdrawal Benefit withdrawals can be represented in V1 by using the event-level charge and bonus-suspension waiver overrides, while eligibility timing, documentary proof, and usage-count limits remain manual.',
-      'Secondary-insured replacement mechanics, future premium option, and the published minimum distribution amount remain informational only in V1.',
+      'Invest Flex Vantage is cataloged as a supported V1 product. The parser captures the policy fee, death / TI insurance cover charge after the 2nd policy anniversary once insured-life inputs are supplied, the current-state death and terminal-illness benefit amount during the first policy year as policy value less a manual current excluded claim bonus value and after the first policy year as the higher of 101% of net premiums paid or policy value, regular-premium allocation uplifts, first-year investment bonus, annual loyalty bonus, premium-variation start and minimum-floor gating with active premium-holiday variation blocking, top-up routing, premium holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support.',
+      'Qualifying Life Events Withdrawal Benefit withdrawals can be represented in V1 by using the event-level charge and bonus-suspension waiver overrides, which preserves the modeled loyalty-bonus basis after the withdrawal, while eligibility timing, documentary proof, the 10%-of-policy-value cap, and usage-count limits remain manual.',
+      'Secondary-insured replacement mechanics, future premium option, the published minimum distribution amount, and insurer-defined minimum premium-change increments remain informational only in V1. The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state.',
     ],
     unsupportedItems: [
       'Secondary insured appointment, removal, and insured-replacement mechanics remain informational only.',
       'Life Events Withdrawal Benefit eligibility timing, documentary proof, and use-count limits remain manual.',
       'Future Premium Option remains informational only.',
       'The published minimum distribution amount and fund-level payout processing remain informational only.',
+      'The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state, but terminal-illness definitions, exclusions, and insurer-side settlement mechanics remain informational only.',
     ],
-    sourceRefs: [page1, page2, page3, page4, page5, page7, page15, page17, page20, page21, page22],
+    sourceRefs: [page1, page2, page3, page4, page5, page6, page7, page15, page17, page20, page21, page22],
   }
 }
 
@@ -324,6 +383,9 @@ export function parseIncomeInvestFlexVantage(context: ParseContext): IlpCatalogP
     economicsStatus: 'supported',
     modeledEconomics: [
       'kernel:protected-base-assurance',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:bonus-lookback-qualification-window',
       'branch:income-vs2-policy-fee',
       'branch:income-vs2-death-ti-insurance-cover-charge',
       'branch:income-vs2-regular-premium-allocation-uplift',
@@ -333,6 +395,10 @@ export function parseIncomeInvestFlexVantage(context: ParseContext): IlpCatalogP
       'branch:income-vs2-partial-withdrawal-charge',
       'branch:income-vs2-surrender-charge',
       'branch:income-vs2-ad-hoc-top-up-routing',
+      'kernel:regular-premium-variation-start-gate',
+      'kernel:regular-premium-variation-minimum-floor',
+      'kernel:regular-premium-variation-premium-holiday-block',
+      'kernel:bonus-preserved-value-cohorts',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
@@ -343,7 +409,7 @@ export function parseIncomeInvestFlexVantage(context: ParseContext): IlpCatalogP
       'income-vs2-death-benefit-continuation-after-insured-replacement',
     ],
     warnings: [
-      'Invest Flex Vantage is cataloged as a supported V1 product. The parser captures the regular-premium fee, protection charge, charge and bonus path, and reinvest-default distribution support, while secondary-insured replacement mechanics, life-event eligibility administration, and fund-level distribution-election constraints remain informational only.',
+      'Invest Flex Vantage is cataloged as a supported V1 product. The parser captures the regular-premium fee, protection charge, the current-state death and terminal-illness benefit amount during the first policy year as policy value less a manual current excluded claim bonus value and after the first policy year as the higher of 101% of net premiums paid or policy value, the current admitted-state TI payable amount through the published full-termination TI corridor after manual claim-amount entry, an admitted-and-settled TI claim as a current policy-termination state, charge and bonus path, and reinvest-default distribution support, while terminal-illness definitions / exclusions / settlement, secondary-insured replacement mechanics, life-event eligibility administration, and fund-level distribution-election constraints remain informational only.',
     ],
     archived: false,
     variants: TERM_OPTIONS.map((term) => buildVariant(context.document, term)),

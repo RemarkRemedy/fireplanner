@@ -28,10 +28,18 @@ describe('parseTokioMarineAtlasWealth', () => {
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
     expect(product.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
     expect(product.modeledEconomics).toContain('branch:tokio-atlas-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction')
+    expect(product.modeledEconomics).toContain('branch:tokio-current-only-multi-life-life-state')
+    expect(product.modeledEconomics).toContain('kernel:committed-premium-rsp-resumption-gate')
     expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(product.modeledEconomics).toContain('kernel:minimum-premium-holiday-start-month')
+    expect(product.modeledEconomics).toContain('kernel:minimum-recurring-single-premium-start-month')
+    expect(product.modeledEconomics).toContain('kernel:minimum-recurring-single-premium-amount')
+    expect(product.modeledEconomics).toContain('kernel:regular-premium-variation-minimum-floor')
+    expect(product.modeledEconomics).toContain('kernel:regular-premium-variation-start-gate')
+    expect(product.modeledEconomics).toContain('kernel:partial-withdrawal-start-policy-month-block')
+    expect(product.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
     expect(product.metadataOnlyBehaviors).toContain('tokio-atlas-advanced-death-payout-handling')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-atlas-multiple-life-last-life-settlement')
     expect(product.metadataOnlyBehaviors).toContain('tokio-atlas-change-of-life-assured-administration')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-atlas-loyalty-bonus-adjustment-factor')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-atlas-advanced-death-payout-and-life-assured-administration')
@@ -43,6 +51,29 @@ describe('parseTokioMarineAtlasWealth', () => {
 
     expect(product.variants).toHaveLength(2)
     expect(basicVariant?.icpMonths).toBe(12)
+    expect(basicVariant?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumRegularPremiumVariationStartPolicyMonth: 13,
+      minimumRegularPremiumAmountByFrequency: {
+        annual: 7_560,
+        'semi-annual': 3_780,
+        quarterly: 1_890,
+        monthly: 630,
+      },
+      minimumPartialWithdrawalAmount: 500,
+      minimumPartialWithdrawalStartPolicyMonthByAccount: [
+        { accountId: 'accumulation', startPolicyMonth: 13 },
+        { accountId: 'initial', startPolicyMonth: 301 },
+      ],
+      minimumPremiumHolidayStartPolicyMonth: 13,
+      minimumRecurringSinglePremiumStartPolicyMonth: 13,
+      minimumRecurringSinglePremiumMonthlyAmount: 50,
+      partialWithdrawalMinimumRemainingValueRules: [
+        { activeWindow: 'policy-term', basis: 'policy-value', minimumValue: 3_000 },
+      ],
+      requiresCommencementPremiumForRecurringSinglePremiumResumption: true,
+    })
+    expect(basicVariant?.warnings.some((warning) => warning.includes('monthly-equivalent minimum of S$50'))).toBe(true)
     expect(basicVariant?.accounts).toEqual([
       expect.objectContaining({
         id: 'initial',
@@ -109,6 +140,10 @@ describe('parseTokioMarineAtlasWealth', () => {
     expect(product.warnings).toContain(
       'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
     )
+    expect(product.warnings.some((warning) => warning.includes('explicit recurring-single-premium resumption'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('minimum regular-premium table'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('S$500 minimum withdrawal amount'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('S$3,000 minimum account value'))).toBe(true)
     expect(advancedVariant?.feeRules).toEqual([
       expect.objectContaining({
         id: 'monthly-protection-charge',
@@ -132,7 +167,7 @@ describe('parseTokioMarineAtlasWealth', () => {
       'The Advanced Death variant also models the published current death-benefit estimate, first-policy-year Monthly Protection Charge accrual, policy-year-2 settlement, policy-value valuation basis, and irreversible downgrade to Basic Death after failed Accumulation Units Account deduction.',
     )
     expect(advancedVariant?.unsupportedItems).toContain(
-      'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, multiple-life last-life settlement, change-of-life-assured administration, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.',
+      'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, change-of-life-assured administration, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.',
     )
     expect(basicVariant?.eecTable).toEqual([
       1, 1, 0.88, 0.86, 0.84, 0.82, 0.8, 0.78, 0.76, 0.73,

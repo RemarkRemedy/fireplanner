@@ -26,10 +26,13 @@ describe('parseTokioMarineGoClassicSecure', () => {
     expect(product.supportStatus).toBe('supported')
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-policy-value')
+    expect(product.modeledEconomics).toContain('branch:tokio-goclassic-secure-zero-partial-withdrawal-charge')
     expect(product.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
     expect(product.modeledEconomics).toContain('branch:tokio-additional-bonus-current-year-qualification')
     expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(product.modeledEconomics).toContain('kernel:partial-withdrawal-start-policy-month-block')
+    expect(product.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
     expect(product.modeledEconomics).toContain('kernel:tokio-locked-in-protection-state')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-goclassic-secure-loyalty-bonus-adjustment-factor')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-goclassic-secure-additional-bonus-qualification')
@@ -87,9 +90,21 @@ describe('parseTokioMarineGoClassicSecure', () => {
       }),
     )
     expect(basicVariant?.feeRules).toEqual([])
+    expect(basicVariant?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 500,
+      minimumPartialWithdrawalStartPolicyMonthByAccount: [
+        { accountId: 'accumulation', startPolicyMonth: 25 },
+        { accountId: 'initial', startPolicyMonth: 301 },
+      ],
+      partialWithdrawalMinimumRemainingValueRules: [
+        { activeWindow: 'policy-term', basis: 'policy-value', minimumValue: 3_000 },
+      ],
+    })
     expect(basicVariant?.eventChargeRules).toEqual([
       expect.objectContaining({ id: 'top-up-premium-charge', appliesTo: ['accumulation'], rate: 0.05 }),
       expect.objectContaining({ id: 'recurring-single-premium-charge', appliesTo: ['accumulation'], rate: 0.05 }),
+      expect.objectContaining({ id: 'partial-withdrawal-charge', appliesTo: ['initial', 'accumulation'], rate: 0 }),
     ])
     expect(basicVariant?.distributionSupport).toEqual({
       mode: 'manual-assumption',
@@ -118,6 +133,8 @@ describe('parseTokioMarineGoClassicSecure', () => {
     expect(product.warnings).toContain(
       'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
     )
+    expect(product.warnings.some((warning) => warning.includes('S$500 minimum amount'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('S$3,000 minimum account value'))).toBe(true)
 
     const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-25-advanced-death')
     expect(advancedVariant).toBeDefined()

@@ -32,13 +32,19 @@ describe('parseHsbcGoalBuilderIi', () => {
       'branch:goal-builder-ii-top-up-premium-charge',
       'branch:goal-builder-ii-recurrent-single-premium-charge',
       'branch:goal-builder-ii-premium-year-surrender-charge',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'kernel:scheduled-payout-manual-assumption',
+      'kernel:scheduled-payout-start-gate',
+      'kernel:scheduled-payout-per-occurrence-minimum',
       'kernel:distribution-mode-assumption',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('goal-builder-ii-loyalty-bonus-supplementary-premium-exclusion')
+    expect(product.metadataOnlyBehaviors).toContain('goal-builder-ii-terminal-illness-post-claim-reduction-and-payout-mechanics')
+    expect(product.metadataOnlyBehaviors).not.toContain('goal-builder-ii-death-ti-benefit')
     expect(product.metadataOnlyBehaviors).not.toContain('goal-builder-ii-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).toContain('goal-builder-ii-no-dividend-insufficient-nav-gate')
-    expect(product.metadataOnlyBehaviors).toContain('goal-builder-ii-regular-withdrawal-minimums')
+    expect(product.metadataOnlyBehaviors).toContain('goal-builder-ii-regular-withdrawal-minimum-balance-and-fund-holding-rules')
     expect(product.variants).toHaveLength(6)
 
     const term10 = product.variants.find((variant) => variant.id === 'sgd-mip-10')
@@ -133,14 +139,32 @@ describe('parseHsbcGoalBuilderIi', () => {
         cadenceYears: 2,
         requiresPremiumsPaidUpToDate: true,
         rate: 0.01,
+        excludedValueRules: [
+          {
+            trigger: 'top-up',
+            basis: 'event-amount',
+            lookbackMonths: 24,
+            netAmountFactor: 0.97,
+          },
+          {
+            trigger: 'recurring-single-premium',
+            basis: 'event-amount',
+            lookbackMonths: 24,
+            netAmountFactor: 0.97,
+          },
+        ],
       }),
     ])
     expect(term10?.scheduledPayoutSupport).toEqual({
       mode: 'manual-assumption',
       accountId: 'policy',
+      minimumStartPolicyYear: 11,
+      minimumWithdrawalAmountPerOccurrence: 250,
       source: 'policy-redemption',
       notes: expect.arrayContaining([
         expect.stringContaining('yearly, half-yearly, quarterly, or monthly'),
+        expect.stringContaining('start gate after the relevant surrender-penalty period'),
+        expect.stringContaining('published $250 minimum'),
       ]),
       sourceRefs: [
         expect.objectContaining({
@@ -168,6 +192,14 @@ describe('parseHsbcGoalBuilderIi', () => {
       ],
     })
     expect(term10?.warnings).toContain('The published no-dividend-during-insufficient-NAV rule and withdrawal minimum-balance gates remain informational only in V1.')
+    expect(term10?.warnings[0]).toContain('manual regular-withdrawal payout support with the published start gate after the relevant surrender-penalty period and the published $250 minimum per withdrawal occurrence once payout frequency is supplied')
+    expect(term10?.warnings).toContain('The Loyalty Bonus exclusion for Top-up Premiums and Recurrent Single Premiums made in the preceding 24 calendar months is modeled for projected future loyalty years in V1, including historical pre-projection excluded cohorts when explicit current excluded supplementary-premium inputs are supplied.')
+    expect(term10?.unsupportedItems).toContain('The current accidental-death estimate also needs manual current age and current amount owing inputs and, once a scheduled payout assumption is already active, a manual current accidental-death sum insured; age-75 cut-off handling is modeled, while claim exclusions and settlement remain informational only.')
+    expect(term10?.unsupportedItems).toContain('The current admitted-state TI payable amount and residual death-benefit estimate after a TI claim today are supported through the published proportional post-claim reduction corridor after manual claim-amount and residual-death input, but claim exclusions, claim-notification valuation timing, and insurer-side settlement mechanics remain informational only.')
+    expect(term10?.unsupportedItems).toContain('Regular withdrawal minimum-balance gates, insurer acceptance / commencement timing, and per-fund proportional realization rules remain informational only.')
+    expect(term10?.unsupportedItems).not.toContain('The current-state death-benefit estimate needs a manual current amount owing input and does not reconstruct historical regular-withdrawal erosion once a scheduled payout assumption is already active in V1.')
+    expect(term10?.unsupportedItems).not.toContain('The current TI snapshot needs a manual remaining aggregate TI cap and does not reconstruct historical regular-withdrawal erosion once a scheduled payout assumption is already active in V1.')
+    expect(term10?.unsupportedItems).not.toContain('The current-state Loyalty Bonus exclusion base from historical Top-up Premiums and Recurrent Single Premiums before the projection start remains informational only.')
     expect(term10?.eecTable).toEqual([1, 1, 0.75, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.1])
   }, 30_000)
 })

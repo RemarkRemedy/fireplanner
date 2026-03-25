@@ -129,7 +129,9 @@ function buildVariant(
       activeWindow: 'policy-term',
       allocation: 'equal-split',
       notes: [
-        'No policy-level partial withdrawal charge is stated; withdrawals redeem units subject to the published minimum account value and transaction size rules.',
+        'No policy-level partial withdrawal charge is stated; withdrawals redeem units without an extra policy-level fee.',
+        'V1 blocks explicit one-off partial withdrawals that would leave the initial-units-account value below 10% of the committed initial single premium.',
+        'Minimum withdrawal amount, fund-selection routing, and pending-transaction execution timing remain informational only.',
       ],
       sourceRefs: [page4, page6],
     },
@@ -157,15 +159,26 @@ function buildVariant(
     bonuses: [],
     feeRules,
     eventChargeRules,
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'initial-single-premium',
+          accountId: 'policy',
+          minimumValueRate: 0.1,
+        },
+      ],
+    },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     exitChargeBasis: 'initial-single-premium-base',
     warnings: [
-      `FWD Invest Goal 1 (${currency}) is cataloged as a supported V1 product. The parser captures the published 0% single-premium charge, the 1.00% annual initial-account charge on account value, the 1.4% plan charge on the committed initial single premium during the first five policy years, the first-five-policy-years surrender charge on that same original base, and the zero policy-level partial-withdrawal charge through the open-ended single-premium basis.`,
+      `FWD Invest Goal 1 (${currency}) is cataloged as a supported V1 product. The parser captures the published 0% single-premium charge, the 1.00% annual initial-account charge on account value, the 1.4% plan charge on the committed initial single premium during the first five policy years, the first-five-policy-years surrender charge on that same original base, the current-state death benefit as 105% of policy value, the zero policy-level partial-withdrawal charge, and the 10%-of-committed-initial-single-premium minimum remaining-value floor on explicit one-off partial withdrawals through the open-ended single-premium basis.`,
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
-      'The withdrawal minimum transaction amount and minimum residual account-value rules remain informational only in V1.',
+      'The withdrawal minimum transaction amount, fund-selection routing, and pending-transaction execution timing remain informational only in V1.',
     ],
     unsupportedItems: [
-      'Death benefit and multi-life last-survivor behavior remain informational only.',
+      'Multi-life last-survivor death-trigger handling remains informational only.',
       'Single-premium principal tracking remains informational only in V1.',
       'Policy closure charge, currency-change processing, change-of-person-insured handling, and reviewable switching-fee administration remain informational only.',
       'Fund management fees remain informational only because they depend on the selected ILP sub-fund.',
@@ -192,12 +205,12 @@ export function parseFwdInvestGoal1(context: ParseContext): IlpCatalogProduct {
       'branch:fwd-invest-goal-1-plan-charge',
       'branch:fwd-invest-goal-1-surrender-charge',
       'branch:fwd-invest-goal-1-zero-partial-withdrawal-charge',
+      'kernel:current-death-benefit-estimate',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
     ],
     metadataOnlyBehaviors: [
-      'fwd-invest-goal-1-death-benefit',
       'fwd-invest-goal-1-multi-life-last-survivor',
       'fwd-invest-goal-1-single-premium-principal-tracking',
-      'fwd-invest-goal-1-withdrawal-minimum-rules',
       'fwd-invest-goal-1-policy-closure-charge',
       'fwd-invest-goal-1-currency-change-processing',
       'fwd-invest-goal-1-change-of-person-insured',
@@ -205,7 +218,7 @@ export function parseFwdInvestGoal1(context: ParseContext): IlpCatalogProduct {
       'fwd-invest-goal-1-fund-management-fees',
     ],
     warnings: [
-      'FWD Invest Goal 1 is cataloged as a supported V1 product. The parser captures the published 0% single-premium charge, the 1.00% annual initial-account charge on account value, the 1.4% plan charge on the committed initial single premium during the first five policy years, the first-five-policy-years surrender charge on that same original base, and the zero policy-level partial-withdrawal charge through the open-ended single-premium basis, while protection benefits and principal-tracking remain outside the current engine.',
+      'FWD Invest Goal 1 is cataloged as a supported V1 product. The parser captures the published 0% single-premium charge, the 1.00% annual initial-account charge on account value, the 1.4% plan charge on the committed initial single premium during the first five policy years, the first-five-policy-years surrender charge on that same original base, the current-state death benefit as 105% of policy value, the zero policy-level partial-withdrawal charge, and the 10%-of-committed-initial-single-premium minimum remaining-value floor on explicit one-off partial withdrawals through the open-ended single-premium basis, while multi-life last-survivor handling, principal-tracking, and broader operational mechanics remain outside the current engine.',
     ],
     archived: false,
     variants: [

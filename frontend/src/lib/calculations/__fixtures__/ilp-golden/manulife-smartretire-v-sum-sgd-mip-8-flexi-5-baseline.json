@@ -11,8 +11,18 @@
       "baseline",
       "kernel:current-death-benefit-estimate",
       "kernel:distribution-mode-assumption",
+      "branch:manulife-smartretire-v-death-coi",
+      "branch:manulife-smartretire-v-wop-on-tpd-coi",
+      "branch:manulife-smartretire-v-coi-refund",
       "branch:manulife-smartretire-v-administrative-charge",
-      "branch:manulife-smartretire-v-withdrawal-and-surrender-charge"
+      "branch:manulife-smartretire-v-withdrawal-and-surrender-charge",
+      "branch:manulife-smartretire-v-premium-shortfall-charge",
+      "branch:manulife-smartretire-v-zero-top-up-charge",
+      "kernel:top-up-amount-gate-block",
+      "branch:manulife-smartretire-v-welcome-bonus",
+      "branch:manulife-smartretire-v-loyalty-bonus",
+      "branch:manulife-smartretire-v-wop-premium-waiver",
+      "kernel:automatic-lapse-on-account-depletion"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "WA_MSRS5_PdtSum.pdf",
@@ -142,7 +152,48 @@
         ]
       }
     ],
-    "chargeRules": [],
+    "chargeRules": [
+      {
+        "id": "cost-of-insurance-death",
+        "label": "Cost of Insurance (Death Benefit)",
+        "basis": "assurance-sum-at-risk",
+        "activeWindow": "policy-term",
+        "startPolicyYear": 1,
+        "endPolicyYear": null,
+        "appliesTo": [
+          "policy"
+        ],
+        "rate": 0,
+        "amount": 0,
+        "assuranceConfig": {
+          "formula": "manulife-smartretire-death",
+          "monthlyModalFactor": 0.083333,
+          "maxAgeNextBirthday": 99
+        },
+        "requiresManualInput": false,
+        "allocation": "pro-rata-by-value"
+      },
+      {
+        "id": "cost-of-insurance-wop-on-tpd",
+        "label": "Cost of Insurance (WOP on TPD)",
+        "basis": "assurance-sum-at-risk",
+        "activeWindow": "during-mip",
+        "startPolicyYear": 1,
+        "endPolicyYear": 5,
+        "appliesTo": [
+          "policy"
+        ],
+        "rate": 0,
+        "amount": 0,
+        "assuranceConfig": {
+          "formula": "manulife-smartretire-wop-tpd",
+          "monthlyModalFactor": 0.083333,
+          "maxAgeNextBirthday": 70
+        },
+        "requiresManualInput": false,
+        "allocation": "pro-rata-by-value"
+      }
+    ],
     "policyEvents": [],
     "eventChargeRules": [
       {
@@ -271,8 +322,13 @@
         "branch:manulife-smartretire-v-withdrawal-and-surrender-charge",
         "branch:manulife-smartretire-v-premium-shortfall-charge",
         "branch:manulife-smartretire-v-zero-top-up-charge",
+        "kernel:top-up-amount-gate-block",
         "branch:manulife-smartretire-v-welcome-bonus",
         "branch:manulife-smartretire-v-loyalty-bonus",
+        "branch:manulife-smartretire-v-death-coi",
+        "branch:manulife-smartretire-v-wop-on-tpd-coi",
+        "branch:manulife-smartretire-v-wop-premium-waiver",
+        "branch:manulife-smartretire-v-coi-refund",
         "kernel:current-death-benefit-estimate",
         "kernel:automatic-lapse-on-account-depletion",
         "kernel:distribution-mode-assumption"
@@ -280,10 +336,9 @@
       "metadataOnlyBehaviors": [
         "manulife-smartretire-v-sum-target-retirement-sum-withdrawal",
         "manulife-smartretire-v-sum-regular-income-drawdown",
-        "manulife-smartretire-v-sum-post-mip-death-benefit-corridor",
-        "manulife-smartretire-v-sum-amount-owed-deductions-and-claim-handling",
+        "manulife-smartretire-v-sum-claim-handling",
         "manulife-smartretire-v-sum-waiver-of-premium-benefit",
-        "manulife-smartretire-v-sum-coi-refund",
+        "manulife-smartretire-v-sum-coi-refund-claim-history",
         "manulife-smartretire-v-sum-flexi-start-premium-variation",
         "manulife-smartretire-v-sum-reinstatement-underwriting-and-exclusion-resets",
         "manulife-smartretire-v-sum-reinvested-dividend-withdrawal",
@@ -292,17 +347,20 @@
       ]
     },
     "catalogWarnings": [
-      "Manulife SmartRetire (V) - Sum is cataloged as a supported V1 product for the regular-pay corridors. The parser captures the published administrative-charge path, MIP withdrawal / surrender schedule, premium-shortfall charge before Flexi Start, prevailing 0% top-up charge, welcome-bonus and loyalty-bonus mechanics, the current-state MIP death-benefit estimate, annual-state lapse / termination after projected account-value depletion, and the reinvest-default distribution-mode assumption surface, while retirement-sum withdrawal handling, optional drawdown elections, later death-benefit corridors, hybrid COI mechanics, TPD waiver, COI refund, reinstatement underwriting and exclusion resets, and fund-level charges remain outside the current engine.",
-      "8 Years Flexi 5 is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the welcome-bonus and loyalty-bonus mechanics, the current-state MIP death-benefit estimate, annual-state lapse / termination after projected account-value depletion, and the reinvest-default distribution-mode assumption surface.",
-      "Target Retirement Sum withdrawal, optional regular-income drawdown elections, hybrid death-benefit / COI mechanics, waiver-of-premium on TPD, COI refund at target retirement age, and fund-level management charges remain outside the current engine.",
+      "Manulife SmartRetire (V) - Sum is cataloged as a supported V1 product for the regular-pay corridors. The parser captures the published administrative-charge path, MIP withdrawal / surrender schedule, premium-shortfall charge before Flexi Start, prevailing 0% top-up charge, the published S$2,500 minimum on explicit ad-hoc top-up premiums, welcome-bonus and loyalty-bonus mechanics, the current-state death-benefit estimate across the MIP and later current-only mature-policy corridors, the guaranteed death-benefit COI table, the guaranteed WOP-on-TPD COI table before Flexi Start after insured-life details are supplied, the current admitted-state WOP premium-waiver path before Flexi Start when the current WOP claim-history status and remaining-waiver-runway inputs are supplied, the target-retirement-age COI refund path both before and after target retirement age when current refund-eligible death COI, explicit refund-gate status, and already-due refund-status inputs are supplied where applicable, annual-state lapse / termination after projected account-value depletion, and the reinvest-default distribution-mode assumption surface, while retirement-sum withdrawal handling, optional drawdown elections, top-up allocation across up to 10 funds at a minimum of 10% per fund, broader insurer-side claim settlement, reinstatement underwriting and exclusion resets, and fund-level charges remain outside the current engine.",
+      "8 Years Flexi 5 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the published S$2,500 minimum on explicit ad-hoc top-up premiums, the welcome-bonus and loyalty-bonus mechanics, the current-state death-benefit estimate across the MIP and later current-only mature-policy corridors, the guaranteed death-benefit COI table, the guaranteed WOP-on-TPD COI table before Flexi Start after insured-life details are supplied, the current admitted-state WOP premium-waiver path before Flexi Start when the current WOP claim-history status and remaining-waiver-runway inputs are supplied, the target-retirement-age COI refund path both before and after target retirement age when current refund-eligible death COI, explicit refund-gate status, and already-due refund-status inputs are supplied where applicable, annual-state lapse / termination after projected account-value depletion, and the reinvest-default distribution-mode assumption surface.",
+      "Target Retirement Sum withdrawal, optional regular-income drawdown elections, waiver-of-premium claim admission history before the current projection start, broader COI refund claim-history reconstruction beyond the explicit current inputs, and fund-level management charges remain outside the current engine.",
+      "Top-up allocation across up to 10 funds at a minimum of 10% per fund remains informational only.",
       "Withdrawals of accumulated reinvested dividends remain informational only.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption, and payouts below the published minimum annual cash-payout amount of $40 remain reinvested.",
       "Target Retirement Sum withdrawal remains informational only and should be represented manually with withdrawal events if needed.",
       "Optional regular-income drawdown elections remain informational only.",
-      "Only the current-state MIP death-benefit estimate is modeled. The accumulation-period basic-sum-insured corridor, the post-target-retirement-age account-value-only corridor, amount-owed deductions, and claim-side handling remain informational only.",
-      "Waiver of Premium benefit on TPD and its separate COI table remain informational only.",
-      "Refund of Cost of Insurance at target retirement age remains informational only.",
+      "The current-state death-benefit estimate now covers the MIP corridor plus the later current-only mature-policy corridors once manual amount-owing and retirement-state inputs are supplied. Claim-side handling after benefit settlement remains informational only.",
+      "Death-benefit claim settlement and post-claim handling remain informational only beyond the modeled death-benefit COI table.",
+      "Waiver of Premium benefit on TPD claim admission history before the current projection start, insurer-side claim settlement, and broader post-claim administration remain informational only beyond the modeled WOP-on-TPD COI table and current admitted-state waived-premium path.",
+      "Refund of Cost of Insurance at target retirement age is modeled only through explicit current refund-eligible death COI, SmartRetire refund-gate status, WOP-on-TPD claim-state, and already-due refund-status inputs. Broader refund claim-history reconstruction remains informational only.",
       "Flexi-start regular-premium variation and change-of-basic-sum-insured mechanics remain informational only.",
+      "Top-up allocation across up to 10 funds at a minimum of 10% per fund remains informational only.",
       "Reinstatement underwriting, approval, premium-allocation carry-forward, and exclusion resets after reinstatement remain informational only.",
       "Withdrawals of accumulated reinvested dividends remain informational only.",
       "Fund-level management charges, fund switching, premium redirection, and automatic fund rebalancing remain informational only."

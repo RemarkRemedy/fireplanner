@@ -108,7 +108,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       'This open-ended recurrent-single-premium product uses the no-MIP basis; ongoing premiums continue until the user changes them or the review horizon ends.',
     ],
     unsupportedItems: [
-      'Death and terminal-illness benefit formulas remain informational only.',
+      'The current-state terminal-illness benefit amount is modeled as the same amount as the current death-benefit estimate after manual current amount owing, but terminal-illness claim admission, exclusions, settlement, and policy termination remain informational only.',
       'Fund-switching and minimum-transaction guards remain informational only.',
     ],
     sourceRefs: [page1, page2, page3],
@@ -131,14 +131,14 @@ export function parseGreatEasternInvestAdvantage2Rsp(context: ParseContext): Ilp
       'branch:great-eastern-gia2-rsp-recurrent-single-premium-charge',
       'branch:great-eastern-gia2-rsp-top-up-premium-charge',
       'branch:great-eastern-gia2-rsp-open-ended-zero-surrender-charge',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
     ],
     metadataOnlyBehaviors: [
-      'great-eastern-gia2-rsp-death-benefit',
-      'great-eastern-gia2-rsp-terminal-illness-benefit',
       'great-eastern-gia2-rsp-srs-surrender-destination',
     ],
     warnings: [
-      'GREAT Invest Advantage 2 (RSP) is cataloged as a supported V1 product. The parser captures the published recurrent-premium charge path, top-up premium charge, and explicit no-surrender-charge structure through the open-ended no-MIP basis, while protection benefits and surrender-destination handling remain informational only.',
+      'GREAT Invest Advantage 2 (RSP) is cataloged as a supported V1 product. The parser captures the published recurrent-premium charge path, top-up premium charge, the current-state death and terminal-illness benefit amount as the higher of 110% of recurrent single premiums plus top-ups less partial surrenders or account value less manual current amount owing, and the explicit no-surrender-charge structure through the open-ended no-MIP basis, while terminal-illness claim admission / exclusions / settlement and surrender-destination handling remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

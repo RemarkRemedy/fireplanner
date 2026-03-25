@@ -25,10 +25,19 @@ describe('parseGreatEasternWealthAdvantage4', () => {
     expect(product.supportStatus).toBe('supported')
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('kernel:protected-base-assurance')
+    expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
+    expect(product.modeledEconomics).toContain('kernel:current-ti-benefit-estimate')
+    expect(product.modeledEconomics).toContain('kernel:current-tpd-benefit-estimate')
     expect(product.modeledEconomics).toContain('branch:great-eastern-wa4-insurance-charge')
     expect(product.modeledEconomics).toContain('branch:great-eastern-wa4-premium-holiday-charge')
     expect(product.modeledEconomics).toContain('branch:great-eastern-wa4-premium-holiday-charge-refund')
+    expect(product.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
+    expect(product.modeledEconomics).toContain('kernel:premium-holiday-top-up-block')
+    expect(product.modeledEconomics).toContain('kernel:top-up-paid-up-to-date-block')
     expect(product.metadataOnlyBehaviors).not.toContain('great-eastern-wa4-insurance-charge')
+    expect(product.warnings).toContain(
+      'GREAT Wealth Advantage 4 is cataloged as a supported V1 corridor. The parser captures the published bonus path, policy fee, monthly insurance charge, the current-state death / terminal-illness / TPD benefit estimate as the higher of policy value or the 101%-of-paid-premiums floor after partial withdrawals including withdrawal charges and current amount owing, with TPD capped by a manual remaining aggregate TPD cap, the current admitted-state TI payable amount through the published full-termination TI corridor after manual claim-amount entry, an admitted-and-settled TI claim as a current policy-termination state, premium-holiday charge, the premium-holiday-charge refund path, the published S$1,000 single-premium top-up minimum, premium-holiday and paid-up-to-date top-up blocking, and partial-withdrawal / surrender schedules, while TPD continuation-event state, terminal-illness exclusions / settlement / broader post-claim continuation, and administrative gating on premium reductions, change of life assured, and AFR remain informational only beyond the modeled current death / terminal-illness / TPD benefit estimate.',
+    )
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-mip-10-choice-5',
       'sgd-mip-10-choice-10-under-6000',
@@ -134,6 +143,24 @@ describe('parseGreatEasternWealthAdvantage4', () => {
         }),
       ]),
     )
+    expect(choice15High?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: true,
+      blockTopUpsDuringPremiumHoliday: true,
+      blockTopUpsWhenPremiumsNotPaidUpToDate: true,
+      minimumTopUpAmount: 1_000,
+    })
+    expect(choice15High?.warnings).toContain(
+      'GREAT Wealth Advantage 4 is modeled as a supported V1 corridor. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, monthly insurance charge, the current-state death / terminal-illness / TPD benefit estimate as the higher of policy value or the 101% paid-premium floor after partial withdrawals including withdrawal charges and current amount owing, with TPD capped by a manual remaining aggregate TPD cap, premium-holiday charge, the premium-holiday-charge refund path, the published S$1,000 single-premium top-up minimum, premium-holiday and paid-up-to-date top-up blocking, and the published partial-withdrawal / surrender charge schedules.',
+    )
+    expect(choice15High?.unsupportedItems).toContain(
+      'The current-state death / terminal-illness / TPD benefit estimate needs a manual current amount owing input because current debt is not reconstructed from history in V1.',
+    )
+    expect(choice15High?.unsupportedItems).toContain(
+      'The current-state TPD estimate needs a manual remaining aggregate TPD cap input because Great Eastern’s S$5,000,000 aggregate TPD limit is not reconstructed across policies and riders in V1.',
+    )
+    expect(choice15High?.unsupportedItems).toContain(
+      'The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state, but TPD continuation-event state plus terminal-illness exclusions, settlement, and broader post-claim continuation remain informational only.',
+    )
 
     const choice10Low = product.variants.find((variant) => variant.id === 'sgd-mip-10-choice-10-under-6000')
     expect(choice10Low).toBeDefined()
@@ -169,5 +196,11 @@ describe('parseGreatEasternWealthAdvantage4', () => {
     const choice5 = product.variants.find((variant) => variant.id === 'sgd-mip-10-choice-5')
     expect(choice5).toBeDefined()
     expect(choice5?.eventChargeRules?.find((rule) => rule.id === 'premium-holiday-charge-refund')).toBeUndefined()
+    expect(choice5?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: true,
+      blockTopUpsDuringPremiumHoliday: true,
+      blockTopUpsWhenPremiumsNotPaidUpToDate: true,
+      minimumTopUpAmount: 1_000,
+    })
   }, 30_000)
 })

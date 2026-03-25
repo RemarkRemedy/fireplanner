@@ -11,7 +11,22 @@
       "event-heavy",
       "branch:manulife-investready-iii-premium-shortfall-charge",
       "branch:manulife-investready-iii-zero-top-up-charge",
-      "branch:manulife-investready-iii-partial-withdrawal-charge"
+      "branch:manulife-investready-iii-partial-withdrawal-charge",
+      "kernel:protected-base-assurance",
+      "kernel:current-death-benefit-estimate",
+      "kernel:current-ti-benefit-estimate",
+      "kernel:current-residual-death-benefit-after-ti-estimate",
+      "branch:manulife-investready-iii-welcome-bonus",
+      "branch:manulife-investready-iii-annual-premium-bonus",
+      "branch:manulife-investready-iii-loyalty-bonus",
+      "branch:manulife-investready-iii-policy-fee-manual-input",
+      "branch:manulife-investready-iii-administrative-charge",
+      "kernel:regular-premium-variation-start-gate",
+      "kernel:regular-premium-variation-minimum-floor",
+      "kernel:top-up-amount-gate-block",
+      "kernel:partial-withdrawal-minimum-remaining-value-block",
+      "branch:manulife-investready-iii-full-surrender-charge",
+      "kernel:distribution-mode-assumption"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "WA_MIR03_PdtSum.pdf",
@@ -146,12 +161,17 @@
         "startPolicyYear": 6,
         "endPolicyYear": null,
         "tieredRates": [],
-        "suspensionRules": [
+        "qualificationRules": [
           {
             "trigger": "partial-withdrawal",
-            "suspensionMonths": 12
+            "disqualifyInReferenceYear": true
+          },
+          {
+            "trigger": "reinvested-dividend-withdrawal",
+            "disqualifyInReferenceYear": true
           }
-        ]
+        ],
+        "suspensionRules": []
       }
     ],
     "chargeRules": [
@@ -299,38 +319,43 @@
       "modeledEconomics": [
         "kernel:protected-base-assurance",
         "kernel:current-death-benefit-estimate",
+        "kernel:current-ti-benefit-estimate",
+        "kernel:current-residual-death-benefit-after-ti-estimate",
         "branch:manulife-investready-iii-welcome-bonus",
         "branch:manulife-investready-iii-annual-premium-bonus",
         "branch:manulife-investready-iii-loyalty-bonus",
+        "branch:manulife-investready-iii-policy-fee-manual-input",
         "branch:manulife-investready-iii-administrative-charge",
         "branch:manulife-investready-iii-premium-shortfall-charge",
         "branch:manulife-investready-iii-zero-top-up-charge",
+        "kernel:regular-premium-variation-start-gate",
+        "kernel:regular-premium-variation-minimum-floor",
+        "kernel:top-up-amount-gate-block",
+        "kernel:partial-withdrawal-minimum-remaining-value-block",
         "branch:manulife-investready-iii-partial-withdrawal-charge",
         "branch:manulife-investready-iii-full-surrender-charge",
         "kernel:distribution-mode-assumption"
       ],
       "metadataOnlyBehaviors": [
         "manulife-investready-iii-top-up-underwriting",
-        "manulife-investready-iii-reinvested-dividend-withdrawals",
-        "manulife-investready-iii-ti-acceleration-limits-and-claim-timing",
+        "manulife-investready-iii-ti-claim-admission-settlement-and-notification-timing",
         "manulife-investready-iii-reinstatement-underwriting-and-pre-existing-condition-exclusions",
-        "manulife-investready-iii-flexi-start-premium-variation"
+        "manulife-investready-iii-annual-mode-clawback-on-payment-mode-change"
       ]
     },
     "catalogWarnings": [
-      "Manulife InvestReady (III) is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter insured-life details and current premium bases, the current-state death-benefit estimate from that same floor, the published 1% / 2% welcome-bonus tiers, the annual-premium bonus gate under the annual premium-frequency assumption, the corridor’s 0.0% loyalty-bonus rate after MIP, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface with the published S$40 minimum cash-payout threshold. Selected-fund management charges are represented through the policy fund OCF inputs rather than a product-level parser rate, while annual-mode clawback on later payment-mode changes, flexi-start premium variation, terminal-illness acceleration limits, amount-owed deductions, claim-notification valuation timing, post-claim continuation, and reinstatement underwriting and pre-existing-condition exclusions remain informational only.",
-      "Manulife InvestReady (III) is cataloged as a supported V1 corridor. The parser captures the 5 Years Flexi 4 administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the current-state death-benefit estimate from that same floor, the published 1% / 2% welcome-bonus tiers, the annual-premium bonus gate when the seed uses annual premium frequency, the corridor’s 0.0% loyalty-bonus rate after MIP, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
-      "Flexi-start premium variation, annual-mode clawback on later payment-mode changes, and partial-withdrawal amount limits remain informational only.",
+      "Manulife InvestReady (III) Jan-2026 summary cohort is cataloged as a separate supported corridor set in V1. The parser captures the published administration-charge path, the 101% paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the current-state death-benefit estimate net of manually entered current amount owing, the current terminal-illness benefit estimate as the lower of the modeled current death benefit, a manual remaining aggregate TI cap, and a manual remaining aggregate TI + CI cap, subject to the published S$1,000,000 TI limit, the current residual death-benefit estimate after a TI claim today for the supported acceleration corridor, the Welcome Bonus tiers, the annual-premium bonus gate under the annual premium-frequency assumption, the published Loyalty Bonus rates including the 12-month suspension after partial withdrawals or withdrawals of reinvested dividends, the low-band policy-fee surface through manual annual-fee input for the 10-year and 13-year corridors, the premium-shortfall charge before Flexi Start where applicable, the prevailing 0% top-up charge, the published S$2,500 minimum on explicit ad-hoc top-up premiums, the flexi-start premium-variation start-month gate, the published minimum reduced premium floor after Flexi Start, the published S$500 minimum on explicit one-off partial withdrawals with the S$1,000 residual policy-value floor, the MIP partial-withdrawal charge schedules, the MIP full-surrender charge schedules, and the reinvest-default distribution-mode assumption surface with the published S$40 minimum cash-payout threshold. Selected-fund management charges are represented through the policy fund OCF inputs rather than a product-level parser rate, while issue-time policy-fee band selection, annual-mode clawback on later payment-mode changes, the separate MIP partial-withdrawal amount-limit table, terminal-illness claim admission / notification valuation timing / settlement, top-up underwriting, and reinstatement underwriting and pre-existing-condition exclusions remain informational only.",
+      "5 Years Flexi 4 is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the current-state death-benefit estimate net of manually entered current amount owing, the current terminal-illness benefit estimate as the lower of the modeled current death benefit, a manual remaining aggregate TI cap, and a manual remaining aggregate TI + CI cap, subject to the published S$1,000,000 TI limit, the current residual death-benefit estimate after a TI claim today for the supported acceleration corridor, the Welcome Bonus tiers, the annual-premium bonus gate when the seed uses annual premium frequency, the published Loyalty Bonus rate for this corridor, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the published S$2,500 minimum on explicit ad-hoc top-up premiums, the published S$500 minimum on explicit one-off partial withdrawals with the S$1,000 residual policy-value floor, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface with the published S$40 minimum cash-payout threshold.",
+      "the flexi-start premium-variation start-month gate and the published minimum reduced premium floor after Flexi Start are modeled, while annual-mode clawback on later payment-mode changes and the separate MIP partial-withdrawal amount-limit table remain informational only.",
       "Selected-fund management charges are represented through the policy fund OCF inputs rather than a product-level parser rate.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption, and payouts below the published minimum annual cash-payout amount of $40 remain reinvested.",
       "This seed assumes the regular premium is paid on the annual frequency option so the published annual-premium bonus path can execute. Change Regular Premium Payment Frequency in Policy Details if the policy uses a non-annual mode.",
       "Changing the regular premium payment mode from annual to a non-annual mode during the premium-shortfall-charge period remains informational only.",
       "Top-up underwriting remains informational only.",
-      "Withdrawals of accumulated reinvested dividends remain informational only.",
-      "Terminal-illness acceleration limits, amount-owed deductions, claim-notification valuation timing, and post-claim continuation remain informational only beyond the current death-benefit estimate.",
+      "Reinvested-dividend withdrawal approval and available-balance verification remain informational only.",
+      "Current amount owing, the remaining aggregate TI cap, and the remaining aggregate TI + CI cap must still be entered manually for the current death / terminal-illness and residual-after-TI estimates; claim-notification valuation timing, TI claim admission, and settlement remain informational only.",
       "Reinstatement underwriting and pre-existing-condition exclusions remain informational only.",
-      "Regular premium variation from Flexi Start onwards remains informational only.",
-      "Partial-withdrawal amount limits, minimum withdrawal amount, and minimum residual-account-value rules remain informational only."
+      "The separate MIP partial-withdrawal amount-limit table remains informational only."
     ]
   },
   "expected": {

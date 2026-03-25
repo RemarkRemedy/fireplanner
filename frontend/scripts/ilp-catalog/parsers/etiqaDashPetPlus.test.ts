@@ -119,11 +119,18 @@ describe('parseEtiqaDashPetPlus', () => {
       'branch:etiqa-dash-pet-plus-management-charge',
       'branch:etiqa-dash-pet-plus-zero-top-up-charge',
       'branch:etiqa-dash-pet-plus-zero-partial-withdrawal-charge',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ])
+    expect(product.metadataOnlyBehaviors).not.toContain('etiqa-dash-pet-plus-death-benefit')
+    expect(product.metadataOnlyBehaviors).not.toContain('etiqa-dash-pet-plus-terminal-illness-benefit')
     expect(product.metadataOnlyBehaviors).toContain('etiqa-dash-pet-plus-yearly-renewability')
     expect(product.metadataOnlyBehaviors).toContain('etiqa-dash-pet-plus-paynow-transfer-charge')
     expect(product.metadataOnlyBehaviors).toContain('etiqa-dash-pet-plus-dividend-crediting-to-basic-policy')
+    expect(product.warnings).toContain(
+      'Dash PET Plus is cataloged as a supported V1 rider. The parser captures the zero-charge rider subscription, zero-charge top-up and withdrawal path, the 0.75% annual management charge through the open-ended rider basis, reinvest-default distribution support, the current-state death benefit as the higher of rider account value or the 105%-of-paid-premiums floor after rider withdrawals and current amounts owing, the current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap, and the current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today through the published partial-TI continuation corridor after manual claim-amount and residual-death input, while yearly renewability, basic-policy dependency, payout-method fees, Basic-policy crediting, and claim exclusions / insurer-side settlement mechanics remain informational only.',
+    )
 
     const variant = product.variants[0]
     expect(variant).toMatchObject({
@@ -168,6 +175,9 @@ describe('parseEtiqaDashPetPlus', () => {
       sourceRefs: expect.any(Array),
     })
     expect(variant.eecTable).toEqual([])
+    expect(variant.unsupportedItems).toContain(
+      'The current-state death and terminal-illness snapshot needs manual current amount owing and remaining aggregate TI cap inputs because rider debt and cross-policy TI cap usage are not reconstructed from history in V1.',
+    )
   })
 
   it.skipIf(!existsSync(SOURCE_PATH))('matches the live source PDF when the local corpus is available', async () => {

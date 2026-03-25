@@ -148,6 +148,7 @@ function buildBonuses(term: PremiumTerm, page4: IlpCatalogSourceRef, page5: IlpC
 
 function buildVariant(document: ExtractedPdfDocument, term: PremiumTerm): IlpTemplateVariant {
   const page2 = sourceRef(2, 'Accounts', snippetNear(document, 2, 'Accounts:'))
+  const page3 = sourceRef(3, 'Death Benefit', snippetNear(document, 3, 'Death Benefit:'))
   const page4 = sourceRef(4, 'Welcome Bonus', snippetNear(document, 4, 'Welcome Bonus Tables'))
   const page5 = sourceRef(5, 'Loyalty Bonus and Administration Charge', snippetNear(document, 5, 'Loyalty Bonus'))
   const page10 = sourceRef(10, 'Assurance Charge', snippetNear(document, 10, 'assurance charge'))
@@ -362,11 +363,15 @@ function buildVariant(document: ExtractedPdfDocument, term: PremiumTerm): IlpTem
       'Set the actual Growth/Flex regular-premium split before trusting the fee-drag output. The seeded draft defaults to 50/50.',
       dividendElectionNote,
       'Enter insured-life details and the current net regular premium base to activate the modeled assurance charges.',
+      'The current-state death-benefit estimate is modeled as the higher of the 101%-of-paid-regular-premiums floor net Growth/Flex withdrawals or current Growth/Flex account value, plus Additional Investment Account value, after manual current amount owing.',
+      'The current accidental-death estimate is modeled as the higher of the 105%-of-paid-regular-premiums floor net Growth/Flex withdrawals or current Growth/Flex account value, plus Additional Investment Account value, after manual current amount owing.',
     ],
     unsupportedItems: [
+      'The current-state death-benefit estimate needs a manual current amount owing input because current debt is not reconstructed from history in V1.',
+      'Accidental-death pre-existing-condition / suicide exclusions and other death-claim settlement mechanics remain informational only beyond the modeled current ordinary and accidental-death benefit estimates.',
       'Premium Pass, Wealth Share, and secondary-life/ownership options remain informational only.',
     ],
-    sourceRefs: [page2, page4, page5, page10, page11, page12, page13, page14],
+    sourceRefs: [page2, page3, page4, page5, page10, page11, page12, page13, page14],
   }
 }
 
@@ -386,6 +391,8 @@ export function parsePrudentialPruVantageProsper(context: ParseContext): IlpCata
     economicsStatus: 'supported',
     modeledEconomics: [
       'branch:prosper-assurance-charge',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
       'branch:pru-holiday-refund',
       'branch:pru-holiday-fallback',
       'branch:pru-top-up-charge',
@@ -394,10 +401,11 @@ export function parsePrudentialPruVantageProsper(context: ParseContext): IlpCata
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
+      'pruvantage-prosper-accidental-death-and-claim-exclusions',
       'premium-pass-wealth-share-secondary-life-options',
     ],
     warnings: [
-      'This template captures account routing, bonuses, premium-holiday mechanics, exit charges, Prudential Prosper assurance charges after you enter the insured-life details and current net regular premium base, plus Growth Account dividend-election support through the manual distribution-mode kernel. Premium Pass / Wealth Share / secondary-life options remain informational only.',
+      'This template captures account routing, bonuses, premium-holiday mechanics, the current-state death-benefit estimate as the higher of the 101%-of-paid-regular-premiums floor net Growth/Flex withdrawals or current Growth/Flex account value plus Additional Investment Account value after manual current amount owing, the current accidental-death estimate as the higher of the 105%-of-paid-regular-premiums floor net Growth/Flex withdrawals or current Growth/Flex account value plus Additional Investment Account value after manual current amount owing, Prudential Prosper assurance charges after you enter the insured-life details and current net regular premium base, plus Growth Account dividend-election support through the manual distribution-mode kernel. Accidental-death pre-existing-condition / suicide exclusions and broader death-claim settlement mechanics, Premium Pass, Wealth Share, and secondary-life options remain informational only.',
     ],
     archived: false,
     variants,

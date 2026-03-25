@@ -64,6 +64,7 @@ function buildVariant(document: ExtractedPdfDocument, coverOption: CoverOption):
   const page12 = sourceRef(12, 'Premium allocation', snippetNear(document, 12, 'Percentage (%) of', 24))
   const page16 = sourceRef(16, 'Fees and charges', snippetNear(document, 16, 'PREMIUM CHARGE', 28))
   const page17 = sourceRef(17, 'Partial withdrawal and regular withdrawal', snippetNear(document, 17, 'PARTIAL WITHDRAWAL', 24))
+  const page18 = sourceRef(18, 'Regular withdrawal', snippetNear(document, 18, 'REGULAR WITHDRAWAL', 24))
   const page24 = sourceRef(24, 'Surrender and termination', snippetNear(document, 24, 'SURRENDER OF THE POLICY', 24))
   const insuranceFormula = coverOption === 'choice-cover' ? 'hsbc-flexi-choice-death-ti' : 'hsbc-flexi-max-death-ti'
   const coverLabel = coverOption === 'choice-cover' ? 'Choice Cover' : 'Max Cover'
@@ -153,7 +154,7 @@ function buildVariant(document: ExtractedPdfDocument, coverOption: CoverOption):
       activeWindow: 'policy-term',
       notes: [
         `Models the monthly ${coverLabel} death / TI insurance charge using the existing HSBC assurance formula after entering the insured-life details and current basic-sum-assured / supplementary-premium-base inputs.`,
-        'The calculator models the monthly deduction path only; TI / TPD claim caps, staged TPD payout treatment, claim-currency settlement, post-claim continuation, and later underwritten sum-assured changes remain informational only.',
+        'The calculator models the monthly deduction path only; TI / TPD cap logic, staged TPD payout treatment, claim-currency settlement, post-claim continuation, and later underwritten sum-assured changes remain informational only.',
       ],
       sourceRefs: [page4, page16],
     },
@@ -233,6 +234,10 @@ function buildVariant(document: ExtractedPdfDocument, coverOption: CoverOption):
     bonuses,
     feeRules,
     eventChargeRules,
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      blockTopUpsDuringPremiumHoliday: true,
+    },
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['policy'],
@@ -247,26 +252,38 @@ function buildVariant(document: ExtractedPdfDocument, coverOption: CoverOption):
       ],
       sourceRefs: [page9],
     },
+    scheduledPayoutSupport: {
+      mode: 'manual-assumption',
+      accountId: 'policy',
+      minimumAnnualWithdrawalAmount: 1_200,
+      source: 'policy-redemption',
+      notes: [
+        'Regular Withdrawal may be paid annually, semi-annually, quarterly, or monthly from the policy account.',
+        'V1 exposes Regular Withdrawal as a manual scheduled-redemption assumption from the policy account.',
+        'V1 models the published S$1,200 annualised minimum Regular Withdrawal threshold, while multiples-of-S$10 administration, minimum holding amount, and the insurer’s suspension / termination control over the facility remain informational only.',
+      ],
+      sourceRefs: [page18],
+    },
     eecTable: [],
     warnings: [
-      `This supported template models the SGD open-ended ${coverLabel} corridor with the published regular-premium charge schedule, the year-5-onward 102% regular-premium allocation uplift, the tiered Additional Bonus Units, the fixed S$5 monthly administration fee, the monthly death / TI insurance charge, the 5% top-up / recurring-single-premium charge path, and the nil withdrawal/redemption-fee path.`,
+      `This supported template models the SGD open-ended ${coverLabel} corridor with the published regular-premium charge schedule, the year-5-onward 102% regular-premium allocation uplift, the tiered Additional Bonus Units, the fixed S$5 monthly administration fee, the monthly death / TI insurance charge, the admitted-TI residual-death continuation corridor from remaining account value after the modeled TI payout, the current payable-now TPD snapshot from the published basic-sum-assured corridor after manual indebtedness, current TPD payout stage, and current-claim-stage TPD cap inputs, the 5% top-up / recurring-single-premium charge path, premium-holiday blocking of ad-hoc top-ups and recurring single premiums, the nil withdrawal/redemption-fee path, and manual Regular Withdrawal scheduled-redemption support with the published S$1,200 annual threshold.`,
       'Dividend cash payout remains a manual assumption surface and still depends on fund-level dividend declaration.',
     ],
     unsupportedItems: [
       'Terminal Illness and TPD cross-policy benefit caps remain informational only.',
-      'TPD staged Activities-of-Daily-Living payout handling remains informational only.',
-      'TI / TPD claim-currency settlement and post-claim policy-continuation handling remain informational only.',
-      'Premium Holiday activation, top-up / recurring-single-premium suspension, lapse-state no-benefit periods, and premium-holiday resumption rules remain informational only.',
+      'The current TPD snapshot is modeled as the amount payable now after entering current indebtedness, the current TPD payout stage, the current-claim-stage TPD cap, and, for later-stage claims, the current remaining TPD balance.',
+      'TPD Activities-of-Daily-Living qualification gating and later-balance release timing remain informational only beyond the modeled payable-now TPD snapshot.',
+      'TI claim-currency settlement, plus TPD post-claim continuation and claim-currency settlement, remain informational only.',
+      'Automatic Premium Holiday activation after missed regular premiums, lapse-state no-benefit periods, and premium-holiday resumption rules remain informational only.',
       'Policy reinstatement backpay, health evidence, approval timing, and post-reinstatement charge continuation remain informational only.',
       'Guaranteed Insurability Option milestone eligibility, health conditions, issue-time product availability, and cross-policy / sum-assured limits remain informational only.',
       'Life Replacement Option eligibility / underwriting, rider deletion, cover reset, assignment / beneficiary revocation, and new-life waiting-period / pre-existing-condition handling remain informational only.',
-      'USD-denominated policies do not allow monthly Regular Premium mode, which remains informational only.',
-      'Recurring Single Premium is not available for USD-denominated policies, which remains informational only.',
-      'Minimum holding amounts, Regular Withdrawal thresholds, and the insurer’s suspension / termination control over the Regular Withdrawal facility remain informational only.',
+      'USD-denominated policies do not allow monthly Regular Premium mode and do not offer the Recurring Single Premium corridor, which remain informational only.',
+      'Regular Withdrawal multiples-of-S$10 administration, minimum holding amounts, and the insurer’s suspension / termination control over the Regular Withdrawal facility remain informational only.',
       'Policy-change approvals, next-commencement-day change timing, and fund-switching administrative rules remain informational only.',
       'Fund-level management charges and other underlying-fund expenses remain informational only.',
     ],
-    sourceRefs: [page4, page9, page10, page11, page12, page16, page17, page24],
+    sourceRefs: [page4, page9, page10, page11, page12, page16, page17, page18, page24],
   }
 }
 
@@ -288,29 +305,37 @@ export function parseHsbcLifeFlexiProtector({ document, sourceChecksumSha256 }: 
       'branch:hsbc-life-flexi-protector-additional-bonus-units',
       'branch:hsbc-life-flexi-protector-administration-fee',
       'branch:hsbc-flexi-choice-max-assurance',
+      'kernel:premium-holiday-top-up-block',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-residual-death-benefit-after-ti-estimate',
+      'kernel:current-tpd-benefit-estimate',
       'branch:hsbc-life-flexi-protector-top-up-premium-charge',
       'branch:hsbc-life-flexi-protector-recurring-single-premium-charge',
       'branch:hsbc-life-flexi-protector-zero-partial-withdrawal-charge',
+      'kernel:scheduled-payout-manual-assumption',
+      'kernel:scheduled-payout-minimum-annual-withdrawal-amount',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'hsbc-life-flexi-protector-ti-and-tpd-cross-policy-benefit-caps',
-      'hsbc-life-flexi-protector-tpd-staged-adl-payout',
-      'hsbc-life-flexi-protector-ti-and-tpd-claim-currency-and-post-claim-continuation',
+      'hsbc-life-flexi-protector-tpd-cross-policy-benefit-caps',
+      'hsbc-life-flexi-protector-tpd-adl-qualification-and-later-release',
+      'hsbc-life-flexi-protector-ti-claim-currency-settlement',
+      'hsbc-life-flexi-protector-tpd-claim-currency-and-post-claim-continuation',
       'hsbc-life-flexi-protector-premium-holiday-lapse-and-no-claim-state',
       'hsbc-life-flexi-protector-reinstatement-and-backpay',
       'hsbc-life-flexi-protector-gio-milestone-eligibility-and-health-conditions',
       'hsbc-life-flexi-protector-gio-cross-policy-and-sum-assured-limits',
       'hsbc-life-flexi-protector-life-replacement-eligibility-and-underwriting',
       'hsbc-life-flexi-protector-life-replacement-cover-reset-and-beneficiary-reset',
-      'hsbc-life-flexi-protector-regular-withdrawal-facility-and-minimum-holding',
+      'hsbc-life-flexi-protector-regular-withdrawal-minimum-holding-and-termination',
       'hsbc-life-flexi-protector-policy-change-and-fund-switch-approvals',
       'hsbc-life-flexi-protector-usd-no-monthly-regular-premium-mode',
       'hsbc-life-flexi-protector-usd-no-rsp-corridor',
     ],
     warnings: [
-      'HSBC Life Flexi Protector is cataloged as a supported V1 product. The parser captures explicit SGD open-ended Choice Cover and Max Cover variants with the published regular-premium charge schedule, the year-5-onward 102% regular-premium allocation uplift, the tiered Additional Bonus Units, the fixed S$5 monthly administration fee, the Choice/Max death and terminal-illness insurance-charge corridor, the 5% top-up / recurring-single-premium charge path, and the nil withdrawal/redemption-fee path.',
-      'TI / TPD claim caps, staged TPD payout handling, claim-currency / post-claim continuation, Premium Holiday lapse / no-claim state, reinstatement, Guaranteed Insurability Option milestone / cross-policy limits, Life Replacement Option underwriting / cover resets, regular-withdrawal facility controls, policy-change / fund-switch approvals, and USD payment-frequency / RSP constraints remain informational only.',
+      'HSBC Life Flexi Protector is cataloged as a supported V1 product. The parser captures explicit SGD open-ended Choice Cover and Max Cover variants with the published regular-premium charge schedule, the year-5-onward 102% regular-premium allocation uplift, the tiered Additional Bonus Units, the fixed S$5 monthly administration fee, the Choice/Max death and terminal-illness insurance-charge corridor, the current-state death-benefit estimate from that same cover corridor after manual sum-assured and supplementary-base inputs are provided, the current TI snapshot from the same cover corridor after manual indebtedness and remaining aggregate TI-cap inputs are provided, the admitted-TI residual death continuation corridor from remaining account value after the modeled TI payout, the current payable-now TPD snapshot from the published basic-sum-assured corridor after manual indebtedness, current TPD payout stage, current-claim-stage TPD cap, and, for later-stage claims, current remaining TPD balance inputs are provided, the 5% top-up / recurring-single-premium charge path, premium-holiday blocking of ad-hoc top-ups and recurring single premiums, and the nil withdrawal/redemption-fee path.',
+      'TPD cross-policy cap derivation, ADL qualification / later-balance release handling, TI claim-currency conversion, TPD claim-currency conversion and post-claim continuation, Premium Holiday lapse / no-claim state, reinstatement, Guaranteed Insurability Option milestone / cross-policy limits, Life Replacement Option underwriting / cover resets, remaining regular-withdrawal holding / termination controls, policy-change / fund-switch approvals, and USD payment-frequency / RSP constraints remain informational only.',
       'Structured extraction validated against the HSBC Life Flexi Protector product summary text layer.',
     ],
     archived: false,

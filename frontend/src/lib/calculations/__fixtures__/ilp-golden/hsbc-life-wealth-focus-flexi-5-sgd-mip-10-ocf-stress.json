@@ -8,7 +8,29 @@
     "supportStatus": "supported",
     "description": "HSBC Wealth Focus Flexi 5 SGD alternate-fund high-OCF stress scenario.",
     "coverageTags": [
-      "ocf-stress"
+      "ocf-stress",
+      "branch:wealth-focus-startup-bonus",
+      "branch:wealth-focus-premium-contribution-bonus",
+      "branch:wealth-focus-loyalty-bonus",
+      "branch:wealth-focus-premium-base-amf",
+      "branch:wealth-focus-top-up-premium-charge",
+      "branch:wealth-focus-partial-withdrawal-charge",
+      "branch:wealth-focus-eec",
+      "branch:wealth-focus-ad-hoc-top-up-routing",
+      "kernel:cumulative-free-partial-withdrawal-pool",
+      "kernel:current-death-benefit-estimate",
+      "kernel:current-accidental-death-benefit-estimate",
+      "kernel:current-ti-benefit-estimate",
+      "kernel:current-residual-death-benefit-after-ti-estimate",
+      "kernel:scheduled-payout-manual-assumption",
+      "kernel:scheduled-payout-start-gate",
+      "kernel:scheduled-payout-minimum-annual-withdrawal-amount",
+      "kernel:scheduled-payout-frequency-eligibility-gate",
+      "kernel:distribution-mode-assumption",
+      "kernel:premium-holiday-top-up-block",
+      "kernel:top-up-start-policy-month-block",
+      "kernel:top-up-amount-gate-block",
+      "branch:wealth-focus-premium-holiday-charge"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "WF PS v1.51_MIP10Flexi5.pdf",
@@ -156,7 +178,13 @@
         "startPolicyYear": 11,
         "endPolicyYear": null,
         "tieredRates": [],
-        "suspensionRules": []
+        "suspensionRules": [],
+        "excludedValueRules": [
+          {
+            "trigger": "premium-holiday-repayment",
+            "basis": "repaid-premium"
+          }
+        ]
       }
     ],
     "chargeRules": [
@@ -350,31 +378,41 @@
         "branch:wealth-focus-ad-hoc-top-up-routing",
         "kernel:cumulative-free-partial-withdrawal-pool",
         "kernel:current-death-benefit-estimate",
+        "kernel:current-accidental-death-benefit-estimate",
+        "kernel:current-ti-benefit-estimate",
+        "kernel:current-residual-death-benefit-after-ti-estimate",
         "kernel:scheduled-payout-manual-assumption",
+        "kernel:scheduled-payout-start-gate",
+        "kernel:scheduled-payout-minimum-annual-withdrawal-amount",
+        "kernel:scheduled-payout-frequency-eligibility-gate",
         "kernel:distribution-mode-assumption",
+        "kernel:premium-holiday-top-up-block",
+        "kernel:top-up-start-policy-month-block",
+        "kernel:top-up-amount-gate-block",
         "branch:wealth-focus-premium-holiday-charge"
       ],
       "metadataOnlyBehaviors": [
         "wealth-focus-life-replacement-eligibility-and-underwriting",
         "wealth-focus-life-replacement-cover-reset-and-rider-termination",
         "wealth-focus-life-replacement-policy-reissue-fallback",
-        "wealth-focus-accidental-death-uplift-and-claim-cap",
-        "wealth-focus-terminal-illness-aggregate-cap-and-post-claim-reduction",
+        "wealth-focus-accidental-death-claim-settlement-and-exclusions",
+        "wealth-focus-terminal-illness-claim-admission-and-settlement",
         "wealth-focus-claim-side-benefit-settlement"
       ]
     },
     "catalogWarnings": [
-      "Wealth Focus Flexi 5 is currently modeled as a supported V1 product. Accumulation charges, the cumulative life-event free-withdrawal pool, the current-state death-benefit estimate, the top-up-first manual scheduled-payout surface for Regular Withdrawal, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, while Life Replacement Option eligibility / underwriting, post-replacement cover resets, policy-reissue fallback, accidental-death uplift / claim-cap handling, terminal-illness aggregate-cap / post-claim reduction mechanics, and claim-side benefit settlement remain informational only.",
-      "Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, the current-state death-benefit estimate from regular-premium-paid history and current account balances, manual top-up-first scheduled payout support for Regular Withdrawal, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.",
+      "Wealth Focus Flexi 5 is currently modeled as a supported V1 product. Accumulation charges, the cumulative life-event free-withdrawal pool, the current-state death-benefit estimate after manual current amount owing, the current accidental-death estimate before age 75 as the higher of the ordinary death amount or the 200%-of-paid-regular-premiums floor capped at SGD 2 million plus Top-up Account value after manual current age and current amount owing, including manual current accidental-death regular-premium-floor support once Regular Withdrawal assumptions are already active, the current terminal-illness snapshot as the lower of the ordinary death amount and a manual remaining aggregate TI cap subject to the published SGD 3 million aggregate limit, the current residual death-benefit estimate after a TI claim today for the supported acceleration corridor, the top-up-first manual scheduled-payout surface for Regular Withdrawal, MIP-end surrender charges, regular/top-up routing, the documented bonuses including projected repayment-excluded Loyalty Bonus base after premium-holiday backpayment plus manual current excluded cohorts for historical repaid premiums, and reinvest-default distribution support are modeled, while Life Replacement Option eligibility / underwriting, post-replacement cover resets, policy-reissue fallback, accidental-death claim exclusions and settlement, terminal-illness claim admission / notification valuation timing / settlement, and claim-side benefit settlement remain informational only beyond the modeled current ordinary death, accidental death, TI, and residual-after-TI snapshot surface.",
+      "Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus including projected repayment-excluded regular-premium balance after premium-holiday backpayment, AMF, top-up premium charge, premium-holiday top-up blocking, premium-holiday charge where applicable, partial-withdrawal charge, the current-state death-benefit estimate from regular-premium-paid history and current account balances after manual current amount owing, the current accidental-death estimate before age 75 as the higher of that ordinary death amount or the 200%-of-paid-regular-premiums floor capped at SGD 2 million plus Top-up Account value after manual current age and current amount owing, including manual current accidental-death regular-premium-floor support once Regular Withdrawal assumptions are already active, the current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap subject to the published SGD 3 million aggregate limit, the current residual death-benefit estimate after a TI claim today for the supported acceleration corridor, manual top-up-first scheduled payout support for Regular Withdrawal, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.",
       "Life Replacement Option eligibility / underwriting, post-replacement cover resets, and policy-reissue fallback remain informational only in V1.",
       "This product supports scheduled payout-state, but V1 requires a manual payout assumption. No payout schedule is seeded by default.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.",
       "Life Replacement Option request timing, replacement eligibility, and underwriting acceptance remain informational only.",
       "Life Replacement Option rider termination, new suicide / incontestability / exclusion periods, and revised expiry-date administration remain informational only.",
       "Life Replacement Option policy-reissue fallback, non-identical replacement-policy terms, and post-replacement premium / term administration remain informational only.",
-      "Accidental Death uplift and claim-cap mechanics remain informational only beyond the current death-benefit estimate.",
-      "Terminal Illness aggregate-cap and post-claim reduction mechanics remain informational only beyond the current death-benefit estimate.",
-      "Claim-side payout settlement remains informational only beyond the current death-benefit estimate."
+      "The current accidental-death estimate also needs manual current age and current amount owing inputs and, once Regular Withdrawal assumptions are already active, a manual current accidental-death regular-premium floor; age-75 cut-off and the published SGD 2 million cap are modeled, while claim exclusions and settlement remain informational only.",
+      "The current terminal-illness snapshot and residual death-benefit estimate after a TI claim today follow the same current Regular Withdrawal history limitation as the current death-benefit estimate.",
+      "Terminal Illness claim admission, notification valuation timing, and settlement remain informational only beyond the modeled current TI snapshot and residual death-benefit estimate after TI claim today.",
+      "Claim-side payout settlement remains informational only beyond the modeled current death, terminal-illness, and residual-after-TI snapshots."
     ]
   },
   "expected": {
@@ -449,9 +487,9 @@
           "eecCharge": 0,
           "pvEec": 0,
           "npvGrossFees": 5508.61,
-          "npvBonuses": 606.36,
-          "totalNpvFees": 4902.24,
-          "netSurrenderValue": 92441.51,
+          "npvBonuses": 406.47,
+          "totalNpvFees": 5102.14,
+          "netSurrenderValue": 92146.25,
           "totalContributions": 108000
         },
         {
@@ -461,9 +499,9 @@
           "eecCharge": 0,
           "pvEec": 0,
           "npvGrossFees": 5908.41,
-          "npvBonuses": 802.32,
-          "totalNpvFees": 5106.09,
-          "netSurrenderValue": 97027.98,
+          "npvBonuses": 601.73,
+          "totalNpvFees": 5306.68,
+          "netSurrenderValue": 96715.96,
           "totalContributions": 108000
         },
         {
@@ -473,9 +511,9 @@
           "eecCharge": 0,
           "pvEec": 0,
           "npvGrossFees": 6282.06,
-          "npvBonuses": 994.48,
-          "totalNpvFees": 5287.58,
-          "netSurrenderValue": 101873.26,
+          "npvBonuses": 793.21,
+          "totalNpvFees": 5488.85,
+          "netSurrenderValue": 101543.52,
           "totalContributions": 108000
         },
         {
@@ -485,9 +523,9 @@
           "eecCharge": 0,
           "pvEec": 0,
           "npvGrossFees": 6631.27,
-          "npvBonuses": 1182.98,
-          "totalNpvFees": 5448.29,
-          "netSurrenderValue": 106991.95,
+          "npvBonuses": 981.04,
+          "totalNpvFees": 5650.23,
+          "netSurrenderValue": 106643.48,
           "totalContributions": 108000
         },
         {
@@ -497,9 +535,9 @@
           "eecCharge": 0,
           "pvEec": 0,
           "npvGrossFees": 6957.63,
-          "npvBonuses": 1367.95,
-          "totalNpvFees": 5589.68,
-          "netSurrenderValue": 112399.47,
+          "npvBonuses": 1165.35,
+          "totalNpvFees": 5792.28,
+          "netSurrenderValue": 112031.22,
           "totalContributions": 108000
         }
       ],
@@ -673,23 +711,23 @@
             "policyYear": 11,
             "annualContribution": 0,
             "annualWithdrawals": 0,
-            "combinedValue": 81172.91,
+            "combinedValue": 80912.23,
             "eecRate": 0,
             "eecCharge": 0,
-            "surrenderValue": 81172.91,
+            "surrenderValue": 80912.23,
             "cumulativePremiums": 108000,
             "cumulativeGrossFees": 6600,
-            "cumulativeBonuses": 736.52,
+            "cumulativeBonuses": 480,
             "accounts": [
               {
                 "accountId": "regular",
                 "open": 73290.81,
                 "contributionAmount": 0,
                 "grossFee": 600,
-                "bonusCredit": 256.52,
-                "netFee": 343.48,
+                "bonusCredit": 0,
+                "netFee": 600,
                 "withdrawalAmount": 0,
-                "close": 74129.07
+                "close": 73868.4
               },
               {
                 "accountId": "topup",
@@ -708,23 +746,23 @@
             "policyYear": 12,
             "annualContribution": 0,
             "annualWithdrawals": 0,
-            "combinedValue": 82141.84,
+            "combinedValue": 81876.02,
             "eecRate": 0,
             "eecCharge": 0,
-            "surrenderValue": 82141.84,
+            "surrenderValue": 81876.02,
             "cumulativePremiums": 108000,
             "cumulativeGrossFees": 7200,
-            "cumulativeBonuses": 995.97,
+            "cumulativeBonuses": 738.54,
             "accounts": [
               {
                 "accountId": "regular",
-                "open": 74129.07,
+                "open": 73868.4,
                 "contributionAmount": 0,
                 "grossFee": 600,
-                "bonusCredit": 259.45,
-                "netFee": 340.55,
+                "bonusCredit": 258.54,
+                "netFee": 341.46,
                 "withdrawalAmount": 0,
-                "close": 74983.9
+                "close": 74718.07
               },
               {
                 "accountId": "topup",
@@ -743,23 +781,23 @@
             "policyYear": 13,
             "annualContribution": 0,
             "annualWithdrawals": 0,
-            "combinedValue": 83129.52,
+            "combinedValue": 82858.44,
             "eecRate": 0,
             "eecCharge": 0,
-            "surrenderValue": 83129.52,
+            "surrenderValue": 82858.44,
             "cumulativePremiums": 108000,
             "cumulativeGrossFees": 7800,
-            "cumulativeBonuses": 1258.41,
+            "cumulativeBonuses": 1000.05,
             "accounts": [
               {
                 "accountId": "regular",
-                "open": 74983.9,
+                "open": 74718.07,
                 "contributionAmount": 0,
                 "grossFee": 600,
-                "bonusCredit": 262.44,
-                "netFee": 337.56,
+                "bonusCredit": 261.51,
+                "netFee": 338.49,
                 "withdrawalAmount": 0,
-                "close": 75855.61
+                "close": 75584.53
               },
               {
                 "accountId": "topup",
@@ -778,23 +816,23 @@
             "policyYear": 14,
             "annualContribution": 0,
             "annualWithdrawals": 0,
-            "combinedValue": 84136.29,
+            "combinedValue": 83859.86,
             "eecRate": 0,
             "eecCharge": 0,
-            "surrenderValue": 84136.29,
+            "surrenderValue": 83859.86,
             "cumulativePremiums": 108000,
             "cumulativeGrossFees": 8400,
-            "cumulativeBonuses": 1523.91,
+            "cumulativeBonuses": 1264.6,
             "accounts": [
               {
                 "accountId": "regular",
-                "open": 75855.61,
+                "open": 75584.53,
                 "contributionAmount": 0,
                 "grossFee": 600,
-                "bonusCredit": 265.49,
-                "netFee": 334.51,
+                "bonusCredit": 264.55,
+                "netFee": 335.45,
                 "withdrawalAmount": 0,
-                "close": 76744.55
+                "close": 76468.12
               },
               {
                 "accountId": "topup",
@@ -813,23 +851,23 @@
             "policyYear": 15,
             "annualContribution": 0,
             "annualWithdrawals": 0,
-            "combinedValue": 85162.53,
+            "combinedValue": 84880.64,
             "eecRate": 0,
             "eecCharge": 0,
-            "surrenderValue": 85162.53,
+            "surrenderValue": 84880.64,
             "cumulativePremiums": 108000,
             "cumulativeGrossFees": 9000,
-            "cumulativeBonuses": 1792.51,
+            "cumulativeBonuses": 1532.24,
             "accounts": [
               {
                 "accountId": "regular",
-                "open": 76744.55,
+                "open": 76468.12,
                 "contributionAmount": 0,
                 "grossFee": 600,
-                "bonusCredit": 268.61,
-                "netFee": 331.39,
+                "bonusCredit": 267.64,
+                "netFee": 332.36,
                 "withdrawalAmount": 0,
-                "close": 77651.05
+                "close": 77369.15
               },
               {
                 "accountId": "topup",
@@ -993,23 +1031,23 @@
             "policyYear": 11,
             "annualContribution": 0,
             "annualWithdrawals": 0,
-            "combinedValue": 92441.51,
+            "combinedValue": 92146.25,
             "eecRate": 0,
             "eecCharge": 0,
-            "surrenderValue": 92441.51,
+            "surrenderValue": 92146.25,
             "cumulativePremiums": 108000,
             "cumulativeGrossFees": 6600,
-            "cumulativeBonuses": 760.37,
+            "cumulativeBonuses": 480,
             "accounts": [
               {
                 "accountId": "regular",
                 "open": 80105.49,
                 "contributionAmount": 0,
                 "grossFee": 600,
-                "bonusCredit": 280.37,
-                "netFee": 319.63,
+                "bonusCredit": 0,
+                "netFee": 600,
                 "withdrawalAmount": 0,
-                "close": 84022.49
+                "close": 83727.23
               },
               {
                 "accountId": "topup",
@@ -1028,23 +1066,23 @@
             "policyYear": 12,
             "annualContribution": 0,
             "annualWithdrawals": 0,
-            "combinedValue": 97027.98,
+            "combinedValue": 96715.96,
             "eecRate": 0,
             "eecCharge": 0,
-            "surrenderValue": 97027.98,
+            "surrenderValue": 96715.96,
             "cumulativePremiums": 108000,
             "cumulativeGrossFees": 7200,
-            "cumulativeBonuses": 1054.45,
+            "cumulativeBonuses": 773.05,
             "accounts": [
               {
                 "accountId": "regular",
-                "open": 84022.49,
+                "open": 83727.23,
                 "contributionAmount": 0,
                 "grossFee": 600,
-                "bonusCredit": 294.08,
-                "netFee": 305.92,
+                "bonusCredit": 293.05,
+                "netFee": 306.95,
                 "withdrawalAmount": 0,
-                "close": 88161.92
+                "close": 87849.89
               },
               {
                 "accountId": "topup",
@@ -1063,23 +1101,23 @@
             "policyYear": 13,
             "annualContribution": 0,
             "annualWithdrawals": 0,
-            "combinedValue": 101873.26,
+            "combinedValue": 101543.52,
             "eecRate": 0,
             "eecCharge": 0,
-            "surrenderValue": 101873.26,
+            "surrenderValue": 101543.52,
             "cumulativePremiums": 108000,
             "cumulativeGrossFees": 7800,
-            "cumulativeBonuses": 1363.01,
+            "cumulativeBonuses": 1080.52,
             "accounts": [
               {
                 "accountId": "regular",
-                "open": 88161.92,
+                "open": 87849.89,
                 "contributionAmount": 0,
                 "grossFee": 600,
-                "bonusCredit": 308.57,
-                "netFee": 291.43,
+                "bonusCredit": 307.47,
+                "netFee": 292.53,
                 "withdrawalAmount": 0,
-                "close": 92536.41
+                "close": 92206.66
               },
               {
                 "accountId": "topup",
@@ -1098,23 +1136,23 @@
             "policyYear": 14,
             "annualContribution": 0,
             "annualWithdrawals": 0,
-            "combinedValue": 106991.95,
+            "combinedValue": 106643.48,
             "eecRate": 0,
             "eecCharge": 0,
-            "surrenderValue": 106991.95,
+            "surrenderValue": 106643.48,
             "cumulativePremiums": 108000,
             "cumulativeGrossFees": 8400,
-            "cumulativeBonuses": 1686.89,
+            "cumulativeBonuses": 1403.24,
             "accounts": [
               {
                 "accountId": "regular",
-                "open": 92536.41,
+                "open": 92206.66,
                 "contributionAmount": 0,
                 "grossFee": 600,
-                "bonusCredit": 323.88,
-                "netFee": 276.12,
+                "bonusCredit": 322.72,
+                "netFee": 277.28,
                 "withdrawalAmount": 0,
-                "close": 97159.3
+                "close": 96810.84
               },
               {
                 "accountId": "topup",
@@ -1133,23 +1171,23 @@
             "policyYear": 15,
             "annualContribution": 0,
             "annualWithdrawals": 0,
-            "combinedValue": 112399.47,
+            "combinedValue": 112031.22,
             "eecRate": 0,
             "eecCharge": 0,
-            "surrenderValue": 112399.47,
+            "surrenderValue": 112031.22,
             "cumulativePremiums": 108000,
             "cumulativeGrossFees": 9000,
-            "cumulativeBonuses": 2026.95,
+            "cumulativeBonuses": 1742.08,
             "accounts": [
               {
                 "accountId": "regular",
-                "open": 97159.3,
+                "open": 96810.84,
                 "contributionAmount": 0,
                 "grossFee": 600,
-                "bonusCredit": 340.06,
-                "netFee": 259.94,
+                "bonusCredit": 338.84,
+                "netFee": 261.16,
                 "withdrawalAmount": 0,
-                "close": 102044.72
+                "close": 101676.46
               },
               {
                 "accountId": "topup",
@@ -1313,23 +1351,23 @@
             "policyYear": 11,
             "annualContribution": 0,
             "annualWithdrawals": 0,
-            "combinedValue": 103533.31,
+            "combinedValue": 103204.13,
             "eecRate": 0,
             "eecCharge": 0,
-            "surrenderValue": 103533.31,
+            "surrenderValue": 103204.13,
             "cumulativePremiums": 108000,
             "cumulativeGrossFees": 6600,
-            "cumulativeBonuses": 783.19,
+            "cumulativeBonuses": 480,
             "accounts": [
               {
                 "accountId": "regular",
                 "open": 86626.34,
                 "contributionAmount": 0,
                 "grossFee": 600,
-                "bonusCredit": 303.19,
-                "netFee": 296.81,
+                "bonusCredit": 0,
+                "netFee": 600,
                 "withdrawalAmount": 0,
-                "close": 93727.97
+                "close": 93398.79
               },
               {
                 "accountId": "topup",
@@ -1348,23 +1386,23 @@
             "policyYear": 12,
             "annualContribution": 0,
             "annualWithdrawals": 0,
-            "combinedValue": 112110.85,
+            "combinedValue": 111752.22,
             "eecRate": 0,
             "eecCharge": 0,
-            "surrenderValue": 112110.85,
+            "surrenderValue": 111752.22,
             "cumulativePremiums": 108000,
             "cumulativeGrossFees": 7200,
-            "cumulativeBonuses": 1111.24,
+            "cumulativeBonuses": 806.9,
             "accounts": [
               {
                 "accountId": "regular",
-                "open": 93727.97,
+                "open": 93398.79,
                 "contributionAmount": 0,
                 "grossFee": 600,
-                "bonusCredit": 328.05,
-                "netFee": 271.95,
+                "bonusCredit": 326.9,
+                "netFee": 273.1,
                 "withdrawalAmount": 0,
-                "close": 101465.2
+                "close": 101106.56
               },
               {
                 "accountId": "topup",
@@ -1383,23 +1421,23 @@
             "policyYear": 13,
             "annualContribution": 0,
             "annualWithdrawals": 0,
-            "combinedValue": 121452.9,
+            "combinedValue": 121062.16,
             "eecRate": 0,
             "eecCharge": 0,
-            "surrenderValue": 121452.9,
+            "surrenderValue": 121062.16,
             "cumulativePremiums": 108000,
             "cumulativeGrossFees": 7800,
-            "cumulativeBonuses": 1466.37,
+            "cumulativeBonuses": 1160.77,
             "accounts": [
               {
                 "accountId": "regular",
-                "open": 101465.2,
+                "open": 101106.56,
                 "contributionAmount": 0,
                 "grossFee": 600,
-                "bonusCredit": 355.13,
-                "netFee": 244.87,
+                "bonusCredit": 353.87,
+                "netFee": 246.13,
                 "withdrawalAmount": 0,
-                "close": 109894.91
+                "close": 109504.17
               },
               {
                 "accountId": "topup",
@@ -1418,23 +1456,23 @@
             "policyYear": 14,
             "annualContribution": 0,
             "annualWithdrawals": 0,
-            "combinedValue": 131627.58,
+            "combinedValue": 131201.88,
             "eecRate": 0,
             "eecCharge": 0,
-            "surrenderValue": 131627.58,
+            "surrenderValue": 131201.88,
             "cumulativePremiums": 108000,
             "cumulativeGrossFees": 8400,
-            "cumulativeBonuses": 1851,
+            "cumulativeBonuses": 1544.03,
             "accounts": [
               {
                 "accountId": "regular",
-                "open": 109894.91,
+                "open": 109504.17,
                 "contributionAmount": 0,
                 "grossFee": 600,
-                "bonusCredit": 384.63,
-                "netFee": 215.37,
+                "bonusCredit": 383.26,
+                "netFee": 216.74,
                 "withdrawalAmount": 0,
-                "close": 119079.08
+                "close": 118653.37
               },
               {
                 "accountId": "topup",
@@ -1453,23 +1491,23 @@
             "policyYear": 15,
             "annualContribution": 0,
             "annualWithdrawals": 0,
-            "combinedValue": 142709.14,
+            "combinedValue": 142245.34,
             "eecRate": 0,
             "eecCharge": 0,
-            "surrenderValue": 142709.14,
+            "surrenderValue": 142245.34,
             "cumulativePremiums": 108000,
             "cumulativeGrossFees": 9000,
-            "cumulativeBonuses": 2267.78,
+            "cumulativeBonuses": 1959.32,
             "accounts": [
               {
                 "accountId": "regular",
-                "open": 119079.08,
+                "open": 118653.37,
                 "contributionAmount": 0,
                 "grossFee": 600,
-                "bonusCredit": 416.78,
-                "netFee": 183.22,
+                "bonusCredit": 415.29,
+                "netFee": 184.71,
                 "withdrawalAmount": 0,
-                "close": 129085.23
+                "close": 128621.42
               },
               {
                 "accountId": "topup",

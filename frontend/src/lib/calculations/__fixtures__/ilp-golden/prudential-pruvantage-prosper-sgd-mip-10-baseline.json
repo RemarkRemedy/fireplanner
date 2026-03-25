@@ -9,7 +9,15 @@
     "description": "Baseline in-force PRUVantage Prosper SGD / MIP 10 scenario.",
     "coverageTags": [
       "baseline",
-      "branch:prosper-assurance-charge"
+      "branch:prosper-assurance-charge",
+      "kernel:current-death-benefit-estimate",
+      "kernel:current-accidental-death-benefit-estimate",
+      "branch:pru-holiday-refund",
+      "branch:pru-holiday-fallback",
+      "branch:pru-top-up-charge",
+      "branch:pru-free-withdrawal",
+      "branch:pru-charged-withdrawal",
+      "kernel:distribution-mode-assumption"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "PRUVantage Prosper Product Summary.pdf",
@@ -456,6 +464,8 @@
       "structureStatus": "structured",
       "modeledEconomics": [
         "branch:prosper-assurance-charge",
+        "kernel:current-death-benefit-estimate",
+        "kernel:current-accidental-death-benefit-estimate",
         "branch:pru-holiday-refund",
         "branch:pru-holiday-fallback",
         "branch:pru-top-up-charge",
@@ -464,15 +474,20 @@
         "kernel:distribution-mode-assumption"
       ],
       "metadataOnlyBehaviors": [
+        "pruvantage-prosper-accidental-death-and-claim-exclusions",
         "premium-pass-wealth-share-secondary-life-options"
       ]
     },
     "catalogWarnings": [
-      "This template captures account routing, bonuses, premium-holiday mechanics, exit charges, Prudential Prosper assurance charges after you enter the insured-life details and current net regular premium base, plus Growth Account dividend-election support through the manual distribution-mode kernel. Premium Pass / Wealth Share / secondary-life options remain informational only.",
+      "This template captures account routing, bonuses, premium-holiday mechanics, the current-state death-benefit estimate as the higher of the 101%-of-paid-regular-premiums floor net Growth/Flex withdrawals or current Growth/Flex account value plus Additional Investment Account value after manual current amount owing, the current accidental-death estimate as the higher of the 105%-of-paid-regular-premiums floor net Growth/Flex withdrawals or current Growth/Flex account value plus Additional Investment Account value after manual current amount owing, Prudential Prosper assurance charges after you enter the insured-life details and current net regular premium base, plus Growth Account dividend-election support through the manual distribution-mode kernel. Accidental-death pre-existing-condition / suicide exclusions and broader death-claim settlement mechanics, Premium Pass, Wealth Share, and secondary-life options remain informational only.",
       "Set the actual Growth/Flex regular-premium split before trusting the fee-drag output. The seeded draft defaults to 50/50.",
       "Growth Account dividend payout is only allowed after 10 years from the cover start date once 10 years of premiums have been paid.",
       "Enter insured-life details and the current net regular premium base to activate the modeled assurance charges.",
+      "The current-state death-benefit estimate is modeled as the higher of the 101%-of-paid-regular-premiums floor net Growth/Flex withdrawals or current Growth/Flex account value, plus Additional Investment Account value, after manual current amount owing.",
+      "The current accidental-death estimate is modeled as the higher of the 105%-of-paid-regular-premiums floor net Growth/Flex withdrawals or current Growth/Flex account value, plus Additional Investment Account value, after manual current amount owing.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.",
+      "The current-state death-benefit estimate needs a manual current amount owing input because current debt is not reconstructed from history in V1.",
+      "Accidental-death pre-existing-condition / suicide exclusions and other death-claim settlement mechanics remain informational only beyond the modeled current ordinary and accidental-death benefit estimates.",
       "Premium Pass, Wealth Share, and secondary-life/ownership options remain informational only."
     ]
   },

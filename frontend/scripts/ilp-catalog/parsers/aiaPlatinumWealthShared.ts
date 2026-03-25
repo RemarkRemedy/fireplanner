@@ -148,7 +148,7 @@ function buildVariant(document: ExtractedPdfDocument, config: AiaPlatinumWealthC
       allocation: 'equal-split',
       notes: [
         'Models the published 3% premium charge deducted from each accepted ad hoc top-up premium.',
-        'The gating that regular premiums must be current before ad hoc top-ups are accepted remains informational only in V1.',
+        'Ad hoc top-ups are blocked in policy months where due regular premiums are not paid up to date.',
       ],
       sourceRefs: [premiumRef, topUpRef],
     },
@@ -218,6 +218,10 @@ function buildVariant(document: ExtractedPdfDocument, config: AiaPlatinumWealthC
     eecTable: config.regularFullSurrenderChargeSchedule
       ? [...config.regularFullSurrenderChargeSchedule]
       : [],
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      blockTopUpsWhenPremiumsNotPaidUpToDate: true,
+    },
     warnings: [
       `${config.productName} is cataloged as a ${catalogWarningLabel}. ${config.productWarning}`,
       ...(config.additionalVariantWarnings ?? []),

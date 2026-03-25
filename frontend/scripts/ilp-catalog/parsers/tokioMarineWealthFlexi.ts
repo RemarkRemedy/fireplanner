@@ -391,6 +391,52 @@ function buildVariant(
     bonuses: buildBonuses(document),
     feeRules,
     eventChargeRules,
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      minimumRecurringSinglePremiumStartPolicyMonth: 13,
+      minimumRecurringSinglePremiumMonthlyAmount: 50,
+      minimumPartialWithdrawalStartPolicyMonthByAccount: [
+        { accountId: 'accumulation', startPolicyMonth: 25 },
+        { accountId: 'topup', startPolicyMonth: 25 },
+      ],
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalMaximumAmountRules: [
+        {
+          activeWindow: 'during-mip',
+          accountId: 'accumulation',
+          basis: 'account-value-less-prior-withdrawals',
+          startPolicyYear: 3,
+          endPolicyYear: 3,
+          maximumValueRate: 0.3,
+        },
+        {
+          activeWindow: 'during-mip',
+          accountId: 'accumulation',
+          basis: 'account-value-less-prior-withdrawals',
+          startPolicyYear: 4,
+          endPolicyYear: 4,
+          maximumValueRate: 0.4,
+        },
+        {
+          activeWindow: 'during-mip',
+          accountId: 'accumulation',
+          basis: 'account-value-less-prior-withdrawals',
+          startPolicyYear: 5,
+          endPolicyYear: 9,
+          maximumValueRate: 0.5,
+        },
+      ],
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'policy-value',
+          minimumValue: 3_000,
+        },
+      ],
+      minimumTopUpStartPolicyMonth: 13,
+      minimumTopUpAmount: 1_000,
+      requiresCommencementPremiumForRecurringSinglePremiumResumption: true,
+    },
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['accumulation', 'topup'],
@@ -424,13 +470,14 @@ function buildVariant(
     },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
-      `This supported template models the SGD / MIP 10 (${hasLifeBenefitRider ? 'Advanced Death with Life Benefit Rider' : isAdvancedDeath ? 'Advanced Death' : 'Basic Death'}) corridor only.${hasLifeBenefitRider ? ' The Life Benefit Rider path is limited to the single-life corridor.' : ''}`,
-      'This supported template models regular-premium routing to the Accumulation Units Account, the published initial setup charge, policy investment charge, admin charge, top-up routing, recurring single premium routing, the split performance-investment-bonus schedule, the published surrender, partial-withdrawal, and premium-shortfall charge schedules, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
+      `This supported template models the SGD / MIP 10 (${hasLifeBenefitRider ? 'Advanced Death with Life Benefit Rider' : isAdvancedDeath ? 'Advanced Death' : 'Basic Death'}) corridor only.`,
+      'This supported template models regular-premium routing to the Accumulation Units Account, the published initial setup charge, policy investment charge, admin charge, top-up routing, recurring single premium routing, the split performance-investment-bonus schedule, the published one-off partial-withdrawal corridor with the policy-year-banded Accumulation Units Account cap during the minimum investment period, the published surrender and premium-shortfall charge schedules, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
+      'Explicit one-off partial withdrawals before policy month 25, below the published S$500 minimum, above the published year-banded Accumulation Units Account limit during the minimum investment period, or leaving policy value below the published S$3,000 minimum account value are blocked on the seeded/runtime path.',
       ...(isAdvancedDeath
         ? [
             hasLifeBenefitRider
-              ? 'The Advanced Death with Life Benefit Rider variant also models the published Monthly Protection Charge after you enter the insured-life details and current net premium base through the policy anniversary immediately after age 99.'
-              : 'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
+              ? 'The Advanced Death with Life Benefit Rider variant also models the published Monthly Protection Charge after you enter the insured-life details and current net premium base through the policy anniversary immediately after age 99 with oldest-life MPC rating and youngest-life rider age gating on the same static current multi-life surface.'
+              : 'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base with static current multi-life last-life handling.',
           ]
         : []),
       'Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the administrative restart month.',
@@ -440,15 +487,16 @@ function buildVariant(
     unsupportedItems: [
       ...(!isAdvancedDeath
         ? [
-            'Advanced Death Benefit selection, Advanced Death Benefit with Life Benefit Rider selection, multiple-life last-life settlement, and life replacement administration remain metadata-only for this product.',
+            'Advanced Death Benefit selection, Advanced Death Benefit with Life Benefit Rider selection, and life replacement administration remain metadata-only for this product.',
           ]
         : hasLifeBenefitRider
           ? [
-              'Advanced Death Benefit and Life Benefit Rider payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, multiple-life last-life settlement, oldest/youngest-life rider-term and Monthly Protection Charge recalculation, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+              'Advanced Death Benefit and Life Benefit Rider payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
             ]
           : [
-              'Advanced Death Benefit payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, Advanced Death Benefit with Life Benefit Rider selection, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+            'Advanced Death Benefit payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, Advanced Death Benefit with Life Benefit Rider selection, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
             ]),
+      'Selected-fund minimum-holding rules, regular-withdrawal administration, and policy-year-10 full Accumulation Units Account withdrawal handling beyond the current account-balance surface remain informational only.',
     ],
     sourceRefs: [
       page1,
@@ -487,30 +535,37 @@ export function parseTokioMarineWealthFlexi(context: ParseContext): IlpCatalogPr
       'tokio-policy-charge-on-accumulation-account',
       'tokio-admin-charge-on-accumulation-account',
       'tokio-top-up-routing',
+      'kernel:top-up-start-policy-month-block',
+      'kernel:top-up-amount-gate-block',
       'tokio-recurring-single-premium-routing',
+      'kernel:minimum-recurring-single-premium-start-month',
+      'kernel:minimum-recurring-single-premium-amount',
+      'kernel:committed-premium-rsp-resumption-gate',
       'tokio-recurring-single-premium-manual-resumption-after-premium-holiday',
       'tokio-regular-premium-reduction-consumes-recurring-single-premium-first',
       'tokio-top-up-premium-charge',
       'tokio-recurring-single-premium-charge',
       'tokio-accumulation-account-surrender-charge',
       'tokio-accumulation-partial-withdrawal-charge',
+      'kernel:partial-withdrawal-maximum-amount-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
       'tokio-premium-shortfall-charge-non-payment',
       'tokio-premium-shortfall-charge-regular-premium-reduction',
       'tokio-premium-increase-restores-shortfall-charge-cessation',
       'tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only',
       'branch:tokio-wealth-flexi-advanced-death-monthly-protection-charge',
+      'branch:tokio-current-only-multi-life-life-state',
       'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'tokio-wealth-flexi-advanced-death-payout-handling',
-      'tokio-wealth-flexi-multiple-life-last-life-settlement',
       'tokio-wealth-flexi-change-of-life-assured-and-life-replacement-administration',
     ],
     warnings: [
       'Structured extraction validated against the Wealth Flexi product summary text layer.',
       'Wealth Flexi is modeled as split SGD / MIP 10 death-benefit-option variants with the published initial setup charge, policy investment charge, and admin charge on top of the existing routing and shortfall surfaces.',
-      'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base, and the Advanced Death with Life Benefit Rider variant extends that same Monthly Protection Charge corridor through the policy anniversary immediately after age 99 for the single-life corridor.',
+      'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base with static current multi-life last-life handling, and the Advanced Death with Life Benefit Rider variant extends that same Monthly Protection Charge corridor through the policy anniversary immediately after age 99 with oldest-life MPC rating and youngest-life rider age gating on the same static current multi-life surface.',
       'Dividend cash payouts are modeled through the manual distribution-mode assumption surface: only Top-up Units Account dividends may be paid in cash during the first three policy years, Accumulation Units Account dividends join after policy year 3, payouts below SGD 50 remain reinvested, and cash-payout elections should be made at least 30 days before the record date.',
       'Performance investment bonus is modeled as three published policy-year windows: policy years 4 to 6, policy years 7 to 10, and after the minimum investment period.',
       'Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge.',

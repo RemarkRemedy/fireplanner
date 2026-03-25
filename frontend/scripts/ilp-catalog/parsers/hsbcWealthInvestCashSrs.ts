@@ -150,6 +150,13 @@ function buildVariant(document: ExtractedPdfDocument, fundingMode: FundingMode):
     bonuses: [],
     feeRules,
     eventChargeRules,
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 1_000,
+      partialWithdrawalMinimumRemainingValueRules: [
+        { activeWindow: 'policy-term', basis: 'policy-value', minimumValue: 10_000 },
+      ],
+    },
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['policy'],
@@ -172,15 +179,14 @@ function buildVariant(document: ExtractedPdfDocument, fundingMode: FundingMode):
     eecTable: [],
     warnings: [
       isSrs
-        ? 'HSBC Life Wealth Invest (SRS) is cataloged as a supported V1 product. The parser captures the distributor-selected premium-charge surface through manual input for initial single premiums, recurring single premiums, and top-ups, plus reinvest-only distribution support and the nil-redemption-fee withdrawal path through the open-ended no-MIP basis.'
-        : 'HSBC Life Wealth Invest (Cash) is cataloged as a supported V1 product. The parser captures the distributor-selected premium-charge surface through manual input for initial single premiums, recurring single premiums, and top-ups, plus reinvest-default distribution support and the nil-redemption-fee withdrawal path through the open-ended no-MIP basis.',
+        ? 'HSBC Life Wealth Invest (SRS) is cataloged as a supported V1 product. The parser captures the distributor-selected premium-charge surface through manual input for initial single premiums, recurring single premiums, and top-ups, plus reinvest-only distribution support, the nil-redemption-fee withdrawal path, and the published S$10,000 residual policy-value floor on explicit one-off partial redemptions through the open-ended no-MIP basis.'
+        : 'HSBC Life Wealth Invest (Cash) is cataloged as a supported V1 product. The parser captures the distributor-selected premium-charge surface through manual input for initial single premiums, recurring single premiums, and top-ups, plus reinvest-default distribution support, the nil-redemption-fee withdrawal path, and the published S$10,000 residual policy-value floor on explicit one-off partial redemptions through the open-ended no-MIP basis.',
       'Enter the actual single-premium, recurring-single-premium, and top-up premium-charge percentages from the issued policy or quotation before trusting the analysis.',
       'Switching fees are currently nil, while switching behavior, dividend cash-payout operations, and bank-routing edge cases remain outside the current calculator surface.',
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
     unsupportedItems: [
-      'Death and terminal-illness benefit formulas remain informational only, including the 101% of total premiums principal-style floor.',
-      'Single-premium principal tracking remains informational only in V1.',
+      'The current terminal-illness benefit amount is modeled as the same higher-of policy value or 101%-of-paid-premiums corridor after current amounts owing, and the current admitted-state TI payable amount is supported through the published termination corridor after manual claim-amount entry, but claim exclusions and insurer-side payout mechanics remain informational only.',
       'Recurring single premium enrollment approval, allocation-change requests, and failed-deduction handling remain informational only.',
       'Fund-level management charges and additional ILP-sub-fund charges remain informational only because they depend on the selected fund mix and are not a single product-level rate.',
       'Fund switching administration remains informational only.',
@@ -208,13 +214,13 @@ export function parseHsbcWealthInvestCashSrs(context: ParseContext): IlpCatalogP
       'branch:hsbc-life-wealth-invest-cash-srs-max-recurring-single-premium-charge',
       'branch:hsbc-life-wealth-invest-cash-srs-max-top-up-charge',
       'branch:hsbc-life-wealth-invest-cash-srs-zero-redemption-fee',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'tokio-recurring-single-premium-routing',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'hsbc-life-wealth-invest-cash-srs-death-benefit',
-      'hsbc-life-wealth-invest-cash-srs-terminal-illness-benefit',
-      'hsbc-life-wealth-invest-cash-srs-single-premium-principal-tracking',
       'hsbc-life-wealth-invest-cash-srs-fund-management-charge',
       'hsbc-life-wealth-invest-cash-srs-additional-ilp-sub-fund-charges',
       'hsbc-life-wealth-invest-cash-srs-dividend-bank-account-routing',
@@ -223,7 +229,7 @@ export function parseHsbcWealthInvestCashSrs(context: ParseContext): IlpCatalogP
       'hsbc-life-wealth-invest-cash-srs-termination',
     ],
     warnings: [
-      'HSBC Life Wealth Invest (Cash/SRS) is cataloged as a supported V1 product. The parser captures separate cash and SRS corridors for the distributor-selected single-premium, recurring-single-premium, and top-up charge paths through manual input, reinvest-default or reinvest-only distribution support, and the nil-redemption-fee withdrawal path through the open-ended no-MIP basis, while protection formulas, single-premium principal tracking, fund-level charges, and payout operations remain informational only.',
+      'HSBC Life Wealth Invest (Cash/SRS) is cataloged as a supported V1 product. The parser captures separate cash and SRS corridors for the distributor-selected single-premium, recurring-single-premium, and top-up charge paths through manual input, reinvest-default or reinvest-only distribution support, the nil-redemption-fee withdrawal path, and the published S$10,000 residual policy-value floor on explicit one-off partial redemptions through the open-ended no-MIP basis, the current-state death and terminal-illness benefit amount as the higher of policy value or the 101%-of-paid-premiums floor after partial withdrawals and current amounts owing, and the current admitted-state TI payable amount through the published automatic-termination TI corridor after manual claim-amount entry, while terminal-illness claim exceptions, fund-level charges, payout operations, and free-look behavior remain informational only beyond the modeled current ordinary death-benefit and terminal-illness estimates.',
     ],
     archived: false,
     variants: [

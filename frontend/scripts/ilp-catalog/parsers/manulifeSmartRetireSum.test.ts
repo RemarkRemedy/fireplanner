@@ -30,16 +30,21 @@ describe('parseManulifeSmartRetireSum', () => {
       'branch:manulife-smartretire-v-withdrawal-and-surrender-charge',
       'branch:manulife-smartretire-v-premium-shortfall-charge',
       'branch:manulife-smartretire-v-zero-top-up-charge',
+      'kernel:top-up-amount-gate-block',
       'branch:manulife-smartretire-v-welcome-bonus',
       'branch:manulife-smartretire-v-loyalty-bonus',
+      'branch:manulife-smartretire-v-death-coi',
+      'branch:manulife-smartretire-v-wop-on-tpd-coi',
+      'branch:manulife-smartretire-v-wop-premium-waiver',
+      'branch:manulife-smartretire-v-coi-refund',
       'kernel:current-death-benefit-estimate',
       'kernel:automatic-lapse-on-account-depletion',
       'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-target-retirement-sum-withdrawal')
     expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-regular-income-drawdown')
-    expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-post-mip-death-benefit-corridor')
-    expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-amount-owed-deductions-and-claim-handling')
+    expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-claim-handling')
+    expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-coi-refund-claim-history')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-sum-lapse-and-cover-termination')
     expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-reinstatement-underwriting-and-exclusion-resets')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-sum-reinstatement')
@@ -48,8 +53,12 @@ describe('parseManulifeSmartRetireSum', () => {
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-sum-loyalty-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-sum-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-reinvested-dividend-withdrawal')
-    expect(product.warnings.some((warning) => warning.includes('current-state MIP death-benefit estimate'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('current-state death-benefit estimate across the MIP and later current-only mature-policy corridors'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('current admitted-state WOP premium-waiver path before Flexi Start when the current WOP claim-history status and remaining-waiver-runway inputs are supplied'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('target-retirement-age COI refund path both before and after target retirement age'))).toBe(true)
     expect(product.warnings.some((warning) => warning.includes('annual-state lapse / termination after projected account-value depletion'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('published S$2,500 minimum on explicit ad-hoc top-up premiums'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('minimum of 10% per fund'))).toBe(true)
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-mip-8-flexi-3',
       'sgd-mip-8-flexi-5',
@@ -60,6 +69,7 @@ describe('parseManulifeSmartRetireSum', () => {
     expect(firstVariant?.mipLength).toBe(8)
     expect(firstVariant?.policyStateSupport).toEqual({
       automaticLapseOnAccountValueDepletion: true,
+      minimumTopUpAmount: 2_500,
     })
     expect(firstVariant?.accounts).toEqual([
       expect.objectContaining({
@@ -67,6 +77,30 @@ describe('parseManulifeSmartRetireSum', () => {
         feeRate: 0.025,
         postMipFeeRate: 0.0075,
         subjectToEec: true,
+      }),
+    ])
+    expect(firstVariant?.feeRules).toEqual([
+      expect.objectContaining({
+        id: 'cost-of-insurance-death',
+        basis: 'assurance-sum-at-risk',
+        startPolicyYear: 1,
+        endPolicyYear: null,
+        assuranceConfig: expect.objectContaining({
+          formula: 'manulife-smartretire-death',
+          monthlyModalFactor: 1 / 12,
+          maxAgeNextBirthday: 99,
+        }),
+      }),
+      expect.objectContaining({
+        id: 'cost-of-insurance-wop-on-tpd',
+        basis: 'assurance-sum-at-risk',
+        startPolicyYear: 1,
+        endPolicyYear: 3,
+        assuranceConfig: expect.objectContaining({
+          formula: 'manulife-smartretire-wop-tpd',
+          monthlyModalFactor: 1 / 12,
+          maxAgeNextBirthday: 70,
+        }),
       }),
     ])
     expect(firstVariant?.scheduledPayoutSupport).toBeUndefined()
@@ -188,7 +222,10 @@ describe('parseManulifeSmartRetireSum', () => {
     ])
     expect(lastVariant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus')?.startPolicyYear).toBe(13)
     expect(lastVariant?.warnings).toContain('Withdrawals of accumulated reinvested dividends remain informational only.')
+    expect(firstVariant?.unsupportedItems).toContain('Top-up allocation across up to 10 funds at a minimum of 10% per fund remains informational only.')
     expect(firstVariant?.unsupportedItems).not.toContain('Policy lapse when account value can no longer cover monthly deductions remains informational only.')
     expect(firstVariant?.unsupportedItems).toContain('Reinstatement underwriting, approval, premium-allocation carry-forward, and exclusion resets after reinstatement remain informational only.')
+    expect(firstVariant?.unsupportedItems).toContain('Death-benefit claim settlement and post-claim handling remain informational only beyond the modeled death-benefit COI table.')
+    expect(firstVariant?.unsupportedItems).toContain('Waiver of Premium benefit on TPD claim admission history before the current projection start, insurer-side claim settlement, and broader post-claim administration remain informational only beyond the modeled WOP-on-TPD COI table and current admitted-state waived-premium path.')
   }, 30_000)
 })

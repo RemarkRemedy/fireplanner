@@ -32,6 +32,10 @@ export interface IlpTemplateBonusTier {
   currency: IlpCatalogCurrency
   minAnnualPremium: number | null
   maxAnnualPremium: number | null
+  minSumAssured?: number | null
+  maxSumAssured?: number | null
+  minSumAssuredMultiple?: number | null
+  maxSumAssuredMultiple?: number | null
   minAccountValue?: number | null
   maxAccountValue?: number | null
   rate: number
@@ -41,7 +45,14 @@ export interface IlpTemplateBonus {
   id: string
   type: 'power-up' | 'loyalty' | 'allocation' | 'sign-up' | 'custom'
   label: string
-  mode: 'annual-rate' | 'premium-allocation' | 'one-time'
+  mode: 'annual-rate' | 'monthly-rate' | 'premium-allocation' | 'one-time'
+  oneTimePayoutBasis?: 'fixed-amount' | 'committed-annual-premium-at-issue' | 'initial-single-premium-at-issue' | 'step-up-booster-delta'
+  annualPremiumTierBasis?:
+    | 'projected-paid-regular-premium-this-year'
+    | 'committed-annual-premium-at-issue'
+    | 'initial-basic-sum-assured-at-issue'
+    | 'initial-basic-sum-assured-multiple-at-issue'
+    | 'initial-single-premium-at-issue'
   appliesTo: string[]
   startPolicyYear: number
   endPolicyYear: number | null
@@ -52,17 +63,96 @@ export interface IlpTemplateBonus {
   rate: number | null
   amount: number | null
   tieredRates: IlpTemplateBonusTier[]
-  adjustmentFactorConfig?: {
-    formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium'
-    withdrawalAccountIds: string[]
+  policyYearRateSchedule?: Array<{
+    startPolicyYear: number
+    endPolicyYear: number | null
+    rate: number
+  }>
+  stepUpPayoutConfig?: {
+    premiumShortfallChargeYears: number
+    partialWithdrawalAccountIds: string[]
+    countPartialWithdrawalsFromPolicyYear: number
   }
+  adjustmentFactorConfig?: {
+    formula:
+      | 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium'
+      | 'cumulative-withdrawal-factor-product-over-account-value'
+    withdrawalAccountIds: string[]
+    countFromPolicyYear?: number
+    includePolicyRepaymentsInPaidRegularPremium?: boolean
+    policyRepaymentPriorOffsetRules?: Array<{
+      trigger: 'partial-withdrawal' | 'regular-premium-reduction'
+      accountIds?: string[]
+    }>
+  }
+  qualificationRules?: Array<
+    | {
+        trigger: 'premium-holiday' | 'partial-withdrawal' | 'reinvested-dividend-withdrawal' | 'regular-premium-reduction' | 'scheduled-payout'
+        accountIds?: string[]
+        disqualifyThroughPolicyYear: number
+      }
+    | {
+        trigger: 'premium-holiday' | 'partial-withdrawal' | 'reinvested-dividend-withdrawal' | 'regular-premium-reduction' | 'scheduled-payout'
+        accountIds?: string[]
+        disqualifyInReferenceYear: true
+      }
+    | {
+        trigger: 'premium-holiday' | 'partial-withdrawal' | 'reinvested-dividend-withdrawal' | 'regular-premium-reduction' | 'scheduled-payout'
+        accountIds?: string[]
+        disqualifyThroughReferenceYear: true
+      }
+    | {
+        trigger: 'partial-withdrawal'
+        accountIds?: string[]
+        disqualifyWhenCumulativeAmountExceeds: 'annualised-regular-premium-at-issue'
+        countFromPolicyYear: number
+    }
+    | {
+        trigger: 'premium-holiday' | 'partial-withdrawal' | 'reinvested-dividend-withdrawal' | 'regular-premium-reduction' | 'scheduled-payout'
+        accountIds?: string[]
+        disqualifyIfAnyFromPolicyYear: number
+      }
+    | {
+        trigger: 'premium-holiday' | 'partial-withdrawal' | 'reinvested-dividend-withdrawal' | 'regular-premium-reduction' | 'scheduled-payout'
+        accountIds?: string[]
+        disqualifyIfAnyInLookbackMonths: number
+      }
+    | {
+        formula: 'policy-year-growth-measure'
+        minimumRatio: number
+        rounding: 'floor-whole-percent'
+      }
+    | {
+        formula: 'cumulative-effective-account-value-ratio'
+        maximumRatio: number
+        includeReinvestedDividendWithdrawals?: boolean
+      }
+    | {
+        formula: 'no-new-premium-arrears-in-lookback-months'
+        lookbackMonths: number
+      }
+  >
   suspensionRules?: Array<{
-    trigger: 'premium-holiday' | 'partial-withdrawal' | 'regular-premium-reduction' | 'scheduled-payout'
+    trigger: 'premium-holiday' | 'partial-withdrawal' | 'reinvested-dividend-withdrawal' | 'regular-premium-reduction' | 'scheduled-payout'
     suspensionMonths: number
+    startOffsetMonths?: number
+    accountIds?: string[]
   }>
   restorationRules?: Array<{
-    trigger: 'premium-holiday-repayment'
-    basis: 'repaid-premium-with-missed-months' | 'account-value-plus-repaid-premium-with-missed-months'
+    trigger: 'premium-holiday-repayment' | 'policy-repayment'
+    basis: 'repaid-premium-with-missed-months' | 'account-value-plus-repaid-premium-with-missed-months' | 'repaid-premium'
+  }>
+  excludedValueRules?: Array<{
+    trigger: 'premium-holiday-repayment' | 'policy-repayment' | 'top-up' | 'recurring-single-premium'
+    basis: 'repaid-premium' | 'event-amount'
+    lookbackMonths?: number
+    netAmountFactor?: number
+  }>
+  preservedValueRules?: Array<{
+    trigger: 'partial-withdrawal'
+    basis: 'event-amount'
+    accountIds?: string[]
+    requiresBonusSuspensionWaived?: boolean
   }>
   notes: string[]
   sourceRefs: IlpCatalogSourceRef[]
@@ -74,6 +164,10 @@ export interface IlpTemplateFeeRule {
   basis?: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier' | 'premium-base-mip-multiplier-capped-account-value' | 'cumulative-paid-regular-premium' | 'initial-single-premium' | 'initial-single-premium-base'
   yearBasis?: 'policy-year' | 'premium-year'
   requiresPremiumsPaidUpToDate?: boolean
+  suspensionRules?: Array<{
+    trigger: 'premium-holiday'
+    basis: 'prorate-by-overlap-months'
+  }>
   rate: number | null
   amount?: number | null
   assuranceConfig?: {
@@ -84,15 +178,20 @@ export interface IlpTemplateFeeRule {
       | 'prudential-linkguard-combined'
       | 'aia-plp2-plus-death'
       | 'aia-plp2-max-death'
+      | 'aia-pro-achiever-3-benefit-charge'
       | 'hsbc-flexi-choice-death-ti'
       | 'hsbc-flexi-max-death-ti'
       | 'great-eastern-wa4-death-ti'
       | 'great-eastern-gla4-death-ti'
       | 'great-eastern-pla-death-ti'
       | 'fwd-invest-flexi-elite-death'
+      | 'fwd-invest-repayment-inclusive-death'
       | 'income-invest-flex-death-ti'
       | 'income-legacy-flex-solitaire-death-ti'
       | 'manulife-investready-iii-death-ti'
+      | 'singlife-savvy-invest-ii-death-ti'
+      | 'manulife-smartretire-death'
+      | 'manulife-smartretire-wop-tpd'
       | 'manulife-manuinvest-duo-death-ti-tpd'
       | 'tokio-mpc-net-premium-floor'
       | 'tokio-mpc-locked-in-policy-value'
@@ -167,15 +266,26 @@ export interface IlpTemplateEventChargeRule {
   id: string
   label: string
   trigger: 'partial-withdrawal' | 'regular-premium-reduction' | 'premium-holiday' | 'premium-holiday-repayment' | 'top-up' | 'recurring-single-premium'
-  basis: 'event-amount' | 'account-value' | 'premium-reduction-with-startup-recovery' | 'premium-reduction-tiered-startup-recovery' | 'repaid-premium-with-missed-months' | 'annual-premium-with-overlap-months' | 'committed-annual-premium-with-overlap-months' | 'premium-holiday-charge-refund' | 'event-amount-with-overlap-months' | 'annual-reduction-with-active-months'
+  basis: 'event-amount' | 'account-value' | 'premium-reduction-with-startup-recovery' | 'premium-reduction-tiered-startup-recovery' | 'repaid-premium-with-missed-months' | 'annual-premium-with-overlap-months' | 'committed-annual-premium-with-overlap-months' | 'premium-holiday-charge-refund' | 'source-event-charge-refund' | 'event-amount-with-overlap-months' | 'annual-reduction-with-active-months' | 'fixed-amount-with-overlap-months'
   yearBasis?: 'policy-year' | 'premium-year'
   appliesTo: string[]
   fallbackAppliesTo?: string[]
+  manualWaiverMode?: 'full-skip' | 'capped-free-event'
+  manualWaiverGrantGroup?: string
+  manualWaiverMaxGrantCount?: number
+  manualWaiverMaxOverlapMonths?: number
   freeLifetimeMonths?: number
+  freeLifetimeMonthsStartPolicyYear?: number
+  freeLifetimeMonthsSchedule?: Array<{
+    startPolicyYear: number
+    endPolicyYear: number | null
+    months: number
+  }>
+  freeLifetimeMonthsResetOnRepayment?: boolean
   freeEventCount?: number
   freeEventStartPolicyYear?: number
   freeEventMaxAmountRate?: number
-  freeEventMaxAmountBasis?: 'open-balance' | 'initial-single-premium'
+  freeEventMaxAmountBasis?: 'open-balance' | 'initial-single-premium' | 'cumulative-paid-regular-premium'
   freeAmountPoolRate?: number
   freeAmountPoolBasis?: 'open-balance-at-start-policy-year' | 'initial-single-premium'
   freeAmountPoolReferencePolicyYear?: number
@@ -201,6 +311,12 @@ export interface IlpTemplateScheduledPayoutSupport {
   mode: 'manual-assumption'
   accountId: string
   fallbackAccountIds?: string[]
+  allowedFrequencies?: Array<'annual' | 'semi-annual' | 'quarterly' | 'monthly'>
+  minimumStartPolicyYear?: number
+  requiresTargetRetirementAgeStart?: boolean
+  minimumAnnualWithdrawalAmount?: number
+  minimumWithdrawalAmountPerOccurrence?: number
+  minimumRemainingPolicyValue?: number
   source: 'policy-redemption'
   payoutStateSupport?: {
     defaultState: 'secure-income' | 'target-income'
@@ -233,6 +349,48 @@ export interface IlpTemplateDistributionSupport {
 
 export interface IlpTemplatePolicyStateSupport {
   automaticLapseOnAccountValueDepletion: boolean
+  minimumRegularPremiumVariationStartPolicyMonth?: number
+  minimumRegularPremiumAmountByFrequency?: Partial<Record<IlpRegularPremiumPaymentFrequency, number>>
+  blockRegularPremiumVariationDuringPremiumHoliday?: boolean
+  blockTopUpsDuringPremiumHoliday?: boolean
+  blockTopUpsWhenPremiumsNotPaidUpToDate?: boolean
+  minimumTopUpAmount?: number
+  topUpAmountIncrement?: number
+  minimumRecurringSinglePremiumMonthlyAmount?: number
+  minimumRecurringSinglePremiumStartPolicyMonth?: number
+  requiresCommencementPremiumForRecurringSinglePremiumResumption?: boolean
+  minimumPremiumHolidayStartPolicyMonth?: number
+  minimumPartialWithdrawalStartPolicyMonthByAccount?: Array<{
+    accountId: string
+    startPolicyMonth: number
+  }>
+  minimumPartialWithdrawalAmount?: number
+  partialWithdrawalAmountIncrement?: number
+  partialWithdrawalMaximumAmountRules?: Array<{
+    activeWindow: 'during-mip' | 'after-mip' | 'policy-term'
+    accountId: string
+    basis:
+      | 'cumulative-paid-regular-premium-less-prior-gross-withdrawals'
+      | 'account-value-less-prior-withdrawals'
+    startPolicyYear?: number
+    endPolicyYear?: number | null
+    maximumValueRate: number
+  }>
+  partialWithdrawalMinimumRemainingValueRules?: Array<{
+    activeWindow: 'during-mip' | 'after-mip' | 'policy-term'
+    basis: 'account-value' | 'policy-value' | 'initial-single-premium'
+    accountId?: string
+    minimumValue?: number
+    minimumValueRate?: number
+  }>
+  minimumTopUpStartPolicyMonth?: number
+  topUpRepaymentClearance?: {
+    includeMissedPremiums?: boolean
+    priorOffsetRules?: Array<{
+      trigger: 'partial-withdrawal' | 'regular-premium-reduction'
+      accountIds?: string[]
+    }>
+  }
 }
 
 export interface IlpTemplateVariant {

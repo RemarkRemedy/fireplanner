@@ -113,9 +113,15 @@ describe('parseEtiqaInvestPlusSp', () => {
       'branch:etiqa-invest-plus-sp-top-up-premium-charge',
       'branch:etiqa-invest-plus-sp-initial-partial-withdrawal-charge',
       'branch:etiqa-invest-plus-sp-initial-surrender-charge',
+      'branch:etiqa-invest-plus-sp-current-power-up-bonus-credit',
+      'branch:etiqa-invest-plus-sp-initial-power-up-bonus',
+      'branch:etiqa-invest-plus-sp-projected-top-up-power-up-bonus-for-new-top-ups',
+      'kernel:current-death-benefit-estimate',
+      'kernel:partial-withdrawal-amount-increment-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
       'kernel:distribution-mode-assumption',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-power-up-bonus')
+    expect(product.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-historical-top-up-power-up-bonus-vintage-accounting')
     expect(product.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-representative-management-charge')
     expect(product.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-dividend-threshold-and-withdrawal-consequences')
     expect(product.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-grace-period-top-up-funding')
@@ -147,6 +153,7 @@ describe('parseEtiqaInvestPlusSp', () => {
       expect.objectContaining({
         id: 'top-up-premium-charge',
         trigger: 'top-up',
+        appliesTo: ['topup'],
         rate: 0.04,
       }),
       expect.objectContaining({
@@ -154,9 +161,22 @@ describe('parseEtiqaInvestPlusSp', () => {
         trigger: 'partial-withdrawal',
       }),
     ])
+    expect(variant.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalAmountIncrement: 100,
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'account-value',
+          accountId: 'policy',
+          minimumValue: 1_000,
+        },
+      ],
+    })
     expect(variant.distributionSupport).toEqual({
       mode: 'manual-assumption',
-      accountIds: ['policy'],
+      accountIds: ['policy', 'topup'],
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -167,9 +187,29 @@ describe('parseEtiqaInvestPlusSp', () => {
       sourceRefs: expect.any(Array),
     })
     expect(variant.eecTable).toEqual([0.07, 0.05, 0.04, 0.026, 0.012, 0])
+    expect(variant.accounts).toEqual([
+      expect.objectContaining({
+        id: 'policy',
+        contributionRules: [
+          { phase: 'during-icp', targetAccountId: 'policy', contributionShare: 1 },
+        ],
+      }),
+      expect.objectContaining({
+        id: 'topup',
+        contributionRules: [
+          { phase: 'top-up', targetAccountId: 'topup', contributionShare: 1 },
+        ],
+      }),
+    ])
+    expect(variant.unsupportedItems).toContain('Historical top-up-vintage Power-up Bonus qualification and rolling average accounting for vintages that started before the current projection remain informational only.')
+    expect(variant.unsupportedItems).toContain('Top-up-specific surrender charge clocks remain informational only, and top-up-specific policy-charge / partial-withdrawal charge clocks are only modeled for new projection-start top-up bonus qualification.')
     expect(variant.unsupportedItems).toContain('Grace-period top-up funding remains informational only.')
     expect(variant.unsupportedItems).toContain('Reinstatement remains informational only.')
     expect(variant.unsupportedItems).toContain('Free-look handling remains informational only.')
+    expect(variant.warnings[0]).toContain('S$500 minimum withdrawal amount in multiples of S$100')
+    expect(variant.warnings[0]).toContain('S$1,000 post-withdrawal minimum remaining-account-value floor')
+    expect(variant.warnings[0]).toContain('current ordinary death-benefit estimate as the higher of account value or 101% of net premium')
+    expect(variant.warnings[1]).toContain('future recurring Top-up Account Power-up Bonus is modeled for new projection-start top-ups')
   })
 
   it.skipIf(!existsSync(SOURCE_PATH))('matches the live source PDF when the local corpus is available', async () => {

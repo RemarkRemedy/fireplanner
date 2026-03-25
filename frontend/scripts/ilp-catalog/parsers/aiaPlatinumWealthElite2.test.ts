@@ -64,7 +64,7 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
         characterCount: 320,
         text: 'Top-up premium section',
         lines: [
-          { y: 700, text: 'You may request to pay additional top-up premium on an ad-hoc basis.' },
+          { y: 700, text: 'You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due.' },
           { y: 680, text: 'Premium charge is 3% of the top-up premium.' },
         ],
       },
@@ -100,16 +100,25 @@ describe('parseAiaPlatinumWealthElite2', () => {
       'branch:aia-platinum-wealth-elite-2-premium-holiday-charge',
       'branch:aia-platinum-wealth-elite-2-partial-withdrawal-charge',
       'branch:aia-platinum-wealth-elite-2-full-surrender-charge',
+      'kernel:top-up-paid-up-to-date-block',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-residual-death-benefit-after-ti-estimate',
     ])
     expect(product.metadataOnlyBehaviors).toContain('aia-platinum-wealth-elite-2-no-lapse-privilege')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-elite-2-protection-benefits')
     expect(product.warnings).toContain(
-      'AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge, the premium-holiday charge schedule, and the regular-premium withdrawal / surrender charge schedules, while the single-pay corridor, premium-term extension, administration charge, insurance risk charge, no-lapse mechanics, and protection-side benefits remain informational only.',
+      'AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the regular-premium withdrawal / surrender charge schedules, the current-state death benefit as the higher of current insured amount or policy value via a manual current insured amount input, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, premium-term extension, administration charge, insurance risk charge, no-lapse mechanics, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.',
     )
 
     const variant = product.variants[0]
     expect(variant).toMatchObject({
       id: 'sgd-mip-5',
       mipLength: 5,
+      policyStateSupport: {
+        automaticLapseOnAccountValueDepletion: false,
+        blockTopUpsWhenPremiumsNotPaidUpToDate: true,
+      },
     })
     expect(variant.feeRules).toEqual([
       expect.objectContaining({
@@ -133,6 +142,10 @@ describe('parseAiaPlatinumWealthElite2', () => {
       }),
     ])
     expect(variant.eecTable).toEqual([0.5, 0.4, 0.3, 0.2, 0.1, 0])
+    expect(variant.unsupportedItems).toContain('The current death benefit needs a manual current insured amount input because withdrawals, Income Withdrawal Privilege usage, and claim-side reductions are not reconstructed from history in V1.')
+    expect(variant.unsupportedItems).toContain('Death Benefit Bequest Option and other protection-side payout handling remain informational only.')
+    expect(variant.unsupportedItems).toContain('The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both need manual current insured amount and remaining aggregate TI cap inputs because claim-side reductions and TI usage are not reconstructed from history in V1.')
+    expect(variant.unsupportedItems).toContain('Terminal-illness claim exclusions, settlement workflow, and non-manual post-claim state remain informational only beyond the modeled current terminal-illness and residual-after-TI snapshot surface.')
   })
 
   it.skipIf(!existsSync(SOURCE_PATH))('matches the live source PDF when the local corpus is available', async () => {

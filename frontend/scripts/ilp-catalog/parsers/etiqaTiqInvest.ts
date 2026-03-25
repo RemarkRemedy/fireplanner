@@ -89,6 +89,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       allocation: 'equal-split',
       notes: [
         'The published subscription example states no fees and charges apply to top-ups.',
+        'V1 also blocks explicit ad-hoc top-ups below the published S$500 minimum and ad-hoc top-ups that are not in S$100 increments.',
       ],
       sourceRefs: [page5, page6],
     },
@@ -120,6 +121,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       allocation: 'equal-split',
       notes: [
         'The published redemption example states no fees and charges apply on withdrawals.',
+        'V1 also blocks explicit one-off partial withdrawals below the published S$200 minimum and, because Tiq Invest only allows one Packaged fund at a time, blocks withdrawals that would leave policy value below the published S$200 remaining-fund floor.',
       ],
       sourceRefs: [page2, page5],
     },
@@ -149,13 +151,27 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     feeRules,
     eventChargeRules,
     eecTable: [],
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      minimumTopUpAmount: 500,
+      topUpAmountIncrement: 100,
+      minimumPartialWithdrawalAmount: 200,
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'policy-value',
+          minimumValue: 200,
+        },
+      ],
+    },
     warnings: [
-      'Tiq Invest is cataloged as a supported V1 product. The parser captures the published zero-charge initial subscription, zero-charge ad-hoc and recurring top-up path, zero-charge withdrawal path, and the 0.75% annual management charge through the open-ended no-MIP basis.',
+      'Tiq Invest is cataloged as a supported V1 product. The parser captures the published zero-charge initial subscription, zero-charge ad-hoc and recurring top-up path, the published S$500 ad-hoc top-up minimum with S$100 increments, the published zero-charge one-off withdrawal path with the S$200 minimum amount and S$200 remaining-value floor on this one-Packaged-fund policy, the 0.75% annual management charge through the open-ended no-MIP basis, the current-state death benefit as the higher of account value or the 105%-of-premiums floor after partial withdrawals and current amounts owing, the current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap, and the current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today through the published partial-TI continuation corridor after manual claim-amount and residual-death input.',
       'There is no insurance charge imposed on this policy.',
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
     unsupportedItems: [
-      'Death and terminal-illness benefit formulas remain informational only.',
+      'The current admitted-state TI payable amount and residual death-benefit estimate after a TI claim today are supported through the published partial-TI continuation corridor after manual claim-amount and residual-death input, but claim exclusions and insurer-side settlement mechanics remain informational only.',
+      'Top-up approval, recurring top-up minimums by payment frequency, and Packaged-fund allocation administration remain informational only.',
       'Grace-period funding remains informational only.',
       'Fund-switching administration remains informational only.',
     ],
@@ -181,16 +197,18 @@ export function parseEtiqaTiqInvest(context: ParseContext): IlpCatalogProduct {
       'branch:etiqa-tiq-invest-zero-top-up-charge',
       'branch:etiqa-tiq-invest-zero-recurring-single-premium-charge',
       'branch:etiqa-tiq-invest-zero-partial-withdrawal-charge',
+      'kernel:top-up-amount-gate-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'tokio-recurring-single-premium-routing',
     ],
     metadataOnlyBehaviors: [
-      'etiqa-tiq-invest-death-benefit',
-      'etiqa-tiq-invest-terminal-illness-benefit',
       'etiqa-tiq-invest-fund-switching',
       'etiqa-tiq-invest-grace-period-funding',
     ],
     warnings: [
-      'Tiq Invest is cataloged as a supported V1 product. The parser captures the published zero-charge initial subscription, zero-charge ad-hoc and recurring top-up path, zero-charge withdrawal path, and the 0.75% annual management charge through the open-ended no-MIP basis, while protection benefits, fund-switching administration, and grace-period funding remain informational only.',
+      'Tiq Invest is cataloged as a supported V1 product. The parser captures the published zero-charge initial subscription, zero-charge ad-hoc and recurring top-up path, the published S$500 ad-hoc top-up minimum with S$100 increments, the published zero-charge one-off withdrawal path with the S$200 minimum amount and S$200 remaining-value floor on this one-Packaged-fund policy, the 0.75% annual management charge through the open-ended no-MIP basis, the current-state death benefit as the higher of account value or the 105%-of-premiums floor after partial withdrawals and current amounts owing, the current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap, and the current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today through the published partial-TI continuation corridor after manual claim-amount and residual-death input, while claim exclusions / insurer-side settlement mechanics, top-up approval, recurring top-up minimums by payment frequency, fund-switching administration, Packaged-fund allocation administration, and grace-period funding remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

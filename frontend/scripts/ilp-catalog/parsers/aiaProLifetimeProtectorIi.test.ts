@@ -121,15 +121,24 @@ describe('parseAiaProLifetimeProtectorIi', () => {
       'branch:aia-pro-lifetime-protector-ii-policy-fee',
       'branch:aia-pro-lifetime-protector-ii-plus-benefit-charge',
       'branch:aia-pro-lifetime-protector-ii-max-benefit-charge',
+      'branch:aia-pro-lifetime-protector-ii-premium-holiday-charge-fixed-monthly',
       'branch:aia-pro-lifetime-protector-ii-top-up-premium-charge',
       'branch:aia-pro-lifetime-protector-ii-zero-partial-withdrawal-charge',
       'branch:aia-pro-lifetime-protector-ii-full-surrender-charge',
+      'kernel:partial-withdrawal-start-policy-month-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
+      'kernel:top-up-paid-up-to-date-block',
+      'kernel:current-death-benefit-estimate',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('aia-pro-lifetime-protector-ii-premium-holiday-charge-fixed-monthly')
-    expect(product.metadataOnlyBehaviors).toContain('aia-pro-lifetime-protector-ii-death-benefit-max-option')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-pro-lifetime-protector-ii-premium-holiday-charge-fixed-monthly')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-pro-lifetime-protector-ii-death-benefit-plus-option')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-pro-lifetime-protector-ii-death-benefit-max-option')
     expect(product.metadataOnlyBehaviors).toContain('aia-pro-lifetime-protector-ii-no-lapse-privilege')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-pro-lifetime-protector-ii-minimum-withdrawal-amount')
     expect(product.metadataOnlyBehaviors).toContain('aia-pro-lifetime-protector-ii-reinstatement-underwriting-and-extra-mortality')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-pro-lifetime-protector-ii-reinstatement')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-pro-lifetime-protector-ii-top-up-eligibility-gate')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-pro-lifetime-protector-ii-partial-withdrawal-eligibility-gate')
 
     expect(product.variants).toHaveLength(2)
 
@@ -143,12 +152,34 @@ describe('parseAiaProLifetimeProtectorIi', () => {
       currency: 'SGD',
       mipBasis: 'open-ended',
       mipLength: null,
+      policyStateSupport: {
+        automaticLapseOnAccountValueDepletion: false,
+        blockTopUpsWhenPremiumsNotPaidUpToDate: true,
+        minimumPartialWithdrawalAmount: 1_000,
+        minimumPartialWithdrawalStartPolicyMonthByAccount: [
+          { accountId: 'policy', startPolicyMonth: 25 },
+        ],
+        partialWithdrawalMinimumRemainingValueRules: [
+          { activeWindow: 'policy-term', basis: 'policy-value', minimumValue: 1_000 },
+        ],
+      },
     })
     expect(maxVariant).toMatchObject({
       id: 'sgd-open-ended-max',
       currency: 'SGD',
       mipBasis: 'open-ended',
       mipLength: null,
+      policyStateSupport: {
+        automaticLapseOnAccountValueDepletion: false,
+        blockTopUpsWhenPremiumsNotPaidUpToDate: true,
+        minimumPartialWithdrawalAmount: 1_000,
+        minimumPartialWithdrawalStartPolicyMonthByAccount: [
+          { accountId: 'policy', startPolicyMonth: 25 },
+        ],
+        partialWithdrawalMinimumRemainingValueRules: [
+          { activeWindow: 'policy-term', basis: 'policy-value', minimumValue: 1_000 },
+        ],
+      },
     })
     expect(maxVariant?.accounts).toEqual(plusVariant?.accounts)
     expect(maxVariant?.bonuses).toEqual(plusVariant?.bonuses)
@@ -229,16 +260,29 @@ describe('parseAiaProLifetimeProtectorIi', () => {
     expect(maxVariant?.eventChargeRules).toEqual(plusVariant?.eventChargeRules)
     expect(maxVariant?.eecTable).toEqual([0.75, 0.5, 0])
     expect(maxVariant?.warnings).toContain(
-      'This supported template models the SGD open-ended Max corridor with the published premium-year regular premium charge schedule, the 2% Special Bonus from premium year 10 onward, the fixed S$5 monthly policy fee, the Appendix A Benefit Charge, the 5% top-up premium charge, the nil policy-level partial-withdrawal charge path, and the first-two-policy-years full-surrender charge schedule.',
+      'This supported template models the SGD open-ended Max corridor with the published premium-year regular premium charge schedule, the 2% Special Bonus from premium year 10 onward, the fixed S$5 monthly policy fee, the Appendix A Benefit Charge, the fixed S$50 monthly premium-holiday charge during the first two policy years, the 5% top-up premium charge with blocking in months where regular premiums are not paid up to date, the nil policy-level partial-withdrawal charge path with the post-second-policy-year start gate plus the published S$1,000 minimum one-off withdrawal amount and S$1,000 residual policy-value floor, the first-two-policy-years full-surrender charge schedule, and the current-state death benefit via a manual current insured amount input.',
     )
     expect(maxVariant?.unsupportedItems).toContain(
-      'The Max death-benefit payout settlement itself remains metadata-only beyond the modeled Benefit Charge corridor.',
+      'The Max current death benefit needs a manual current insured amount input because insured-amount changes and claim-side reductions are not reconstructed from history in V1.',
+    )
+    expect(maxVariant?.unsupportedItems).toContain(
+      'The Max death-benefit claim-side payout settlement itself remains metadata-only beyond the modeled current snapshot and Benefit Charge corridor.',
     )
     expect(plusVariant?.eventChargeRules).toEqual([
-      expect.objectContaining({
-        id: 'top-up-premium-charge',
-        trigger: 'top-up',
-        basis: 'event-amount',
+        expect.objectContaining({
+          id: 'premium-holiday-charge',
+          trigger: 'premium-holiday',
+          basis: 'fixed-amount-with-overlap-months',
+          amount: 50,
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 2, rate: 1 },
+            { startPolicyYear: 3, endPolicyYear: null, rate: 0 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'top-up-premium-charge',
+          trigger: 'top-up',
+          basis: 'event-amount',
         rate: 0.05,
       }),
       expect.objectContaining({
@@ -250,9 +294,9 @@ describe('parseAiaProLifetimeProtectorIi', () => {
     ])
     expect(plusVariant?.eecTable).toEqual([0.75, 0.5, 0])
     expect(plusVariant?.warnings).toContain(
-      'This supported template models the SGD open-ended Plus corridor with the published premium-year regular premium charge schedule, the 2% Special Bonus from premium year 10 onward, the fixed S$5 monthly policy fee, the Appendix A Benefit Charge, the 5% top-up premium charge, the nil policy-level partial-withdrawal charge path, and the first-two-policy-years full-surrender charge schedule.',
+      'This supported template models the SGD open-ended Plus corridor with the published premium-year regular premium charge schedule, the 2% Special Bonus from premium year 10 onward, the fixed S$5 monthly policy fee, the Appendix A Benefit Charge, the fixed S$50 monthly premium-holiday charge during the first two policy years, the 5% top-up premium charge with blocking in months where regular premiums are not paid up to date, the nil policy-level partial-withdrawal charge path with the post-second-policy-year start gate plus the published S$1,000 minimum one-off withdrawal amount and S$1,000 residual policy-value floor, the first-two-policy-years full-surrender charge schedule, and the current-state death benefit via a manual current insured amount input.',
     )
-    expect(plusVariant?.unsupportedItems).toContain(
+    expect(plusVariant?.unsupportedItems).not.toContain(
       'The S$50 monthly premium-holiday charge in the first two policy years remains informational only because the current event kernel does not author fixed-per-month premium-holiday deductions.',
     )
   })

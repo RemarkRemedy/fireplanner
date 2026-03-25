@@ -2,6 +2,7 @@ import path from 'node:path'
 import type {
   IlpCatalogProduct,
   IlpCatalogSourceRef,
+  IlpTemplateBonus,
   IlpTemplateEventChargeRule,
   IlpTemplateFeeRule,
   IlpTemplateVariant,
@@ -156,6 +157,34 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
   ]
 
+  const bonuses: IlpTemplateBonus[] = [
+    {
+      id: 'power-up-bonus',
+      type: 'power-up',
+      label: 'Power-up Bonus',
+      mode: 'one-time',
+      oneTimePayoutBasis: 'initial-single-premium-at-issue',
+      appliesTo: ['policy'],
+      startPolicyYear: 10,
+      endPolicyYear: null,
+      cadenceYears: 5,
+      requiresPremiumsPaidUpToDate: true,
+      rate: 0.025,
+      amount: 0,
+      tieredRates: [],
+      adjustmentFactorConfig: {
+        formula: 'cumulative-withdrawal-factor-product-over-account-value',
+        withdrawalAccountIds: ['policy'],
+        countFromPolicyYear: 6,
+      },
+      notes: [
+        'Models the published 2.5% of single premium Power-up Bonus from the end of policy year 10 and every fifth policy year thereafter.',
+        'Partial withdrawals from policy year 6 onward reduce the bonus by the published cumulative product of withdrawal factors.',
+      ],
+      sourceRefs: [page2, page6],
+    },
+  ]
+
   return {
     id: 'sgd-open-ended-sp',
     currency: 'SGD',
@@ -176,11 +205,19 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
         sourceRefs: [page1, page3],
       },
     ],
-    bonuses: [],
+    bonuses,
     feeRules,
     eventChargeRules,
     eecTable: [...FULL_SURRENDER_CHARGE_SCHEDULE],
     exitChargeBasis: 'account-value',
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      minimumTopUpAmount: 1_000,
+      minimumPartialWithdrawalAmount: 1_000,
+      partialWithdrawalMinimumRemainingValueRules: [
+        { activeWindow: 'policy-term', basis: 'policy-value', minimumValue: 10_000 },
+      ],
+    },
     scheduledPayoutSupport: {
       mode: 'manual-assumption',
       accountId: 'policy',
@@ -196,13 +233,14 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       sourceRefs: [page1, page2, page7],
     },
     warnings: [
-      'AIA Elite Secure Income - Single Premium is cataloged as a supported V1 product. The parser captures the published 5% single-premium charge, manual annual supplementary charge input, 3% top-up premium charge, full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel, including lapse suppression and post-reinstatement Target Monthly Income fallback in the annual-state model.',
+      'AIA Elite Secure Income - Single Premium is cataloged as a supported V1 product. The parser captures the published 5% single-premium charge, manual annual supplementary charge input, 3% top-up premium charge, the published S$1,000 minimum on explicit ad-hoc top-ups, full-surrender / partial-withdrawal charge schedules, the published S$10,000 residual policy-value floor on explicit one-off partial withdrawals, the Power-up Bonus corridor from the end of policy year 10 and every fifth policy year thereafter including the published cumulative withdrawal-factor adjustment from policy year 6 onward, scheduled payout capability through the payout-state kernel, the current-state death and terminal-illness benefit amount as the higher of 105% of policy value or a manual current net protected premium base input, the current admitted-state terminal-illness payable amount as a manual current claim amount, an admitted-and-settled terminal-illness claim as a current policy-termination state, and the current accidental-death uplift as 10% of a manual initial single premium input during the first 5 policy years, including lapse suppression and post-reinstatement Target Monthly Income fallback in the annual-state model.',
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
     unsupportedItems: [
       'Secure Monthly Income amount, payout age, and payout period selection remain manual-assumption inputs in V1.',
-      'Single-premium principal tracking remains informational only in V1.',
-      'Death, accidental-death, and terminal-illness benefit formulas remain informational only.',
+      'Single-premium principal tracking and paid / deemed-paid Secure Monthly Income erosion need a manual current net protected premium base input in V1.',
+      'Accidental-death claim admission timing, exclusions, and settlement remain informational only beyond the modeled current ordinary death amount plus the first-5-policy-year 10%-of-single-premium uplift.',
+      'The current admitted-state terminal-illness payable amount is supported through manual claim-amount input, and an admitted-and-settled terminal-illness claim is supported as a current policy-termination state, but terminal-illness exclusions and settlement remain informational only.',
       'Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.',
       'Fund switching is not allowed and remains informational only.',
     ],
@@ -228,20 +266,23 @@ export function parseAiaEliteSecureIncomeSp(context: ParseContext): IlpCatalogPr
       'branch:aia-elite-secure-income-sp-top-up-premium-charge',
       'branch:aia-elite-secure-income-sp-full-surrender-charge',
       'branch:aia-elite-secure-income-sp-partial-withdrawal-charge',
+      'branch:aia-elite-secure-income-sp-power-up-bonus-no-withdrawal-corridor',
+      'kernel:top-up-amount-gate-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'kernel:scheduled-payout-manual-assumption',
       'kernel:lapse-reinstatement-payout-state',
     ],
     metadataOnlyBehaviors: [
       'aia-elite-secure-income-sp-secure-monthly-income-election',
       'aia-elite-secure-income-sp-single-premium-principal-tracking',
-      'aia-elite-secure-income-sp-death-benefit',
-      'aia-elite-secure-income-sp-accidental-death-benefit',
-      'aia-elite-secure-income-sp-terminal-illness-benefit',
       'aia-elite-secure-income-sp-fund-management-charge',
       'aia-elite-secure-income-sp-no-fund-switching',
     ],
     warnings: [
-      'AIA Elite Secure Income - Single Premium is cataloged as a supported V1 product. The parser captures the published 5% single-premium charge, manual annual supplementary charge input, 3% top-up premium charge, full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel; payout selection, principal tracking, protection benefits, and fund-level charges remain informational only.',
+      'AIA Elite Secure Income - Single Premium is cataloged as a supported V1 product. The parser captures the published 5% single-premium charge, manual annual supplementary charge input, 3% top-up premium charge, the published S$1,000 minimum on explicit ad-hoc top-ups, full-surrender / partial-withdrawal charge schedules, the published S$10,000 residual policy-value floor on explicit one-off partial withdrawals, the Power-up Bonus corridor from the end of policy year 10 and every fifth policy year thereafter including the published cumulative withdrawal-factor adjustment from policy year 6 onward, scheduled payout capability through the payout-state kernel, the current-state death and terminal-illness benefit amount as the higher of 105% of policy value or a manual current net protected premium base input, the current admitted-state terminal-illness payable amount as a manual current claim amount, an admitted-and-settled terminal-illness claim as a current policy-termination state, and the current accidental-death uplift as 10% of a manual initial single premium input during the first 5 policy years; payout selection, principal tracking, accidental-death claim admission / exclusions / settlement, terminal-illness exclusions / settlement, and fund-level charges remain informational only beyond the modeled current ordinary death, accidental death, and terminal-illness benefit amounts.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

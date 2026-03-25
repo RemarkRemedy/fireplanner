@@ -54,7 +54,7 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
         characterCount: 320,
         text: 'Top-up premium and withdrawal',
         lines: [
-          { y: 700, text: 'You may request to pay additional top-up premium on an ad hoc basis.' },
+          { y: 700, text: 'You may request to pay additional top-up premium on an ad hoc basis, provided all regular premiums are paid when they fall due.' },
           { y: 680, text: 'Premium charge is 3% of the top-up premium.' },
         ],
       },
@@ -90,13 +90,26 @@ describe('parseAiaPlatinumWealthLegacy', () => {
       'branch:aia-platinum-wealth-legacy-premium-holiday-charge',
       'branch:aia-platinum-wealth-legacy-partial-withdrawal-charge',
       'branch:aia-platinum-wealth-legacy-full-surrender-charge',
+      'kernel:top-up-paid-up-to-date-block',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-residual-death-benefit-after-ti-estimate',
     ])
+    expect(product.metadataOnlyBehaviors).toContain('aia-platinum-wealth-legacy-no-lapse-privilege')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-legacy-protection-benefits')
+    expect(product.warnings).toContain(
+      'AIA Platinum Wealth Legacy is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the published regular-premium partial-withdrawal / surrender charge schedules, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, administration charge, insurance risk charge, no-lapse activation or expiry election mechanics, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.',
+    )
 
     const variant = product.variants[0]
     expect(variant).toMatchObject({
       id: 'sgd-mip-5',
       mipLength: 5,
       eecTable: [0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05],
+      policyStateSupport: {
+        automaticLapseOnAccountValueDepletion: false,
+        blockTopUpsWhenPremiumsNotPaidUpToDate: true,
+      },
     })
     expect(variant.feeRules).toEqual([
       expect.objectContaining({
@@ -131,6 +144,10 @@ describe('parseAiaPlatinumWealthLegacy', () => {
         ],
       }),
     ])
+    expect(variant.unsupportedItems).toContain('The current death benefit needs manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs because adjusted partial withdrawals and no-lapse history are not reconstructed from history in V1.')
+    expect(variant.unsupportedItems).toContain('The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both need manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs because adjusted partial withdrawals and TI usage are not reconstructed from history in V1.')
+    expect(variant.unsupportedItems).toContain('Terminal-illness claim exclusions, settlement workflow, and non-manual post-claim state remain informational only beyond the modeled current terminal-illness and residual-after-TI snapshot surface.')
+    expect(variant.unsupportedItems).toContain('Other protection-side payout handling remains informational only.')
   })
 
   it.skipIf(!existsSync(SOURCE_PATH))('matches the live source PDF when the local corpus is available', async () => {

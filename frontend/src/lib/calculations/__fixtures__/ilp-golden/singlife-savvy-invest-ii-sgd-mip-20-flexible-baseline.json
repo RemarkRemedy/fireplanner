@@ -1,0 +1,680 @@
+{
+  "metadata": {
+    "fixtureId": "singlife-savvy-invest-ii-sgd-mip-20-flexible-baseline",
+    "fixtureClass": "supported",
+    "productId": "singlife-savvy-invest-ii",
+    "variantId": "sgd-mip-20-flexible",
+    "scenarioId": "baseline",
+    "supportStatus": "supported",
+    "description": "Singlife Savvy Invest II baseline scenario covering the supported SGD / 20 years (Flexible) corridor with the shared allocation, loyalty, assurance-charge, and distribution surfaces.",
+    "coverageTags": [
+      "baseline",
+      "kernel:distribution-mode-assumption",
+      "kernel:current-death-benefit-estimate",
+      "kernel:current-ti-benefit-estimate",
+      "branch:singlife-savvy-invest-ii-welcome-bonus",
+      "branch:singlife-savvy-invest-ii-regular-premium-allocation-uplift",
+      "branch:singlife-savvy-invest-ii-loyalty-bonus",
+      "branch:singlife-savvy-invest-ii-cost-of-insurance",
+      "branch:singlife-savvy-invest-ii-administrative-charge",
+      "branch:singlife-savvy-invest-ii-supplementary-charge",
+      "branch:singlife-savvy-invest-ii-zero-top-up-charge",
+      "branch:singlife-savvy-invest-ii-partial-withdrawal-charge",
+      "branch:singlife-savvy-invest-ii-surrender-charge",
+      "branch:singlife-savvy-invest-ii-premium-shortfall-charge"
+    ],
+    "catalogVersion": "0.1.0",
+    "sourceFileName": "SinglifeSavvyInvestII_PS_Dec25.pdf",
+    "sourceChecksumSha256": "349726f8868daf987cb280f74e9428bf19e580ca108223d9c1c9de89216e410b"
+  },
+  "policyInput": {
+    "id": "singlife-savvy-invest-ii-sgd-mip-20-flexible-baseline",
+    "name": "Golden Singlife Savvy Invest II (SGD / MIP 20 Flexible Baseline)",
+    "insurer": "Singlife",
+    "currency": "SGD",
+    "monthlyContribution": 1000,
+    "monthsAlreadyPaid": 216,
+    "currentPolicyYear": 19,
+    "icpMonths": 1,
+    "assuranceProfile": {
+      "currentAgeNextBirthday": 45,
+      "sex": "female",
+      "smokerStatus": "non-smoker",
+      "currentNetRegularPremiumBase": 216000,
+      "currentNetSupplementaryPremiumBase": 0
+    },
+    "mipLength": 20,
+    "postMipYears": 0,
+    "eecTable": [
+      1,
+      1,
+      0.9,
+      0.75,
+      0.65,
+      0.6,
+      0.55,
+      0.5,
+      0.45,
+      0.4,
+      0.35,
+      0.3,
+      0.25,
+      0.2,
+      0.15,
+      0.1,
+      0.05,
+      0.05,
+      0.05,
+      0.05
+    ],
+    "discountRate": 0.07,
+    "inflationRate": 0.025,
+    "alternativeReturn": 0.07,
+    "accounts": [
+      {
+        "id": "policy",
+        "label": "Policy Account",
+        "feeRate": 0.006,
+        "currentValue": 45000,
+        "contributionShare": 0,
+        "subjectToEec": true,
+        "postMipFeeRate": null,
+        "contributionRules": [
+          {
+            "phase": "during-icp",
+            "contributionShare": 1
+          },
+          {
+            "phase": "after-icp",
+            "contributionShare": 1
+          },
+          {
+            "phase": "after-mip",
+            "contributionShare": 1
+          },
+          {
+            "phase": "top-up",
+            "contributionShare": 1
+          }
+        ]
+      }
+    ],
+    "funds": [
+      {
+        "name": "Manulife Global Equity",
+        "allocation": 0.6,
+        "ocf": 0.013,
+        "grossReturnLow": 0.045,
+        "grossReturnMid": 0.074,
+        "grossReturnHigh": 0.1
+      },
+      {
+        "name": "Manulife Income",
+        "allocation": 0.4,
+        "ocf": 0.01,
+        "grossReturnLow": 0.03,
+        "grossReturnMid": 0.052,
+        "grossReturnHigh": 0.07
+      }
+    ],
+    "bonuses": [
+      {
+        "id": "welcome-bonus",
+        "type": "allocation",
+        "label": "Welcome Bonus",
+        "mode": "premium-allocation",
+        "rate": 0.3,
+        "amount": 0,
+        "appliesTo": [
+          "policy"
+        ],
+        "startPolicyYear": 1,
+        "endPolicyYear": 1,
+        "tieredRates": [
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 2400,
+            "maxAnnualPremium": 9999.99,
+            "rate": 0.3
+          },
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 10000,
+            "maxAnnualPremium": null,
+            "rate": 0.6
+          }
+        ],
+        "suspensionRules": []
+      },
+      {
+        "id": "regular-premium-allocation-uplift-policy-years-11-20",
+        "type": "allocation",
+        "label": "Regular Premium Allocation Uplift (Policy Years 11-20)",
+        "mode": "premium-allocation",
+        "rate": 0.02,
+        "amount": 0,
+        "appliesTo": [
+          "policy"
+        ],
+        "startPolicyYear": 11,
+        "endPolicyYear": 20,
+        "tieredRates": [],
+        "suspensionRules": []
+      },
+      {
+        "id": "regular-premium-allocation-uplift-policy-year-21-onward",
+        "type": "allocation",
+        "label": "Regular Premium Allocation Uplift (Policy Year 21 Onward)",
+        "mode": "premium-allocation",
+        "rate": 0.05,
+        "amount": 0,
+        "appliesTo": [
+          "policy"
+        ],
+        "startPolicyYear": 21,
+        "endPolicyYear": null,
+        "tieredRates": [],
+        "suspensionRules": []
+      },
+      {
+        "id": "loyalty-bonus-payments-1-10",
+        "type": "loyalty",
+        "label": "Loyalty Bonus (Payments 1-10)",
+        "mode": "annual-rate",
+        "rate": 0.003,
+        "amount": 0,
+        "appliesTo": [
+          "policy"
+        ],
+        "startPolicyYear": 21,
+        "endPolicyYear": 30,
+        "tieredRates": [],
+        "suspensionRules": [
+          {
+            "trigger": "partial-withdrawal",
+            "suspensionMonths": 12
+          }
+        ]
+      },
+      {
+        "id": "loyalty-bonus-payments-11-20",
+        "type": "loyalty",
+        "label": "Loyalty Bonus (Payments 11-20)",
+        "mode": "annual-rate",
+        "rate": 0.004,
+        "amount": 0,
+        "appliesTo": [
+          "policy"
+        ],
+        "startPolicyYear": 31,
+        "endPolicyYear": 40,
+        "tieredRates": [],
+        "suspensionRules": [
+          {
+            "trigger": "partial-withdrawal",
+            "suspensionMonths": 12
+          }
+        ]
+      },
+      {
+        "id": "loyalty-bonus-payments-21-plus",
+        "type": "loyalty",
+        "label": "Loyalty Bonus (Payments 21+)",
+        "mode": "annual-rate",
+        "rate": 0.005,
+        "amount": 0,
+        "appliesTo": [
+          "policy"
+        ],
+        "startPolicyYear": 41,
+        "endPolicyYear": null,
+        "tieredRates": [],
+        "suspensionRules": [
+          {
+            "trigger": "partial-withdrawal",
+            "suspensionMonths": 12
+          }
+        ]
+      }
+    ],
+    "chargeRules": [
+      {
+        "id": "cost-of-insurance",
+        "label": "Cost of Insurance (Death / TI)",
+        "basis": "assurance-sum-at-risk",
+        "activeWindow": "policy-term",
+        "appliesTo": [
+          "policy"
+        ],
+        "rate": 0,
+        "amount": 0,
+        "assuranceConfig": {
+          "formula": "singlife-savvy-invest-ii-death-ti",
+          "monthlyModalFactor": 0.083333,
+          "maxAgeNextBirthday": 120
+        },
+        "requiresManualInput": false,
+        "allocation": "pro-rata-by-value"
+      },
+      {
+        "id": "administrative-charge",
+        "label": "Administrative Charge",
+        "basis": "account-value",
+        "activeWindow": "policy-term",
+        "appliesTo": [
+          "policy"
+        ],
+        "rate": 0.006,
+        "amount": 0,
+        "requiresManualInput": false,
+        "allocation": "equal-split"
+      },
+      {
+        "id": "supplementary-charge",
+        "label": "Supplementary Charge",
+        "basis": "account-value",
+        "activeWindow": "during-mip",
+        "startPolicyYear": 1,
+        "endPolicyYear": 10,
+        "appliesTo": [
+          "policy"
+        ],
+        "rate": 0.019,
+        "amount": 0,
+        "requiresManualInput": false,
+        "allocation": "equal-split"
+      }
+    ],
+    "policyEvents": [],
+    "eventChargeRules": [
+      {
+        "id": "single-premium-top-up-charge",
+        "label": "Single Premium Top-up Charge",
+        "trigger": "top-up",
+        "basis": "event-amount",
+        "activeWindow": "policy-term",
+        "appliesTo": [
+          "policy"
+        ],
+        "rate": 0,
+        "amount": 0,
+        "requiresManualInput": false,
+        "allocation": "equal-split"
+      },
+      {
+        "id": "partial-withdrawal-charge",
+        "label": "Partial Withdrawal Charge",
+        "trigger": "partial-withdrawal",
+        "basis": "event-amount",
+        "activeWindow": "during-mip",
+        "yearBasis": "policy-year",
+        "appliesTo": [
+          "policy"
+        ],
+        "rate": 0,
+        "rateSchedule": [
+          {
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0.1
+          },
+          {
+            "startPolicyYear": 2,
+            "endPolicyYear": 2,
+            "rate": 0.1
+          },
+          {
+            "startPolicyYear": 3,
+            "endPolicyYear": 3,
+            "rate": 0.1
+          },
+          {
+            "startPolicyYear": 4,
+            "endPolicyYear": 4,
+            "rate": 0.1
+          },
+          {
+            "startPolicyYear": 5,
+            "endPolicyYear": 5,
+            "rate": 0.1
+          },
+          {
+            "startPolicyYear": 6,
+            "endPolicyYear": 6,
+            "rate": 0.1
+          },
+          {
+            "startPolicyYear": 7,
+            "endPolicyYear": 7,
+            "rate": 0.1
+          },
+          {
+            "startPolicyYear": 8,
+            "endPolicyYear": 8,
+            "rate": 0.1
+          },
+          {
+            "startPolicyYear": 9,
+            "endPolicyYear": 9,
+            "rate": 0.1
+          },
+          {
+            "startPolicyYear": 10,
+            "endPolicyYear": 10,
+            "rate": 0.1
+          },
+          {
+            "startPolicyYear": 11,
+            "endPolicyYear": 11,
+            "rate": 0.05
+          },
+          {
+            "startPolicyYear": 12,
+            "endPolicyYear": 12,
+            "rate": 0.05
+          },
+          {
+            "startPolicyYear": 13,
+            "endPolicyYear": 13,
+            "rate": 0.05
+          },
+          {
+            "startPolicyYear": 14,
+            "endPolicyYear": 14,
+            "rate": 0.05
+          },
+          {
+            "startPolicyYear": 15,
+            "endPolicyYear": 15,
+            "rate": 0.05
+          },
+          {
+            "startPolicyYear": 16,
+            "endPolicyYear": 16,
+            "rate": 0.05
+          },
+          {
+            "startPolicyYear": 17,
+            "endPolicyYear": 17,
+            "rate": 0.05
+          },
+          {
+            "startPolicyYear": 18,
+            "endPolicyYear": 18,
+            "rate": 0.05
+          },
+          {
+            "startPolicyYear": 19,
+            "endPolicyYear": 19,
+            "rate": 0.05
+          },
+          {
+            "startPolicyYear": 20,
+            "endPolicyYear": 20,
+            "rate": 0.05
+          }
+        ],
+        "amount": 0,
+        "requiresManualInput": false,
+        "allocation": "equal-split"
+      },
+      {
+        "id": "premium-shortfall-charge",
+        "label": "Premium Shortfall Charge",
+        "trigger": "premium-holiday",
+        "basis": "annual-premium-with-overlap-months",
+        "activeWindow": "during-mip",
+        "yearBasis": "policy-year",
+        "appliesTo": [
+          "policy"
+        ],
+        "rate": 0,
+        "rateSchedule": [
+          {
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 1
+          },
+          {
+            "startPolicyYear": 2,
+            "endPolicyYear": 2,
+            "rate": 1
+          },
+          {
+            "startPolicyYear": 3,
+            "endPolicyYear": 3,
+            "rate": 0.9
+          },
+          {
+            "startPolicyYear": 4,
+            "endPolicyYear": 4,
+            "rate": 0.75
+          },
+          {
+            "startPolicyYear": 5,
+            "endPolicyYear": 5,
+            "rate": 0.65
+          },
+          {
+            "startPolicyYear": 6,
+            "endPolicyYear": 6,
+            "rate": 0.6
+          },
+          {
+            "startPolicyYear": 7,
+            "endPolicyYear": 7,
+            "rate": 0.55
+          },
+          {
+            "startPolicyYear": 8,
+            "endPolicyYear": 8,
+            "rate": 0.5
+          },
+          {
+            "startPolicyYear": 9,
+            "endPolicyYear": 9,
+            "rate": 0.45
+          },
+          {
+            "startPolicyYear": 10,
+            "endPolicyYear": 10,
+            "rate": 0.4
+          }
+        ],
+        "amount": 0,
+        "requiresManualInput": false,
+        "allocation": "equal-split"
+      }
+    ],
+    "catalogSource": {
+      "productId": "singlife-savvy-invest-ii",
+      "productName": "Singlife Savvy Invest II",
+      "variantId": "sgd-mip-20-flexible",
+      "variantLabel": "SGD / MIP 20 (Flexible)",
+      "catalogVersion": "0.1.0",
+      "supportStatus": "supported",
+      "economicsStatus": "supported",
+      "structureStatus": "structured",
+      "modeledEconomics": [
+        "branch:singlife-savvy-invest-ii-welcome-bonus",
+        "branch:singlife-savvy-invest-ii-regular-premium-allocation-uplift",
+        "branch:singlife-savvy-invest-ii-loyalty-bonus",
+        "branch:singlife-savvy-invest-ii-cost-of-insurance",
+        "branch:singlife-savvy-invest-ii-administrative-charge",
+        "branch:singlife-savvy-invest-ii-supplementary-charge",
+        "branch:singlife-savvy-invest-ii-zero-top-up-charge",
+        "branch:singlife-savvy-invest-ii-partial-withdrawal-charge",
+        "branch:singlife-savvy-invest-ii-surrender-charge",
+        "branch:singlife-savvy-invest-ii-premium-shortfall-charge",
+        "kernel:current-death-benefit-estimate",
+        "kernel:current-ti-benefit-estimate",
+        "kernel:distribution-mode-assumption"
+      ],
+      "metadataOnlyBehaviors": [
+        "singlife-savvy-invest-ii-life-stage-benefit-eligibility-and-limit-overrides",
+        "singlife-savvy-invest-ii-change-of-life-assured",
+        "singlife-savvy-invest-ii-appendix-b-withdrawal-limits",
+        "singlife-savvy-invest-ii-fund-management-and-switching"
+      ]
+    },
+    "catalogWarnings": [
+      "Singlife Savvy Invest II is cataloged as a supported V1 product for the published SGD / 3 years (Fixed), 5 years (Fixed), 5 years (Flexible), 10 years (Fixed), 10 years (Flexible), and 20 years (Flexible) corridors. The parser captures the corridor-specific welcome bonus tiers and Appendix A surrender / withdrawal / premium-shortfall schedules, plus the shared regular-premium allocation uplifts, loyalty-bonus windows, guaranteed cost-of-insurance formula after you enter insured-life details and current premium bases, administrative and supplementary charges, the currently nil top-up charge, the current-state death and terminal-illness benefit amount as the higher of 101% of total basic regular premiums paid plus top-ups less withdrawals or account value less manual current amount owing, and reinvest-default distribution support.",
+      "Qualifying Life Stage Benefit withdrawals can be represented in V1 with event-level charge and loyalty-bonus-suspension waivers, while benefit timing, proof, use-count, and allowable partial-withdrawal limits from Appendix B remain informational only beyond the modeled current ordinary death and terminal-illness benefit amount. An admitted-and-settled terminal-illness claim is supported as a current policy-termination state.",
+      "Structured extraction validated against the Singlife Savvy Invest II product summary text layer.",
+      "This supported template models the SGD / 20 years (Flexible) corridor.",
+      "This supported template models the welcome bonus tiers, the 100% / 102% / 105% regular-premium allocation ladder, the published loyalty-bonus payment windows, the guaranteed cost-of-insurance formula after insured-life details and current premium bases are entered, the 0.60% administrative charge, the first-10-policy-years 1.90% supplementary charge, the currently nil top-up charge, the current-state death and terminal-illness benefit amount as the higher of 101% of total basic regular premiums paid plus top-ups less withdrawals or account value less manual current amount owing, the Appendix A surrender / withdrawal / premium-shortfall schedules, and the reinvest-default distribution-mode assumption surface.",
+      "Qualifying Life Stage Benefit withdrawals can be represented in V1 with event-level charge and loyalty-bonus-suspension waivers, while benefit timing, proof, use-count, and Appendix B allowable partial-withdrawal-limit overrides remain informational only. An admitted-and-settled terminal-illness claim is supported as a current policy-termination state.",
+      "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption, and payouts below the published minimum annual cash-payout amount of $40 remain reinvested.",
+      "Life Stage Benefit timing windows, use-count limits, and Appendix B allowable partial-withdrawal-limit overrides remain informational only.",
+      "The current-state death-benefit estimate needs a manual current amount owing input because indebtedness is not reconstructed from history in V1.",
+      "The current-state terminal-illness benefit amount is modeled as an early payout of the current death-benefit estimate after manual current amount owing, and an admitted-and-settled terminal-illness claim is supported as a current policy-termination state, but pre-settlement claim admission, exclusions, and other post-claim policy effects remain informational only.",
+      "Change of Life Assured and rider continuity effects remain informational only.",
+      "Allowable partial withdrawal amount limits from Appendix B remain informational only.",
+      "Fund switching, fund-level annual management charges, and future non-guaranteed top-up-charge changes remain informational only."
+    ]
+  },
+  "expected": {
+    "summary": {
+      "totalPremiumsPaid": 228000,
+      "totalFeesCharged": 655.12,
+      "totalBonusesReceived": 240,
+      "netFeeDrag": 415.12,
+      "currentSurrenderValue": 42750,
+      "cancelNowPenalty": 2250
+    },
+    "npvAnalysis": {
+      "surrenderNow": {
+        "eecRate": 0.05,
+        "eecCharge": 2250,
+        "npvFees": 2250,
+        "netSurrenderValue": 42750
+      },
+      "futureExitOptions": [
+        {
+          "exitYear": 1,
+          "policyYear": 20,
+          "eecRate": 0.05,
+          "eecCharge": 2880.79,
+          "pvEec": 2692.32,
+          "npvGrossFees": 612.26,
+          "npvBonuses": 224.3,
+          "totalNpvFees": 3080.28,
+          "netSurrenderValue": 54734.93,
+          "totalContributions": 228000
+        }
+      ],
+      "bestExitYear": 1,
+      "bestExitNpvFees": 3080.28,
+      "holdToMip": {
+        "npvGrossFees": 612.26,
+        "npvBonuses": 224.3,
+        "totalNpvFees": 3080.28,
+        "finalValue": 57615.71,
+        "totalContributions": 228000
+      }
+    },
+    "opportunityCost": {
+      "alternativePortfolioValue": 57742.5,
+      "ilpValueAtHorizon": 57615.71,
+      "difference": 126.79,
+      "atBestExit": {
+        "exitYear": 1,
+        "alternativeValue": 54734.93,
+        "ilpValueAtHorizon": 57615.71,
+        "difference": -2880.79
+      }
+    },
+    "projections": {
+      "low": {
+        "blendedNetReturn": 0.0272,
+        "rows": [
+          {
+            "year": 1,
+            "policyYear": 20,
+            "annualContribution": 12000,
+            "annualWithdrawals": 1350,
+            "combinedValue": 56447.19,
+            "eecRate": 0.05,
+            "eecCharge": 2822.36,
+            "surrenderValue": 53624.83,
+            "cumulativePremiums": 228000,
+            "cumulativeGrossFees": 655.51,
+            "cumulativeBonuses": 240,
+            "accounts": [
+              {
+                "accountId": "policy",
+                "open": 45000,
+                "contributionAmount": 12000,
+                "grossFee": 655.51,
+                "bonusCredit": 240,
+                "netFee": 415.51,
+                "withdrawalAmount": 1350,
+                "close": 56447.19
+              }
+            ]
+          }
+        ]
+      },
+      "mid": {
+        "blendedNetReturn": 0.0534,
+        "rows": [
+          {
+            "year": 1,
+            "policyYear": 20,
+            "annualContribution": 12000,
+            "annualWithdrawals": 1350,
+            "combinedValue": 57615.71,
+            "eecRate": 0.05,
+            "eecCharge": 2880.79,
+            "surrenderValue": 54734.93,
+            "cumulativePremiums": 228000,
+            "cumulativeGrossFees": 655.12,
+            "cumulativeBonuses": 240,
+            "accounts": [
+              {
+                "accountId": "policy",
+                "open": 45000,
+                "contributionAmount": 12000,
+                "grossFee": 655.12,
+                "bonusCredit": 240,
+                "netFee": 415.12,
+                "withdrawalAmount": 1350,
+                "close": 57615.71
+              }
+            ]
+          }
+        ]
+      },
+      "high": {
+        "blendedNetReturn": 0.0762,
+        "rows": [
+          {
+            "year": 1,
+            "policyYear": 20,
+            "annualContribution": 12000,
+            "annualWithdrawals": 1350,
+            "combinedValue": 58632.61,
+            "eecRate": 0.05,
+            "eecCharge": 2931.63,
+            "surrenderValue": 55700.98,
+            "cumulativePremiums": 228000,
+            "cumulativeGrossFees": 654.78,
+            "cumulativeBonuses": 240,
+            "accounts": [
+              {
+                "accountId": "policy",
+                "open": 45000,
+                "contributionAmount": 12000,
+                "grossFee": 654.78,
+                "bonusCredit": 240,
+                "netFee": 414.78,
+                "withdrawalAmount": 1350,
+                "close": 58632.61
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

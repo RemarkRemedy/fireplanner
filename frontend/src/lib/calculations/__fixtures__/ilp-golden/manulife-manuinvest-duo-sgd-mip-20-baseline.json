@@ -14,7 +14,15 @@
       "kernel:distribution-mode-assumption",
       "branch:manuinvest-duo-loyalty-bonus",
       "branch:manuinvest-duo-administrative-charge",
-      "branch:manuinvest-duo-full-surrender-charge"
+      "branch:manuinvest-duo-full-surrender-charge",
+      "kernel:current-ti-benefit-estimate",
+      "kernel:current-residual-death-benefit-after-ti-estimate",
+      "kernel:current-tpd-benefit-estimate",
+      "kernel:current-residual-death-benefit-after-tpd-estimate",
+      "branch:manuinvest-duo-welcome-bonus",
+      "branch:manuinvest-duo-zero-top-up-charge",
+      "branch:manuinvest-duo-premium-shortfall-charge",
+      "branch:manuinvest-duo-partial-withdrawal-charge"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "WA_MID01_PdtSum.pdf",
@@ -107,6 +115,87 @@
     ],
     "bonuses": [
       {
+        "id": "welcome-bonus",
+        "type": "sign-up",
+        "label": "Welcome Bonus",
+        "mode": "premium-allocation",
+        "annualPremiumTierBasis": "initial-basic-sum-assured-multiple-at-issue",
+        "rate": 0,
+        "amount": 0,
+        "appliesTo": [
+          "policy"
+        ],
+        "startPolicyYear": 1,
+        "endPolicyYear": 1,
+        "tieredRates": [
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 1800,
+            "maxAnnualPremium": 11999.99,
+            "minSumAssuredMultiple": 20,
+            "maxSumAssuredMultiple": 29.99,
+            "rate": 0.4
+          },
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 12000,
+            "maxAnnualPremium": null,
+            "minSumAssuredMultiple": 20,
+            "maxSumAssuredMultiple": 29.99,
+            "rate": 0.65
+          },
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 1800,
+            "maxAnnualPremium": 11999.99,
+            "minSumAssuredMultiple": 30,
+            "maxSumAssuredMultiple": 39.99,
+            "rate": 0.44
+          },
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 12000,
+            "maxAnnualPremium": null,
+            "minSumAssuredMultiple": 30,
+            "maxSumAssuredMultiple": 39.99,
+            "rate": 0.69
+          },
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 1800,
+            "maxAnnualPremium": 11999.99,
+            "minSumAssuredMultiple": 40,
+            "maxSumAssuredMultiple": 49.99,
+            "rate": 0.48
+          },
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 12000,
+            "maxAnnualPremium": null,
+            "minSumAssuredMultiple": 40,
+            "maxSumAssuredMultiple": 49.99,
+            "rate": 0.73
+          },
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 1800,
+            "maxAnnualPremium": 11999.99,
+            "minSumAssuredMultiple": 50,
+            "maxSumAssuredMultiple": 100,
+            "rate": 0.52
+          },
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 12000,
+            "maxAnnualPremium": null,
+            "minSumAssuredMultiple": 50,
+            "maxSumAssuredMultiple": 100,
+            "rate": 0.8
+          }
+        ],
+        "suspensionRules": []
+      },
+      {
         "id": "loyalty-bonus",
         "type": "loyalty",
         "label": "Loyalty Bonus",
@@ -181,6 +270,125 @@
           "policy"
         ],
         "rate": 0,
+        "amount": 0,
+        "requiresManualInput": false,
+        "allocation": "equal-split"
+      },
+      {
+        "id": "premium-shortfall-charge",
+        "label": "Premium Shortfall Charge",
+        "trigger": "premium-holiday",
+        "basis": "annual-premium-with-overlap-months",
+        "activeWindow": "during-mip",
+        "appliesTo": [
+          "policy"
+        ],
+        "freeLifetimeMonths": 48,
+        "freeLifetimeMonthsStartPolicyYear": 6,
+        "freeLifetimeMonthsResetOnRepayment": false,
+        "rate": 0,
+        "rateSchedule": [
+          {
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 1
+          },
+          {
+            "startPolicyYear": 2,
+            "endPolicyYear": 2,
+            "rate": 1
+          },
+          {
+            "startPolicyYear": 3,
+            "endPolicyYear": 3,
+            "rate": 0.9
+          },
+          {
+            "startPolicyYear": 4,
+            "endPolicyYear": 4,
+            "rate": 0.81
+          },
+          {
+            "startPolicyYear": 5,
+            "endPolicyYear": 5,
+            "rate": 0.71
+          },
+          {
+            "startPolicyYear": 6,
+            "endPolicyYear": 6,
+            "rate": 0.65
+          },
+          {
+            "startPolicyYear": 7,
+            "endPolicyYear": 7,
+            "rate": 0.59
+          },
+          {
+            "startPolicyYear": 8,
+            "endPolicyYear": 8,
+            "rate": 0.53
+          },
+          {
+            "startPolicyYear": 9,
+            "endPolicyYear": 9,
+            "rate": 0.48
+          },
+          {
+            "startPolicyYear": 10,
+            "endPolicyYear": 10,
+            "rate": 0.43
+          },
+          {
+            "startPolicyYear": 11,
+            "endPolicyYear": 11,
+            "rate": 0.38
+          },
+          {
+            "startPolicyYear": 12,
+            "endPolicyYear": 12,
+            "rate": 0.34
+          },
+          {
+            "startPolicyYear": 13,
+            "endPolicyYear": 13,
+            "rate": 0.3
+          },
+          {
+            "startPolicyYear": 14,
+            "endPolicyYear": 14,
+            "rate": 0.26
+          },
+          {
+            "startPolicyYear": 15,
+            "endPolicyYear": 15,
+            "rate": 0.22
+          },
+          {
+            "startPolicyYear": 16,
+            "endPolicyYear": 16,
+            "rate": 0.18
+          },
+          {
+            "startPolicyYear": 17,
+            "endPolicyYear": 17,
+            "rate": 0.14
+          },
+          {
+            "startPolicyYear": 18,
+            "endPolicyYear": 18,
+            "rate": 0.1
+          },
+          {
+            "startPolicyYear": 19,
+            "endPolicyYear": 19,
+            "rate": 0.09
+          },
+          {
+            "startPolicyYear": 20,
+            "endPolicyYear": 20,
+            "rate": 0.08
+          }
+        ],
         "amount": 0,
         "requiresManualInput": false,
         "allocation": "equal-split"
@@ -314,17 +522,20 @@
       "modeledEconomics": [
         "kernel:protected-base-assurance",
         "kernel:current-death-benefit-estimate",
+        "kernel:current-ti-benefit-estimate",
+        "kernel:current-residual-death-benefit-after-ti-estimate",
+        "kernel:current-tpd-benefit-estimate",
+        "kernel:current-residual-death-benefit-after-tpd-estimate",
+        "branch:manuinvest-duo-welcome-bonus",
         "branch:manuinvest-duo-loyalty-bonus",
         "branch:manuinvest-duo-administrative-charge",
         "branch:manuinvest-duo-zero-top-up-charge",
+        "branch:manuinvest-duo-premium-shortfall-charge",
         "branch:manuinvest-duo-partial-withdrawal-charge",
         "branch:manuinvest-duo-full-surrender-charge",
         "kernel:distribution-mode-assumption"
       ],
       "metadataOnlyBehaviors": [
-        "manuinvest-duo-welcome-bonus",
-        "manuinvest-duo-premium-shortfall-charge",
-        "manuinvest-duo-premium-flexibility-benefit",
         "manuinvest-duo-withdrawal-flexibility-charge-threshold",
         "manuinvest-duo-death-ti-tpd-benefit-payout-handling",
         "manuinvest-duo-reinvested-dividend-withdrawals",
@@ -335,15 +546,17 @@
       ]
     },
     "catalogWarnings": [
-      "ManuInvest Duo is cataloged as a supported V1 corridor. The parser captures the published 5.00% / 1.00% administration-charge path, the protected-base death / TI / TPD cost-of-insurance formula after you enter insured-life details and current sum insured, the current-state death-benefit estimate from that same current sum insured, the published Loyalty Bonus rate windows, the prevailing 0% top-up charge, the MIP withdrawal / surrender charge schedules, and the reinvest-default distribution-mode assumption surface with the published $40 minimum annual payout threshold, while the issue-time Welcome Bonus grid, premium-flexibility shortfall behavior, withdrawal-flexibility fee handling, death / TI / TPD claim-side treatment, and fund-level charges remain informational only.",
-      "ManuInvest Duo is cataloged as a supported V1 corridor for the 20-year MIP. The parser captures the published 5.00% / 1.00% administration-charge path, the protected-base cost-of-insurance formula after you enter insured-life details and current sum insured, the current-state death-benefit estimate from that same current sum insured, the published Loyalty Bonus rate windows, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
-      "Premium shortfall charging remains metadata-only because Premium Flexibility Benefit waives the published shortfall charge up to a cumulative missed-premium limit that the current event kernel does not yet track.",
-      "Welcome Bonus, withdrawal-flexibility fee handling, and fund-level management charges remain informational only.",
+      "ManuInvest Duo is cataloged as a supported V1 corridor. The parser captures the published 5.00% / 1.00% administration-charge path, the protected-base death / TI / TPD cost-of-insurance formula after you enter insured-life details and current sum insured, the current-state death-benefit estimate from that same current sum insured, the current terminal-illness benefit estimate as the lower of the modeled current death benefit and a manual remaining aggregate TI cap subject to the published S$1 million TI limit, the current residual death-benefit estimate after a TI claim today for the supported acceleration corridor, the current TPD benefit estimate as the lower of the modeled current death benefit and a manual remaining aggregate TPD cap subject to the published S$5 million disability limit, the current residual death-benefit estimate after a TPD claim today for the supported acceleration corridor, the published Welcome Bonus issue-time grid, the published Loyalty Bonus rate windows, the prevailing 0% top-up charge, the MIP premium-shortfall-charge schedule on annualised basic premium with Premium Flexibility Benefit suppression starting only from policy year 6, the MIP withdrawal / surrender charge schedules, and the reinvest-default distribution-mode assumption surface with the published $40 minimum annual payout threshold, while supplementary-benefit continuation during Premium Flexibility Benefit, withdrawal-flexibility fee handling, death / TI / TPD claim-side treatment, and fund-level charges remain informational only.",
+      "ManuInvest Duo is cataloged as a supported V1 corridor for the 20-year MIP. The parser captures the published 5.00% / 1.00% administration-charge path, the protected-base cost-of-insurance formula after you enter insured-life details and current sum insured, the current-state death-benefit estimate from that same current sum insured, the current terminal-illness benefit estimate as the lower of the modeled current death benefit and a manual remaining aggregate TI cap subject to the published S$1 million TI limit, the current residual death-benefit estimate after a TI claim today for the supported acceleration corridor, the current TPD benefit estimate as the lower of the modeled current death benefit and a manual remaining aggregate TPD cap subject to the published S$5 million disability limit, the published Welcome Bonus issue-time grid, the published Loyalty Bonus rate windows, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+      "ManuInvest Duo is cataloged as a supported V1 corridor for the 20-year MIP. The parser captures the published 5.00% / 1.00% administration-charge path, the protected-base cost-of-insurance formula after you enter insured-life details and current sum insured, the current-state death-benefit estimate from that same current sum insured, the current terminal-illness benefit estimate as the lower of the modeled current death benefit and a manual remaining aggregate TI cap subject to the published S$1 million TI limit, the current residual death-benefit estimate after a TI claim today for the supported acceleration corridor, the current TPD benefit estimate as the lower of the modeled current death benefit and a manual remaining aggregate TPD cap subject to the published S$5 million disability limit, the current residual death-benefit estimate after a TPD claim today for the supported acceleration corridor, the published Welcome Bonus issue-time grid, the published Loyalty Bonus rate windows, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.",
+      "Premium shortfall charging is modeled during the 20-year MIP with Premium Flexibility Benefit automatically suppressing the first 48 missed months only from policy year 6 onward; supplementary-benefit continuation during the benefit remains informational only.",
+      "Withdrawal-flexibility fee handling and fund-level management charges remain informational only.",
       "Dividend-paying funds seed reinvestment by default in V1. Cash payout requires a manual annual distribution-yield assumption with the published $40 minimum annual payout threshold.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption, and payouts below the published minimum annual cash-payout amount of $40 remain reinvested.",
-      "Death, terminal-illness, and TPD benefit payout handling remain informational only beyond the current death-benefit estimate.",
-      "Welcome Bonus remains informational only because the published bonus grid depends on the issue-time sum-insured multiple.",
-      "Premium shortfall charge and Premium Flexibility Benefit remain informational only because they depend on a cumulative missed-premium allowance ledger.",
+      "The current terminal-illness benefit estimate and current residual death-benefit estimate after a TI claim today both need a manual remaining aggregate TI cap input because the product summary publishes a S$1 million TI limit and a cross-policy TI/CI limit that are not reconstructed from claims history in V1.",
+      "The current TPD benefit estimate and current residual death-benefit estimate after a TPD claim today both need a manual remaining aggregate TPD cap input because the product summary publishes a S$5 million cross-policy disability limit that is not reconstructed from claims history in V1.",
+      "Death, terminal-illness, and TPD claim admission / exclusions / settlement remain informational only beyond the current death, terminal-illness, residual-after-TI, TPD, and residual-after-TPD estimates.",
+      "Premium-paying supplementary-benefit continuation and deduction during Premium Flexibility Benefit remain informational only.",
       "The S$50 withdrawal-flexibility fee corridor and the published aggregate annual withdrawal cap remain informational only.",
       "Withdrawals of accumulated reinvested dividends remain informational only.",
       "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",

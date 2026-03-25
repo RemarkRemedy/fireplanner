@@ -109,9 +109,14 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
       rate: 0.0008,
       amount: null,
       tieredRates: [],
+      qualificationRules: [
+        { formula: 'no-new-premium-arrears-in-lookback-months', lookbackMonths: 12 },
+        { trigger: 'partial-withdrawal', accountIds: ['accumulation'], disqualifyIfAnyInLookbackMonths: 12 },
+        { trigger: 'scheduled-payout', accountIds: ['accumulation', 'topup'], disqualifyInReferenceYear: true },
+      ],
       notes: [
         'Annual premium bonus on the Accumulation Units Account value from the end of policy year 6 to the end of policy year 20.',
-        'The source document conditions payment on all regular premiums due in the prior 12 months being paid and no withdrawals from the Accumulation Units Account in the prior 12 months; those gates remain manual review assumptions in this partial template.',
+        'The bonus is credited only when all regular premiums due in the prior 12 months have been paid, no partial withdrawal from the Accumulation Units Account occurred in that same 12-month window, and no regular withdrawal is active in the bonus year.',
       ],
       sourceRefs: [page2],
     },
@@ -126,9 +131,14 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
       rate: 0.0015,
       amount: null,
       tieredRates: [],
+      qualificationRules: [
+        { formula: 'no-new-premium-arrears-in-lookback-months', lookbackMonths: 12 },
+        { trigger: 'partial-withdrawal', accountIds: ['accumulation'], disqualifyIfAnyInLookbackMonths: 12 },
+        { trigger: 'scheduled-payout', accountIds: ['accumulation', 'topup'], disqualifyInReferenceYear: true },
+      ],
       notes: [
         'Annual premium bonus on the Accumulation Units Account value from the end of policy year 21 onward.',
-        'The source document conditions payment on all regular premiums due in the prior 12 months being paid and no withdrawals from the Accumulation Units Account in the prior 12 months; those gates remain manual review assumptions in this partial template.',
+        'The bonus is credited only when all regular premiums due in the prior 12 months have been paid, no partial withdrawal from the Accumulation Units Account occurred in that same 12-month window, and no regular withdrawal is active in the bonus year.',
       ],
       sourceRefs: [page2],
     },
@@ -143,9 +153,12 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
       rate: 0.013,
       amount: null,
       tieredRates: [],
+      qualificationRules: [
+        { trigger: 'partial-withdrawal', accountIds: ['accumulation'], disqualifyIfAnyInLookbackMonths: 12 },
+      ],
       notes: [
         'Annual power-up bonus on the Accumulation Units Account value at the end of the minimum investment period only.',
-        'The source document conditions payment on no partial withdrawal from the Accumulation Units Account in the prior 12 months; that gate remains a manual review assumption in this partial template.',
+        'The bonus is credited only when no partial withdrawal from the Accumulation Units Account occurred in the prior 12 months.',
       ],
       sourceRefs: [page3],
     },
@@ -160,9 +173,13 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
       rate: 0.005,
       amount: null,
       tieredRates: [],
+      qualificationRules: [
+        { trigger: 'partial-withdrawal', accountIds: ['accumulation'], disqualifyIfAnyInLookbackMonths: 12 },
+        { trigger: 'scheduled-payout', accountIds: ['accumulation', 'topup'], disqualifyInReferenceYear: true },
+      ],
       notes: [
         'Annual loyalty bonus on the Accumulation Units Account value from the end of policy year 11 onward.',
-        'The source document conditions payment on no withdrawals from the Accumulation Units Account in the prior 12 months; that gate remains a manual review assumption in this partial template.',
+        'The bonus is credited only when no partial withdrawal from the Accumulation Units Account occurred in the prior 12 months and no regular withdrawal is active in the bonus year.',
       ],
       sourceRefs: [page3],
     },
@@ -208,6 +225,7 @@ function buildTokioMpcFeeRule(
   optionPage: IlpCatalogSourceRef,
   chargePage: IlpCatalogSourceRef,
   tablePage: IlpCatalogSourceRef,
+  withLifeBenefitRider = false,
 ): IlpTemplateFeeRule {
   return {
     id: 'monthly-protection-charge',
@@ -217,7 +235,7 @@ function buildTokioMpcFeeRule(
     amount: 0,
     appliesTo: ['accumulation'],
     fallbackAppliesTo: ['topup'],
-    activeWindow: 'during-mip',
+    activeWindow: withLifeBenefitRider ? 'policy-term' : 'during-mip',
     assuranceConfig: {
       formula: 'tokio-mpc-net-premium-floor',
       rateTable: 'tokio-mpc-unzo-death',
@@ -226,10 +244,14 @@ function buildTokioMpcFeeRule(
     },
     requiresManualInput: true,
     notes: [
-      'Models the published Monthly Protection Charge for the Advanced Death corridor during the 10-year minimum investment period.',
+      withLifeBenefitRider
+        ? 'Models the published Monthly Protection Charge for the Advanced Death with Life Benefit Rider corridor through the policy anniversary immediately after age 99.'
+        : 'Models the published Monthly Protection Charge for the Advanced Death corridor during the 10-year minimum investment period.',
       'Sum at risk is the published net premium less 101% of the Accumulation Units Account value, floored at zero.',
       'The charge is deducted monthly in advance from the Accumulation Units Account, with outstanding amounts deducted from the Top-up Units Account if needed.',
-      'Advanced Death Benefit with Life Benefit Rider remains metadata-only even though the same MPC table family is published for that corridor.',
+      ...(withLifeBenefitRider
+        ? ['For policies with more than one life assured, the rider terminates on the policy anniversary immediately after the 99th birthday of the youngest life assured.']
+        : []),
     ],
     sourceRefs: [optionPage, chargePage, tablePage],
   }
@@ -237,9 +259,10 @@ function buildTokioMpcFeeRule(
 
 function buildVariant(
   document: ExtractedPdfDocument,
-  deathBenefitOption: 'basic-death' | 'advanced-death',
+  deathBenefitOption: 'basic-death' | 'advanced-death' | 'advanced-death-life-benefit-rider',
 ): IlpTemplateVariant {
-  const isAdvancedDeath = deathBenefitOption === 'advanced-death'
+  const isAdvancedDeath = deathBenefitOption !== 'basic-death'
+  const hasLifeBenefitRider = deathBenefitOption === 'advanced-death-life-benefit-rider'
   const page1 = sourceRef(1, 'Plan Description', snippetNear(document, 1, 'Wealth Builder@Future', 18))
   const page2 = sourceRef(2, 'Initial Bonus / Premium Bonus', snippetNear(document, 2, 'Initial Bonus', 36))
   const page3 = sourceRef(3, 'Power-up Bonus / Loyalty Bonus', snippetNear(document, 3, 'Power-up Bonus', 30))
@@ -325,11 +348,15 @@ function buildVariant(
 
   const feeRules = buildFeeRules(document)
   if (isAdvancedDeath && page14) {
-    feeRules.push(buildTokioMpcFeeRule(page1, page9, page14))
+    feeRules.push(buildTokioMpcFeeRule(page1, page9, page14, hasLifeBenefitRider))
   }
 
   return {
-    id: isAdvancedDeath ? 'sgd-mip-10-advanced-death' : 'sgd-mip-10',
+    id: deathBenefitOption === 'basic-death'
+      ? 'sgd-mip-10'
+      : hasLifeBenefitRider
+        ? 'sgd-mip-10-advanced-death-life-benefit-rider'
+        : 'sgd-mip-10-advanced-death',
     currency: 'SGD',
     mipLength: MIP_LENGTH,
     icpMonths: 1,
@@ -362,6 +389,20 @@ function buildVariant(
     bonuses: buildBonuses(document),
     feeRules,
     eventChargeRules,
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      minimumRegularPremiumVariationStartPolicyMonth: 61,
+      minimumRegularPremiumAmountByFrequency: {
+        annual: 6_000,
+        'semi-annual': 3_000,
+        quarterly: 1_500,
+        monthly: 500,
+      },
+      minimumPremiumHolidayStartPolicyMonth: 25,
+      minimumRecurringSinglePremiumStartPolicyMonth: 13,
+      minimumRecurringSinglePremiumMonthlyAmount: 50,
+      requiresCommencementPremiumForRecurringSinglePremiumResumption: true,
+    },
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['accumulation', 'topup'],
@@ -380,26 +421,47 @@ function buildVariant(
       ],
       sourceRefs: [page8],
     },
+    scheduledPayoutSupport: {
+      mode: 'manual-assumption',
+      accountId: 'accumulation',
+      fallbackAccountIds: ['topup'],
+      allowedFrequencies: ['annual', 'semi-annual', 'quarterly', 'monthly'],
+      minimumStartPolicyYear: 11,
+      minimumRemainingPolicyValue: 3_000,
+      source: 'policy-redemption',
+      notes: [
+        'After the minimum investment period, regular withdrawals may be modeled through the manual scheduled-redemption assumption across the Accumulation Units Account with Top-up Units Account fallback.',
+        'V1 enforces the published start gate after the minimum investment period and the published Minimum Account Value of S$3,000 on the annualized scheduled-redemption surface.',
+        'Selected-fund minimum residual holdings, pending-transaction sequencing, and exact intra-year payout timing remain informational only.',
+      ],
+      sourceRefs: [page7],
+    },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
-      `This partial template models the SGD / MIP 10 (${isAdvancedDeath ? 'Advanced Death' : 'Basic Death'}) corridor only.`,
-      'This partial template models regular-premium routing to the Accumulation Units Account, top-up routing, recurring single premium routing, the published premium-bonus windows, the end-of-MIP power-up bonus, the loyalty-bonus tail, a 2.50% account-value policy charge during the minimum investment period, a 0.60% account-value policy charge thereafter, and the published surrender, partial-withdrawal, and premium-shortfall charge schedules.',
+      `This ${isAdvancedDeath ? 'supported' : 'partial'} template models the SGD / MIP 10 (${hasLifeBenefitRider ? 'Advanced Death with Life Benefit Rider' : isAdvancedDeath ? 'Advanced Death' : 'Basic Death'}) corridor only.`,
+      `This ${isAdvancedDeath ? 'supported' : 'partial'} template models regular-premium routing to the Accumulation Units Account, top-up routing, recurring single premium routing, the published premium-bonus windows, the end-of-MIP power-up bonus, the loyalty-bonus tail, the after-first-five-policy-years regular-premium variation start gate with the published SGD minimum regular-premium table, a 2.50% account-value policy charge during the minimum investment period, a 0.60% account-value policy charge thereafter, and the published surrender, partial-withdrawal, and premium-shortfall charge schedules.`,
       ...(isAdvancedDeath
         ? [
-            'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
+            hasLifeBenefitRider
+              ? 'The Advanced Death with Life Benefit Rider variant also models the published Monthly Protection Charge through the policy anniversary immediately after age 99 after you enter the insured-life details and current net premium base, with youngest-life rider age gating on the same static current multi-life surface.'
+              : 'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
           ]
         : []),
-      'Premium bonus, power-up bonus, and loyalty bonus are modeled at the published rate windows, but their paid-up and no-withdrawal eligibility gates remain manual review assumptions.',
-      'Recurring single premium stays blocked after a premium-holiday event until regular premium resumes at the commencement-date amount.',
+      'Premium bonus, power-up bonus, and loyalty bonus also model the published 12-month premium-payment and partial-withdrawal eligibility gates, and Premium Bonus / Loyalty Bonus also model the published regular-withdrawal disqualification limb through the manual scheduled-redemption assumption surface after the minimum investment period.',
+      'Minimum regular-premium increase / reduction amounts remain informational only because the summary leaves those insurer-defined.',
+      'Recurring single premium events before policy month 13 or below the published monthly-equivalent minimum of S$50 are blocked; insurer-defined increase / reduction minimums remain informational only.',
+      'Recurring single premium stays blocked after a premium-holiday event until an explicit recurring-single-premium resumption is entered and the regular premium amount is restored to the commencement-date amount.',
       'Wealth Builder@Future keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
     ],
     unsupportedItems: [
       ...(isAdvancedDeath
         ? [
-            'Advanced Death Benefit payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, Life Benefit Rider, credit-card charge, multiple-life last-life settlement, change-of-life-assured and life-replacement administration, regular withdrawal behavior, minimum-account-value enforcement, and rider premium-deduction handling remain metadata-only for this product.',
+            hasLifeBenefitRider
+              ? 'Advanced Death Benefit and Life Benefit Rider payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, and change-of-life-assured / life-replacement administration remain metadata-only for this product.'
+              : 'Advanced Death Benefit payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, Life Benefit Rider, credit-card charge, change-of-life-assured and life-replacement administration, selected-fund regular-withdrawal routing constraints, and rider premium-deduction handling remain metadata-only for this product.',
           ]
         : [
-            'Advanced Death Benefit selection, Life Benefit Rider, monthly protection charge, credit-card charge, multiple-life last-life settlement, change-of-life-assured and life-replacement administration, regular withdrawal behavior, minimum-account-value enforcement, and rider premium-deduction handling remain metadata-only for this product.',
+            'Advanced Death Benefit selection, Life Benefit Rider, monthly protection charge, credit-card charge, change-of-life-assured and life-replacement administration, selected-fund regular-withdrawal routing constraints, and rider premium-deduction handling remain metadata-only for this product.',
           ]),
     ],
     sourceRefs: [page1, page2, page3, page4, page5, page6, page7, page8, page9, page10, ...(page14 ? [page14] : []), page15],
@@ -424,42 +486,52 @@ export function parseTokioMarineWealthBuilderAtFuture(context: ParseContext): Il
       'tokio-premium-bonus',
       'tokio-power-up-bonus',
       'tokio-loyalty-bonus',
+      'kernel:bonus-lookback-qualification-window',
       'tokio-policy-charge-on-accumulation-account',
       'tokio-top-up-routing',
       'tokio-recurring-single-premium-routing',
       'tokio-recurring-single-premium-manual-resumption-after-premium-holiday',
+      'kernel:minimum-premium-holiday-start-month',
+      'kernel:regular-premium-variation-start-gate',
+      'kernel:regular-premium-variation-minimum-floor',
+      'kernel:minimum-recurring-single-premium-start-month',
+      'kernel:minimum-recurring-single-premium-amount',
+      'kernel:committed-premium-rsp-resumption-gate',
       'tokio-top-up-premium-charge',
       'tokio-recurring-single-premium-charge',
       'tokio-accumulation-account-surrender-charge',
       'tokio-accumulation-partial-withdrawal-charge',
       'tokio-premium-shortfall-charge-non-payment',
+      'kernel:scheduled-payout-manual-assumption',
+      'kernel:scheduled-payout-start-gate',
+      'kernel:scheduled-payout-minimum-remaining-policy-value',
       'branch:tokio-wealth-builder-atfuture-advanced-death-monthly-protection-charge',
+      'branch:tokio-current-only-multi-life-life-state',
       'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-wealth-builder-atfuture-advanced-death-benefit-selection',
       'tokio-wealth-builder-atfuture-advanced-death-benefit-payout-handling',
-      'tokio-wealth-builder-atfuture-life-benefit-rider',
       'tokio-wealth-builder-atfuture-credit-card-charge',
-      'tokio-wealth-builder-atfuture-multiple-life-last-life-settlement',
       'tokio-wealth-builder-atfuture-change-of-life-assured-and-life-replacement-administration',
-      'tokio-wealth-builder-atfuture-regular-withdrawal-behavior',
-      'tokio-wealth-builder-atfuture-minimum-account-value-enforcement',
+      'tokio-wealth-builder-atfuture-regular-withdrawal-routing-and-selected-fund-constraints',
       'tokio-wealth-builder-atfuture-rider-premium-deduction-handling',
     ],
     warnings: [
       'Structured extraction validated against the Wealth Builder@Future product summary text layer.',
-      'Wealth Builder@Future is modeled as split SGD / MIP 10 death-benefit-option corridors with a published 2.50% policy charge during the minimum investment period and a 0.60% policy charge thereafter.',
-      'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published Monthly Protection Charge during the minimum investment period using the Accumulation Units Account sum-at-risk basis and Top-up Units Account fallback.',
+      'Wealth Builder@Future is modeled as split SGD / MIP 10 death-benefit-option corridors with the after-first-five-policy-years regular-premium variation start gate and the published SGD minimum regular-premium table, plus a published 2.50% policy charge during the minimum investment period and a 0.60% policy charge thereafter.',
+      'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published Monthly Protection Charge during the minimum investment period using the Accumulation Units Account sum-at-risk basis and Top-up Units Account fallback with static current multi-life last-life handling, and the Advanced Death with Life Benefit Rider variant extends that same Monthly Protection Charge corridor through the policy anniversary immediately after age 99 with youngest-life rider age gating on the same static current multi-life surface.',
       'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
-      'Premium bonus, power-up bonus, and loyalty bonus retain the published paid-up and no-withdrawal eligibility gates as manual review assumptions.',
-      'Recurring single premium stays blocked after a premium-holiday event until regular premium resumes at the commencement-date amount.',
+      'Premium bonus, power-up bonus, and loyalty bonus also model the published 12-month premium-payment and partial-withdrawal eligibility gates.',
+      'Minimum regular-premium increase / reduction amounts remain informational only because the summary leaves those insurer-defined.',
+      'Recurring single premium stays blocked after a premium-holiday event until an explicit recurring-single-premium resumption is entered and the regular premium amount is restored to the commencement-date amount.',
+      'Manual regular-withdrawal support after the minimum investment period now enforces the published Minimum Account Value of S$3,000 on the annualized scheduled-redemption surface; selected-fund minimum holdings, pending-transaction sequencing, and exact intra-year payout timing remain informational only.',
     ],
     archived: false,
     variants: [
       buildVariant(context.document, 'basic-death'),
       buildVariant(context.document, 'advanced-death'),
+      buildVariant(context.document, 'advanced-death-life-benefit-rider'),
     ],
   }
 }

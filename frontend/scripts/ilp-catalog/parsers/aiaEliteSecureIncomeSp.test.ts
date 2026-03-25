@@ -36,6 +36,7 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
         text: 'Secure Monthly Income mechanics',
         lines: [
           { y: 700, text: 'Secure Monthly Income is paid by redeeming units from the policy account.' },
+          { y: 680, text: 'Power-up Bonus from the end of policy year 10 and every fifth year thereafter is 2.5% of Single Premium x Adjustment Factor.' },
         ],
       },
       {
@@ -102,15 +103,24 @@ describe('parseAiaEliteSecureIncomeSp', () => {
       'branch:aia-elite-secure-income-sp-top-up-premium-charge',
       'branch:aia-elite-secure-income-sp-full-surrender-charge',
       'branch:aia-elite-secure-income-sp-partial-withdrawal-charge',
+      'branch:aia-elite-secure-income-sp-power-up-bonus-no-withdrawal-corridor',
+      'kernel:top-up-amount-gate-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'kernel:scheduled-payout-manual-assumption',
       'kernel:lapse-reinstatement-payout-state',
     ])
     expect(product.metadataOnlyBehaviors).toContain('aia-elite-secure-income-sp-secure-monthly-income-election')
     expect(product.metadataOnlyBehaviors).toContain('aia-elite-secure-income-sp-single-premium-principal-tracking')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-withdrawal-adjusted-power-up-bonus')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-death-benefit')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-reinstatement-payout-continuity')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-reinstatement')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-single-premium-charge')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-supplementary-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-accidental-death-benefit')
 
     expect(product.variants).toHaveLength(1)
     const variant = product.variants[0]
@@ -120,6 +130,14 @@ describe('parseAiaEliteSecureIncomeSp', () => {
       mipBasis: 'open-ended',
       mipLength: null,
       icpMonths: 1,
+      policyStateSupport: {
+        automaticLapseOnAccountValueDepletion: false,
+        minimumTopUpAmount: 1_000,
+        minimumPartialWithdrawalAmount: 1_000,
+        partialWithdrawalMinimumRemainingValueRules: [
+          { activeWindow: 'policy-term', basis: 'policy-value', minimumValue: 10_000 },
+        ],
+      },
       scheduledPayoutSupport: {
         mode: 'manual-assumption',
         accountId: 'policy',
@@ -136,6 +154,21 @@ describe('parseAiaEliteSecureIncomeSp', () => {
         id: 'policy',
         feeRate: null,
         subjectToEec: false,
+      }),
+    ])
+    expect(variant.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'power-up-bonus',
+        label: 'Power-up Bonus',
+        mode: 'one-time',
+        oneTimePayoutBasis: 'initial-single-premium-at-issue',
+        rate: 0.025,
+        cadenceYears: 5,
+        adjustmentFactorConfig: {
+          formula: 'cumulative-withdrawal-factor-product-over-account-value',
+          withdrawalAccountIds: ['policy'],
+          countFromPolicyYear: 6,
+        },
       }),
     ])
     expect(variant.feeRules).toEqual([
@@ -179,12 +212,24 @@ describe('parseAiaEliteSecureIncomeSp', () => {
       }),
     ])
     expect(variant.warnings).toContain(
-      'AIA Elite Secure Income - Single Premium is cataloged as a supported V1 product. The parser captures the published 5% single-premium charge, manual annual supplementary charge input, 3% top-up premium charge, full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel, including lapse suppression and post-reinstatement Target Monthly Income fallback in the annual-state model.',
+      'AIA Elite Secure Income - Single Premium is cataloged as a supported V1 product. The parser captures the published 5% single-premium charge, manual annual supplementary charge input, 3% top-up premium charge, the published S$1,000 minimum on explicit ad-hoc top-ups, full-surrender / partial-withdrawal charge schedules, the published S$10,000 residual policy-value floor on explicit one-off partial withdrawals, the Power-up Bonus corridor from the end of policy year 10 and every fifth policy year thereafter including the published cumulative withdrawal-factor adjustment from policy year 6 onward, scheduled payout capability through the payout-state kernel, the current-state death and terminal-illness benefit amount as the higher of 105% of policy value or a manual current net protected premium base input, the current admitted-state terminal-illness payable amount as a manual current claim amount, an admitted-and-settled terminal-illness claim as a current policy-termination state, and the current accidental-death uplift as 10% of a manual initial single premium input during the first 5 policy years, including lapse suppression and post-reinstatement Target Monthly Income fallback in the annual-state model.',
     )
     expect(variant.unsupportedItems).toContain(
       'Secure Monthly Income amount, payout age, and payout period selection remain manual-assumption inputs in V1.',
     )
-    expect(variant.unsupportedItems).toContain('Single-premium principal tracking remains informational only in V1.')
+    expect(variant.unsupportedItems).toContain('Single-premium principal tracking and paid / deemed-paid Secure Monthly Income erosion need a manual current net protected premium base input in V1.')
+    expect(variant.unsupportedItems).not.toContain(
+      'Withdrawal-adjusted Power-up Bonus scaling after any partial withdrawal from policy year 6 onward remains informational only.',
+    )
+    expect(variant.unsupportedItems).toContain(
+      'Accidental-death claim admission timing, exclusions, and settlement remain informational only beyond the modeled current ordinary death amount plus the first-5-policy-year 10%-of-single-premium uplift.',
+    )
+    expect(variant.unsupportedItems).toContain(
+      'The current admitted-state terminal-illness payable amount is supported through manual claim-amount input, and an admitted-and-settled terminal-illness claim is supported as a current policy-termination state, but terminal-illness exclusions and settlement remain informational only.',
+    )
+    expect(variant.unsupportedItems).not.toContain(
+      'Accidental-death and terminal-illness benefit formulas remain informational only.',
+    )
     expect(variant.unsupportedItems).not.toContain('Reinstatement effects on payout continuity remain informational only.')
     expect(variant.sourceRefs.find((ref) => ref.page === 7)?.excerpt).toContain(
       'Approximate excerpt; keyword "Reinstatement" not found on page.',

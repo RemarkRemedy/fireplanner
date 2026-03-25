@@ -11,7 +11,21 @@
       "event-heavy",
       "branch:aia-platinum-wealth-venture-2-top-up-premium-charge",
       "branch:aia-platinum-wealth-venture-2-premium-holiday-charge",
-      "branch:aia-platinum-wealth-venture-2-partial-withdrawal-charge"
+      "branch:aia-platinum-wealth-venture-2-partial-withdrawal-charge",
+      "branch:aia-platinum-wealth-venture-2-welcome-bonus",
+      "branch:aia-platinum-wealth-venture-2-investment-bonus",
+      "branch:aia-platinum-wealth-venture-2-performance-bonus",
+      "branch:aia-platinum-wealth-venture-2-zero-regular-premium-charge",
+      "branch:aia-platinum-wealth-venture-2-regular-supplementary-charge",
+      "branch:aia-platinum-wealth-venture-2-benefit-charge",
+      "branch:aia-platinum-wealth-venture-2-full-surrender-charge",
+      "kernel:automatic-lapse-on-account-depletion",
+      "kernel:partial-withdrawal-minimum-remaining-value-block",
+      "kernel:top-up-paid-up-to-date-block",
+      "kernel:top-up-amount-gate-block",
+      "kernel:current-death-benefit-estimate",
+      "kernel:current-accidental-death-benefit-estimate",
+      "kernel:distribution-mode-assumption"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "WA_Sum_201106386R_PWV2.0_Apr2025.pdf",
@@ -26,6 +40,11 @@
     "monthsAlreadyPaid": 24,
     "currentPolicyYear": 3,
     "icpMonths": 1,
+    "assuranceProfile": {
+      "currentAgeNextBirthday": 45,
+      "sex": "female",
+      "smokerStatus": "non-smoker"
+    },
     "mipLength": 5,
     "postMipYears": 0,
     "eecTable": [
@@ -84,7 +103,117 @@
         "grossReturnHigh": 0.07
       }
     ],
-    "bonuses": [],
+    "bonuses": [
+      {
+        "id": "welcome-bonus-y1",
+        "type": "allocation",
+        "label": "Welcome Bonus (Premium Year 1)",
+        "mode": "premium-allocation",
+        "rate": 0.03,
+        "amount": 0,
+        "appliesTo": [
+          "policy"
+        ],
+        "startPolicyYear": 1,
+        "endPolicyYear": 1,
+        "yearBasis": "premium-year",
+        "tieredRates": [
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 24000,
+            "maxAnnualPremium": 41999.99,
+            "rate": 0.03
+          },
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 42000,
+            "maxAnnualPremium": null,
+            "rate": 0.03
+          }
+        ],
+        "suspensionRules": []
+      },
+      {
+        "id": "welcome-bonus-y2",
+        "type": "allocation",
+        "label": "Welcome Bonus (Premium Year 2)",
+        "mode": "premium-allocation",
+        "rate": 0.04,
+        "amount": 0,
+        "appliesTo": [
+          "policy"
+        ],
+        "startPolicyYear": 2,
+        "endPolicyYear": 2,
+        "yearBasis": "premium-year",
+        "tieredRates": [
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 42000,
+            "maxAnnualPremium": null,
+            "rate": 0.04
+          }
+        ],
+        "suspensionRules": []
+      },
+      {
+        "id": "welcome-bonus-y3",
+        "type": "allocation",
+        "label": "Welcome Bonus (Premium Year 3)",
+        "mode": "premium-allocation",
+        "rate": 0.05,
+        "amount": 0,
+        "appliesTo": [
+          "policy"
+        ],
+        "startPolicyYear": 3,
+        "endPolicyYear": 3,
+        "yearBasis": "premium-year",
+        "tieredRates": [
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 42000,
+            "maxAnnualPremium": null,
+            "rate": 0.05
+          }
+        ],
+        "suspensionRules": []
+      },
+      {
+        "id": "investment-bonus",
+        "type": "custom",
+        "label": "Investment Bonus",
+        "mode": "one-time",
+        "oneTimePayoutBasis": "committed-annual-premium-at-issue",
+        "rate": 0.025,
+        "amount": 0,
+        "appliesTo": [
+          "policy"
+        ],
+        "startPolicyYear": 8,
+        "endPolicyYear": 11,
+        "cadenceYears": 1,
+        "requiresPremiumsPaidUpToDate": true,
+        "tieredRates": [],
+        "suspensionRules": []
+      },
+      {
+        "id": "performance-bonus",
+        "type": "loyalty",
+        "label": "Performance Bonus",
+        "mode": "annual-rate",
+        "rate": 0.004,
+        "amount": 0,
+        "appliesTo": [
+          "policy"
+        ],
+        "startPolicyYear": 8,
+        "endPolicyYear": null,
+        "requiresPremiumsPaidUpToDate": true,
+        "tieredRates": [],
+        "suspensionRules": []
+      }
+    ],
     "chargeRules": [
       {
         "id": "regular-premium-charge",
@@ -104,6 +233,7 @@
         ],
         "rate": 0,
         "amount": 0,
+        "requiresManualInput": false,
         "allocation": "equal-split"
       },
       {
@@ -118,7 +248,26 @@
         ],
         "rate": 0.036,
         "amount": 0,
+        "requiresManualInput": false,
         "allocation": "equal-split"
+      },
+      {
+        "id": "benefit-charge",
+        "label": "Benefit Charge",
+        "basis": "assurance-sum-at-risk",
+        "activeWindow": "policy-term",
+        "appliesTo": [
+          "policy"
+        ],
+        "rate": 0,
+        "amount": 0,
+        "assuranceConfig": {
+          "formula": "aia-venture-benefit-charge",
+          "monthlyModalFactor": 0.083333,
+          "maxAgeNextBirthday": 99
+        },
+        "requiresManualInput": false,
+        "allocation": "pro-rata-by-value"
       }
     ],
     "policyEvents": [
@@ -126,7 +275,9 @@
         "id": "holiday-1",
         "type": "premium-holiday",
         "startPolicyMonth": 25,
-        "durationMonths": 3
+        "durationMonths": 3,
+        "repayMissedPremiums": true,
+        "repaymentAccountId": "policy"
       },
       {
         "id": "top-up-1",
@@ -156,6 +307,7 @@
         ],
         "rate": 0.03,
         "amount": 0,
+        "requiresManualInput": false,
         "allocation": "equal-split"
       },
       {
@@ -192,6 +344,7 @@
           }
         ],
         "amount": 0,
+        "requiresManualInput": false,
         "allocation": "pro-rata-by-value"
       },
       {
@@ -247,6 +400,7 @@
           }
         ],
         "amount": 0,
+        "requiresManualInput": false,
         "allocation": "equal-split"
       }
     ],
@@ -260,46 +414,49 @@
       "economicsStatus": "supported",
       "structureStatus": "structured",
       "modeledEconomics": [
+        "branch:aia-platinum-wealth-venture-2-welcome-bonus",
+        "branch:aia-platinum-wealth-venture-2-investment-bonus",
+        "branch:aia-platinum-wealth-venture-2-performance-bonus",
         "branch:aia-platinum-wealth-venture-2-zero-regular-premium-charge",
         "branch:aia-platinum-wealth-venture-2-regular-supplementary-charge",
+        "branch:aia-platinum-wealth-venture-2-benefit-charge",
         "branch:aia-platinum-wealth-venture-2-top-up-premium-charge",
         "branch:aia-platinum-wealth-venture-2-premium-holiday-charge",
         "branch:aia-platinum-wealth-venture-2-partial-withdrawal-charge",
         "branch:aia-platinum-wealth-venture-2-full-surrender-charge",
+        "kernel:automatic-lapse-on-account-depletion",
+        "kernel:partial-withdrawal-minimum-remaining-value-block",
+        "kernel:top-up-paid-up-to-date-block",
+        "kernel:top-up-amount-gate-block",
+        "kernel:current-death-benefit-estimate",
+        "kernel:current-accidental-death-benefit-estimate",
         "kernel:distribution-mode-assumption"
       ],
       "metadataOnlyBehaviors": [
-        "aia-platinum-wealth-venture-2-welcome-bonus",
-        "aia-platinum-wealth-venture-2-investment-bonus",
-        "aia-platinum-wealth-venture-2-performance-bonus",
-        "aia-platinum-wealth-venture-2-benefit-charge",
-        "aia-platinum-wealth-venture-2-protection-benefits",
         "aia-platinum-wealth-venture-2-secondary-insured-option",
         "aia-platinum-wealth-venture-2-fund-management-charge",
-        "aia-platinum-wealth-venture-2-top-up-eligibility-gating",
         "aia-platinum-wealth-venture-2-fund-switching"
       ]
     },
     "catalogWarnings": [
-      "AIA Platinum Wealth Venture 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge for the first 7 policy years, the premium-holiday charge schedule with full-outstanding-premium repayment resumption, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and reinvest-default distribution support, while bonuses, protection benefits, secondary-insured options, fund-level charges, and underwriting or approval handling around premium resumption remain informational only.",
-      "AIA Platinum Wealth Venture 2.0 is cataloged as a partial modeled subset in V1. The current parser models the regular-pay 5-year corridor: zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge for the first 7 policy years, the premium-holiday charge schedule plus full-outstanding-premium repayment resumption, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and reinvest-default distribution support.",
-      "Welcome Bonus, Investment Bonus, Performance Bonus, Benefit Charge, and Secondary Insured mechanics remain informational only in V1.",
+      "AIA Platinum Wealth Venture 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures the published Welcome Bonus tiers for premium years 1 to 3, the Investment Bonus milestones at policy years 8 to 11, the annual Performance Bonus from policy year 8 onward, the current-state death benefit as the higher of policy value or total regular premiums paid plus top-up premiums less withdrawals, the current accidental-death uplift as 100% of cumulative paid regular premiums during the first 2 policy years, zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge for the first 7 policy years, the published Appendix A Benefit Charge corridor, the premium-holiday charge schedule with full-outstanding-premium repayment resumption, annual-state lapse / termination after projected account-value depletion, the 3% top-up premium charge with blocking in months where regular premiums are not paid up to date and the published S$1,000 minimum on explicit ad-hoc top-ups, the regular-premium withdrawal / surrender charge schedules with the published S$10,000 residual policy-value floor on explicit one-off withdrawals, and reinvest-default distribution support, while secondary-insured claim handling, fund-level charges, and underwriting or approval handling around premium resumption remain informational only beyond the modeled current ordinary death, accidental-death, and Benefit Charge estimates.",
+      "AIA Platinum Wealth Venture 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures the published Welcome Bonus tiers for premium years 1 to 3, the Investment Bonus milestones at policy years 8 to 11, the annual Performance Bonus from policy year 8 onward, the current-state death benefit as the higher of policy value or total regular premiums paid plus top-up premiums less withdrawals, the current accidental-death uplift as 100% of cumulative paid regular premiums during the first 2 policy years, zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge for the first 7 policy years, the published Appendix A Benefit Charge corridor, the premium-holiday charge schedule with full-outstanding-premium repayment resumption, annual-state lapse / termination after projected account-value depletion, the 3% top-up premium charge with blocking in months where regular premiums are not paid up to date and the published S$1,000 minimum on explicit ad-hoc top-ups, the regular-premium withdrawal / surrender charge schedules, and reinvest-default distribution support, while accidental-death and secondary-insured claim handling, fund-level charges, and underwriting or approval handling around premium resumption remain informational only beyond the modeled current ordinary death-benefit estimate, current accidental-death estimate, and Benefit Charge.",
+      "Accidental-death claim admission / exclusions / settlement and Secondary Insured mechanics remain informational only beyond the modeled current ordinary death-benefit estimate plus the first-2-policy-year 100%-of-paid-regular-premiums accidental-death uplift.",
       "Automatic fund switching, reinvested dividend top-up units, and fund-level management charges remain informational only in V1.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption, and payouts below the published minimum annual cash-payout amount of $50 remain reinvested.",
-      "Welcome Bonus, Investment Bonus, and Performance Bonus remain informational only because they credit additional regular-premium units outside the current executable slice.",
-      "Benefit Charge, death benefit floors, accidental death benefit, secondary insured, and other protection-side formulas remain informational only.",
+      "Accidental-death claim admission / exclusions / settlement, secondary-insured handling, and other protection-side claim handling remain informational only beyond the modeled current ordinary death-benefit estimate plus the first-2-policy-year 100%-of-paid-regular-premiums accidental-death uplift.",
       "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
-      "Minimum withdrawal amount, minimum post-withdrawal policy value, regular-top-up eligibility while premiums are outstanding, and top-up suspension remain informational only.",
+      "Top-up suspension and single-premium withdrawal scheduling remain informational only.",
       "Fund switching and reinvested dividend top-up units remain informational only.",
       "Any underwriting or approval handling around premium resumption remains informational only."
     ]
   },
   "expected": {
     "summary": {
-      "totalPremiumsPaid": 48500,
-      "totalFeesCharged": 6427.31,
-      "totalBonusesReceived": 0,
-      "netFeeDrag": 6427.31,
+      "totalPremiumsPaid": 51200,
+      "totalFeesCharged": 6539.87,
+      "totalBonusesReceived": 405,
+      "netFeeDrag": 6134.87,
       "currentSurrenderValue": 11000,
       "cancelNowPenalty": 11000
     },
@@ -315,46 +472,46 @@
           "exitYear": 1,
           "policyYear": 4,
           "eecRate": 0.4,
-          "eecCharge": 12059.01,
-          "pvEec": 11270.11,
+          "eecCharge": 13309.67,
+          "pvEec": 12438.94,
           "npvGrossFees": 4992.52,
-          "npvBonuses": 0,
-          "totalNpvFees": 16262.63,
-          "netSurrenderValue": 18088.52,
-          "totalContributions": 37700
+          "npvBonuses": 378.5,
+          "totalNpvFees": 17052.96,
+          "netSurrenderValue": 19964.5,
+          "totalContributions": 40400
         },
         {
           "exitYear": 2,
           "policyYear": 5,
           "eecRate": 0.3,
-          "eecCharge": 12424.24,
-          "pvEec": 10851.82,
-          "npvGrossFees": 5940.48,
-          "npvBonuses": 0,
-          "totalNpvFees": 16792.29,
-          "netSurrenderValue": 28989.9,
-          "totalContributions": 48500
+          "eecCharge": 13376.75,
+          "pvEec": 11683.77,
+          "npvGrossFees": 6038.79,
+          "npvBonuses": 378.5,
+          "totalNpvFees": 17344.06,
+          "netSurrenderValue": 31212.42,
+          "totalContributions": 51200
         }
       ],
       "bestExitYear": 1,
-      "bestExitNpvFees": 16262.63,
+      "bestExitNpvFees": 17052.96,
       "holdToMip": {
-        "npvGrossFees": 5940.48,
-        "npvBonuses": 0,
-        "totalNpvFees": 16792.29,
-        "finalValue": 41414.15,
-        "totalContributions": 48500
+        "npvGrossFees": 6038.79,
+        "npvBonuses": 378.5,
+        "totalNpvFees": 17344.06,
+        "finalValue": 44589.17,
+        "totalContributions": 51200
       }
     },
     "opportunityCost": {
-      "alternativePortfolioValue": 40620.9,
-      "ilpValueAtHorizon": 41414.15,
-      "difference": -793.25,
+      "alternativePortfolioValue": 43509.9,
+      "ilpValueAtHorizon": 44589.17,
+      "difference": -1079.27,
       "atBestExit": {
         "exitYear": 1,
-        "alternativeValue": 30154.72,
-        "ilpValueAtHorizon": 41414.15,
-        "difference": -11259.43
+        "alternativeValue": 32162.01,
+        "ilpValueAtHorizon": 44589.17,
+        "difference": -12427.15
       }
     },
     "projections": {
@@ -364,25 +521,25 @@
           {
             "year": 1,
             "policyYear": 4,
-            "annualContribution": 16100,
+            "annualContribution": 18800,
             "annualWithdrawals": 3500,
-            "combinedValue": 29711.1,
+            "combinedValue": 32827.11,
             "eecRate": 0.4,
-            "eecCharge": 11884.44,
-            "surrenderValue": 17826.66,
-            "cumulativePremiums": 37700,
+            "eecCharge": 13130.85,
+            "surrenderValue": 19696.27,
+            "cumulativePremiums": 40400,
             "cumulativeGrossFees": 5342,
-            "cumulativeBonuses": 0,
+            "cumulativeBonuses": 405,
             "accounts": [
               {
                 "accountId": "policy",
                 "open": 22000,
-                "contributionAmount": 16100,
+                "contributionAmount": 18800,
                 "grossFee": 5342,
-                "bonusCredit": 0,
-                "netFee": 5342,
+                "bonusCredit": 405,
+                "netFee": 4937,
                 "withdrawalAmount": 3500,
-                "close": 29711.1
+                "close": 32827.11
               }
             ]
           },
@@ -391,23 +548,23 @@
             "policyYear": 5,
             "annualContribution": 10800,
             "annualWithdrawals": 0,
-            "combinedValue": 40220.55,
+            "combinedValue": 43306.09,
             "eecRate": 0.3,
-            "eecCharge": 12066.16,
-            "surrenderValue": 28154.38,
-            "cumulativePremiums": 48500,
-            "cumulativeGrossFees": 6411.6,
-            "cumulativeBonuses": 0,
+            "eecCharge": 12991.83,
+            "surrenderValue": 30314.26,
+            "cumulativePremiums": 51200,
+            "cumulativeGrossFees": 6523.78,
+            "cumulativeBonuses": 405,
             "accounts": [
               {
                 "accountId": "policy",
-                "open": 29711.1,
+                "open": 32827.11,
                 "contributionAmount": 10800,
-                "grossFee": 1069.6,
+                "grossFee": 1181.78,
                 "bonusCredit": 0,
-                "netFee": 1069.6,
+                "netFee": 1181.78,
                 "withdrawalAmount": 0,
-                "close": 40220.55
+                "close": 43306.09
               }
             ]
           }
@@ -419,25 +576,25 @@
           {
             "year": 1,
             "policyYear": 4,
-            "annualContribution": 16100,
+            "annualContribution": 18800,
             "annualWithdrawals": 3500,
-            "combinedValue": 30147.54,
+            "combinedValue": 33274.16,
             "eecRate": 0.4,
-            "eecCharge": 12059.01,
-            "surrenderValue": 18088.52,
-            "cumulativePremiums": 37700,
+            "eecCharge": 13309.67,
+            "surrenderValue": 19964.5,
+            "cumulativePremiums": 40400,
             "cumulativeGrossFees": 5342,
-            "cumulativeBonuses": 0,
+            "cumulativeBonuses": 405,
             "accounts": [
               {
                 "accountId": "policy",
                 "open": 22000,
-                "contributionAmount": 16100,
+                "contributionAmount": 18800,
                 "grossFee": 5342,
-                "bonusCredit": 0,
-                "netFee": 5342,
+                "bonusCredit": 405,
+                "netFee": 4937,
                 "withdrawalAmount": 3500,
-                "close": 30147.54
+                "close": 33274.16
               }
             ]
           },
@@ -446,23 +603,23 @@
             "policyYear": 5,
             "annualContribution": 10800,
             "annualWithdrawals": 0,
-            "combinedValue": 41414.15,
+            "combinedValue": 44589.17,
             "eecRate": 0.3,
-            "eecCharge": 12424.24,
-            "surrenderValue": 28989.9,
-            "cumulativePremiums": 48500,
-            "cumulativeGrossFees": 6427.31,
-            "cumulativeBonuses": 0,
+            "eecCharge": 13376.75,
+            "surrenderValue": 31212.42,
+            "cumulativePremiums": 51200,
+            "cumulativeGrossFees": 6539.87,
+            "cumulativeBonuses": 405,
             "accounts": [
               {
                 "accountId": "policy",
-                "open": 30147.54,
+                "open": 33274.16,
                 "contributionAmount": 10800,
-                "grossFee": 1085.31,
+                "grossFee": 1197.87,
                 "bonusCredit": 0,
-                "netFee": 1085.31,
+                "netFee": 1197.87,
                 "withdrawalAmount": 0,
-                "close": 41414.15
+                "close": 44589.17
               }
             ]
           }
@@ -474,25 +631,25 @@
           {
             "year": 1,
             "policyYear": 4,
-            "annualContribution": 16100,
+            "annualContribution": 18800,
             "annualWithdrawals": 3500,
-            "combinedValue": 30527.34,
+            "combinedValue": 33663.2,
             "eecRate": 0.4,
-            "eecCharge": 12210.94,
-            "surrenderValue": 18316.4,
-            "cumulativePremiums": 37700,
+            "eecCharge": 13465.28,
+            "surrenderValue": 20197.92,
+            "cumulativePremiums": 40400,
             "cumulativeGrossFees": 5342,
-            "cumulativeBonuses": 0,
+            "cumulativeBonuses": 405,
             "accounts": [
               {
                 "accountId": "policy",
                 "open": 22000,
-                "contributionAmount": 16100,
+                "contributionAmount": 18800,
                 "grossFee": 5342,
-                "bonusCredit": 0,
-                "netFee": 5342,
+                "bonusCredit": 405,
+                "netFee": 4937,
                 "withdrawalAmount": 3500,
-                "close": 30527.34
+                "close": 33663.2
               }
             ]
           },
@@ -501,23 +658,23 @@
             "policyYear": 5,
             "annualContribution": 10800,
             "annualWithdrawals": 0,
-            "combinedValue": 42470.8,
+            "combinedValue": 45724.12,
             "eecRate": 0.3,
-            "eecCharge": 12741.24,
-            "surrenderValue": 29729.56,
-            "cumulativePremiums": 48500,
-            "cumulativeGrossFees": 6440.98,
-            "cumulativeBonuses": 0,
+            "eecCharge": 13717.23,
+            "surrenderValue": 32006.88,
+            "cumulativePremiums": 51200,
+            "cumulativeGrossFees": 6553.88,
+            "cumulativeBonuses": 405,
             "accounts": [
               {
                 "accountId": "policy",
-                "open": 30527.34,
+                "open": 33663.2,
                 "contributionAmount": 10800,
-                "grossFee": 1098.98,
+                "grossFee": 1211.88,
                 "bonusCredit": 0,
-                "netFee": 1098.98,
+                "netFee": 1211.88,
                 "withdrawalAmount": 0,
-                "close": 42470.8
+                "close": 45724.12
               }
             ]
           }

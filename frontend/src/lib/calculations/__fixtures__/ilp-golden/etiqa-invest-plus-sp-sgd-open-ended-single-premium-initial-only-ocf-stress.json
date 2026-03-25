@@ -8,7 +8,19 @@
     "supportStatus": "supported",
     "description": "Etiqa Invest plus SP alternate-fund high-OCF stress scenario through the supported initial corridor.",
     "coverageTags": [
-      "ocf-stress"
+      "ocf-stress",
+      "branch:etiqa-invest-plus-sp-zero-single-premium-charge",
+      "branch:etiqa-invest-plus-sp-policy-charge",
+      "branch:etiqa-invest-plus-sp-top-up-premium-charge",
+      "branch:etiqa-invest-plus-sp-initial-partial-withdrawal-charge",
+      "branch:etiqa-invest-plus-sp-initial-surrender-charge",
+      "branch:etiqa-invest-plus-sp-current-power-up-bonus-credit",
+      "branch:etiqa-invest-plus-sp-initial-power-up-bonus",
+      "branch:etiqa-invest-plus-sp-projected-top-up-power-up-bonus-for-new-top-ups",
+      "kernel:current-death-benefit-estimate",
+      "kernel:partial-withdrawal-amount-increment-block",
+      "kernel:partial-withdrawal-minimum-remaining-value-block",
+      "kernel:distribution-mode-assumption"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "EIP_Invest plus SP_Summary.pdf",
@@ -49,6 +61,21 @@
         "contributionRules": [
           {
             "phase": "during-icp",
+            "contributionShare": 1
+          }
+        ]
+      },
+      {
+        "id": "topup",
+        "label": "Additional Account Value",
+        "feeRate": 0,
+        "currentValue": 0,
+        "contributionShare": 0,
+        "subjectToEec": false,
+        "postMipFeeRate": null,
+        "contributionRules": [
+          {
+            "phase": "top-up",
             "contributionShare": 1
           }
         ]
@@ -120,7 +147,7 @@
         "basis": "event-amount",
         "activeWindow": "policy-term",
         "appliesTo": [
-          "policy"
+          "topup"
         ],
         "rate": 0.04,
         "amount": 0,
@@ -177,11 +204,16 @@
         "branch:etiqa-invest-plus-sp-top-up-premium-charge",
         "branch:etiqa-invest-plus-sp-initial-partial-withdrawal-charge",
         "branch:etiqa-invest-plus-sp-initial-surrender-charge",
+        "branch:etiqa-invest-plus-sp-current-power-up-bonus-credit",
+        "branch:etiqa-invest-plus-sp-initial-power-up-bonus",
+        "branch:etiqa-invest-plus-sp-projected-top-up-power-up-bonus-for-new-top-ups",
+        "kernel:current-death-benefit-estimate",
+        "kernel:partial-withdrawal-amount-increment-block",
+        "kernel:partial-withdrawal-minimum-remaining-value-block",
         "kernel:distribution-mode-assumption"
       ],
       "metadataOnlyBehaviors": [
-        "etiqa-invest-plus-sp-power-up-bonus",
-        "etiqa-invest-plus-sp-death-benefit-floor",
+        "etiqa-invest-plus-sp-historical-top-up-power-up-bonus-vintage-accounting",
         "etiqa-invest-plus-sp-top-up-vintage-accounting",
         "etiqa-invest-plus-sp-representative-management-charge",
         "etiqa-invest-plus-sp-fund-management-fee",
@@ -192,18 +224,18 @@
       ]
     },
     "catalogWarnings": [
-      "Invest plus SP is cataloged as a supported V1 product for the initial single-premium corridor only. The parser captures zero initial subscription charge, the initial-account policy-charge schedule, the 4.00% top-up premium charge, the initial-account surrender / partial-withdrawal charge tables, and reinvest-default distribution support, while power-up bonus, representative-management charges, protection formulas, top-up-vintage post-charge accounting, and grace-period / reinstatement / free-look administration remain informational only.",
-      "Invest plus SP is cataloged as a supported V1 product for the initial single-premium corridor only. The parser captures zero initial subscription charge, the initial-account policy-charge schedule, the 4.00% top-up premium charge, the initial-account surrender / partial-withdrawal charge tables, and reinvest-default distribution support.",
-      "Power-up bonus, representative management charge, death-benefit principal floor, and top-up-specific post-charge accounting remain informational only in V1.",
+      "Invest plus SP is cataloged as a supported V1 product for the initial single-premium corridor only. The parser captures zero initial subscription charge, the initial-account policy-charge schedule, the 4.00% top-up premium charge, the initial-account surrender / partial-withdrawal charge tables, the current ordinary death-benefit estimate as the higher of account value or 101% of net premium, reinvest-default distribution support, current-due Power-up Bonus crediting through manual initial-account and top-up-account amounts plus status, future recurring Initial Account Power-up Bonus through the published three-year cadence after a manual observed-average input seeds the current incomplete block, and future recurring Top-up Account Power-up Bonus for new projection-start top-ups after a manual representative-management-charge rate is supplied, including top-up-specific policy-charge and partial-withdrawal-charge clocks inside that projected new-top-up lane. Historical top-up-vintage rolling-average qualification, pre-projection top-up vintages, representative-management-charge effects outside that new-top-up lane, top-up-vintage post-charge accounting, and grace-period / reinstatement / free-look administration remain informational only.",
+      "Invest plus SP is cataloged as a supported V1 product for the initial single-premium corridor only. The parser captures zero initial subscription charge, the initial-account policy-charge schedule, the 4.00% top-up premium charge, the initial-account surrender / partial-withdrawal charge tables, the published S$500 minimum withdrawal amount in multiples of S$100 plus the published S$1,000 post-withdrawal minimum remaining-account-value floor on explicit one-off partial withdrawals, the current ordinary death-benefit estimate as the higher of account value or 101% of net premium, and reinvest-default distribution support.",
+      "Current-due Power-up Bonus is modeled through manual current initial-account and top-up-account bonus-credit amounts. Future recurring Initial Account Power-up Bonus is modeled through the published three-year cadence after a manual observed-average input seeds the current incomplete block, and future recurring Top-up Account Power-up Bonus is modeled for new projection-start top-ups after a manual representative-management-charge rate is supplied.",
+      "Historical top-up-vintage rolling-average qualification, pre-projection top-up vintages, and top-up-specific charge clocks outside the modeled future new-top-up bonus lane remain informational only in V1.",
       "Grace-period top-up funding, reinstatement, and free-look handling remain informational only.",
       "This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.",
       "Open-ended products use a default 20-year review horizon in V1; adjust the horizon if you want a different analysis window.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.",
       "Enter the one-time gross initial single premium lump sum in Policy Details if you want the upfront single-premium deduction to seed the starting policy value honestly.",
-      "Power-up bonus remains informational only because it credits additional units based on rolling initial-account and top-up averages.",
-      "Death benefit and the 101% of net premium floor remain informational only.",
-      "Top-up premium charge, top-up-specific policy-charge clocks, and top-up-specific surrender / withdrawal charge clocks remain informational only.",
-      "Representative management charge remains informational only because the application-agreed rate can vary up to 0.75% per annum.",
+      "Historical top-up-vintage Power-up Bonus qualification and rolling average accounting for vintages that started before the current projection remain informational only.",
+      "Top-up-specific surrender charge clocks remain informational only, and top-up-specific policy-charge / partial-withdrawal charge clocks are only modeled for new projection-start top-up bonus qualification.",
+      "Representative management charge remains informational only outside the modeled future new-top-up Power-up Bonus lane because the application-agreed rate can vary up to 0.75% per annum.",
       "Fund-level management fees, dividend payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested dividends remain informational only.",
       "Grace-period top-up funding remains informational only.",
       "Reinstatement remains informational only.",
@@ -515,6 +547,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -533,6 +575,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -565,6 +617,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -583,6 +645,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -615,6 +687,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -633,6 +715,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -665,6 +757,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -683,6 +785,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -715,6 +827,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -733,6 +855,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -765,6 +897,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -783,6 +925,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -815,6 +967,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -833,6 +995,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -865,6 +1037,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -883,6 +1065,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -915,6 +1107,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -933,6 +1135,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -965,6 +1177,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -983,6 +1205,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -1020,6 +1252,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -1038,6 +1280,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -1070,6 +1322,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -1088,6 +1350,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -1120,6 +1392,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -1138,6 +1420,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -1170,6 +1462,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -1188,6 +1490,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -1220,6 +1532,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -1238,6 +1560,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -1270,6 +1602,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -1288,6 +1630,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -1320,6 +1672,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -1338,6 +1700,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -1370,6 +1742,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -1388,6 +1770,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -1420,6 +1812,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -1438,6 +1840,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -1470,6 +1882,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -1488,6 +1910,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -1525,6 +1957,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -1543,6 +1985,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -1575,6 +2027,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -1593,6 +2055,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -1625,6 +2097,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -1643,6 +2125,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -1675,6 +2167,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -1693,6 +2195,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -1725,6 +2237,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -1743,6 +2265,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -1775,6 +2307,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -1793,6 +2335,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -1825,6 +2377,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -1843,6 +2405,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -1875,6 +2447,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -1893,6 +2475,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -1925,6 +2517,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -1943,6 +2545,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,
@@ -1975,6 +2587,16 @@
                 "netFee": 0,
                 "withdrawalAmount": 0,
                 "close": 0
+              },
+              {
+                "accountId": "topup",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
               }
             ]
           },
@@ -1993,6 +2615,16 @@
             "accounts": [
               {
                 "accountId": "policy",
+                "open": 0,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 0,
+                "close": 0
+              },
+              {
+                "accountId": "topup",
                 "open": 0,
                 "contributionAmount": 0,
                 "grossFee": 0,

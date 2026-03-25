@@ -163,6 +163,27 @@ function buildVariant(document: ExtractedPdfDocument, deathBenefitOption: DeathB
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
     {
+      id: 'premium-holiday-charge',
+      label: 'Premium Holiday Charge',
+      trigger: 'premium-holiday',
+      basis: 'fixed-amount-with-overlap-months',
+      yearBasis: 'policy-year',
+      appliesTo: ['policy'],
+      rate: 0,
+      rateSchedule: [
+        { startPolicyYear: 1, endPolicyYear: 2, rate: 1 },
+        { startPolicyYear: 3, endPolicyYear: null, rate: 0 },
+      ],
+      amount: 50,
+      activeWindow: 'policy-term',
+      allocation: 'equal-split',
+      notes: [
+        'Models the published fixed S$50 monthly Premium Holiday Charge during the first two policy years only.',
+        'No Lapse Privilege debt carry and premium-holiday behavior beyond this fixed monthly deduction remain informational only.',
+      ],
+      sourceRefs: [page6],
+    },
+    {
       id: 'top-up-premium-charge',
       label: 'Top-Up Premium Charge',
       trigger: 'top-up',
@@ -174,7 +195,7 @@ function buildVariant(document: ExtractedPdfDocument, deathBenefitOption: DeathB
       allocation: 'equal-split',
       notes: [
         'Models the published 5% premium charge on each accepted ad-hoc top-up premium.',
-        'Top-ups are only accepted while regular premiums are fully paid when due, but that eligibility gate remains informational only in V1.',
+        'V1 blocks ad-hoc top-ups in policy months where regular premiums are no longer paid up to date.',
       ],
       sourceRefs: [page3, page5],
     },
@@ -190,7 +211,9 @@ function buildVariant(document: ExtractedPdfDocument, deathBenefitOption: DeathB
       allocation: 'equal-split',
       notes: [
         'No policy-level partial withdrawal charge is stated in the summary.',
-        'Partial withdrawals are only available after the end of the second policy year and remain subject to minimum-withdrawal and minimum-residual-value rules that stay informational only in V1.',
+        'V1 blocks explicit one-off partial withdrawals before the end of the second policy year.',
+        'V1 also blocks explicit one-off partial withdrawals that would leave policy value below the published S$1,000 residual floor.',
+        'V1 also blocks explicit one-off partial withdrawals below the published S$1,000 minimum amount.',
       ],
       sourceRefs: [page5],
     },
@@ -220,19 +243,31 @@ function buildVariant(document: ExtractedPdfDocument, deathBenefitOption: DeathB
     bonuses,
     feeRules,
     eventChargeRules,
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      blockTopUpsWhenPremiumsNotPaidUpToDate: true,
+      minimumPartialWithdrawalAmount: 1_000,
+      minimumPartialWithdrawalStartPolicyMonthByAccount: [
+        { accountId: 'policy', startPolicyMonth: 25 },
+      ],
+      partialWithdrawalMinimumRemainingValueRules: [
+        { activeWindow: 'policy-term', basis: 'policy-value', minimumValue: 1_000 },
+      ],
+    },
     eecTable: [...FULL_SURRENDER_CHARGE_SCHEDULE],
     warnings: [
-      `This supported template models the SGD open-ended ${coverLabel} corridor with the published premium-year regular premium charge schedule, the 2% Special Bonus from premium year 10 onward, the fixed S$5 monthly policy fee, the Appendix A Benefit Charge, the 5% top-up premium charge, the nil policy-level partial-withdrawal charge path, and the first-two-policy-years full-surrender charge schedule.`,
-      'The fixed S$50 monthly premium-holiday charge, No Lapse Privilege debt carry, policy-variation approval rules, and claim-side payout settlement remain informational only.',
+      `This supported template models the SGD open-ended ${coverLabel} corridor with the published premium-year regular premium charge schedule, the 2% Special Bonus from premium year 10 onward, the fixed S$5 monthly policy fee, the Appendix A Benefit Charge, the fixed S$50 monthly premium-holiday charge during the first two policy years, the 5% top-up premium charge with blocking in months where regular premiums are not paid up to date, the nil policy-level partial-withdrawal charge path with the post-second-policy-year start gate plus the published S$1,000 minimum one-off withdrawal amount and S$1,000 residual policy-value floor, the first-two-policy-years full-surrender charge schedule, and the current-state death benefit via a manual current insured amount input.`,
+      'No Lapse Privilege debt carry, policy-variation approval rules, and claim-side payout settlement remain informational only.',
     ],
     unsupportedItems: [
-      'The S$50 monthly premium-holiday charge in the first two policy years remains informational only because the current event kernel does not author fixed-per-month premium-holiday deductions.',
       'No Lapse Privilege debt carry and post-depletion fee accrual remain informational only.',
-      'Partial-withdrawal eligibility timing, minimum withdrawal amount, and minimum residual policy-value rules remain informational only.',
       'Insured-amount variation, milestone-event increase option, regular-premium variation, and premium-frequency change handling remain informational only.',
       'AIA Vitality PowerUp Dollar, optional riders, fund switching, automatic fund switching, automatic fund re-balancing, and fund-level management charges remain informational only.',
       'Reinstatement underwriting and extra-mortality revisions remain informational only.',
-      `The ${coverLabel} death-benefit payout settlement itself remains metadata-only beyond the modeled Benefit Charge corridor.`,
+      deathBenefitOption === 'plus'
+        ? 'The Plus current death benefit needs a manual current insured amount input because insured-amount changes and claim-side reductions are not reconstructed from history in V1.'
+        : 'The Max current death benefit needs a manual current insured amount input because insured-amount changes and claim-side reductions are not reconstructed from history in V1.',
+      `The ${coverLabel} death-benefit claim-side payout settlement itself remains metadata-only beyond the modeled current snapshot and Benefit Charge corridor.`,
     ],
     sourceRefs: [page1, page2, page3, page4, page5, page6, page13],
   }
@@ -256,17 +291,17 @@ export function parseAiaProLifetimeProtectorIi({ document, sourceChecksumSha256 
       'branch:aia-pro-lifetime-protector-ii-policy-fee',
       'branch:aia-pro-lifetime-protector-ii-plus-benefit-charge',
       'branch:aia-pro-lifetime-protector-ii-max-benefit-charge',
+      'branch:aia-pro-lifetime-protector-ii-premium-holiday-charge-fixed-monthly',
       'branch:aia-pro-lifetime-protector-ii-top-up-premium-charge',
       'branch:aia-pro-lifetime-protector-ii-zero-partial-withdrawal-charge',
       'branch:aia-pro-lifetime-protector-ii-full-surrender-charge',
+      'kernel:partial-withdrawal-start-policy-month-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
+      'kernel:top-up-paid-up-to-date-block',
+      'kernel:current-death-benefit-estimate',
     ],
     metadataOnlyBehaviors: [
-      'aia-pro-lifetime-protector-ii-premium-holiday-charge-fixed-monthly',
-      'aia-pro-lifetime-protector-ii-death-benefit-plus-option',
-      'aia-pro-lifetime-protector-ii-death-benefit-max-option',
       'aia-pro-lifetime-protector-ii-no-lapse-privilege',
-      'aia-pro-lifetime-protector-ii-partial-withdrawal-eligibility-gate',
-      'aia-pro-lifetime-protector-ii-top-up-eligibility-gate',
       'aia-pro-lifetime-protector-ii-insured-amount-variation',
       'aia-pro-lifetime-protector-ii-milestone-event-increase-option',
       'aia-pro-lifetime-protector-ii-regular-premium-variation',
@@ -279,8 +314,8 @@ export function parseAiaProLifetimeProtectorIi({ document, sourceChecksumSha256 
       'aia-pro-lifetime-protector-ii-termination-limits',
     ],
     warnings: [
-      'AIA Pro Lifetime Protector (II) is cataloged as a supported V1 product. The parser captures explicit SGD open-ended Plus and Max variants with the published premium-year regular premium charge schedule, the year-10-onward Special Bonus, the fixed S$5 monthly policy fee, the Appendix A Benefit Charge corridor, the 5% top-up premium charge, the nil policy-level partial-withdrawal charge path, and the first-two-policy-years full-surrender charge schedule.',
-      'The fixed monthly premium-holiday charge, No Lapse Privilege debt carry, claim-side death-benefit settlement, milestone insured-amount increases, and AIA Vitality add-on mechanics remain informational only.',
+      'AIA Pro Lifetime Protector (II) is cataloged as a supported V1 product. The parser captures explicit SGD open-ended Plus and Max variants with the published premium-year regular premium charge schedule, the year-10-onward Special Bonus, the fixed S$5 monthly policy fee, the Appendix A Benefit Charge corridor, the fixed S$50 monthly premium-holiday charge during the first two policy years, the 5% top-up premium charge with blocking in months where regular premiums are not paid up to date, the nil policy-level partial-withdrawal charge path with the post-second-policy-year start gate plus the published S$1,000 minimum one-off withdrawal amount and S$1,000 residual policy-value floor, the first-two-policy-years full-surrender charge schedule, and the current-state death benefit via a manual current insured amount input.',
+      'No Lapse Privilege debt carry, claim-side death-benefit settlement, milestone insured-amount increases, and AIA Vitality add-on mechanics remain informational only.',
       'Structured extraction validated against the AIA Pro Lifetime Protector (II) product summary text layer.',
     ],
     archived: false,

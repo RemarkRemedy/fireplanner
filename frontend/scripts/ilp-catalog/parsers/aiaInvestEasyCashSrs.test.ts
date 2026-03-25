@@ -29,13 +29,32 @@ describe('parseAiaInvestEasyCashSrs', () => {
       'branch:aia-invest-easy-cash-srs-three-percent-single-premium-charge',
       'branch:aia-invest-easy-cash-srs-three-percent-top-up-charge',
       'branch:aia-invest-easy-cash-srs-three-percent-recurring-single-premium-charge',
+      'branch:aia-invest-easy-cash-srs-zero-partial-withdrawal-charge',
+      'kernel:top-up-amount-gate-block',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
       'tokio-recurring-single-premium-routing',
     ])
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-invest-easy-cash-srs-death-benefit')
+    expect(product.metadataOnlyBehaviors).toContain('aia-invest-easy-cash-srs-first-year-accidental-death-claim-exclusions')
+    expect(product.warnings.some((warning) => warning.includes('current first-year accidental-death estimate'))).toBe(true)
+    expect(product.warnings).toContain(
+      'AIA Invest Easy (Cash/SRS) is cataloged as a supported V1 product. The parser captures the published 3% single-premium, ad-hoc top-up, and regular top-up premium charges for the Cash/SRS corridor through the open-ended no-MIP basis, the published S$1,000 minimum on explicit ad-hoc top-ups, the nil policy-level partial-withdrawal charge path with the published S$1,000 minimum one-off withdrawal amount and S$1,000 residual policy-value floor, and now also models the current-state death benefit as 100% of policy value plus the current first-year accidental-death estimate as the higher of ordinary death benefit or 110% of single premium plus total top-up premium less total withdrawals, while maturity, broader withdrawal and surrender administration, regular top-up cadence-specific minimums, switching, free-look handling, top-up age-limit handling, and fund-level charges remain informational only beyond the modeled current protection estimates.',
+    )
 
     const variant = product.variants[0]
     expect(variant?.id).toBe('sgd-open-ended-cash-srs')
     expect(variant?.mipBasis).toBe('open-ended')
     expect(variant?.mipLength).toBeNull()
+    expect(variant?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumTopUpAmount: 1_000,
+      minimumPartialWithdrawalAmount: 1_000,
+      partialWithdrawalMinimumRemainingValueRules: [
+        { activeWindow: 'policy-term', basis: 'policy-value', minimumValue: 1_000 },
+      ],
+    })
     expect(variant?.feeRules).toEqual([
       expect.objectContaining({
         id: 'single-premium-charge',
@@ -55,7 +74,13 @@ describe('parseAiaInvestEasyCashSrs', () => {
         basis: 'event-amount-with-overlap-months',
         rate: 0.03,
       }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+        rate: 0,
+      }),
     ])
+    expect(variant?.unsupportedItems).toContain('First-year accidental-death claim admission, exclusions, and settlement remain informational only beyond the modeled current accidental-death estimate.')
     expect(product.metadataOnlyBehaviors).toContain('aia-invest-easy-cash-srs-free-look-refund')
   }, 30_000)
 })

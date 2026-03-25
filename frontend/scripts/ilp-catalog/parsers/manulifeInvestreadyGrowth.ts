@@ -41,7 +41,18 @@ const ADMINISTRATIVE_CHARGE_RATES = {
     afterMip: 0.0092,
   },
 } as const
+const WELCOME_BONUS_TIERS = {
+  '15 Years Flexi 10': [
+    { currency: 'SGD', minAnnualPremium: 3_600, maxAnnualPremium: 9_599.99, rate: 0.15 },
+    { currency: 'SGD', minAnnualPremium: 9_600, maxAnnualPremium: null, rate: 0.45 },
+  ],
+  '20 Years Flexi 10': [
+    { currency: 'SGD', minAnnualPremium: 2_400, maxAnnualPremium: 9_599.99, rate: 0.3 },
+    { currency: 'SGD', minAnnualPremium: 9_600, maxAnnualPremium: null, rate: 0.6 },
+  ],
+} as const
 const ANNUAL_PREMIUM_BONUS_RATE = 0.03
+const LOYALTY_BONUS_RATE = 0.003
 
 function normalizeWhitespace(text: string): string {
   return text.replace(/\s+/g, ' ').trim()
@@ -86,7 +97,8 @@ function buildVariant(
   plan: { id: string, mipLength: 15 | 20, label: '15 Years Flexi 10' | '20 Years Flexi 10' },
 ): IlpTemplateVariant {
   const page1 = sourceRef(1, 'Product description and death benefit', snippetNear(document, 1, 'Manulife InvestReady Growth', 18))
-  const page4 = sourceRef(4, 'Bonuses', snippetNear(document, 4, 'Premium Bonus', 28))
+  const page3 = sourceRef(3, 'Welcome Bonus', snippetNear(document, 3, 'Welcome Bonus', 28))
+  const page4 = sourceRef(4, 'Annual Premium Bonus, Premium Bonus, and Booster Bonus', snippetNear(document, 4, 'Annual Premium Bonus', 28))
   const page5 = sourceRef(5, 'COI and administrative charge', snippetNear(document, 5, 'Cost of Insurance', 26))
   const page7 = sourceRef(7, 'Premium shortfall charge', snippetNear(document, 7, 'Premium Shortfall Charge', 24))
   const page8 = sourceRef(8, 'Top-up premium', snippetNear(document, 8, 'Top-up Premium', 18))
@@ -94,6 +106,22 @@ function buildVariant(
   const page18 = sourceRef(18, 'Appendix A annual COI table', snippetNear(document, 18, 'Annual Cost of Insurance', 20))
 
   const bonuses: IlpTemplateBonus[] = [
+    {
+      id: 'welcome-bonus',
+      type: 'sign-up',
+      label: 'Welcome Bonus',
+      mode: 'premium-allocation',
+      appliesTo: ['policy'],
+      startPolicyYear: 1,
+      endPolicyYear: 1,
+      rate: null,
+      amount: null,
+      tieredRates: WELCOME_BONUS_TIERS[plan.label].map((tier) => ({ ...tier })),
+      notes: [
+        `Applied to the first 12 months of regular basic premium paid for the ${plan.label} corridor, excluding top-up premiums.`,
+      ],
+      sourceRefs: [page3],
+    },
     {
       id: 'annual-premium-bonus',
       type: 'allocation',
@@ -109,9 +137,85 @@ function buildVariant(
       tieredRates: [],
       notes: [
         `Applied once on the first annual regular basic premium for the ${plan.label} corridor when the policy is issued on annual premium payment frequency.`,
-        'The product’s separate Premium Bonus, Booster Bonus, and annual-mode change handling remain informational only in V1.',
+        'The product’s separate Booster Bonus and annual-mode change handling remain informational only in V1.',
       ],
       sourceRefs: [page4],
+    },
+    {
+      id: 'premium-bonus',
+      type: 'allocation',
+      label: 'Premium Bonus',
+      mode: 'premium-allocation',
+      appliesTo: ['policy'],
+      startPolicyYear: FLEXI_START_YEARS + 1,
+      endPolicyYear: null,
+      rate: 0.02,
+      amount: null,
+      requiresPremiumsPaidUpToDate: true,
+      tieredRates: [],
+      qualificationRules: [
+        {
+          trigger: 'partial-withdrawal',
+          accountIds: ['policy'],
+          disqualifyWhenCumulativeAmountExceeds: 'annualised-regular-premium-at-issue',
+          countFromPolicyYear: plan.mipLength + 1,
+        },
+      ],
+      notes: [
+        `Applied on each regular basic premium paid from Flexi Start onwards for the ${plan.label} corridor.`,
+        'The published post-MIP cumulative partial-withdrawal threshold is modeled against policy-account withdrawals, and withdrawals of accumulated reinvested dividends stay excluded from that threshold.',
+      ],
+      sourceRefs: [page4],
+    },
+    {
+      id: 'booster-bonus',
+      type: 'custom',
+      label: 'Booster Bonus',
+      mode: 'one-time',
+      oneTimePayoutBasis: 'committed-annual-premium-at-issue',
+      appliesTo: ['policy'],
+      startPolicyYear: plan.mipLength,
+      endPolicyYear: plan.mipLength,
+      rate: 0.35,
+      amount: null,
+      tieredRates: [],
+      qualificationRules: [
+        {
+          formula: 'cumulative-effective-account-value-ratio',
+          maximumRatio: 1,
+          includeReinvestedDividendWithdrawals: true,
+        },
+        {
+          trigger: 'premium-holiday',
+          disqualifyThroughPolicyYear: FLEXI_START_YEARS,
+        },
+      ],
+      notes: [
+        `Applied one business day after the end of MIP for the ${plan.label} corridor when the published end-of-MIP effective account value stays at or below cumulative paid premiums and all regular basic premiums were paid on time before Flexi Start.`,
+        'The supported corridor uses the seeded reinvest-default distribution path and modeled partial-withdrawal, cash-distribution, reinvested-dividend-withdrawal, and deducted-COI history.',
+      ],
+      sourceRefs: [page4, page5],
+    },
+    {
+      id: 'loyalty-bonus',
+      type: 'loyalty',
+      label: 'Loyalty Bonus',
+      mode: 'annual-rate',
+      appliesTo: ['policy'],
+      startPolicyYear: plan.mipLength + 1,
+      endPolicyYear: null,
+      rate: LOYALTY_BONUS_RATE,
+      amount: null,
+      tieredRates: [],
+      qualificationRules: [
+        { trigger: 'partial-withdrawal', disqualifyInReferenceYear: true },
+        { trigger: 'reinvested-dividend-withdrawal', disqualifyInReferenceYear: true },
+      ],
+      notes: [
+        `Applied from the policy anniversary immediately after the end of MIP for the ${plan.label} corridor.`,
+        'No partial withdrawals or withdrawals of reinvested dividends in the preceding 12 consecutive months are allowed for the loyalty-bonus payment to be credited.',
+      ],
+      sourceRefs: [page5],
     },
   ]
 
@@ -254,6 +358,18 @@ function buildVariant(
     feeRules,
     eventChargeRules,
     eecTable: [...WITHDRAWAL_AND_SURRENDER_CHARGE_SCHEDULES[plan.label]],
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'policy-value',
+          minimumValue: 1_000,
+        },
+      ],
+      minimumTopUpAmount: 2_500,
+    },
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['policy'],
@@ -269,22 +385,19 @@ function buildVariant(
       sourceRefs: [page11],
     },
     warnings: [
-      `${plan.label} is cataloged as a supported V1 corridor. The parser captures the published administrative-charge path using the accumulated minimum-premium base, the one-time annual-premium bonus when the seed uses annual premium frequency, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the current-state death-benefit estimate from that same floor, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal charge schedule, the in-MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.`,
+      `${plan.label} is cataloged as a supported V1 corridor. The parser captures the published Welcome Bonus tiers, the one-time annual-premium bonus when the seed uses annual premium frequency, the published Premium Bonus from Flexi Start with the post-MIP cumulative-withdrawal threshold subset, the published Booster Bonus end-of-MIP qualification including reinvested-dividend-withdrawal addbacks, the published Loyalty Bonus rate with the 12-month withdrawal disqualification subset, the administrative-charge path using the accumulated minimum-premium base, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the current-state death-benefit estimate net of manually entered current amount owing, the current terminal-illness benefit estimate as the lower of the modeled current death benefit, a manual remaining aggregate TI cap, and a manual remaining aggregate TI + CI cap, subject to the published S$1,000,000 TI limit, the current residual death-benefit estimate after a TI claim today for the supported acceleration corridor, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the published $2,500 minimum on explicit ad-hoc top-ups, the published $500 minimum on explicit one-off partial withdrawals with the $1,000 residual policy-value floor, the in-MIP partial-withdrawal charge schedule, the in-MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.`,
       'The administrative-charge base is interpreted as the future value of annualised regular basic premiums payable through the 10-year Flexi Start window, accumulated at 6% per annum. Keep monthly contribution aligned to the committed regular basic premium because post-Flexi premium variation remains informational only in V1.',
-      'Premium Bonus, Booster Bonus, Loyalty Bonus, partial-withdrawal flexibility, and fund-level management charges remain informational only.',
-      'Withdrawals of accumulated reinvested dividends remain informational only.',
+      'Booster Bonus end-of-MIP qualification is modeled for the seeded reinvest-default corridor using projected account value, partial withdrawals, cash distributions, reinvested-dividend withdrawals, and deducted COI history; terminal-illness claim admission / settlement / notification valuation timing, the separate partial-withdrawal flexibility corridor, and fund-level management charges remain informational only.',
     ],
     unsupportedItems: [
-      'Welcome Bonus, Premium Bonus, Booster Bonus, and Loyalty Bonus remain informational only.',
       'Changing the regular premium payment mode from annual to a non-annual mode remains informational only.',
       'The partial-withdrawal flexibility corridor from policy year 6 and the life-stage-event waiver remain informational only.',
-      'Terminal-illness acceleration limits, amount-owed deductions, claim-notification valuation timing, and post-claim continuation remain informational only beyond the current death-benefit estimate.',
-      'Withdrawals of accumulated reinvested dividends remain informational only.',
+      'Current amount owing, the remaining aggregate TI cap, and the remaining aggregate TI + CI cap must still be entered manually for the current death / terminal-illness and residual-after-TI estimates; claim-notification valuation timing, TI claim admission, and settlement remain informational only.',
       'Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.',
       'Fund switching, premium redirection, automatic fund rebalancing, change-of-payment-mode, change-of-life-insured, and post-Flexi premium variation options remain informational only.',
       'Reinstatement underwriting and pre-existing-condition exclusions remain informational only.',
     ],
-    sourceRefs: [page1, page4, page5, page7, page8, page11, page18],
+    sourceRefs: [page1, page3, page4, page5, page7, page8, page11, page18],
   }
 }
 
@@ -303,23 +416,27 @@ export function parseManulifeInvestreadyGrowth(context: ParseContext): IlpCatalo
     modeledEconomics: [
       'kernel:protected-base-assurance',
       'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-residual-death-benefit-after-ti-estimate',
+      'branch:manulife-investready-growth-welcome-bonus',
       'branch:manulife-investready-growth-annual-premium-bonus',
+      'branch:manulife-investready-growth-premium-bonus',
+      'branch:manulife-investready-growth-booster-bonus',
+      'branch:manulife-investready-growth-loyalty-bonus',
       'branch:manulife-investready-growth-administrative-charge',
       'branch:manulife-investready-growth-premium-shortfall-charge',
       'branch:manulife-investready-growth-top-up-charge',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
       'branch:manulife-investready-growth-partial-withdrawal-charge',
       'branch:manulife-investready-growth-full-surrender-charge',
+      'kernel:top-up-amount-gate-block',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'manulife-investready-growth-welcome-bonus',
-      'manulife-investready-growth-premium-bonus',
-      'manulife-investready-growth-booster-bonus',
-      'manulife-investready-growth-loyalty-bonus',
       'manulife-investready-growth-partial-withdrawal-flexibility',
       'manulife-investready-growth-partial-withdrawal-flexibility-life-stage-waiver',
       'manulife-investready-growth-reinvested-dividend-withdrawals',
-      'manulife-investready-growth-ti-acceleration-limits-and-claim-timing',
+      'manulife-investready-growth-ti-claim-admission-settlement-and-notification-timing',
       'manulife-investready-growth-fund-management-charge',
       'manulife-investready-growth-fund-switching-and-redirection',
       'manulife-investready-growth-life-insured-change',
@@ -327,7 +444,7 @@ export function parseManulifeInvestreadyGrowth(context: ParseContext): IlpCatalo
       'manulife-investready-growth-post-flexi-premium-variation',
     ],
     warnings: [
-      'Manulife InvestReady Growth is cataloged as a supported V1 corridor. The parser captures the accumulated-minimum-premium administrative-charge path, the paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the current-state death-benefit estimate from that same floor, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal and full-surrender charge schedules, and the reinvest-default distribution-mode assumption surface with the published S$40 minimum cash-payout threshold, while bonus mechanics, partial-withdrawal flexibility, terminal-illness acceleration limits, amount-owed deductions, claim-notification valuation timing, post-claim continuation, reinstatement underwriting and pre-existing-condition exclusions, and fund-level charges remain informational only.',
+      'Manulife InvestReady Growth is cataloged as a supported V1 corridor. The parser captures the published Welcome Bonus tiers, the annual-premium bonus gate under the annual premium-frequency assumption, the published Premium Bonus from Flexi Start with the post-MIP cumulative-withdrawal threshold subset, the published Booster Bonus end-of-MIP qualification for the seeded reinvest-default corridor, the published Loyalty Bonus rate with the partial-withdrawal suspension subset, the accumulated-minimum-premium administrative-charge path, the paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the current-state death-benefit estimate net of manually entered current amount owing, the current terminal-illness benefit estimate as the lower of the modeled current death benefit, a manual remaining aggregate TI cap, and a manual remaining aggregate TI + CI cap, subject to the published S$1,000,000 TI limit, the current residual death-benefit estimate after a TI claim today for the supported acceleration corridor, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the published $2,500 minimum on explicit ad-hoc top-ups, the published $500 minimum on explicit one-off partial withdrawals with the $1,000 residual policy-value floor, the in-MIP partial-withdrawal and full-surrender charge schedules, and the reinvest-default distribution-mode assumption surface with the published S$40 minimum cash-payout threshold, while withdrawals of accumulated reinvested dividends, the separate partial-withdrawal flexibility corridor, terminal-illness claim admission / settlement / notification timing, reinstatement underwriting and pre-existing-condition exclusions, and fund-level charges remain informational only.',
     ],
     archived: false,
     variants: [

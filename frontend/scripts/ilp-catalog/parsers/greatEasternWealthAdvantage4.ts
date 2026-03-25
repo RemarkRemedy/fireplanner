@@ -305,7 +305,8 @@ function buildEventChargeRules(
       allocation: 'equal-split',
       notes: [
         'Applies a 3% upfront charge on each accepted single premium top-up.',
-        'Top-ups are not accepted while the policy is on premium holiday, but that administrative gating is not enforced automatically in V1.',
+        'Single-premium top-ups below the published S$1,000 minimum are blocked.',
+        'Single-premium top-ups are also blocked while a premium holiday is active or when due basic regular premiums are not paid up to date.',
       ],
       sourceRefs: [page6],
     },
@@ -398,9 +399,15 @@ function buildVariant(
     bonuses: buildBonuses(choice, page3, page4),
     feeRules: buildFeeRules(choice, page10, page11, page16, page17),
     eventChargeRules: buildEventChargeRules(choice, page4, page5, page6, page8),
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: true,
+      blockTopUpsDuringPremiumHoliday: true,
+      blockTopUpsWhenPremiumsNotPaidUpToDate: true,
+      minimumTopUpAmount: 1_000,
+    },
     eecTable: [...eecTable],
     warnings: [
-      'GREAT Wealth Advantage 4 is modeled as a supported V1 corridor. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, monthly insurance charge, premium-holiday charge, the premium-holiday-charge refund path, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.',
+      'GREAT Wealth Advantage 4 is modeled as a supported V1 corridor. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, monthly insurance charge, the current-state death / terminal-illness / TPD benefit estimate as the higher of policy value or the 101% paid-premium floor after partial withdrawals including withdrawal charges and current amount owing, with TPD capped by a manual remaining aggregate TPD cap, premium-holiday charge, the premium-holiday-charge refund path, the published S$1,000 single-premium top-up minimum, premium-holiday and paid-up-to-date top-up blocking, and the published partial-withdrawal / surrender charge schedules.',
       ...(needsFixedPolicyFee(choice)
         ? ['This low-annualised-premium variant assumes the additional S$5 monthly policy fee applies throughout the modeled path unless you manually switch variants after a premium change.']
         : isChoice10(choice) || isChoice15(choice)
@@ -408,7 +415,10 @@ function buildVariant(
           : []),
     ],
     unsupportedItems: [
-      'Administrative gating on top-ups, premium reductions, change of life assured, and AFR remains informational only.',
+      'The current-state death / terminal-illness / TPD benefit estimate needs a manual current amount owing input because current debt is not reconstructed from history in V1.',
+      'The current-state TPD estimate needs a manual remaining aggregate TPD cap input because Great Eastern’s S$5,000,000 aggregate TPD limit is not reconstructed across policies and riders in V1.',
+      'The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state, but TPD continuation-event state plus terminal-illness exclusions, settlement, and broader post-claim continuation remain informational only.',
+      'Administrative gating on premium reductions, change of life assured, and AFR remains informational only.',
       ...(isChoice10(choice) || isChoice15(choice)
         ? ['Prevailing-annualised-premium transitions across the S$6,000 fixed-fee threshold are not modeled dynamically; switch variants manually if the threshold changes after a premium reduction.']
         : []),
@@ -431,6 +441,9 @@ export function parseGreatEasternWealthAdvantage4(context: ParseContext): IlpCat
     economicsStatus: 'supported',
     modeledEconomics: [
       'kernel:protected-base-assurance',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-tpd-benefit-estimate',
       'branch:great-eastern-wa4-welcome-bonus',
       'branch:great-eastern-wa4-premium-bonus',
       'branch:great-eastern-wa4-loyalty-bonus',
@@ -442,6 +455,9 @@ export function parseGreatEasternWealthAdvantage4(context: ParseContext): IlpCat
       'branch:great-eastern-wa4-top-up-premium-charge',
       'branch:great-eastern-wa4-partial-withdrawal-charge',
       'branch:great-eastern-wa4-surrender-charge',
+      'kernel:top-up-amount-gate-block',
+      'kernel:premium-holiday-top-up-block',
+      'kernel:top-up-paid-up-to-date-block',
     ],
     metadataOnlyBehaviors: [
       'great-eastern-wa4-tpd-continuation-event',
@@ -451,7 +467,7 @@ export function parseGreatEasternWealthAdvantage4(context: ParseContext): IlpCat
       'great-eastern-wa4-automatic-fund-rebalancing-administration',
     ],
     warnings: [
-      'GREAT Wealth Advantage 4 is cataloged as a supported V1 corridor. The parser captures the published bonus path, policy fee, monthly insurance charge, premium-holiday charge, the premium-holiday-charge refund path, top-up charge, and partial-withdrawal / surrender schedules, while application-gated mechanics such as TPD continuation events, change-of-life-assured handling, and AFR administration remain metadata only.',
+      'GREAT Wealth Advantage 4 is cataloged as a supported V1 corridor. The parser captures the published bonus path, policy fee, monthly insurance charge, the current-state death / terminal-illness / TPD benefit estimate as the higher of policy value or the 101%-of-paid-premiums floor after partial withdrawals including withdrawal charges and current amount owing, with TPD capped by a manual remaining aggregate TPD cap, the current admitted-state TI payable amount through the published full-termination TI corridor after manual claim-amount entry, an admitted-and-settled TI claim as a current policy-termination state, premium-holiday charge, the premium-holiday-charge refund path, the published S$1,000 single-premium top-up minimum, premium-holiday and paid-up-to-date top-up blocking, and partial-withdrawal / surrender schedules, while TPD continuation-event state, terminal-illness exclusions / settlement / broader post-claim continuation, and administrative gating on premium reductions, change of life assured, and AFR remain informational only beyond the modeled current death / terminal-illness / TPD benefit estimate.',
     ],
     archived: false,
     variants: [

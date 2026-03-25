@@ -14,19 +14,175 @@ interface ParseContext {
   sourceChecksumSha256: string
 }
 
-const PREMIUM_SHORTFALL_SCHEDULE = [
-  { startPolicyYear: 1, endPolicyYear: 2, rate: 1 },
-  { startPolicyYear: 3, endPolicyYear: 3, rate: 0.75 },
-  { startPolicyYear: 4, endPolicyYear: 4, rate: 0.4 },
+const VARIANTS = [
+  {
+    id: 'sgd-mip-5-flexi-1',
+    label: '5 Years Flexi 1',
+    mipLength: 5,
+    flexiStartYears: 1,
+    postMipFeeRate: 0.01,
+    annualPremiumBonusRate: 0,
+    welcomeBonusTiers: [
+      { currency: 'SGD', minAnnualPremium: 25_000, maxAnnualPremium: null, rate: 0.058 },
+    ],
+    loyaltyBonusRate: 0,
+    surrenderChargeSchedule: [0.15, 0.12, 0.09, 0.06, 0.03],
+    premiumShortfallSchedule: [],
+    hasPolicyFee: false,
+  },
+  {
+    id: 'sgd-mip-5-flexi-4',
+    label: '5 Years Flexi 4',
+    mipLength: 5,
+    flexiStartYears: 4,
+    postMipFeeRate: 0.01,
+    annualPremiumBonusRate: 0,
+    welcomeBonusTiers: [
+      { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 47_999.99, rate: 0.01 },
+      { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.02 },
+    ],
+    loyaltyBonusRate: 0,
+    surrenderChargeSchedule: [1, 1, 0.75, 0.4, 0.2],
+    premiumShortfallSchedule: [
+      { startPolicyYear: 1, endPolicyYear: 2, rate: 1 },
+      { startPolicyYear: 3, endPolicyYear: 3, rate: 0.75 },
+      { startPolicyYear: 4, endPolicyYear: 4, rate: 0.4 },
+    ],
+    hasPolicyFee: false,
+  },
+  {
+    id: 'sgd-mip-6-flexi-2',
+    label: '6 Years Flexi 2',
+    mipLength: 6,
+    flexiStartYears: 2,
+    postMipFeeRate: 0.01,
+    annualPremiumBonusRate: 0,
+    welcomeBonusTiers: [
+      { currency: 'SGD', minAnnualPremium: 10_000, maxAnnualPremium: null, rate: 0.116 },
+    ],
+    loyaltyBonusRate: 0,
+    surrenderChargeSchedule: [1, 1, 0.77, 0.4, 0.2, 0.1],
+    premiumShortfallSchedule: [
+      { startPolicyYear: 2, endPolicyYear: 2, rate: 1 },
+    ],
+    hasPolicyFee: false,
+  },
+  {
+    id: 'sgd-mip-7-flexi-5',
+    label: '7 Years Flexi 5',
+    mipLength: 7,
+    flexiStartYears: 5,
+    postMipFeeRate: 0.01,
+    annualPremiumBonusRate: 0,
+    welcomeBonusTiers: [
+      { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 47_999.99, rate: 0.07 },
+      { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.12 },
+    ],
+    loyaltyBonusRate: 0.003,
+    surrenderChargeSchedule: [1, 1, 0.77, 0.4, 0.2, 0.1, 0.05],
+    premiumShortfallSchedule: [
+      { startPolicyYear: 1, endPolicyYear: 2, rate: 1 },
+      { startPolicyYear: 3, endPolicyYear: 3, rate: 0.77 },
+      { startPolicyYear: 4, endPolicyYear: 4, rate: 0.4 },
+      { startPolicyYear: 5, endPolicyYear: 5, rate: 0.2 },
+    ],
+    hasPolicyFee: false,
+  },
+  {
+    id: 'sgd-mip-10-flexi-3',
+    label: '10 Years Flexi 3',
+    mipLength: 10,
+    flexiStartYears: 3,
+    postMipFeeRate: 0.007,
+    annualPremiumBonusRate: 0.02,
+    welcomeBonusTiers: [
+      { currency: 'SGD', minAnnualPremium: 6_000, maxAnnualPremium: 9_599.99, rate: 0.08 },
+      { currency: 'SGD', minAnnualPremium: 9_600, maxAnnualPremium: null, rate: 0.15 },
+    ],
+    loyaltyBonusRate: 0.003,
+    surrenderChargeSchedule: [1, 1, 0.79, 0.6, 0.5, 0.08, 0.08, 0.08, 0.08, 0.08],
+    premiumShortfallSchedule: [
+      { startPolicyYear: 1, endPolicyYear: 2, rate: 1 },
+      { startPolicyYear: 3, endPolicyYear: 3, rate: 0.79 },
+    ],
+    hasPolicyFee: true,
+    policyFeeAnnualisedPremiumBand: 'S$6,000 to S$9,599.99',
+  },
+  {
+    id: 'sgd-mip-10-flexi-5',
+    label: '10 Years Flexi 5',
+    mipLength: 10,
+    flexiStartYears: 5,
+    postMipFeeRate: 0.007,
+    annualPremiumBonusRate: 0.05,
+    welcomeBonusTiers: [
+      { currency: 'SGD', minAnnualPremium: 6_000, maxAnnualPremium: 9_599.99, rate: 0.1 },
+      { currency: 'SGD', minAnnualPremium: 9_600, maxAnnualPremium: null, rate: 0.25 },
+    ],
+    loyaltyBonusRate: 0.003,
+    surrenderChargeSchedule: [1, 1, 0.79, 0.6, 0.5, 0.08, 0.08, 0.08, 0.08, 0.08],
+    premiumShortfallSchedule: [
+      { startPolicyYear: 1, endPolicyYear: 2, rate: 1 },
+      { startPolicyYear: 3, endPolicyYear: 3, rate: 0.79 },
+      { startPolicyYear: 4, endPolicyYear: 4, rate: 0.6 },
+      { startPolicyYear: 5, endPolicyYear: 5, rate: 0.5 },
+    ],
+    hasPolicyFee: true,
+    policyFeeAnnualisedPremiumBand: 'S$6,000 to S$9,599.99',
+  },
+  {
+    id: 'sgd-mip-10-flexi-8',
+    label: '10 Years Flexi 8',
+    mipLength: 10,
+    flexiStartYears: 8,
+    postMipFeeRate: 0.007,
+    annualPremiumBonusRate: 0.05,
+    welcomeBonusTiers: [
+      { currency: 'SGD', minAnnualPremium: 6_000, maxAnnualPremium: 9_599.99, rate: 0.13 },
+      { currency: 'SGD', minAnnualPremium: 9_600, maxAnnualPremium: null, rate: 0.3 },
+    ],
+    loyaltyBonusRate: 0.003,
+    surrenderChargeSchedule: [1, 1, 0.79, 0.6, 0.5, 0.08, 0.08, 0.08, 0.08, 0.08],
+    premiumShortfallSchedule: [
+      { startPolicyYear: 1, endPolicyYear: 2, rate: 1 },
+      { startPolicyYear: 3, endPolicyYear: 3, rate: 0.79 },
+      { startPolicyYear: 4, endPolicyYear: 4, rate: 0.6 },
+      { startPolicyYear: 5, endPolicyYear: 5, rate: 0.5 },
+      { startPolicyYear: 6, endPolicyYear: 6, rate: 0.47 },
+      { startPolicyYear: 7, endPolicyYear: 7, rate: 0.44 },
+      { startPolicyYear: 8, endPolicyYear: 8, rate: 0.21 },
+    ],
+    hasPolicyFee: true,
+    policyFeeAnnualisedPremiumBand: 'S$6,000 to S$9,599.99',
+  },
+  {
+    id: 'sgd-mip-13-flexi-10',
+    label: '13 Years Flexi 10',
+    mipLength: 13,
+    flexiStartYears: 10,
+    postMipFeeRate: 0.007,
+    annualPremiumBonusRate: 0.05,
+    welcomeBonusTiers: [
+      { currency: 'SGD', minAnnualPremium: 3_600, maxAnnualPremium: 9_599.99, rate: 0.15 },
+      { currency: 'SGD', minAnnualPremium: 9_600, maxAnnualPremium: null, rate: 0.45 },
+    ],
+    loyaltyBonusRate: 0.003,
+    surrenderChargeSchedule: [1, 1, 0.81, 0.63, 0.53, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08],
+    premiumShortfallSchedule: [
+      { startPolicyYear: 1, endPolicyYear: 2, rate: 1 },
+      { startPolicyYear: 3, endPolicyYear: 3, rate: 0.81 },
+      { startPolicyYear: 4, endPolicyYear: 4, rate: 0.63 },
+      { startPolicyYear: 5, endPolicyYear: 5, rate: 0.53 },
+      { startPolicyYear: 6, endPolicyYear: 6, rate: 0.49 },
+      { startPolicyYear: 7, endPolicyYear: 7, rate: 0.46 },
+      { startPolicyYear: 8, endPolicyYear: 8, rate: 0.27 },
+      { startPolicyYear: 9, endPolicyYear: 9, rate: 0.22 },
+      { startPolicyYear: 10, endPolicyYear: 10, rate: 0.14 },
+    ],
+    hasPolicyFee: true,
+    policyFeeAnnualisedPremiumBand: 'S$3,600 to S$9,599.99',
+  },
 ] as const
-
-const WELCOME_BONUS_TIERS = [
-  { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 47_999.99, rate: 0.01 },
-  { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.02 },
-] as const
-const ANNUAL_PREMIUM_BONUS_RATE = 0
-
-const WITHDRAWAL_AND_SURRENDER_CHARGE_SCHEDULE = [1, 1, 0.75, 0.4, 0.2] as const
 
 function normalizeWhitespace(text: string): string {
   return text.replace(/\s+/g, ' ').trim()
@@ -66,10 +222,11 @@ function buildRateSchedule(values: readonly number[]): Array<{ startPolicyYear: 
   }))
 }
 
-function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
-  const page4 = sourceRef(4, 'Welcome Bonus', snippetNear(document, 4, 'Welcome Bonus rate is based on the table below', 24))
-  const page5 = sourceRef(5, 'Loyalty Bonus', snippetNear(document, 5, 'Loyalty Bonus rate is based on the table below', 24))
-
+function buildBonuses(
+  variantDefinition: typeof VARIANTS[number],
+  page4: IlpCatalogSourceRef,
+  page5: IlpCatalogSourceRef,
+): IlpTemplateBonus[] {
   return [
     {
       id: 'welcome-bonus',
@@ -81,10 +238,9 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
       endPolicyYear: 1,
       rate: null,
       amount: null,
-      tieredRates: WELCOME_BONUS_TIERS.map((tier) => ({ ...tier })),
+      tieredRates: variantDefinition.welcomeBonusTiers.map((tier) => ({ ...tier })),
       notes: [
-        'Applied to the first 12 months of regular basic premium paid, excluding top-up premiums.',
-        'The supported SGD 5 Years Flexi 4 corridor uses the published 1% / 2% welcome-bonus tiers by annualised basic premium.',
+        `Applied to the first 12 months of regular basic premium paid for the ${variantDefinition.label} corridor, excluding top-up premiums.`,
       ],
       sourceRefs: [page4],
     },
@@ -96,13 +252,13 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
       appliesTo: ['policy'],
       startPolicyYear: 1,
       endPolicyYear: 1,
-      rate: ANNUAL_PREMIUM_BONUS_RATE,
+      rate: variantDefinition.annualPremiumBonusRate,
       amount: null,
       requiresPremiumsPaidUpToDate: true,
       requiredRegularPremiumPaymentFrequency: 'annual',
       tieredRates: [],
       notes: [
-        'Applied once on the first annual regular basic premium when the policy is issued on annual premium payment mode.',
+        `Applied once on the first annual regular basic premium for the ${variantDefinition.label} corridor when the policy is issued on annual premium payment mode.`,
         'Any later change from annual to a non-annual premium payment mode during the premium-shortfall-charge period remains informational only in V1.',
       ],
       sourceRefs: [page5],
@@ -113,26 +269,34 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
       label: 'Loyalty Bonus',
       mode: 'annual-rate',
       appliesTo: ['policy'],
-      startPolicyYear: 6,
+      startPolicyYear: variantDefinition.mipLength + 1,
       endPolicyYear: null,
-      rate: 0,
+      rate: variantDefinition.loyaltyBonusRate,
       amount: null,
       tieredRates: [],
-      suspensionRules: [
-        { trigger: 'partial-withdrawal', suspensionMonths: 12 },
+      qualificationRules: [
+        { trigger: 'partial-withdrawal', disqualifyInReferenceYear: true },
+        { trigger: 'reinvested-dividend-withdrawal', disqualifyInReferenceYear: true },
       ],
       notes: [
-        'The supported SGD 5 Years Flexi 4 corridor publishes a 0.0% loyalty-bonus rate after MIP, so the executable bonus remains economically neutral.',
-        'Partial withdrawals or withdrawals of reinvested dividends in the preceding 12 months suspend loyalty-bonus eligibility, but the published rate for this corridor is zero.',
+        `Applied from the policy anniversary immediately after the end of MIP for the ${variantDefinition.label} corridor.`,
+        variantDefinition.loyaltyBonusRate === 0
+          ? 'The published loyalty-bonus rate for this corridor is 0.0%, so the executable bonus remains economically neutral.'
+          : 'Any partial withdrawal or reinvested-dividend withdrawal in the preceding 12 consecutive months disqualifies the annual loyalty-bonus payment for that policy year.',
       ],
       sourceRefs: [page5],
     },
   ]
 }
 
-function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
+function buildVariant(
+  document: ExtractedPdfDocument,
+  variantDefinition: typeof VARIANTS[number],
+): IlpTemplateVariant {
   const page1 = sourceRef(1, 'Product description', snippetNear(document, 1, 'Manulife InvestReady (III)', 16))
   const page2 = sourceRef(2, 'MIP and flexi start table', snippetNear(document, 2, 'Flexi start date', 18))
+  const page4 = sourceRef(4, 'Welcome Bonus', snippetNear(document, 4, 'Welcome Bonus rate is based on the table below', 24))
+  const page5 = sourceRef(5, 'Annual Premium Bonus and Loyalty Bonus', snippetNear(document, 5, 'Annual Premium Bonus rate is based on the table below', 30))
   const page6 = sourceRef(6, 'COI and administrative charge', snippetNear(document, 6, 'Cost of Insurance', 22))
   const page8 = sourceRef(8, 'Withdrawal and premium shortfall charge tables', snippetNear(document, 8, 'Partial Withdrawal Charge', 28))
   const page9 = sourceRef(9, 'Top-up premium and flexi options', snippetNear(document, 9, 'Top-up premium', 24))
@@ -141,6 +305,23 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page19 = sourceRef(19, 'Appendix A annual COI table', snippetNear(document, 19, 'Annual Cost of Insurance', 22))
 
   const feeRules: IlpTemplateFeeRule[] = [
+    ...(variantDefinition.hasPolicyFee
+      ? [{
+          id: 'policy-fee',
+          label: 'Policy Fee',
+          basis: 'fixed-annual',
+          rate: 0,
+          amount: 0,
+          requiresManualInput: true,
+          appliesTo: ['policy'],
+          activeWindow: 'policy-term',
+          notes: [
+            'Enter the actual annual policy-fee amount before trusting the projection.',
+            `The published policy fee is S$5 deducted on each policy monthiversary only when the first-year annualised basic premium for the ${variantDefinition.label} corridor is in the ${variantDefinition.policyFeeAnnualisedPremiumBand} band.`,
+          ],
+          sourceRefs: [page6],
+        }]
+      : []),
     {
       id: 'cost-of-insurance',
       label: 'Cost of Insurance (Death / TI)',
@@ -177,26 +358,9 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       activeWindow: 'policy-term',
       allocation: 'equal-split',
       notes: [
-        'Models the published prevailing 0% top-up charge for the 5 Years Flexi 4 corridor.',
+        `Models the published prevailing 0% top-up charge for the ${variantDefinition.label} corridor.`,
       ],
       sourceRefs: [page9],
-    },
-    {
-      id: 'premium-shortfall-charge',
-      label: 'Premium Shortfall Charge',
-      trigger: 'premium-holiday',
-      basis: 'committed-annual-premium-with-overlap-months',
-      appliesTo: ['policy'],
-      rate: 0,
-      rateSchedule: PREMIUM_SHORTFALL_SCHEDULE.map((tier) => ({ ...tier })),
-      amount: 0,
-      activeWindow: 'during-mip',
-      allocation: 'pro-rata-by-value',
-      notes: [
-        'Models the published monthly premium shortfall charge before the Flexi Start date for the 5 Years Flexi 4 corridor.',
-        'Use a premium-holiday event to represent missed regular premiums after the grace period.',
-      ],
-      sourceRefs: [page2, page8],
     },
     {
       id: 'partial-withdrawal-charge',
@@ -206,28 +370,48 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       appliesTo: ['policy'],
       rate: 0,
       amount: 0,
-      rateSchedule: buildRateSchedule(WITHDRAWAL_AND_SURRENDER_CHARGE_SCHEDULE),
+      rateSchedule: buildRateSchedule(variantDefinition.surrenderChargeSchedule),
       activeWindow: 'during-mip',
       allocation: 'equal-split',
       notes: [
-        'Models the published MIP partial-withdrawal charge schedule for the 5 Years Flexi 4 corridor.',
-        'Partial-withdrawal amount limits and minimum residual-account-value conditions remain informational only in V1.',
+        `Models the published MIP partial-withdrawal charge schedule for the ${variantDefinition.label} corridor.`,
+        'The separate MIP partial-withdrawal amount-limit table remains informational only in V1.',
       ],
       sourceRefs: [page8, page10],
     },
   ]
 
+  if (variantDefinition.premiumShortfallSchedule.length > 0) {
+    eventChargeRules.splice(1, 0, {
+      id: 'premium-shortfall-charge',
+      label: 'Premium Shortfall Charge',
+      trigger: 'premium-holiday',
+      basis: 'committed-annual-premium-with-overlap-months',
+      appliesTo: ['policy'],
+      rate: 0,
+      rateSchedule: variantDefinition.premiumShortfallSchedule.map((tier) => ({ ...tier })),
+      amount: 0,
+      activeWindow: 'during-mip',
+      allocation: 'pro-rata-by-value',
+      notes: [
+        `Models the published monthly premium shortfall charge before the Flexi Start date for the ${variantDefinition.label} corridor.`,
+        'Use a premium-holiday event to represent missed regular premiums after the grace period.',
+      ],
+      sourceRefs: [page2, page8, page9],
+    })
+  }
+
   return {
-    id: 'sgd-mip-5-flexi-4',
+    id: variantDefinition.id,
     currency: 'SGD',
-    mipLength: 5,
+    mipLength: variantDefinition.mipLength,
     icpMonths: 1,
     accounts: [
       {
         id: 'policy',
         label: 'Policy Account',
         feeRate: 0.025,
-        postMipFeeRate: 0.01,
+        postMipFeeRate: variantDefinition.postMipFeeRate,
         subjectToEec: true,
         contributionRules: [
           { phase: 'during-icp', targetAccountId: 'policy', contributionShare: 1 },
@@ -237,9 +421,28 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
         sourceRefs: [page1, page6, page9],
       },
     ],
-    bonuses: buildBonuses(document),
+    bonuses: buildBonuses(variantDefinition, page4, page5),
     feeRules,
     eventChargeRules,
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'policy-value',
+          minimumValue: 1_000,
+        },
+      ],
+      minimumRegularPremiumVariationStartPolicyMonth: (variantDefinition.flexiStartYears * 12) + 1,
+      minimumRegularPremiumAmountByFrequency: {
+        annual: 40,
+        'semi-annual': 40,
+        quarterly: 40,
+        monthly: 40,
+      },
+      minimumTopUpAmount: 2_500,
+    },
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['policy'],
@@ -254,20 +457,22 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       ],
       sourceRefs: [page12],
     },
-    eecTable: [...WITHDRAWAL_AND_SURRENDER_CHARGE_SCHEDULE],
+    eecTable: [...variantDefinition.surrenderChargeSchedule],
     warnings: [
-      'Manulife InvestReady (III) is cataloged as a supported V1 corridor. The parser captures the 5 Years Flexi 4 administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the current-state death-benefit estimate from that same floor, the published 1% / 2% welcome-bonus tiers, the annual-premium bonus gate when the seed uses annual premium frequency, the corridor’s 0.0% loyalty-bonus rate after MIP, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.',
-      'Flexi-start premium variation, annual-mode clawback on later payment-mode changes, and partial-withdrawal amount limits remain informational only.',
+      `${variantDefinition.label} is cataloged as a supported V1 corridor. The parser captures the published 2.50% / ${(variantDefinition.postMipFeeRate * 100).toFixed(2)}% administration-charge path, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the current-state death-benefit estimate net of manually entered current amount owing, the current terminal-illness benefit estimate as the lower of the modeled current death benefit, a manual remaining aggregate TI cap, and a manual remaining aggregate TI + CI cap, subject to the published S$1,000,000 TI limit, the current residual death-benefit estimate after a TI claim today for the supported acceleration corridor, the Welcome Bonus tiers, the annual-premium bonus gate when the seed uses annual premium frequency, the published Loyalty Bonus rate for this corridor, the ${variantDefinition.hasPolicyFee ? 'low-band policy-fee surface through manual annual-fee input, the ' : ''}${variantDefinition.premiumShortfallSchedule.length > 0 ? 'premium-shortfall charge before Flexi Start, the ' : ''}prevailing 0% top-up charge, the published S$2,500 minimum on explicit ad-hoc top-up premiums, the published S$500 minimum on explicit one-off partial withdrawals with the S$1,000 residual policy-value floor, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface with the published S$40 minimum cash-payout threshold.`,
+      `${variantDefinition.hasPolicyFee ? 'Issue-time policy-fee band selection, ' : ''}the flexi-start premium-variation start-month gate and the published minimum reduced premium floor after Flexi Start are modeled, while annual-mode clawback on later payment-mode changes and the separate MIP partial-withdrawal amount-limit table remain informational only.`,
       'Selected-fund management charges are represented through the policy fund OCF inputs rather than a product-level parser rate.',
     ],
     unsupportedItems: [
+      ...(variantDefinition.hasPolicyFee
+        ? ['Issue-time policy-fee band selection remains informational only; enter the actual annual policy-fee amount for low-band corridors before trusting the projection.']
+        : []),
       'Changing the regular premium payment mode from annual to a non-annual mode during the premium-shortfall-charge period remains informational only.',
       'Top-up underwriting remains informational only.',
-      'Withdrawals of accumulated reinvested dividends remain informational only.',
-      'Terminal-illness acceleration limits, amount-owed deductions, claim-notification valuation timing, and post-claim continuation remain informational only beyond the current death-benefit estimate.',
+      'Reinvested-dividend withdrawal approval and available-balance verification remain informational only.',
+      'Current amount owing, the remaining aggregate TI cap, and the remaining aggregate TI + CI cap must still be entered manually for the current death / terminal-illness and residual-after-TI estimates; claim-notification valuation timing, TI claim admission, and settlement remain informational only.',
       'Reinstatement underwriting and pre-existing-condition exclusions remain informational only.',
-      'Regular premium variation from Flexi Start onwards remains informational only.',
-      'Partial-withdrawal amount limits, minimum withdrawal amount, and minimum residual-account-value rules remain informational only.',
+      'The separate MIP partial-withdrawal amount-limit table remains informational only.',
     ],
     sourceRefs: [page1, page2, page6, page8, page9, page10, page12, page19],
   }
@@ -288,27 +493,33 @@ export function parseManulifeInvestreadyIii(context: ParseContext): IlpCatalogPr
     modeledEconomics: [
       'kernel:protected-base-assurance',
       'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-residual-death-benefit-after-ti-estimate',
       'branch:manulife-investready-iii-welcome-bonus',
       'branch:manulife-investready-iii-annual-premium-bonus',
       'branch:manulife-investready-iii-loyalty-bonus',
+      'branch:manulife-investready-iii-policy-fee-manual-input',
       'branch:manulife-investready-iii-administrative-charge',
       'branch:manulife-investready-iii-premium-shortfall-charge',
       'branch:manulife-investready-iii-zero-top-up-charge',
+      'kernel:regular-premium-variation-start-gate',
+      'kernel:regular-premium-variation-minimum-floor',
+      'kernel:top-up-amount-gate-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
       'branch:manulife-investready-iii-partial-withdrawal-charge',
       'branch:manulife-investready-iii-full-surrender-charge',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'manulife-investready-iii-top-up-underwriting',
-      'manulife-investready-iii-reinvested-dividend-withdrawals',
-      'manulife-investready-iii-ti-acceleration-limits-and-claim-timing',
+      'manulife-investready-iii-ti-claim-admission-settlement-and-notification-timing',
       'manulife-investready-iii-reinstatement-underwriting-and-pre-existing-condition-exclusions',
-      'manulife-investready-iii-flexi-start-premium-variation',
+      'manulife-investready-iii-annual-mode-clawback-on-payment-mode-change',
     ],
     warnings: [
-      'Manulife InvestReady (III) is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 1.00% administration-charge path, the 101% paid-premium-floor COI formula after you enter insured-life details and current premium bases, the current-state death-benefit estimate from that same floor, the published 1% / 2% welcome-bonus tiers, the annual-premium bonus gate under the annual premium-frequency assumption, the corridor’s 0.0% loyalty-bonus rate after MIP, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the MIP partial-withdrawal charge schedule, the MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface with the published S$40 minimum cash-payout threshold. Selected-fund management charges are represented through the policy fund OCF inputs rather than a product-level parser rate, while annual-mode clawback on later payment-mode changes, flexi-start premium variation, terminal-illness acceleration limits, amount-owed deductions, claim-notification valuation timing, post-claim continuation, and reinstatement underwriting and pre-existing-condition exclusions remain informational only.',
+      'Manulife InvestReady (III) Jan-2026 summary cohort is cataloged as a separate supported corridor set in V1. The parser captures the published administration-charge path, the 101% paid-premium-floor cost-of-insurance formula after you enter insured-life details and current premium bases, the current-state death-benefit estimate net of manually entered current amount owing, the current terminal-illness benefit estimate as the lower of the modeled current death benefit, a manual remaining aggregate TI cap, and a manual remaining aggregate TI + CI cap, subject to the published S$1,000,000 TI limit, the current residual death-benefit estimate after a TI claim today for the supported acceleration corridor, the Welcome Bonus tiers, the annual-premium bonus gate under the annual premium-frequency assumption, the published Loyalty Bonus rates including the 12-month suspension after partial withdrawals or withdrawals of reinvested dividends, the low-band policy-fee surface through manual annual-fee input for the 10-year and 13-year corridors, the premium-shortfall charge before Flexi Start where applicable, the prevailing 0% top-up charge, the published S$2,500 minimum on explicit ad-hoc top-up premiums, the flexi-start premium-variation start-month gate, the published minimum reduced premium floor after Flexi Start, the published S$500 minimum on explicit one-off partial withdrawals with the S$1,000 residual policy-value floor, the MIP partial-withdrawal charge schedules, the MIP full-surrender charge schedules, and the reinvest-default distribution-mode assumption surface with the published S$40 minimum cash-payout threshold. Selected-fund management charges are represented through the policy fund OCF inputs rather than a product-level parser rate, while issue-time policy-fee band selection, annual-mode clawback on later payment-mode changes, the separate MIP partial-withdrawal amount-limit table, terminal-illness claim admission / notification valuation timing / settlement, top-up underwriting, and reinstatement underwriting and pre-existing-condition exclusions remain informational only.',
     ],
     archived: false,
-    variants: [buildVariant(context.document)],
+    variants: VARIANTS.map((variant) => buildVariant(context.document, variant)),
   }
 }

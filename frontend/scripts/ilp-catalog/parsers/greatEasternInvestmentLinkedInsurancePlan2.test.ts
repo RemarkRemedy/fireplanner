@@ -25,11 +25,20 @@ describe('parseGreatEasternInvestmentLinkedInsurancePlan2', () => {
     expect(product.supportStatus).toBe('supported')
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('kernel:protected-base-assurance')
+    expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
+    expect(product.modeledEconomics).toContain('kernel:current-ti-benefit-estimate')
+    expect(product.modeledEconomics).toContain('kernel:current-tpd-benefit-estimate')
     expect(product.modeledEconomics).toContain('branch:great-eastern-ilp2-insurance-charge')
     expect(product.modeledEconomics).toContain('branch:great-eastern-ilp2-premium-holiday-charge')
     expect(product.modeledEconomics).toContain('branch:great-eastern-ilp2-premium-holiday-charge-refund')
+    expect(product.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
+    expect(product.modeledEconomics).toContain('kernel:premium-holiday-top-up-block')
+    expect(product.modeledEconomics).toContain('kernel:top-up-paid-up-to-date-block')
     expect(product.modeledEconomics).toContain('branch:great-eastern-ilp2-choice10-fixed-policy-fee')
     expect(product.metadataOnlyBehaviors).not.toContain('great-eastern-ilp2-insurance-charge')
+    expect(product.warnings).toContain(
+      'Investment-linked Insurance Plan 2 is cataloged as a supported V1 corridor. The parser captures the published bonus path, policy fee, monthly insurance charge, the current-state death / terminal-illness / TPD benefit estimate as the higher of policy value or the 101%-of-paid-premiums floor after partial withdrawals including withdrawal charges and current amount owing, with TPD capped by a manual remaining aggregate TPD cap, the current admitted-state TI payable amount through the published full-termination TI corridor after manual claim-amount entry, an admitted-and-settled TI claim as a current policy-termination state, premium-holiday charge, the Choice 10 premium-holiday-charge refund path, the published S$1,000 single-premium top-up minimum, premium-holiday and paid-up-to-date top-up blocking, and partial-withdrawal / surrender schedules, while TPD continuation-event state, rider premium-deduction treatment, Choice 10 fixed-fee-threshold transitions, change-of-life-assured handling, automatic fund rebalancing administration, and terminal-illness exclusions / settlement / broader post-claim continuation remain informational only beyond the modeled current death / terminal-illness / TPD benefit estimate.',
+    )
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-mip-10-choice-5',
       'sgd-mip-10-choice-10-under-6000',
@@ -134,6 +143,12 @@ describe('parseGreatEasternInvestmentLinkedInsurancePlan2', () => {
         }),
       ]),
     )
+    expect(choice5?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: true,
+      blockTopUpsDuringPremiumHoliday: true,
+      blockTopUpsWhenPremiumsNotPaidUpToDate: true,
+      minimumTopUpAmount: 1_000,
+    })
     expect(choice5?.eventChargeRules?.find((rule) => rule.id === 'premium-holiday-charge-refund')).toBeUndefined()
     expect(choice5?.eecTable).toEqual([1, 1, 0.75, 0.6, 0.5, 0.45, 0.4, 0.2, 0.15, 0.05])
 
@@ -187,6 +202,18 @@ describe('parseGreatEasternInvestmentLinkedInsurancePlan2', () => {
     expect(choice10Low?.unsupportedItems).toContain(
       'Choice 10 prevailing-annualised-premium transitions across the S$6,000 fixed-fee threshold are not modeled dynamically; switch variants manually if the threshold changes after a premium reduction.',
     )
+    expect(choice10Low?.unsupportedItems).toContain(
+      'The current-state death / terminal-illness / TPD benefit estimate needs a manual current amount owing input because current debt is not reconstructed from history in V1.',
+    )
+    expect(choice10Low?.unsupportedItems).toContain(
+      'The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state, but TPD continuation-event state plus terminal-illness exclusions / settlement / broader post-claim continuation remain informational only beyond the modeled current death / terminal-illness / TPD benefit estimate.',
+    )
+    expect(choice10Low?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: true,
+      blockTopUpsDuringPremiumHoliday: true,
+      blockTopUpsWhenPremiumsNotPaidUpToDate: true,
+      minimumTopUpAmount: 1_000,
+    })
 
     const choice10High = product.variants.find((variant) => variant.id === 'sgd-mip-10-choice-10-6000-and-above')
     expect(choice10High).toBeDefined()
@@ -215,5 +242,14 @@ describe('parseGreatEasternInvestmentLinkedInsurancePlan2', () => {
     expect(choice10High?.warnings).toContain(
       'This Choice 10 high-annualised-premium variant assumes the additional S$5 monthly policy fee does not apply throughout the modeled path unless you manually switch variants after a premium change.',
     )
+    expect(choice10High?.warnings).toContain(
+      'Investment-linked Insurance Plan 2 is modeled as a supported V1 corridor. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, monthly insurance charge, the current-state death / terminal-illness / TPD benefit estimate as the higher of policy value or the 101% paid-premium floor after partial withdrawals including withdrawal charges and current amount owing, with TPD capped by a manual remaining aggregate TPD cap, the current admitted-state TI payable amount through the published full-termination TI corridor after manual claim-amount entry, an admitted-and-settled TI claim as a current policy-termination state, premium-holiday charge, the Choice 10 premium-holiday-charge refund path, the published S$1,000 single-premium top-up minimum, premium-holiday and paid-up-to-date top-up blocking, and the published partial-withdrawal / surrender charge schedules.',
+    )
+    expect(choice10High?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: true,
+      blockTopUpsDuringPremiumHoliday: true,
+      blockTopUpsWhenPremiumsNotPaidUpToDate: true,
+      minimumTopUpAmount: 1_000,
+    })
   }, 30_000)
 })

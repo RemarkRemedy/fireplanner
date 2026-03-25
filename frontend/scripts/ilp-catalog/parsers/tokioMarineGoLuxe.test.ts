@@ -28,14 +28,21 @@ describe('parseTokioMarineGoLuxe', () => {
     expect(product.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(product.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
+    expect(product.modeledEconomics).toContain('branch:tokio-goluxe-achievement-bonus-qualification-window')
     expect(product.modeledEconomics).toContain('branch:tokio-goluxe-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
+    expect(product.modeledEconomics).toContain('branch:tokio-current-only-multi-life-life-state')
+    expect(product.modeledEconomics).toContain('kernel:committed-premium-rsp-resumption-gate')
     expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-achievement-bonus-qualification')
+    expect(product.modeledEconomics).toContain('kernel:minimum-premium-holiday-start-month')
+    expect(product.modeledEconomics).toContain('kernel:minimum-recurring-single-premium-start-month')
+    expect(product.modeledEconomics).toContain('kernel:minimum-recurring-single-premium-amount')
+    expect(product.modeledEconomics).toContain('kernel:partial-withdrawal-maximum-amount-block')
+    expect(product.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
     expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-advanced-death-payout-handling')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-multiple-life-last-life-settlement')
     expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-change-of-life-assured-administration')
     expect(product.metadataOnlyBehaviors).toContain('tokio-goluxe-regular-withdrawal-facility')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-goluxe-achievement-bonus-qualification')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-goluxe-loyalty-and-achievement-bonuses')
     expect(product.metadataOnlyBehaviors).not.toContain(
       'tokio-goluxe-advanced-death-payout-handling-and-life-assured-administration',
@@ -46,6 +53,53 @@ describe('parseTokioMarineGoLuxe', () => {
 
     expect(product.variants).toHaveLength(2)
     expect(basicVariant?.icpMonths).toBe(36)
+    expect(basicVariant?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPremiumHolidayStartPolicyMonth: 37,
+      minimumRecurringSinglePremiumStartPolicyMonth: 13,
+      minimumRecurringSinglePremiumMonthlyAmount: 50,
+      minimumPartialWithdrawalStartPolicyMonthByAccount: [
+        { accountId: 'accumulation', startPolicyMonth: 37 },
+        { accountId: 'topup', startPolicyMonth: 37 },
+        { accountId: 'initial', startPolicyMonth: 181 },
+      ],
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalMaximumAmountRules: [
+        {
+          activeWindow: 'during-mip',
+          accountId: 'accumulation',
+          basis: 'account-value-less-prior-withdrawals',
+          startPolicyYear: 6,
+          endPolicyYear: 6,
+          maximumValueRate: 0.3,
+        },
+        {
+          activeWindow: 'during-mip',
+          accountId: 'accumulation',
+          basis: 'account-value-less-prior-withdrawals',
+          startPolicyYear: 7,
+          endPolicyYear: 7,
+          maximumValueRate: 0.4,
+        },
+        {
+          activeWindow: 'during-mip',
+          accountId: 'accumulation',
+          basis: 'account-value-less-prior-withdrawals',
+          startPolicyYear: 8,
+          endPolicyYear: 15,
+          maximumValueRate: 0.5,
+        },
+      ],
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'policy-value',
+          minimumValue: 3_000,
+        },
+      ],
+      requiresCommencementPremiumForRecurringSinglePremiumResumption: true,
+    })
+    expect(basicVariant?.warnings.some((warning) => warning.includes('monthly-equivalent minimum of S$50'))).toBe(true)
     expect(basicVariant?.accounts).toEqual([
       expect.objectContaining({ id: 'initial', feeRate: 0.03, postMipFeeRate: 0, subjectToEec: true }),
       expect.objectContaining({ id: 'accumulation', feeRate: 0.0135, postMipFeeRate: 0.0135, subjectToEec: false }),
@@ -71,6 +125,20 @@ describe('parseTokioMarineGoLuxe', () => {
       expect.objectContaining({
         rate: 0.003,
         startPolicyYear: 16,
+      }),
+    )
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'achievement-bonus')).toEqual(
+      expect.objectContaining({
+        mode: 'annual-rate',
+        rate: 0.05,
+        startPolicyYear: 30,
+        endPolicyYear: 40,
+        cadenceYears: 5,
+        qualificationRules: [
+          { trigger: 'premium-holiday', disqualifyThroughPolicyYear: 10 },
+          { trigger: 'regular-premium-reduction', disqualifyThroughPolicyYear: 10 },
+          { trigger: 'partial-withdrawal', disqualifyThroughPolicyYear: 10 },
+        ],
       }),
     )
     expect(basicVariant?.feeRules).toEqual([])
@@ -120,6 +188,7 @@ describe('parseTokioMarineGoLuxe', () => {
     })
     expect(basicVariant?.eecTable).toEqual([1, 1, 1, 0.95, 0.76, 0.76, 0.76, 0.73, 0.73, 0.73, 0.7, 0.6, 0.45, 0.25, 0.07])
     expect(product.warnings.some((warning) => warning.includes('30-day record-date lead time'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('explicit recurring-single-premium resumption'))).toBe(true)
     expect(advancedVariant?.feeRules).toEqual([
       expect.objectContaining({
         id: 'monthly-protection-charge',
@@ -138,10 +207,13 @@ describe('parseTokioMarineGoLuxe', () => {
       }),
     ])
     expect(advancedVariant?.warnings).toContain(
-      'The Advanced Death variant also models the published current death-benefit estimate, Monthly Protection Charge, including the first-three-policy-years accrual window, policy-year-4 lump-sum settlement, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base.',
+      'The Advanced Death variant also models the published current death-benefit estimate, Monthly Protection Charge, including the first-three-policy-years accrual window, policy-year-4 lump-sum settlement, static current multi-life last-life handling, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base.',
     )
     expect(advancedVariant?.unsupportedItems).toContain(
-      'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, multiple-life last-life settlement, and change-of-life-assured administration remain metadata-only for this product.',
+      'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, and change-of-life-assured administration remain metadata-only for this product.',
+    )
+    expect(basicVariant?.unsupportedItems).toContain(
+      'Regular withdrawal, selected-fund minimum-holding rules, and non-SGD policy currencies remain metadata-only for this product.',
     )
   }, 30_000)
 })

@@ -26,12 +26,15 @@ describe('parseIncomeSnackInvestment', () => {
     expect(product.supportStatus).toBe('supported')
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
       'branch:income-snack-investment-zero-single-premium-charge',
       'branch:income-snack-investment-zero-top-up-charge',
       'branch:income-snack-investment-zero-withdrawal-charge',
       'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).not.toContain('income-snack-investment-single-premium-net-premium-tracking')
+    expect(product.metadataOnlyBehaviors).toContain('income-snack-investment-accidental-death-claim-exclusions')
     expect(product.metadataOnlyBehaviors).toContain('income-snack-investment-trigger-driven-top-ups')
     expect(product.metadataOnlyBehaviors).toContain('income-snack-investment-fund-management-fee')
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended'])
@@ -93,5 +96,6 @@ describe('parseIncomeSnackInvestment', () => {
     })
     expect(variant?.unsupportedItems).not.toContain('Single-premium and top-up net-premium tracking remain informational only in V1.')
     expect(variant?.warnings).toContain('The plan reinvests declared distributions and does not support cash payouts in the published corridor; fund-level management fees remain informational only.')
+    expect(product.warnings[0]).toContain('current accidental-death estimate before age 75 as the higher of cash-in value or 105% of net premium')
   }, 30_000)
 })

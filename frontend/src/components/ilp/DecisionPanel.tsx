@@ -1,11 +1,11 @@
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import type { IlpPolicyAnalysis, IlpPolicyInput } from '@/lib/calculations/ilp'
+import type { IlpPolicyInput, IlpProjectedPolicyAnalysis } from '@/lib/calculations/ilp'
 import { formatIlpCurrency } from './formatters'
 
 interface DecisionPanelProps {
   policy: IlpPolicyInput
-  analysis: IlpPolicyAnalysis
+  analysis: IlpProjectedPolicyAnalysis
 }
 
 export function DecisionPanel({ policy, analysis }: DecisionPanelProps) {

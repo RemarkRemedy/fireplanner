@@ -16,6 +16,17 @@ interface ParseContext {
 
 type PremiumPaymentTerm = 20 | 25
 
+const BOOSTER_BONUS_TIERS: Record<PremiumPaymentTerm, Array<{ currency: 'SGD', minAnnualPremium: number | null, maxAnnualPremium: number | null, rate: number }>> = {
+  20: [
+    { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.15 },
+    { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: null, rate: 0.2 },
+  ],
+  25: [
+    { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.25 },
+    { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: null, rate: 0.3 },
+  ],
+}
+
 const INITIAL_ACCOUNT_CHARGE_RATE_SCHEDULE: Record<PremiumPaymentTerm, Array<{ startPolicyYear: number, endPolicyYear: number | null, rate: number }>> = {
   20: [
     { startPolicyYear: 1, endPolicyYear: 9, rate: 0.038 },
@@ -175,32 +186,6 @@ function buildInitialAccountChargeRule(term: PremiumPaymentTerm, page9: IlpCatal
   }
 }
 
-function buildInsuranceChargeRule(page9: IlpCatalogSourceRef): IlpTemplateFeeRule {
-  return {
-    id: 'insurance-charge',
-    label: 'Insurance Charge',
-    basis: 'assurance-sum-at-risk',
-    rate: 0,
-    amount: 0,
-    appliesTo: ['initial'],
-    fallbackAppliesTo: ['accumulation'],
-    assuranceValueAppliesTo: ['initial', 'accumulation'],
-    activeWindow: 'policy-term',
-    requiresManualInput: true,
-    assuranceConfig: {
-      formula: 'fwd-invest-flexi-elite-death',
-      monthlyModalFactor: 1 / 12,
-      maxAgeNextBirthday: 99,
-    },
-    notes: [
-      'Requires insured-life details and the current net regular-premium, top-up-premium, and repayment bases before the calculator can model the monthly insurance charge.',
-      'Models the published Appendix B attained-age / sex / smoker insurance charge using the higher of 101% of paid premium and repayment bases less withdrawals and terminal-illness advances, minus policy value.',
-      'The charge is deducted from the initial units account first, with accumulation units account fallback if the initial account is insufficient.',
-    ],
-    sourceRefs: [page9],
-  }
-}
-
 function buildPremiumReductionChargeRule(term: PremiumPaymentTerm, page12: IlpCatalogSourceRef): IlpTemplateEventChargeRule {
   return {
     id: 'premium-reduction-charge',
@@ -217,15 +202,71 @@ function buildPremiumReductionChargeRule(term: PremiumPaymentTerm, page12: IlpCa
     notes: [
       `Models the published monthly premium-reduction charge for the ${term}-year premium-payment-term corridor.`,
       'The charge applies to the reduction from the commencement-date annualised regular premium until you restore the original premium or the charge period ends.',
-      'Support Benefit waiver approval remains informational only in V1.',
+      'Mark the reduction event with an insurer-approved charge waiver when an admitted Support Benefit approval waives the reduction charge for that period.',
+      'Mark the same reduction event as charge-refunded when the charge was deducted first and later refunded after admitted Support Benefit approval.',
+      'Support Benefit approval history and claim-side timing remain informational only in V1.',
     ],
     sourceRefs: [page12],
+  }
+}
+
+function buildPremiumShortfallChargeRule(
+  term: PremiumPaymentTerm,
+  page7: IlpCatalogSourceRef,
+  page11: IlpCatalogSourceRef,
+): IlpTemplateEventChargeRule {
+  return {
+    id: 'premium-shortfall-charge',
+    label: 'Premium Shortfall Charge',
+    trigger: 'premium-holiday',
+    basis: 'annual-premium-with-overlap-months',
+    appliesTo: ['initial'],
+    fallbackAppliesTo: ['accumulation'],
+    rate: 0,
+    amount: 0,
+    rateSchedule: PREMIUM_REDUCTION_CHARGE_SCHEDULE[term].map((tier) => ({ ...tier })),
+    activeWindow: 'during-mip',
+    allocation: 'equal-split',
+    notes: [
+      `Models the published monthly premium shortfall charge for the ${term}-year premium-payment-term corridor from policy year 3 until the end of the applicable shortfall-charge period.`,
+      'Mark the premium-holiday event with an insurer-approved charge waiver when an admitted Support Benefit approval or already-active Premium Pause Waiver applies for that missed-premium period.',
+      'Mark the same premium-holiday event as charge-refunded when the charge was deducted first and later refunded after admitted Support Benefit approval.',
+      'Automatic 24-month Premium Pause Waiver activation and month accounting, year-3-vs-year-4 non-payment gating remain informational only in V1.',
+    ],
+    sourceRefs: [page7, page11],
+  }
+}
+
+function buildInsuranceChargeRule(page9: IlpCatalogSourceRef): IlpTemplateFeeRule {
+  return {
+    id: 'insurance-charge',
+    label: 'Insurance Charge',
+    basis: 'assurance-sum-at-risk',
+    rate: 0,
+    amount: 0,
+    appliesTo: ['initial'],
+    fallbackAppliesTo: ['accumulation'],
+    assuranceValueAppliesTo: ['initial', 'accumulation'],
+    activeWindow: 'policy-term',
+    requiresManualInput: true,
+    assuranceConfig: {
+      formula: 'fwd-invest-repayment-inclusive-death',
+      monthlyModalFactor: 1 / 12,
+      maxAgeNextBirthday: 99,
+    },
+    notes: [
+      'Requires insured-life details and the current net regular-premium, supplementary / top-up, and repayment bases before the calculator can model the monthly insurance charge.',
+      'Models the published Appendix B attained-age / sex / smoker insurance charge on the 101% paid-premium-and-repayment protected base, net of policy value.',
+      'The charge is deducted from the initial units account first, with accumulation units account fallback if the initial account is insufficient.',
+    ],
+    sourceRefs: [page9],
   }
 }
 
 function buildVariant(document: ExtractedPdfDocument, term: PremiumPaymentTerm): IlpTemplateVariant {
   const page1 = sourceRef(1, 'Plan overview and death benefit', snippetNear(document, 1, 'FWD Invest First Horizon', 18))
   const page3 = sourceRef(3, 'Bonus overview and support benefits', snippetNear(document, 3, 'Annual Premium Bonus', 24))
+  const page4 = sourceRef(4, 'Loyalty Bonus', snippetNear(document, 4, 'Loyalty Bonus', 34))
   const page7 = sourceRef(7, 'Missed regular premium and Premium Pause Waiver', snippetNear(document, 7, 'During Policy Year 3', 26))
   const page8 = sourceRef(8, 'Top-up premium', snippetNear(document, 8, 'Top-up premium', 20))
   const page9 = sourceRef(9, 'Initial account charge and insurance charge', snippetNear(document, 9, 'Initial account charge', 30))
@@ -237,6 +278,45 @@ function buildVariant(document: ExtractedPdfDocument, term: PremiumPaymentTerm):
   const page16 = sourceRef(16, 'Withdrawal rules and partial withdrawal limits', snippetNear(document, 16, 'Withdrawals are allowed', 28))
 
   const bonuses: IlpTemplateBonus[] = [
+    {
+      id: 'booster-bonus-y1',
+      type: 'sign-up',
+      label: 'Booster Bonus (Policy Year 1)',
+      mode: 'premium-allocation',
+      appliesTo: ['initial'],
+      startPolicyYear: 1,
+      endPolicyYear: 1,
+      annualPremiumTierBasis: 'committed-annual-premium-at-issue',
+      rate: null,
+      amount: null,
+      tieredRates: BOOSTER_BONUS_TIERS[term].map((tier) => ({ ...tier })),
+      notes: [
+        `Applied on each regular premium received during policy year 1 for the ${term}-year premium-payment-term corridor, using the published reward band based on annualised regular premium at issue.`,
+        'Missed regular premiums simply do not earn Booster Bonus; repayment-driven restoration and later premium-frequency changes remain informational only in V1.',
+      ],
+      sourceRefs: [page3],
+    },
+    {
+      id: 'booster-bonus-y2',
+      type: 'sign-up',
+      label: 'Booster Bonus (Policy Year 2)',
+      mode: 'premium-allocation',
+      appliesTo: ['initial'],
+      startPolicyYear: 2,
+      endPolicyYear: 2,
+      annualPremiumTierBasis: 'committed-annual-premium-at-issue',
+      rate: null,
+      amount: null,
+      tieredRates: [
+        { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: term === 20 ? 0.1 : 0.2 },
+        { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: null, rate: term === 20 ? 0.2 : 0.3 },
+      ],
+      notes: [
+        `Applied on each regular premium received during policy year 2 for the ${term}-year premium-payment-term corridor, using the published reward band based on annualised regular premium at issue.`,
+        'Missed regular premiums simply do not earn Booster Bonus; repayment-driven restoration and later premium-frequency changes remain informational only in V1.',
+      ],
+      sourceRefs: [page3],
+    },
     {
       id: 'annual-premium-bonus',
       type: 'allocation',
@@ -256,6 +336,313 @@ function buildVariant(document: ExtractedPdfDocument, term: PremiumPaymentTerm):
       ],
       sourceRefs: [page3],
     },
+    ...(
+      term === 20
+        ? [
+            {
+              id: 'loyalty-bonus-y3-to-y5',
+              type: 'loyalty',
+              label: 'Loyalty Bonus (Policy Years 3-5)',
+              mode: 'annual-rate',
+              appliesTo: ['initial'],
+              startPolicyYear: 3,
+              endPolicyYear: 5,
+              rate: 0.004,
+              amount: null,
+              tieredRates: [],
+              adjustmentFactorConfig: {
+                formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+                withdrawalAccountIds: ['initial'],
+                includePolicyRepaymentsInPaidRegularPremium: true,
+                policyRepaymentPriorOffsetRules: [
+                  { trigger: 'partial-withdrawal', accountIds: ['initial'] },
+                  { trigger: 'regular-premium-reduction' },
+                ],
+              },
+              notes: [
+                'Models the published during-premium-payment-term loyalty-bonus formula using the annual adjustment factor on the initial units account value.',
+                'Manual policy-repayment events can count as current-year paid regular premium after first offsetting prior-policy-year initial-account withdrawals and regular-premium reductions.',
+                'Same-year repayment sequencing, missed-premium repayment ordering, and broader repayment-allocation waterfalls remain informational only in V1.',
+                'The post-premium-payment-term no-initial-account-withdrawal corridor is modeled separately in the later loyalty-bonus ranges.',
+              ],
+              sourceRefs: [page4],
+            },
+            {
+              id: 'loyalty-bonus-y6-to-y10',
+              type: 'loyalty',
+              label: 'Loyalty Bonus (Policy Years 6-10)',
+              mode: 'annual-rate',
+              appliesTo: ['initial'],
+              startPolicyYear: 6,
+              endPolicyYear: 10,
+              rate: 0.008,
+              amount: null,
+              tieredRates: [],
+              adjustmentFactorConfig: {
+                formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+                withdrawalAccountIds: ['initial'],
+                includePolicyRepaymentsInPaidRegularPremium: true,
+                policyRepaymentPriorOffsetRules: [
+                  { trigger: 'partial-withdrawal', accountIds: ['initial'] },
+                  { trigger: 'regular-premium-reduction' },
+                ],
+              },
+              notes: [
+                'Models the published during-premium-payment-term loyalty-bonus formula using the annual adjustment factor on the initial units account value.',
+                'Manual policy-repayment events can count as current-year paid regular premium after first offsetting prior-policy-year initial-account withdrawals and regular-premium reductions.',
+                'Same-year repayment sequencing, missed-premium repayment ordering, and broader repayment-allocation waterfalls remain informational only in V1.',
+                'The post-premium-payment-term no-initial-account-withdrawal corridor is modeled separately in the later loyalty-bonus ranges.',
+              ],
+              sourceRefs: [page4],
+            },
+            {
+              id: 'loyalty-bonus-y11-to-y15',
+              type: 'loyalty',
+              label: 'Loyalty Bonus (Policy Years 11-15)',
+              mode: 'annual-rate',
+              appliesTo: ['initial'],
+              startPolicyYear: 11,
+              endPolicyYear: 15,
+              rate: 0.012,
+              amount: null,
+              tieredRates: [],
+              adjustmentFactorConfig: {
+                formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+                withdrawalAccountIds: ['initial'],
+                includePolicyRepaymentsInPaidRegularPremium: true,
+                policyRepaymentPriorOffsetRules: [
+                  { trigger: 'partial-withdrawal', accountIds: ['initial'] },
+                  { trigger: 'regular-premium-reduction' },
+                ],
+              },
+              notes: [
+                'Models the published during-premium-payment-term loyalty-bonus formula using the annual adjustment factor on the initial units account value.',
+                'Manual policy-repayment events can count as current-year paid regular premium after first offsetting prior-policy-year initial-account withdrawals and regular-premium reductions.',
+                'Same-year repayment sequencing, missed-premium repayment ordering, and broader repayment-allocation waterfalls remain informational only in V1.',
+                'The post-premium-payment-term no-initial-account-withdrawal corridor is modeled separately in the later loyalty-bonus ranges.',
+              ],
+              sourceRefs: [page4],
+            },
+            {
+              id: 'loyalty-bonus-y16-to-y20',
+              type: 'loyalty',
+              label: 'Loyalty Bonus (Policy Years 16-20)',
+              mode: 'annual-rate',
+              appliesTo: ['initial'],
+              startPolicyYear: 16,
+              endPolicyYear: 20,
+              rate: 0.016,
+              amount: null,
+              tieredRates: [],
+              adjustmentFactorConfig: {
+                formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+                withdrawalAccountIds: ['initial'],
+                includePolicyRepaymentsInPaidRegularPremium: true,
+                policyRepaymentPriorOffsetRules: [
+                  { trigger: 'partial-withdrawal', accountIds: ['initial'] },
+                  { trigger: 'regular-premium-reduction' },
+                ],
+              },
+              notes: [
+                'Models the published during-premium-payment-term loyalty-bonus formula using the annual adjustment factor on the initial units account value.',
+                'Manual policy-repayment events can count as current-year paid regular premium after first offsetting prior-policy-year initial-account withdrawals and regular-premium reductions.',
+                'Same-year repayment sequencing, missed-premium repayment ordering, and broader repayment-allocation waterfalls remain informational only in V1.',
+                'The post-premium-payment-term no-initial-account-withdrawal corridor is modeled separately in the later loyalty-bonus ranges.',
+              ],
+              sourceRefs: [page4],
+            },
+            {
+              id: 'loyalty-bonus-y21-plus',
+              type: 'loyalty',
+              label: 'Loyalty Bonus (Policy Year 21+)',
+              mode: 'annual-rate',
+              appliesTo: ['initial'],
+              startPolicyYear: 21,
+              endPolicyYear: null,
+              rate: 0.011,
+              amount: null,
+              tieredRates: [],
+              qualificationRules: [
+                {
+                  trigger: 'partial-withdrawal',
+                  accountIds: ['initial'],
+                  disqualifyThroughReferenceYear: true,
+                },
+              ],
+              notes: [
+                'Models the published post-premium-payment-term loyalty-bonus corridor using the 1.10% p.a. rate on the initial units account value.',
+                'The bonus is disqualified for the current policy year if a withdrawal is made from the initial units account during that policy year.',
+              ],
+              sourceRefs: [page4],
+            },
+          ]
+        : [
+            {
+              id: 'loyalty-bonus-y3-to-y5',
+              type: 'loyalty',
+              label: 'Loyalty Bonus (Policy Years 3-5)',
+              mode: 'annual-rate',
+              appliesTo: ['initial'],
+              startPolicyYear: 3,
+              endPolicyYear: 5,
+              rate: 0.005,
+              amount: null,
+              tieredRates: [],
+              adjustmentFactorConfig: {
+                formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+                withdrawalAccountIds: ['initial'],
+                includePolicyRepaymentsInPaidRegularPremium: true,
+                policyRepaymentPriorOffsetRules: [
+                  { trigger: 'partial-withdrawal', accountIds: ['initial'] },
+                  { trigger: 'regular-premium-reduction' },
+                ],
+              },
+              notes: [
+                'Models the published during-premium-payment-term loyalty-bonus formula using the annual adjustment factor on the initial units account value.',
+                'Manual policy-repayment events can count as current-year paid regular premium after first offsetting prior-policy-year initial-account withdrawals and regular-premium reductions.',
+                'Same-year repayment sequencing, missed-premium repayment ordering, and broader repayment-allocation waterfalls remain informational only in V1.',
+                'The post-premium-payment-term no-initial-account-withdrawal corridor is modeled separately in the later loyalty-bonus ranges.',
+              ],
+              sourceRefs: [page4],
+            },
+            {
+              id: 'loyalty-bonus-y6-to-y10',
+              type: 'loyalty',
+              label: 'Loyalty Bonus (Policy Years 6-10)',
+              mode: 'annual-rate',
+              appliesTo: ['initial'],
+              startPolicyYear: 6,
+              endPolicyYear: 10,
+              rate: 0.01,
+              amount: null,
+              tieredRates: [],
+              adjustmentFactorConfig: {
+                formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+                withdrawalAccountIds: ['initial'],
+                includePolicyRepaymentsInPaidRegularPremium: true,
+                policyRepaymentPriorOffsetRules: [
+                  { trigger: 'partial-withdrawal', accountIds: ['initial'] },
+                  { trigger: 'regular-premium-reduction' },
+                ],
+              },
+              notes: [
+                'Models the published during-premium-payment-term loyalty-bonus formula using the annual adjustment factor on the initial units account value.',
+                'Manual policy-repayment events can count as current-year paid regular premium after first offsetting prior-policy-year initial-account withdrawals and regular-premium reductions.',
+                'Same-year repayment sequencing, missed-premium repayment ordering, and broader repayment-allocation waterfalls remain informational only in V1.',
+                'The post-premium-payment-term no-initial-account-withdrawal corridor is modeled separately in the later loyalty-bonus ranges.',
+              ],
+              sourceRefs: [page4],
+            },
+            {
+              id: 'loyalty-bonus-y11-to-y15',
+              type: 'loyalty',
+              label: 'Loyalty Bonus (Policy Years 11-15)',
+              mode: 'annual-rate',
+              appliesTo: ['initial'],
+              startPolicyYear: 11,
+              endPolicyYear: 15,
+              rate: 0.015,
+              amount: null,
+              tieredRates: [],
+              adjustmentFactorConfig: {
+                formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+                withdrawalAccountIds: ['initial'],
+                includePolicyRepaymentsInPaidRegularPremium: true,
+                policyRepaymentPriorOffsetRules: [
+                  { trigger: 'partial-withdrawal', accountIds: ['initial'] },
+                  { trigger: 'regular-premium-reduction' },
+                ],
+              },
+              notes: [
+                'Models the published during-premium-payment-term loyalty-bonus formula using the annual adjustment factor on the initial units account value.',
+                'Manual policy-repayment events can count as current-year paid regular premium after first offsetting prior-policy-year initial-account withdrawals and regular-premium reductions.',
+                'Same-year repayment sequencing, missed-premium repayment ordering, and broader repayment-allocation waterfalls remain informational only in V1.',
+                'The post-premium-payment-term no-initial-account-withdrawal corridor is modeled separately in the later loyalty-bonus ranges.',
+              ],
+              sourceRefs: [page4],
+            },
+            {
+              id: 'loyalty-bonus-y16-to-y20',
+              type: 'loyalty',
+              label: 'Loyalty Bonus (Policy Years 16-20)',
+              mode: 'annual-rate',
+              appliesTo: ['initial'],
+              startPolicyYear: 16,
+              endPolicyYear: 20,
+              rate: 0.015,
+              amount: null,
+              tieredRates: [],
+              adjustmentFactorConfig: {
+                formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+                withdrawalAccountIds: ['initial'],
+                includePolicyRepaymentsInPaidRegularPremium: true,
+                policyRepaymentPriorOffsetRules: [
+                  { trigger: 'partial-withdrawal', accountIds: ['initial'] },
+                  { trigger: 'regular-premium-reduction' },
+                ],
+              },
+              notes: [
+                'Models the published during-premium-payment-term loyalty-bonus formula using the annual adjustment factor on the initial units account value.',
+                'Manual policy-repayment events can count as current-year paid regular premium after first offsetting prior-policy-year initial-account withdrawals and regular-premium reductions.',
+                'Same-year repayment sequencing, missed-premium repayment ordering, and broader repayment-allocation waterfalls remain informational only in V1.',
+                'The post-premium-payment-term no-initial-account-withdrawal corridor is modeled separately in the later loyalty-bonus ranges.',
+              ],
+              sourceRefs: [page4],
+            },
+            {
+              id: 'loyalty-bonus-y21-to-y25',
+              type: 'loyalty',
+              label: 'Loyalty Bonus (Policy Years 21-25)',
+              mode: 'annual-rate',
+              appliesTo: ['initial'],
+              startPolicyYear: 21,
+              endPolicyYear: 25,
+              rate: 0.02,
+              amount: null,
+              tieredRates: [],
+              adjustmentFactorConfig: {
+                formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
+                withdrawalAccountIds: ['initial'],
+                includePolicyRepaymentsInPaidRegularPremium: true,
+                policyRepaymentPriorOffsetRules: [
+                  { trigger: 'partial-withdrawal', accountIds: ['initial'] },
+                  { trigger: 'regular-premium-reduction' },
+                ],
+              },
+              notes: [
+                'Models the published during-premium-payment-term loyalty-bonus formula using the annual adjustment factor on the initial units account value.',
+                'Manual policy-repayment events can count as current-year paid regular premium after first offsetting prior-policy-year initial-account withdrawals and regular-premium reductions.',
+                'Same-year repayment sequencing, missed-premium repayment ordering, and broader repayment-allocation waterfalls remain informational only in V1.',
+                'The post-premium-payment-term no-initial-account-withdrawal corridor is modeled separately in the later loyalty-bonus ranges.',
+              ],
+              sourceRefs: [page4],
+            },
+            {
+              id: 'loyalty-bonus-y26-plus',
+              type: 'loyalty',
+              label: 'Loyalty Bonus (Policy Year 26+)',
+              mode: 'annual-rate',
+              appliesTo: ['initial'],
+              startPolicyYear: 26,
+              endPolicyYear: null,
+              rate: 0.012,
+              amount: null,
+              tieredRates: [],
+              qualificationRules: [
+                {
+                  trigger: 'partial-withdrawal',
+                  accountIds: ['initial'],
+                  disqualifyThroughReferenceYear: true,
+                },
+              ],
+              notes: [
+                'Models the published post-premium-payment-term loyalty-bonus corridor using the 1.20% p.a. rate on the initial units account value.',
+                'The bonus is disqualified for the current policy year if a withdrawal is made from the initial units account during that policy year.',
+              ],
+              sourceRefs: [page4],
+            },
+          ]
+    ),
   ]
 
   return {
@@ -307,11 +694,49 @@ function buildVariant(document: ExtractedPdfDocument, term: PremiumPaymentTerm):
         allocation: 'equal-split',
         notes: [
           'Models the published 5% premium charge on each accepted top-up premium.',
-          'The year-2 eligibility gate, repayment waterfall, and total top-up cap remain informational only in V1.',
+          'V1 blocks top-ups below the published S$3,000 minimum, before policy month 13, and until missed-premium, prior initial-account withdrawal, and regular-premium-reduction obligations are fully cleared through repayment events.',
+          'The exact repayment-allocation waterfall and total top-up cap remain informational only in V1.',
         ],
         sourceRefs: [page8, page10],
       },
+      buildPremiumShortfallChargeRule(term, page7, page11),
+      {
+        id: 'premium-shortfall-charge-refund',
+        label: 'Premium Shortfall Charge Refund',
+        trigger: 'premium-holiday',
+        basis: 'source-event-charge-refund',
+        appliesTo: ['initial'],
+        rate: 1,
+        amount: 0,
+        activeWindow: 'during-mip',
+        allocation: 'equal-split',
+        sourceChargeRuleId: 'premium-shortfall-charge',
+        notes: [
+          `Models the published retrospective refund of deducted premium shortfall charge for the ${term}-year premium-payment-term corridor after admitted Support Benefit approval.`,
+          'Use the same premium-holiday event and mark it as charge-refunded when the charge was deducted between the qualifying event date and notification date and later refunded.',
+          'Automatic Premium Pause Waiver activation, approval history before the current projection start, and broader repayment waterfalls remain informational only in V1.',
+        ],
+        sourceRefs: [page7, page11],
+      },
       buildPremiumReductionChargeRule(term, page12),
+      {
+        id: 'premium-reduction-charge-refund',
+        label: 'Premium Reduction Charge Refund',
+        trigger: 'regular-premium-reduction',
+        basis: 'source-event-charge-refund',
+        appliesTo: ['initial'],
+        rate: 1,
+        amount: 0,
+        activeWindow: 'during-mip',
+        allocation: 'equal-split',
+        sourceChargeRuleId: 'premium-reduction-charge',
+        notes: [
+          `Models the published retrospective refund of deducted premium reduction charge for the ${term}-year premium-payment-term corridor after admitted Support Benefit approval.`,
+          'Use the same reduction event and mark it as charge-refunded when the charge was deducted between the qualifying event date and notification date and later refunded.',
+          'Approval history before the current projection start and broader premium-restoration sequencing remain informational only in V1.',
+        ],
+        sourceRefs: [page12],
+      },
       {
         id: 'initial-account-redemption-fee',
         label: 'Initial Account Redemption Fee',
@@ -326,25 +751,43 @@ function buildVariant(document: ExtractedPdfDocument, term: PremiumPaymentTerm):
         notes: [
           `Models the published initial-units-account redemption fee schedule for the ${term}-year premium-payment-term corridor.`,
           'Withdrawals from the accumulation units account are charge-free under the published summary.',
-          'The first-two-policy-year no-withdrawal gate, partial-withdrawal limit, and minimum account-value rules remain informational only.',
+          'V1 blocks authored initial-units-account withdrawals before policy month 25 and enforces the published S$3,000 minimum remaining-value floor on explicit one-off partial-withdrawal events.',
+          'The 50%-minus-prior-withdrawals partial-withdrawal limit and minimum withdrawal requirements remain informational only.',
         ],
         sourceRefs: [page13, page16],
       },
     ],
     eecTable: [...SURRENDER_CHARGE_SCHEDULE[term]],
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      minimumTopUpAmount: 3_000,
+      minimumTopUpStartPolicyMonth: 13,
+      minimumPartialWithdrawalStartPolicyMonthByAccount: [
+        { accountId: 'initial', startPolicyMonth: 25 },
+      ],
+      partialWithdrawalMinimumRemainingValueRules: [
+        { activeWindow: 'during-mip', basis: 'account-value', accountId: 'initial', minimumValue: 3_000 },
+        { activeWindow: 'after-mip', basis: 'policy-value', minimumValue: 3_000 },
+      ],
+      topUpRepaymentClearance: {
+        includeMissedPremiums: true,
+        priorOffsetRules: [
+          { trigger: 'partial-withdrawal', accountIds: ['initial'] },
+          { trigger: 'regular-premium-reduction' },
+        ],
+      },
+    },
     warnings: [
-      `FWD Invest First Horizon (${term}-year premium payment term) is cataloged as a supported V1 product. The parser captures the published fixed-premium-base initial-account charge, the annual-premium bonus under the annual premium-frequency assumption, the Appendix B insurance charge, the premium-reduction charge schedule, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, and the initial-units-account surrender-charge schedule.`,
-      'Premium shortfall charge remains informational only because the automatic 24-month Premium Pause Waiver cannot be expressed exactly in the current event kernel without miscounting year-3 missed premiums.',
-      'Booster Bonus, Loyalty Bonus, repayment waterfalls, payment-frequency changes after issue, and withdrawal-eligibility gates remain metadata-only.',
+      `FWD Invest First Horizon (${term}-year premium payment term) is cataloged as a supported V1 product. The parser captures the published Booster Bonus, Loyalty Bonus including the post-premium-payment-term no-initial-account-withdrawal corridor, fixed-premium-base initial-account charge, annual-premium bonus under the annual premium-frequency assumption, Appendix B insurance charge with manual repayment-base input, the premium shortfall charge corridor with admitted-state charge-waiver and retrospective charge-refund support on premium-holiday events, the premium-reduction charge schedule with admitted-state charge-waiver and retrospective charge-refund support on reduction events, 5% top-up premium charge with blocking below the published S$3,000 minimum, before policy month 13, and until aggregate repayment-clearance for missed premiums, prior initial-account withdrawals, and regular-premium-reduction differences, the initial-units-account policy-month-25 one-off partial-withdrawal gate with the published S$3,000 minimum remaining-value floor, initial-units-account redemption-fee schedule, and initial-units-account surrender-charge schedule.`,
+      'Automatic 24-month Premium Pause Waiver activation and month accounting, Support Benefit approval history, and broader repayment waterfalls remain metadata-only.',
+      'The exact repayment-allocation waterfall, payment-frequency changes after issue, and broader withdrawal-eligibility gates remain metadata-only beyond the modeled initial-units-account policy-month-25 gate and S$3,000 minimum remaining-value floor for explicit one-off partial withdrawals.',
     ],
     unsupportedItems: [
-      'Premium shortfall charge remains informational only because the automatic 24-month Premium Pause Waiver starts only from policy year 4 and is not modeled exactly in V1.',
-      'Policy year 3 non-payment behavior, Support Benefit approvals, and Premium Pause Waiver month accounting remain informational only.',
-      'Booster Bonus, Loyalty Bonus, and repayment-driven bonus restoration remain informational only.',
+      'Automatic 24-month Premium Pause Waiver activation and month accounting, policy-year-3-vs-year-4 non-payment gating beyond explicit charge-waived / charge-refunded events, Support Benefit approval history, and broader repayment waterfalls remain informational only.',
+      'Repayment-driven bonus restoration remains informational only.',
       'Changing the regular premium payment frequency after issue remains informational only.',
-      'Top-up repayment precedence for missed premiums, prior withdrawals, and prior premium reductions remains informational only.',
-      'Top-up eligibility from policy year 2, total top-up cap, minimum top-up amount, and minimum withdrawal requirements remain informational only.',
-      'Initial-units-account withdrawal lockout in the first two policy years, the 50%-minus-prior-withdrawals partial-withdrawal limit, and minimum account-value gates remain informational only.',
+      'The exact repayment-allocation waterfall, total top-up cap, and minimum withdrawal requirements remain informational only beyond the modeled aggregate top-up-clearance gate and the published S$3,000 minimum top-up amount.',
+      'The 50%-minus-prior-withdrawals partial-withdrawal limit and broader withdrawal administration remain informational only beyond the modeled initial-units-account policy-month-25 gate and S$3,000 minimum remaining-value floor.',
       'Policy closure charge, switching fee review rights, fund management charges, change-of-person-insured handling, and fund-level transaction deferrals remain informational only.',
     ],
     sourceRefs: [page1, page7, page8, page9, page10, page11, page12, page13, page14, page16],
@@ -364,33 +807,39 @@ export function parseFwdInvestFirstHorizon(context: ParseContext): IlpCatalogPro
     structureStatus: 'structured',
     economicsStatus: 'supported',
     modeledEconomics: [
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'kernel:protected-base-assurance',
+      'branch:fwd-invest-first-horizon-booster-bonus',
+      'branch:fwd-invest-first-horizon-loyalty-bonus',
       'branch:fwd-invest-first-horizon-annual-premium-bonus',
       'branch:fwd-invest-first-horizon-initial-account-charge',
       'branch:fwd-invest-first-horizon-insurance-charge',
+      'branch:fwd-invest-first-horizon-premium-shortfall-charge',
       'branch:fwd-invest-first-horizon-premium-reduction-charge',
       'branch:fwd-invest-first-horizon-top-up-premium-charge',
       'branch:fwd-invest-first-horizon-initial-account-redemption-fee',
       'branch:fwd-invest-first-horizon-initial-account-surrender-charge',
+      'kernel:top-up-amount-gate-block',
+      'kernel:partial-withdrawal-start-policy-month-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
+      'kernel:top-up-start-policy-month-block',
+      'kernel:top-up-repayment-clearance-block',
     ],
     metadataOnlyBehaviors: [
-      'fwd-invest-first-horizon-premium-shortfall-charge',
       'fwd-invest-first-horizon-premium-pause-waiver',
       'fwd-invest-first-horizon-support-benefit-waiver',
-      'fwd-invest-first-horizon-booster-bonus',
-      'fwd-invest-first-horizon-loyalty-bonus',
       'fwd-invest-first-horizon-repayment-bonus-restoration',
       'fwd-invest-first-horizon-top-up-repayment-waterfall',
       'fwd-invest-first-horizon-withdrawal-eligibility-gates',
-      'fwd-invest-first-horizon-top-up-eligibility-and-cap',
       'fwd-invest-first-horizon-policy-closure-charge',
       'fwd-invest-first-horizon-change-of-person-insured',
       'fwd-invest-first-horizon-fund-switching',
       'fwd-invest-first-horizon-fund-level-charges',
     ],
     warnings: [
-      'FWD Invest First Horizon is cataloged as a supported V1 product. The parser currently covers the published 20-year and 25-year regular-premium corridors through the fixed-premium-base initial-account charge, Appendix B insurance charge, premium-reduction charge, top-up premium charge, initial-account redemption-fee, and surrender-charge surfaces that fit the existing charge and surrender kernels.',
-      'Premium shortfall / Premium Pause Waiver behavior, bonus mechanics, repayment waterfalls, and withdrawal eligibility gates remain metadata-only.',
+      'FWD Invest First Horizon is cataloged as a supported V1 product. The parser currently covers the published current-state ordinary death benefit as the higher of 105% of policy value or the 101% protected premium-and-repayment base, the current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap subject to the published S$2 million per-life limit, Booster Bonus, Loyalty Bonus including the post-premium-payment-term no-initial-account-withdrawal corridor, and the 20-year and 25-year regular-premium corridors through the fixed-premium-base initial-account charge, Appendix B insurance charge with manual repayment-base input, premium shortfall charge with admitted-state charge-waiver and retrospective charge-refund support on premium-holiday events, premium-reduction charge with admitted-state charge-waiver and retrospective charge-refund support on reduction events, top-up premium charge with blocking below the published S$3,000 minimum, before policy month 13, and until aggregate repayment-clearance for missed premiums, prior initial-account withdrawals, and regular-premium-reduction differences, the initial-units-account policy-month-25 one-off partial-withdrawal gate with the published S$3,000 minimum remaining-value floor, initial-account redemption-fee, and surrender-charge surfaces that fit the existing charge and surrender kernels.',
+      'Automatic Premium Pause Waiver activation, Support Benefit approval history, the exact repayment-allocation waterfall, and broader withdrawal eligibility gates remain metadata-only beyond the modeled initial-units-account policy-month-25 gate and S$3,000 minimum remaining-value floor for explicit one-off partial withdrawals.',
     ],
     archived: false,
     variants: [

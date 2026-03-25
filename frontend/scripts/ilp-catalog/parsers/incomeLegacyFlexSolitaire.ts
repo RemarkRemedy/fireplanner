@@ -2,6 +2,7 @@ import path from 'node:path'
 import type {
   IlpCatalogProduct,
   IlpCatalogSourceRef,
+  IlpTemplateBonus,
   IlpTemplateEventChargeRule,
   IlpTemplateFeeRule,
   IlpTemplateVariant,
@@ -200,9 +201,33 @@ function buildVariant(document: ExtractedPdfDocument, config: LegacyFlexVariantC
       notes: [
         'Models the published Appendix 2 charge factor on partial withdrawals from the premium account during the selected minimum investment period.',
         'Top-up-account withdrawals after 12 months are charge-free, but first-12-month top-up-account withdrawal charges remain informational only in V1.',
-        'Withdrawal access option withdrawals remain informational only in V1.',
+        'Qualifying Withdrawal Access Option withdrawals can be represented in V1 by setting chargeWaived on the premium-account partial-withdrawal event.',
+        'Withdrawal Access Option timing, 5%-of-prevailing-premium-account-value limits, and once-per-policy-year administration remain manual in V1.',
       ],
       sourceRefs: [page11, page25],
+    },
+  ]
+
+  const loyaltyBonusRate = config.mipLength === 5 ? 0.0025 : 0.005
+  const bonuses: IlpTemplateBonus[] = [
+    {
+      id: 'loyalty-bonus',
+      type: 'loyalty',
+      label: 'Loyalty Bonus',
+      mode: 'annual-rate',
+      appliesTo: ['premium'],
+      startPolicyYear: config.mipLength + 1,
+      endPolicyYear: null,
+      rate: loyaltyBonusRate,
+      amount: null,
+      tieredRates: [],
+      suspensionRules: [{ trigger: 'partial-withdrawal', suspensionMonths: 12 }],
+      notes: [
+        `Applied annually from the end of the ${config.mipLength}-year MIP on the premium-account policy value.`,
+        'Qualifying Withdrawal Access Option withdrawals and top-up-account withdrawals can be represented in V1 by setting bonusSuspensionWaived on the recorded partial-withdrawal event.',
+        'Premium holidays do not suspend Loyalty Bonus eligibility in the published summary.',
+      ],
+      sourceRefs: [page2],
     },
   ]
 
@@ -236,7 +261,7 @@ function buildVariant(document: ExtractedPdfDocument, config: LegacyFlexVariantC
         sourceRefs: [page2, page12],
       },
     ],
-    bonuses: [],
+    bonuses,
     feeRules,
     eventChargeRules,
     distributionSupport: {
@@ -254,14 +279,15 @@ function buildVariant(document: ExtractedPdfDocument, config: LegacyFlexVariantC
     },
     eecTable: [...config.withdrawalAndSurrenderChargeSchedule],
     warnings: [
-      `Legacy Flex Solitaire is cataloged as supported in V1 for the ${config.mipLength}-year regular-premium corridor. The parser captures the premium-year regular premium charge schedule, a manual-input policy-fee amount for policy years 1-4, the manual-input Appendix 1 insurance-cover-charge corridor, the top-up premium charge, the premium-holiday charge schedule, the premium-account Appendix 2 partial-withdrawal / surrender charge schedule, and the published reinvest-only distribution baseline.`,
-      'Single-premium charging, loyalty-bonus suspension logic, automatic adjusted-sum-assured changes after top-ups and withdrawals, No Lapse Guarantee behavior, top-up-account first-12-month charge timing, and retirement-option distribution payouts remain informational only in V1.',
+      `Legacy Flex Solitaire is cataloged as supported in V1 for the ${config.mipLength}-year regular-premium corridor. The parser captures the premium-year regular premium charge schedule, a manual-input policy-fee amount for policy years 1-4, the manual-input Appendix 1 insurance-cover-charge corridor, the current-state death and terminal-illness benefit estimate as the higher of adjusted sum assured or policy value via a manual current adjusted sum assured input, the published Loyalty Bonus rate with the supported partial-withdrawal suspension subset, the top-up premium charge, the premium-holiday charge schedule, the premium-account Appendix 2 partial-withdrawal / surrender charge schedule, and the published reinvest-only distribution baseline.`,
+      'Qualifying Withdrawal Access Option withdrawals can be represented in V1 with event-level charge and loyalty-bonus-suspension waivers, and qualifying top-up-account withdrawals can be represented with event-level loyalty-bonus-suspension waivers, while timing, caps, once-per-policy-year administration, adjusted-sum-assured exceptions, and No Lapse Guarantee exceptions remain informational only.',
+      'Single-premium charging, automatic adjusted-sum-assured changes after top-ups and withdrawals, No Lapse Guarantee behavior, top-up-account first-12-month charge timing, and retirement-option distribution payouts remain informational only in V1. The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state.',
     ],
     unsupportedItems: [
       'Single-premium corridor remains informational only in V1, including the 4% single-premium charge and the single-premium Appendix 2 charge schedule.',
-      'Loyalty Bonus remains informational only because the current runtime does not distinguish chargeable premium-account withdrawals from top-up-account or withdrawal-access withdrawals for bonus suspension.',
-      'Automatic adjusted-sum-assured updates after top-ups, charged withdrawals, withdrawal-access exceptions, and sum-assured reductions remain informational only, so the current adjusted sum assured must be maintained manually for the insurance-cover-charge corridor.',
-      'Death and terminal-illness benefit settlement, secondary-insured continuation, bequest option behavior, and other protection-side payout mechanics remain informational only beyond the supported insurance-cover-charge corridor.',
+      'Withdrawal Access Option timing, 5%-of-prevailing-premium-account-value limits, once-per-policy-year administration, and top-up-account first-12-month charge timing remain informational only in V1.',
+      'Automatic adjusted-sum-assured updates after top-ups, charged withdrawals, withdrawal-access exceptions, and sum-assured reductions remain informational only, so the current adjusted sum assured must be maintained manually for the insurance-cover-charge corridor and current death / terminal-illness benefit estimate.',
+      'The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state, but terminal-illness definitions, exclusions, insurer-side settlement, secondary-insured continuation, bequest option behavior, and other protection-side claim mechanics remain informational only beyond the supported current death / terminal-illness benefit estimate and insurance-cover-charge corridor.',
       'No Lapse Guarantee debt carry and termination behavior remain informational only.',
       'Future Premium Option and recurring top-up enrollment remain informational only.',
       'Withdrawal Access Option, retirement-option distribution payout elections, and the insurer-set minimum distribution payout threshold remain informational only.',
@@ -288,6 +314,9 @@ export function parseIncomeLegacyFlexSolitaire({ document, sourceChecksumSha256 
       'branch:income-legacy-flex-solitaire-regular-premium-charge',
       'branch:income-legacy-flex-solitaire-policy-fee',
       'branch:income-legacy-flex-solitaire-insurance-cover-charge',
+      'branch:income-legacy-flex-solitaire-loyalty-bonus',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:income-legacy-flex-solitaire-top-up-premium-charge',
       'branch:income-legacy-flex-solitaire-premium-holiday-charge',
       'branch:income-legacy-flex-solitaire-appendix-2-withdrawal-and-surrender-charge',
@@ -295,7 +324,6 @@ export function parseIncomeLegacyFlexSolitaire({ document, sourceChecksumSha256 
     ],
     metadataOnlyBehaviors: [
       'income-legacy-flex-solitaire-single-premium-corridor',
-      'income-legacy-flex-solitaire-loyalty-bonus',
       'income-legacy-flex-solitaire-no-lapse-guarantee',
       'income-legacy-flex-solitaire-future-premium-option',
       'income-legacy-flex-solitaire-withdrawal-access-option',
@@ -304,10 +332,11 @@ export function parseIncomeLegacyFlexSolitaire({ document, sourceChecksumSha256 
       'income-legacy-flex-solitaire-top-up-account-first-12-month-charge-window',
       'income-legacy-flex-solitaire-fund-level-annual-management-fee',
       'income-legacy-flex-solitaire-fund-switching-and-suspension',
-      'income-legacy-flex-solitaire-protection-benefits',
+      'income-legacy-flex-solitaire-terminal-illness-and-claim-settlement',
     ],
     warnings: [
-      'Legacy Flex Solitaire (VA3S / VA3R) is cataloged as supported in V1 for the regular-premium 5-year and 10-year corridors. The current parser models the premium-year regular premium charges, manual-input policy-fee and Appendix 1 insurance-cover-charge corridors, the top-up premium charge, premium-holiday charge, premium-account Appendix 2 withdrawal / surrender charges, and the published reinvest-only distribution baseline. The single-premium corridor, loyalty-bonus suspension logic, automatic adjusted-sum-assured updates, No Lapse Guarantee, retirement-option payout elections, and top-up-account first-12-month charge timing remain outside the current engine.',
+      'Legacy Flex Solitaire (VA3S / VA3R) is cataloged as supported in V1 for the regular-premium 5-year and 10-year corridors. The current parser models the premium-year regular premium charges, manual-input policy-fee and Appendix 1 insurance-cover-charge corridors, the current-state death and terminal-illness benefit estimate as the higher of adjusted sum assured or policy value via a manual current adjusted sum assured input, the current admitted-state TI payable amount through the published full-termination TI corridor after manual claim-amount entry, an admitted-and-settled TI claim as a current policy-termination state, the published Loyalty Bonus rate with the supported partial-withdrawal suspension subset, the top-up premium charge, premium-holiday charge, premium-account Appendix 2 withdrawal / surrender charges, and the published reinvest-only distribution baseline. The single-premium corridor, automatic adjusted-sum-assured updates, No Lapse Guarantee, retirement-option payout elections, top-up-account first-12-month charge timing, and broader claim-side settlement / continuation mechanics remain outside the current engine.',
+      'Qualifying Withdrawal Access Option withdrawals can be represented in V1 with event-level charge and loyalty-bonus-suspension waivers, and qualifying top-up-account withdrawals can be represented with event-level loyalty-bonus-suspension waivers, while timing, caps, adjusted-sum-assured exceptions, No Lapse Guarantee exceptions, and retirement-option distribution behavior remain informational only.',
     ],
     archived: false,
     variants: VARIANT_CONFIGS.map((config) => buildVariant(document, config)),

@@ -115,7 +115,7 @@ function buildVariant(
       'This open-ended single-premium product uses the new no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
     unsupportedItems: [
-      'Death and terminal-illness benefit formulas remain informational only.',
+      'The current-state terminal-illness benefit amount is modeled as the same amount as the current death-benefit estimate after manual current amount owing, but terminal-illness claim admission, exclusions, settlement, and policy termination remain informational only.',
       'Fund-switching and minimum-transaction guards remain informational only.',
     ],
     sourceRefs: [page1, page2, page3],
@@ -138,14 +138,14 @@ export function parseGreatEasternInvestAdvantageSp(context: ParseContext): IlpCa
       'branch:great-eastern-gia-sp-initial-single-premium-charge',
       'branch:great-eastern-gia-sp-top-up-premium-charge',
       'branch:great-eastern-gia-sp-open-ended-zero-surrender-charge',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
     ],
     metadataOnlyBehaviors: [
-      'great-eastern-gia-sp-death-benefit',
-      'great-eastern-gia-sp-terminal-illness-benefit',
       'great-eastern-gia-sp-srs-cpfis-surrender-destination',
     ],
     warnings: [
-      'GREAT Invest Advantage (SP) is cataloged as a supported V1 product. The parser captures the upfront initial single-premium charge, accepted top-up premium charge, and explicit no-surrender-charge structure through the open-ended no-MIP basis, while protection benefits and surrender-destination handling remain informational only.',
+      'GREAT Invest Advantage (SP) is cataloged as a supported V1 product. The parser captures the upfront initial single-premium charge, accepted top-up premium charge, the current-state death and terminal-illness benefit amount as the higher of 110% of single premium plus top-ups less partial surrenders or account value less manual current amount owing, and the explicit no-surrender-charge structure through the open-ended no-MIP basis, while terminal-illness claim admission / exclusions / settlement and surrender-destination handling remain informational only.',
     ],
     archived: false,
     variants: [

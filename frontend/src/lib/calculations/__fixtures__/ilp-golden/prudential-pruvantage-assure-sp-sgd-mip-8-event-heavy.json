@@ -14,7 +14,15 @@
       "branch:pru-charged-withdrawal",
       "branch:assure-sp-top-up-charge",
       "branch:assure-sp-first-free-withdrawal",
-      "branch:assure-sp-charged-withdrawal"
+      "branch:assure-sp-charged-withdrawal",
+      "branch:assure-sp-administration-charge",
+      "branch:assure-sp-combined-assurance",
+      "branch:assure-sp-single-premium-allocation-enhancement",
+      "branch:assure-sp-loyalty-bonus",
+      "kernel:current-death-benefit-estimate",
+      "kernel:current-accidental-disability-benefit-estimate",
+      "branch:assure-sp-iia-surrender-charge",
+      "kernel:distribution-mode-assumption"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "PRUVantage Assure (SP) Product Summary.pdf",
@@ -103,6 +111,41 @@
       }
     ],
     "bonuses": [
+      {
+        "id": "single-premium-allocation-enhancement",
+        "type": "sign-up",
+        "label": "Single Premium Allocation Enhancement",
+        "mode": "premium-allocation",
+        "annualPremiumTierBasis": "initial-single-premium-at-issue",
+        "rate": 0,
+        "amount": 0,
+        "appliesTo": [
+          "iia"
+        ],
+        "startPolicyYear": 1,
+        "endPolicyYear": 1,
+        "tieredRates": [
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 50000,
+            "maxAnnualPremium": 149999.99,
+            "rate": 0
+          },
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 150000,
+            "maxAnnualPremium": 399999.99,
+            "rate": 0.005
+          },
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 400000,
+            "maxAnnualPremium": null,
+            "rate": 0.01
+          }
+        ],
+        "suspensionRules": []
+      },
       {
         "id": "loyalty-bonus",
         "type": "loyalty",
@@ -271,7 +314,10 @@
       "modeledEconomics": [
         "branch:assure-sp-administration-charge",
         "branch:assure-sp-combined-assurance",
+        "branch:assure-sp-single-premium-allocation-enhancement",
         "branch:assure-sp-loyalty-bonus",
+        "kernel:current-death-benefit-estimate",
+        "kernel:current-accidental-disability-benefit-estimate",
         "branch:assure-sp-top-up-charge",
         "branch:assure-sp-first-free-withdrawal",
         "branch:assure-sp-charged-withdrawal",
@@ -279,31 +325,30 @@
         "kernel:distribution-mode-assumption"
       ],
       "metadataOnlyBehaviors": [
-        "pruvantage-assure-sp-single-premium-allocation-enhancement",
         "pruvantage-assure-sp-change-of-life-assured",
         "pruvantage-assure-sp-sum-assured-wealth-assure-reduction-resumption",
-        "pruvantage-assure-sp-dividend-payout-yield-assumption"
+        "pruvantage-assure-sp-death-claim-exclusions"
       ]
     },
     "catalogWarnings": [
-      "PRUVantage Assure (SP) is cataloged as a supported V1 product. The parser captures the two-account structure, administration charge, combined Appendix A assurance charge, the recurring 8-year loyalty bonus on the Initial Investment Account, top-up premium charge, Initial Investment Account withdrawal / surrender charge schedules including the first-withdrawal free cap tied to original single premium, and reinvest-default distribution support, while the enhanced single-premium allocation tiers and policy-specific dividend-yield election remain informational only.",
-      "This supported template models administration charges, Appendix A combined assurance charges, the recurring 8-year Loyalty Bonus on the Initial Investment Account, top-up premium charges, Initial Investment Account withdrawal / surrender charge schedules including the first-withdrawal 10%-of-original-single-premium free cap, and reinvest-default distribution support.",
-      "The enhanced single-premium allocation tiers remain informational only in V1.",
+      "PRUVantage Assure (SP) is cataloged as a supported V1 product. The parser captures the two-account structure, administration charge, combined Appendix A assurance charge, the published single-premium allocation enhancement tiers on the original initial single premium, the recurring 8-year loyalty bonus on the Initial Investment Account, the current-state death-benefit estimate as the higher of current sum assured, current Wealth Assure Value, or Initial Investment Account value plus Additional Investment Account value after manual current amount owing, a payable-now accidental-disability snapshot from that same corridor once the current accidental-disability payout stage is filled, top-up premium charge, Initial Investment Account withdrawal / surrender charge schedules including the first-withdrawal free cap tied to original single premium, and reinvest-default distribution support, while later accidental-disability release timing and change-of-life-assured / reduction-resumption mechanics remain informational only.",
+      "This supported template models administration charges, Appendix A combined assurance charges, the recurring 8-year Loyalty Bonus on the Initial Investment Account, the current-state death-benefit estimate as the higher of current sum assured, current Wealth Assure Value, or Initial Investment Account value plus Additional Investment Account value after manual current amount owing, top-up premium charges, Initial Investment Account withdrawal / surrender charge schedules including the first-withdrawal 10%-of-original-single-premium free cap, and reinvest-default distribution support.",
+      "The payable-now accidental-disability snapshot is modeled from the same current corridor once the current accidental-disability payout stage is filled.",
       "Enter insured-life details and use the current net regular premium base field as the current net single-premium base to activate the modeled assurance charge path.",
-      "The current ILP engine does not yet model the published 100.5% / 101% single-premium allocation enhancements, so high-tier initial allocations remain conservative in V1.",
+      "Enter current sum assured, current Wealth Assure Value, and current amount owing before trusting the current-state death-benefit estimate.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.",
       "Enter the one-time gross initial single premium lump sum in Policy Details if you want the upfront single-premium deduction to seed the starting policy value honestly.",
-      "Enhanced single-premium allocation tiers (100% / 100.49999999999999% / 101%) remain informational only.",
       "Change of life assured and sum assured / Wealth Assure Value reduction-resumption options remain informational only.",
-      "The published dividend payout election remains informational only insofar as the policy-specific payout yield remains a manual assumption in V1."
+      "The current-state death-benefit estimate needs a manual current amount owing input because outstanding debt is not reconstructed from history in V1.",
+      "Accidental-disability deferment timing, staged later-balance release, disability-status revalidation, suicide and pre-existing-condition exclusions, and broader claim settlement mechanics remain informational only beyond the modeled payable-now accidental-disability snapshot."
     ]
   },
   "expected": {
     "summary": {
       "totalPremiumsPaid": 8000,
-      "totalFeesCharged": 5341.06,
-      "totalBonusesReceived": 660.61,
-      "netFeeDrag": 4680.44,
+      "totalFeesCharged": 5342.44,
+      "totalBonusesReceived": 0,
+      "netFeeDrag": 5342.44,
       "currentSurrenderValue": 92450,
       "cancelNowPenalty": 8550
     },
@@ -367,34 +412,34 @@
           "exitYear": 5,
           "policyYear": 8,
           "eecRate": 0.015,
-          "eecCharge": 1308.37,
-          "pvEec": 932.85,
-          "npvGrossFees": 4602.28,
-          "npvBonuses": 471.01,
-          "totalNpvFees": 5064.12,
-          "netSurrenderValue": 103487.5,
+          "eecCharge": 1297.88,
+          "pvEec": 925.37,
+          "npvGrossFees": 4603.26,
+          "npvBonuses": 0,
+          "totalNpvFees": 5528.63,
+          "netSurrenderValue": 102798.4,
           "totalContributions": 8000
         }
       ],
       "bestExitYear": 5,
-      "bestExitNpvFees": 5064.12,
+      "bestExitNpvFees": 5528.63,
       "holdToMip": {
-        "npvGrossFees": 4602.28,
-        "npvBonuses": 471.01,
-        "totalNpvFees": 5064.12,
-        "finalValue": 104795.87,
+        "npvGrossFees": 4603.26,
+        "npvBonuses": 0,
+        "totalNpvFees": 5528.63,
+        "finalValue": 104096.28,
         "totalContributions": 8000
       }
     },
     "opportunityCost": {
       "alternativePortfolioValue": 140152.28,
-      "ilpValueAtHorizon": 104795.87,
-      "difference": 35356.4,
+      "ilpValueAtHorizon": 104096.28,
+      "difference": 36056,
       "atBestExit": {
         "exitYear": 5,
-        "alternativeValue": 103487.5,
-        "ilpValueAtHorizon": 104795.87,
-        "difference": -1308.37
+        "alternativeValue": 102798.4,
+        "ilpValueAtHorizon": 104096.28,
+        "difference": -1297.88
       }
     },
     "projections": {
@@ -546,23 +591,23 @@
             "policyYear": 8,
             "annualContribution": 0,
             "annualWithdrawals": 0,
-            "combinedValue": 92043.74,
+            "combinedValue": 91431.52,
             "eecRate": 0.015,
-            "eecCharge": 1144.37,
-            "surrenderValue": 90899.37,
+            "eecCharge": 1135.19,
+            "surrenderValue": 90296.33,
             "cumulativePremiums": 8000,
-            "cumulativeGrossFees": 5264.1,
-            "cumulativeBonuses": 592.58,
+            "cumulativeGrossFees": 5265.31,
+            "cumulativeBonuses": 0,
             "accounts": [
               {
                 "accountId": "iia",
                 "open": 74072.05,
                 "contributionAmount": 0,
-                "grossFee": 670.76,
-                "bonusCredit": 592.58,
-                "netFee": 78.19,
+                "grossFee": 671.97,
+                "bonusCredit": 0,
+                "netFee": 671.97,
                 "withdrawalAmount": 0,
-                "close": 76291.38
+                "close": 75679.16
               },
               {
                 "accountId": "aia",
@@ -726,23 +771,23 @@
             "policyYear": 8,
             "annualContribution": 0,
             "annualWithdrawals": 0,
-            "combinedValue": 104795.87,
+            "combinedValue": 104096.28,
             "eecRate": 0.015,
-            "eecCharge": 1308.37,
-            "surrenderValue": 103487.5,
+            "eecCharge": 1297.88,
+            "surrenderValue": 102798.4,
             "cumulativePremiums": 8000,
-            "cumulativeGrossFees": 5341.06,
-            "cumulativeBonuses": 660.61,
+            "cumulativeGrossFees": 5342.44,
+            "cumulativeBonuses": 0,
             "accounts": [
               {
                 "accountId": "iia",
                 "open": 82576.68,
                 "contributionAmount": 0,
-                "grossFee": 700.45,
-                "bonusCredit": 660.61,
-                "netFee": 39.84,
+                "grossFee": 701.83,
+                "bonusCredit": 0,
+                "netFee": 701.83,
                 "withdrawalAmount": 0,
-                "close": 87224.94
+                "close": 86525.34
               },
               {
                 "accountId": "aia",
@@ -906,23 +951,23 @@
             "policyYear": 8,
             "annualContribution": 0,
             "annualWithdrawals": 0,
-            "combinedValue": 117049.24,
+            "combinedValue": 116267.1,
             "eecRate": 0.015,
-            "eecCharge": 1466.36,
-            "surrenderValue": 115582.88,
+            "eecCharge": 1454.63,
+            "surrenderValue": 114812.47,
             "cumulativePremiums": 8000,
             "cumulativeGrossFees": 5416.09,
-            "cumulativeBonuses": 724.67,
+            "cumulativeBonuses": 0,
             "accounts": [
               {
                 "accountId": "iia",
                 "open": 90583.71,
                 "contributionAmount": 0,
                 "grossFee": 733.4,
-                "bonusCredit": 724.67,
-                "netFee": 8.73,
+                "bonusCredit": 0,
+                "netFee": 733.4,
                 "withdrawalAmount": 0,
-                "close": 97757.58
+                "close": 96975.45
               },
               {
                 "accountId": "aia",

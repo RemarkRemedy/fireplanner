@@ -160,13 +160,15 @@ export function parseIncomeSnackInvestment(context: ParseContext): IlpCatalogPro
     structureStatus: 'structured',
     economicsStatus: 'supported',
     modeledEconomics: [
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
       'branch:income-snack-investment-zero-single-premium-charge',
       'branch:income-snack-investment-zero-top-up-charge',
       'branch:income-snack-investment-zero-withdrawal-charge',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'income-snack-investment-accidental-death-benefit',
+      'income-snack-investment-accidental-death-claim-exclusions',
       'income-snack-investment-trigger-driven-top-ups',
       'income-snack-investment-auto-invest-weekly-cap',
       'income-snack-investment-fund-management-fee',
@@ -174,7 +176,7 @@ export function parseIncomeSnackInvestment(context: ParseContext): IlpCatalogPro
       'income-snack-investment-free-look',
     ],
     warnings: [
-      'SNACK-Investment is cataloged as a supported V1 product. The parser captures the published zero-charge initial premium, top-up, and no-penalty withdrawal path through the open-ended no-MIP basis, plus the reinvest-only distribution mode published for this product, while accidental-death protection, trigger-driven top-up automation, and fund-level charges remain informational only.',
+      'SNACK-Investment is cataloged as a supported V1 product. The parser captures the published zero-charge initial premium, top-up, and no-penalty withdrawal path through the open-ended no-MIP basis, plus the reinvest-only distribution mode, the current-state ordinary death benefit as cash-in value, and the current accidental-death estimate before age 75 as the higher of cash-in value or 105% of net premium, while accidental-death claim timing and exclusions, trigger-driven top-up automation, and fund-level charges remain informational only beyond the modeled current ordinary and accidental-death benefit estimates.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

@@ -26,8 +26,129 @@ describe('parseEtiqaInvestWealthPurpose', () => {
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('branch:etiqa-wealth-purpose-cumulative-paid-policy-charge')
     expect(product.modeledEconomics).toContain('branch:etiqa-wealth-purpose-insurance-charge')
+    expect(product.modeledEconomics).toContain('branch:etiqa-wealth-purpose-premium-shortfall-charge')
+    expect(product.modeledEconomics).toContain('branch:etiqa-wealth-purpose-premium-shortfall-refund')
+    expect(product.modeledEconomics).toContain('branch:etiqa-wealth-purpose-partial-withdrawal-charge')
+    expect(product.modeledEconomics).toContain('kernel:premium-holiday-top-up-block')
+    expect(product.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
+    expect(product.modeledEconomics).toContain('kernel:monthly-rate-bonus-crediting')
+    expect(product.modeledEconomics).toContain('kernel:free-withdrawal-event-cap')
+    expect(product.modeledEconomics).toContain('kernel:partial-withdrawal-amount-increment-block')
+    expect(product.modeledEconomics).toContain('kernel:partial-withdrawal-maximum-amount-block')
+    expect(product.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
+    expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
+    expect(product.modeledEconomics).toContain('kernel:current-ti-benefit-estimate')
     expect(product.metadataOnlyBehaviors).not.toContain('etiqa-wealth-purpose-insurance-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('etiqa-wealth-purpose-premium-free-period-gated-shortfall-charge-after-policy-year-3')
+    expect(product.metadataOnlyBehaviors).toContain('etiqa-wealth-purpose-free-partial-withdrawal-benefit-administration')
+    expect(product.warnings[0]).toContain('current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap')
+    expect(product.warnings[0]).toContain('top-up premium charge with ad-hoc top-up blocking during active Premium-Free Period windows')
+    const term10 = product.variants.find((variant) => variant.id === 'sgd-mip-10')
+    expect(term10?.policyStateSupport).toEqual(expect.objectContaining({
+      automaticLapseOnAccountValueDepletion: false,
+      blockTopUpsDuringPremiumHoliday: true,
+      minimumTopUpAmount: 2_500,
+      topUpAmountIncrement: 100,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalAmountIncrement: 100,
+      partialWithdrawalMaximumAmountRules: [
+        {
+          activeWindow: 'during-mip',
+          accountId: 'regular',
+          basis: 'cumulative-paid-regular-premium-less-prior-gross-withdrawals',
+          maximumValueRate: 0.5,
+        },
+      ],
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'account-value',
+          accountId: 'regular',
+          minimumValue: 1_000,
+        },
+      ],
+    }))
+    expect(term10?.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'partial-withdrawal-charge',
+          trigger: 'partial-withdrawal',
+          basis: 'event-amount',
+          freeEventCount: 2,
+          freeEventStartPolicyYear: 4,
+          freeEventMaxAmountRate: 0.05,
+          freeEventMaxAmountBasis: 'cumulative-paid-regular-premium',
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 1, rate: 1 },
+            { startPolicyYear: 2, endPolicyYear: 2, rate: 0.7 },
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.6 },
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.5 },
+            { startPolicyYear: 5, endPolicyYear: 5, rate: 0.4 },
+            { startPolicyYear: 6, endPolicyYear: 6, rate: 0.05 },
+            { startPolicyYear: 7, endPolicyYear: 7, rate: 0.05 },
+            { startPolicyYear: 8, endPolicyYear: 8, rate: 0.05 },
+            { startPolicyYear: 9, endPolicyYear: 9, rate: 0.05 },
+            { startPolicyYear: 10, endPolicyYear: 10, rate: 0.05 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'premium-shortfall-charge',
+          trigger: 'premium-holiday',
+          basis: 'annual-premium-with-overlap-months',
+          freeLifetimeMonthsResetOnRepayment: true,
+          freeLifetimeMonthsSchedule: [
+            { startPolicyYear: 7, endPolicyYear: 10, months: 60 },
+          ],
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 1, rate: 1 },
+            { startPolicyYear: 2, endPolicyYear: 2, rate: 1 },
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.79 },
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.6 },
+            { startPolicyYear: 5, endPolicyYear: 5, rate: 0.5 },
+            { startPolicyYear: 6, endPolicyYear: 6, rate: 0.47 },
+            { startPolicyYear: 7, endPolicyYear: 7, rate: 0.44 },
+            { startPolicyYear: 8, endPolicyYear: 8, rate: 0.21 },
+            { startPolicyYear: 9, endPolicyYear: 9, rate: 0.16 },
+            { startPolicyYear: 10, endPolicyYear: 10, rate: 0.08 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'premium-shortfall-charge-refund',
+          trigger: 'premium-holiday-repayment',
+          basis: 'premium-holiday-charge-refund',
+          sourceChargeRuleId: 'premium-shortfall-charge',
+        }),
+      ]),
+    )
+    expect(term10?.warnings).toEqual(expect.arrayContaining([
+      expect.stringContaining('the published 50%-of-cumulative-paid-regular-premiums less prior gross Regular Premium Account withdrawals limit'),
+      expect.stringContaining('the published S$1,000 Regular Premium Account minimum holding floor on explicit regular-account withdrawals'),
+    ]))
     const term20 = product.variants.find((variant) => variant.id === 'sgd-mip-20')
+    expect(term20?.unsupportedItems).toContain('The current-state death and terminal-illness snapshot needs manual current amount owing and remaining aggregate TI cap inputs because debt and cross-policy TI cap usage are not reconstructed from history in V1.')
+    expect(term20?.bonuses).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'startup-bonus',
+          restorationRules: [
+            { trigger: 'premium-holiday-repayment', basis: 'repaid-premium' },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'special-bonus',
+          restorationRules: [
+            { trigger: 'premium-holiday-repayment', basis: 'repaid-premium' },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'loyalty-bonus',
+          mode: 'monthly-rate',
+          rate: 0.001,
+          appliesTo: ['regular'],
+          suspensionRules: [{ trigger: 'partial-withdrawal', suspensionMonths: 12, startOffsetMonths: 1 }],
+        }),
+      ]),
+    )
     expect(term20?.feeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

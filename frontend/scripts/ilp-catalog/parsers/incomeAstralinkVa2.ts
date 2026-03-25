@@ -29,6 +29,8 @@ const PREMIUM_HOLIDAY_NO_CHARGE_MONTHS: Record<MipTerm, number> = {
   20: 24,
   25: 24,
 }
+const PREMIUM_HOLIDAY_MIN_START_POLICY_MONTH = 13
+const PREMIUM_HOLIDAY_NO_CHARGE_START_POLICY_YEAR = 3
 const LOYALTY_BONUS_PHASES: Record<MipTerm, Array<{ startPolicyYear: number, endPolicyYear: number | null, rate: number }>> = {
   10: [
     { startPolicyYear: 10, endPolicyYear: null, rate: 0.003 },
@@ -46,6 +48,36 @@ const LOYALTY_BONUS_PHASES: Record<MipTerm, Array<{ startPolicyYear: number, end
     { startPolicyYear: 26, endPolicyYear: null, rate: 0.01 },
   ],
 }
+const INVESTMENT_BONUS_BANDS = [
+  {
+    minAnnualPremium: 1_200,
+    maxAnnualPremium: 9_599.99,
+    ratesByTerm: {
+      10: [0, 0.07, 0.11, 0.15, 0.19, 0.23],
+      15: [0, 0.07, 0.26, 0.3, 0.34, 0.38],
+      20: [0, 0.07, 0.4, 0.44, 0.48, 0.52],
+      25: [0, 0.07, 0.42, 0.46, 0.5, 0.54],
+    } satisfies Record<MipTerm, readonly number[]>,
+  },
+  {
+    minAnnualPremium: 9_600,
+    maxAnnualPremium: null,
+    ratesByTerm: {
+      10: [0, 0.15, 0.19, 0.23, 0.27, 0.31],
+      15: [0, 0.15, 0.34, 0.38, 0.42, 0.46],
+      20: [0, 0.15, 0.5, 0.54, 0.58, 0.65],
+      25: [0, 0.15, 0.52, 0.56, 0.6, 0.67],
+    } satisfies Record<MipTerm, readonly number[]>,
+  },
+] as const
+const INVESTMENT_BONUS_MULTIPLE_BANDS: Array<{ min: number, max: number | null }> = [
+  { min: 0, max: 9.99 },
+  { min: 10, max: 19.99 },
+  { min: 20, max: 29.99 },
+  { min: 30, max: 39.99 },
+  { min: 40, max: 49.99 },
+  { min: 50, max: null },
+]
 
 function normalizeWhitespace(text: string): string {
   return text.replace(/\s+/g, ' ').trim()
@@ -84,8 +116,39 @@ function buildRateSchedule(values: readonly number[]): Array<{ startPolicyYear: 
   }))
 }
 
-function buildBonuses(term: MipTerm, page1: IlpCatalogSourceRef, page3: IlpCatalogSourceRef): IlpTemplateBonus[] {
+function buildInvestmentBonusTiers(term: MipTerm) {
+  return INVESTMENT_BONUS_BANDS.flatMap((band) => (
+    INVESTMENT_BONUS_MULTIPLE_BANDS.map((multipleBand, index) => ({
+      currency: 'SGD' as const,
+      minAnnualPremium: band.minAnnualPremium,
+      maxAnnualPremium: band.maxAnnualPremium,
+      minSumAssuredMultiple: multipleBand.min,
+      maxSumAssuredMultiple: multipleBand.max,
+      rate: roundRate(band.ratesByTerm[term][index] ?? 0),
+    }))
+  ))
+}
+
+function buildBonuses(term: MipTerm, page1: IlpCatalogSourceRef, page2: IlpCatalogSourceRef, page3: IlpCatalogSourceRef): IlpTemplateBonus[] {
   return [
+    {
+      id: 'investment-bonus',
+      type: 'sign-up',
+      label: 'Investment Bonus',
+      mode: 'premium-allocation',
+      appliesTo: ['policy'],
+      startPolicyYear: 1,
+      endPolicyYear: 1,
+      rate: null,
+      amount: null,
+      annualPremiumTierBasis: 'initial-basic-sum-assured-multiple-at-issue',
+      tieredRates: buildInvestmentBonusTiers(term),
+      notes: [
+        'Models the published basic-policy Table 1 investment bonus on regular premiums paid in the first 12 months using the issue-time sum assured multiple and annual premium band.',
+        'The separate Critical Protect (ILP) rider table uses different rates and remains informational only.',
+      ],
+      sourceRefs: [page2],
+    },
     {
       id: 'post-mip-regular-premium-allocation',
       type: 'allocation',
@@ -183,14 +246,15 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
       basis: 'annual-premium-with-overlap-months',
       appliesTo: ['policy'],
       freeLifetimeMonths: PREMIUM_HOLIDAY_NO_CHARGE_MONTHS[term],
+      freeLifetimeMonthsStartPolicyYear: PREMIUM_HOLIDAY_NO_CHARGE_START_POLICY_YEAR,
       rate: 0,
       rateSchedule: buildRateSchedule(APPENDIX_2_CHARGE[term]),
       amount: 0,
       activeWindow: 'during-mip',
       allocation: 'equal-split',
       notes: [
-        `Models the published Appendix 2 premium-holiday charge after the first ${PREMIUM_HOLIDAY_NO_CHARGE_MONTHS[term]} months of charge-free premium holiday for the selected MIP corridor.`,
-        'Premium-holiday start timing from the 2nd anniversary and the no-lapse / lapse gating remain manual in V1.',
+        `Models the published Appendix 2 premium-holiday charge from the 2nd policy anniversary during the MIP, with the first ${PREMIUM_HOLIDAY_NO_CHARGE_MONTHS[term]} months waived from the 3rd policy anniversary for the selected MIP corridor.`,
+        'Pre-2nd-anniversary nonpayment termination, No Lapse Guarantee debt carry, and reinstatement remain manual in V1.',
       ],
       sourceRefs: [page8, page21],
     },
@@ -233,9 +297,14 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
         sourceRefs: [page1, page3, page9],
       },
     ],
-    bonuses: buildBonuses(term, page1, page3),
+    bonuses: buildBonuses(term, page1, page2, page3),
     feeRules,
     eventChargeRules,
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      blockTopUpsDuringPremiumHoliday: true,
+      minimumPremiumHolidayStartPolicyMonth: PREMIUM_HOLIDAY_MIN_START_POLICY_MONTH,
+    },
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['policy'],
@@ -251,17 +320,19 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
     },
     eecTable: [...APPENDIX_2_CHARGE[term]],
     warnings: [
-      'AstraLink (VA2) is modeled as a supported subset in V1. The parser captures the 105% post-MIP regular-premium allocation uplift, the term-specific annual loyalty bonus schedule from the 10th policy anniversary onward, the policy-fee schedule, the monthly insurance cover charge after insured-life and current-basic-benefit inputs are supplied, the Appendix 2 premium-holiday / partial-withdrawal / surrender charge schedules, and the published reinvest-only distribution mode.',
-      'Investment bonus remains informational only because the published tables depend on sum-assured-multiple, annual-premium, and rider dimensions that are not expressible without overstating support in the current template surface.',
-      'No Lapse Guarantee debt carry, premium-holiday start gating, and protection-side payout handling remain informational only in V1.',
+      'AstraLink (VA2) is modeled as a supported subset in V1. The parser captures the basic-policy Table 1 investment bonus on first-year regular premiums, the 105% post-MIP regular-premium allocation uplift, the term-specific annual loyalty bonus schedule from the 10th policy anniversary onward, the current-state death / terminal-illness / TPD estimates as the higher of current applicable basic benefit or policy value, with TPD capped by a manual remaining aggregate TPD cap, the current accidental-death estimate as the current death corridor plus a manual accidental-claim-mode uplift on current applicable basic benefit before age 70, the policy-fee schedule, the monthly insurance cover charge after insured-life and current-basic-benefit inputs are supplied, the Appendix 2 premium-holiday / partial-withdrawal / surrender charge schedules including premium-holiday start gating from the 2nd policy anniversary and the published charge-free window from the 3rd policy anniversary, active premium-holiday top-up blocking, and the published reinvest-only distribution mode.',
+      'The separate Investment Bonus table for Critical Protect (ILP) rider cases remains informational only.',
+      'No Lapse Guarantee debt carry, pre-2nd-anniversary nonpayment termination, and broader protection-side claim settlement remain informational only in V1 beyond the modeled current death / terminal-illness / TPD / accidental-death / accidental-TPD snapshots.',
     ],
     unsupportedItems: [
-      'Investment bonus tables depend on annual premium bands and sum assured multiple, including a separate rider table, and remain informational only.',
+      'The separate Investment Bonus table for Critical Protect (ILP) rider cases remains informational only.',
       'No Lapse Guarantee amount-owed carry and reinstatement behavior remain informational only.',
-      'Premium holiday start gating and the pre-2nd-anniversary lapse path remain informational only.',
-      'Minimum withdrawal amount, minimum post-withdrawal policy value, and top-up blocking during premium holiday remain informational only.',
+      'Pre-2nd-anniversary nonpayment termination remains informational only.',
+      'Minimum withdrawal amount and minimum post-withdrawal policy value remain informational only.',
       'Changing premium or sum assured, retirement option, and guaranteed insurability option remain informational only.',
-      'All protection-benefit payout mechanics remain informational only.',
+      'The current-state death / terminal-illness / TPD estimates need a manual current applicable basic benefit input because that benefit changes across MPV / sum-assured mode and is not reconstructed from history in V1.',
+      'The current-state TPD estimate also needs a manual remaining aggregate TPD cap because the published S$6.5 million aggregate limit is not reconstructed from cross-policy history in V1.',
+      'Accidental-death / accidental-TPD claim admission and exclusions, and broader protection-side claim settlement remain informational only beyond the modeled current death / terminal-illness / TPD / accidental-death / accidental-TPD snapshots.',
     ],
     sourceRefs: [page1, page2, page3, page4, page7, page8, page9, page17, page21],
   }
@@ -281,6 +352,12 @@ export function parseIncomeAstralinkVa2({ document, sourceChecksumSha256 }: Pars
     economicsStatus: 'supported',
     modeledEconomics: [
       'kernel:protected-base-assurance',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-tpd-benefit-estimate',
+      'kernel:current-accidental-tpd-benefit-estimate',
+      'branch:astralink-va2-investment-bonus',
       'branch:astralink-va2-post-mip-regular-allocation',
       'branch:astralink-va2-loyalty-bonus',
       'branch:astralink-va2-policy-fee',
@@ -288,17 +365,18 @@ export function parseIncomeAstralinkVa2({ document, sourceChecksumSha256 }: Pars
       'branch:astralink-va2-premium-holiday-charge',
       'branch:astralink-va2-partial-withdrawal-charge',
       'branch:astralink-va2-surrender-charge',
+      'kernel:minimum-premium-holiday-start-month',
+      'kernel:premium-holiday-top-up-block',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'astralink-va2-investment-bonus',
       'astralink-va2-no-lapse-guarantee',
-      'astralink-va2-premium-holiday-gating',
-      'astralink-va2-protection-benefits',
+      'astralink-va2-pre-2nd-anniversary-nonpayment-termination',
+      'astralink-va2-accidental-tpd-and-claim-settlement',
       'astralink-va2-flexible-options',
     ],
     warnings: [
-      'AstraLink (VA2) is cataloged as a supported V1 product. The parser captures the 105% post-MIP regular-premium allocation uplift, the term-specific annual loyalty bonus schedule, the policy-fee schedule, the monthly insurance cover charge after insured-life and current-basic-benefit inputs are supplied, the Appendix 2 premium-holiday / partial-withdrawal / surrender charge schedules, and the published reinvest-only distribution mode, while investment bonus, No Lapse Guarantee debt carry, premium-holiday start gating, and protection-side payouts remain informational only.',
+      'AstraLink (VA2) is cataloged as a supported V1 product. The parser captures the basic-policy Table 1 investment bonus on first-year regular premiums, the 105% post-MIP regular-premium allocation uplift, the term-specific annual loyalty bonus schedule, the current-state death / terminal-illness / TPD estimates as the higher of current applicable basic benefit or policy value, with TPD capped by a manual remaining aggregate TPD cap, the current accidental-death estimate as the current death corridor plus a manual accidental-claim-mode uplift on current applicable basic benefit before age 70, the current accidental-TPD estimate as the current TPD corridor plus that same manual accidental-claim-mode uplift before age 70, the policy-fee schedule, the monthly insurance cover charge after insured-life and current-basic-benefit inputs are supplied, the Appendix 2 premium-holiday / partial-withdrawal / surrender charge schedules including premium-holiday start gating from the 2nd policy anniversary and the published charge-free window from the 3rd policy anniversary, and the published reinvest-only distribution mode, while the Critical Protect (ILP) rider investment-bonus table, No Lapse Guarantee debt carry, pre-2nd-anniversary nonpayment termination, and broader protection-side claim settlement remain informational only beyond the modeled current death / terminal-illness / TPD / accidental-death / accidental-TPD snapshots.',
     ],
     archived: false,
     variants: TERM_OPTIONS.map((term) => buildVariant(document, term)),

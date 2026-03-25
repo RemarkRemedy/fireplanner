@@ -77,6 +77,7 @@ function snippetNear(document: ExtractedPdfDocument, pageNumber: number, keyword
 
 function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
   const page2 = sourceRef(2, 'Welcome Bonus / Loyalty Bonus / Maturity Bonus', snippetNear(document, 2, 'Welcome Bonus', 30))
+  const page3 = sourceRef(3, 'Maturity Bonus', snippetNear(document, 3, 'Maturity Bonus', 22))
 
   return [
     {
@@ -97,6 +98,26 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
       sourceRefs: [page2],
     },
     {
+      id: 'special-booster',
+      type: 'custom',
+      label: 'Special Booster',
+      mode: 'one-time',
+      oneTimePayoutBasis: 'committed-annual-premium-at-issue',
+      appliesTo: ['policy'],
+      startPolicyYear: 10,
+      endPolicyYear: 10,
+      requiresPremiumsPaidUpToDate: true,
+      rate: 0.25,
+      amount: null,
+      tieredRates: [],
+      notes: [
+        'Models the published 2.50% Special Booster rate for the SGD regular-pay 10-year corridor as a one-time payout at the end of the premium payment term.',
+        'This V1 slice assumes the full committed regular premiums have been paid by the end of policy year 10; any reduction for still-unpaid regular premiums remains informational only.',
+        'Single premium top-ups are excluded from the published Special Booster basis and are not included in this modeled amount.',
+      ],
+      sourceRefs: [page2],
+    },
+    {
       id: 'loyalty-bonus',
       type: 'loyalty',
       label: 'Loyalty Bonus',
@@ -112,6 +133,23 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
         'If the policy is extended, loyalty bonus still ceases on the original maturity date; the extension election itself remains informational only in V1.',
       ],
       sourceRefs: [page2],
+    },
+    {
+      id: 'maturity-bonus',
+      type: 'custom',
+      label: 'Maturity Bonus',
+      mode: 'annual-rate',
+      appliesTo: ['policy'],
+      startPolicyYear: 15,
+      endPolicyYear: 15,
+      rate: 0.03,
+      amount: null,
+      tieredRates: [],
+      notes: [
+        'Models the published 3.0% Maturity Bonus for the SGD regular-pay 10-year / policy-term-15-year corridor as a one-time credit on the original policy maturity date.',
+        'Extension Benefit election, cash-versus-reinvestment handling after extension, and policy termination after maturity remain informational only in V1.',
+      ],
+      sourceRefs: [page2, page3],
     },
   ]
 }
@@ -177,7 +215,8 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       allocation: 'equal-split',
       notes: [
         'Models the published Appendix A partial-withdrawal charge schedule during the first 10 policy years.',
-        'Free Partial Withdrawal Benefit elections, life-stage gating, and penalty-free withdrawal sequencing remain informational only in V1.',
+        'Qualifying Free Partial Withdrawal Benefit withdrawals can be represented in V1 by setting chargeWaived on the partial-withdrawal event.',
+        'Life-stage gating, non-life-stage gating, benefit sequencing, use-count limits, and withdrawal-limit mechanics remain manual in V1.',
       ],
       sourceRefs: [page3, page8, page17],
     },
@@ -227,10 +266,12 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     scheduledPayoutSupport: {
       mode: 'manual-assumption',
       accountId: 'policy',
+      minimumWithdrawalAmountPerOccurrence: 500,
       source: 'policy-redemption',
       notes: [
         'After the Partial Withdrawal Charge Period, regular withdrawals may be applied annually, semi-annually, quarterly, or monthly from the policy account.',
-        'V1 exposes regular withdrawal only as a manual payout-state assumption; the published $500 minimum withdrawal, $1,000 minimum remaining account value, and sub-fund-selection / pending-transaction resumption rules remain informational only.',
+        'V1 exposes regular withdrawal as a manual payout-state assumption and blocks manual scheduled-redemption assumptions whose per-withdrawal amount would fall below the published $500 minimum once the payout frequency is supplied.',
+        'The published $1,000 minimum remaining account value plus sub-fund-selection and pending-transaction resumption rules remain informational only.',
       ],
       sourceRefs: [page11],
     },
@@ -251,15 +292,15 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     eecTable: SURRENDER_AND_WITHDRAWAL_CHARGE_SCHEDULE.map((tier) => tier.rate),
     warnings: [
       'This supported template models the SGD / regular-pay-10-years / policy-term-15-years corridor only.',
-      'This supported template models the welcome bonus tiers, the 0.30% annual loyalty bonus from policy years 11 to 14, the first-10-policy-years administrative charge, the 3% single-premium top-up charge, the published Appendix A surrender / withdrawal / premium-shortfall charge schedules, manual regular-withdrawal payout support, and the reinvest-default distribution-mode assumption surface.',
-      'Special Booster, Maturity Bonus, Free Partial Withdrawal Benefit sequencing, and regular-withdrawal operational constraints remain informational only in V1.',
+      'This supported template models the welcome bonus tiers, the published 2.50% Special Booster on the fully-paid 10-year premium-payment corridor, the 0.30% annual loyalty bonus from policy years 11 to 14, the published 3.0% Maturity Bonus on the original policy maturity date, the first-10-policy-years administrative charge, the 3% single-premium top-up charge, the current-state death and terminal-illness benefit amount as the higher of 101% of total basic regular premiums paid plus top-ups less withdrawals or account value less manual current amount owing, the published Appendix A surrender / withdrawal / premium-shortfall charge schedules, manual regular-withdrawal payout support, and the reinvest-default distribution-mode assumption surface.',
+      'Qualifying Free Partial Withdrawal Benefit withdrawals can be represented in V1 with event-level charge waivers, while life-stage gating, non-life-stage gating, sequencing, and withdrawal-limit mechanics remain informational only. An admitted-and-settled terminal-illness claim is supported as a current policy-termination state.',
     ],
     unsupportedItems: [
-      'Special Booster remains informational only because it is a one-time bonus based on total basic regular premiums paid during the premium payment term.',
-      'Maturity Bonus remains informational only because it is a one-time maturity-date payout on account value and is not yet represented in the current executable templates.',
-      'Death and Terminal Illness payout mechanics remain informational only.',
+      'Special Booster is modeled for the fully-paid 10-year regular-premium corridor, but any reduction for still-unpaid basic regular premiums due during the premium payment term remains informational only.',
+      'The current-state death-benefit estimate needs a manual current amount owing input because indebtedness is not reconstructed from history in V1.',
+      'The current-state terminal-illness benefit amount is modeled as an early payout of the current death-benefit estimate after manual current amount owing, and an admitted-and-settled terminal-illness claim is supported as a current policy-termination state, but pre-settlement claim admission, exclusions, and other post-claim policy effects remain informational only.',
       'Extension Benefit elections and post-extension behavior remain informational only.',
-      'Free Partial Withdrawal Benefit life-stage gating, penalty-free sequencing, and withdrawal limits remain informational only.',
+      'Free Partial Withdrawal Benefit life-stage gating, non-life-stage gating, penalty-free sequencing, and withdrawal limits remain informational only.',
       'Change of Life Assured, Secondary Life Assured, and policy-continuity mechanics remain informational only.',
       'Cash-payment timing remains informational only.',
       'Regular-withdrawal sub-fund selection, pending-transaction resumption, and operational constraints remain informational only.',
@@ -284,29 +325,31 @@ export function parseSinglifeLegacyInvest({ document, sourceChecksumSha256 }: Pa
     economicsStatus: 'supported',
     modeledEconomics: [
       'branch:singlife-legacy-invest-welcome-bonus',
+      'branch:singlife-legacy-invest-special-booster',
       'branch:singlife-legacy-invest-loyalty-bonus',
+      'branch:singlife-legacy-invest-maturity-bonus',
       'branch:singlife-legacy-invest-administrative-charge',
       'branch:singlife-legacy-invest-top-up-charge',
       'branch:singlife-legacy-invest-partial-withdrawal-charge',
       'branch:singlife-legacy-invest-surrender-charge',
       'branch:singlife-legacy-invest-premium-shortfall-charge',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'kernel:scheduled-payout-manual-assumption',
+      'kernel:scheduled-payout-per-occurrence-minimum',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'singlife-legacy-invest-special-booster',
-      'singlife-legacy-invest-maturity-bonus',
-      'singlife-legacy-invest-protection-benefits',
       'singlife-legacy-invest-extension-benefit',
-      'singlife-legacy-invest-free-partial-withdrawal-benefit',
+      'singlife-legacy-invest-free-partial-withdrawal-benefit-eligibility-and-limits',
       'singlife-legacy-invest-change-of-life-assured',
       'singlife-legacy-invest-secondary-life-assured',
       'singlife-legacy-invest-regular-withdrawal-operational-constraints',
       'singlife-legacy-invest-non-sgd-and-other-term-corridors',
     ],
     warnings: [
-      'Singlife Legacy Invest is cataloged as a supported V1 product for the SGD / regular-pay-10-years / policy-term-15-years corridor. The parser captures welcome bonus tiers, annual loyalty bonus, administrative charge, single-premium top-up charge, the Appendix A surrender / withdrawal / premium-shortfall schedules, manual regular-withdrawal payout support, and reinvest-default distribution support.',
-      'Special Booster, Maturity Bonus, Free Partial Withdrawal Benefit sequencing, protection-side benefits, and non-SGD or alternate-term corridors remain informational only.',
+      'Singlife Legacy Invest is cataloged as a supported V1 product for the SGD / regular-pay-10-years / policy-term-15-years corridor. The parser captures welcome bonus tiers, the published 2.50% Special Booster on the fully-paid 10-year premium-payment corridor, annual loyalty bonus, the published 3.0% Maturity Bonus on the original policy maturity date, administrative charge, single-premium top-up charge, the current-state death and terminal-illness benefit amount as the higher of 101% of total basic regular premiums paid plus top-ups less withdrawals or account value less manual current amount owing, the Appendix A surrender / withdrawal / premium-shortfall schedules, manual regular-withdrawal payout support with the published $500 per-withdrawal minimum once payout frequency is supplied, and reinvest-default distribution support.',
+      'Qualifying Free Partial Withdrawal Benefit withdrawals can be represented in V1 with event-level charge waivers, while life-stage gating, non-life-stage gating, sequencing, withdrawal limits, and non-SGD or alternate-term corridors remain informational only beyond the modeled current ordinary death and terminal-illness benefit amount. An admitted-and-settled terminal-illness claim is supported as a current policy-termination state.',
       'Structured extraction validated against the Singlife Legacy Invest product summary text layer.',
     ],
     archived: false,

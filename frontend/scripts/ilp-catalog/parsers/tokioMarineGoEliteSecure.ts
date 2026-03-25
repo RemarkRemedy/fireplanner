@@ -96,6 +96,7 @@ function buildTokioEliteSecureMpcFeeRule(
       'The sum at risk is the published death benefit less the Single Premium Units Account value, where the death-benefit floor is the higher of the Locked-in Policy Value and Adjusted Single Premium.',
       'The engine uses an annual approximation of the published monthiversary locked-in-value updates and proportional partial-withdrawal reductions to Locked-in Policy Value and Adjusted Single Premium.',
       'Change-of-life-assured administration and payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge remain metadata-only.',
+      'User-entered current Locked-in Policy Value and Adjusted Single Premium can represent the present effect of insurer-approved reductions, but the approval workflow itself remains metadata-only.',
     ],
     sourceRefs: [page1, page2, page5, page7, page11],
   }
@@ -238,6 +239,22 @@ function buildVariant(document: ExtractedPdfDocument, variantId: 'sgd-open-ended
     bonuses: [],
     feeRules,
     eventChargeRules,
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      minimumRecurringSinglePremiumStartPolicyMonth: 13,
+      minimumRecurringSinglePremiumMonthlyAmount: 100,
+      minimumTopUpStartPolicyMonth: 13,
+      minimumTopUpAmount: 1_000,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'initial-single-premium',
+          accountId: 'policy',
+          minimumValueRate: 0.1,
+        },
+      ],
+    },
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['policy', 'topup'],
@@ -260,10 +277,8 @@ function buildVariant(document: ExtractedPdfDocument, variantId: 'sgd-open-ended
     exitChargeBasis: 'initial-single-premium-base',
     warnings: [
       isCash
-        ? '#goElite Secure (Cash) is cataloged as a supported V1 corridor. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the published current death-benefit estimate plus Monthly Protection Charge through the locked-in-policy-value plus adjusted-single-premium protection-state kernel, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the cash-payout-capable manual distribution-mode assumption surface with the published $50 minimum cash-payout threshold and 30-day record-date lead time through the open-ended single-premium basis.'
-        : '#goElite Secure (SRS) is cataloged as a supported V1 corridor. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the published current death-benefit estimate plus Monthly Protection Charge through the locked-in-policy-value plus adjusted-single-premium protection-state kernel, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the reinvest-only distribution-mode support surface through the open-ended single-premium basis.',
-      'Recurring single premium and top-up availability only after one policy year remains informational only.',
-      'Partial withdrawals remain subject to published minimum transaction and minimum residual Single Premium Units Account rules, which stay informational only in V1.',
+        ? '#goElite Secure (Cash) is cataloged as a supported V1 corridor. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the published current death-benefit estimate plus Monthly Protection Charge through the locked-in-policy-value plus adjusted-single-premium protection-state kernel, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, the published S$500 minimum one-off partial withdrawal amount plus the 10%-of-initial-single-premium minimum remaining Single Premium Units Account floor, and the cash-payout-capable manual distribution-mode assumption surface with the published $50 minimum cash-payout threshold and 30-day record-date lead time through the open-ended single-premium basis.'
+        : '#goElite Secure (SRS) is cataloged as a supported V1 corridor. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the published current death-benefit estimate plus Monthly Protection Charge through the locked-in-policy-value plus adjusted-single-premium protection-state kernel, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, the published S$500 minimum one-off partial withdrawal amount plus the 10%-of-initial-single-premium minimum remaining Single Premium Units Account floor, and the reinvest-only distribution-mode support surface through the open-ended single-premium basis.',
     ],
     unsupportedItems: [
       'Death-benefit payout handling beyond the modeled current death-benefit estimate, aggregation-limit handling, and any policy action that changes the life assured remain informational only.',
@@ -293,20 +308,24 @@ export function parseTokioMarineGoEliteSecure(context: ParseContext): IlpCatalog
       'kernel:current-death-benefit-estimate',
       'kernel:tokio-locked-in-protection-state',
       'branch:tokio-marine-goelite-secure-recurring-single-and-top-up-charge',
+      'kernel:minimum-recurring-single-premium-start-month',
+      'kernel:minimum-recurring-single-premium-amount',
+      'kernel:top-up-start-policy-month-block',
+      'kernel:top-up-amount-gate-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
       'branch:tokio-marine-goelite-secure-zero-partial-withdrawal-charge',
       'branch:tokio-marine-goelite-secure-surrender-charge',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-marine-goelite-secure-death-benefit',
+      'tokio-marine-goelite-secure-death-benefit-payout-handling',
       'tokio-marine-goelite-secure-aggregation-limit',
-      'tokio-marine-goelite-secure-minimum-withdrawal-rules',
       'tokio-marine-goelite-secure-fund-switching',
       'tokio-marine-goelite-secure-fund-level-and-third-party-charges',
     ],
     warnings: [
-      '#goElite Secure is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the published current death-benefit estimate plus Monthly Protection Charge through the locked-in-policy-value plus adjusted-single-premium protection-state kernel, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the cash-vs-SRS distribution-mode support surface, with the SRS corridor remaining reinvest-only.',
-      'The modeled current death-benefit estimate and Monthly Protection Charge use the published death-benefit floor logic across Locked-in Policy Value and Adjusted Single Premium, while change-of-life-assured handling, explicit approved Locked-in Policy Value reductions, death-benefit payout handling, aggregation limits, minimum residual withdrawal rules, fund switching, and fund-level / third-party charges remain informational only.',
+      '#goElite Secure is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the published current death-benefit estimate plus Monthly Protection Charge through the locked-in-policy-value plus adjusted-single-premium protection-state kernel, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, the published S$500 minimum one-off partial withdrawal amount plus the 10%-of-initial-single-premium minimum remaining Single Premium Units Account floor, and the cash-vs-SRS distribution-mode support surface, with the SRS corridor remaining reinvest-only.',
+      'The modeled current death-benefit estimate and Monthly Protection Charge use the published death-benefit floor logic across Locked-in Policy Value and Adjusted Single Premium. User-entered current Locked-in Policy Value and Adjusted Single Premium can represent the present effect of insurer-approved reductions, while change-of-life-assured handling, future approved-reduction administration, death-benefit payout handling, aggregation limits, fund switching, and fund-level / third-party charges remain informational only.',
     ],
     archived: false,
     variants: [
