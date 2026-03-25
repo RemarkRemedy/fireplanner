@@ -12,6 +12,7 @@ import { FeeWaterfallChart } from '@/components/ilp/FeeWaterfallChart'
 import { NpvTimelineChart } from '@/components/ilp/NpvTimelineChart'
 import { OpportunityCostCard } from '@/components/ilp/OpportunityCostCard'
 import { PolicyInputForm } from '@/components/ilp/PolicyInputForm'
+import { PolicySetupGate } from '@/components/ilp/PolicySetupGate'
 import { PolicyTabs } from '@/components/ilp/PolicyTabs'
 import { ProjectionTable } from '@/components/ilp/ProjectionTable'
 import { SummaryCards } from '@/components/ilp/SummaryCards'
@@ -20,6 +21,7 @@ import type { IlpPolicyAnalysis } from '@/lib/calculations/ilp'
 import { analyzeAllPolicies } from '@/lib/calculations/ilp'
 import { formatIlpCurrency, formatIlpPercent } from '@/components/ilp/formatters'
 import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
+import type { IlpPolicySeed } from '@/lib/ilp-catalog/policySeedSchema'
 import { templateVariantToPolicySeed } from '@/lib/ilp-catalog/templateToPolicy'
 import { ilpPolicySchema } from '@/lib/validation/ilpSchema'
 import { useIlpStore } from '@/stores/useIlpStore'
@@ -151,17 +153,26 @@ export function IlpReviewPage() {
   const addPolicyFromSeed = useIlpStore((state) => state.addPolicyFromSeed)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [catalogError, setCatalogError] = useState<string | null>(null)
+  const [pendingSeed, setPendingSeed] = useState<IlpPolicySeed | null>(null)
 
   function handleCatalogPick(product: ReturnType<typeof getIlpCatalog>['products'][number], variant: ReturnType<typeof getIlpCatalog>['products'][number]['variants'][number]) {
     const seed = templateVariantToPolicySeed(product, variant, getIlpCatalog().manifest)
-    const result = addPolicyFromSeed(seed)
+    setCatalogError(null)
+    setPickerOpen(false)
+    setPendingSeed(seed)
+  }
+
+  function handleGateConfirm(adjustedSeed: IlpPolicySeed) {
+    const result = addPolicyFromSeed(adjustedSeed)
     if (!result.success) {
       setCatalogError(result.errors[0] ?? 'Unable to seed policy from the selected catalog template.')
       return
     }
+    setPendingSeed(null)
+  }
 
-    setCatalogError(null)
-    setPickerOpen(false)
+  function handleGateCancel() {
+    setPendingSeed(null)
   }
 
   const policyEntries = useMemo(() => (
@@ -236,6 +247,13 @@ export function IlpReviewPage() {
         </Card>
         <TemplateCatalogSummary />
         <ProductPickerDialog open={pickerOpen} onOpenChange={setPickerOpen} onSelect={handleCatalogPick} />
+        {pendingSeed && (
+          <PolicySetupGate
+            seed={pendingSeed}
+            onConfirm={handleGateConfirm}
+            onCancel={handleGateCancel}
+          />
+        )}
       </div>
     )
   }
@@ -260,6 +278,14 @@ export function IlpReviewPage() {
       <PolicyTabs />
 
       <ProductPickerDialog open={pickerOpen} onOpenChange={setPickerOpen} onSelect={handleCatalogPick} />
+
+      {pendingSeed && (
+        <PolicySetupGate
+          seed={pendingSeed}
+          onConfirm={handleGateConfirm}
+          onCancel={handleGateCancel}
+        />
+      )}
 
       {analysisResult.error && (
         <Alert variant="destructive">
