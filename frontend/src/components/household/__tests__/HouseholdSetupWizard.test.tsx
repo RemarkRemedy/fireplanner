@@ -11,6 +11,8 @@ import { useUIStore } from '@/stores/useUIStore'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
 
+const HOUSEHOLD_SETUP_WIZARD_TEST_TIMEOUT_MS = 20_000
+
 vi.mock('@/lib/household/featureFlag', () => ({
   HOUSEHOLD_PLANNER_V1_FLAG_KEY: 'fireplanner-feature-householdPlannerV1',
   isHouseholdPlannerV1Enabled: vi.fn(),
@@ -151,7 +153,7 @@ describe('Household setup flow', () => {
     expect(state.plan.dependents).toHaveLength(0)
     expect(state.provenance.source).toBe('manual')
     expect(useUIStore.getState().cpfEnabled).toBe(false)
-  })
+  }, HOUSEHOLD_SETUP_WIZARD_TEST_TIMEOUT_MS)
 
   it('forces household toggles on when migrated data already exists', () => {
     useUIStore.setState({

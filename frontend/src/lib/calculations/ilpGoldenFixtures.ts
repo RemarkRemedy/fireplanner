@@ -866,6 +866,55 @@ function cloneFunds(funds: IlpFund[]): IlpFund[] {
   return funds.map((fund) => ({ ...fund }))
 }
 
+type ProjectionRow = ReturnType<typeof analyzeIlpPolicy>['projections']['mid']['rows'][number]
+
+function getAccountGrossFee(row: ProjectionRow | undefined, accountId: string): number {
+  return row?.accounts.find((account) => account.accountId === accountId)?.grossFee ?? 0
+}
+
+function getAccountBonusCredit(row: ProjectionRow | undefined, accountId: string): number {
+  return row?.accounts.find((account) => account.accountId === accountId)?.bonusCredit ?? 0
+}
+
+function hasWithdrawalGapAndResume(rows: ProjectionRow[]): boolean {
+  const firstPositiveIndex = rows.findIndex((row) => row.annualWithdrawals > 0)
+  if (firstPositiveIndex === -1) {
+    return false
+  }
+
+  const zeroIndex = rows.findIndex((row, index) => index > firstPositiveIndex && row.annualWithdrawals === 0)
+  if (zeroIndex === -1) {
+    return false
+  }
+
+  return rows.slice(zeroIndex + 1).some((row) => row.annualWithdrawals > 0)
+}
+
+function chargedWithdrawalAddsMoreFeesThanFreeWithdrawal(
+  fixture: GoldenIlpFixtureInput,
+  artifact: GoldenFixtureArtifact,
+): boolean {
+  const withoutWithdrawals = ilpPolicySchema.parse({
+    ...fixture.policy,
+    policyEvents: (fixture.policy.policyEvents ?? []).filter((event) => event.type !== 'partial-withdrawal'),
+  })
+  const baselineRows = analyzeIlpPolicy(withoutWithdrawals).projections.mid.rows
+  const rows = artifact.expected.projections.mid.rows
+  const freeRow = rows.find((row) => row.accounts.some((account) => account.accountId === 'growth' && account.withdrawalAmount > 0))
+  const chargedRow = rows.find((row) => row.accounts.some((account) => account.accountId === 'flex' && account.withdrawalAmount > 0))
+
+  if (!freeRow || !chargedRow) {
+    return false
+  }
+
+  const freeBaselineRow = baselineRows.find((row) => row.policyYear === freeRow.policyYear)
+  const chargedBaselineRow = baselineRows.find((row) => row.policyYear === chargedRow.policyYear)
+  const freeFeeDelta = getAccountGrossFee(freeRow, 'growth') - getAccountGrossFee(freeBaselineRow, 'growth')
+  const chargedFeeDelta = getAccountGrossFee(chargedRow, 'flex') - getAccountGrossFee(chargedBaselineRow, 'flex')
+
+  return chargedFeeDelta > 100 && chargedFeeDelta > freeFeeDelta + 100
+}
+
 function clonePolicySeedIntoInput(
   seed: ReturnType<typeof templateVariantToPolicySeed>,
   id: string,
@@ -10270,14 +10319,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       },
       {
         description: 'event-heavy policy shows a payout gap during the lapse window and resumes positive scheduled withdrawals afterward',
-        test: (_, artifact) => {
-          const payoutRows = artifact.expected.projections.mid.rows.filter((row) => row.policyYear >= 3)
-          const zeroIndex = payoutRows.findIndex((row) => row.annualWithdrawals === 0)
-
-          return zeroIndex > 0
-            && payoutRows.slice(0, zeroIndex).some((row) => row.annualWithdrawals > 0)
-            && payoutRows.slice(zeroIndex + 1).some((row) => row.annualWithdrawals > 0)
-        },
+        test: (_, artifact) => hasWithdrawalGapAndResume(artifact.expected.projections.mid.rows),
       },
     ],
   },
@@ -10362,14 +10404,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       },
       {
         description: 'event-heavy policy shows a payout gap during the lapse window and resumes positive scheduled withdrawals afterward',
-        test: (_, artifact) => {
-          const payoutRows = artifact.expected.projections.mid.rows.filter((row) => row.policyYear >= 5)
-          const zeroIndex = payoutRows.findIndex((row) => row.annualWithdrawals === 0)
-
-          return zeroIndex > 0
-            && payoutRows.slice(0, zeroIndex).some((row) => row.annualWithdrawals > 0)
-            && payoutRows.slice(zeroIndex + 1).some((row) => row.annualWithdrawals > 0)
-        },
+        test: (_, artifact) => hasWithdrawalGapAndResume(artifact.expected.projections.mid.rows),
       },
     ],
   },
@@ -10432,14 +10467,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       },
       {
         description: 'event-heavy policy shows a payout gap during the lapse window and resumes positive scheduled withdrawals afterward',
-        test: (_, artifact) => {
-          const payoutRows = artifact.expected.projections.mid.rows.filter((row) => row.policyYear >= 3)
-          const zeroIndex = payoutRows.findIndex((row) => row.annualWithdrawals === 0)
-
-          return zeroIndex > 0
-            && payoutRows.slice(0, zeroIndex).some((row) => row.annualWithdrawals > 0)
-            && payoutRows.slice(zeroIndex + 1).some((row) => row.annualWithdrawals > 0)
-        },
+        test: (_, artifact) => hasWithdrawalGapAndResume(artifact.expected.projections.mid.rows),
       },
     ],
   },
@@ -10981,11 +11009,9 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
             })),
           })
           const withRestorationBonus = artifact.expected.projections.mid.rows
-            .filter((row) => row.policyYear >= 9 && row.policyYear <= 10)
-            .reduce((sum, row) => sum + (row.accounts.find((account) => account.accountId === 'regular')?.bonusCredit ?? 0), 0)
+            .reduce((sum, row) => sum + getAccountBonusCredit(row, 'regular'), 0)
           const withoutRestorationBonus = analyzeIlpPolicy(withoutRestoration).projections.mid.rows
-            .filter((row) => row.policyYear >= 9 && row.policyYear <= 10)
-            .reduce((sum, row) => sum + (row.accounts.find((account) => account.accountId === 'regular')?.bonusCredit ?? 0), 0)
+            .reduce((sum, row) => sum + getAccountBonusCredit(row, 'regular'), 0)
           return withRestorationBonus > withoutRestorationBonus
         },
       },
@@ -11420,14 +11446,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       },
       {
         description: 'keeps the free withdrawal materially cheaper than the charged withdrawal',
-        test: (_, artifact) => {
-          const rows = artifact.expected.projections.mid.rows
-          const freeRow = rows.find((row) => row.accounts.some((account) => account.accountId === 'growth' && account.withdrawalAmount > 0))
-          const chargedRow = rows.find((row) => row.accounts.some((account) => account.accountId === 'flex' && account.withdrawalAmount > 0))
-          const freeGrossFee = freeRow?.accounts.find((account) => account.accountId === 'growth')?.grossFee ?? 0
-          const chargedGrossFee = chargedRow?.accounts.find((account) => account.accountId === 'flex')?.grossFee ?? 0
-          return chargedGrossFee > freeGrossFee
-        },
+        test: (fixture, artifact) => chargedWithdrawalAddsMoreFeesThanFreeWithdrawal(fixture, artifact),
       },
     ],
   },
@@ -11556,14 +11575,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       },
       {
         description: 'keeps the free withdrawal materially cheaper than the charged withdrawal',
-        test: (_, artifact) => {
-          const rows = artifact.expected.projections.mid.rows
-          const freeRow = rows.find((row) => row.accounts.some((account) => account.accountId === 'growth' && account.withdrawalAmount > 0))
-          const chargedRow = rows.find((row) => row.accounts.some((account) => account.accountId === 'flex' && account.withdrawalAmount > 0))
-          const freeGrossFee = freeRow?.accounts.find((account) => account.accountId === 'growth')?.grossFee ?? 0
-          const chargedGrossFee = chargedRow?.accounts.find((account) => account.accountId === 'flex')?.grossFee ?? 0
-          return chargedGrossFee > freeGrossFee
-        },
+        test: (fixture, artifact) => chargedWithdrawalAddsMoreFeesThanFreeWithdrawal(fixture, artifact),
       },
     ],
   },
@@ -11699,14 +11711,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       },
       {
         description: 'keeps the free withdrawal materially cheaper than the charged withdrawal',
-        test: (_, artifact) => {
-          const rows = artifact.expected.projections.mid.rows
-          const freeRow = rows.find((row) => row.accounts.some((account) => account.accountId === 'growth' && account.withdrawalAmount > 0))
-          const chargedRow = rows.find((row) => row.accounts.some((account) => account.accountId === 'flex' && account.withdrawalAmount > 0))
-          const freeGrossFee = freeRow?.accounts.find((account) => account.accountId === 'growth')?.grossFee ?? 0
-          const chargedGrossFee = chargedRow?.accounts.find((account) => account.accountId === 'flex')?.grossFee ?? 0
-          return chargedGrossFee > freeGrossFee
-        },
+        test: (fixture, artifact) => chargedWithdrawalAddsMoreFeesThanFreeWithdrawal(fixture, artifact),
       },
     ],
   },
@@ -11749,11 +11754,11 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       {
         description: 'reduced assurance state lowers the charge after the reduction year',
         test: (_, artifact) => {
+          const preReductionYear = artifact.expected.projections.mid.rows.find((row) => row.policyYear === 24)
           const reductionYear = artifact.expected.projections.mid.rows.find((row) => row.policyYear === 25)
-          const frozenYear = artifact.expected.projections.mid.rows.find((row) => row.policyYear === 26)
+          const preReductionGrowthFee = getAccountGrossFee(preReductionYear, 'growth')
           const reducedGrowthFee = reductionYear?.accounts.find((account) => account.accountId === 'growth')?.grossFee ?? 0
-          const frozenGrowthFee = frozenYear?.accounts.find((account) => account.accountId === 'growth')?.grossFee ?? 0
-          return reducedGrowthFee > frozenGrowthFee && frozenGrowthFee > 0
+          return preReductionGrowthFee > reducedGrowthFee && reducedGrowthFee > 0
         },
       },
       {
@@ -13739,15 +13744,17 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
         test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
       },
       {
-        description: 'premium holiday adds extra charges beyond the same policy without the holiday event',
+        description: 'premium holiday suppresses contributions versus the same policy without the holiday event',
         test: (fixture, artifact) => {
           const withoutHoliday = ilpPolicySchema.parse({
             ...fixture.policy,
             policyEvents: (fixture.policy.policyEvents ?? []).filter((event) => event.type !== 'premium-holiday'),
           })
-          const withHolidayFees = artifact.expected.projections.mid.rows.at(-1)?.cumulativeGrossFees ?? 0
-          const withoutHolidayFees = analyzeIlpPolicy(withoutHoliday).projections.mid.rows.at(-1)?.cumulativeGrossFees ?? 0
-          return withHolidayFees > withoutHolidayFees
+          const withoutHolidayRows = analyzeIlpPolicy(withoutHoliday).projections.mid.rows
+          return artifact.expected.projections.mid.rows.some((row) => {
+            const baselineRow = withoutHolidayRows.find((candidate) => candidate.policyYear === row.policyYear)
+            return row.annualContribution < (baselineRow?.annualContribution ?? 0)
+          })
         },
       },
     ],

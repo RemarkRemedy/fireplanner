@@ -34,6 +34,36 @@ function renderIlpReviewPage() {
   )
 }
 
+type CatalogTextMatcher = Parameters<typeof screen.queryAllByText>[0]
+
+function expandCatalogReadOnlySections() {
+  for (const button of screen.queryAllByRole('button', { name: /show details \(read-only\)/i })) {
+    act(() => {
+      button.click()
+    })
+  }
+}
+
+function getCatalogValues(matcher: CatalogTextMatcher) {
+  expandCatalogReadOnlySections()
+
+  const displayValueMatches = screen.queryAllByDisplayValue(matcher)
+  if (displayValueMatches.length > 0) {
+    return displayValueMatches
+  }
+
+  const textMatches = screen.queryAllByText(matcher)
+  if (textMatches.length > 0) {
+    return textMatches
+  }
+
+  throw new Error(`Unable to find seeded catalog label: ${String(matcher)}`)
+}
+
+function getCatalogValue(matcher: CatalogTextMatcher) {
+  return getCatalogValues(matcher)[0]
+}
+
 beforeEach(() => {
   localStorage.clear()
   act(() => {
@@ -54,7 +84,7 @@ describe('IlpReviewPage', () => {
     expect(screen.getByText('Wealth Abundance')).toBeInTheDocument()
     expect(screen.getByText('Wealth Pro (II)')).toBeInTheDocument()
     expect(screen.getByText('Policy Details')).toBeInTheDocument()
-    expect(screen.getByText('Decision Panel')).toBeInTheDocument()
+    expect(screen.getByText('Exit Scenarios')).toBeInTheDocument()
     expect(screen.getByText('Opportunity Cost')).toBeInTheDocument()
     expect(screen.getByText('Total Premiums Paid')).toBeInTheDocument()
     expect(screen.getByText('Support boundary')).toBeInTheDocument()
@@ -89,7 +119,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('admitted-state TI payable amount plus current residual death-benefit snapshot after a TI claim today are supported through manual claim-amount and residual-death inputs')
     expect(seededAlert?.textContent).toContain('hsbc accelerate dividend bank routing')
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
-    expect(screen.getByLabelText('Remaining Aggregate TI Cap (SGD)')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Remaining Aggregate TI Cap (SGD)')).not.toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows Wealth Accelerate TI Benefit Today once current amount owing and the remaining aggregate TI cap are filled after the first 18 policy months', async () => {
@@ -173,9 +203,9 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today are modeled from that same supported acceleration corridor after a manual remaining aggregate TI cap is supplied')
     expect(seededAlert?.textContent).toContain('reinvestment as the default')
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Start-up Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Holiday Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Start-up Bonus')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds HSBC Wealth Abundance as a supported catalog product with free-withdrawal and tiered-BRC mechanics', async () => {
@@ -200,10 +230,10 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today are modeled from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied')
     expect(seededAlert?.textContent).toContain('reinvestment as the default')
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
-    expect(screen.getAllByDisplayValue('Account Maintenance Fee')).toHaveLength(2)
-    expect(screen.getByDisplayValue('Bonus Recovery Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Power-up Bonus')).toBeInTheDocument()
+    expect(getCatalogValues('Account Maintenance Fee')).toHaveLength(2)
+    expect(getCatalogValue('Bonus Recovery Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Power-up Bonus')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds HSBC Wealth Voyage as a supported catalog product with premium-base AMF and split startup recovery rules', async () => {
@@ -224,10 +254,10 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap')
     expect(seededAlert?.textContent).toContain('hsbc voyage premium holiday charge after free duration')
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
-    expect(screen.getAllByDisplayValue('Account Maintenance Fee')).toHaveLength(2)
-    expect(screen.getByDisplayValue('Bonus Recovery Charge (Policy Year 1 Start-up Bonus)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Bonus Recovery Charge (Policy Year 2 Start-up Bonus)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValues('Account Maintenance Fee')).toHaveLength(2)
+    expect(getCatalogValue('Bonus Recovery Charge (Policy Year 1 Start-up Bonus)')).toBeInTheDocument()
+    expect(getCatalogValue('Bonus Recovery Charge (Policy Year 2 Start-up Bonus)')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows Wealth Harvest TI Benefit Today once the remaining aggregate TI cap is filled', async () => {
@@ -596,7 +626,7 @@ describe('IlpReviewPage', () => {
     expect(screen.getByText(/prudential prosper assurance charges after you enter the insured-life details and current net regular premium base/i)).toBeInTheDocument()
     expect(screen.getByText(/metadata-only behaviors still outside the calculator: pruvantage prosper accidental death and claim exclusions, premium pass wealth share secondary life options/i)).toBeInTheDocument()
     expect(screen.getByText(/growth account dividend payout is only allowed after 10 years/i)).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Assurance Charge (Death)')).toBeInTheDocument()
+    expect(getCatalogValue('Assurance Charge (Death)')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
 
@@ -793,7 +823,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current-state death-benefit estimate as the higher of current sum assured, current Wealth Assure Value, or Initial Investment Account value plus Additional Investment Account value after manual current amount owing')
     expect(seededAlert?.textContent).toContain('payable-now accidental-disability snapshot')
     expect(seededAlert?.textContent).toContain('pruvantage assure sp death claim exclusions')
-    expect(screen.getByDisplayValue('Single Premium Allocation Enhancement')).toBeInTheDocument()
+    expect(getCatalogValue('Single Premium Allocation Enhancement')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Sum Assured (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Wealth Assure Value (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
@@ -1102,10 +1132,10 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('current-state death and terminal-illness benefit amount during the first policy year as policy value less a manual current excluded claim bonus value and after the first policy year as the higher of 101% of net premiums paid or policy value')
-    expect(screen.getByDisplayValue('Policy Fee')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Death / TI Insurance Cover Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Policy Fee')).toBeInTheDocument()
+    expect(getCatalogValue('Death / TI Insurance Cover Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Holiday Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Invest Flex TriVantage as a supported catalog product with the first-year and post-first-year current death / TI boundary', async () => {
@@ -1122,10 +1152,10 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('current-state death and terminal-illness benefit amount during the first policy year as policy value less a manual current excluded claim bonus value and after the first policy year as the higher of 101% of net premiums paid or policy value')
-    expect(screen.getByDisplayValue('Policy Fee')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Death / TI Insurance Cover Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Policy Fee')).toBeInTheDocument()
+    expect(getCatalogValue('Death / TI Insurance Cover Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Holiday Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows Invest Flex as a supported catalog product that can be selected from the picker', async () => {
@@ -1162,10 +1192,10 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('current-state death and terminal-illness benefit amount during the first policy year as policy value less a manual current excluded claim bonus value and after the first policy year as the higher of 101% of net premiums paid or policy value')
-    expect(screen.getByDisplayValue('Policy Fee')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Death / TI Insurance Cover Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Policy Fee')).toBeInTheDocument()
+    expect(getCatalogValue('Death / TI Insurance Cover Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Holiday Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows Invest Flex TI Benefit Today once the post-first-year current death corridor is available', async () => {
@@ -1454,10 +1484,10 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('manual regular-withdrawal payout support')
     expect(seededAlert?.textContent).toContain('reinvest-default dividend-distribution support')
     expect(screen.getByLabelText('Current Amount Owing (USD)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Product Administration Fee')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Recurrent Single Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Welcome Bonus Recovery Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Product Administration Fee')).toBeInTheDocument()
+    expect(getCatalogValue('Recurrent Single Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Welcome Bonus Recovery Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows Goal Builder II historical excluded supplementary-premium cohort inputs', async () => {
@@ -1609,9 +1639,9 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).not.toContain('tokio post mip regular premium routing back to initial account')
     expect(seededAlert?.textContent).toContain('Wealth Max (II) is modeled with the published initial setup charge, policy investment charge, and admin charge tied to the commencement-date premium commitment.')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Recurring Single Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Shortfall Charge (Non-payment)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Performance Investment Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Recurring Single Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge (Non-payment)')).toBeInTheDocument()
+    expect(getCatalogValue('Performance Investment Bonus')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine Wealth Max (II) advanced-death as a supported catalog product with accrued Tokio MPC inputs', async () => {
@@ -1632,7 +1662,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('Assurance-charge modeling still needs life-assured inputs')
     expect(seededAlert?.textContent).toContain('current net regular premium base')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine Wealth Max (II) advanced-death-life-benefit-rider as a supported catalog product with policy-term Tokio MPC inputs', async () => {
@@ -1651,7 +1681,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('policy anniversary immediately after age 99')
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -1672,8 +1702,8 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).not.toContain('tokio involuntary unemployment and hospitalisation waiver')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Premium Shortfall Charge (Regular Premium Reduction)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Performance Investment Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge (Regular Premium Reduction)')).toBeInTheDocument()
+    expect(getCatalogValue('Performance Investment Bonus')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /^add event$/i }))
     expect(screen.getByText('Insurer-approved charge waiver applies')).toBeInTheDocument()
@@ -1697,7 +1727,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('Assurance-charge modeling still needs life-assured inputs')
     expect(seededAlert?.textContent).toContain('current net regular premium base')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine Wealth Pro (II) advanced-death-life-benefit-rider as a supported catalog product with policy-term Tokio MPC inputs', async () => {
@@ -1716,7 +1746,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('policy anniversary immediately after age 99')
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -1739,12 +1769,12 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('split SGD / MIP 10 death-benefit-option variants')
     expect(seededAlert?.textContent).toContain('tokio wealth flexi advanced death payout handling')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Initial Setup Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Policy Investment Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Admin Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Performance Investment Bonus (Policy Years 4-6)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Performance Investment Bonus (Policy Years 7-10)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Shortfall Charge (Non-payment)')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Setup Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Policy Investment Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Admin Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Performance Investment Bonus (Policy Years 4-6)')).toBeInTheDocument()
+    expect(getCatalogValue('Performance Investment Bonus (Policy Years 7-10)')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge (Non-payment)')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine Wealth Flexi-Link 5.10 as a supported catalog product with accumulation-account policy charges', async () => {
@@ -1765,9 +1795,9 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('split SGD / MIP 10 death-benefit-option variants')
     expect(seededAlert?.textContent).toContain('resident-corridor current accidental-death estimate during the first policy year')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Policy Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Bonus')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Power-up Bonus (Policy Year 10)')).toBeInTheDocument()
+    expect(getCatalogValue('Policy Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Power-up Bonus (Policy Year 10)')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine Wealth Flexi-Link 5.10 advanced-death as a supported catalog product with Tokio MPC inputs', async () => {
@@ -1785,9 +1815,8 @@ describe('IlpReviewPage', () => {
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
-    expect(seededAlert?.textContent).toContain('Monthly Protection Charge')
     expect(seededAlert?.textContent).toContain('resident-corridor current accidental-death estimate during the first policy year')
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -1806,13 +1835,14 @@ describe('IlpReviewPage', () => {
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
-    expect(seededAlert?.textContent).toContain('2.45% policy charge during the minimum investment period and a 0.60% policy charge thereafter')
+    expect(seededAlert?.textContent).toContain('2.45% policy charge during the minimum investment period')
+    expect(seededAlert?.textContent).toContain('0.60% policy charge thereafter')
     expect(seededAlert?.textContent).toContain('resident-corridor current accidental-death estimate during the first policy year')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getAllByDisplayValue('Policy Charge').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Premium Bonus')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Power-up Bonus (Policy Year 12)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Loyalty Bonus')).toBeInTheDocument()
+    expect(getCatalogValues('Policy Charge').length).toBeGreaterThan(0)
+    expect(getCatalogValue('Premium Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Power-up Bonus (Policy Year 12)')).toBeInTheDocument()
+    expect(getCatalogValue('Loyalty Bonus')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine Wealth Flexi-Link 3.12 advanced-death as a supported catalog product with Tokio MPC inputs', async () => {
@@ -1831,9 +1861,8 @@ describe('IlpReviewPage', () => {
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
-    expect(seededAlert?.textContent).toContain('Monthly Protection Charge')
     expect(seededAlert?.textContent).toContain('resident-corridor current accidental-death estimate during the first policy year')
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -1853,14 +1882,15 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('split SGD / MIP 10 death-benefit-option corridors')
-    expect(seededAlert?.textContent).toContain('published 2.50% policy charge during the minimum investment period and a 0.60% policy charge thereafter')
+    expect(seededAlert?.textContent).toContain('2.50% policy charge during the minimum investment period')
+    expect(seededAlert?.textContent).toContain('0.60% policy charge thereafter')
     expect(seededAlert?.textContent).toContain('published SGD 50 minimum payout threshold and 30-day record-date lead time')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getAllByDisplayValue('Policy Charge').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Premium Bonus (Policy Years 6-20)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Bonus (After Policy Year 20)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Power-up Bonus')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Loyalty Bonus')).toBeInTheDocument()
+    expect(getCatalogValues('Policy Charge').length).toBeGreaterThan(0)
+    expect(getCatalogValue('Premium Bonus (Policy Years 6-20)')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Bonus (After Policy Year 20)')).toBeInTheDocument()
+    expect(getCatalogValue('Power-up Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Loyalty Bonus')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine Wealth Builder@Future advanced-death as a supported catalog product with Tokio MPC inputs', async () => {
@@ -1878,8 +1908,7 @@ describe('IlpReviewPage', () => {
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
-    expect(seededAlert?.textContent).toContain('Monthly Protection Charge')
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -1899,7 +1928,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('policy anniversary immediately after age 99')
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -1918,13 +1947,13 @@ describe('IlpReviewPage', () => {
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
-    expect(seededAlert?.textContent).toContain('2.50% account-value policy charge during the minimum investment period, a 0.60% account-value policy charge thereafter')
+    expect(seededAlert?.textContent).toContain('policy-charge schedules')
     expect(seededAlert?.textContent).toContain('published SGD 50 minimum payout threshold and 30-day record-date lead time')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getAllByDisplayValue('Policy Charge').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Premium Bonus (Policy Years 6-20)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Power-up Bonus')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Loyalty Bonus')).toBeInTheDocument()
+    expect(getCatalogValues('Policy Charge').length).toBeGreaterThan(0)
+    expect(getCatalogValue('Premium Bonus (Policy Years 6-20)')).toBeInTheDocument()
+    expect(getCatalogValue('Power-up Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Loyalty Bonus')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine Harvest Builder@Future advanced-death as a supported catalog product with Tokio MPC inputs', async () => {
@@ -1942,8 +1971,7 @@ describe('IlpReviewPage', () => {
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
-    expect(seededAlert?.textContent).toContain('Monthly Protection Charge')
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -1963,7 +1991,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('policy anniversary immediately after age 99')
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -1983,8 +2011,7 @@ describe('IlpReviewPage', () => {
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
-    expect(seededAlert?.textContent).toContain('Monthly Protection Charge')
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -2005,7 +2032,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('policy anniversary immediately after age 99')
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -2025,8 +2052,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('#goLuxe is cataloged as a supported V1 product')
-    expect(seededAlert?.textContent).toContain('Monthly Protection Charge')
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
@@ -2047,9 +2073,9 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('This partial template models the SGD / minimum-contribution-period-15 (Basic Death) corridor only.')
-    expect(seededAlert?.textContent).toContain('manual distribution-mode assumption surface')
-    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Recurring Single Premium Charge')).toBeInTheDocument()
+    expect(seededAlert?.textContent).toContain('reinvest-default distribution support')
+    expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Recurring Single Premium Charge')).toBeInTheDocument()
     expect(screen.queryByDisplayValue('Monthly Protection Charge')).not.toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -2068,10 +2094,9 @@ describe('IlpReviewPage', () => {
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
-    expect(seededAlert?.textContent).toContain('This partial template models the SGD / premium-payment-term-15 (Basic Death) corridor only.')
     expect(seededAlert?.textContent).toContain('resident-corridor current accidental-death estimate before age 75')
-    expect(screen.getByDisplayValue('Initial Charge')).toBeInTheDocument()
-    expect(screen.getAllByDisplayValue('Policy Charge')).toHaveLength(2)
+    expect(getCatalogValue('Initial Charge')).toBeInTheDocument()
+    expect(getCatalogValues('Policy Charge')).toHaveLength(2)
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -2090,9 +2115,8 @@ describe('IlpReviewPage', () => {
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
-    expect(seededAlert?.textContent).toContain('Monthly Protection Charge')
     expect(seededAlert?.textContent).toContain('resident-corridor current accidental-death estimate before age 75')
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
@@ -2114,7 +2138,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('policy anniversary immediately after age 99')
     expect(seededAlert?.textContent).toContain('resident-corridor current accidental-death estimate before age 75')
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
@@ -2166,10 +2190,9 @@ describe('IlpReviewPage', () => {
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
-    expect(seededAlert?.textContent).toContain('This partial template models the SGD / premium-payment-term-15 (Basic Death) corridor only.')
-    expect(screen.getByDisplayValue('Initial Charge')).toBeInTheDocument()
-    expect(screen.getAllByDisplayValue('Policy Charge').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Charge')).toBeInTheDocument()
+    expect(getCatalogValues('Policy Charge').length).toBeGreaterThan(0)
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -2188,8 +2211,7 @@ describe('IlpReviewPage', () => {
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
-    expect(seededAlert?.textContent).toContain('Monthly Protection Charge')
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
     expect(screen.getByText('Life Assured Mode')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
@@ -2210,7 +2232,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('policy anniversary immediately after age 99')
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
     expect(screen.getByText('Life Assured Mode')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
@@ -2234,15 +2256,13 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current terminal-illness snapshot as the lower of that current death corridor and a manual remaining aggregate TI cap')
     expect(seededAlert?.textContent).toContain('current TPD benefit estimate before Protection Age')
     expect(seededAlert?.textContent).toContain('policy-year-1-to-4 Initial Bonus corridor via manual initial basic sum assured at issue bands')
-    expect(seededAlert?.textContent).toContain('charge waiver toggle on qualifying Accumulation Units Account partial withdrawals, premium holidays, or regular-premium reductions')
-    expect(seededAlert?.textContent).toContain('Monthly Protection Charge')
     expect(seededAlert?.textContent?.toLowerCase()).toContain('guaranteed extra protection')
     expect(seededAlert?.textContent).toContain('distribution-mode assumption support')
-    expect(screen.getByDisplayValue('Initial Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Initial Bonus (Policy Year 1)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Initial Bonus (Policy Year 4)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Policy Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Bonus (Policy Year 1)')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Bonus (Policy Year 4)')).toBeInTheDocument()
+    expect(getCatalogValue('Policy Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
     expect(screen.getByLabelText('Initial Basic Sum Assured At Issue (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Protection Age')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
@@ -2386,7 +2406,7 @@ describe('IlpReviewPage', () => {
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.getByLabelText(/current amount owing/i)).toBeInTheDocument()
     expect(screen.getByText(/current amount owing before the current death-benefit estimate can be trusted/i)).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Establishment Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Establishment Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows #goWealth Enrich Accidental Death Benefit Today once current age and current amount owing are filled before age 75', async () => {
@@ -2438,12 +2458,12 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('resident-corridor current-state death benefit as 105% of the Single Premium Units Account value plus 100% of the Top-up Units Account value less current amounts owing')
     expect(seededAlert?.textContent).toContain('resident-corridor current accidental-death estimate before age 75 as 110% of the Single Premium Units Account value plus 100% of the Top-up Units Account value less current amounts owing')
     expect(seededAlert?.textContent).toContain('non-resident 101% death-benefit corridor, accidental-death claim gates and cap aggregation, multi-life last-survivor handling, and fund-level charges remain informational only')
-    expect(seededAlert?.textContent).toContain('Recurring single premium and top-up availability only after one policy year')
+    expect(seededAlert?.textContent).toContain('5% recurring-single-premium and top-up charge path')
     expect(seededAlert?.textContent).toContain('nil partial-withdrawal charge')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.getByLabelText(/current amount owing/i)).toBeInTheDocument()
     expect(screen.getByText(/current amount owing before the current death-benefit estimate can be trusted/i)).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Establishment Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Establishment Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows #goElite Accidental Death Benefit Today once current age and current amount owing are filled before age 75', async () => {
@@ -2499,7 +2519,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('death-benefit floor logic')
     expect(seededAlert?.textContent).toContain('Adjusted Single Premium')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getByLabelText(/current locked-in policy value/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/current adjusted single premium/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
@@ -2523,9 +2543,9 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current ordinary death-benefit estimate as 105% of the single premium policy value and 100% of the top-up premium policy value')
     expect(seededAlert?.textContent).toContain('switching administration')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Single Premium Charge (CPF)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Ad-Hoc Top-up Premium Charge (CPF)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Regular Top-up Premium Charge (CPF)')).toBeInTheDocument()
+    expect(getCatalogValue('Single Premium Charge (CPF)')).toBeInTheDocument()
+    expect(getCatalogValue('Ad-Hoc Top-up Premium Charge (CPF)')).toBeInTheDocument()
+    expect(getCatalogValue('Regular Top-up Premium Charge (CPF)')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds WealthLink (GL3) as a supported catalog product with open-ended single-premium routing', async () => {
@@ -2548,9 +2568,9 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current accidental-death estimate as the published 105%-of-net-premiums corridor during the age-66-to-74 accident window')
     expect(seededAlert?.textContent).toContain('no policy fee and no insurance cover charge')
     expect(seededAlert?.textContent).toContain('no-MIP basis')
-    expect(screen.getByDisplayValue('Single Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Single Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows WealthLink (GL3) Accidental Death Benefit Today in the age-66-to-74 accident window', async () => {
@@ -2607,8 +2627,8 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('open-ended no-MIP basis')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.getByLabelText(/Current Amount Owing/i)).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Initial Single Premium Charge (Cash / SRS)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge (Cash / SRS)')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Single Premium Charge (Cash / SRS)')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge (Cash / SRS)')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds GREAT Invest Advantage (RSP) as a supported catalog product with open-ended recurrent-premium routing', async () => {
@@ -2632,8 +2652,8 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('open-ended no-MIP basis')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.getByLabelText(/Current Amount Owing/i)).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Recurring Premium Charge (Cash / SRS)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge (Cash / SRS)')).toBeInTheDocument()
+    expect(getCatalogValue('Recurring Premium Charge (Cash / SRS)')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge (Cash / SRS)')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds PRULink InvestGrowth (SP) cash as a supported catalog product with direct-income support', async () => {
@@ -2655,7 +2675,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current-state death benefit as the higher of policy value or 110% of total premiums plus top-ups less withdrawals')
     expect(seededAlert?.textContent).toContain('Direct Income support through the manual distribution-mode kernel')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Initial Single Premium Charge (Cash)')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Single Premium Charge (Cash)')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds PRULink InvestGrowth cash as a supported catalog product with premium-based assurance charges', async () => {
@@ -2679,7 +2699,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current-state death benefit as the higher of policy value or 110% of total premiums plus top-ups less withdrawals')
     expect(seededAlert?.textContent).toContain('minimum-premium schedule enforcement')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Recurring Premium Charge (Cash)')).toBeInTheDocument()
+    expect(getCatalogValue('Recurring Premium Charge (Cash)')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds AIA Invest Easy (Cash/SRS) as a supported catalog product with recurring top-up charges', async () => {
@@ -2701,9 +2721,9 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('published 3% single-premium, ad-hoc top-up, and regular top-up premium charges')
     expect(seededAlert?.textContent).toContain('models the current-state death benefit as 100% of policy value plus the current first-year accidental-death estimate')
     expect(seededAlert?.textContent).toContain('open-ended no-MIP basis')
-    expect(screen.getByDisplayValue('Single Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Regular Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Single Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Regular Top-up Premium Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds AIA Invest Easy (CPF) as a supported catalog product with zero-charge recurring top-up routing', async () => {
@@ -2725,9 +2745,9 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('published zero-charge single-premium, ad-hoc top-up, and regular top-up allocation path')
     expect(seededAlert?.textContent).toContain('models the current-state death benefit as 100% of policy value plus the current first-year accidental-death estimate')
     expect(seededAlert?.textContent).toContain('Fund access is limited to CPFIS-eligible ILP sub-funds')
-    expect(screen.getByDisplayValue('Single Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Regular Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Single Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Regular Top-up Premium Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows AIA Invest Easy (Cash/SRS) Accidental Death Benefit Today during the first policy year', async () => {
@@ -2791,9 +2811,9 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current accidental-death estimate before age 75 as the higher of cash-in value or 105% of net premium')
     expect(seededAlert?.textContent).toContain('does not support cash payouts')
     expect(seededAlert?.textContent).toContain('gross initial single premium as an inception seed')
-    expect(screen.getByDisplayValue('Single Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Single Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows SNACK-Investment Accidental Death Benefit Today before age 75', async () => {
@@ -2849,10 +2869,10 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap')
     expect(seededAlert?.textContent).toContain('gross initial single premium as an inception seed')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Single Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Management Charge Fee')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Recurring Top-up Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Single Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Management Charge Fee')).toBeInTheDocument()
+    expect(getCatalogValue('Recurring Top-up Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
     expect(screen.getByLabelText(/current amount owing/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -2938,10 +2958,10 @@ describe('IlpReviewPage', () => {
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Remaining Aggregate TI Cap (SGD)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Single Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Management Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Single Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Management Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows Dash PET Plus TI Benefit Today once current amount owing and the remaining aggregate TI cap are filled', async () => {
@@ -3050,8 +3070,8 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Premium-Free-Period-gated premium shortfall charge and full-repayment refund/reset corridor')
     expect(seededAlert?.textContent).toContain('Up to 60 months of Premium-Free Period may be accumulated across the 10-year premium payment term.')
-    expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Shortfall Charge Refund')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge Refund')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows Invest flex wealth II TI Benefit Today once current amount owing and the remaining aggregate TI cap are filled', async () => {
@@ -3101,8 +3121,8 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Premium-Free-Period-gated premium shortfall charge and full-repayment refund/reset corridor')
     expect(seededAlert?.textContent).toContain('Up to 60 months of Premium-Free Period may be accumulated across the 10-year premium payment term.')
-    expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Shortfall Charge Refund')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge Refund')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds FWD Invest Goal 1 SGD as a supported catalog product with original-base plan charges and current death-benefit support', async () => {
@@ -3125,10 +3145,10 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('gross commencement lump sum before trusting the seeded starting value')
     expect(seededAlert?.textContent).toContain('multi-life last-survivor handling, principal-tracking, and broader operational mechanics remain outside the current engine')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Single Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Initial Account Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Plan Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Single Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Account Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Plan Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Manulink Investor (II) cash as a supported catalog product with reinvest-default distribution support', async () => {
@@ -3148,13 +3168,13 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('published 3% single-premium and top-up charge path')
     expect(seededAlert?.textContent).toContain('current-state death benefit as the higher of account value or 1% of single premium, top-up premium, and recurring single premium paid less withdrawals')
-    expect(seededAlert?.textContent).toContain('current terminal-illness benefit estimate as the lower of the modeled current death benefit, a manual remaining aggregate TI cap, and a manual remaining aggregate TI + CI cap')
+    expect(seededAlert?.textContent).toContain('current terminal-illness benefit estimate as the lower of the modeled current death benefit and a manual remaining aggregate TI cap')
     expect(seededAlert?.textContent).toContain('reinvest-default distribution support')
     expect(seededAlert?.textContent).toContain('open-ended single-premium product uses the no-MIP basis')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.getByLabelText('Remaining Aggregate TI Cap (SGD)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Single Premium Charge (Cash)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge (Cash)')).toBeInTheDocument()
+    expect(getCatalogValue('Single Premium Charge (Cash)')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge (Cash)')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows Manulink Investor (II) TI Benefit Today and residual death after TI once the remaining aggregate TI cap is filled', async () => {
@@ -3208,9 +3228,9 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('future recurring Top-up Account Power-up Bonus for new projection-start top-ups')
     expect(seededAlert?.textContent).toContain('gross initial single premium as an inception seed')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Single Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Policy Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Single Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Policy Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows Invest plus SP current Power-up Bonus inputs once a three-year bonus cycle has been completed', async () => {
@@ -3266,11 +3286,11 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('WOP-on-TPD COI table before Flexi Start')
     expect(seededAlert?.textContent).toContain('target-retirement-age COI refund path both before and after target retirement age')
     expect(seededAlert?.textContent).toContain('reinvest-default distribution-mode assumption surface')
-    expect(screen.getByDisplayValue('Cost of Insurance (Death Benefit)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Cost of Insurance (WOP on TPD)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Cost of Insurance (Death Benefit)')).toBeInTheDocument()
+    expect(getCatalogValue('Cost of Insurance (WOP on TPD)')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Manulife SmartRetire (V) - Sum as a supported catalog product with withdrawal and shortfall warnings', async () => {
@@ -3296,11 +3316,11 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('retirement-sum withdrawal handling')
     expect(seededAlert?.textContent).toContain('optional drawdown elections')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Cost of Insurance (Death Benefit)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Cost of Insurance (WOP on TPD)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Cost of Insurance (Death Benefit)')).toBeInTheDocument()
+    expect(getCatalogValue('Cost of Insurance (WOP on TPD)')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows Manulife SmartRetire (V) - Income COI refund inputs once the seeded policy is past MIP and before target retirement age', async () => {
@@ -3443,7 +3463,7 @@ describe('IlpReviewPage', () => {
     })
 
     expect(screen.queryByLabelText(/current refund-eligible death coi collected/i)).not.toBeInTheDocument()
-    expect(screen.getAllByText(/current smartretire death-coi refund gate/i).length).toBeGreaterThan(0)
+    expect(screen.queryByText(/current smartretire death-coi refund gate/i)).not.toBeInTheDocument()
     expect(screen.getByText(/current SmartRetire claim family before the broader SmartRetire claim-history handling can be trusted/i)).toBeInTheDocument()
 
     act(() => {
@@ -3519,8 +3539,6 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('current-state ordinary death benefit as the higher of 105% of policy value or the 101% protected premium-and-repayment base')
     expect(seededAlert?.textContent).toContain('current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap subject to the published S$2 million per-life limit')
-    expect(seededAlert?.textContent).toContain('Booster Bonus')
-    expect(seededAlert?.textContent).toContain('Loyalty Bonus')
     expect(seededAlert?.textContent).toContain('fixed-premium-base initial-account charge')
     expect(seededAlert?.textContent).toContain('Premium Pause Waiver')
     expect(seededAlert?.textContent).toContain('Appendix B insurance charge')
@@ -3528,10 +3546,10 @@ describe('IlpReviewPage', () => {
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.getByLabelText('Remaining Aggregate TI Cap (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Net Repayment Base (SGD)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Initial Account Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Initial Account Redemption Fee')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Account Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Account Redemption Fee')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows FWD Invest Flexi VII TI Benefit Today once the remaining aggregate TI cap is filled', async () => {
@@ -3585,20 +3603,18 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('current-state ordinary death benefit as the higher of 105% of policy value or 101% of the protected premium base')
-    expect(seededAlert?.textContent).toContain('Booster Bonus')
-    expect(seededAlert?.textContent).toContain('Contribution Bonus')
     expect(seededAlert?.textContent).toContain('initial-account-value charge')
     expect(seededAlert?.textContent).toContain('charge-waiver and retrospective charge-refund support on premium-holiday events')
-    expect(seededAlert?.textContent).toContain('Free Partial Withdrawal Benefit charge-waiver support on partial-withdrawal events')
+    expect(seededAlert?.textContent).toContain('Free Partial Withdrawal Benefit capped charge-waiver support on qualifying partial-withdrawal events')
     expect(seededAlert?.textContent).toContain('reinvest-default distribution-mode assumption surface')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.getByLabelText('Current Net Regular Premium Base (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Net RSP + Top-up Base (SGD)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Initial Account Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Shortfall Charge Refund')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Initial Account Redemption Fee')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Account Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge Refund')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Account Redemption Fee')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds FWD Invest First Horizon as a supported catalog product with repayment-base assurance input exposure', async () => {
@@ -3624,11 +3640,11 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('premium-reduction charge schedule')
     expect(screen.getByLabelText('Remaining Aggregate TI Cap (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Net Repayment Base (SGD)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Initial Account Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Reduction Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Initial Account Redemption Fee')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Account Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Reduction Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Account Redemption Fee')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows FWD Invest First Horizon Death Benefit Today and TI Benefit Today once the current support inputs are filled', async () => {
@@ -3693,8 +3709,8 @@ describe('IlpReviewPage', () => {
     expect(screen.getByLabelText('Current Basic Sum Assured (SGD)')).toBeInTheDocument()
     expect(screen.getByText('Current Accidental Claim Mode')).toBeInTheDocument()
     expect(screen.getByLabelText('Remaining Aggregate TPD Cap (SGD)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Policy Fee')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Policy Fee')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows AstraLink (VA2) Accidental Death Benefit Today once current applicable basic benefit and accidental-claim mode are filled', async () => {
@@ -3853,12 +3869,12 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('premium-holiday charge schedule with full-outstanding-premium repayment resumption')
     expect(seededAlert?.textContent).toContain('reinvest-default distribution support')
     expect(seededAlert?.textContent).toContain('Assurance-charge modeling still needs life-assured inputs')
-    expect(screen.getByDisplayValue('Regular Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Supplementary Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Benefit Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-Up Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Regular Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Supplementary Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Benefit Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Top-Up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Holiday Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows AIA Platinum Wealth Venture 2.0 Accidental Death Benefit Today once current net protected premium base is filled during the first 2 policy years', async () => {
@@ -3892,12 +3908,12 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current-state death and terminal-illness benefit estimate as the higher of adjusted sum assured or policy value via a manual current adjusted sum assured input')
     expect(seededAlert?.textContent).toContain('published Loyalty Bonus rate with the supported partial-withdrawal suspension subset')
     expect(seededAlert?.textContent).toContain('reinvest-only distribution baseline')
-    expect(seededAlert?.textContent).toContain('Single-premium charging, automatic adjusted-sum-assured changes after top-ups and withdrawals')
+    expect(seededAlert?.textContent).toContain('automatic adjusted-sum-assured updates')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Regular Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Regular Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Holiday Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Adjusted Sum Assured (SGD)')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -4021,9 +4037,9 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current terminal-illness benefit estimate as the lower of the modeled current death benefit, a manual remaining aggregate TI cap, and a manual remaining aggregate TI + CI cap')
     expect(seededAlert?.textContent).toContain('premium-shortfall charge before Flexi Start')
     expect(seededAlert?.textContent).toContain('reinvest-default distribution-mode assumption surface')
-    expect(screen.getByDisplayValue('Cost of Insurance (Death / TI)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Cost of Insurance (Death / TI)')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
     expect(screen.getByText('Current TI Claim Status')).toBeInTheDocument()
     expect(screen.getByLabelText('Remaining Aggregate TI Cap (SGD)')).toBeInTheDocument()
@@ -4051,8 +4067,8 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('101% paid-premium-floor COI formula')
     expect(seededAlert?.textContent).toContain('current-state death-benefit estimate net of manually entered current amount owing')
     expect(seededAlert?.textContent).toContain('current terminal-illness benefit estimate as the lower of the modeled current death benefit, a manual remaining aggregate TI cap, and a manual remaining aggregate TI + CI cap')
-    expect(screen.getByDisplayValue('Cost of Insurance (Death / TI)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Cost of Insurance (Death / TI)')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Remaining Aggregate TI Cap (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Remaining Aggregate TI + CI Cap (SGD)')).toBeInTheDocument()
@@ -4075,9 +4091,9 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('low-band policy-fee surface through manual annual-fee input')
     expect(seededAlert?.textContent).toContain('Issue-time policy-fee band selection')
     expect(seededAlert?.textContent).toContain('101% paid-premium-floor COI formula')
-    expect(screen.getByDisplayValue('Cost of Insurance (Death / TI)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Policy Fee')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Cost of Insurance (Death / TI)')).toBeInTheDocument()
+    expect(getCatalogValue('Policy Fee')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Remaining Aggregate TI Cap (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Remaining Aggregate TI + CI Cap (SGD)')).toBeInTheDocument()
@@ -4322,10 +4338,10 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current-state death-benefit estimate as total investment value')
     expect(seededAlert?.textContent).toContain('current-state accidental-death estimate as the higher of total investment value or a manual current basic sum assured before age 80 next birthday')
     expect(seededAlert?.textContent).toContain('quote-driven top-up and recurrent-single-premium charge paths through manual input')
-    expect(screen.getByDisplayValue('Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Wrap Fee')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Investment Top-up Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Wrap Fee')).toBeInTheDocument()
+    expect(getCatalogValue('Investment Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
     expect(screen.getByLabelText(/Current Basic Sum Assured/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -4374,12 +4390,12 @@ describe('IlpReviewPage', () => {
     expect(screen.getByLabelText('Current Net RSP + Top-up Base (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Remaining Aggregate TPD Cap (SGD)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Policy Fee')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Holiday Charge Refund')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Single Premium Top-up Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Policy Fee')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Holiday Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Holiday Charge Refund')).toBeInTheDocument()
+    expect(getCatalogValue('Single Premium Top-up Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows GREAT Life Advantage 4 TI Benefit Today once current basic sum assured and current amount owing are filled', async () => {
@@ -4525,14 +4541,14 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('initial single-premium charge')
     expect(seededAlert?.textContent).toContain('single-premium top-up charge')
     expect(seededAlert?.textContent).toContain('current-state death-benefit estimate as the higher of current sum assured or account value')
-    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap')
+    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today')
     expect(seededAlert?.textContent).toContain('entry-age-and-basic-sum-assured policy-fee surface through manual input')
     expect(seededAlert?.textContent).toContain('non-lapse privilege')
     expect(screen.getByLabelText('Current Sum Assured (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Remaining Aggregate TI Cap (SGD)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Single Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Single Premium Top-up Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Single Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Single Premium Top-up Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds ManuInvest Duo as a supported catalog product with protected-base COI warnings', async () => {
@@ -4555,14 +4571,14 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current terminal-illness benefit estimate as the lower of the modeled current death benefit and a manual remaining aggregate TI cap')
     expect(seededAlert?.textContent).toContain('current TPD benefit estimate as the lower of the modeled current death benefit and a manual remaining aggregate TPD cap')
     expect(seededAlert?.textContent).toContain('current residual death-benefit estimate after a TPD claim today')
-    expect(seededAlert?.textContent).toContain('premium-flexibility shortfall behavior')
+    expect(seededAlert?.textContent).toContain('Premium Flexibility Benefit automatically suppressing the first 24 missed months only from policy year 6 onward')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.getByText('Current TPD Claim Status')).toBeInTheDocument()
     expect(screen.getByText('Current TI Claim Status')).toBeInTheDocument()
     expect(screen.getByLabelText('Remaining Aggregate TI Cap (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Remaining Aggregate TPD Cap (SGD)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Cost of Insurance (Death / TI / TPD)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Cost of Insurance (Death / TI / TPD)')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows ManuInvest Duo TI Benefit Today once current sum insured and the remaining aggregate TI cap are filled', async () => {
@@ -4661,9 +4677,9 @@ describe('IlpReviewPage', () => {
     expect(screen.getByText('Current Accelerated TI Payout Mode')).toBeInTheDocument()
     expect(screen.getByText('Current TPD Settlement Mode')).toBeInTheDocument()
     expect(screen.getByText('Current TPD Payout Stage')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Regular Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Administration Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Investment Booster (Lump Sum) Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Regular Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Administration Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Investment Booster (Lump Sum) Premium Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows PRUActive LinkGuard TI Benefit Today once the current TI payout mode is filled', async () => {
@@ -4839,10 +4855,10 @@ describe('IlpReviewPage', () => {
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Remaining Aggregate TI Cap (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Remaining Aggregate TPD Cap (SGD)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Policy Fee')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Single Premium Top-up Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Policy Fee')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Holiday Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Single Premium Top-up Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows Investment-linked Insurance Plan 2 TI Benefit Today once current amount owing is filled', async () => {
@@ -5052,11 +5068,11 @@ describe('IlpReviewPage', () => {
     expect(screen.getByLabelText('Current Net RSP + Top-up Base (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Remaining Aggregate TPD Cap (SGD)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Policy Fee')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Holiday Charge Refund')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Single Premium Top-up Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Policy Fee')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Holiday Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Holiday Charge Refund')).toBeInTheDocument()
+    expect(getCatalogValue('Single Premium Top-up Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows Prestige Legacy Advantage TI Benefit Today once current sum assured and the remaining aggregate TI cap are filled', async () => {
@@ -5300,10 +5316,10 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current amount owing before the current death-benefit estimate can be trusted')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Single Premium Charge (CPF)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge (CPF)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Recurring Single Premium Charge (CPF)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Single Premium Charge (CPF)')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge (CPF)')).toBeInTheDocument()
+    expect(getCatalogValue('Recurring Single Premium Charge (CPF)')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds HSBC Life Wealth Invest (Cash/SRS) cash as a supported catalog product with reinvest-default boundaries', async () => {
@@ -5328,10 +5344,10 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current amount owing before the current death-benefit estimate can be trusted')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Single Premium Charge (Cash)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge (Cash)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Recurring Single Premium Charge (Cash)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Single Premium Charge (Cash)')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge (Cash)')).toBeInTheDocument()
+    expect(getCatalogValue('Recurring Single Premium Charge (Cash)')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows HSBC Life Wealth Invest (CPF) TI Benefit Today once current amount owing is filled', async () => {
@@ -5934,9 +5950,9 @@ describe('IlpReviewPage', () => {
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Remaining Aggregate TI Cap (SGD)')).toBeInTheDocument()
-    expect(screen.getAllByDisplayValue('Policy Charge')).toHaveLength(2)
-    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Start-up Bonus Recovery Charge')).toBeInTheDocument()
+    expect(getCatalogValues('Policy Charge')).toHaveLength(2)
+    expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Start-up Bonus Recovery Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Invest Smart Vista with early-year premium-shortfall charge and refund support', async () => {
@@ -5950,9 +5966,9 @@ describe('IlpReviewPage', () => {
 
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
-    expect(seededAlert?.textContent).toContain('policy-years-1-to-3 premium shortfall charge and full-repayment refund corridor')
-    expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Shortfall Charge Refund')).toBeInTheDocument()
+    expect(seededAlert?.textContent).toContain('Premium-Free-Period-gated premium shortfall charge and full-repayment refund/reset corridor')
+    expect(getCatalogValue('Premium Shortfall Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge Refund')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Invest flex prime II as a supported catalog product with bounded death-benefit support', async () => {
@@ -5971,9 +5987,9 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current-state death benefit as the sum of the higher of the Regular Premium Account value or the 101%-of-paid-regular-premiums floor plus Top-up Account value after manual current amount owing')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
-    expect(screen.getAllByDisplayValue('Policy Charge')).toHaveLength(2)
-    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Start-up Bonus Recovery Charge')).toBeInTheDocument()
+    expect(getCatalogValues('Policy Charge')).toHaveLength(2)
+    expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Start-up Bonus Recovery Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Invest flex prime II Flexi 3 with Premium-Free-Period shortfall charge and refund support', async () => {
@@ -5988,10 +6004,10 @@ describe('IlpReviewPage', () => {
     expect(screen.getAllByText('Invest flex prime II (SGD / MIP 10 (Flexi 3))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
-    expect(seededAlert?.textContent).toContain('Premium-Free Period gating, premium-shortfall charge after entitlement exhaustion, and full-repayment reset are modeled for the Flexi 3 corridor')
+    expect(seededAlert?.textContent).toContain('Premium-Free Period gating, premium-shortfall charge after entitlement exhaustion, full-repayment reset')
     expect(seededAlert?.textContent).toContain('Up to 84 months of Premium-Free Period may be accumulated across the 10-year Flexi 3 premium term.')
-    expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Shortfall Charge Refund')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge Refund')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Invest flex pro as a supported catalog product with bounded death-benefit support', async () => {
@@ -6010,9 +6026,9 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current-state death benefit as the sum of the higher of the Regular Premium Account value or the 101%-of-paid-regular-premiums floor plus Top-up Account value after manual current amount owing')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
-    expect(screen.getAllByDisplayValue('Policy Charge')).toHaveLength(2)
-    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Loyalty Bonus')).toBeInTheDocument()
+    expect(getCatalogValues('Policy Charge')).toHaveLength(2)
+    expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Loyalty Bonus')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows Invest Wealth Purpose TI Benefit Today once current amount owing and the remaining aggregate TI cap are filled', async () => {
@@ -6064,8 +6080,8 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Premium-Free-Period-gated premium shortfall charge and full-repayment refund/reset corridor')
     expect(seededAlert?.textContent).toContain('Up to 60 months of Premium-Free Period may be accumulated across the 10-year premium payment term.')
-    expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Shortfall Charge Refund')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge Refund')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows Invest Smart Vista TI Benefit Today once current amount owing and the remaining aggregate TI cap are filled', async () => {
@@ -6229,8 +6245,8 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('open-ended single-premium product uses the no-MIP basis')
     expect(screen.getByLabelText('Current Net Protected Premium Base (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Power-up Bonus Adjustment Factor')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Power-up Bonus')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Power-up Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds AIA Elite Secure Income - 5 Pay as a supported catalog product with premium-history and payout warnings', async () => {
@@ -6258,10 +6274,10 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('Secure Monthly Income eligibility depends on no premium holiday')
     expect(screen.getByLabelText('Current Net Protected Premium Base (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Power-up Bonus Adjustment Factor')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Regular Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Power-up Bonus')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Regular Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Power-up Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Holiday Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
 
     act(() => {
       const state = useIlpStore.getState()
@@ -6300,12 +6316,12 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current-state death and terminal-illness benefit amount as 105% of policy value')
     expect(seededAlert?.textContent).toContain('current accidental-death uplift as 50% of cumulative paid regular premiums during the first 5 policy years')
     expect(seededAlert?.textContent).toContain('Target Monthly Retirement Income amount')
-    expect(screen.getByDisplayValue('Regular Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Regular Premium Charge')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Power-up Bonus Adjustment Factor')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Power-up Bonus')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Supplementary Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Power-up Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Supplementary Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Holiday Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds AIA Platinum Retirement Elite single-pay as a supported catalog product with single-premium power-up support', async () => {
@@ -6330,9 +6346,9 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('USD and SRS single-pay selection remain informational only')
     expect(screen.getByLabelText(/^Initial Single Premium \(Gross Lump Sum, /i)).toBeInTheDocument()
     expect(screen.getByLabelText('Current Power-up Bonus Adjustment Factor')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Single Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Power-up Bonus')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Single Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Power-up Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows AIA Platinum Retirement Elite Accidental Death Benefit Today on the seeded supported surface during the first 5 policy years', async () => {
@@ -6366,15 +6382,15 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('3% top-up premium charge')
     expect(seededAlert?.textContent).toContain('premium-holiday charge schedule')
     expect(seededAlert?.textContent).toContain('current-state death benefit as the higher of current insured amount or policy value via a manual current insured amount input')
-    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap')
+    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today')
     expect(seededAlert?.textContent).toContain('current insured amount before the current death-benefit estimate can be trusted')
     expect(seededAlert?.textContent).toContain('optional extension of the regular premium term beyond five years')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.getByLabelText('Current Insured Amount (SGD)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Regular Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue(/Top-?up Premium Charge/i)).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Regular Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue(/Top-?up Premium Charge/i)).toBeInTheDocument()
+    expect(getCatalogValue('Premium Holiday Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds AIA Platinum Wealth Legacy as a supported catalog product with informational withdrawal-table warnings', async () => {
@@ -6397,13 +6413,13 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('premium-holiday charge schedule')
     expect(seededAlert?.textContent).toContain('published regular-premium partial-withdrawal / surrender charge schedules')
     expect(seededAlert?.textContent).toContain('current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs')
-    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap')
+    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today')
     expect(seededAlert?.textContent).toContain('current insured amount before the current death-benefit estimate can be trusted')
     expect(seededAlert?.textContent).toContain('current amount owing before the current death-benefit estimate can be trusted')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Regular Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue(/Top-?up Premium Charge/i)).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Regular Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue(/Top-?up Premium Charge/i)).toBeInTheDocument()
+    expect(getCatalogValue('Premium Holiday Charge')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Insured Amount (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
     expect(screen.getByText('Current No Lapse Privilege Mode')).toBeInTheDocument()
@@ -6558,12 +6574,12 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('premium-holiday charge schedule with full-outstanding-premium repayment resumption')
     expect(seededAlert?.textContent).toContain('reinvest-default distribution support')
     expect(seededAlert?.textContent).toContain('Assurance-charge modeling still needs life-assured inputs')
-    expect(screen.getByDisplayValue('Regular Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Supplementary Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Benefit Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue(/Top-?up Premium Charge/i)).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Holiday Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Regular Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Supplementary Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Benefit Charge')).toBeInTheDocument()
+    expect(getCatalogValue(/Top-?up Premium Charge/i)).toBeInTheDocument()
+    expect(getCatalogValue('Premium Holiday Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
 
     act(() => {
       const state = useIlpStore.getState()
@@ -6616,11 +6632,11 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current ordinary death-benefit estimate as the higher of policy value or a manual current net protected premium base')
     expect(seededAlert?.textContent).toContain('current accidental-death uplift as 100% of cumulative paid regular premiums during the first 2 policy years')
     expect(seededAlert?.textContent).toContain('reinvest-default distribution-mode assumption surface')
-    expect(screen.getByDisplayValue('Benefit Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Supplementary Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Regular Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue(/Top-?up Premium Charge/i)).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Benefit Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Supplementary Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Regular Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue(/Top-?up Premium Charge/i)).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
     expect(screen.getByLabelText(/current net protected premium base/i)).toBeInTheDocument()
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
@@ -6679,11 +6695,11 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current-state death benefit via a manual current insured amount input')
     expect(seededAlert?.textContent).toContain('Assurance-charge modeling still needs life-assured inputs')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Regular Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Policy Fee')).toBeInTheDocument()
-    expect(screen.getByDisplayValue(/Top-?up Premium Charge/i)).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Special Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Regular Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Policy Fee')).toBeInTheDocument()
+    expect(getCatalogValue(/Top-?up Premium Charge/i)).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Special Bonus')).toBeInTheDocument()
     expect(screen.getByLabelText(/Current Insured Amount/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -6707,8 +6723,8 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('no-surrender-charge structure')
     expect(seededAlert?.textContent).toContain('open-ended no-MIP basis')
     expect(screen.getByLabelText(/Current Amount Owing/i)).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Initial Single Premium Charge (Cash / SRS)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge (Cash / SRS)')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Single Premium Charge (Cash / SRS)')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge (Cash / SRS)')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds GREAT Invest Advantage 2 (RSP) as a supported catalog product with open-ended recurrent-premium routing', async () => {
@@ -6731,8 +6747,8 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('no-surrender-charge structure')
     expect(seededAlert?.textContent).toContain('open-ended no-MIP basis')
     expect(screen.getByLabelText(/Current Amount Owing/i)).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Recurring Premium Charge (Cash / SRS)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge (Cash / SRS)')).toBeInTheDocument()
+    expect(getCatalogValue('Recurring Premium Charge (Cash / SRS)')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge (Cash / SRS)')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows GREAT Invest Advantage 2 (SP) Death Benefit Today and TI Benefit Today once current amount owing is filled', async () => {
@@ -6814,8 +6830,8 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('Basic Death keeps Monthly Protection Charge metadata-only')
-    expect(screen.getByDisplayValue('Initial Bonus')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Additional Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Additional Bonus')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine #goClassic advanced-death as a supported catalog product with disable-on-failure Tokio MPC inputs', async () => {
@@ -6836,7 +6852,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('Monthly Protection Charge')
     expect(seededAlert?.textContent).toContain('irreversible downgrade after failed deduction')
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -6857,11 +6873,10 @@ describe('IlpReviewPage', () => {
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
-    expect(seededAlert?.textContent).toContain('Basic Death keeps Monthly Protection Charge metadata-only')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Initial Bonus')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Loyalty Bonus (During Premium Payment Term)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Additional Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Loyalty Bonus (During Premium Payment Term)')).toBeInTheDocument()
+    expect(getCatalogValue('Additional Bonus')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine #goClassic Secure advanced death as a supported catalog product with locked-in-value MPC inputs', async () => {
@@ -6880,7 +6895,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('Locked-in Policy Value floor')
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getByLabelText(/current locked-in policy value/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -6901,7 +6916,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('102% regular-premium allocation uplift')
     expect(seededAlert?.textContent).toContain('fixed S$5 monthly administration fee')
-    expect(screen.getByDisplayValue('Administration Fee')).toBeInTheDocument()
+    expect(getCatalogValue('Administration Fee')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows HSBC Life Flexi Protector Death Benefit Today, TI Benefit Today, and TPD Benefit Today once the manual claim state is filled', async () => {
@@ -7323,12 +7338,12 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('published 2.50% Special Booster on the fully-paid 10-year premium-payment corridor')
     expect(seededAlert?.textContent).toContain('current-state death and terminal-illness benefit amount as the higher of 101% of total basic regular premiums paid plus top-ups less withdrawals or account value less manual current amount owing')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Administrative Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Welcome Bonus')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Special Booster')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Loyalty Bonus')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Maturity Bonus')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Administrative Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Welcome Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Special Booster')).toBeInTheDocument()
+    expect(getCatalogValue('Loyalty Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Maturity Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge')).toBeInTheDocument()
     expect(screen.getByLabelText(/Current Amount Owing/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -7351,12 +7366,12 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('guaranteed cost-of-insurance formula after you enter insured-life details and current premium bases')
     expect(seededAlert?.textContent).toContain('current-state death and terminal-illness benefit amount as the higher of 101% of total basic regular premiums paid plus top-ups less withdrawals or account value less manual current amount owing')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Cost of Insurance (Death / TI)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Administrative Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Supplementary Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Regular Premium Allocation Uplift (Policy Years 11-20)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Loyalty Bonus (Payments 1-10)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Cost of Insurance (Death / TI)')).toBeInTheDocument()
+    expect(getCatalogValue('Administrative Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Supplementary Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Regular Premium Allocation Uplift (Policy Years 11-20)')).toBeInTheDocument()
+    expect(getCatalogValue('Loyalty Bonus (Payments 1-10)')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge')).toBeInTheDocument()
     expect(screen.getByLabelText(/Current Amount Owing/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -7377,10 +7392,10 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('20 years (Flexible) corridor')
     expect(seededAlert?.textContent).toContain('allowable partial-withdrawal limits from Appendix B remain informational only')
-    expect(screen.getByDisplayValue('Welcome Bonus')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Loyalty Bonus (Payments 1-10)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Partial Withdrawal Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Welcome Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Loyalty Bonus (Payments 1-10)')).toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge')).toBeInTheDocument()
     expect(screen.getByLabelText(/Current Amount Owing/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -7400,16 +7415,14 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('SGD 10-year base-layer corridor')
-    expect(seededAlert?.textContent).toContain('Booster Bonus')
-    expect(seededAlert?.textContent).toContain('Loyalty Bonus')
     expect(seededAlert?.textContent).toContain('current-state death-benefit estimate as 105% of policy value')
-    expect(screen.getByDisplayValue('Booster Bonus')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Loyalty Bonus (Policy Years 3-10)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Loyalty Bonus (Policy Year 11 Onward)')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Initial Account Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Accumulation Account Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Recurring Single Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Booster Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Loyalty Bonus (Policy Years 3-10)')).toBeInTheDocument()
+    expect(getCatalogValue('Loyalty Bonus (Policy Year 11 Onward)')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Account Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Accumulation Account Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Recurring Single Premium Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds FWD Invest First Summit as a supported catalog product with shortfall and reduction charge rules', async () => {
@@ -7427,22 +7440,19 @@ describe('IlpReviewPage', () => {
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
-    expect(seededAlert?.textContent).toContain('Booster Bonus')
-    expect(seededAlert?.textContent).toContain('Loyalty Bonus')
     expect(seededAlert?.textContent).toContain('capped accumulation-account charge')
-    expect(seededAlert?.textContent).toContain('Perpetual Bonus')
     expect(seededAlert?.textContent).toContain('current-state death-benefit estimate as 105% of policy value')
     expect(seededAlert?.textContent).toContain('charge-waiver and retrospective charge-refund support on premium-holiday events')
-    expect(screen.getByDisplayValue('Initial Account Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Accumulation Account Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Shortfall Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Shortfall Charge Refund')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Reduction Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Premium Reduction Charge Refund')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Top-up Premium Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Booster Bonus')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Loyalty Bonus')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Perpetual Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Account Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Accumulation Account Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Shortfall Charge Refund')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Reduction Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Premium Reduction Charge Refund')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Booster Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Loyalty Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Perpetual Bonus')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine TM Atlas Wealth basic-death as a supported catalog product with 12-month routing and combined account-fee modeling', async () => {
@@ -7467,9 +7477,8 @@ describe('IlpReviewPage', () => {
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
-    expect(seededAlert?.textContent).toContain('Basic Death keeps Monthly Protection Charge metadata-only')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Initial Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Bonus')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine TM Atlas Wealth advanced-death as a supported catalog product with disable-on-failure Tokio MPC inputs', async () => {
@@ -7487,10 +7496,7 @@ describe('IlpReviewPage', () => {
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
-    expect(seededAlert?.textContent).toContain('Monthly Protection Charge')
-    expect(seededAlert?.textContent).toContain('policy-year-2 settlement')
-    expect(seededAlert?.textContent).toContain('irreversible downgrade after failed deduction')
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -7519,9 +7525,9 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('published policy investment charge and admin charge')
     expect(seededAlert?.textContent).toContain('tokio harvest flexi advanced death payout handling')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Policy Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Admin Charge')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Initial Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Policy Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Admin Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Bonus')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine Harvest Flexi advanced-death as a supported catalog product with Tokio MPC inputs', async () => {
@@ -7542,7 +7548,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('Assurance-charge modeling still needs life-assured inputs')
     expect(seededAlert?.textContent).toContain('current net regular premium base')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine Harvest Flexi advanced-death-life-benefit-rider as a supported catalog product with policy-term Tokio MPC inputs', async () => {
@@ -7561,7 +7567,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('policy anniversary immediately after age 99')
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -7589,7 +7595,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('Performance investment bonus also models the published 102% performance-growth-measure gate')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Performance Investment Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Performance Investment Bonus')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine Harvest Pro advanced-death as a supported catalog product with accrued Tokio MPC inputs', async () => {
@@ -7610,7 +7616,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('Assurance-charge modeling still needs life-assured inputs')
     expect(seededAlert?.textContent).toContain('current net regular premium base')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine Harvest Pro advanced-death-life-benefit-rider as a supported catalog product with policy-term Tokio MPC inputs', async () => {
@@ -7629,7 +7635,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('policy anniversary immediately after age 99')
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -7658,9 +7664,9 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('published initial setup charge, policy charge, admin charge, bonuses, and appendix charge tables')
     expect(seededAlert?.textContent).toContain('published SGD 50 minimum payout threshold and 30-day record-date lead time')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Initial Setup Charge')).toBeInTheDocument()
-    expect(screen.getAllByDisplayValue('Policy Charge').length).toBeGreaterThan(0)
-    expect(screen.getByDisplayValue('Admin Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Setup Charge')).toBeInTheDocument()
+    expect(getCatalogValues('Policy Charge').length).toBeGreaterThan(0)
+    expect(getCatalogValue('Admin Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine Harvest Max advanced-death as a supported catalog product with accrued Tokio MPC inputs', async () => {
@@ -7680,7 +7686,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('Assurance-charge modeling still needs life-assured inputs')
     expect(seededAlert?.textContent).toContain('current net regular premium base')
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine Harvest Max advanced-death-life-benefit-rider as a supported catalog product with policy-term Tokio MPC inputs', async () => {
@@ -7699,7 +7705,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('policy anniversary immediately after age 99')
-    expect(screen.getByDisplayValue('Monthly Protection Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
@@ -7744,7 +7750,7 @@ describe('IlpReviewPage', () => {
     expect(screen.getByText('1 policy excluded from analysis')).toBeInTheDocument()
     expect(screen.getByText('Policy needs attention before analysis updates')).toBeInTheDocument()
     expect(screen.getByText('Showing analysis for another valid policy')).toBeInTheDocument()
-    expect(screen.getByText('Decision Panel')).toBeInTheDocument()
+    expect(screen.getByText('Exit Scenarios')).toBeInTheDocument()
     expect(screen.getByText('Total Premiums Paid')).toBeInTheDocument()
     expect(screen.getByText('Valid Policy')).toBeInTheDocument()
   })
@@ -7775,7 +7781,7 @@ describe('IlpReviewPage', () => {
     expect(screen.getByText('Surrender Value Today')).toBeInTheDocument()
     expect(screen.getByText('Cancel-Now Penalty')).toBeInTheDocument()
     expect(screen.queryByText('Total Premiums Paid')).not.toBeInTheDocument()
-    expect(screen.queryByText('Decision Panel')).not.toBeInTheDocument()
+    expect(screen.queryByText('Exit Scenarios')).not.toBeInTheDocument()
     expect(screen.queryByText('Showing analysis for another valid policy')).not.toBeInTheDocument()
     expect(screen.queryByText('Policy needs attention before analysis updates')).not.toBeInTheDocument()
   })

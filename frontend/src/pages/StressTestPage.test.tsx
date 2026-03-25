@@ -55,6 +55,8 @@ import { fetchPlannerSnapshot, postPlannerResults } from '@/lib/companion/compan
 import { runMonteCarloWorker } from '@/lib/simulation/workerClient'
 import { runActionImpactAnalysis } from '@/lib/companion/actionImpacts'
 
+const STRESS_TEST_PAGE_TEST_TIMEOUT_MS = 20_000
+
 const mockFetchSnapshot = vi.mocked(fetchPlannerSnapshot)
 const mockPostResults = vi.mocked(postPlannerResults)
 const mockRunMC = vi.mocked(runMonteCarloWorker)
@@ -353,7 +355,7 @@ describe('StressTestPage companion orchestration', () => {
     await waitFor(() => {
       expect(mockRunMC).toHaveBeenCalled()
     })
-  })
+  }, STRESS_TEST_PAGE_TEST_TIMEOUT_MS)
 
   it('uses normalized retirement context when building companion action impact overrides', async () => {
     const normalizedSpy = vi

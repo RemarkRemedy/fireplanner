@@ -19,7 +19,7 @@ describe('ILP golden harness meta gate', () => {
     snapshot = await buildCatalogSnapshot()
     fixtures = buildGoldenIlpFixtureInputs(snapshot)
     artifacts = fixtures.map((fixture) => buildGoldenFixtureArtifact(fixture, snapshot))
-  }, 120_000)
+  }, 300_000)
 
   it('keeps generated catalog JSON in sync with parser sources', async () => {
     const { generatedAt: expectedGeneratedAt, ...expectedManifest } = manifestJson

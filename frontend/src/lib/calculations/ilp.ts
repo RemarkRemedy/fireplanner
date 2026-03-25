@@ -2190,7 +2190,7 @@ function buildCashflowYearContext(
         event.startPolicyMonth + event.durationMonths - 1,
       )
     ), 0))
-  const policyYear = normalized.input.currentPolicyYear + projectionYear
+  const policyYear = normalized.input.currentPolicyYear + projectionYear - 1
 
   return {
     projectionYear,
@@ -2831,7 +2831,7 @@ function getDistributionPayoutsByAccount(
     return payouts
   }
 
-  const policyYear = normalized.input.currentPolicyYear + projectionYear
+  const policyYear = normalized.input.currentPolicyYear + projectionYear - 1
   const eligibleAccountIds = resolveDistributionPayoutAccountIds(normalized.input, policyYear)
 
   if (eligibleAccountIds.length === 0) {
@@ -5779,7 +5779,7 @@ function getRemainingMipYears(input: IlpPolicyInput): number {
     return input.postMipYears
   }
 
-  return Math.max(0, input.mipLength - input.currentPolicyYear)
+  return Math.max(0, input.mipLength - input.currentPolicyYear + 1)
 }
 
 function getRuleShare(
@@ -11124,7 +11124,7 @@ export function projectIlpPolicy(
   let cumulativeAssuranceChargesForBonusQualification = 0
 
   for (let year = 1; year <= totalYears; year += 1) {
-    const policyYear = input.currentPolicyYear + year
+    const policyYear = input.currentPolicyYear + year - 1
     const isPostMip = isPostMipPolicyYear(input, policyYear)
     const context = buildCashflowYearContext(normalized, year)
     const hasExplicitLapseForYear = isLapseActiveForEntireRange(normalized, context.range)

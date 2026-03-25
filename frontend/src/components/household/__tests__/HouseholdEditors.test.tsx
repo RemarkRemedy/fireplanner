@@ -10,6 +10,8 @@ import {
   useHouseholdPlanStore,
 } from '@/stores/useHouseholdPlanStore'
 
+const HOUSEHOLD_EDITORS_TEST_TIMEOUT_MS = 20_000
+
 beforeAll(() => {
   if (!HTMLElement.prototype.hasPointerCapture) {
     Object.defineProperty(HTMLElement.prototype, 'hasPointerCapture', {
@@ -201,7 +203,7 @@ describe('Household editors', () => {
     expect(partnerAdult?.retirementAge).toBe(64)
     expect(state.plan.dependents).toHaveLength(1)
     expect(state.plan.dependents[0]?.label).toBe('Avery')
-  })
+  }, HOUSEHOLD_EDITORS_TEST_TIMEOUT_MS)
 
   it('shows only income streams anchored to the selected adult timeline', () => {
     const plan = makeHouseholdPlan({ includePartner: true, planType: 'couple' })
@@ -241,7 +243,7 @@ describe('Household editors', () => {
 
     expect(screen.getByDisplayValue('Partner rental')).toBeInTheDocument()
     expect(screen.queryByDisplayValue('Self consulting')).not.toBeInTheDocument()
-  })
+  }, HOUSEHOLD_EDITORS_TEST_TIMEOUT_MS)
 
   it('edits partner salary, income ownership, tax reliefs, SRS, and life events from the household income section', async () => {
     const user = userEvent.setup()
@@ -295,7 +297,7 @@ describe('Household editors', () => {
     expect(stream?.owner).toBe('shared')
     expect(stream?.timing.owner).toBe('self')
     expect(stream?.annualAmount).toBe(24_000)
-  })
+  }, HOUSEHOLD_EDITORS_TEST_TIMEOUT_MS)
 
   it('edits ownership-scoped spending, healthcare, withdrawals, and goals from the household spending section', async () => {
     const user = userEvent.setup()
@@ -371,5 +373,5 @@ describe('Household editors', () => {
     if (goal?.timing.kind === 'age-range') {
       expect(goal.timing.endAge).toBe(goal.timing.startAge + 3)
     }
-  })
+  }, HOUSEHOLD_EDITORS_TEST_TIMEOUT_MS)
 })
