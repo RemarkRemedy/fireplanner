@@ -92,6 +92,8 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
   const removeBonus = useIlpStore((state) => state.removeBonus)
   const [showCatalogChargeRules, setShowCatalogChargeRules] = useState(false)
   const [showCatalogEventChargeRules, setShowCatalogEventChargeRules] = useState(false)
+  const [showCatalogEec, setShowCatalogEec] = useState(false)
+  const [showCatalogBonuses, setShowCatalogBonuses] = useState(false)
 
   if (!policy) return null
 
@@ -574,6 +576,53 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
         <AccordionItem value="eec">
           <AccordionTrigger>EEC Table</AccordionTrigger>
           <AccordionContent className="space-y-4">
+            {isCatalogSeeded ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Lock className="h-4 w-4 shrink-0" />
+                  <span>{policy.eecTable.length}-year early exit charge schedule from catalog template.</span>
+                </div>
+                <div className="h-44 rounded-md border p-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={eecChartData}>
+                      <XAxis dataKey="year" />
+                      <YAxis tickFormatter={(value: number) => `${value.toFixed(0)}%`} />
+                      <Tooltip formatter={(value: number) => `${value.toFixed(1)}%`} />
+                      <Line type="monotone" dataKey="rate" stroke="hsl(var(--chart-danger))" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                <button
+                  type="button"
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowCatalogEec(!showCatalogEec)}
+                >
+                  {showCatalogEec ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                  {showCatalogEec ? 'Hide rates' : 'Show rates (read-only)'}
+                </button>
+                {showCatalogEec && (
+                  <div className="overflow-auto rounded-md border opacity-75">
+                    <table className="w-full text-sm">
+                      <thead className="sticky top-0 bg-background">
+                        <tr className="border-b">
+                          <th className="px-3 py-2 text-left font-medium text-muted-foreground">Policy Year</th>
+                          <th className="px-3 py-2 text-left font-medium text-muted-foreground">EEC Rate</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {policy.eecTable.map((rate, index) => (
+                          <tr key={index} className="border-b last:border-0">
+                            <td className="px-3 py-2">{index + 1}</td>
+                            <td className="px-3 py-2">{formatIlpPercent(rate)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            ) : (
+            <>
             <div className="grid gap-4 lg:grid-cols-[260px,1fr]">
               <div className="space-y-2">
                 <Label>Load Preset</Label>
@@ -641,6 +690,8 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                 </tbody>
               </table>
             </div>
+            </>
+            )}
           </AccordionContent>
         </AccordionItem>
 
@@ -719,6 +770,38 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
         <AccordionItem value="bonuses">
           <AccordionTrigger>Bonus Rules</AccordionTrigger>
           <AccordionContent className="space-y-4">
+            {isCatalogSeeded ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Lock className="h-4 w-4 shrink-0" />
+                  <span>{policy.bonuses.length} bonus {policy.bonuses.length === 1 ? 'rule' : 'rules'} from catalog template. These reflect the product's published bonus schedule.</span>
+                </div>
+                {policy.bonuses.length > 0 && (
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowCatalogBonuses(!showCatalogBonuses)}
+                  >
+                    {showCatalogBonuses ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                    {showCatalogBonuses ? 'Hide details' : 'Show details (read-only)'}
+                  </button>
+                )}
+                {showCatalogBonuses && policy.bonuses.map((bonus, index) => (
+                  <Card key={`${bonus.label}-${index}`} className="opacity-75">
+                    <CardContent className="py-3 text-sm">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                        <span className="font-medium">{bonus.label}</span>
+                        <Badge variant="outline">{bonus.type}</Badge>
+                        <Badge variant="secondary">{bonus.mode}</Badge>
+                        {bonus.rate > 0 && <span>{formatIlpPercent(bonus.rate)}</span>}
+                        <span>PY {bonus.startPolicyYear}{bonus.endPolicyYear != null ? `–${bonus.endPolicyYear}` : '+'}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+            <>
             <p className="text-sm text-muted-foreground">
               `premium-allocation` and `one-time` bonuses are split evenly across targeted accounts so the bonus dollars are not accidentally duplicated.
             </p>
@@ -875,6 +958,8 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
               <Plus className="h-4 w-4" />
               Add Bonus
             </Button>
+            </>
+            )}
           </AccordionContent>
         </AccordionItem>
 
