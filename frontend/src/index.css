@@ -102,6 +102,20 @@
 }
 
 @layer base {
+  :root {
+    /* Modular type scale — Major Third (1.25 ratio)
+       Produces tighter steps than golden ratio, better for data-dense UIs.
+       Usage: font-size: var(--text-md); */
+    --text-2xs: 0.64rem;   /* 10.24px */
+    --text-xs:  0.8rem;    /* 12.8px  */
+    --text-sm:  1rem;      /* 16px — base */
+    --text-md:  1.25rem;   /* 20px   */
+    --text-lg:  1.563rem;  /* 25px   */
+    --text-xl:  1.953rem;  /* 31.25px */
+    --text-2xl: 2.441rem;  /* 39.06px */
+    --text-3xl: 3.052rem;  /* 48.83px */
+  }
+
   * {
     @apply border-border;
   }
@@ -114,6 +128,19 @@
 }
 
 @layer components {
+  /* Optical card correction (cherry-picked from LiftKit)
+     When CardContent is the first child (no CardHeader above it),
+     auto-add top padding so content doesn't touch the card edge.
+     :where() keeps specificity at 0 so any explicit pt-* class wins. */
+  :where(.card-content:first-child) {
+    padding-top: 1rem;     /* matches p-4 */
+  }
+  @media (min-width: 768px) {
+    :where(.card-content:first-child) {
+      padding-top: 1.5rem; /* matches md:p-6 */
+    }
+  }
+
   .companion-mode {
     --primary: 145 63% 32%;
     --primary-foreground: 0 0% 100%;
