@@ -225,8 +225,6 @@ export function IlpStoryModePage() {
     )
   }
 
-  const midProjection = analysis.projections.mid
-
   return (
     <div className="h-[100dvh] snap-y snap-proximity overflow-y-auto">
       {/* Screen 1: The Hook */}
@@ -250,7 +248,7 @@ export function IlpStoryModePage() {
       {/* Screen 2: Where Your Money Goes */}
       <StoryScreen id="story-fees">
         <h2 className="text-2xl font-bold">Where your money goes</h2>
-        <FeeBreakdownSection policy={activePolicy} analysis={midProjection} />
+        <FeeBreakdownSection policy={activePolicy} analysis={analysis} />
         <ScrollHint targetId="story-bonuses" label="What about bonuses?" />
       </StoryScreen>
 
