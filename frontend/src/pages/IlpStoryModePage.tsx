@@ -183,7 +183,7 @@ export function IlpStoryModePage() {
             Verify or adjust the premium and policy details before we show you the fee breakdown.
           </p>
           <PolicySetupGate
-            seed={pendingSeed}
+            seed={effectiveSeed!}
             onConfirm={(adjustedSeed) => {
               // Build the policy from the seed
               const result = addPolicyFromSeed(adjustedSeed)
