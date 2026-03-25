@@ -73,7 +73,7 @@ function deriveSeedMonthlyContribution(product: IlpCatalogProduct, variant: IlpT
 }
 
 function deriveSeedPostMipYears(variant: IlpTemplateVariant): number {
-  return variant.mipBasis === 'open-ended' ? 20 : 0
+  return variant.mipBasis === 'open-ended' ? 20 : 10
 }
 
 function sameRate(left: number | null, right: number | null): boolean {
