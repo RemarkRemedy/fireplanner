@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, FolderOpen, Plus } from 'lucide-react'
+import { AlertTriangle, ChevronDown, ChevronRight, FolderOpen, Plus } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -32,51 +32,63 @@ function TemplateCatalogSummary() {
   const { products, manifest } = getIlpCatalog()
   const supportedProducts = products.filter((product) => product.supportStatus === 'supported')
   const partialProducts = products.filter((product) => product.supportStatus === 'partial')
+  const [expanded, setExpanded] = useState(false)
 
   return (
     <Card>
       <CardContent className="space-y-4 pt-6">
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-semibold">Available Templates</h2>
-            <Badge variant="outline">Catalog {manifest.catalogVersion}</Badge>
-            <Badge>{supportedProducts.length} supported</Badge>
-            <Badge variant="secondary">{partialProducts.length} partial</Badge>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Supported templates are release-gated within their modeled economics. Partial templates stay selectable, but still need document review for metadata-only behavior.
-          </p>
-        </div>
-
-        <div className="grid gap-4 lg:grid-cols-2">
+        <button
+          type="button"
+          className="flex w-full items-start justify-between text-left"
+          onClick={() => setExpanded(!expanded)}
+        >
           <div className="space-y-2">
-            <div className="text-sm font-medium">Supported templates</div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-lg font-semibold">Available Templates</h2>
+              <Badge variant="outline">Catalog {manifest.catalogVersion}</Badge>
+              <Badge>{supportedProducts.length} supported</Badge>
+              <Badge variant="secondary">{partialProducts.length} partial</Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Supported templates are release-gated within their modeled economics. Partial templates stay selectable, but still need document review for metadata-only behavior.
+            </p>
+          </div>
+          {expanded
+            ? <ChevronDown className="mt-1 h-5 w-5 shrink-0 text-muted-foreground" />
+            : <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-muted-foreground" />}
+        </button>
+
+        {expanded && (
+          <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-2">
-              {supportedProducts.map((product) => (
-                <div key={product.id} className="rounded-md border px-3 py-2">
-                  <div className="font-medium">{product.productName}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {product.insurer} · {product.variants.length} {product.variants.length === 1 ? 'variant' : 'variants'}
+              <div className="text-sm font-medium">Supported templates</div>
+              <div className="space-y-2">
+                {supportedProducts.map((product) => (
+                  <div key={product.id} className="rounded-md border px-3 py-2">
+                    <div className="font-medium">{product.productName}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {product.insurer} · {product.variants.length} {product.variants.length === 1 ? 'variant' : 'variants'}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Partial templates</div>
+              <div className="space-y-2">
+                {partialProducts.map((product) => (
+                  <div key={product.id} className="rounded-md border px-3 py-2">
+                    <div className="font-medium">{product.productName}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {product.insurer} · {product.variants.length} {product.variants.length === 1 ? 'variant' : 'variants'}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-
-          <div className="space-y-2">
-            <div className="text-sm font-medium">Partial templates</div>
-            <div className="space-y-2">
-              {partialProducts.map((product) => (
-                <div key={product.id} className="rounded-md border px-3 py-2">
-                  <div className="font-medium">{product.productName}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {product.insurer} · {product.variants.length} {product.variants.length === 1 ? 'variant' : 'variants'}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   )
