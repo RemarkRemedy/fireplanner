@@ -17,7 +17,7 @@ import { PolicyTabs } from '@/components/ilp/PolicyTabs'
 import { ProjectionTable } from '@/components/ilp/ProjectionTable'
 import { SummaryCards } from '@/components/ilp/SummaryCards'
 import { usePageMeta } from '@/hooks/usePageMeta'
-import type { IlpPolicyAnalysis } from '@/lib/calculations/ilp'
+import type { IlpPolicyAnalysis, IlpPolicyInput } from '@/lib/calculations/ilp'
 import { analyzeAllPolicies } from '@/lib/calculations/ilp'
 import { formatIlpCurrency, formatIlpPercent } from '@/components/ilp/formatters'
 import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
@@ -33,8 +33,25 @@ function issueMessagesFromPolicy(policy: unknown): string[] {
 }
 
 interface HeadlineInsightProps {
-  policy: { name: string; currency: 'SGD' | 'USD' }
+  policy: IlpPolicyInput
   analysis: IlpPolicyAnalysis
+}
+
+function countMetadataOnlyBonuses(policy: IlpPolicyInput): string[] {
+  if (!policy.catalogSource?.metadataOnlyBehaviors) return []
+  return policy.catalogSource.metadataOnlyBehaviors.filter((b) =>
+    /bonus|welcome|loyalty|power.?up|booster|achievement|investment.bonus|performance.bonus|vitality|perpetual|accumulation/i.test(b),
+  )
+}
+
+function humanizeBonusTag(tag: string): string {
+  const parts = tag.split('-')
+  // Find the bonus-relevant suffix (after the product name prefix)
+  const bonusIdx = parts.findIndex((p) => /bonus|welcome|loyalty|booster|achievement|vitality|perpetual|accumulation/i.test(p))
+  if (bonusIdx >= 0) {
+    return parts.slice(Math.max(0, bonusIdx - 1)).join(' ').replace(/-/g, ' ')
+  }
+  return parts.slice(-2).join(' ')
 }
 
 function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
@@ -42,6 +59,7 @@ function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
   const feePctOfPremiums = summary.totalPremiumsPaid > 0
     ? summary.netFeeDrag / summary.totalPremiumsPaid
     : 0
+  const unmodeledBonuses = countMetadataOnlyBonuses(policy)
 
   return (
     <Card className="border-primary/20 bg-primary/5">
@@ -69,6 +87,16 @@ function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
           {policy.name}. Gross fees {formatIlpCurrency(summary.totalFeesCharged, policy.currency)}, bonuses offset {formatIlpCurrency(summary.totalBonusesReceived, policy.currency)}.
           {analysis.mode === 'projected' && ` Cancel-now penalty: ${formatIlpCurrency(summary.cancelNowPenalty, policy.currency)}.`}
         </p>
+        {unmodeledBonuses.length > 0 && (
+          <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 dark:border-amber-800 dark:bg-amber-950/30">
+            <p className="text-xs font-medium text-amber-900 dark:text-amber-200">
+              {unmodeledBonuses.length} bonus {unmodeledBonuses.length === 1 ? 'type' : 'types'} not yet modeled. Actual net fees may be lower.
+            </p>
+            <p className="mt-1 text-xs text-amber-800 dark:text-amber-300">
+              {unmodeledBonuses.map(humanizeBonusTag).join(', ')}
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   )
