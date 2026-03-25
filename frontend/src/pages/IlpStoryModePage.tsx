@@ -33,7 +33,7 @@ function StoryScreen({ children, id }: { children: React.ReactNode; id: string }
   return (
     <section
       id={id}
-      className="flex min-h-[100dvh] snap-start flex-col items-center justify-center px-4 py-8"
+      className="flex min-h-[100dvh] flex-col items-center justify-center px-4 py-8"
     >
       <div className="w-full max-w-2xl space-y-6">
         {children}
@@ -226,7 +226,7 @@ export function IlpStoryModePage() {
   }
 
   return (
-    <div className="h-[100dvh] snap-y snap-proximity overflow-y-auto">
+    <div>
       {/* Screen 1: The Hook */}
       <StoryScreen id="story-hook">
         <div className="space-y-2 text-center">
