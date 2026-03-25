@@ -1,0 +1,360 @@
+import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { ArrowRight, Calculator } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CurrencyInput } from '@/components/shared/CurrencyInput'
+import { NumberInput } from '@/components/shared/NumberInput'
+import { ProductPickerDialog } from '@/components/ilp/catalog/ProductPickerDialog'
+import { DecisionPanel } from '@/components/ilp/DecisionPanel'
+import { HeadlineInsight } from '@/components/ilp/HeadlineInsight'
+import { OpportunityCostCard } from '@/components/ilp/OpportunityCostCard'
+import { usePageMeta } from '@/hooks/usePageMeta'
+import { analyzeIlpPolicy } from '@/lib/calculations/ilp'
+import type { IlpPolicyAnalysis, IlpPolicyInput } from '@/lib/calculations/ilp'
+import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
+import type { IlpPolicySeed } from '@/lib/ilp-catalog/policySeedSchema'
+import { templateVariantToPolicySeed } from '@/lib/ilp-catalog/templateToPolicy'
+import type { IlpCatalogProduct, IlpTemplateVariant } from '@/lib/ilp-catalog/types'
+import { useIlpStore } from '@/stores/useIlpStore'
+
+// --- Exit Setup Form: extends PolicySetupGate with per-account balances ---
+
+interface ExitSetupFormProps {
+  seed: IlpPolicySeed
+  onConfirm: (adjustedSeed: IlpPolicySeed, accountBalances: Record<string, number>) => void
+  onCancel: () => void
+}
+
+function ExitSetupForm({ seed, onConfirm, onCancel }: ExitSetupFormProps) {
+  const isSinglePremium = (seed.initialSinglePremium ?? 0) > 0 || seed.monthlyContribution === 0
+  const [monthlyContribution, setMonthlyContribution] = useState(seed.monthlyContribution)
+  const [initialSinglePremium, setInitialSinglePremium] = useState(seed.initialSinglePremium ?? 0)
+  const [currentPolicyYear, setCurrentPolicyYear] = useState(seed.currentPolicyYear)
+  const [monthsAlreadyPaid, setMonthsAlreadyPaid] = useState(seed.monthsAlreadyPaid)
+
+  // Per-account balances for existing holders
+  const [accountBalances, setAccountBalances] = useState<Record<string, number>>(() => {
+    const balances: Record<string, number> = {}
+    for (const account of seed.accounts ?? []) {
+      balances[account.id] = 0
+    }
+    return balances
+  })
+  const hasMultipleAccounts = (seed.accounts?.length ?? 0) > 1
+
+  function handleConfirm() {
+    const adjustedSeed: IlpPolicySeed = {
+      ...seed,
+      monthlyContribution,
+      initialSinglePremium: isSinglePremium ? initialSinglePremium : seed.initialSinglePremium,
+      currentPolicyYear,
+      monthsAlreadyPaid,
+    }
+    onConfirm(adjustedSeed, accountBalances)
+  }
+
+  const horizonYears = seed.mipLength != null
+    ? seed.mipLength + (seed.postMipYears ?? 0) - (currentPolicyYear - 1)
+    : (seed.postMipYears ?? 20)
+
+  return (
+    <Card className="border-primary/30">
+      <CardContent className="space-y-6 pt-6">
+        <div className="space-y-2">
+          <h2 className="text-xl font-semibold">{seed.name}</h2>
+          <p className="text-sm text-muted-foreground">
+            {seed.insurer} · {seed.currency}
+            {seed.mipLength != null && ` · MIP ${seed.mipLength} years`}
+          </p>
+        </div>
+
+        <div className="space-y-1">
+          <p className="text-sm font-medium">Your current policy details</p>
+          <p className="text-xs text-muted-foreground">
+            Enter your current policy year, premiums paid, and account balances from your latest policy statement.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          {isSinglePremium ? (
+            <CurrencyInput
+              label="Initial Single Premium"
+              value={initialSinglePremium}
+              onChange={setInitialSinglePremium}
+              currency={seed.currency}
+            />
+          ) : (
+            <CurrencyInput
+              label="Monthly Premium"
+              value={monthlyContribution}
+              onChange={setMonthlyContribution}
+              currency={seed.currency}
+            />
+          )}
+          <NumberInput
+            label="Current Policy Year"
+            value={currentPolicyYear}
+            onChange={setCurrentPolicyYear}
+            integer
+            min={1}
+          />
+          <NumberInput
+            label="Months Already Paid"
+            value={monthsAlreadyPaid}
+            onChange={setMonthsAlreadyPaid}
+            integer
+            min={0}
+          />
+          <div className="flex items-end">
+            <div className="space-y-1 text-sm">
+              <div className="text-muted-foreground">Projection horizon</div>
+              <div className="font-medium">{horizonYears} years</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Per-account balances */}
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <p className="text-sm font-medium">
+              {hasMultipleAccounts ? 'Current account balances' : 'Current account balance'}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Find these on your latest policy statement. {hasMultipleAccounts
+                ? 'EEC (early exit charge) applies only to accounts marked as subject to EEC, so entering accurate per-account values matters for exit calculations.'
+                : 'This is used to calculate your surrender value and exit options.'}
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {(seed.accounts ?? []).map((account) => (
+              <CurrencyInput
+                key={account.id}
+                label={`${account.label} balance`}
+                value={accountBalances[account.id] ?? 0}
+                onChange={(value) => setAccountBalances((prev) => ({ ...prev, [account.id]: value }))}
+                currency={seed.currency}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button onClick={handleConfirm} className="gap-2">
+            <Calculator className="h-4 w-4" />
+            Calculate exit options
+          </Button>
+          <Button variant="ghost" onClick={onCancel}>
+            Cancel
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// --- Main page ---
+
+export function IlpExitCalculatorPage() {
+  usePageMeta({
+    title: 'ILP Exit Calculator: SG FIRE Planner',
+    description: 'Calculate exit scenarios for your existing ILP policy.',
+    path: '/ilp/exit',
+  })
+
+  const addPolicyFromSeed = useIlpStore((state) => state.addPolicyFromSeed)
+  const updatePolicy = useIlpStore((state) => state.updatePolicy)
+
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [pendingSeed, setPendingSeed] = useState<IlpPolicySeed | null>(null)
+  const [selectedProduct, setSelectedProduct] = useState<IlpCatalogProduct | null>(null)
+  const [exitPolicy, setExitPolicy] = useState<IlpPolicyInput | null>(null)
+
+  const analysis: IlpPolicyAnalysis | null = useMemo(() => {
+    if (!exitPolicy) return null
+    try {
+      return analyzeIlpPolicy(exitPolicy)
+    } catch {
+      return null
+    }
+  }, [exitPolicy])
+
+  function handleCatalogPick(
+    product: IlpCatalogProduct,
+    variant: IlpTemplateVariant,
+  ) {
+    const { manifest } = getIlpCatalog()
+    const seed = templateVariantToPolicySeed(product, variant, manifest)
+    setSelectedProduct(product)
+    setPendingSeed(seed)
+    setPickerOpen(false)
+  }
+
+  function handleExitSetupConfirm(adjustedSeed: IlpPolicySeed, accountBalances: Record<string, number>) {
+    const result = addPolicyFromSeed(adjustedSeed)
+    if (!result.success) return
+
+    // Update per-account currentValue fields
+    const store = useIlpStore.getState()
+    const policy = store.policies.find((p) => p.id === result.policyId)
+    if (policy) {
+      const updatedAccounts = policy.accounts.map((account) => ({
+        ...account,
+        currentValue: accountBalances[account.id] ?? account.currentValue,
+      }))
+      updatePolicy(result.policyId, { accounts: updatedAccounts })
+      // Read the updated policy
+      const updatedPolicy = useIlpStore.getState().policies.find((p) => p.id === result.policyId)
+      if (updatedPolicy) setExitPolicy(updatedPolicy)
+    }
+
+    setPendingSeed(null)
+  }
+
+  // --- Product picker ---
+  if (!pendingSeed && !exitPolicy) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-6 px-4 py-8">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold">ILP Exit Calculator</h1>
+          <p className="text-muted-foreground">
+            Find out if staying in your ILP or exiting makes more financial sense under your specific circumstances.
+          </p>
+        </div>
+
+        <Card>
+          <CardContent className="flex flex-col items-center gap-4 py-8">
+            <Calculator className="h-10 w-10 text-muted-foreground" />
+            <div className="text-center">
+              <p className="font-medium">Select your ILP product</p>
+              <p className="text-sm text-muted-foreground">
+                Choose from 92 supported products in the catalog.
+              </p>
+            </div>
+            <Button onClick={() => setPickerOpen(true)} className="gap-2">
+              Choose product
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-xs text-muted-foreground">
+              Not financial advice. This calculator shows fee comparisons based on your inputs and standardized assumptions. Consult a licensed financial adviser before making policy decisions.
+            </p>
+          </CardContent>
+        </Card>
+
+        <ProductPickerDialog
+          open={pickerOpen}
+          onOpenChange={setPickerOpen}
+          onSelect={handleCatalogPick}
+        />
+      </div>
+    )
+  }
+
+  // --- Setup form ---
+  if (pendingSeed && !exitPolicy && selectedProduct) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-6 px-4 py-8">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold">ILP Exit Calculator</h1>
+          <p className="text-muted-foreground">
+            Enter your current policy details to calculate exit scenarios.
+          </p>
+        </div>
+        <ExitSetupForm
+          seed={pendingSeed}
+          onConfirm={handleExitSetupConfirm}
+          onCancel={() => {
+            setPendingSeed(null)
+            setSelectedProduct(null)
+          }}
+        />
+      </div>
+    )
+  }
+
+  // --- Results ---
+  if (exitPolicy && analysis) {
+    const isSinglePremium = (exitPolicy.initialSinglePremium ?? 0) > 0
+      || exitPolicy.accounts.every((a) => a.contributionShare === 0)
+
+    return (
+      <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-bold">Exit Analysis</h1>
+            <Badge variant="outline">{exitPolicy.name}</Badge>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {exitPolicy.insurer} · Policy year {exitPolicy.currentPolicyYear} · {exitPolicy.currency}
+          </p>
+        </div>
+
+        <HeadlineInsight policy={exitPolicy} analysis={analysis} />
+
+        <DecisionPanel policy={exitPolicy} analysis={analysis} />
+
+        <OpportunityCostCard policy={exitPolicy} analysis={analysis} />
+
+        {/* Premium holiday caveat */}
+        {!isSinglePremium && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Premium holiday scenario</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Taking a premium holiday (pausing contributions) may affect charges and bonus eligibility.
+                Premium holiday impact is not fully modelled for all products. Use the full dashboard
+                for manual scenario modelling with premium holiday events.
+              </p>
+              <Link to="/ilp-review" className="mt-3 inline-flex items-center gap-1 text-sm text-primary hover:underline">
+                Open full dashboard
+                <ArrowRight className="h-3 w-3" />
+              </Link>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-xs text-muted-foreground">
+              Not financial advice. These calculations are based on your inputs and standardized assumptions. Insurance coverage loss is not factored into the fee comparison. Consult a licensed financial adviser before making policy decisions.
+            </p>
+          </CardContent>
+        </Card>
+
+        <div className="flex flex-wrap gap-3">
+          <Link to="/ilp-review">
+            <Button variant="outline" className="gap-2">
+              See full details
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setExitPolicy(null)
+              setPendingSeed(null)
+              setSelectedProduct(null)
+            }}
+          >
+            Start over
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  // Loading state
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center">
+      <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+    </div>
+  )
+}
