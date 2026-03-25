@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { ProductPickerDialog } from '@/components/ilp/catalog/ProductPickerDialog'
 import { ComparisonTable } from '@/components/ilp/ComparisonTable'
 import { DecisionPanel } from '@/components/ilp/DecisionPanel'
+import { FeeBreakdownSection } from '@/components/ilp/FeeBreakdownSection'
 import { FeeWaterfallChart } from '@/components/ilp/FeeWaterfallChart'
 import { NpvTimelineChart } from '@/components/ilp/NpvTimelineChart'
 import { OpportunityCostCard } from '@/components/ilp/OpportunityCostCard'
@@ -262,6 +263,7 @@ export function IlpReviewPage() {
           )}
           <SummaryCards policy={displayPolicy} analysis={displayAnalysis} />
           <FeeWaterfallChart policy={displayPolicy} analysis={displayAnalysis} />
+          <FeeBreakdownSection policy={displayPolicy} analysis={displayAnalysis} />
           <DecisionPanel policy={displayPolicy} analysis={displayAnalysis} />
           <NpvTimelineChart analyses={analysisResult.analysis?.policies ?? [displayAnalysis]} />
           <ProjectionTable policy={displayPolicy} analysis={displayAnalysis} />

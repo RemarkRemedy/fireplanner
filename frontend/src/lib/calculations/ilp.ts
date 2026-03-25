@@ -387,6 +387,10 @@ export interface IlpAccountYearRow {
   open: number
   contributionAmount: number
   grossFee: number
+  accountFee: number
+  additionalCharges: number
+  assuranceCharges: number
+  eventCharges: number
   bonusCredit: number
   netFee: number
   withdrawalAmount: number
@@ -4197,6 +4201,10 @@ export function projectIlpPolicy(
           open: openBalances.get(account.id) ?? account.currentValue,
           contributionAmount: 0,
           grossFee: 0,
+          accountFee: 0,
+          additionalCharges: 0,
+          assuranceCharges: 0,
+          eventCharges: 0,
           bonusCredit: 0,
           netFee: 0,
           withdrawalAmount: 0,
@@ -4376,6 +4384,10 @@ export function projectIlpPolicy(
         open,
         contributionAmount: accountContribution,
         grossFee,
+        accountFee: baseGrossFee,
+        additionalCharges: additionalChargeByAccount.get(account.id) ?? 0,
+        assuranceCharges: assuranceChargeByAccount.get(account.id) ?? 0,
+        eventCharges: eventChargeByAccount.get(account.id) ?? 0,
         bonusCredit,
         netFee,
         withdrawalAmount,
