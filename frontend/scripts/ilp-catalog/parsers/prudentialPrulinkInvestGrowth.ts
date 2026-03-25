@@ -19,16 +19,18 @@ export function parsePrudentialPrulinkInvestGrowth(context: ParseContext): IlpCa
       'branch:prulink-investgrowth-premium-assurance-charge',
       'branch:prulink-investgrowth-top-up-charge',
       'branch:prulink-investgrowth-top-up-assurance-charge',
+      'kernel:top-up-amount-gate-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
+      'kernel:current-death-benefit-estimate',
     ],
     metadataOnlyBehaviors: [
-      'prulink-investgrowth-death-benefit',
       'prulink-investgrowth-e-top-up-charge',
       'prulink-investgrowth-withdrawals',
       'prulink-investgrowth-fund-switching',
       'prulink-investgrowth-minimum-premium-schedule',
     ],
     warnings: [
-      'PRULink InvestGrowth is cataloged as a supported V1 product. The parser captures the published recurring-premium charge and premium-event assurance-charge path for standard premiums and standard top-ups, while e-top-up treatment, withdrawals, fund switching, and minimum-premium schedule enforcement remain outside the current engine.',
+      'PRULink InvestGrowth is cataloged as a supported V1 product. The parser captures the published recurring-premium charge and premium-event assurance-charge path for standard premiums and standard top-ups, the published S$2,000 one-off top-up minimum, the published S$1,000 one-off withdrawal minimum and residual-account floor, plus the current-state death benefit as the higher of policy value or 110% of total premiums plus top-ups less withdrawals, while e-top-up treatment, broader withdrawal administration, fund switching, minimum-premium schedule enforcement, and death-benefit exclusions or terminal-illness handling remain outside the current engine.',
     ],
     archived: false,
     variants: [

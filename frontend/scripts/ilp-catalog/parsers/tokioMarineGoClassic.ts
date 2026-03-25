@@ -209,6 +209,7 @@ function buildVariant(
   const page2 = sourceRef(2, 'Initial Bonus / Loyalty Bonus / Additional Bonus', snippetNear(document, 2, 'Loyalty Bonus', 22))
   const page4 = sourceRef(4, 'Regular Premium Routing', snippetNear(document, 4, 'Regular premium due during the first 24 months', 20))
   const page5 = sourceRef(5, 'Recurring Single Premium / Top-up Premium / Premium Holiday', snippetNear(document, 5, 'Recurring Single Premium', 22))
+  const page6 = sourceRef(6, 'Partial Withdrawal', snippetNear(document, 6, 'Partial Withdrawal', 26))
   const page8 = sourceRef(8, 'Dividend Distribution', snippetNear(document, 8, 'Dividend Distribution', 28))
   const page9 = sourceRef(9, 'Initial Charge / Policy Charge / MPC', snippetNear(document, 9, 'Initial Charge', 28))
   const page10 = sourceRef(10, 'Premium Charge / Surrender Charge', snippetNear(document, 10, 'Premium Charge for Recurring Single Premium and Top-up Premium', 26))
@@ -248,6 +249,24 @@ function buildVariant(
         'A 5% premium charge is deducted before each recurring single premium allocation to the Accumulation Units Account.',
       ],
       sourceRefs: [page5, page10],
+    },
+    {
+      id: 'partial-withdrawal-charge',
+      label: 'Partial Withdrawal Charge',
+      trigger: 'partial-withdrawal',
+      basis: 'event-amount',
+      appliesTo: ['initial', 'accumulation'],
+      rate: 0,
+      amount: 0,
+      activeWindow: 'policy-term',
+      allocation: 'equal-split',
+      notes: [
+        'No policy-level partial withdrawal charge is stated in the summary.',
+        'V1 blocks explicit one-off partial withdrawals before the third policy year on the Accumulation Units Account and before the end of the premium payment term on the Initial Units Account.',
+        'V1 also blocks explicit one-off partial withdrawals below the published S$500 minimum amount and any one-off withdrawal that would leave total policy value below the published S$3,000 minimum account value.',
+        'Regular-withdrawal administration and selected-fund residual-value conditions remain informational only in V1.',
+      ],
+      sourceRefs: [page6, page10],
     },
   ]
 
@@ -290,6 +309,17 @@ function buildVariant(
     bonuses: buildBonuses(document),
     feeRules,
     eventChargeRules,
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 500,
+      minimumPartialWithdrawalStartPolicyMonthByAccount: [
+        { accountId: 'accumulation', startPolicyMonth: 25 },
+        { accountId: 'initial', startPolicyMonth: 301 },
+      ],
+      partialWithdrawalMinimumRemainingValueRules: [
+        { activeWindow: 'policy-term', basis: 'policy-value', minimumValue: 3_000 },
+      ],
+    },
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['initial', 'accumulation'],
@@ -324,7 +354,7 @@ function buildVariant(
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
       `This ${isAdvancedDeath ? 'supported' : 'partial'} template models the SGD / premium-payment-term-25 (${isAdvancedDeath ? 'Advanced Death' : 'Basic Death'}) corridor only.`,
-      `This ${isAdvancedDeath ? 'supported' : 'partial'} template models 24-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, the published 25-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.`,
+      `This ${isAdvancedDeath ? 'supported' : 'partial'} template models 24-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, the nil policy-level one-off partial-withdrawal charge path with the published policy-year-3 start gate, S$500 minimum amount, and S$3,000 minimum account value, the published 25-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.`,
       ...(isAdvancedDeath
         ? [
             'The Advanced Death variant also models the published current death-benefit estimate, Monthly Protection Charge, including the first-two-policy-years accrual window, policy-year-3 lump-sum settlement, policy-value valuation basis, and the irreversible downgrade to Basic Death after failed Accumulation Units Account deduction.',
@@ -334,13 +364,13 @@ function buildVariant(
     unsupportedItems: [
       ...(isAdvancedDeath
         ? [
-            'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and change-of-life-assured administration remain metadata-only.',
+            'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, premium-holiday lapse behavior, regular withdrawal, selected-fund residual-value conditions, credit-card charge, and change-of-life-assured administration remain metadata-only.',
           ]
         : [
-            'Advanced Death Benefit selection, Monthly Protection Charge, premium-holiday lapse behavior, regular withdrawal, credit-card charge, change-of-life-assured administration, and non-SGD or non-25-year corridors remain metadata-only.',
+            'Advanced Death Benefit selection, Monthly Protection Charge, premium-holiday lapse behavior, regular withdrawal, selected-fund residual-value conditions, credit-card charge, change-of-life-assured administration, and non-SGD or non-25-year corridors remain metadata-only.',
           ]),
     ],
-    sourceRefs: [page1, page2, page4, page5, page8, page9, page10, page14],
+    sourceRefs: [page1, page2, page4, page5, page6, page8, page9, page10, page14],
   }
 }
 
@@ -365,12 +395,15 @@ export function parseTokioMarineGoClassic(context: ParseContext): IlpCatalogProd
       'tokio-recurring-single-premium-routing',
       'tokio-top-up-premium-charge',
       'tokio-recurring-single-premium-charge',
+      'branch:tokio-goclassic-zero-partial-withdrawal-charge',
       'tokio-initial-account-surrender-charge',
       'branch:tokio-loyalty-bonus-adjustment-factor',
       'branch:tokio-additional-bonus-current-year-qualification',
       'branch:tokio-current-only-multi-life-life-state',
       'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
+      'kernel:partial-withdrawal-start-policy-month-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
       'branch:tokio-goclassic-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction',
     ],
     metadataOnlyBehaviors: [
@@ -381,9 +414,9 @@ export function parseTokioMarineGoClassic(context: ParseContext): IlpCatalogProd
       'tokio-goclassic-credit-card-charge',
     ],
     warnings: [
-      '#goClassic is cataloged as a supported V1 product. The parser captures split SGD / premium-payment-term-25 Basic Death and Advanced Death corridors with executable regular-premium routing, published initial bonus tiers, annual loyalty bonus with the published bounded adjustment-factor formula during the premium payment term and the flat post-term rate thereafter, the published 0.20% Additional Bonus during the premium payment term with same-policy-year qualification gates, fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the 25-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
+      '#goClassic is cataloged as a supported V1 product. The parser captures split SGD / premium-payment-term-25 Basic Death and Advanced Death corridors with executable regular-premium routing, published initial bonus tiers, annual loyalty bonus with the published bounded adjustment-factor formula during the premium payment term and the flat post-term rate thereafter, the published 0.20% Additional Bonus during the premium payment term with same-policy-year qualification gates, fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the nil policy-level one-off partial-withdrawal charge path with the published policy-year-3 start gate, S$500 minimum amount, and S$3,000 minimum account value, the 25-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
       'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
-      'Additional Bonus is modeled on the published same-policy-year qualification corridor only; regular-withdrawal administration, premium-holiday lapse behavior, credit-card charge, change-of-life-assured administration, and other non-SGD or non-25-year corridors remain informational only.',
+      'Additional Bonus is modeled on the published same-policy-year qualification corridor only; regular-withdrawal administration, selected-fund residual-value conditions, premium-holiday lapse behavior, credit-card charge, change-of-life-assured administration, and other non-SGD or non-25-year corridors remain informational only.',
       'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published current death-benefit estimate, first-two-policy-years accrual, policy-year-3 settlement, policy-value valuation basis, irreversible downgrade after failed deduction, and static current multi-life last-life handling.',
     ],
     archived: false,

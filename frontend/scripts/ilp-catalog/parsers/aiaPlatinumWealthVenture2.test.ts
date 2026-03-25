@@ -18,8 +18,8 @@ async function sha256(filePath: string): Promise<string> {
 function makeSyntheticDocument(): ExtractedPdfDocument {
   return {
     filePath: '/synthetic/WA_Sum_201106386R_PWV2.0_Apr2025.pdf',
-    pageCount: 10,
-    totalCharacters: 2_150,
+    pageCount: 14,
+    totalCharacters: 2_500,
     pages: [
       {
         pageNumber: 1,
@@ -50,11 +50,13 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
       },
       {
         pageNumber: 4,
-        characterCount: 300,
+        characterCount: 380,
         text: 'Supplementary Charge and Premium Holiday Charge',
         lines: [
           { y: 700, text: 'Supplementary Charge which is equivalent to 3.60% p.a. of the Regular Premium Policy Value will be deducted for the first 7 policy years.' },
-          { y: 680, text: 'Premium Holiday Charge = Premium Holiday Charge Annual Rate/12 x Annualised Regular Premium.' },
+          { y: 690, text: 'Benefit Charge = Annual Benefit Charge Rate/12 x Sum-at-Risk.' },
+          { y: 680, text: 'Sum-at-Risk = 100% of total regular premiums paid + total top-ups - total withdrawals - policy value.' },
+          { y: 670, text: 'Premium Holiday Charge = Premium Holiday Charge Annual Rate/12 x Annualised Regular Premium.' },
         ],
       },
       {
@@ -103,6 +105,15 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
           { y: 660, text: 'We will not pay your entitled dividend in cash if the cash value of the dividend is less than S$50.' },
         ],
       },
+      {
+        pageNumber: 14,
+        characterCount: 220,
+        text: 'Appendix A annual benefit charge schedule',
+        lines: [
+          { y: 700, text: 'Current annual Benefit Charge per S$1,000 Sum-at-Risk' },
+          { y: 680, text: 'Age Male Female' },
+        ],
+      },
     ],
   }
 }
@@ -121,18 +132,38 @@ describe('parseAiaPlatinumWealthVenture2', () => {
     expect(product.supportStatus).toBe('supported')
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
+      'branch:aia-platinum-wealth-venture-2-welcome-bonus',
+      'branch:aia-platinum-wealth-venture-2-investment-bonus',
+      'branch:aia-platinum-wealth-venture-2-performance-bonus',
       'branch:aia-platinum-wealth-venture-2-zero-regular-premium-charge',
       'branch:aia-platinum-wealth-venture-2-regular-supplementary-charge',
+      'branch:aia-platinum-wealth-venture-2-benefit-charge',
       'branch:aia-platinum-wealth-venture-2-top-up-premium-charge',
       'branch:aia-platinum-wealth-venture-2-premium-holiday-charge',
       'branch:aia-platinum-wealth-venture-2-partial-withdrawal-charge',
       'branch:aia-platinum-wealth-venture-2-full-surrender-charge',
+      'kernel:automatic-lapse-on-account-depletion',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
+      'kernel:top-up-paid-up-to-date-block',
+      'kernel:top-up-amount-gate-block',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('aia-platinum-wealth-venture-2-welcome-bonus')
-    expect(product.metadataOnlyBehaviors).toContain('aia-platinum-wealth-venture-2-performance-bonus')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-venture-2-welcome-bonus')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-venture-2-investment-bonus')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-venture-2-performance-bonus')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-venture-2-benefit-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-venture-2-accidental-death-benefit')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-venture-2-protection-benefits')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-venture-2-reinstatement')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-venture-2-dividend-cashout-threshold')
+    expect(product.variants[0]?.unsupportedItems).toContain(
+      'Accidental-death claim admission / exclusions / settlement, secondary-insured handling, and other protection-side claim handling remain informational only beyond the modeled current ordinary death-benefit estimate plus the first-2-policy-year 100%-of-paid-regular-premiums accidental-death uplift.',
+    )
+    expect(product.variants[0]?.unsupportedItems).not.toContain(
+      'Benefit Charge, accidental death benefit, secondary insured, and other protection-side formulas remain informational only.',
+    )
 
     expect(product.variants).toHaveLength(1)
     const variant = product.variants[0]
@@ -141,6 +172,50 @@ describe('parseAiaPlatinumWealthVenture2', () => {
       currency: 'SGD',
       mipLength: 5,
     })
+    expect(variant.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: true,
+      blockTopUpsWhenPremiumsNotPaidUpToDate: true,
+      minimumTopUpAmount: 1_000,
+      minimumPartialWithdrawalAmount: 1_000,
+      partialWithdrawalMinimumRemainingValueRules: [
+        { activeWindow: 'policy-term', basis: 'policy-value', minimumValue: 10_000 },
+      ],
+    })
+    expect(variant.bonuses).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'welcome-bonus-y1',
+        mode: 'premium-allocation',
+        yearBasis: 'premium-year',
+        tieredRates: [
+          { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 41_999.99, rate: 0.03 },
+          { currency: 'SGD', minAnnualPremium: 42_000, maxAnnualPremium: null, rate: 0.03 },
+        ],
+      }),
+      expect.objectContaining({
+        id: 'welcome-bonus-y3',
+        mode: 'premium-allocation',
+        yearBasis: 'premium-year',
+        tieredRates: [
+          { currency: 'SGD', minAnnualPremium: 42_000, maxAnnualPremium: null, rate: 0.05 },
+        ],
+      }),
+      expect.objectContaining({
+        id: 'investment-bonus',
+        mode: 'one-time',
+        oneTimePayoutBasis: 'committed-annual-premium-at-issue',
+        startPolicyYear: 8,
+        endPolicyYear: 11,
+        rate: 0.025,
+        requiresPremiumsPaidUpToDate: true,
+      }),
+      expect.objectContaining({
+        id: 'performance-bonus',
+        mode: 'annual-rate',
+        startPolicyYear: 8,
+        rate: 0.004,
+        requiresPremiumsPaidUpToDate: true,
+      }),
+    ]))
     expect(variant.feeRules).toEqual([
       expect.objectContaining({
         id: 'regular-premium-charge',
@@ -152,6 +227,16 @@ describe('parseAiaPlatinumWealthVenture2', () => {
         rate: 0.036,
         startPolicyYear: 1,
         endPolicyYear: 7,
+      }),
+      expect.objectContaining({
+        id: 'benefit-charge',
+        basis: 'assurance-sum-at-risk',
+        requiresManualInput: true,
+        assuranceConfig: expect.objectContaining({
+          formula: 'aia-venture-benefit-charge',
+          monthlyModalFactor: 1 / 12,
+          maxAgeNextBirthday: 99,
+        }),
       }),
     ])
     expect(variant.eventChargeRules).toEqual([
@@ -192,7 +277,7 @@ describe('parseAiaPlatinumWealthVenture2', () => {
     })
     expect(variant.eecTable).toEqual([0.6, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0])
     expect(product.warnings).toContain(
-      'AIA Platinum Wealth Venture 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge for the first 7 policy years, the premium-holiday charge schedule with full-outstanding-premium repayment resumption, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and reinvest-default distribution support, while bonuses, protection benefits, secondary-insured options, fund-level charges, and underwriting or approval handling around premium resumption remain informational only.',
+      'AIA Platinum Wealth Venture 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures the published Welcome Bonus tiers for premium years 1 to 3, the Investment Bonus milestones at policy years 8 to 11, the annual Performance Bonus from policy year 8 onward, the current-state death benefit as the higher of policy value or total regular premiums paid plus top-up premiums less withdrawals, the current accidental-death uplift as 100% of cumulative paid regular premiums during the first 2 policy years, zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge for the first 7 policy years, the published Appendix A Benefit Charge corridor, the premium-holiday charge schedule with full-outstanding-premium repayment resumption, annual-state lapse / termination after projected account-value depletion, the 3% top-up premium charge with blocking in months where regular premiums are not paid up to date and the published S$1,000 minimum on explicit ad-hoc top-ups, the regular-premium withdrawal / surrender charge schedules with the published S$10,000 residual policy-value floor on explicit one-off withdrawals, and reinvest-default distribution support, while secondary-insured claim handling, fund-level charges, and underwriting or approval handling around premium resumption remain informational only beyond the modeled current ordinary death, accidental-death, and Benefit Charge estimates.',
     )
   })
 

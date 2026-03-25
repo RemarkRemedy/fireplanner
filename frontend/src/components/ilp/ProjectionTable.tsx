@@ -2,12 +2,12 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
-import { getMipEndProjectionIndex, type IlpPolicyAnalysis, type IlpPolicyInput, type ReturnScenario } from '@/lib/calculations/ilp'
+import { getMipEndProjectionIndex, type IlpPolicyInput, type IlpProjectedPolicyAnalysis, type ReturnScenario } from '@/lib/calculations/ilp'
 import { formatIlpCurrency } from './formatters'
 
 interface ProjectionTableProps {
   policy: IlpPolicyInput
-  analysis: IlpPolicyAnalysis
+  analysis: IlpProjectedPolicyAnalysis
 }
 
 export function ProjectionTable({ policy, analysis }: ProjectionTableProps) {

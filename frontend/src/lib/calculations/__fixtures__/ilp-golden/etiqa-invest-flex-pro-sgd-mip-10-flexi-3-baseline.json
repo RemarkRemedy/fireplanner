@@ -9,8 +9,27 @@
     "description": "Etiqa Invest Flex Pro baseline scenario for the SGD / MIP 10 Flexi 3 corridor.",
     "coverageTags": [
       "baseline",
+      "kernel:current-death-benefit-estimate",
+      "kernel:current-ti-benefit-estimate",
       "branch:etiqa-flex-pro-startup-bonus",
-      "branch:etiqa-flex-pro-special-bonus"
+      "branch:etiqa-flex-pro-special-bonus",
+      "branch:etiqa-flex-pro-loyalty-bonus",
+      "branch:etiqa-flex-pro-policy-charge",
+      "branch:etiqa-flex-pro-insurance-charge",
+      "branch:etiqa-flex-pro-top-up-premium-charge",
+      "branch:etiqa-flex-pro-startup-bonus-recovery",
+      "branch:etiqa-flex-pro-premium-shortfall-charge",
+      "branch:etiqa-flex-pro-premium-shortfall-refund",
+      "branch:etiqa-flex-pro-partial-withdrawal-charge",
+      "branch:etiqa-flex-pro-surrender-charge",
+      "kernel:premium-holiday-top-up-block",
+      "kernel:top-up-amount-gate-block",
+      "kernel:free-withdrawal-event-cap",
+      "kernel:partial-withdrawal-amount-increment-block",
+      "kernel:partial-withdrawal-maximum-amount-block",
+      "kernel:partial-withdrawal-minimum-remaining-value-block",
+      "kernel:monthly-rate-bonus-crediting",
+      "kernel:distribution-mode-assumption"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "EIP_Invest flex pro_Product Summary.pdf",
@@ -129,7 +148,13 @@
             "rate": 0.22
           }
         ],
-        "suspensionRules": []
+        "suspensionRules": [],
+        "restorationRules": [
+          {
+            "trigger": "premium-holiday-repayment",
+            "basis": "repaid-premium"
+          }
+        ]
       }
     ],
     "chargeRules": [
@@ -238,6 +263,95 @@
         "allocation": "equal-split"
       },
       {
+        "id": "premium-shortfall-charge",
+        "label": "Premium Shortfall Charge",
+        "trigger": "premium-holiday",
+        "basis": "annual-premium-with-overlap-months",
+        "activeWindow": "during-mip",
+        "appliesTo": [
+          "regular"
+        ],
+        "freeLifetimeMonthsSchedule": [
+          {
+            "startPolicyYear": 7,
+            "endPolicyYear": 10,
+            "months": 84
+          }
+        ],
+        "freeLifetimeMonthsResetOnRepayment": true,
+        "rate": 0,
+        "rateSchedule": [
+          {
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 1
+          },
+          {
+            "startPolicyYear": 2,
+            "endPolicyYear": 2,
+            "rate": 1
+          },
+          {
+            "startPolicyYear": 3,
+            "endPolicyYear": 3,
+            "rate": 0.79
+          },
+          {
+            "startPolicyYear": 4,
+            "endPolicyYear": 4,
+            "rate": 0.6
+          },
+          {
+            "startPolicyYear": 5,
+            "endPolicyYear": 5,
+            "rate": 0.5
+          },
+          {
+            "startPolicyYear": 6,
+            "endPolicyYear": 6,
+            "rate": 0.47
+          },
+          {
+            "startPolicyYear": 7,
+            "endPolicyYear": 7,
+            "rate": 0.44
+          },
+          {
+            "startPolicyYear": 8,
+            "endPolicyYear": 8,
+            "rate": 0.21
+          },
+          {
+            "startPolicyYear": 9,
+            "endPolicyYear": 9,
+            "rate": 0.16
+          },
+          {
+            "startPolicyYear": 10,
+            "endPolicyYear": 10,
+            "rate": 0.08
+          }
+        ],
+        "amount": 0,
+        "requiresManualInput": false,
+        "allocation": "equal-split"
+      },
+      {
+        "id": "premium-shortfall-charge-refund",
+        "label": "Premium Shortfall Charge Refund",
+        "trigger": "premium-holiday-repayment",
+        "basis": "premium-holiday-charge-refund",
+        "activeWindow": "during-mip",
+        "appliesTo": [
+          "regular"
+        ],
+        "rate": 1,
+        "amount": 0,
+        "sourceChargeRuleId": "premium-shortfall-charge",
+        "requiresManualInput": false,
+        "allocation": "equal-split"
+      },
+      {
         "id": "partial-withdrawal-charge",
         "label": "Partial Withdrawal Charge",
         "trigger": "partial-withdrawal",
@@ -246,6 +360,10 @@
         "appliesTo": [
           "regular"
         ],
+        "freeEventCount": 2,
+        "freeEventStartPolicyYear": 4,
+        "freeEventMaxAmountRate": 0.05,
+        "freeEventMaxAmountBasis": "cumulative-paid-regular-premium",
         "rate": 0,
         "rateSchedule": [
           {
@@ -314,6 +432,8 @@
       "economicsStatus": "supported",
       "structureStatus": "structured",
       "modeledEconomics": [
+        "kernel:current-death-benefit-estimate",
+        "kernel:current-ti-benefit-estimate",
         "branch:etiqa-flex-pro-startup-bonus",
         "branch:etiqa-flex-pro-special-bonus",
         "branch:etiqa-flex-pro-loyalty-bonus",
@@ -321,28 +441,35 @@
         "branch:etiqa-flex-pro-insurance-charge",
         "branch:etiqa-flex-pro-top-up-premium-charge",
         "branch:etiqa-flex-pro-startup-bonus-recovery",
+        "branch:etiqa-flex-pro-premium-shortfall-charge",
+        "branch:etiqa-flex-pro-premium-shortfall-refund",
         "branch:etiqa-flex-pro-partial-withdrawal-charge",
         "branch:etiqa-flex-pro-surrender-charge",
+        "kernel:premium-holiday-top-up-block",
+        "kernel:top-up-amount-gate-block",
+        "kernel:free-withdrawal-event-cap",
+        "kernel:partial-withdrawal-amount-increment-block",
+        "kernel:partial-withdrawal-maximum-amount-block",
+        "kernel:partial-withdrawal-minimum-remaining-value-block",
+        "kernel:monthly-rate-bonus-crediting",
         "kernel:distribution-mode-assumption"
       ],
       "metadataOnlyBehaviors": [
-        "etiqa-flex-pro-premium-free-period-gating",
-        "etiqa-flex-pro-premium-shortfall-charge",
-        "etiqa-flex-pro-free-partial-withdrawal-benefit",
+        "etiqa-flex-pro-free-partial-withdrawal-benefit-administration",
         "etiqa-flex-pro-distribution-paying-fund-threshold-and-withdrawal-consequences",
         "etiqa-flex-pro-change-of-life-insured"
       ]
     },
     "catalogWarnings": [
-      "Invest flex pro is currently modeled as a supported product in V1. The parser captures the bounded accumulation mechanics, monthly insurance charge through manual insured-life inputs, and reinvest-default distribution support, while Premium-Free Period gating, premium shortfall charge, free partial withdrawal allowances, and distribution-paying fund thresholds and withdrawal consequences remain outside the calculator.",
-      "Flexi 3 is modeled as a supported V1 corridor. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, monthly insurance charge through manual insured-life inputs, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
-      "No Premium-Free Period applies for 10 Years – Flexi 3.",
-      "Premium-Free Period gating, premium-shortfall charge, and free partial withdrawal allowances remain informational only in V1.",
+      "Invest flex pro is currently modeled as a supported product in V1. The parser captures the current-state death benefit as the sum of the higher of the Regular Premium Account value or the 101%-of-paid-regular-premiums floor plus Top-up Account value after manual current amount owing, the current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap, the current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today through the published partial-TI continuation corridor after manual claim-amount and residual-death input, the bounded accumulation mechanics, monthly insurance charge through manual insured-life inputs, the Premium-Free-Period-gated premium shortfall charge and full-repayment refund/reset corridor across the supported premium terms, ad-hoc top-up blocking during active Premium-Free Period windows, the published S$2,500 minimum ad-hoc top-up in S$100 increments, the published S$500 minimum one-off partial withdrawal amount with S$100 increments, the published two-count free partial withdrawal cap from policy year 4 on the Regular Premium Account, and reinvest-default distribution support, while broader free partial withdrawal limits, minimum holding amount, account-routing administration, top-up product-highlights-sheet limits / approval timing, claim exclusions / insurer-side settlement mechanics, and distribution-paying fund thresholds and withdrawal consequences remain outside the calculator.",
+      "Flexi 3 is modeled as a supported V1 corridor. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge with blocking during active Premium-Free Period windows, policy charge, the current-state death benefit as the sum of the higher of the Regular Premium Account value or the 101%-of-paid-regular-premiums floor plus Top-up Account value after manual current amount owing, the current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap, the current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today through the published partial-TI continuation corridor after manual claim-amount and residual-death input, monthly insurance charge through manual insured-life inputs, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
+      "Up to 84 months of Premium-Free Period may be accumulated across the 10-year Flexi 3 premium term.",
+      "Premium-Free Period gating, premium-shortfall charge after entitlement exhaustion, full-repayment reset, ad-hoc top-up blocking during active Premium-Free Period windows, the published S$500 minimum one-off partial withdrawal amount in S$100 increments, the published 50%-of-cumulative-paid-regular-premiums less prior gross Regular Premium Account withdrawals limit during the premium payment term, the published S$1,000 Regular Premium Account minimum holding floor on explicit regular-account withdrawals, and the published two-count free partial withdrawal cap from policy year 4 are modeled for the Flexi 3 corridor; broader account-routing administration remains informational only in V1.",
       "Distribution-paying fund support is modeled with reinvestment as the default assumption; payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only in V1.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.",
-      "Premium-Free Period accumulated-month logic remains informational only.",
-      "Premium shortfall charge and premium repayment reset behavior remain informational only.",
-      "Free Partial Withdrawal Benefit count and 5%-of-total-premiums cap remain informational only.",
+      "The current-state death and terminal-illness snapshot needs manual current amount owing and remaining aggregate TI cap inputs because debt and cross-policy TI cap usage are not reconstructed from history in V1.",
+      "The current admitted-state TI payable amount and residual death-benefit estimate after a TI claim today are supported through the published partial-TI continuation corridor after manual claim-amount and residual-death input, but claim exclusions and insurer-side settlement mechanics remain informational only.",
+      "Free Partial Withdrawal Benefit account-routing order and broader withdrawal administration remain informational only.",
       "Distribution-paying fund minimum S$40 payout threshold, bank-account administration, change-request cutoff, and withdrawal consequences on reinvested distributions remain informational only.",
       "Change of Life insured remains informational only.",
       "Optional riders and guaranteed issue wording remain informational only."

@@ -28,19 +28,37 @@ describe('parseTokioMarineGoAffluence', () => {
     expect(product.modeledEconomics).toContain('tokio-initial-charge-on-initial-account')
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(product.modeledEconomics).toContain('branch:tokio-loyalty-bonus-adjustment-factor')
+    expect(product.modeledEconomics).toContain('branch:tokio-goaffluence-achievement-bonus-premium-base-milestones')
     expect(product.modeledEconomics).toContain('branch:tokio-goaffluence-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts')
+    expect(product.modeledEconomics).toContain('branch:tokio-current-only-multi-life-life-state')
+    expect(product.modeledEconomics).toContain('kernel:committed-premium-rsp-resumption-gate')
     expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
+    expect(product.modeledEconomics).toContain('kernel:current-accidental-death-benefit-estimate')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-goaffluence-achievement-bonus-qualification')
+    expect(product.modeledEconomics).toContain('kernel:minimum-premium-holiday-start-month')
+    expect(product.modeledEconomics).toContain('kernel:minimum-recurring-single-premium-start-month')
+    expect(product.modeledEconomics).toContain('kernel:minimum-recurring-single-premium-amount')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-goaffluence-accidental-death-claim-gates-and-premium-change-history')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-goaffluence-achievement-bonus-qualification')
     expect(product.metadataOnlyBehaviors).toContain('tokio-goaffluence-regular-withdrawal-and-partial-withdrawal-constraints')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-goaffluence-dividend-payout-threshold-record-date-regular-withdrawal-and-partial-withdrawal-constraints')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-goaffluence-loyalty-and-achievement-bonuses')
 
     const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15')
     const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15-advanced-death')
+    const riderVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15-advanced-death-life-benefit-rider')
 
-    expect(product.variants).toHaveLength(2)
+    expect(product.variants).toHaveLength(3)
     expect(basicVariant?.icpMonths).toBe(24)
+    expect(riderVariant).toBeDefined()
+    expect(basicVariant?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPremiumHolidayStartPolicyMonth: 25,
+      minimumRecurringSinglePremiumStartPolicyMonth: 13,
+      minimumRecurringSinglePremiumMonthlyAmount: 50,
+      requiresCommencementPremiumForRecurringSinglePremiumResumption: true,
+    })
+    expect(basicVariant?.warnings.some((warning) => warning.includes('monthly-equivalent minimum of S$50'))).toBe(true)
     expect(basicVariant?.accounts.map((account) => account.id)).toEqual(['initial', 'accumulation', 'topup'])
     expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
       { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.5 },
@@ -64,6 +82,21 @@ describe('parseTokioMarineGoAffluence', () => {
       { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.0099 },
       { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.0099 },
     ])
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'achievement-bonus')).toEqual(
+      expect.objectContaining({
+        mode: 'one-time',
+        oneTimePayoutBasis: 'committed-annual-premium-at-issue',
+        rate: 0.25,
+        startPolicyYear: 20,
+        endPolicyYear: 25,
+        cadenceYears: 5,
+        qualificationRules: [
+          { trigger: 'premium-holiday', disqualifyThroughReferenceYear: true },
+          { trigger: 'regular-premium-reduction', disqualifyThroughReferenceYear: true },
+          { trigger: 'partial-withdrawal', disqualifyThroughReferenceYear: true },
+        ],
+      }),
+    )
     expect(basicVariant?.feeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -129,8 +162,18 @@ describe('parseTokioMarineGoAffluence', () => {
       'The published $50 minimum dividend amount and 30-day instruction window remain informational only in V1.',
     )
     expect(basicVariant?.eecTable).toEqual([1, 1, 0.99, 0.99, 0.99, 0.91, 0.84, 0.76, 0.68, 0.6, 0.5, 0.43, 0.34, 0.26, 0.15])
+    expect(basicVariant?.warnings).toContain(
+      'The resident-corridor current accidental-death estimate before age 75 is also modeled on the published annualised regular premium band after you enter current age; premium-holiday and regular-premium-reduction history, 180-day timing, residency / Singapore-location claim gates, double-indemnity payout, and accidental-death last-life settlement remain informational only.',
+    )
     expect(product.warnings).toContain(
       'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
+    )
+    expect(product.warnings).toContain(
+      'Advanced-death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, accidental-death claim gating beyond the resident premium-band current-state shortcut, regular-withdrawal administration, partial-withdrawal limit and minimum-account-value constraints, and premium-holiday / non-SGD / non-15-year variants remain informational only.',
+    )
+    expect(product.warnings.some((warning) => warning.includes('explicit recurring-single-premium resumption'))).toBe(true)
+    expect(basicVariant?.unsupportedItems).toContain(
+      'The resident current accidental-death estimate before age 75 is modeled on the published annualised regular premium band, while double indemnity, 180-day timing, residency / Singapore-location claim gates, accidental-death last-life settlement, and premium-holiday / regular-premium-reduction history remain metadata-only for this product.',
     )
     expect(advancedVariant?.feeRules).toEqual(
       expect.arrayContaining([
@@ -152,10 +195,36 @@ describe('parseTokioMarineGoAffluence', () => {
       ]),
     )
     expect(advancedVariant?.warnings).toContain(
-      'The Advanced Death variant also models the published current death-benefit estimate, Monthly Protection Charge, including the first-two-policy-years accrual window, policy-year-3 lump-sum settlement, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base.',
+      'The Advanced Death variant also models the published current death-benefit estimate, Monthly Protection Charge, including the first-two-policy-years accrual window, policy-year-3 lump-sum settlement, static current multi-life last-life handling, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base.',
     )
     expect(advancedVariant?.unsupportedItems).toContain(
-      'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, together with Advanced Death Benefit with Life Benefit Rider, accidental/dependent medical/retrenchment benefits, multiple-life handling, and change-of-life-assured administration, remains metadata-only for this product.',
+      'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, together with Advanced Death Benefit with Life Benefit Rider, dependent medical / retrenchment benefits, and change-of-life-assured administration, remains metadata-only for this product.',
+    )
+    expect(riderVariant?.feeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'monthly-protection-charge',
+          activeWindow: 'policy-term',
+          appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          fallbackAppliesTo: ['initial', 'topup'],
+          assuranceConfig: expect.objectContaining({
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            accrual: {
+              startPolicyYear: 1,
+              endPolicyYear: 2,
+              settlementPolicyYear: 3,
+            },
+          }),
+        }),
+      ]),
+    )
+    expect(riderVariant?.warnings).toContain(
+      'The Advanced Death with Life Benefit Rider variant also models the published current death-benefit estimate, Monthly Protection Charge, including the first-two-policy-years accrual window, policy-year-3 lump-sum settlement, static current multi-life last-life handling, oldest-life MPC rating, youngest-life rider age gating, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base through the policy anniversary immediately after age 99.',
+    )
+    expect(riderVariant?.unsupportedItems).toContain(
+      'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, Life Benefit Rider termination / fallback handling, dependent medical / retrenchment benefits, and change-of-life-assured administration remain metadata-only for this product.',
     )
   }, 30_000)
 })

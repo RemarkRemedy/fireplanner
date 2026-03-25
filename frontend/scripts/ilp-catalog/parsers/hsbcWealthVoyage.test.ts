@@ -24,18 +24,26 @@ describe('parseHsbcWealthVoyage', () => {
     expect(product.id).toBe('hsbc-life-wealth-voyage')
     expect(product.supportStatus).toBe('supported')
     expect(product.economicsStatus).toBe('supported')
+    expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
+    expect(product.modeledEconomics).toContain('kernel:current-accidental-death-benefit-estimate')
+    expect(product.modeledEconomics).toContain('kernel:current-ti-benefit-estimate')
+    expect(product.modeledEconomics).toContain('kernel:current-residual-death-benefit-after-ti-estimate')
     expect(product.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(product.modeledEconomics).toContain('kernel:premium-holiday-top-up-block')
+    expect(product.modeledEconomics).toContain('kernel:top-up-start-policy-month-block')
+    expect(product.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
+    expect(product.modeledEconomics).toContain('kernel:monthly-rate-bonus-crediting')
+    expect(product.metadataOnlyBehaviors).not.toContain('hsbc-voyage-terminal-illness-aggregate-cap-and-post-claim-state')
+    expect(product.metadataOnlyBehaviors).toContain('hsbc-voyage-terminal-illness-cap-overflow-and-post-claim-state')
+    expect(product.metadataOnlyBehaviors).not.toContain('hsbc-voyage-premium-holiday-backpay-amf-reconciliation')
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-voyage-dividend-payout-threshold')
-    expect(product.metadataOnlyBehaviors).toContain('hsbc-voyage-regular-withdrawal-loyalty-suspension')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-voyage-dividend-cash-payout-routing-fallback-and-execution')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-voyage-life-replacement-eligibility-and-underwriting')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-voyage-life-replacement-cover-reset-and-rider-termination')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-voyage-life-replacement-policy-reissue-fallback')
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-voyage-life-replacement-option')
-    expect(product.warnings).toContain(
-      'Wealth Voyage is cataloged as a supported V1 product. Premium-base AMF, start-up bonus, bonus recovery charge, top-up charge, partial-withdrawal charge, surrender mechanics, manual regular-withdrawal payout support, the modeled subset of power-up / loyalty bonus suspension rules, and reinvest-default distribution support are modeled; premium-holiday charge after the free duration, premium-holiday backpay AMF reconciliation, regular-withdrawal-linked loyalty suspension, dividend cash-payout routing / fallback / execution, Life Replacement Option eligibility / underwriting, post-replacement cover resets, and policy-reissue fallback remain informational only.',
-    )
+    expect(product.warnings.some((warning) => warning.includes('premium-holiday repayment AMF deduction with Power-up Bonus reinstatement'))).toBe(true)
 
     const sgdMip20 = product.variants.find((variant) => variant.id === 'sgd-mip-20')
     expect(sgdMip20).toBeDefined()
@@ -72,6 +80,9 @@ describe('parseHsbcWealthVoyage', () => {
       mode: 'manual-assumption',
       accountId: 'topup',
       fallbackAccountIds: ['regular'],
+      allowedFrequencies: ['annual', 'semi-annual', 'quarterly', 'monthly'],
+      minimumStartPolicyYear: 21,
+      minimumAnnualWithdrawalAmount: 1_200,
       source: 'policy-redemption',
       notes: expect.arrayContaining([
         expect.stringContaining('Top-up Account first'),
@@ -83,9 +94,34 @@ describe('parseHsbcWealthVoyage', () => {
         }),
       ],
     })
+    expect(usdMip20?.scheduledPayoutSupport?.allowedFrequencies).toEqual(['annual', 'semi-annual', 'quarterly'])
+    expect(sgdMip20?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: true,
+      blockTopUpsDuringPremiumHoliday: true,
+      minimumTopUpStartPolicyMonth: 13,
+      minimumTopUpAmount: 5_000,
+      topUpAmountIncrement: 10,
+    })
+    expect(usdMip20?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: true,
+      blockTopUpsDuringPremiumHoliday: true,
+      minimumTopUpStartPolicyMonth: 13,
+      minimumTopUpAmount: 5_000,
+      topUpAmountIncrement: 10,
+    })
     expect(sgdMip20?.warnings).toContain(
       'Life Replacement Option eligibility / underwriting, post-replacement cover resets, and policy-reissue fallback remain informational only in V1.',
     )
+    expect(product.warnings.some((warning) => warning.includes('manual current net protected premium base support once regular-withdrawal assumptions are already active'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('manual current accidental-death regular-premium-floor support once regular-withdrawal assumptions are already active'))).toBe(true)
+    expect(sgdMip20?.unsupportedItems).toContain(
+      'The current accidental-death estimate also needs manual current age and current amount owing inputs and, once regular-withdrawal assumptions are already active, a manual current accidental-death regular-premium floor; age-75 cut-off handling is modeled, while claim exclusions, payout settlement, and post-claim state remain informational only.',
+    )
+    expect(sgdMip20?.unsupportedItems).toContain(
+      'The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both need a manual remaining aggregate TI cap; payout settlement and post-claim state remain informational only.',
+    )
+    expect(product.modeledEconomics).toContain('kernel:scheduled-payout-start-gate')
+    expect(product.modeledEconomics).toContain('kernel:scheduled-payout-minimum-annual-withdrawal-amount')
     expect(sgdMip20?.unsupportedItems).toContain(
       'Life Replacement Option request timing, replacement eligibility, and underwriting acceptance remain informational only.',
     )
@@ -97,10 +133,26 @@ describe('parseHsbcWealthVoyage', () => {
     )
     expect(sgdMip20?.bonuses).toEqual(expect.arrayContaining([
       expect.objectContaining({
-        id: 'loyalty-bonus',
+        id: 'power-up-bonus-1',
+        mode: 'monthly-rate',
+        restorationRules: [
+          {
+            trigger: 'premium-holiday-repayment',
+            basis: 'account-value-plus-repaid-premium-with-missed-months',
+          },
+        ],
         suspensionRules: [
-          { trigger: 'partial-withdrawal', suspensionMonths: 12 },
-          { trigger: 'scheduled-payout', suspensionMonths: 12 },
+          { trigger: 'partial-withdrawal', suspensionMonths: 12, startOffsetMonths: 1 },
+          { trigger: 'premium-holiday', suspensionMonths: 12, startOffsetMonths: 1 },
+          { trigger: 'regular-premium-reduction', suspensionMonths: 12, startOffsetMonths: 1 },
+        ],
+      }),
+      expect.objectContaining({
+        id: 'loyalty-bonus',
+        mode: 'monthly-rate',
+        suspensionRules: [
+          { trigger: 'partial-withdrawal', suspensionMonths: 12, startOffsetMonths: 1 },
+          { trigger: 'scheduled-payout', suspensionMonths: 12, startOffsetMonths: 1 },
         ],
       }),
     ]))
@@ -123,6 +175,12 @@ describe('parseHsbcWealthVoyage', () => {
           trigger: 'top-up',
           basis: 'event-amount',
           rate: 0.03,
+        }),
+        expect.objectContaining({
+          id: 'missed-amf-on-premium-holiday-repayment',
+          trigger: 'premium-holiday-repayment',
+          basis: 'repaid-premium-with-missed-months',
+          appliesTo: ['regular'],
         }),
         expect.objectContaining({
           id: 'partial-withdrawal-charge',

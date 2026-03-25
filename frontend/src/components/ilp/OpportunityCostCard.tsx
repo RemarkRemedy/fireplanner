@@ -1,11 +1,11 @@
 import { DeltaBadge } from '@/components/shared/DeltaBadge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import type { IlpPolicyAnalysis, IlpPolicyInput } from '@/lib/calculations/ilp'
+import type { IlpPolicyInput, IlpProjectedPolicyAnalysis } from '@/lib/calculations/ilp'
 import { formatIlpCurrency, formatIlpPercent } from './formatters'
 
 interface OpportunityCostCardProps {
   policy: IlpPolicyInput
-  analysis: IlpPolicyAnalysis
+  analysis: IlpProjectedPolicyAnalysis
 }
 
 export function OpportunityCostCard({ policy, analysis }: OpportunityCostCardProps) {

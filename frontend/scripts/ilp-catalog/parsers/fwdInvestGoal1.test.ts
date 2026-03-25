@@ -99,9 +99,14 @@ describe('parseFwdInvestGoal1', () => {
       'branch:fwd-invest-goal-1-plan-charge',
       'branch:fwd-invest-goal-1-surrender-charge',
       'branch:fwd-invest-goal-1-zero-partial-withdrawal-charge',
+      'kernel:current-death-benefit-estimate',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
     ])
+    expect(product.metadataOnlyBehaviors).not.toContain('fwd-invest-goal-1-death-benefit')
     expect(product.metadataOnlyBehaviors).not.toContain('fwd-invest-goal-1-plan-charge-single-premium-base')
     expect(product.metadataOnlyBehaviors).not.toContain('fwd-invest-goal-1-surrender-charge-single-premium-base')
+    expect(product.metadataOnlyBehaviors).not.toContain('fwd-invest-goal-1-withdrawal-minimum-rules')
+    expect(product.warnings[0]).toContain('current-state death benefit as 105% of policy value')
 
     expect(product.variants).toHaveLength(2)
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended', 'usd-open-ended'])
@@ -147,6 +152,17 @@ describe('parseFwdInvestGoal1', () => {
         rate: 0,
       }),
     ])
+    expect(product.variants[0].policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: false,
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'initial-single-premium',
+          accountId: 'policy',
+          minimumValueRate: 0.1,
+        },
+      ],
+    })
   })
 
   it.skipIf(!existsSync(SOURCE_PATH))('matches the live source PDF when the local corpus is available', async () => {

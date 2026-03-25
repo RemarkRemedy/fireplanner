@@ -27,6 +27,8 @@ describe('Etiqa Invest flex parsers', () => {
     expect(product.supportStatus).toBe('supported')
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-flex-prime-ii-startup-bonus',
       'branch:etiqa-flex-prime-ii-special-bonus',
       'branch:etiqa-flex-prime-ii-loyalty-bonus',
@@ -34,11 +36,21 @@ describe('Etiqa Invest flex parsers', () => {
       'branch:etiqa-flex-prime-ii-insurance-charge',
       'branch:etiqa-flex-prime-ii-top-up-premium-charge',
       'branch:etiqa-flex-prime-ii-startup-bonus-recovery',
+      'branch:etiqa-flex-prime-ii-premium-shortfall-charge',
+      'branch:etiqa-flex-prime-ii-premium-shortfall-refund',
       'branch:etiqa-flex-prime-ii-partial-withdrawal-charge',
       'branch:etiqa-flex-prime-ii-surrender-charge',
+      'kernel:premium-holiday-top-up-block',
+      'kernel:top-up-amount-gate-block',
+      'kernel:free-withdrawal-event-cap',
+      'kernel:partial-withdrawal-amount-increment-block',
+      'kernel:partial-withdrawal-maximum-amount-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
+      'kernel:monthly-rate-bonus-crediting',
       'kernel:distribution-mode-assumption',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('etiqa-flex-prime-ii-premium-shortfall-charge')
+    expect(product.warnings[0]).toContain('current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap')
+    expect(product.metadataOnlyBehaviors).not.toContain('etiqa-flex-prime-ii-premium-free-period-gated-shortfall-charge')
     expect(product.metadataOnlyBehaviors).not.toContain('etiqa-flex-prime-ii-insurance-charge')
 
     expect(product.variants.map((variant) => variant.id)).toEqual([
@@ -107,6 +119,10 @@ describe('Etiqa Invest flex parsers', () => {
         expect.objectContaining({
           id: 'partial-withdrawal-charge',
           trigger: 'partial-withdrawal',
+          freeEventCount: 2,
+          freeEventStartPolicyYear: 4,
+          freeEventMaxAmountRate: 0.05,
+          freeEventMaxAmountBasis: 'cumulative-paid-regular-premium',
           rateSchedule: [
             { startPolicyYear: 1, endPolicyYear: 1, rate: 1 },
             { startPolicyYear: 2, endPolicyYear: 2, rate: 1 },
@@ -122,6 +138,70 @@ describe('Etiqa Invest flex parsers', () => {
         }),
       ]),
     )
+    expect(flexi5?.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'premium-shortfall-charge',
+          trigger: 'premium-holiday',
+          basis: 'annual-premium-with-overlap-months',
+          freeLifetimeMonthsResetOnRepayment: true,
+          freeLifetimeMonthsSchedule: [
+            { startPolicyYear: 8, endPolicyYear: 10, months: 60 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'premium-shortfall-charge-refund',
+          trigger: 'premium-holiday-repayment',
+          basis: 'premium-holiday-charge-refund',
+          sourceChargeRuleId: 'premium-shortfall-charge',
+        }),
+      ]),
+    )
+    const flexi3 = product.variants.find((variant) => variant.id === 'sgd-mip-10-flexi-3')
+    expect(flexi3?.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'premium-shortfall-charge',
+          trigger: 'premium-holiday',
+          basis: 'annual-premium-with-overlap-months',
+          freeLifetimeMonthsResetOnRepayment: true,
+          freeLifetimeMonthsSchedule: [
+            { startPolicyYear: 7, endPolicyYear: 10, months: 84 },
+          ],
+          sourceRefs: expect.any(Array),
+        }),
+        expect.objectContaining({
+          id: 'premium-shortfall-charge-refund',
+          trigger: 'premium-holiday-repayment',
+          basis: 'premium-holiday-charge-refund',
+          sourceChargeRuleId: 'premium-shortfall-charge',
+        }),
+      ]),
+    )
+    expect(flexi5?.policyStateSupport).toEqual(expect.objectContaining({
+      automaticLapseOnAccountValueDepletion: false,
+      blockTopUpsDuringPremiumHoliday: true,
+      minimumTopUpAmount: 2_500,
+      topUpAmountIncrement: 100,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalAmountIncrement: 100,
+      partialWithdrawalMaximumAmountRules: [
+        {
+          activeWindow: 'during-mip',
+          accountId: 'regular',
+          basis: 'cumulative-paid-regular-premium-less-prior-gross-withdrawals',
+          maximumValueRate: 0.5,
+        },
+      ],
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'account-value',
+          accountId: 'regular',
+          minimumValue: 1_000,
+        },
+      ],
+    }))
     expect(flexi5?.bonuses).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -130,12 +210,18 @@ describe('Etiqa Invest flex parsers', () => {
             { currency: 'SGD', minAnnualPremium: 4_800, maxAnnualPremium: 9_599.99, rate: 0.14 },
             { currency: 'SGD', minAnnualPremium: 9_600, maxAnnualPremium: null, rate: 0.32 },
           ],
+          restorationRules: [
+            { trigger: 'premium-holiday-repayment', basis: 'repaid-premium' },
+          ],
         }),
         expect.objectContaining({
           id: 'special-bonus',
           startPolicyYear: 6,
           endPolicyYear: 10,
           rate: 0.03,
+          restorationRules: [
+            { trigger: 'premium-holiday-repayment', basis: 'repaid-premium' },
+          ],
         }),
       ]),
     )
@@ -150,17 +236,25 @@ describe('Etiqa Invest flex parsers', () => {
             { currency: 'SGD', minAnnualPremium: 2_400, maxAnnualPremium: 4_799.99, rate: 0.37 },
             { currency: 'SGD', minAnnualPremium: 4_800, maxAnnualPremium: null, rate: 0.75 },
           ],
+          restorationRules: [
+            { trigger: 'premium-holiday-repayment', basis: 'repaid-premium' },
+          ],
         }),
         expect.objectContaining({
           id: 'special-bonus',
           startPolicyYear: 16,
           endPolicyYear: 20,
           rate: 0.03,
+          restorationRules: [
+            { trigger: 'premium-holiday-repayment', basis: 'repaid-premium' },
+          ],
         }),
         expect.objectContaining({
           id: 'loyalty-bonus',
+          mode: 'monthly-rate',
           startPolicyYear: 21,
           rate: 0.001,
+          suspensionRules: [{ trigger: 'partial-withdrawal', suspensionMonths: 12, startOffsetMonths: 1 }],
         }),
       ]),
     )
@@ -184,12 +278,49 @@ describe('Etiqa Invest flex parsers', () => {
     expect(product.productName).toBe('Invest flex pro')
     expect(product.supportStatus).toBe('supported')
     expect(product.economicsStatus).toBe('supported')
+    expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
+    expect(product.modeledEconomics).toContain('kernel:current-ti-benefit-estimate')
     expect(product.modeledEconomics).toContain('branch:etiqa-flex-pro-policy-charge')
     expect(product.modeledEconomics).toContain('branch:etiqa-flex-pro-insurance-charge')
+    expect(product.modeledEconomics).toContain('branch:etiqa-flex-pro-premium-shortfall-charge')
+    expect(product.modeledEconomics).toContain('branch:etiqa-flex-pro-premium-shortfall-refund')
+    expect(product.modeledEconomics).toContain('kernel:premium-holiday-top-up-block')
+    expect(product.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
+    expect(product.modeledEconomics).toContain('kernel:free-withdrawal-event-cap')
+    expect(product.modeledEconomics).toContain('kernel:partial-withdrawal-amount-increment-block')
+    expect(product.modeledEconomics).toContain('kernel:partial-withdrawal-maximum-amount-block')
+    expect(product.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
+    expect(product.metadataOnlyBehaviors).not.toContain('etiqa-flex-pro-premium-free-period-gated-shortfall-charge')
+    expect(product.metadataOnlyBehaviors).toContain('etiqa-flex-pro-free-partial-withdrawal-benefit-administration')
+    expect(product.warnings[0]).toContain('current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-mip-10-flexi-3',
       'sgd-mip-10-flexi-5',
       'sgd-mip-20',
     ])
+    expect(product.variants[0]?.policyStateSupport).toEqual(expect.objectContaining({
+      automaticLapseOnAccountValueDepletion: false,
+      blockTopUpsDuringPremiumHoliday: true,
+      minimumTopUpAmount: 2_500,
+      topUpAmountIncrement: 100,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalAmountIncrement: 100,
+      partialWithdrawalMaximumAmountRules: [
+        {
+          activeWindow: 'during-mip',
+          accountId: 'regular',
+          basis: 'cumulative-paid-regular-premium-less-prior-gross-withdrawals',
+          maximumValueRate: 0.5,
+        },
+      ],
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'account-value',
+          accountId: 'regular',
+          minimumValue: 1_000,
+        },
+      ],
+    }))
   }, 30_000)
 })

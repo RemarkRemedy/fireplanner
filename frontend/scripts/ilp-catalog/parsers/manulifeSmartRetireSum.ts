@@ -4,6 +4,7 @@ import type {
   IlpCatalogSourceRef,
   IlpTemplateBonus,
   IlpTemplateEventChargeRule,
+  IlpTemplateFeeRule,
   IlpTemplateVariant,
 } from '../../../src/lib/ilp-catalog/types.js'
 import type { ExtractedPdfDocument } from '../pdf/extractPdfText.js'
@@ -167,6 +168,61 @@ function buildVariant(
   const page6 = sourceRef(6, 'Partial withdrawal charge and premium shortfall charge', snippetNear(document, 6, 'Premium Shortfall Charge', 24))
   const page8 = sourceRef(8, 'Regular income drawdown and policy options', snippetNear(document, 8, 'Regular Income Drawdown', 22))
   const page9 = sourceRef(9, 'Distribution of dividend', snippetNear(document, 9, 'Distribution of Dividend', 20))
+  const page19 = sourceRef(19, 'Appendix B annual COI table for death benefit', snippetNear(document, 19, 'Annual Cost of Insurance for Death Benefit', 26))
+  const page21 = sourceRef(21, 'Appendix B annual COI table for WOP on TPD', snippetNear(document, 21, 'Annual Cost of Insurance for Waiver of Premium Benefit on TPD', 26))
+
+  const flexiStartPolicyYear = Math.max(
+    ...variantDefinition.premiumShortfallSchedule.map((tier) => tier.endPolicyYear),
+  ) + 1
+
+  const feeRules: IlpTemplateFeeRule[] = [
+    {
+      id: 'cost-of-insurance-death',
+      label: 'Cost of Insurance (Death Benefit)',
+      basis: 'assurance-sum-at-risk',
+      rate: null,
+      amount: null,
+      assuranceConfig: {
+        formula: 'manulife-smartretire-death',
+        monthlyModalFactor: 1 / 12,
+        maxAgeNextBirthday: 99,
+      },
+      requiresManualInput: true,
+      appliesTo: ['policy'],
+      activeWindow: 'policy-term',
+      startPolicyYear: 1,
+      endPolicyYear: null,
+      notes: [
+        'Models the published monthly COI for the death benefit during the minimum investment period using 105% of basic premiums paid plus top-up premiums less withdrawals, net of account value.',
+        'After the minimum investment period and before target retirement age, the modeled death-benefit COI uses current basic sum insured less withdrawals and account value.',
+        'No death-benefit COI is modeled on or after the supplied target retirement age.',
+        'Requires insured-life details, plus current target retirement age and current basic sum insured for the later accumulation corridor.',
+      ],
+      sourceRefs: [page5, page19],
+    },
+    {
+      id: 'cost-of-insurance-wop-on-tpd',
+      label: 'Cost of Insurance (WOP on TPD)',
+      basis: 'assurance-sum-at-risk',
+      rate: null,
+      amount: null,
+      assuranceConfig: {
+        formula: 'manulife-smartretire-wop-tpd',
+        monthlyModalFactor: 1 / 12,
+        maxAgeNextBirthday: 70,
+      },
+      requiresManualInput: true,
+      appliesTo: ['policy'],
+      activeWindow: 'during-mip',
+      startPolicyYear: 1,
+      endPolicyYear: flexiStartPolicyYear - 1,
+      notes: [
+        `Models the published monthly COI for Waiver of Premium benefit on TPD through policy year ${flexiStartPolicyYear - 1}, with NAAR equal to the remaining scheduled basic premiums until before Flexi Start and capped at S$1,000,000.`,
+        'Requires the policy-owner insured-life details before the calculator can model the guaranteed WOP-on-TPD COI table.',
+      ],
+      sourceRefs: [page5, page21],
+    },
+  ]
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
     {
@@ -240,10 +296,11 @@ function buildVariant(
       },
     ],
     bonuses: buildBonuses(variantDefinition, page4, page5, page8),
-    feeRules: [],
+    feeRules,
     eventChargeRules,
     policyStateSupport: {
       automaticLapseOnAccountValueDepletion: true,
+      minimumTopUpAmount: 2_500,
     },
     distributionSupport: {
       mode: 'manual-assumption',
@@ -261,17 +318,20 @@ function buildVariant(
     },
     eecTable: [...variantDefinition.withdrawalAndSurrenderChargeSchedule],
     warnings: [
-      `${variantDefinition.label} is cataloged as a partial modeled subset in V1. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the welcome-bonus and loyalty-bonus mechanics, the current-state MIP death-benefit estimate, annual-state lapse / termination after projected account-value depletion, and the reinvest-default distribution-mode assumption surface.`,
-      'Target Retirement Sum withdrawal, optional regular-income drawdown elections, hybrid death-benefit / COI mechanics, waiver-of-premium on TPD, COI refund at target retirement age, and fund-level management charges remain outside the current engine.',
+      `${variantDefinition.label} is cataloged as a supported V1 corridor. The parser captures the published 2.50% / 0.75% administrative-charge path, the MIP withdrawal / surrender charge schedule, the premium-shortfall charge before Flexi Start, the prevailing 0% top-up charge, the published S$2,500 minimum on explicit ad-hoc top-up premiums, the welcome-bonus and loyalty-bonus mechanics, the current-state death-benefit estimate across the MIP and later current-only mature-policy corridors, the guaranteed death-benefit COI table, the guaranteed WOP-on-TPD COI table before Flexi Start after insured-life details are supplied, the current admitted-state WOP premium-waiver path before Flexi Start when the current WOP claim-history status and remaining-waiver-runway inputs are supplied, the target-retirement-age COI refund path both before and after target retirement age when current refund-eligible death COI, explicit refund-gate status, and already-due refund-status inputs are supplied where applicable, annual-state lapse / termination after projected account-value depletion, and the reinvest-default distribution-mode assumption surface.`,
+      'Target Retirement Sum withdrawal, optional regular-income drawdown elections, waiver-of-premium claim admission history before the current projection start, broader COI refund claim-history reconstruction beyond the explicit current inputs, and fund-level management charges remain outside the current engine.',
+      'Top-up allocation across up to 10 funds at a minimum of 10% per fund remains informational only.',
       'Withdrawals of accumulated reinvested dividends remain informational only.',
     ],
     unsupportedItems: [
       'Target Retirement Sum withdrawal remains informational only and should be represented manually with withdrawal events if needed.',
       'Optional regular-income drawdown elections remain informational only.',
-      'Only the current-state MIP death-benefit estimate is modeled. The accumulation-period basic-sum-insured corridor, the post-target-retirement-age account-value-only corridor, amount-owed deductions, and claim-side handling remain informational only.',
-      'Waiver of Premium benefit on TPD and its separate COI table remain informational only.',
-      'Refund of Cost of Insurance at target retirement age remains informational only.',
+      'The current-state death-benefit estimate now covers the MIP corridor plus the later current-only mature-policy corridors once manual amount-owing and retirement-state inputs are supplied. Claim-side handling after benefit settlement remains informational only.',
+      'Death-benefit claim settlement and post-claim handling remain informational only beyond the modeled death-benefit COI table.',
+      'Waiver of Premium benefit on TPD claim admission history before the current projection start, insurer-side claim settlement, and broader post-claim administration remain informational only beyond the modeled WOP-on-TPD COI table and current admitted-state waived-premium path.',
+      'Refund of Cost of Insurance at target retirement age is modeled only through explicit current refund-eligible death COI, SmartRetire refund-gate status, WOP-on-TPD claim-state, and already-due refund-status inputs. Broader refund claim-history reconstruction remains informational only.',
       'Flexi-start regular-premium variation and change-of-basic-sum-insured mechanics remain informational only.',
+      'Top-up allocation across up to 10 funds at a minimum of 10% per fund remains informational only.',
       'Reinstatement underwriting, approval, premium-allocation carry-forward, and exclusion resets after reinstatement remain informational only.',
       'Withdrawals of accumulated reinvested dividends remain informational only.',
       'Fund-level management charges, fund switching, premium redirection, and automatic fund rebalancing remain informational only.',
@@ -297,8 +357,13 @@ export function parseManulifeSmartRetireSum({ document, sourceChecksumSha256 }: 
       'branch:manulife-smartretire-v-withdrawal-and-surrender-charge',
       'branch:manulife-smartretire-v-premium-shortfall-charge',
       'branch:manulife-smartretire-v-zero-top-up-charge',
+      'kernel:top-up-amount-gate-block',
       'branch:manulife-smartretire-v-welcome-bonus',
       'branch:manulife-smartretire-v-loyalty-bonus',
+      'branch:manulife-smartretire-v-death-coi',
+      'branch:manulife-smartretire-v-wop-on-tpd-coi',
+      'branch:manulife-smartretire-v-wop-premium-waiver',
+      'branch:manulife-smartretire-v-coi-refund',
       'kernel:current-death-benefit-estimate',
       'kernel:automatic-lapse-on-account-depletion',
       'kernel:distribution-mode-assumption',
@@ -306,10 +371,9 @@ export function parseManulifeSmartRetireSum({ document, sourceChecksumSha256 }: 
     metadataOnlyBehaviors: [
       'manulife-smartretire-v-sum-target-retirement-sum-withdrawal',
       'manulife-smartretire-v-sum-regular-income-drawdown',
-      'manulife-smartretire-v-sum-post-mip-death-benefit-corridor',
-      'manulife-smartretire-v-sum-amount-owed-deductions-and-claim-handling',
+      'manulife-smartretire-v-sum-claim-handling',
       'manulife-smartretire-v-sum-waiver-of-premium-benefit',
-      'manulife-smartretire-v-sum-coi-refund',
+      'manulife-smartretire-v-sum-coi-refund-claim-history',
       'manulife-smartretire-v-sum-flexi-start-premium-variation',
       'manulife-smartretire-v-sum-reinstatement-underwriting-and-exclusion-resets',
       'manulife-smartretire-v-sum-reinvested-dividend-withdrawal',
@@ -317,7 +381,7 @@ export function parseManulifeSmartRetireSum({ document, sourceChecksumSha256 }: 
       'manulife-smartretire-v-sum-fund-switching-and-redirection',
     ],
     warnings: [
-      'Manulife SmartRetire (V) - Sum is cataloged as a supported V1 product for the regular-pay corridors. The parser captures the published administrative-charge path, MIP withdrawal / surrender schedule, premium-shortfall charge before Flexi Start, prevailing 0% top-up charge, welcome-bonus and loyalty-bonus mechanics, the current-state MIP death-benefit estimate, annual-state lapse / termination after projected account-value depletion, and the reinvest-default distribution-mode assumption surface, while retirement-sum withdrawal handling, optional drawdown elections, later death-benefit corridors, hybrid COI mechanics, TPD waiver, COI refund, reinstatement underwriting and exclusion resets, and fund-level charges remain outside the current engine.',
+      'Manulife SmartRetire (V) - Sum is cataloged as a supported V1 product for the regular-pay corridors. The parser captures the published administrative-charge path, MIP withdrawal / surrender schedule, premium-shortfall charge before Flexi Start, prevailing 0% top-up charge, the published S$2,500 minimum on explicit ad-hoc top-up premiums, welcome-bonus and loyalty-bonus mechanics, the current-state death-benefit estimate across the MIP and later current-only mature-policy corridors, the guaranteed death-benefit COI table, the guaranteed WOP-on-TPD COI table before Flexi Start after insured-life details are supplied, the current admitted-state WOP premium-waiver path before Flexi Start when the current WOP claim-history status and remaining-waiver-runway inputs are supplied, the target-retirement-age COI refund path both before and after target retirement age when current refund-eligible death COI, explicit refund-gate status, and already-due refund-status inputs are supplied where applicable, annual-state lapse / termination after projected account-value depletion, and the reinvest-default distribution-mode assumption surface, while retirement-sum withdrawal handling, optional drawdown elections, top-up allocation across up to 10 funds at a minimum of 10% per fund, broader insurer-side claim settlement, reinstatement underwriting and exclusion resets, and fund-level charges remain outside the current engine.',
     ],
     archived: false,
     variants: VARIANTS.map((variantDefinition) => buildVariant(document, variantDefinition)),

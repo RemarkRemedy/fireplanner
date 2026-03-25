@@ -45,6 +45,9 @@ export type GoldenCoverageTag =
   | 'branch:aia-wealth-venture-premium-holiday-charge'
   | 'branch:aia-wealth-venture-partial-withdrawal-charge'
   | 'branch:aia-wealth-venture-full-surrender-charge'
+  | 'branch:aia-wealth-venture-welcome-bonus'
+  | 'branch:aia-wealth-venture-investment-bonus'
+  | 'branch:aia-wealth-venture-performance-bonus'
   | 'branch:aia-platinum-wealth-elite-2-regular-premium-charge'
   | 'branch:aia-platinum-wealth-elite-2-top-up-premium-charge'
   | 'branch:aia-platinum-wealth-elite-2-premium-holiday-charge'
@@ -65,6 +68,7 @@ export type GoldenCoverageTag =
   | 'branch:aia-pro-lifetime-protector-ii-plus-benefit-charge'
   | 'branch:aia-pro-lifetime-protector-ii-max-benefit-charge'
   | 'branch:aia-pro-lifetime-protector-ii-top-up-premium-charge'
+  | 'branch:aia-pro-lifetime-protector-ii-premium-holiday-charge-fixed-monthly'
   | 'branch:aia-pro-lifetime-protector-ii-zero-partial-withdrawal-charge'
   | 'branch:aia-pro-lifetime-protector-ii-full-surrender-charge'
   | 'branch:aia-platinum-wealth-venture-2-zero-regular-premium-charge'
@@ -73,6 +77,11 @@ export type GoldenCoverageTag =
   | 'branch:aia-platinum-wealth-venture-2-premium-holiday-charge'
   | 'branch:aia-platinum-wealth-venture-2-partial-withdrawal-charge'
   | 'branch:aia-platinum-wealth-venture-2-full-surrender-charge'
+  | 'branch:aia-platinum-wealth-venture-2-welcome-bonus'
+  | 'branch:aia-platinum-wealth-venture-2-investment-bonus'
+  | 'branch:aia-platinum-wealth-venture-2-performance-bonus'
+  | 'branch:aia-pro-achiever-3-welcome-bonus'
+  | 'branch:aia-pro-achiever-3-special-bonus'
   | 'branch:hsbc-holiday-repayment'
   | 'branch:hsbc-holiday-no-repayment'
   | 'branch:hsbc-bonus-suspension'
@@ -154,7 +163,9 @@ export type GoldenCoverageTag =
   | 'branch:pruactive-linkguard-top-up-premium-charge'
   | 'branch:pruactive-linkguard-zero-partial-withdrawal-charge'
   | 'branch:singlife-legacy-invest-welcome-bonus'
+  | 'branch:singlife-legacy-invest-special-booster'
   | 'branch:singlife-legacy-invest-loyalty-bonus'
+  | 'branch:singlife-legacy-invest-maturity-bonus'
   | 'branch:singlife-legacy-invest-administrative-charge'
   | 'branch:singlife-legacy-invest-top-up-charge'
   | 'branch:singlife-legacy-invest-partial-withdrawal-charge'
@@ -163,6 +174,7 @@ export type GoldenCoverageTag =
   | 'branch:singlife-savvy-invest-ii-welcome-bonus'
   | 'branch:singlife-savvy-invest-ii-regular-premium-allocation-uplift'
   | 'branch:singlife-savvy-invest-ii-loyalty-bonus'
+  | 'branch:singlife-savvy-invest-ii-cost-of-insurance'
   | 'branch:singlife-savvy-invest-ii-administrative-charge'
   | 'branch:singlife-savvy-invest-ii-supplementary-charge'
   | 'branch:singlife-savvy-invest-ii-zero-top-up-charge'
@@ -185,6 +197,7 @@ export type GoldenCoverageTag =
   | 'branch:pru-charged-withdrawal'
   | 'branch:assure-sp-administration-charge'
   | 'branch:assure-sp-combined-assurance'
+  | 'branch:assure-sp-single-premium-allocation-enhancement'
   | 'branch:assure-sp-top-up-charge'
   | 'branch:assure-sp-first-free-withdrawal'
   | 'branch:assure-sp-charged-withdrawal'
@@ -288,27 +301,39 @@ export type GoldenCoverageTag =
   | 'branch:tokio-marine-gowealth-enrich-recurring-single-and-top-up-charge'
   | 'branch:tokio-marine-gowealth-enrich-single-premium-partial-withdrawal-charge'
   | 'branch:tokio-marine-gowealth-enrich-surrender-charge'
+  | 'branch:tokio-marine-goassure-initial-bonus'
   | 'branch:tokio-marine-goassure-initial-charge'
   | 'branch:tokio-marine-goassure-policy-charge'
   | 'branch:tokio-marine-goassure-recurring-single-and-top-up-charge'
   | 'branch:tokio-marine-goassure-partial-withdrawal-charge'
   | 'branch:tokio-marine-goassure-premium-shortfall-charge'
   | 'branch:tokio-marine-goassure-surrender-charge'
+  | 'branch:tokio-current-only-multi-life-life-state'
+  | 'branch:tokio-additional-bonus-current-year-qualification'
+  | 'branch:tokio-goaffluence-achievement-bonus-premium-base-milestones'
+  | 'branch:tokio-goluxe-achievement-bonus-qualification-window'
+  | 'branch:tokio-marine-gowealth-enrich-loyalty-bonus'
   | 'branch:tokio-wealth-builder-atfuture-advanced-death-monthly-protection-charge'
   | 'branch:fwd-invest-flexi-vii-initial-account-charge'
   | 'branch:fwd-invest-flexi-vii-annual-premium-bonus'
+  | 'branch:fwd-invest-flexi-vii-booster-bonus'
+  | 'branch:fwd-invest-flexi-vii-loyalty-bonus'
   | 'branch:fwd-invest-flexi-vii-insurance-charge'
   | 'branch:fwd-invest-flexi-vii-top-up-premium-charge'
   | 'branch:fwd-invest-flexi-vii-initial-account-redemption-fee'
   | 'branch:fwd-invest-flexi-vii-initial-account-surrender-charge'
   | 'branch:fwd-invest-flexi-elite-initial-account-charge'
   | 'branch:fwd-invest-flexi-elite-annual-premium-bonus'
+  | 'branch:fwd-invest-flexi-elite-booster-bonus'
+  | 'branch:fwd-invest-flexi-elite-contribution-bonus'
   | 'branch:fwd-invest-flexi-elite-insurance-charge'
   | 'branch:fwd-invest-flexi-elite-top-up-premium-charge'
   | 'branch:fwd-invest-flexi-elite-initial-account-redemption-fee'
   | 'branch:fwd-invest-flexi-elite-initial-account-surrender-charge'
   | 'branch:fwd-invest-first-horizon-initial-account-charge'
   | 'branch:fwd-invest-first-horizon-annual-premium-bonus'
+  | 'branch:fwd-invest-first-horizon-booster-bonus'
+  | 'branch:fwd-invest-first-horizon-loyalty-bonus'
   | 'branch:fwd-invest-first-horizon-insurance-charge'
   | 'branch:fwd-invest-first-horizon-premium-reduction-charge'
   | 'branch:fwd-invest-first-horizon-top-up-premium-charge'
@@ -316,12 +341,17 @@ export type GoldenCoverageTag =
   | 'branch:fwd-invest-first-horizon-initial-account-surrender-charge'
   | 'branch:fwd-invest-first-max-initial-account-charge'
   | 'branch:fwd-invest-first-max-accumulation-account-charge'
+  | 'branch:fwd-invest-first-max-booster-bonus'
+  | 'branch:fwd-invest-first-max-loyalty-bonus'
   | 'branch:fwd-invest-first-max-top-up-premium-charge'
   | 'branch:fwd-invest-first-max-recurring-single-premium-charge'
   | 'branch:fwd-invest-first-max-zero-redemption-fee'
   | 'branch:fwd-invest-first-max-surrender-charge'
   | 'branch:fwd-invest-first-summit-initial-account-charge'
   | 'branch:fwd-invest-first-summit-accumulation-account-charge'
+  | 'branch:fwd-invest-first-summit-booster-bonus'
+  | 'branch:fwd-invest-first-summit-loyalty-bonus'
+  | 'branch:fwd-invest-first-summit-perpetual-bonus'
   | 'branch:fwd-invest-first-summit-top-up-premium-charge'
   | 'branch:fwd-invest-first-summit-premium-shortfall-charge'
   | 'branch:fwd-invest-first-summit-premium-reduction-charge'
@@ -1107,8 +1137,8 @@ function hsbcFlexiProtectorEventHeavyPolicy(
 ): IlpPolicyInput {
   return hsbcFlexiProtectorBasePolicy(snapshot, 'sgd-open-ended-choice-cover', id, HSBC_BALANCED_FUNDS, {
     name: 'Golden HSBC Life Flexi Protector (SGD / Open-ended Choice Cover Event Heavy)',
-    currentPolicyYear: 8,
-    monthsAlreadyPaid: 84,
+    currentPolicyYear: 7,
+    monthsAlreadyPaid: 72,
     policyEvents: [
       {
         id: 'top-up-1',
@@ -1196,9 +1226,17 @@ function aiaPlp2EventHeavyPolicy(
 ): IlpPolicyInput {
   return aiaPlp2BasePolicy(snapshot, 'sgd-open-ended-max', id, HSBC_BALANCED_FUNDS, {
     name: 'Golden AIA Pro Lifetime Protector (II) (SGD / Open-ended Max Event Heavy)',
-    currentPolicyYear: 8,
-    monthsAlreadyPaid: 84,
+    currentPolicyYear: 7,
+    monthsAlreadyPaid: 72,
     policyEvents: [
+      {
+        id: 'holiday-1',
+        type: 'premium-holiday',
+        startPolicyMonth: 91,
+        durationMonths: 4,
+        repayMissedPremiums: true,
+        repaymentAccountId: 'policy',
+      },
       {
         id: 'top-up-1',
         type: 'top-up',
@@ -1594,7 +1632,7 @@ function hsbcAbundanceEventHeavyPolicy(
             type: 'top-up',
             startPolicyMonth: 88,
             durationMonths: 1,
-            amount: 2_000,
+            amount: 5_000,
           },
           {
             id: 'reduction-1',
@@ -1699,14 +1737,15 @@ function hsbcVoyageEventHeavyPolicy(
             type: 'premium-holiday',
             startPolicyMonth: 97,
             durationMonths: 2,
-            repayMissedPremiums: false,
+            repayMissedPremiums: true,
+            repaymentAccountId: 'regular',
           },
           {
             id: 'top-up-1',
             type: 'top-up',
             startPolicyMonth: 100,
             durationMonths: 1,
-            amount: 2_000,
+            amount: 5_000,
           },
           {
             id: 'reduction-1',
@@ -1799,7 +1838,7 @@ function hsbcWealthFocusBaselinePolicy(
   id: string,
 ): IlpPolicyInput {
   const flexiTerm = Number(productId.slice(-1))
-  const scheduledPayoutAmount = variantId.startsWith('usd') ? 900 : 1_200
+  const scheduledPayoutAmount = variantId.startsWith('usd') ? 1_200 : 1_200
   const distributionAssumption = {
     mode: 'cash-payout' as const,
     source: 'manual-assumption' as const,
@@ -1829,20 +1868,21 @@ function hsbcWealthFocusEventHeavyPolicy(
   const startPolicyMonth = usesFreeWithdrawalPoolScenario ? 61 : (flexiTerm * 12 + 1)
   const policyEvents = [
     ...(flexiTerm > 1
-      ? [{
-          id: 'holiday-1',
-          type: 'premium-holiday' as const,
-          startPolicyMonth,
-          durationMonths: Math.min(3, flexiTerm),
-          repayMissedPremiums: false,
-        }]
+          ? [{
+              id: 'holiday-1',
+              type: 'premium-holiday' as const,
+              startPolicyMonth,
+              durationMonths: Math.min(3, flexiTerm),
+              repayMissedPremiums: true,
+              repaymentAccountId: 'regular' as const,
+            }]
       : []),
     {
       id: 'top-up-1',
       type: 'top-up' as const,
       startPolicyMonth: startPolicyMonth + 4,
       durationMonths: 1,
-      amount: 3_000,
+      amount: 5_000,
     },
     {
       id: 'withdrawal-1',
@@ -2166,6 +2206,7 @@ function pruVantageAssureSpBaselinePolicy(
 ): IlpPolicyInput {
   return pruVantageAssureSpBasePolicy(snapshot, id, PRU_BALANCED_FUNDS, {
     name: 'Golden PRUVantage Assure (SP) (SGD / MIP 8 Baseline)',
+    postMipYears: 10,
   })
 }
 
@@ -3646,7 +3687,7 @@ function greatEasternPrestigeLegacyAdvantageEventHeavyPolicy(
         type: 'partial-withdrawal',
         startPolicyMonth: 4,
         durationMonths: 1,
-        amount: 5_000,
+        amount: 2_500,
         accountId: 'policy',
       },
     ],
@@ -4116,6 +4157,13 @@ function tokioMarineGoAssureBasePolicy(
           mode: 'reinvest',
           source: 'catalog-default',
         },
+        assuranceProfile: {
+          ...base.assuranceProfile,
+          currentAgeNextBirthday: base.assuranceProfile?.currentAgeNextBirthday ?? 45,
+          sex: base.assuranceProfile?.sex ?? 'male',
+          smokerStatus: base.assuranceProfile?.smokerStatus ?? 'non-smoker',
+          initialBasicSumAssuredAtIssue: 250_000,
+        },
         ...overrides,
       }),
       24_000,
@@ -4219,6 +4267,10 @@ function fwdInvestGoal1BasePolicy(
       name: variantId === 'sgd-open-ended'
         ? 'Golden FWD Invest Goal 1 (SGD / Open-ended)'
         : 'Golden FWD Invest Goal 1 (USD / Open-ended)',
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: variantId === 'sgd-open-ended' ? 95_000 : 70_000,
+      })),
       policyEvents: [],
       ...overrides,
     }),
@@ -4248,7 +4300,7 @@ function fwdInvestGoal1EventHeavyPolicy(
         type: 'partial-withdrawal',
         startPolicyMonth: 40,
         durationMonths: 1,
-        amount: 5_000,
+        amount: 2_500,
         accountId: 'policy',
       },
     ],
@@ -4463,6 +4515,7 @@ function fwdInvestFirstHorizonBasePolicy(
         smokerStatus: 'non-smoker',
         currentNetRegularPremiumBase: 100_000,
         currentNetSupplementaryPremiumBase: 20_000,
+        currentNetRepaymentBase: 30_000,
       },
       accounts: base.accounts.map((account) => {
         if (account.id === 'initial') {
@@ -5001,9 +5054,9 @@ function manulifeSmartRetireSumBonusCoveragePolicy(
 ): IlpPolicyInput {
   return manulifeSmartRetireSumBasePolicy(snapshot, 'sgd-mip-8-flexi-5', id, MANULIFE_BALANCED_FUNDS, {
     name: 'Golden Manulife SmartRetire (V) - Sum (SGD / MIP 8 Flexi 5 Bonus Coverage)',
-    currentPolicyYear: 1,
-    monthsAlreadyPaid: 0,
-    postMipYears: 1,
+    currentPolicyYear: 7,
+    monthsAlreadyPaid: 72,
+    postMipYears: 3,
   })
 }
 
@@ -5122,14 +5175,27 @@ function manulifeSmartRetireIncomeBonusCoveragePolicy(
 ): IlpPolicyInput {
   return manulifeSmartRetireIncomeBasePolicy(snapshot, 'sgd-mip-8-flexi-5', id, MANULIFE_BALANCED_FUNDS, {
     name: 'Golden Manulife SmartRetire (V) - Income (SGD / MIP 8 Flexi 5 Bonus Coverage)',
-    currentPolicyYear: 1,
-    monthsAlreadyPaid: 0,
-    postMipYears: 1,
+    currentPolicyYear: 7,
+    monthsAlreadyPaid: 72,
+    postMipYears: 3,
   })
 }
 
+const MANULIFE_INVESTREADY_III_VARIANT_LABELS = {
+  'sgd-mip-5-flexi-1': 'SGD / MIP 5 Flexi 1',
+  'sgd-mip-5-flexi-4': 'SGD / MIP 5 Flexi 4',
+  'sgd-mip-6-flexi-2': 'SGD / MIP 6 Flexi 2',
+  'sgd-mip-7-flexi-5': 'SGD / MIP 7 Flexi 5',
+  'sgd-mip-10-flexi-3': 'SGD / MIP 10 Flexi 3',
+  'sgd-mip-10-flexi-5': 'SGD / MIP 10 Flexi 5',
+  'sgd-mip-10-flexi-8': 'SGD / MIP 10 Flexi 8',
+  'sgd-mip-13-flexi-10': 'SGD / MIP 13 Flexi 10',
+} as const
+
 function manulifeInvestreadyIiiBasePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: keyof typeof MANULIFE_INVESTREADY_III_VARIANT_LABELS,
+  variantLabel: string,
   id: string,
   funds: IlpFund[],
   overrides: Partial<IlpPolicyInput> = {},
@@ -5137,7 +5203,7 @@ function manulifeInvestreadyIiiBasePolicy(
   const monthlyContribution = 350
   const currentPolicyYear = 2
   const currentNetRegularPremiumBase = monthlyContribution * 12 * (currentPolicyYear - 1)
-  const base = seedPolicy(snapshot, 'manulife-investready-iii', 'sgd-mip-5-flexi-4', id, {
+  const base = seedPolicy(snapshot, 'manulife-investready-iii', variantId, id, {
     monthlyContribution,
     currentPolicyYear,
     monthsAlreadyPaid: 24,
@@ -5152,7 +5218,7 @@ function manulifeInvestreadyIiiBasePolicy(
   return withResolvedManualInputs(withFunds(
     ilpPolicySchema.parse({
       ...base,
-      name: 'Golden Manulife InvestReady (III) (SGD / MIP 5 Flexi 4)',
+      name: `Golden Manulife InvestReady (III) (${variantLabel})`,
       accounts: base.accounts.map((account) => ({
         ...account,
         currentValue: 18_000,
@@ -5171,10 +5237,12 @@ function manulifeInvestreadyIiiBasePolicy(
 
 function manulifeInvestreadyIiiBaselinePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: keyof typeof MANULIFE_INVESTREADY_III_VARIANT_LABELS,
   id: string,
 ): IlpPolicyInput {
-  return manulifeInvestreadyIiiBasePolicy(snapshot, id, MANULIFE_BALANCED_FUNDS, {
-    name: 'Golden Manulife InvestReady (III) (SGD / MIP 5 Flexi 4 Baseline)',
+  const variantLabel = MANULIFE_INVESTREADY_III_VARIANT_LABELS[variantId]
+  return manulifeInvestreadyIiiBasePolicy(snapshot, variantId, variantLabel, id, MANULIFE_BALANCED_FUNDS, {
+    name: `Golden Manulife InvestReady (III) (${variantLabel} Baseline)`,
   })
 }
 
@@ -5182,7 +5250,13 @@ function manulifeInvestreadyIiiEventHeavyPolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
 ): IlpPolicyInput {
-  return manulifeInvestreadyIiiBasePolicy(snapshot, id, MANULIFE_BALANCED_FUNDS, {
+  return manulifeInvestreadyIiiBasePolicy(
+    snapshot,
+    'sgd-mip-5-flexi-4',
+    MANULIFE_INVESTREADY_III_VARIANT_LABELS['sgd-mip-5-flexi-4'],
+    id,
+    MANULIFE_BALANCED_FUNDS,
+    {
     name: 'Golden Manulife InvestReady (III) (SGD / MIP 5 Flexi 4 Event Heavy)',
     policyEvents: [
       {
@@ -5214,7 +5288,13 @@ function manulifeInvestreadyIiiStressPolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
 ): IlpPolicyInput {
-  return manulifeInvestreadyIiiBasePolicy(snapshot, id, MANULIFE_STRESS_FUNDS, {
+  return manulifeInvestreadyIiiBasePolicy(
+    snapshot,
+    'sgd-mip-5-flexi-4',
+    MANULIFE_INVESTREADY_III_VARIANT_LABELS['sgd-mip-5-flexi-4'],
+    id,
+    MANULIFE_STRESS_FUNDS,
+    {
     name: 'Golden Manulife InvestReady (III) (SGD / MIP 5 Flexi 4 OCF Stress)',
   })
 }
@@ -5632,26 +5712,84 @@ function singlifeLegacyInvestStressPolicy(
   })
 }
 
+const SINGLIFE_SAVVY_VARIANT_BASELINE_CONFIG = {
+  'sgd-mip-3-fixed': {
+    label: 'SGD / MIP 3 Fixed',
+    monthlyContribution: 1_000,
+    currentPolicyYear: 2,
+    monthsAlreadyPaid: 12,
+    currentValue: 30_000,
+  },
+  'sgd-mip-5-fixed': {
+    label: 'SGD / MIP 5 Fixed',
+    monthlyContribution: 1_000,
+    currentPolicyYear: 4,
+    monthsAlreadyPaid: 36,
+    currentValue: 30_000,
+  },
+  'sgd-mip-5-flexible': {
+    label: 'SGD / MIP 5 Flexible',
+    monthlyContribution: 1_000,
+    currentPolicyYear: 4,
+    monthsAlreadyPaid: 36,
+    currentValue: 30_000,
+  },
+  'sgd-mip-10-fixed': {
+    label: 'SGD / MIP 10 Fixed',
+    monthlyContribution: 1_000,
+    currentPolicyYear: 9,
+    monthsAlreadyPaid: 96,
+    currentValue: 30_000,
+  },
+  'sgd-mip-10-flexible': {
+    label: 'SGD / MIP 10 Flexible',
+    monthlyContribution: 1_000,
+    currentPolicyYear: 9,
+    monthsAlreadyPaid: 96,
+    currentValue: 30_000,
+  },
+  'sgd-mip-20-flexible': {
+    label: 'SGD / MIP 20 Flexible',
+    monthlyContribution: 1_000,
+    currentPolicyYear: 19,
+    monthsAlreadyPaid: 216,
+    currentValue: 45_000,
+  },
+} as const
+
+type SinglifeSavvyVariantId = keyof typeof SINGLIFE_SAVVY_VARIANT_BASELINE_CONFIG
+
 function singlifeSavvyInvestIiBasePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: SinglifeSavvyVariantId,
   id: string,
   funds: IlpFund[],
   overrides: Partial<IlpPolicyInput> = {},
 ): IlpPolicyInput {
-  const base = seedPolicy(snapshot, 'singlife-savvy-invest-ii', 'sgd-mip-10-fixed', id, {
-    monthlyContribution: 1_000,
-    currentPolicyYear: 9,
-    monthsAlreadyPaid: 96,
+  const variantConfig = SINGLIFE_SAVVY_VARIANT_BASELINE_CONFIG[variantId]
+  const base = seedPolicy(snapshot, 'singlife-savvy-invest-ii', variantId, id, {
+    monthlyContribution: variantConfig.monthlyContribution,
+    currentPolicyYear: variantConfig.currentPolicyYear,
+    monthsAlreadyPaid: variantConfig.monthsAlreadyPaid,
   })
 
-  return withFunds(
+  return withResolvedManualInputs(withFunds(
     ilpPolicySchema.parse({
       ...base,
-      name: 'Golden Singlife Savvy Invest II (SGD / MIP 10 Fixed)',
+      name: `Golden Singlife Savvy Invest II (${variantConfig.label})`,
       accounts: base.accounts.map((account) => ({
         ...account,
-        currentValue: 30_000,
+        currentValue: variantConfig.currentValue,
       })),
+      assuranceProfile: {
+        ...base.assuranceProfile,
+        currentAgeNextBirthday: 45,
+        sex: 'female',
+        smokerStatus: 'non-smoker',
+        currentNetRegularPremiumBase: variantConfig.monthsAlreadyPaid * variantConfig.monthlyContribution,
+        currentNetSupplementaryPremiumBase: 0,
+        currentAmountOwing: 500,
+      },
       distributionAssumption: {
         mode: 'cash-payout',
         source: 'manual-assumption',
@@ -5661,15 +5799,16 @@ function singlifeSavvyInvestIiBasePolicy(
       ...overrides,
     }),
     funds,
-  )
+  ))
 }
 
 function singlifeSavvyInvestIiBaselinePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: SinglifeSavvyVariantId,
   id: string,
 ): IlpPolicyInput {
-  return singlifeSavvyInvestIiBasePolicy(snapshot, id, MANULIFE_BALANCED_FUNDS, {
-    name: 'Golden Singlife Savvy Invest II (SGD / MIP 10 Fixed Baseline)',
+  return singlifeSavvyInvestIiBasePolicy(snapshot, variantId, id, MANULIFE_BALANCED_FUNDS, {
+    name: `Golden Singlife Savvy Invest II (${SINGLIFE_SAVVY_VARIANT_BASELINE_CONFIG[variantId].label} Baseline)`,
   })
 }
 
@@ -5677,7 +5816,7 @@ function singlifeSavvyInvestIiEventHeavyPolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
 ): IlpPolicyInput {
-  return singlifeSavvyInvestIiBasePolicy(snapshot, id, MANULIFE_BALANCED_FUNDS, {
+  return singlifeSavvyInvestIiBasePolicy(snapshot, 'sgd-mip-10-fixed', id, MANULIFE_BALANCED_FUNDS, {
     name: 'Golden Singlife Savvy Invest II (SGD / MIP 10 Fixed Event Heavy)',
     policyEvents: [
       {
@@ -5709,7 +5848,7 @@ function singlifeSavvyInvestIiStressPolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
 ): IlpPolicyInput {
-  return singlifeSavvyInvestIiBasePolicy(snapshot, id, MANULIFE_STRESS_FUNDS, {
+  return singlifeSavvyInvestIiBasePolicy(snapshot, 'sgd-mip-10-fixed', id, MANULIFE_STRESS_FUNDS, {
     name: 'Golden Singlife Savvy Invest II (SGD / MIP 10 Fixed OCF Stress)',
   })
 }
@@ -5989,6 +6128,13 @@ function aiaPlatinumRetirementEliteBasePolicy(
     ilpPolicySchema.parse({
       ...base,
       name: 'Golden AIA Platinum Retirement Elite (SGD / MIP 5)',
+      assuranceProfile: {
+        ...base.assuranceProfile,
+        currentAgeNextBirthday: 50,
+        sex: 'female',
+        smokerStatus: 'non-smoker',
+        targetRetirementAge: 53,
+      },
       accounts: base.accounts.map((account) => ({
         ...account,
         currentValue: 24_000,
@@ -6037,6 +6183,8 @@ function aiaPlatinumRetirementEliteEventHeavyPolicy(
         type: 'premium-holiday',
         startPolicyMonth: 14,
         durationMonths: 4,
+        repayMissedPremiums: true,
+        repaymentAccountId: 'policy',
       },
       {
         id: 'top-up-1',
@@ -6060,6 +6208,58 @@ function aiaPlatinumRetirementEliteEventHeavyPolicy(
         durationMonths: 6,
       },
     ],
+  })
+}
+
+function aiaPlatinumRetirementEliteSinglePremiumBasePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+  funds: IlpFund[],
+  overrides: Partial<IlpPolicyInput> = {},
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'aia-platinum-retirement-elite', 'sgd-open-ended-sp', id, {
+    initialSinglePremium: 120_000,
+    monthlyContribution: 0,
+    currentPolicyYear: 1,
+    monthsAlreadyPaid: 0,
+  })
+
+  return withResolvedManualInputs(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: 'Golden AIA Platinum Retirement Elite (SGD / Open-ended SP)',
+      assuranceProfile: {
+        ...base.assuranceProfile,
+        currentAgeNextBirthday: 50,
+        sex: 'female',
+        smokerStatus: 'non-smoker',
+        targetRetirementAge: 53,
+      },
+      accounts: base.accounts.map((account) => ({
+        ...account,
+        currentValue: 86_000,
+      })),
+      policyEvents: [],
+      ...overrides,
+    }),
+    funds,
+  ))
+}
+
+function aiaPlatinumRetirementEliteSinglePremiumBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  return aiaPlatinumRetirementEliteSinglePremiumBasePolicy(snapshot, id, AIA_BALANCED_FUNDS, {
+    name: 'Golden AIA Platinum Retirement Elite (SGD / Open-ended SP Baseline)',
+    scheduledPayoutAssumption: {
+      mode: 'scheduled-redemption',
+      source: 'manual-assumption',
+      accountId: 'policy',
+      startPolicyYear: 4,
+      durationYears: 10,
+      annualPayoutAmount: 7_200,
+    },
   })
 }
 
@@ -6141,6 +6341,8 @@ function aiaEliteSecureIncome5PayEventHeavyPolicy(
         type: 'premium-holiday',
         startPolicyMonth: 14,
         durationMonths: 4,
+        repayMissedPremiums: true,
+        repaymentAccountId: 'policy',
       },
       {
         id: 'top-up-1',
@@ -6295,10 +6497,16 @@ function aiaWealthVentureBasePolicy(
     monthsAlreadyPaid: 36,
   })
 
-  return withFunds(
+  return withResolvedManualInputs(withFunds(
     ilpPolicySchema.parse({
       ...base,
       name: 'Golden AIA Wealth Venture (SGD / MIP 8)',
+      assuranceProfile: {
+        ...base.assuranceProfile,
+        currentAgeNextBirthday: 45,
+        sex: 'female',
+        smokerStatus: 'non-smoker',
+      },
       accounts: base.accounts.map((account) => ({
         ...account,
         currentValue: 24_000,
@@ -6307,7 +6515,7 @@ function aiaWealthVentureBasePolicy(
       ...overrides,
     }),
     funds,
-  )
+  ))
 }
 
 function aiaWealthVentureBaselinePolicy(
@@ -6336,6 +6544,8 @@ function aiaWealthVentureEventHeavyPolicy(
         type: 'premium-holiday',
         startPolicyMonth: 37,
         durationMonths: 4,
+        repayMissedPremiums: true,
+        repaymentAccountId: 'policy',
       },
       {
         id: 'top-up-1',
@@ -6413,6 +6623,8 @@ function aiaPlatinumWealthElite2EventHeavyPolicy(
         type: 'premium-holiday',
         startPolicyMonth: 25,
         durationMonths: 3,
+        repayMissedPremiums: true,
+        repaymentAccountId: 'policy',
       },
       {
         id: 'top-up-1',
@@ -6490,6 +6702,8 @@ function aiaPlatinumWealthLegacyEventHeavyPolicy(
         type: 'premium-holiday',
         startPolicyMonth: 25,
         durationMonths: 3,
+        repayMissedPremiums: true,
+        repaymentAccountId: 'policy',
       },
       {
         id: 'top-up-1',
@@ -6532,16 +6746,22 @@ function aiaProAchiever3BasePolicy(
   })
 
   return withFunds(
-    ilpPolicySchema.parse({
+    withResolvedManualInputs(ilpPolicySchema.parse({
       ...base,
       name: 'Golden AIA Pro Achiever 3.0 (SGD / IIP 10)',
       accounts: base.accounts.map((account) => ({
         ...account,
         currentValue: 26_000,
       })),
+      assuranceProfile: {
+        currentAgeNextBirthday: 45,
+        sex: 'female',
+        smokerStatus: 'non-smoker',
+        currentNetProtectedPremiumBase: 92_000,
+      },
       policyEvents: [],
       ...overrides,
-    }),
+    })),
     funds,
   )
 }
@@ -6618,10 +6838,16 @@ function aiaPlatinumWealthVenture2BasePolicy(
     monthsAlreadyPaid: 24,
   })
 
-  return withFunds(
+  return withResolvedManualInputs(withFunds(
     ilpPolicySchema.parse({
       ...base,
       name: 'Golden AIA Platinum Wealth Venture 2.0 (SGD / MIP 5)',
+      assuranceProfile: {
+        ...base.assuranceProfile,
+        currentAgeNextBirthday: 45,
+        sex: 'female',
+        smokerStatus: 'non-smoker',
+      },
       accounts: base.accounts.map((account) => ({
         ...account,
         currentValue: 22_000,
@@ -6630,7 +6856,7 @@ function aiaPlatinumWealthVenture2BasePolicy(
       ...overrides,
     }),
     funds,
-  )
+  ))
 }
 
 function aiaPlatinumWealthVenture2BaselinePolicy(
@@ -6659,6 +6885,8 @@ function aiaPlatinumWealthVenture2EventHeavyPolicy(
         type: 'premium-holiday',
         startPolicyMonth: 25,
         durationMonths: 3,
+        repayMissedPremiums: true,
+        repaymentAccountId: 'policy',
       },
       {
         id: 'top-up-1',
@@ -6719,7 +6947,7 @@ function etiqaInvestStarterBasePolicy(
   overrides: Partial<IlpPolicyInput> = {},
 ): IlpPolicyInput {
   const base = seedPolicy(snapshot, 'etiqa-invest-starter', 'sgd-mip-5', id, {
-    monthlyContribution: 0,
+    monthlyContribution: 350,
     currentPolicyYear: 2,
     monthsAlreadyPaid: 12,
   })
@@ -8239,6 +8467,36 @@ function tokioGoAffluenceAdvancedDeathBaselinePolicy(
   ))
 }
 
+function tokioGoAffluenceAdvancedDeathLifeBenefitRiderBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-goaffluence', 'sgd-mip-15-advanced-death-life-benefit-rider', id)
+  return withResolvedManualInputs(withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden Tokio Marine #goAffluence (SGD / MIP 15 Advanced Death Life Benefit Rider Baseline)',
+        monthlyContribution: 2_000,
+        currentPolicyYear: 3,
+        monthsAlreadyPaid: 24,
+        assuranceProfile: {
+          currentAgeNextBirthday: 45,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetRegularPremiumBase: 72_000,
+        },
+        postMipYears: 15,
+        policyEvents: [],
+      }),
+      TOKIO_BALANCED_FUNDS,
+    ),
+    1_500,
+    8_000,
+    0,
+  ))
+}
+
 function tokioGoAffluenceStressPolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
@@ -9382,6 +9640,36 @@ function tokioWealthBuilderAtfutureAdvancedDeathBaselinePolicy(
   ))
 }
 
+function tokioWealthBuilderAtfutureAdvancedDeathLifeBenefitRiderBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-wealth-builder-atfuture', 'sgd-mip-10-advanced-death-life-benefit-rider', id)
+  return withResolvedManualInputs(withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden Tokio Marine Wealth Builder@Future (SGD / MIP 10 Advanced Death Life Benefit Rider Baseline)',
+        monthlyContribution: 2_000,
+        currentPolicyYear: 4,
+        monthsAlreadyPaid: 36,
+        assuranceProfile: {
+          currentAgeNextBirthday: 45,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetRegularPremiumBase: 72_000,
+        },
+        postMipYears: 15,
+        policyEvents: [],
+      }),
+      TOKIO_BALANCED_FUNDS,
+    ),
+    0,
+    8_000,
+    1_500,
+  ))
+}
+
 function tokioWealthBuilderAtfutureStressPolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
@@ -9467,6 +9755,36 @@ function tokioHarvestBuilderAtfutureAdvancedDeathBaselinePolicy(
       ilpPolicySchema.parse({
         ...base,
         name: 'Golden Tokio Marine Harvest Builder@Future (SGD / MIP 10 Advanced Death Baseline)',
+        monthlyContribution: 2_000,
+        currentPolicyYear: 4,
+        monthsAlreadyPaid: 36,
+        assuranceProfile: {
+          currentAgeNextBirthday: 45,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetRegularPremiumBase: 72_000,
+        },
+        postMipYears: 15,
+        policyEvents: [],
+      }),
+      TOKIO_BALANCED_FUNDS,
+    ),
+    0,
+    8_000,
+    1_500,
+  ))
+}
+
+function tokioHarvestBuilderAtfutureAdvancedDeathLifeBenefitRiderBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-harvest-builder-atfuture', 'sgd-mip-10-advanced-death-life-benefit-rider', id)
+  return withResolvedManualInputs(withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden Tokio Marine Harvest Builder@Future (SGD / MIP 10 Advanced Death Life Benefit Rider Baseline)',
         monthlyContribution: 2_000,
         currentPolicyYear: 4,
         monthsAlreadyPaid: 36,
@@ -9782,6 +10100,36 @@ function tokioHarvestMaxAdvancedDeathBaselinePolicy(
   ))
 }
 
+function tokioHarvestMaxAdvancedDeathLifeBenefitRiderBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-harvest-max', 'sgd-mip-15-advanced-death-life-benefit-rider', id)
+  return withResolvedManualInputs(withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: 'Golden Tokio Marine Harvest Max (SGD / MIP 15 Advanced Death Life Benefit Rider Baseline)',
+        monthlyContribution: 2_000,
+        currentPolicyYear: 4,
+        monthsAlreadyPaid: 36,
+        assuranceProfile: {
+          currentAgeNextBirthday: 45,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetRegularPremiumBase: 72_000,
+        },
+        postMipYears: 15,
+        policyEvents: [],
+      }),
+      TOKIO_BALANCED_FUNDS,
+    ),
+    1_500,
+    8_000,
+    0,
+  ))
+}
+
 function tokioHarvestMaxStressPolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
@@ -9812,7 +10160,12 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     variantId: 'sgd-open-ended-cash-srs',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
-    coverageTags: ['baseline', 'branch:aia-invest-easy-cash-srs-three-percent-single-premium-charge'],
+    coverageTags: [
+      'baseline',
+      'branch:aia-invest-easy-cash-srs-three-percent-single-premium-charge',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+    ],
     description: 'AIA Invest Easy (Cash/SRS) baseline scenario proving the supported 3% single-premium corridor.',
   },
   {
@@ -9841,7 +10194,12 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     variantId: 'sgd-open-ended-cpf',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
-    coverageTags: ['baseline', 'branch:aia-invest-easy-cpf-zero-single-premium-charge'],
+    coverageTags: [
+      'baseline',
+      'branch:aia-invest-easy-cpf-zero-single-premium-charge',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+    ],
     description: 'AIA Invest Easy (CPF) baseline scenario proving zero-charge initial single-premium seeding.',
   },
   {
@@ -9873,6 +10231,9 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:scheduled-payout-manual-assumption',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:aia-platinum-retirement-elite-regular-premium-charge',
       'branch:aia-platinum-retirement-elite-regular-supplementary-charge',
       'branch:aia-platinum-retirement-elite-full-surrender-charge',
@@ -9929,6 +10290,29 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'AIA Platinum Retirement Elite alternate-fund high-OCF stress scenario.',
   },
   {
+    productId: 'aia-platinum-retirement-elite',
+    variantId: 'sgd-open-ended-sp',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:scheduled-payout-manual-assumption',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'branch:aia-platinum-retirement-elite-single-premium-charge',
+      'branch:aia-platinum-retirement-elite-single-supplementary-charge',
+      'branch:aia-platinum-retirement-elite-full-surrender-charge',
+    ],
+    description: 'AIA Platinum Retirement Elite single-pay baseline scenario covering the supported SGD single-premium corridor and manual scheduled-redemption assumption.',
+    integrityChecks: [
+      {
+        description: 'manual scheduled-redemption assumption produces annual withdrawals in projection output',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
     productId: 'aia-elite-secure-income-single-premium',
     variantId: 'sgd-open-ended-sp',
     scenarioId: 'baseline',
@@ -9936,6 +10320,9 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:scheduled-payout-manual-assumption',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:aia-elite-secure-income-sp-single-premium-charge',
       'branch:aia-elite-secure-income-sp-supplementary-charge-manual-input',
       'branch:aia-elite-secure-income-sp-full-surrender-charge',
@@ -10002,6 +10389,9 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:scheduled-payout-manual-assumption',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:aia-elite-secure-income-5p-premium-year-premium-charge',
       'branch:aia-elite-secure-income-5p-supplementary-charge-manual-input',
       'branch:aia-elite-secure-income-5p-full-surrender-charge',
@@ -10069,8 +10459,14 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:distribution-mode-assumption',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+      'branch:aia-wealth-venture-welcome-bonus',
+      'branch:aia-wealth-venture-investment-bonus',
+      'branch:aia-wealth-venture-performance-bonus',
       'branch:aia-wealth-venture-zero-regular-premium-charge',
       'branch:aia-wealth-venture-regular-supplementary-charge',
+      'branch:aia-wealth-venture-benefit-charge',
       'branch:aia-wealth-venture-full-surrender-charge',
     ],
     description: 'AIA Wealth Venture baseline scenario proving the supported regular-pay corridor and cash-payout distribution assumption.',
@@ -10119,6 +10515,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:aia-platinum-wealth-elite-2-regular-premium-charge',
       'branch:aia-platinum-wealth-elite-2-full-surrender-charge',
     ],
@@ -10164,6 +10562,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:aia-platinum-wealth-legacy-regular-premium-charge',
       'branch:aia-platinum-wealth-legacy-full-surrender-charge',
     ],
@@ -10209,7 +10609,13 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+      'branch:aia-pro-achiever-3-welcome-bonus',
+      'branch:aia-pro-achiever-3-special-bonus',
       'branch:aia-pro-achiever-3-regular-premium-charge',
+      'branch:aia-pro-achiever-3-benefit-charge',
+      'branch:aia-pro-achiever-3-regular-supplementary-charge',
       'branch:aia-pro-achiever-3-full-surrender-charge',
       'kernel:distribution-mode-assumption',
     ],
@@ -10255,8 +10661,14 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:distribution-mode-assumption',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+      'branch:aia-platinum-wealth-venture-2-welcome-bonus',
+      'branch:aia-platinum-wealth-venture-2-investment-bonus',
+      'branch:aia-platinum-wealth-venture-2-performance-bonus',
       'branch:aia-platinum-wealth-venture-2-zero-regular-premium-charge',
       'branch:aia-platinum-wealth-venture-2-regular-supplementary-charge',
+      'branch:aia-platinum-wealth-venture-2-benefit-charge',
       'branch:aia-platinum-wealth-venture-2-full-surrender-charge',
     ],
     description: 'AIA Platinum Wealth Venture 2.0 baseline scenario proving the supported regular-pay corridor and cash-payout distribution assumption.',
@@ -10303,7 +10715,12 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     variantId: 'sgd-mip-25',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
-    coverageTags: ['baseline', 'kernel:distribution-mode-assumption'],
+    coverageTags: [
+      'baseline',
+      'kernel:distribution-mode-assumption',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+    ],
     description: 'Baseline in-force HSBC SGD / MIP 25 scenario.',
   },
   {
@@ -10432,6 +10849,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'baseline',
       'kernel:distribution-mode-assumption',
       'kernel:scheduled-payout-manual-assumption',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
     ],
     description: 'HSBC Wealth Harvest baseline scenario under the V1 reinvestment-default assumption.',
   },
@@ -10494,6 +10913,9 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'baseline',
       'kernel:distribution-mode-assumption',
       'kernel:scheduled-payout-manual-assumption',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
     ],
     description: 'HSBC Wealth Abundance SGD baseline scenario under the V1 reinvestment-default assumption.',
   },
@@ -10549,7 +10971,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
         )),
       },
       {
-        description: 'removing restoration rules materially weakens the later regular-account bonus path',
+        description: 'removing restoration rules materially weakens the MIP-end regular-account power-up bonus path after repayment',
         test: (fixture, artifact) => {
           const withoutRestoration = ilpPolicySchema.parse({
             ...fixture.policy,
@@ -10559,10 +10981,10 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
             })),
           })
           const withRestorationBonus = artifact.expected.projections.mid.rows
-            .filter((row) => row.policyYear >= 11)
+            .filter((row) => row.policyYear >= 9 && row.policyYear <= 10)
             .reduce((sum, row) => sum + (row.accounts.find((account) => account.accountId === 'regular')?.bonusCredit ?? 0), 0)
           const withoutRestorationBonus = analyzeIlpPolicy(withoutRestoration).projections.mid.rows
-            .filter((row) => row.policyYear >= 11)
+            .filter((row) => row.policyYear >= 9 && row.policyYear <= 10)
             .reduce((sum, row) => sum + (row.accounts.find((account) => account.accountId === 'regular')?.bonusCredit ?? 0), 0)
           return withRestorationBonus > withoutRestorationBonus
         },
@@ -10589,6 +11011,9 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'hsbc-voyage-eec',
       'kernel:distribution-mode-assumption',
       'kernel:scheduled-payout-manual-assumption',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
     ],
     description: 'HSBC Wealth Voyage SGD / MIP 15 baseline scenario proving start-up bonus, premium-base AMF, surrender mechanics, and reinvest-default distribution support.',
   },
@@ -10702,6 +11127,9 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'branch:wealth-focus-partial-withdrawal-charge',
       'branch:wealth-focus-eec',
       'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-residual-death-benefit-after-ti-estimate',
       'kernel:scheduled-payout-manual-assumption',
       'kernel:distribution-mode-assumption',
     ],
@@ -10788,6 +11216,9 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'kernel:cumulative-free-partial-withdrawal-pool',
       'branch:wealth-focus-eec',
       'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-residual-death-benefit-after-ti-estimate',
       'kernel:scheduled-payout-manual-assumption',
       'kernel:distribution-mode-assumption',
     ],
@@ -10849,6 +11280,9 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'kernel:cumulative-free-partial-withdrawal-pool',
       'branch:wealth-focus-eec',
       'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-residual-death-benefit-after-ti-estimate',
       'kernel:scheduled-payout-manual-assumption',
       'kernel:distribution-mode-assumption',
     ],
@@ -10929,7 +11363,13 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     variantId: 'sgd-mip-20',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
-    coverageTags: ['baseline', 'kernel:distribution-mode-assumption'],
+    coverageTags: [
+      'baseline',
+      'kernel:distribution-mode-assumption',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+      'kernel:current-accidental-disability-benefit-estimate',
+    ],
     description: 'Baseline in-force PRUVantage Wealth II SGD / MIP 20 scenario with eligible Growth Account cash-payout distributions.',
     integrityChecks: [
       {
@@ -11048,7 +11488,13 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     variantId: 'sgd-mip-20',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
-    coverageTags: ['baseline', 'branch:prosper-assurance-charge', 'kernel:distribution-mode-assumption'],
+    coverageTags: [
+      'baseline',
+      'branch:prosper-assurance-charge',
+      'kernel:distribution-mode-assumption',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+    ],
     description: 'Baseline in-force PRUVantage Prosper SGD / MIP 20 scenario with eligible Growth Account cash-payout distributions.',
     integrityChecks: [
       {
@@ -11178,7 +11624,13 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     variantId: 'sgd-mip-20',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
-    coverageTags: ['baseline', 'branch:assure-ii-pre-70-assurance', 'kernel:distribution-mode-assumption'],
+    coverageTags: [
+      'baseline',
+      'branch:assure-ii-pre-70-assurance',
+      'kernel:distribution-mode-assumption',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-disability-benefit-estimate',
+    ],
     description: 'Baseline in-force PRUVantage Assure II SGD / MIP 20 scenario with eligible Growth Account cash-payout distributions.',
     integrityChecks: [
       {
@@ -11324,18 +11776,23 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:distribution-mode-assumption',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-disability-benefit-estimate',
       'branch:assure-sp-administration-charge',
       'branch:assure-sp-combined-assurance',
+      'branch:assure-sp-single-premium-allocation-enhancement',
       'branch:assure-sp-loyalty-bonus',
       'branch:assure-sp-iia-surrender-charge',
     ],
     description: 'Baseline PRUVantage Assure (SP) scenario proving the first eligible loyalty-bonus credit and cash-payout distribution support.',
     integrityChecks: [
       {
-        description: 'credits a positive loyalty bonus on the Initial Investment Account at the first eligible 8-year block',
+        description: 'credits a positive loyalty bonus on the Initial Investment Account by the first projected eligible 8-year block',
         test: (_, artifact) => {
-          const iiaRow = artifact.expected.projections.mid.rows[0]?.accounts.find((account) => account.accountId === 'iia')
-          return (iiaRow?.bonusCredit ?? 0) > 0
+          return artifact.expected.projections.mid.rows.some((row) => (
+            row.policyYear >= 16
+            && (row.accounts.find((account) => account.accountId === 'iia')?.bonusCredit ?? 0) > 0
+          ))
         },
       },
       {
@@ -11407,6 +11864,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:distribution-mode-assumption',
+      'kernel:current-death-benefit-estimate',
       'branch:prulink-investgrowth-sp-single-premium-charge',
       'branch:prulink-investgrowth-sp-premium-assurance-charge',
     ],
@@ -11499,6 +11957,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
       'branch:etiqa-invest-plus-sp-zero-single-premium-charge',
       'branch:etiqa-invest-plus-sp-policy-charge',
@@ -11539,6 +11998,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'kernel:distribution-mode-assumption',
       'branch:etiqa-dash-pet-plus-zero-single-premium-charge',
       'branch:etiqa-dash-pet-plus-management-charge',
@@ -11588,6 +12049,9 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-residual-death-benefit-after-ti-estimate',
       'kernel:distribution-mode-assumption',
       'branch:manulink-investor-ii-single-premium-charge',
     ],
@@ -11690,6 +12154,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:distribution-mode-assumption',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:hsbc-life-wealth-invest-cash-srs-max-single-premium-charge',
     ],
     description: 'HSBC Life Wealth Invest (Cash) baseline scenario proving supported manual-input single-premium charging and cash-payout distribution support.',
@@ -11751,6 +12217,9 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'kernel:scheduled-payout-manual-assumption',
       'kernel:distribution-mode-assumption',
       'branch:goal-builder-ii-welcome-bonus',
@@ -11841,6 +12310,9 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'baseline',
       'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
+      'branch:manulife-smartretire-v-death-coi',
+      'branch:manulife-smartretire-v-wop-on-tpd-coi',
+      'branch:manulife-smartretire-v-coi-refund',
       'branch:manulife-smartretire-v-administrative-charge',
       'branch:manulife-smartretire-v-withdrawal-and-surrender-charge',
     ],
@@ -11946,6 +12418,9 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'kernel:current-death-benefit-estimate',
       'kernel:scheduled-payout-manual-assumption',
       'kernel:distribution-mode-assumption',
+      'branch:manulife-smartretire-v-death-coi',
+      'branch:manulife-smartretire-v-wop-on-tpd-coi',
+      'branch:manulife-smartretire-v-coi-refund',
       'branch:manulife-smartretire-v-administrative-charge',
       'branch:manulife-smartretire-v-withdrawal-and-surrender-charge',
     ],
@@ -12042,8 +12517,13 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'baseline',
       'kernel:protected-base-assurance',
       'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-residual-death-benefit-after-ti-estimate',
       'kernel:distribution-mode-assumption',
+      'branch:manulife-investready-growth-welcome-bonus',
       'branch:manulife-investready-growth-annual-premium-bonus',
+      'branch:manulife-investready-growth-premium-bonus',
+      'branch:manulife-investready-growth-loyalty-bonus',
       'branch:manulife-investready-growth-administrative-charge',
       'branch:manulife-investready-growth-full-surrender-charge',
     ],
@@ -12134,6 +12614,14 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
   },
   {
     productId: 'manulife-investready-iii',
+    variantId: 'sgd-mip-5-flexi-1',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'Manulife InvestReady (III) 5 Years Flexi 1 baseline scenario under the supported regular-pay corridor.',
+  },
+  {
+    productId: 'manulife-investready-iii',
     variantId: 'sgd-mip-5-flexi-4',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
@@ -12141,6 +12629,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'baseline',
       'kernel:protected-base-assurance',
       'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-residual-death-benefit-after-ti-estimate',
       'kernel:distribution-mode-assumption',
       'branch:manulife-investready-iii-annual-premium-bonus',
       'branch:manulife-investready-iii-welcome-bonus',
@@ -12163,6 +12653,54 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
         test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.eecRate > 0),
       },
     ],
+  },
+  {
+    productId: 'manulife-investready-iii',
+    variantId: 'sgd-mip-6-flexi-2',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'Manulife InvestReady (III) 6 Years Flexi 2 baseline scenario under the supported regular-pay corridor.',
+  },
+  {
+    productId: 'manulife-investready-iii',
+    variantId: 'sgd-mip-7-flexi-5',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'Manulife InvestReady (III) 7 Years Flexi 5 baseline scenario under the supported regular-pay corridor.',
+  },
+  {
+    productId: 'manulife-investready-iii',
+    variantId: 'sgd-mip-10-flexi-3',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline', 'branch:manulife-investready-iii-policy-fee-manual-input'],
+    description: 'Manulife InvestReady (III) 10 Years Flexi 3 baseline scenario under the supported regular-pay corridor with manual policy-fee support.',
+  },
+  {
+    productId: 'manulife-investready-iii',
+    variantId: 'sgd-mip-10-flexi-5',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'Manulife InvestReady (III) 10 Years Flexi 5 baseline scenario under the supported regular-pay corridor.',
+  },
+  {
+    productId: 'manulife-investready-iii',
+    variantId: 'sgd-mip-10-flexi-8',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'Manulife InvestReady (III) 10 Years Flexi 8 baseline scenario under the supported regular-pay corridor.',
+  },
+  {
+    productId: 'manulife-investready-iii',
+    variantId: 'sgd-mip-13-flexi-10',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'Manulife InvestReady (III) 13 Years Flexi 10 baseline scenario under the supported regular-pay corridor.',
   },
   {
     productId: 'manulife-investready-iii',
@@ -12212,6 +12750,10 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'baseline',
       'kernel:protected-base-assurance',
       'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-residual-death-benefit-after-ti-estimate',
+      'kernel:current-tpd-benefit-estimate',
+      'kernel:current-residual-death-benefit-after-tpd-estimate',
       'kernel:distribution-mode-assumption',
       'branch:manuinvest-duo-loyalty-bonus',
       'branch:manuinvest-duo-administrative-charge',
@@ -12346,6 +12888,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'baseline',
       'kernel:protected-base-assurance',
       'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-residual-death-benefit-after-ti-estimate',
       'kernel:distribution-mode-assumption',
       'branch:manulife-investready-iii-administrative-charge',
       'branch:manulife-investready-iii-full-surrender-charge',
@@ -12419,8 +12963,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     variantId: 'sgd-mip-10-flexi-3-sep-2025',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
-    coverageTags: ['baseline'],
-    description: 'Manulife InvestReady (III) Sep-2025 10 Years Flexi 3 baseline scenario under supported post-MIP distribution assumptions.',
+    coverageTags: ['baseline', 'branch:manulife-investready-iii-policy-fee-manual-input'],
+    description: 'Manulife InvestReady (III) Sep-2025 10 Years Flexi 3 baseline scenario under supported post-MIP distribution assumptions with manual policy-fee support.',
   },
   {
     productId: 'manulife-investready-iii-sep-2025',
@@ -12455,8 +12999,12 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'baseline',
       'kernel:scheduled-payout-manual-assumption',
       'kernel:distribution-mode-assumption',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:singlife-legacy-invest-welcome-bonus',
+      'branch:singlife-legacy-invest-special-booster',
       'branch:singlife-legacy-invest-loyalty-bonus',
+      'branch:singlife-legacy-invest-maturity-bonus',
       'branch:singlife-legacy-invest-administrative-charge',
     ],
     description: 'Singlife Legacy Invest baseline scenario covering the supported SGD / regular-pay-10-years / policy-term-15-years corridor with scheduled-redemption and cash-payout distribution assumptions.',
@@ -12501,19 +13049,147 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
   },
   {
     productId: 'singlife-savvy-invest-ii',
+    variantId: 'sgd-mip-3-fixed',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:distribution-mode-assumption',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'branch:singlife-savvy-invest-ii-welcome-bonus',
+      'branch:singlife-savvy-invest-ii-regular-premium-allocation-uplift',
+      'branch:singlife-savvy-invest-ii-loyalty-bonus',
+      'branch:singlife-savvy-invest-ii-cost-of-insurance',
+      'branch:singlife-savvy-invest-ii-administrative-charge',
+      'branch:singlife-savvy-invest-ii-supplementary-charge',
+    ],
+    description: 'Singlife Savvy Invest II baseline scenario covering the supported SGD / 3 years (Fixed) corridor with the shared allocation, loyalty, assurance-charge, and distribution surfaces.',
+    integrityChecks: [
+      {
+        description: 'baseline policy incurs positive cumulative fees under the administrative and supplementary charge corridor',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+    ],
+  },
+  {
+    productId: 'singlife-savvy-invest-ii',
+    variantId: 'sgd-mip-5-fixed',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:distribution-mode-assumption',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'branch:singlife-savvy-invest-ii-welcome-bonus',
+      'branch:singlife-savvy-invest-ii-regular-premium-allocation-uplift',
+      'branch:singlife-savvy-invest-ii-loyalty-bonus',
+      'branch:singlife-savvy-invest-ii-cost-of-insurance',
+      'branch:singlife-savvy-invest-ii-administrative-charge',
+      'branch:singlife-savvy-invest-ii-supplementary-charge',
+    ],
+    description: 'Singlife Savvy Invest II baseline scenario covering the supported SGD / 5 years (Fixed) corridor with the shared allocation, loyalty, assurance-charge, and distribution surfaces.',
+    integrityChecks: [
+      {
+        description: 'baseline policy incurs positive cumulative fees under the administrative and supplementary charge corridor',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+    ],
+  },
+  {
+    productId: 'singlife-savvy-invest-ii',
+    variantId: 'sgd-mip-5-flexible',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:distribution-mode-assumption',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'branch:singlife-savvy-invest-ii-welcome-bonus',
+      'branch:singlife-savvy-invest-ii-regular-premium-allocation-uplift',
+      'branch:singlife-savvy-invest-ii-loyalty-bonus',
+      'branch:singlife-savvy-invest-ii-cost-of-insurance',
+      'branch:singlife-savvy-invest-ii-administrative-charge',
+      'branch:singlife-savvy-invest-ii-supplementary-charge',
+    ],
+    description: 'Singlife Savvy Invest II baseline scenario covering the supported SGD / 5 years (Flexible) corridor with the shared allocation, loyalty, assurance-charge, and distribution surfaces.',
+    integrityChecks: [
+      {
+        description: 'baseline policy incurs positive cumulative fees under the administrative and supplementary charge corridor',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+    ],
+  },
+  {
+    productId: 'singlife-savvy-invest-ii',
     variantId: 'sgd-mip-10-fixed',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
       'kernel:distribution-mode-assumption',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:singlife-savvy-invest-ii-welcome-bonus',
       'branch:singlife-savvy-invest-ii-regular-premium-allocation-uplift',
       'branch:singlife-savvy-invest-ii-loyalty-bonus',
+      'branch:singlife-savvy-invest-ii-cost-of-insurance',
       'branch:singlife-savvy-invest-ii-administrative-charge',
       'branch:singlife-savvy-invest-ii-supplementary-charge',
     ],
     description: 'Singlife Savvy Invest II baseline scenario covering the supported SGD / 10 years (Fixed) corridor with allocation uplifts, loyalty windows, and cash-payout distribution assumption support.',
+    integrityChecks: [
+      {
+        description: 'baseline policy incurs positive cumulative fees under the administrative and supplementary charge corridor',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+    ],
+  },
+  {
+    productId: 'singlife-savvy-invest-ii',
+    variantId: 'sgd-mip-10-flexible',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:distribution-mode-assumption',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'branch:singlife-savvy-invest-ii-welcome-bonus',
+      'branch:singlife-savvy-invest-ii-regular-premium-allocation-uplift',
+      'branch:singlife-savvy-invest-ii-loyalty-bonus',
+      'branch:singlife-savvy-invest-ii-cost-of-insurance',
+      'branch:singlife-savvy-invest-ii-administrative-charge',
+      'branch:singlife-savvy-invest-ii-supplementary-charge',
+    ],
+    description: 'Singlife Savvy Invest II baseline scenario covering the supported SGD / 10 years (Flexible) corridor with the shared allocation, loyalty, assurance-charge, and distribution surfaces.',
+    integrityChecks: [
+      {
+        description: 'baseline policy incurs positive cumulative fees under the administrative and supplementary charge corridor',
+        test: (_, artifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+    ],
+  },
+  {
+    productId: 'singlife-savvy-invest-ii',
+    variantId: 'sgd-mip-20-flexible',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:distribution-mode-assumption',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'branch:singlife-savvy-invest-ii-welcome-bonus',
+      'branch:singlife-savvy-invest-ii-regular-premium-allocation-uplift',
+      'branch:singlife-savvy-invest-ii-loyalty-bonus',
+      'branch:singlife-savvy-invest-ii-cost-of-insurance',
+      'branch:singlife-savvy-invest-ii-administrative-charge',
+      'branch:singlife-savvy-invest-ii-supplementary-charge',
+    ],
+    description: 'Singlife Savvy Invest II baseline scenario covering the supported SGD / 20 years (Flexible) corridor with the shared allocation, loyalty, assurance-charge, and distribution surfaces.',
     integrityChecks: [
       {
         description: 'baseline policy incurs positive cumulative fees under the administrative and supplementary charge corridor',
@@ -12560,6 +13236,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
       'branch:prulink-investgrowth-recurring-premium-charge',
       'branch:prulink-investgrowth-premium-assurance-charge',
     ],
@@ -12648,6 +13325,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
       'branch:income-snack-investment-zero-single-premium-charge',
       'kernel:distribution-mode-assumption',
     ],
@@ -12705,6 +13384,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
       'branch:income-wealthlink-gl3-single-premium-charge',
     ],
     description: 'Baseline WealthLink (GL3) scenario proving the supported upfront single-premium charge corridor.',
@@ -12797,7 +13478,12 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     variantId: 'sgd-mip-20',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
-    coverageTags: ['baseline', 'kernel:distribution-mode-assumption'],
+    coverageTags: [
+      'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:distribution-mode-assumption',
+    ],
     description: 'Invest Flex baseline scenario for the SGD / MIP 20 corridor with the manual cash-payout distribution assumption.',
     integrityChecks: [
       {
@@ -12879,7 +13565,12 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     variantId: 'sgd-mip-20',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
-    coverageTags: ['baseline', 'kernel:distribution-mode-assumption'],
+    coverageTags: [
+      'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:distribution-mode-assumption',
+    ],
     description: 'Invest Flex Vantage baseline scenario for the SGD / MIP 20 corridor with the manual cash-payout distribution assumption.',
     integrityChecks: [
       {
@@ -12933,6 +13624,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'branch:income-vs3-investment-bonus',
       'branch:income-vs3-loyalty-bonus',
       'branch:income-vs3-surrender-charge',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
     description: 'Invest Flex TriVantage baseline scenario for the SGD / MIP 10 corridor.',
@@ -13009,6 +13702,11 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'branch:astralink-va2-surrender-charge',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-tpd-benefit-estimate',
+      'kernel:current-accidental-tpd-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
     description: 'AstraLink (VA2) baseline scenario for the SGD / MIP 20 corridor with reinvest-only distribution support.',
@@ -13090,7 +13788,12 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     variantId: 'sgd-regular-mip-10',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
-    coverageTags: ['baseline'],
+    coverageTags: [
+      'baseline',
+      'branch:income-legacy-flex-solitaire-loyalty-bonus',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+    ],
     description: 'Legacy Flex Solitaire baseline scenario for the supported SGD regular MIP 10 corridor.',
   },
   {
@@ -13125,7 +13828,12 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     variantId: 'sgd-open-ended-cpf',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
-    coverageTags: ['baseline', 'branch:hsbc-life-wealth-invest-cpf-zero-single-premium-charge'],
+    coverageTags: [
+      'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'branch:hsbc-life-wealth-invest-cpf-zero-single-premium-charge',
+    ],
     description: 'HSBC Life Wealth Invest (CPF) baseline scenario proving zero-charge initial single-premium seeding through the open-ended CPF corridor.',
   },
   {
@@ -13172,6 +13880,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:invest-starter-policy-charge',
       'branch:invest-starter-surrender-charge',
     ],
@@ -13232,7 +13942,13 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     variantId: 'sgd-open-ended',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
-    coverageTags: ['baseline', 'branch:etiqa-tiq-invest-zero-single-premium-charge', 'branch:etiqa-tiq-invest-management-charge'],
+    coverageTags: [
+      'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'branch:etiqa-tiq-invest-zero-single-premium-charge',
+      'branch:etiqa-tiq-invest-management-charge',
+    ],
     description: 'Tiq Invest baseline scenario proving zero-charge initial single-premium seeding and annual management-charge drag through the open-ended corridor.',
   },
   {
@@ -13274,7 +13990,11 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     variantId: 'sgd-open-ended-cpf',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
-    coverageTags: ['baseline', 'branch:tokio-marine-wealth-enhancer-cpfis-zero-single-premium-charge'],
+    coverageTags: [
+      'baseline',
+      'kernel:current-death-benefit-estimate',
+      'branch:tokio-marine-wealth-enhancer-cpfis-zero-single-premium-charge',
+    ],
     description: 'TM Wealth Enhancer (CPFIS) baseline scenario proving zero-charge initial single-premium seeding through the open-ended CPF corridor.',
   },
   {
@@ -13292,9 +14012,9 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     description: 'TM Wealth Enhancer (CPFIS) supported event-heavy scenario covering zero-charge top-up, recurring single premium routing, and nil-charge withdrawals.',
     integrityChecks: [
       {
-        description: 'zero-charge top-up credits the full gross top-up amount to the policy account',
+        description: 'zero-charge top-up and recurring single premium credit the full gross amount to the top-up account',
         test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => (
-          (row.accounts.find((account) => account.accountId === 'policy')?.contributionAmount ?? 0) >= 10_000
+          (row.accounts.find((account) => account.accountId === 'topup')?.contributionAmount ?? 0) >= 13_000
         )),
       },
       {
@@ -13318,6 +14038,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
       'branch:tokio-marine-goelite-zero-single-premium-charge',
       'branch:tokio-marine-goelite-establishment-charge',
@@ -13471,8 +14193,11 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
       'branch:tokio-marine-gowealth-enrich-zero-single-premium-charge',
+      'branch:tokio-marine-gowealth-enrich-loyalty-bonus',
       'branch:tokio-marine-gowealth-enrich-establishment-charge',
       'branch:tokio-marine-gowealth-enrich-administrative-charge',
       'branch:tokio-marine-gowealth-enrich-surrender-charge',
@@ -13530,12 +14255,16 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-tpd-benefit-estimate',
       'kernel:distribution-mode-assumption',
+      'branch:tokio-marine-goassure-initial-bonus',
       'branch:tokio-marine-goassure-initial-charge',
       'branch:tokio-marine-goassure-policy-charge',
       'branch:tokio-marine-goassure-surrender-charge',
     ],
-    description: '#goAssure baseline scenario proving supported initial-charge, premium-base policy-charge, surrender-charge, and distribution-assumption support through the SGD / MIP 10 corridor.',
+    description: '#goAssure baseline scenario proving supported initial-bonus, initial-charge, premium-base policy-charge, surrender-charge, and distribution-assumption support through the SGD / MIP 10 corridor.',
     integrityChecks: [
       {
         description: 'baseline goAssure corridor incurs positive gross fees from initial and policy charges',
@@ -13587,6 +14316,9 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'baseline',
       'kernel:protected-base-assurance',
       'kernel:distribution-mode-assumption',
+      'kernel:current-death-benefit-estimate',
+      'branch:fwd-invest-flexi-elite-booster-bonus',
+      'branch:fwd-invest-flexi-elite-contribution-bonus',
       'branch:fwd-invest-flexi-elite-annual-premium-bonus',
       'branch:fwd-invest-flexi-elite-initial-account-charge',
       'branch:fwd-invest-flexi-elite-insurance-charge',
@@ -13654,6 +14386,10 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:protected-base-assurance',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'branch:fwd-invest-flexi-vii-booster-bonus',
+      'branch:fwd-invest-flexi-vii-loyalty-bonus',
       'branch:fwd-invest-flexi-vii-annual-premium-bonus',
       'branch:fwd-invest-flexi-vii-initial-account-charge',
       'branch:fwd-invest-flexi-vii-insurance-charge',
@@ -13725,6 +14461,10 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:protected-base-assurance',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'branch:fwd-invest-first-horizon-booster-bonus',
+      'branch:fwd-invest-first-horizon-loyalty-bonus',
       'branch:fwd-invest-first-horizon-annual-premium-bonus',
       'branch:fwd-invest-first-horizon-initial-account-charge',
       'branch:fwd-invest-first-horizon-insurance-charge',
@@ -13792,6 +14532,9 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'branch:fwd-invest-first-max-booster-bonus',
+      'branch:fwd-invest-first-max-loyalty-bonus',
       'branch:fwd-invest-first-max-initial-account-charge',
       'branch:fwd-invest-first-max-accumulation-account-charge',
       'branch:fwd-invest-first-max-surrender-charge',
@@ -13842,6 +14585,10 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'branch:fwd-invest-first-summit-booster-bonus',
+      'branch:fwd-invest-first-summit-loyalty-bonus',
+      'branch:fwd-invest-first-summit-perpetual-bonus',
       'branch:fwd-invest-first-summit-initial-account-charge',
       'branch:fwd-invest-first-summit-accumulation-account-charge',
       'branch:fwd-invest-first-summit-surrender-charge',
@@ -13894,6 +14641,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
       'branch:fwd-invest-goal-1-zero-single-premium-charge',
       'branch:fwd-invest-goal-1-initial-account-charge',
       'branch:fwd-invest-goal-1-plan-charge',
@@ -13953,6 +14701,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-flex-prime-ii-startup-bonus',
       'branch:etiqa-flex-prime-ii-special-bonus',
     ],
@@ -13965,6 +14715,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-flex-prime-ii-loyalty-bonus',
       'branch:etiqa-flex-prime-ii-policy-charge',
       'branch:etiqa-flex-prime-ii-insurance-charge',
@@ -13978,6 +14730,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-flex-prime-ii-surrender-charge',
       'kernel:distribution-mode-assumption',
     ],
@@ -13992,6 +14746,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'event-heavy',
       'branch:etiqa-flex-prime-ii-top-up-premium-charge',
       'branch:etiqa-flex-prime-ii-startup-bonus-recovery',
+      'branch:etiqa-flex-prime-ii-premium-shortfall-charge',
+      'branch:etiqa-flex-prime-ii-premium-shortfall-refund',
       'branch:etiqa-flex-prime-ii-partial-withdrawal-charge',
     ],
     description: 'Etiqa Invest Flex Prime II event-heavy scenario proving top-up charge, start-up bonus recovery, and charged regular-account withdrawals.',
@@ -14017,6 +14773,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-flex-pro-startup-bonus',
       'branch:etiqa-flex-pro-special-bonus',
     ],
@@ -14029,6 +14787,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-flex-pro-loyalty-bonus',
       'branch:etiqa-flex-pro-policy-charge',
       'branch:etiqa-flex-pro-insurance-charge',
@@ -14042,6 +14802,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-flex-pro-surrender-charge',
       'kernel:distribution-mode-assumption',
     ],
@@ -14056,6 +14818,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'event-heavy',
       'branch:etiqa-flex-pro-top-up-premium-charge',
       'branch:etiqa-flex-pro-startup-bonus-recovery',
+      'branch:etiqa-flex-pro-premium-shortfall-charge',
+      'branch:etiqa-flex-pro-premium-shortfall-refund',
       'branch:etiqa-flex-pro-partial-withdrawal-charge',
     ],
     description: 'Etiqa Invest Flex Pro event-heavy scenario covering top-up charge, start-up bonus recovery, and charged regular-account withdrawals.',
@@ -14081,6 +14845,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-vista-startup-bonus',
       'branch:etiqa-vista-special-bonus',
     ],
@@ -14093,6 +14859,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-vista-loyalty-bonus',
       'branch:etiqa-vista-policy-charge',
       'branch:etiqa-vista-insurance-charge',
@@ -14106,6 +14874,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-vista-surrender-charge',
       'kernel:distribution-mode-assumption',
     ],
@@ -14120,6 +14890,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'event-heavy',
       'branch:etiqa-vista-top-up-premium-charge',
       'branch:etiqa-vista-startup-bonus-recovery',
+      'branch:etiqa-vista-premium-shortfall-charge',
+      'branch:etiqa-vista-premium-shortfall-refund',
       'branch:etiqa-vista-partial-withdrawal-charge',
     ],
     description: 'Etiqa Invest Vista event-heavy scenario covering top-up charge, start-up bonus recovery, and charged regular-account withdrawals.',
@@ -14145,6 +14917,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-flex-wealth-ii-startup-bonus',
       'branch:etiqa-flex-wealth-ii-special-bonus',
       'branch:etiqa-flex-wealth-ii-cumulative-paid-policy-charge',
@@ -14159,6 +14933,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-flex-wealth-ii-loyalty-bonus',
     ],
     description: 'Etiqa Invest Flex Wealth II baseline scenario for the SGD / MIP 15 corridor.',
@@ -14170,6 +14946,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-flex-wealth-ii-surrender-charge',
     ],
     description: 'Etiqa Invest Flex Wealth II baseline scenario for the SGD / MIP 20 corridor.',
@@ -14183,6 +14961,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'event-heavy',
       'branch:etiqa-flex-wealth-ii-top-up-premium-charge',
       'branch:etiqa-flex-wealth-ii-startup-bonus-recovery',
+      'branch:etiqa-flex-wealth-ii-premium-shortfall-charge',
+      'branch:etiqa-flex-wealth-ii-premium-shortfall-refund',
       'branch:etiqa-flex-wealth-ii-top-up-account-routing',
     ],
     description: 'Etiqa Invest Flex Wealth II event-heavy scenario covering top-up routing and start-up bonus recovery.',
@@ -14208,6 +14988,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-smart-flex-ii-startup-bonus',
       'branch:etiqa-smart-flex-ii-special-bonus',
       'branch:etiqa-smart-flex-ii-cumulative-paid-policy-charge',
@@ -14222,6 +15004,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-smart-flex-ii-loyalty-bonus',
     ],
     description: 'Etiqa Invest Smart Flex II baseline scenario for the SGD / MIP 15 corridor.',
@@ -14233,6 +15017,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-smart-flex-ii-surrender-charge',
     ],
     description: 'Etiqa Invest Smart Flex II baseline scenario for the SGD / MIP 20 corridor.',
@@ -14246,6 +15032,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'event-heavy',
       'branch:etiqa-smart-flex-ii-top-up-premium-charge',
       'branch:etiqa-smart-flex-ii-startup-bonus-recovery',
+      'branch:etiqa-smart-flex-ii-premium-shortfall-charge',
+      'branch:etiqa-smart-flex-ii-premium-shortfall-refund',
       'branch:etiqa-smart-flex-ii-top-up-account-routing',
     ],
     description: 'Etiqa Invest Smart Flex II event-heavy scenario covering top-up routing and start-up bonus recovery.',
@@ -14271,6 +15059,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-smart-vista-startup-bonus',
       'branch:etiqa-smart-vista-special-bonus',
       'branch:etiqa-smart-vista-cumulative-paid-policy-charge',
@@ -14285,6 +15075,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-smart-vista-loyalty-bonus',
     ],
     description: 'Etiqa Invest Smart Vista baseline scenario for the SGD / MIP 15 corridor.',
@@ -14296,6 +15088,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-smart-vista-surrender-charge',
     ],
     description: 'Etiqa Invest Smart Vista baseline scenario for the SGD / MIP 20 corridor.',
@@ -14309,6 +15103,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'event-heavy',
       'branch:etiqa-smart-vista-top-up-premium-charge',
       'branch:etiqa-smart-vista-startup-bonus-recovery',
+      'branch:etiqa-smart-vista-premium-shortfall-charge',
+      'branch:etiqa-smart-vista-premium-shortfall-refund',
       'branch:etiqa-smart-vista-top-up-account-routing',
     ],
     description: 'Etiqa Invest Smart Vista event-heavy scenario covering top-up routing and start-up bonus recovery.',
@@ -14334,6 +15130,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-wealth-purpose-startup-bonus',
       'branch:etiqa-wealth-purpose-special-bonus',
       'branch:etiqa-wealth-purpose-cumulative-paid-policy-charge',
@@ -14348,6 +15146,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-wealth-purpose-loyalty-bonus',
     ],
     description: 'Etiqa Invest Wealth Purpose baseline scenario for the SGD / MIP 15 corridor.',
@@ -14359,6 +15159,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-wealth-purpose-surrender-charge',
     ],
     description: 'Etiqa Invest Wealth Purpose baseline scenario for the SGD / MIP 20 corridor.',
@@ -14372,6 +15174,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'event-heavy',
       'branch:etiqa-wealth-purpose-top-up-premium-charge',
       'branch:etiqa-wealth-purpose-startup-bonus-recovery',
+      'branch:etiqa-wealth-purpose-premium-shortfall-charge',
+      'branch:etiqa-wealth-purpose-premium-shortfall-refund',
       'branch:etiqa-wealth-purpose-top-up-account-routing',
     ],
     description: 'Etiqa Invest Wealth Purpose event-heavy scenario covering top-up routing and start-up bonus recovery.',
@@ -14398,6 +15202,11 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:protected-base-assurance',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-tpd-benefit-estimate',
+      'kernel:current-ti-benefit-after-tpd-estimate',
+      'kernel:current-residual-death-benefit-after-tpd-estimate',
       'branch:great-life-advantage-4-premium-charge',
       'branch:great-life-advantage-4-premium-reward',
       'branch:great-life-advantage-4-policy-fee',
@@ -14450,6 +15259,9 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:protected-base-assurance',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-tpd-benefit-estimate',
       'branch:great-eastern-wa4-welcome-bonus',
       'branch:great-eastern-wa4-premium-bonus',
       'branch:great-eastern-wa4-policy-fee-rate',
@@ -14514,6 +15326,9 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:protected-base-assurance',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-tpd-benefit-estimate',
       'branch:great-eastern-ilp2-welcome-bonus',
       'branch:great-eastern-ilp2-premium-bonus',
       'branch:great-eastern-ilp2-policy-fee-rate',
@@ -14561,6 +15376,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
       'branch:great-eastern-prestige-portfolio-premium-charge-manual-input',
       'branch:great-eastern-prestige-portfolio-wrap-fee-manual-input',
       'branch:great-eastern-prestige-portfolio-policy-fee',
@@ -14611,6 +15428,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'kernel:protected-base-assurance',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:great-eastern-pla-single-premium-charge',
       'branch:great-eastern-pla-policy-fee-manual-input',
       'branch:great-eastern-pla-standard-life-insurance-charge',
@@ -14657,6 +15476,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:great-eastern-gia-sp-initial-single-premium-charge',
     ],
     description: 'Baseline GREAT Invest Advantage (SP) cash/SRS scenario proving the supported upfront single-premium charge corridor.',
@@ -14726,6 +15547,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:great-eastern-gia2-sp-initial-single-premium-charge',
     ],
     description: 'Baseline GREAT Invest Advantage 2 (SP) scenario proving the supported upfront single-premium charge corridor.',
@@ -14781,6 +15604,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:great-eastern-gia-rsp-recurrent-single-premium-charge',
     ],
     description: 'Baseline GREAT Invest Advantage (RSP) cash/SRS scenario proving the supported recurrent-premium charge corridor.',
@@ -14850,6 +15675,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:great-eastern-gia2-rsp-recurrent-single-premium-charge',
     ],
     description: 'Baseline GREAT Invest Advantage 2 (RSP) scenario proving the supported recurrent-premium charge corridor.',
@@ -14905,6 +15732,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
       'branch:aia-pro-lifetime-protector-ii-regular-premium-charge',
       'branch:aia-pro-lifetime-protector-ii-special-bonus',
       'branch:aia-pro-lifetime-protector-ii-policy-fee',
@@ -14963,9 +15791,10 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'event-heavy',
       'branch:aia-pro-lifetime-protector-ii-top-up-premium-charge',
+      'branch:aia-pro-lifetime-protector-ii-premium-holiday-charge-fixed-monthly',
       'branch:aia-pro-lifetime-protector-ii-zero-partial-withdrawal-charge',
     ],
-    description: 'AIA Pro Lifetime Protector (II) Max event-heavy scenario covering charged top-up allocation and later zero-charge policy withdrawals.',
+    description: 'AIA Pro Lifetime Protector (II) Max event-heavy scenario covering premium holiday, charged top-up allocation, and later zero-charge policy withdrawals.',
     integrityChecks: [
       {
         description: 'event-heavy Max corridor records both a top-up contribution spike and a later withdrawal',
@@ -14993,6 +15822,9 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'branch:hsbc-life-flexi-protector-additional-bonus-units',
       'branch:hsbc-life-flexi-protector-administration-fee',
       'branch:hsbc-flexi-choice-max-assurance',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-tpd-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
     description: 'HSBC Life Flexi Protector baseline scenario proving the supported Choice Cover regular-premium, account-value bonus, administration-fee, insurance-charge, and manual distribution corridor.',
@@ -15080,6 +15912,9 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-tpd-benefit-estimate',
       'branch:pruactive-linkguard-premium-year-premium-charge',
       'branch:pruactive-linkguard-administration-charge',
       'branch:pruactive-linkguard-combined-assurance-charge',
@@ -15158,6 +15993,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'branch:tokio-current-only-multi-life-life-state',
       'branch:tokio-loyalty-bonus-adjustment-factor',
       'tokio-initial-vs-accumulation-regular-premium-routing',
       'tokio-initial-bonus-tiered-premium-allocation',
@@ -15210,6 +16046,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'branch:tokio-additional-bonus-current-year-qualification',
+      'branch:tokio-current-only-multi-life-life-state',
       'branch:tokio-loyalty-bonus-adjustment-factor',
       'tokio-initial-vs-accumulation-regular-premium-routing',
       'tokio-initial-bonus-tiered-premium-allocation',
@@ -15262,6 +16100,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'branch:tokio-additional-bonus-current-year-qualification',
       'branch:tokio-loyalty-bonus-adjustment-factor',
       'tokio-initial-vs-accumulation-regular-premium-routing',
       'tokio-initial-bonus-tiered-premium-allocation',
@@ -15338,6 +16177,14 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
   },
   {
     productId: 'tokio-marine-harvest-builder-atfuture',
+    variantId: 'sgd-mip-10-advanced-death-life-benefit-rider',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline', 'kernel:current-death-benefit-estimate', 'branch:tokio-current-only-multi-life-life-state'],
+    description: 'Tokio Marine Harvest Builder@Future advanced-death-life-benefit-rider supported baseline proving policy-term Monthly Protection Charge handling from insured-life inputs.',
+  },
+  {
+    productId: 'tokio-marine-harvest-builder-atfuture',
     variantId: 'sgd-mip-10',
     scenarioId: 'event-heavy',
     fixtureClass: 'supported',
@@ -15393,6 +16240,14 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
   },
   {
     productId: 'tokio-marine-wealth-builder-atfuture',
+    variantId: 'sgd-mip-10-advanced-death-life-benefit-rider',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline', 'kernel:current-death-benefit-estimate', 'branch:tokio-current-only-multi-life-life-state'],
+    description: 'Tokio Marine Wealth Builder@Future advanced-death-life-benefit-rider supported baseline proving policy-term Monthly Protection Charge handling from insured-life inputs.',
+  },
+  {
+    productId: 'tokio-marine-wealth-builder-atfuture',
     variantId: 'sgd-mip-10',
     scenarioId: 'event-heavy',
     fixtureClass: 'supported',
@@ -15428,6 +16283,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'tokio-premium-bonus',
       'tokio-power-up-bonus',
       'tokio-loyalty-bonus',
+      'branch:tokio-current-only-multi-life-life-state',
+      'kernel:current-accidental-death-benefit-estimate',
       'tokio-policy-charge-on-accumulation-account',
       'tokio-accumulation-account-surrender-charge',
       'kernel:distribution-mode-assumption',
@@ -15482,6 +16339,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'tokio-initial-bonus-tiered-premium-allocation',
       'tokio-premium-bonus',
       'tokio-power-up-bonus',
+      'branch:tokio-current-only-multi-life-life-state',
+      'kernel:current-accidental-death-benefit-estimate',
       'tokio-policy-charge-on-accumulation-account',
       'tokio-accumulation-account-surrender-charge',
       'kernel:distribution-mode-assumption',
@@ -15563,6 +16422,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'branch:tokio-wealth-flexi-advanced-death-monthly-protection-charge',
+      'branch:tokio-current-only-multi-life-life-state',
     ],
     description: 'Tokio Marine Wealth Flexi advanced-death with Life Benefit Rider baseline proving the single-life rider corridor keeps Monthly Protection Charge active through the late supported V1 policy window.',
   },
@@ -15635,6 +16495,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'branch:tokio-harvest-flexi-advanced-death-monthly-protection-charge',
+      'branch:tokio-current-only-multi-life-life-state',
     ],
     description: 'Tokio Marine Harvest Flexi advanced-death with Life Benefit Rider baseline proving the single-life rider corridor keeps Monthly Protection Charge active through the late supported V1 policy window.',
   },
@@ -15712,6 +16573,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'branch:tokio-harvest-pro-advanced-death-monthly-protection-charge-accrual',
+      'branch:tokio-current-only-multi-life-life-state',
     ],
     description: 'Tokio Marine Harvest Pro advanced-death with Life Benefit Rider baseline proving the single-life rider corridor keeps the accrued Monthly Protection Charge path active through the late supported V1 policy window.',
   },
@@ -15795,6 +16657,20 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
   },
   {
     productId: 'tokio-marine-harvest-max',
+    variantId: 'sgd-mip-15-advanced-death-life-benefit-rider',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:current-death-benefit-estimate',
+      'branch:tokio-current-only-multi-life-life-state',
+      'branch:tokio-goaffluence-achievement-bonus-premium-base-milestones',
+      'kernel:current-accidental-death-benefit-estimate',
+    ],
+    description: 'Tokio Marine Harvest Max advanced-death-life-benefit-rider supported baseline proving policy-term Monthly Protection Charge handling.',
+  },
+  {
+    productId: 'tokio-marine-harvest-max',
     variantId: 'sgd-mip-15',
     scenarioId: 'event-heavy',
     fixtureClass: 'supported',
@@ -15862,6 +16738,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'baseline',
       'branch:tokio-marine-affluence-atfuture-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts',
       'kernel:current-death-benefit-estimate',
+      'branch:tokio-current-only-multi-life-life-state',
     ],
     description: 'Tokio Marine Affluence@Future advanced-death with Life Benefit Rider baseline proving the rider corridor seeds the same accrued Monthly Protection Charge inputs under the supported V1 policy window.',
   },
@@ -15900,6 +16777,8 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'branch:tokio-goluxe-achievement-bonus-qualification-window',
+      'branch:tokio-current-only-multi-life-life-state',
       'branch:tokio-loyalty-bonus-adjustment-factor',
       'tokio-initial-vs-accumulation-regular-premium-routing',
       'tokio-initial-bonus-tiered-premium-allocation',
@@ -15962,12 +16841,14 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: [
       'baseline',
+      'branch:tokio-goaffluence-achievement-bonus-premium-base-milestones',
       'branch:tokio-loyalty-bonus-adjustment-factor',
       'tokio-initial-vs-accumulation-regular-premium-routing',
       'tokio-initial-bonus-tiered-premium-allocation',
       'tokio-initial-charge-on-initial-account',
       'tokio-policy-charge-on-accumulation-account',
       'tokio-initial-account-surrender-charge',
+      'kernel:current-accidental-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
     description: 'Tokio Marine #goAffluence supported baseline proving initial routing, charge basis, and surrender mechanics through the SGD / MIP 15 corridor.',
@@ -15983,6 +16864,18 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'kernel:current-death-benefit-estimate',
     ],
     description: 'Tokio Marine #goAffluence advanced-death supported baseline proving accrued Monthly Protection Charge handling across the Initial and Accumulation Units Accounts.',
+  },
+  {
+    productId: 'tokio-marine-goaffluence',
+    variantId: 'sgd-mip-15-advanced-death-life-benefit-rider',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:current-death-benefit-estimate',
+      'branch:tokio-current-only-multi-life-life-state',
+    ],
+    description: 'Tokio Marine #goAffluence advanced-death-life-benefit-rider supported baseline proving policy-term Monthly Protection Charge handling across the Initial and Accumulation Units Accounts.',
   },
   {
     productId: 'tokio-marine-goaffluence',
@@ -16085,6 +16978,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'branch:tokio-wealth-max-ii-advanced-death-monthly-protection-charge-accrual',
+      'branch:tokio-current-only-multi-life-life-state',
     ],
     description: 'Tokio Marine Wealth Max (II) advanced-death with Life Benefit Rider baseline proving the single-life rider corridor keeps the accrued Monthly Protection Charge path active through the late supported V1 policy window.',
   },
@@ -16247,6 +17141,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: [
       'baseline',
       'branch:tokio-wealth-pro-ii-advanced-death-monthly-protection-charge-accrual',
+      'branch:tokio-current-only-multi-life-life-state',
     ],
     description: 'Tokio Marine Wealth Pro (II) advanced-death with Life Benefit Rider baseline proving the single-life rider corridor keeps the accrued Monthly Protection Charge path active through the late supported V1 policy window.',
   },
@@ -16599,7 +17494,11 @@ function buildPolicyForDefinition(
     return manulifeInvestreadyGrowthStressPolicy(snapshot, id)
   }
   if (definition.productId === 'manulife-investready-iii' && definition.scenarioId === 'baseline') {
-    return manulifeInvestreadyIiiBaselinePolicy(snapshot, id)
+    return manulifeInvestreadyIiiBaselinePolicy(
+      snapshot,
+      definition.variantId as keyof typeof MANULIFE_INVESTREADY_III_VARIANT_LABELS,
+      id,
+    )
   }
   if (definition.productId === 'manulife-investready-iii' && definition.scenarioId === 'event-heavy') {
     return manulifeInvestreadyIiiEventHeavyPolicy(snapshot, id)
@@ -16643,7 +17542,7 @@ function buildPolicyForDefinition(
     return singlifeLegacyInvestStressPolicy(snapshot, id)
   }
   if (definition.productId === 'singlife-savvy-invest-ii' && definition.scenarioId === 'baseline') {
-    return singlifeSavvyInvestIiBaselinePolicy(snapshot, id)
+    return singlifeSavvyInvestIiBaselinePolicy(snapshot, definition.variantId as SinglifeSavvyVariantId, id)
   }
   if (definition.productId === 'singlife-savvy-invest-ii' && definition.scenarioId === 'event-heavy') {
     return singlifeSavvyInvestIiEventHeavyPolicy(snapshot, id)
@@ -16773,6 +17672,9 @@ function buildPolicyForDefinition(
     return aiaInvestEasyCpfStressPolicy(snapshot, id)
   }
   if (definition.productId === 'aia-platinum-retirement-elite' && definition.scenarioId === 'baseline') {
+    if (definition.variantId === 'sgd-open-ended-sp') {
+      return aiaPlatinumRetirementEliteSinglePremiumBaselinePolicy(snapshot, id)
+    }
     return aiaPlatinumRetirementEliteBaselinePolicy(snapshot, id)
   }
   if (definition.productId === 'aia-platinum-retirement-elite' && definition.scenarioId === 'event-heavy') {
@@ -17302,6 +18204,9 @@ function buildPolicyForDefinition(
     if (definition.variantId === 'sgd-mip-10-advanced-death') {
       return tokioHarvestBuilderAtfutureAdvancedDeathBaselinePolicy(snapshot, id)
     }
+    if (definition.variantId === 'sgd-mip-10-advanced-death-life-benefit-rider') {
+      return tokioHarvestBuilderAtfutureAdvancedDeathLifeBenefitRiderBaselinePolicy(snapshot, id)
+    }
     return tokioBaselinePolicy(
       snapshot,
       'tokio-marine-harvest-builder-atfuture',
@@ -17319,6 +18224,9 @@ function buildPolicyForDefinition(
   if (definition.productId === 'tokio-marine-wealth-builder-atfuture' && definition.scenarioId === 'baseline') {
     if (definition.variantId === 'sgd-mip-10-advanced-death') {
       return tokioWealthBuilderAtfutureAdvancedDeathBaselinePolicy(snapshot, id)
+    }
+    if (definition.variantId === 'sgd-mip-10-advanced-death-life-benefit-rider') {
+      return tokioWealthBuilderAtfutureAdvancedDeathLifeBenefitRiderBaselinePolicy(snapshot, id)
     }
     return tokioBaselinePolicy(
       snapshot,
@@ -17440,6 +18348,9 @@ function buildPolicyForDefinition(
     if (definition.variantId === 'sgd-mip-15-advanced-death') {
       return tokioHarvestMaxAdvancedDeathBaselinePolicy(snapshot, id)
     }
+    if (definition.variantId === 'sgd-mip-15-advanced-death-life-benefit-rider') {
+      return tokioHarvestMaxAdvancedDeathLifeBenefitRiderBaselinePolicy(snapshot, id)
+    }
     return tokioBaselinePolicy(
       snapshot,
       'tokio-marine-harvest-max',
@@ -17496,6 +18407,9 @@ function buildPolicyForDefinition(
   if (definition.productId === 'tokio-marine-goaffluence' && definition.scenarioId === 'baseline') {
     if (definition.variantId === 'sgd-mip-15-advanced-death') {
       return tokioGoAffluenceAdvancedDeathBaselinePolicy(snapshot, id)
+    }
+    if (definition.variantId === 'sgd-mip-15-advanced-death-life-benefit-rider') {
+      return tokioGoAffluenceAdvancedDeathLifeBenefitRiderBaselinePolicy(snapshot, id)
     }
     return tokioBaselinePolicy(
       snapshot,
@@ -17579,6 +18493,8 @@ export function buildGoldenIlpFixtureInputs(
   return GOLDEN_FIXTURE_MANIFEST.map((definition) => {
     const id = `${definition.productId}-${definition.variantId}-${definition.scenarioId}`
     const policy = buildPolicyForDefinition(snapshot, definition)
+    const modeledEconomics = snapshot.products.find((product) => product.id === definition.productId)?.modeledEconomics ?? []
+    const coverageTags = [...new Set([...definition.coverageTags, ...modeledEconomics])]
 
     return {
       id,
@@ -17587,7 +18503,7 @@ export function buildGoldenIlpFixtureInputs(
       productId: definition.productId,
       variantId: definition.variantId,
       scenarioId: definition.scenarioId,
-      coverageTags: [...definition.coverageTags],
+      coverageTags,
       description: definition.description,
       policy,
       manualSource: definition.manualSource,

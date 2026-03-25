@@ -204,7 +204,12 @@ function normalizePolicyInput(policy: IlpPolicyInput): GoldenPolicyInputSurface 
         rate: roundRate(tier.rate),
       })),
     })),
-    catalogSource: policy.catalogSource ? { ...policy.catalogSource } : undefined,
+    catalogSource: policy.catalogSource
+      ? (() => {
+          const { generatedAt: _generatedAt, ...catalogSource } = policy.catalogSource
+          return catalogSource
+        })()
+      : undefined,
     catalogWarnings: policy.catalogWarnings ? [...policy.catalogWarnings] : undefined,
   }
 }

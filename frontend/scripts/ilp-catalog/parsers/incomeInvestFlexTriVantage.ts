@@ -17,6 +17,12 @@ interface ParseContext {
 const MIP_LENGTH = 10
 const SURRENDER_AND_WITHDRAWAL_CHARGE = [1, 1, 0.8, 0.6, 0.5, 0.45, 0.4, 0.2, 0.15, 0.05]
 const PREMIUM_HOLIDAY_CHARGE = [1, 1, 0.8, 0, 0, 0, 0, 0, 0, 0]
+const MINIMUM_REGULAR_PREMIUM_BY_FREQUENCY = {
+  annual: 48_000,
+  'semi-annual': 24_000,
+  quarterly: 12_000,
+  monthly: 4_000,
+} as const
 
 function normalizeWhitespace(text: string): string {
   return text.replace(/\s+/g, ' ').trim()
@@ -117,10 +123,26 @@ function buildBonuses(page2: IlpCatalogSourceRef): IlpTemplateBonus[] {
       rate: 0.005,
       amount: null,
       tieredRates: [],
+      qualificationRules: [
+        {
+          trigger: 'partial-withdrawal',
+          accountIds: ['policy'],
+          disqualifyIfAnyInLookbackMonths: 12,
+        },
+      ],
+      preservedValueRules: [
+        {
+          trigger: 'partial-withdrawal',
+          basis: 'event-amount',
+          accountIds: ['policy'],
+          requiresBonusSuspensionWaived: true,
+        },
+      ],
       notes: [
         'Loyalty bonus starts from the 10th policy anniversary irrespective of premium holiday.',
         'No withdrawal in the previous 12 months is required, excluding withdrawals under Life Events Withdrawal Benefit.',
-        'Qualifying Life Events Withdrawal Benefit withdrawals can preserve loyalty-bonus eligibility when the event is entered with the bonus-suspension waiver override; source eligibility timing and usage limits remain manual.',
+        'Qualifying Life Events Withdrawal Benefit withdrawals entered with the bonus-suspension waiver preserve the modeled loyalty-bonus basis after the withdrawal.',
+        'Life Events Withdrawal Benefit eligibility timing, documentary proof, and usage limits remain manual.',
       ],
       sourceRefs: [page2],
     },
@@ -132,6 +154,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page2 = sourceRef(2, 'Regular premium allocation and bonuses', snippetNear(document, 2, 'Investment Bonus', 18))
   const page4 = sourceRef(4, 'Secondary insured and life events withdrawal benefit', snippetNear(document, 4, 'Secondary Insured Option', 18))
   const page6 = sourceRef(6, 'Premium holiday and partial withdrawal', snippetNear(document, 6, 'Premium holiday', 16))
+  const page7 = sourceRef(7, 'Minimum regular premium', snippetNear(document, 7, '8.2.1 Minimum regular premium', 16))
   const page8 = sourceRef(8, 'Insurance cover charge', snippetNear(document, 8, 'insurance cover charge', 16))
   const page16 = sourceRef(16, 'Appendix 2 surrender charge', snippetNear(document, 16, 'Appendix 2', 16))
   const page17 = sourceRef(17, 'Appendix 3 partial withdrawal charge', snippetNear(document, 17, 'Appendix 3', 16))
@@ -212,7 +235,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       allocation: 'equal-split',
       notes: [
         'Applied to partial withdrawals during the minimum investment period.',
-        'Qualifying Life Events Withdrawal Benefit withdrawals can be represented by setting both chargeWaived and bonusSuspensionWaived on the event.',
+        'Qualifying Life Events Withdrawal Benefit withdrawals can be represented by setting both chargeWaived and bonusSuspensionWaived on the event so the charge is waived and the modeled loyalty-bonus basis is preserved.',
         'Users must manually stay within the published 10% of prevailing policy value cap, once-per-life-event rule, three-use maximum, and documentary-proof timing conditions.',
       ],
       sourceRefs: [page4, page6, page17],
@@ -256,18 +279,27 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       sourceRefs: [page22],
     },
     eecTable: [...SURRENDER_AND_WITHDRAWAL_CHARGE],
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      minimumRegularPremiumVariationStartPolicyMonth: 25,
+      minimumRegularPremiumAmountByFrequency: {
+        ...MINIMUM_REGULAR_PREMIUM_BY_FREQUENCY,
+      },
+      blockRegularPremiumVariationDuringPremiumHoliday: true,
+    },
     warnings: [
-      'Invest Flex TriVantage is cataloged as a supported V1 product. The parser captures the policy fee, death / TI insurance cover charge after the 2nd policy anniversary once insured-life inputs are supplied, regular-premium allocation uplifts, investment bonus, loyalty bonus, top-up routing, premium-holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support.',
-      'Qualifying Life Events Withdrawal Benefit withdrawals can be represented in V1 by using the event-level charge and bonus-suspension waiver overrides, while eligibility timing, documentary proof, and usage-count limits remain manual.',
-      'Secondary-insured replacement mechanics, future premium option, and the published minimum distribution amount remain informational only.',
+      'Invest Flex TriVantage is cataloged as a supported V1 product. The parser captures the policy fee, death / TI insurance cover charge after the 2nd policy anniversary once insured-life inputs are supplied, the current-state death and terminal-illness benefit amount during the first policy year as policy value less a manual current excluded claim bonus value and after the first policy year as the higher of 101% of net premiums paid or policy value, regular-premium allocation uplifts, investment bonus, loyalty bonus, premium-variation start and minimum-floor gating with active premium-holiday variation blocking, top-up routing, premium-holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support.',
+      'Qualifying Life Events Withdrawal Benefit withdrawals can be represented in V1 by using the event-level charge and bonus-suspension waiver overrides, which preserves the modeled loyalty-bonus basis after the withdrawal, while eligibility timing, documentary proof, the 10%-of-policy-value cap, and usage-count limits remain manual.',
+      'Secondary-insured replacement mechanics, future premium option, the published minimum distribution amount, and insurer-defined minimum premium-change increments remain informational only. The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state.',
     ],
     unsupportedItems: [
       'Secondary insured appointment, removal, and insured-replacement mechanics remain informational only.',
       'Life Events Withdrawal Benefit eligibility timing, documentary proof, and use-count limits remain manual.',
       'Future Premium Option remains informational only.',
       'The published minimum distribution amount and fund-level payout processing remain informational only.',
+      'The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state, but terminal-illness definitions, exclusions, and insurer-side settlement mechanics remain informational only.',
     ],
-    sourceRefs: [page1, page2, page4, page6, page8, page16, page17, page18, page22],
+    sourceRefs: [page1, page2, page4, page6, page7, page8, page16, page17, page18, page22],
   }
 }
 
@@ -285,6 +317,9 @@ export function parseIncomeInvestFlexTriVantage(context: ParseContext): IlpCatal
     economicsStatus: 'supported',
     modeledEconomics: [
       'kernel:protected-base-assurance',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:bonus-lookback-qualification-window',
       'branch:income-vs3-policy-fee',
       'branch:income-vs3-death-ti-insurance-cover-charge',
       'branch:income-vs3-regular-premium-allocation-uplift',
@@ -294,6 +329,10 @@ export function parseIncomeInvestFlexTriVantage(context: ParseContext): IlpCatal
       'branch:income-vs3-partial-withdrawal-charge',
       'branch:income-vs3-surrender-charge',
       'branch:income-vs3-ad-hoc-top-up-routing',
+      'kernel:regular-premium-variation-start-gate',
+      'kernel:regular-premium-variation-minimum-floor',
+      'kernel:regular-premium-variation-premium-holiday-block',
+      'kernel:bonus-preserved-value-cohorts',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
@@ -304,7 +343,7 @@ export function parseIncomeInvestFlexTriVantage(context: ParseContext): IlpCatal
       'income-vs3-death-benefit-continuation-after-insured-replacement',
     ],
     warnings: [
-      'Invest Flex TriVantage is cataloged as a supported V1 product. The parser captures the regular-premium fee, protection charge, charge and bonus path, and reinvest-default distribution support, while secondary-insured replacement mechanics, life-event eligibility administration, and fund-level distribution-election constraints remain informational only.',
+      'Invest Flex TriVantage is cataloged as a supported V1 product. The parser captures the regular-premium fee, protection charge, the current-state death and terminal-illness benefit amount during the first policy year as policy value less a manual current excluded claim bonus value and after the first policy year as the higher of 101% of net premiums paid or policy value, the current admitted-state TI payable amount through the published full-termination TI corridor after manual claim-amount entry, an admitted-and-settled TI claim as a current policy-termination state, charge and bonus path, and reinvest-default distribution support, while terminal-illness definitions / exclusions / settlement, secondary-insured replacement mechanics, life-event eligibility administration, and fund-level distribution-election constraints remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

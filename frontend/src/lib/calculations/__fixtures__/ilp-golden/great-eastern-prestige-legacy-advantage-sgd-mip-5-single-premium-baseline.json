@@ -10,10 +10,16 @@
     "coverageTags": [
       "baseline",
       "kernel:protected-base-assurance",
+      "kernel:current-death-benefit-estimate",
+      "kernel:current-ti-benefit-estimate",
       "branch:great-eastern-pla-single-premium-charge",
       "branch:great-eastern-pla-policy-fee-manual-input",
       "branch:great-eastern-pla-standard-life-insurance-charge",
-      "branch:great-eastern-pla-surrender-charge"
+      "branch:great-eastern-pla-surrender-charge",
+      "kernel:current-residual-death-benefit-after-ti-estimate",
+      "branch:great-eastern-pla-top-up-premium-charge",
+      "kernel:top-up-amount-gate-block",
+      "branch:great-eastern-pla-withdrawal-charge"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "PS(EN)_Prestige Legacy Advantage_(SG)_v2.0.pdf",
@@ -201,8 +207,12 @@
       "structureStatus": "structured",
       "modeledEconomics": [
         "kernel:protected-base-assurance",
+        "kernel:current-death-benefit-estimate",
+        "kernel:current-ti-benefit-estimate",
+        "kernel:current-residual-death-benefit-after-ti-estimate",
         "branch:great-eastern-pla-single-premium-charge",
         "branch:great-eastern-pla-top-up-premium-charge",
+        "kernel:top-up-amount-gate-block",
         "branch:great-eastern-pla-policy-fee-manual-input",
         "branch:great-eastern-pla-standard-life-insurance-charge",
         "branch:great-eastern-pla-withdrawal-charge",
@@ -211,7 +221,6 @@
       "metadataOnlyBehaviors": [
         "great-eastern-pla-single-premium-principal-tracking",
         "great-eastern-pla-current-sum-assured-tracking",
-        "great-eastern-pla-death-and-terminal-illness-benefits",
         "great-eastern-pla-non-lapse-privilege",
         "great-eastern-pla-free-partial-withdrawal-annual-limit",
         "great-eastern-pla-non-standard-insurance-rate-classes",
@@ -221,13 +230,14 @@
       ]
     },
     "catalogWarnings": [
-      "Prestige Legacy Advantage is cataloged as a supported Standard Life single-premium corridor in V1. The parser captures the initial single-premium charge, single-premium top-up charge, the first-five-policy-year withdrawal / surrender charge schedule, the entry-age-and-basic-sum-assured policy-fee surface through manual input, and the Standard Life monthly insurance-charge appendix on net sum assured, while non-lapse privilege, free-withdrawal-limit current-sum-assured adjustments, and non-standard insurance-rate classes remain metadata-only.",
-      "Prestige Legacy Advantage is cataloged as a supported Standard Life single-premium corridor in V1. The parser captures the initial single-premium charge, the first-five-policy-year withdrawal / surrender charge schedule, the entry-age-and-basic-sum-assured policy-fee surface through manual input, and the Standard Life monthly insurance-charge appendix on net sum assured.",
-      "Enter the actual first-five-year policy-fee amount and current sum assured before trusting the projection.",
+      "Prestige Legacy Advantage is cataloged as a supported Standard Life single-premium corridor in V1. The parser captures the initial single-premium charge, single-premium top-up charge, the published S$1,000 single-premium top-up minimum, the first-five-policy-year withdrawal / surrender charge schedule, the current-state death-benefit estimate as the higher of current sum assured or account value, the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, the entry-age-and-basic-sum-assured policy-fee surface through manual input, and the Standard Life monthly insurance-charge appendix on net sum assured, while terminal-illness claim exclusions / settlement workflow and non-manual post-claim reduction handling, non-lapse privilege debt carry, free-withdrawal-limit current-sum-assured adjustments, and non-standard insurance-rate classes remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.",
+      "Prestige Legacy Advantage is cataloged as a supported Standard Life single-premium corridor in V1. The parser captures the initial single-premium charge, the published S$1,000 single-premium top-up minimum, the first-five-policy-year withdrawal / surrender charge schedule, the current-state death-benefit estimate as the higher of current sum assured or account value, the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, the entry-age-and-basic-sum-assured policy-fee surface through manual input, and the Standard Life monthly insurance-charge appendix on net sum assured.",
+      "Enter the actual first-five-year policy-fee amount, current sum assured, and remaining aggregate TI cap before trusting the projection, current death / terminal-illness estimate, or current residual death estimate after an admitted TI claim.",
       "Enter the one-time gross initial single premium lump sum in Policy Details if you want the upfront single-premium deduction to seed the starting policy value honestly.",
       "Single-premium principal tracking remains informational only in V1.",
       "Current-sum-assured tracking after future top-ups, partial withdrawals, and the free partial withdrawal annual limit from policy year 11 onward remains informational only.",
-      "Death and terminal illness benefit reductions remain informational only beyond the manual current-sum-assured corridor.",
+      "The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both need manual current sum assured and remaining aggregate TI cap inputs because post-claim current-sum-assured or account-value reductions are not reconstructed from history in V1.",
+      "Terminal-illness claim exclusions, settlement workflow, and non-manual post-claim current-sum-assured or account-value reductions remain informational only beyond the modeled current death, terminal-illness, and residual-after-TI snapshot surface.",
       "Non-lapse privilege debt carry and lapse/reinstatement behavior remain informational only.",
       "Non-standard underwriting classes and region-specific insurance-charge rates remain informational only.",
       "Fund-level management and custodian fees remain informational only.",

@@ -28,31 +28,39 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
     expect(product.modeledEconomics).toEqual([
       'kernel:protected-base-assurance',
       'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-residual-death-benefit-after-ti-estimate',
       'branch:manulife-investready-iii-welcome-bonus',
       'branch:manulife-investready-iii-annual-premium-bonus',
       'branch:manulife-investready-iii-loyalty-bonus',
+      'branch:manulife-investready-iii-step-up-booster-bonus',
+      'branch:manulife-investready-iii-policy-fee-manual-input',
       'branch:manulife-investready-iii-administrative-charge',
       'branch:manulife-investready-iii-premium-shortfall-charge',
       'branch:manulife-investready-iii-zero-top-up-charge',
+      'kernel:regular-premium-variation-start-gate',
+      'kernel:regular-premium-variation-minimum-floor',
+      'kernel:top-up-amount-gate-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
       'branch:manulife-investready-iii-partial-withdrawal-charge',
       'branch:manulife-investready-iii-full-surrender-charge',
       'kernel:distribution-mode-assumption',
     ])
     expect(product.modeledEconomics).not.toContain('branch:manulife-investready-iii-fund-management-charge')
-    expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-ti-acceleration-limits-and-claim-timing')
+    expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-ti-claim-admission-settlement-and-notification-timing')
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-reinstatement-underwriting-and-pre-existing-condition-exclusions')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-reinstatement')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-benefit-payout-handling')
-    expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-policy-fee')
-    expect(product.metadataOnlyBehaviors).toContain('manulife-investready-iii-step-up-booster-bonus')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-step-up-booster-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-reinvested-dividend-withdrawals')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-fund-management-charge')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-annual-premium-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-welcome-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-loyalty-bonus')
-    expect(product.warnings.some((warning) => warning.includes('current-state death-benefit estimate from that same floor'))).toBe(true)
-    expect(product.warnings.some((warning) => warning.includes('amount-owed deductions'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('current-state death-benefit estimate net of manually entered current amount owing'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('current terminal-illness benefit estimate as the lower of the modeled current death benefit, a manual remaining aggregate TI cap, and a manual remaining aggregate TI + CI cap'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('published S$2,500 minimum on explicit ad-hoc top-up premiums'))).toBe(true)
     expect(product.warnings.some((warning) => warning.includes('pre-existing-condition exclusions'))).toBe(true)
     expect(product.warnings.some((warning) => warning.includes('Selected-fund management charges are represented through the policy fund OCF inputs rather than a product-level parser rate'))).toBe(true)
     expect(product.warnings.some((warning) => warning.includes('fund-level charges remain outside the current engine.'))).toBe(false)
@@ -75,6 +83,26 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
         subjectToEec: true,
       }),
     ])
+    expect(firstVariant?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'policy-value',
+          minimumValue: 1_000,
+        },
+      ],
+      minimumRegularPremiumVariationStartPolicyMonth: 49,
+      minimumRegularPremiumAmountByFrequency: {
+        annual: 40,
+        'semi-annual': 40,
+        quarterly: 40,
+        monthly: 40,
+      },
+      minimumTopUpAmount: 2_500,
+    })
+    expect(firstVariant?.warnings).toContain('the flexi-start premium-variation start-month gate and the published minimum reduced premium floor after Flexi Start are modeled, while annual-mode clawback on later payment-mode changes, the separate MIP partial-withdrawal amount-limit table, and life-stage partial-withdrawal waivers remain outside the current engine.')
     expect(firstVariant?.feeRules).toEqual([
       expect.objectContaining({
         id: 'cost-of-insurance',
@@ -156,6 +184,32 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
         startPolicyYear: 6,
         endPolicyYear: null,
         rate: 0,
+        qualificationRules: [
+          { trigger: 'partial-withdrawal', disqualifyInReferenceYear: true },
+          { trigger: 'reinvested-dividend-withdrawal', disqualifyInReferenceYear: true },
+        ],
+      }),
+      expect.objectContaining({
+        id: 'step-up-booster-bonus',
+        mode: 'one-time',
+        oneTimePayoutBasis: 'step-up-booster-delta',
+        startPolicyYear: 5,
+        endPolicyYear: null,
+        rate: 0.1,
+        policyYearRateSchedule: expect.arrayContaining([
+          { startPolicyYear: 5, endPolicyYear: 9, rate: 0.1 },
+          { startPolicyYear: 10, endPolicyYear: 14, rate: 0.2 },
+          { startPolicyYear: 15, endPolicyYear: 19, rate: 0.3 },
+        ]),
+        stepUpPayoutConfig: {
+          premiumShortfallChargeYears: 4,
+          partialWithdrawalAccountIds: ['policy'],
+          countPartialWithdrawalsFromPolicyYear: 6,
+        },
+        qualificationRules: [
+          { formula: 'cumulative-effective-account-value-ratio', maximumRatio: 1 },
+          { trigger: 'premium-holiday', disqualifyThroughPolicyYear: 4 },
+        ],
       }),
     ])
 
@@ -218,12 +272,42 @@ describe('parseManulifeInvestreadyIiiSep2025', () => {
         rate: 0.003,
         startPolicyYear: 14,
         endPolicyYear: null,
+        qualificationRules: [
+          { trigger: 'partial-withdrawal', disqualifyInReferenceYear: true },
+          { trigger: 'reinvested-dividend-withdrawal', disqualifyInReferenceYear: true },
+        ],
+      }),
+      expect.objectContaining({
+        id: 'step-up-booster-bonus',
+        mode: 'one-time',
+        oneTimePayoutBasis: 'step-up-booster-delta',
+        startPolicyYear: 13,
+        rate: 0.25,
+        policyYearRateSchedule: expect.arrayContaining([
+          { startPolicyYear: 13, endPolicyYear: 17, rate: 0.25 },
+          { startPolicyYear: 18, endPolicyYear: 22, rate: 0.5 },
+          { startPolicyYear: 23, endPolicyYear: 27, rate: 0.75 },
+        ]),
+        stepUpPayoutConfig: {
+          premiumShortfallChargeYears: 10,
+          partialWithdrawalAccountIds: ['policy'],
+          countPartialWithdrawalsFromPolicyYear: 14,
+        },
       }),
     ])
-    expect(lastVariant?.warnings).toContain('Policy-fee thresholds, annual-mode clawback on later payment-mode changes, Step-up Booster Bonus, and life-stage partial-withdrawal waivers remain outside the current engine.')
+    expect(lastVariant?.feeRules).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'policy-fee',
+        basis: 'fixed-annual',
+        amount: 0,
+        requiresManualInput: true,
+      }),
+    ]))
+    expect(lastVariant?.warnings).toContain('Issue-time policy-fee band selection, the flexi-start premium-variation start-month gate and the published minimum reduced premium floor after Flexi Start are modeled, while annual-mode clawback on later payment-mode changes, the separate MIP partial-withdrawal amount-limit table, and life-stage partial-withdrawal waivers remain outside the current engine.')
     expect(lastVariant?.warnings).toContain('Selected-fund management charges are represented through the policy fund OCF inputs rather than a product-level parser rate.')
     expect(lastVariant?.warnings).not.toContain('Withdrawals of accumulated reinvested dividends remain informational only.')
     expect(lastVariant?.unsupportedItems).not.toContain('Withdrawals of accumulated reinvested dividends remain informational only.')
     expect(lastVariant?.unsupportedItems).not.toContain('Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.')
+    expect(lastVariant?.unsupportedItems).toContain('Issue-time policy-fee band selection remains informational only; enter the actual annual policy-fee amount for low-band corridors before trusting the projection.')
   }, 30_000)
 })

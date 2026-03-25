@@ -2,6 +2,8 @@ import path from 'node:path'
 import type {
   IlpCatalogProduct,
   IlpCatalogSourceRef,
+  IlpTemplateBonus,
+  IlpTemplateBonusTier,
   IlpTemplateEventChargeRule,
   IlpTemplateFeeRule,
   IlpTemplateVariant,
@@ -98,15 +100,174 @@ function buildRateSchedule(values: readonly number[]): Array<{ startPolicyYear: 
   }))
 }
 
+function buildTiers(values: Array<{ minAnnualPremium: number, maxAnnualPremium: number | null, rate: number }>): IlpTemplateBonusTier[] {
+  return values.map((tier) => ({
+    currency: 'SGD',
+    minAnnualPremium: tier.minAnnualPremium,
+    maxAnnualPremium: tier.maxAnnualPremium,
+    rate: tier.rate,
+  }))
+}
+
+function buildBonuses(page2: IlpCatalogSourceRef, page4: IlpCatalogSourceRef): IlpTemplateBonus[] {
+  return [
+    {
+      id: 'welcome-bonus-y1',
+      type: 'allocation',
+      label: 'Welcome Bonus (Premium Year 1)',
+      mode: 'premium-allocation',
+      appliesTo: ['policy'],
+      startPolicyYear: 1,
+      endPolicyYear: 1,
+      yearBasis: 'premium-year',
+      rate: null,
+      amount: null,
+      tieredRates: buildTiers([
+        { minAnnualPremium: 7_800, maxAnnualPremium: 8_999.99, rate: 0.01 },
+        { minAnnualPremium: 9_000, maxAnnualPremium: 11_999.99, rate: 0.03 },
+        { minAnnualPremium: 12_000, maxAnnualPremium: null, rate: 0.03 },
+      ]),
+      notes: [
+        'Applied to accepted regular premiums in premium year 1 using the published annualised regular premium tier.',
+        'The published per-payment counts collapse to the same premium-year rate across annual, semi-annual, quarterly, and monthly payment frequencies.',
+      ],
+      sourceRefs: [page2, page4],
+    },
+    {
+      id: 'welcome-bonus-y2',
+      type: 'allocation',
+      label: 'Welcome Bonus (Premium Year 2)',
+      mode: 'premium-allocation',
+      appliesTo: ['policy'],
+      startPolicyYear: 2,
+      endPolicyYear: 2,
+      yearBasis: 'premium-year',
+      rate: null,
+      amount: null,
+      tieredRates: buildTiers([
+        { minAnnualPremium: 7_800, maxAnnualPremium: 8_999.99, rate: 0.03 },
+        { minAnnualPremium: 9_000, maxAnnualPremium: 11_999.99, rate: 0.04 },
+        { minAnnualPremium: 12_000, maxAnnualPremium: null, rate: 0.05 },
+      ]),
+      notes: [
+        'Applied to accepted regular premiums in premium year 2 using the published annualised regular premium tier.',
+      ],
+      sourceRefs: [page2, page4],
+    },
+    {
+      id: 'welcome-bonus-y3',
+      type: 'allocation',
+      label: 'Welcome Bonus (Premium Year 3)',
+      mode: 'premium-allocation',
+      appliesTo: ['policy'],
+      startPolicyYear: 3,
+      endPolicyYear: 3,
+      yearBasis: 'premium-year',
+      rate: null,
+      amount: null,
+      tieredRates: buildTiers([
+        { minAnnualPremium: 7_800, maxAnnualPremium: 8_999.99, rate: 0.05 },
+        { minAnnualPremium: 9_000, maxAnnualPremium: 11_999.99, rate: 0.05 },
+        { minAnnualPremium: 12_000, maxAnnualPremium: null, rate: 0.07 },
+      ]),
+      notes: [
+        'Applied to accepted regular premiums in premium year 3 using the published annualised regular premium tier.',
+      ],
+      sourceRefs: [page2, page4],
+    },
+    {
+      id: 'welcome-bonus-y4',
+      type: 'allocation',
+      label: 'Welcome Bonus (Premium Year 4)',
+      mode: 'premium-allocation',
+      appliesTo: ['policy'],
+      startPolicyYear: 4,
+      endPolicyYear: 4,
+      yearBasis: 'premium-year',
+      rate: null,
+      amount: null,
+      tieredRates: buildTiers([
+        { minAnnualPremium: 7_800, maxAnnualPremium: 8_999.99, rate: 0.07 },
+        { minAnnualPremium: 9_000, maxAnnualPremium: 11_999.99, rate: 0.07 },
+        { minAnnualPremium: 12_000, maxAnnualPremium: null, rate: 0.09 },
+      ]),
+      notes: [
+        'Applied to accepted regular premiums in premium year 4 using the published annualised regular premium tier.',
+      ],
+      sourceRefs: [page2, page4],
+    },
+    {
+      id: 'welcome-bonus-y5',
+      type: 'allocation',
+      label: 'Welcome Bonus (Premium Year 5)',
+      mode: 'premium-allocation',
+      appliesTo: ['policy'],
+      startPolicyYear: 5,
+      endPolicyYear: 5,
+      yearBasis: 'premium-year',
+      rate: null,
+      amount: null,
+      tieredRates: buildTiers([
+        { minAnnualPremium: 9_000, maxAnnualPremium: 11_999.99, rate: 0.07 },
+        { minAnnualPremium: 12_000, maxAnnualPremium: null, rate: 0.11 },
+      ]),
+      notes: [
+        'Applied to accepted regular premiums in premium year 5 using the published annualised regular premium tier.',
+      ],
+      sourceRefs: [page2, page4],
+    },
+    {
+      id: 'investment-bonus',
+      type: 'custom',
+      label: 'Investment Bonus',
+      mode: 'one-time',
+      oneTimePayoutBasis: 'committed-annual-premium-at-issue',
+      appliesTo: ['policy'],
+      startPolicyYear: 9,
+      endPolicyYear: 12,
+      cadenceYears: 1,
+      requiresPremiumsPaidUpToDate: true,
+      rate: 0.025,
+      amount: null,
+      tieredRates: [],
+      notes: [
+        'Models the published investment bonus as 2.5% of annualised regular premium at the beginning of policy years 9 to 12.',
+        'The bonus is only credited while the policy remains in force and regular premiums are paid up to date.',
+      ],
+      sourceRefs: [page2, page4],
+    },
+    {
+      id: 'performance-bonus',
+      type: 'loyalty',
+      label: 'Performance Bonus',
+      mode: 'annual-rate',
+      appliesTo: ['policy'],
+      startPolicyYear: 9,
+      endPolicyYear: null,
+      requiresPremiumsPaidUpToDate: true,
+      rate: 0.003,
+      amount: null,
+      tieredRates: [],
+      notes: [
+        'Models the published annual Performance Bonus from the beginning of policy year 9 onward.',
+        'The bonus credits 0.30% p.a. of Regular Premium Policy Value while the policy is in force and regular premiums are paid up to date.',
+      ],
+      sourceRefs: [page2, page4],
+    },
+  ]
+}
+
 function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   const page1 = sourceRef(1, 'Plan overview and bonuses', snippetNear(document, 1, 'AIA Wealth Venture', 18))
   const page2 = sourceRef(2, 'Bonuses and maturity benefit', snippetNear(document, 2, 'Investment Bonus', 18))
   const page3 = sourceRef(3, 'Regular premium and top-up subscription', snippetNear(document, 3, '100% of regular premium will be used to purchase regular premium units', 18))
   const page4 = sourceRef(4, 'Supplementary Charge and Premium Holiday Charge', snippetNear(document, 4, 'Supplementary Charge', 18))
+  const page4BenefitCharge = sourceRef(4, 'Benefit Charge', snippetNear(document, 4, 'Benefit Charge', 22))
   const page5 = sourceRef(4, 'Full Surrender Charge and Partial Withdrawal Charge', snippetNear(document, 4, 'Full Surrender Charge', 20))
   const page6 = sourceRef(5, 'Top-up and withdrawal effects', snippetNear(document, 5, 'You may request to pay additional top-up premium', 20))
   const page7 = sourceRef(7, 'Premium holiday and reinstatement', snippetNear(document, 7, 'your policy will remain on Premium Holiday', 18))
   const page8 = sourceRef(8, 'Distribution of dividends', snippetNear(document, 8, 'Distribution of Dividends', 22))
+  const page13 = sourceRef(13, 'Appendix A annual benefit charge schedule', snippetNear(document, 13, 'Current annual Benefit Charge per S$1,000 Sum-at-Risk', 22))
 
   const feeRules: IlpTemplateFeeRule[] = [
     {
@@ -136,9 +297,29 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       endPolicyYear: 10,
       notes: [
         'Models the published 3.60% p.a. charge on Regular Premium Policy Value for the regular-pay corridor.',
-        'Benefit Charge and protection-side sum-at-risk formulas remain outside the current executable slice.',
       ],
       sourceRefs: [page4],
+    },
+    {
+      id: 'benefit-charge',
+      label: 'Benefit Charge',
+      basis: 'assurance-sum-at-risk',
+      rate: 0,
+      amount: 0,
+      appliesTo: ['policy'],
+      activeWindow: 'policy-term',
+      requiresManualInput: true,
+      assuranceConfig: {
+        formula: 'aia-venture-benefit-charge',
+        monthlyModalFactor: 1 / 12,
+        maxAgeNextBirthday: 99,
+      },
+      notes: [
+        'Models the published monthly Benefit Charge deducted to provide insurance cover for the regular-pay corridor.',
+        'The sum at risk is the published total regular premiums paid plus total top-ups less total withdrawals less policy value, floored at zero.',
+        'The published Appendix A rates vary by the insured’s gender and attained age, so life-assured inputs are required before the charge can be projected honestly.',
+      ],
+      sourceRefs: [page1, page4BenefitCharge, page13],
     },
   ]
 
@@ -155,7 +336,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       allocation: 'equal-split',
       notes: [
         'Models the published 3% premium charge on each accepted top-up premium.',
-        'Top-ups are only accepted when regular premiums are fully paid when due, but that gating remains informational only in V1.',
+        'V1 blocks ad-hoc top-ups in policy months where regular premiums are no longer paid up to date.',
       ],
       sourceRefs: [page3, page6],
     },
@@ -190,7 +371,8 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       allocation: 'equal-split',
       notes: [
         'Models the published partial withdrawal charge factor on withdrawn Regular Premium Policy Value.',
-        'The single-premium withdrawal schedule is outside the current regular-pay-only executable slice.',
+        'V1 blocks explicit one-off partial withdrawals that would leave policy value below the published S$10,000 residual floor.',
+        'The single-premium withdrawal schedule and published minimum withdrawal amount remain outside the current regular-pay-only executable slice.',
       ],
       sourceRefs: [page5, page6],
     },
@@ -216,9 +398,18 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
         sourceRefs: [page1, page3, page6],
       },
     ],
-    bonuses: [],
+    bonuses: buildBonuses(page2, page3),
     feeRules,
     eventChargeRules,
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: true,
+      blockTopUpsWhenPremiumsNotPaidUpToDate: true,
+      minimumTopUpAmount: 1_000,
+      minimumPartialWithdrawalAmount: 1_000,
+      partialWithdrawalMinimumRemainingValueRules: [
+        { activeWindow: 'policy-term', basis: 'policy-value', minimumValue: 10_000 },
+      ],
+    },
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['policy'],
@@ -235,15 +426,14 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: [...FULL_SURRENDER_CHARGE_SCHEDULE],
     warnings: [
-      'AIA Wealth Venture is cataloged as a partial modeled subset in V1. The current parser models the regular-pay 8-year corridor: zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge, the premium-holiday charge schedule plus full-outstanding-premium repayment resumption, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and reinvest-default distribution support.',
-      'Welcome Bonus, Investment Bonus, Performance Bonus, Benefit Charge, and Secondary Insured mechanics remain informational only in V1.',
+      'AIA Wealth Venture is cataloged as a supported V1 product for the regular-pay 8-year corridor. The parser captures the published Welcome Bonus tiers for premium years 1 to 5, the Investment Bonus milestones at policy years 9 to 12, the annual Performance Bonus from policy year 9 onward, the current-state death benefit as the higher of policy value or total regular premiums paid plus top-up premiums less withdrawals, the current accidental-death uplift as 100% of cumulative paid regular premiums during the first 2 policy years, zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge, the published Appendix A Benefit Charge corridor, the premium-holiday charge schedule with full-outstanding-premium repayment resumption, annual-state lapse / termination after projected account-value depletion, the 3% top-up premium charge with blocking in months where regular premiums are not paid up to date and the published S$1,000 minimum on explicit ad-hoc top-ups, the regular-premium withdrawal / surrender charge schedules with the published S$10,000 residual policy-value floor on explicit one-off withdrawals, and reinvest-default distribution support, while accidental-death and secondary-insured claim handling, fund-level charges, and underwriting or approval handling around premium resumption remain informational only beyond the modeled current ordinary death-benefit estimate and Benefit Charge.',
+      'Accidental-death claim admission / exclusions / settlement and Secondary Insured mechanics remain informational only beyond the modeled current ordinary death-benefit estimate plus the first-2-policy-year 100%-of-paid-regular-premiums accidental-death uplift.',
       'Automatic fund switching, automatic fund re-balancing, and regular top-up enrollment gating remain informational only in V1.',
     ],
     unsupportedItems: [
-      'Welcome Bonus, Investment Bonus, and Performance Bonus remain informational only because they credit additional regular-premium units outside the current executable slice.',
-      'Benefit Charge, death benefit, accidental death benefit, secondary insured, and other protection-side formulas remain informational only.',
+      'Accidental-death claim admission / exclusions / settlement, secondary-insured handling, and other protection-side claim handling remain informational only beyond the modeled current ordinary death-benefit estimate plus the first-2-policy-year 100%-of-paid-regular-premiums accidental-death uplift.',
       'Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.',
-      'Minimum withdrawal amount, minimum post-withdrawal policy value, regular-top-up eligibility while premiums are outstanding, and top-up suspension remain informational only.',
+      'Top-up suspension and single-premium withdrawal scheduling remain informational only.',
       'Fund switching and automatic fund switching / re-balancing remain informational only.',
       'Any underwriting or approval handling around premium resumption remains informational only.',
     ],
@@ -264,27 +454,31 @@ export function parseAiaWealthVenture({ document, sourceChecksumSha256 }: ParseC
     structureStatus: 'structured',
     economicsStatus: 'supported',
     modeledEconomics: [
+      'branch:aia-wealth-venture-welcome-bonus',
+      'branch:aia-wealth-venture-investment-bonus',
+      'branch:aia-wealth-venture-performance-bonus',
       'branch:aia-wealth-venture-zero-regular-premium-charge',
       'branch:aia-wealth-venture-regular-supplementary-charge',
+      'branch:aia-wealth-venture-benefit-charge',
       'branch:aia-wealth-venture-top-up-premium-charge',
       'branch:aia-wealth-venture-premium-holiday-charge',
       'branch:aia-wealth-venture-partial-withdrawal-charge',
       'branch:aia-wealth-venture-full-surrender-charge',
+      'kernel:automatic-lapse-on-account-depletion',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
+      'kernel:top-up-paid-up-to-date-block',
+      'kernel:top-up-amount-gate-block',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'aia-wealth-venture-welcome-bonus',
-      'aia-wealth-venture-investment-bonus',
-      'aia-wealth-venture-performance-bonus',
-      'aia-wealth-venture-benefit-charge',
-      'aia-wealth-venture-protection-benefits',
       'aia-wealth-venture-secondary-insured-option',
       'aia-wealth-venture-fund-management-charge',
-      'aia-wealth-venture-top-up-eligibility-gating',
       'aia-wealth-venture-fund-switching',
     ],
     warnings: [
-      'AIA Wealth Venture is cataloged as a supported V1 product for the regular-pay 8-year corridor. The parser captures zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge, the premium-holiday charge schedule with full-outstanding-premium repayment resumption, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and reinvest-default distribution support, while bonuses, protection benefits, secondary-insured options, fund-level charges, and underwriting or approval handling around premium resumption remain informational only.',
+      'AIA Wealth Venture is cataloged as a supported V1 product for the regular-pay 8-year corridor. The parser captures the published Welcome Bonus tiers for premium years 1 to 5, the Investment Bonus milestones at policy years 9 to 12, the annual Performance Bonus from policy year 9 onward, the current-state death benefit as the higher of policy value or total regular premiums paid plus top-up premiums less withdrawals, the current accidental-death uplift as 100% of cumulative paid regular premiums during the first 2 policy years, zero regular-premium charge, the 3.60% p.a. regular-premium supplementary charge, the published Appendix A Benefit Charge corridor, the premium-holiday charge schedule with full-outstanding-premium repayment resumption, annual-state lapse / termination after projected account-value depletion, the 3% top-up premium charge with blocking in months where regular premiums are not paid up to date and the published S$1,000 minimum on explicit ad-hoc top-ups, the regular-premium withdrawal / surrender charge schedules with the published S$10,000 residual policy-value floor on explicit one-off withdrawals, and reinvest-default distribution support, while accidental-death and secondary-insured claim handling, fund-level charges, and underwriting or approval handling around premium resumption remain informational only beyond the modeled current ordinary death, accidental-death, and Benefit Charge estimates.',
     ],
     archived: false,
     variants: [buildVariant(document)],

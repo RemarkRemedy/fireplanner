@@ -126,9 +126,16 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
       rate: 0.017,
       amount: null,
       tieredRates: [],
+      qualificationRules: [
+        {
+          formula: 'policy-year-growth-measure',
+          minimumRatio: 1.02,
+          rounding: 'floor-whole-percent',
+        },
+      ],
       notes: [
         'Annual bonus on the Accumulation Units Account value from the end of policy year 4 until the end of the minimum investment period.',
-        'The source document conditions payment on the performance growth measure being at least 102%; that gate remains a manual review assumption in this partial template.',
+        'The bonus is credited only when the published performance growth measure for that policy year is at least 102%, rounded down to the nearest whole percent.',
       ],
       sourceRefs: [page3],
     },
@@ -257,6 +264,7 @@ function buildTokioMpcFeeRule(
   optionPage: IlpCatalogSourceRef,
   chargePage: IlpCatalogSourceRef,
   tablePage: IlpCatalogSourceRef,
+  withLifeBenefitRider = false,
 ): IlpTemplateFeeRule {
   return {
     id: 'monthly-protection-charge',
@@ -267,7 +275,7 @@ function buildTokioMpcFeeRule(
     appliesTo: ['accumulation'],
     assuranceValueAppliesTo: ['initial', 'accumulation'],
     fallbackAppliesTo: ['topup', 'initial'],
-    activeWindow: 'during-mip',
+    activeWindow: withLifeBenefitRider ? 'policy-term' : 'during-mip',
     assuranceConfig: {
       formula: 'tokio-mpc-net-premium-floor',
       rateTable: 'tokio-mpc-unzo-death',
@@ -281,10 +289,15 @@ function buildTokioMpcFeeRule(
     },
     requiresManualInput: true,
     notes: [
-      'Models the published Monthly Protection Charge for the Advanced Death corridor during the minimum investment period.',
+      withLifeBenefitRider
+        ? 'Models the published Monthly Protection Charge for the Advanced Death with Life Benefit Rider corridor through the policy anniversary immediately after age 99.'
+        : 'Models the published Monthly Protection Charge for the Advanced Death corridor during the minimum investment period.',
       'The Monthly Protection Charge for policy years 1 to 3 is accrued and collected in one lump sum in policy year 4.',
       'From policy year 4 onward, the Monthly Protection Charge is deducted monthly in advance from the Accumulation Units Account, then the Top-up Units Account, then the Initial Units Account if needed.',
       'Sum at risk is the published net premium less 101% of Account value, floored at zero.',
+      ...(withLifeBenefitRider
+        ? ['Life Benefit Rider termination is still bounded by the youngest life assured through the policy anniversary immediately after age 99.']
+        : []),
     ],
     sourceRefs: [optionPage, chargePage, tablePage],
   }
@@ -292,9 +305,10 @@ function buildTokioMpcFeeRule(
 
 function buildVariant(
   document: ExtractedPdfDocument,
-  deathBenefitOption: 'basic-death' | 'advanced-death',
+  deathBenefitOption: 'basic-death' | 'advanced-death' | 'advanced-death-life-benefit-rider',
 ): IlpTemplateVariant {
-  const isAdvancedDeath = deathBenefitOption === 'advanced-death'
+  const isAdvancedDeath = deathBenefitOption !== 'basic-death'
+  const hasLifeBenefitRider = deathBenefitOption === 'advanced-death-life-benefit-rider'
   const page1 = sourceRef(1, 'Death Benefit Options', snippetNear(document, 1, 'Basic Death Benefit', 28))
   const page2 = sourceRef(2, 'Initial Bonus', snippetNear(document, 2, 'Initial Bonus', 18))
   const page3 = sourceRef(3, 'Performance Investment / Loyalty / Power-up Bonus', snippetNear(document, 3, 'Performance Investment Bonus', 22))
@@ -406,11 +420,15 @@ function buildVariant(
 
   const feeRules = buildFeeRules(document)
   if (isAdvancedDeath && page18Mpc != null) {
-    feeRules.push(buildTokioMpcFeeRule(page1, page10, page18Mpc))
+    feeRules.push(buildTokioMpcFeeRule(page1, page10, page18Mpc, hasLifeBenefitRider))
   }
 
   return {
-    id: isAdvancedDeath ? 'sgd-mip-15-advanced-death' : 'sgd-mip-15',
+    id: deathBenefitOption === 'basic-death'
+      ? 'sgd-mip-15'
+      : hasLifeBenefitRider
+        ? 'sgd-mip-15-advanced-death-life-benefit-rider'
+        : 'sgd-mip-15-advanced-death',
     currency: 'SGD',
     mipLength: MIP_LENGTH,
     icpMonths: 36,
@@ -453,6 +471,14 @@ function buildVariant(
     bonuses: buildBonuses(document),
     feeRules,
     eventChargeRules,
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      minimumRecurringSinglePremiumStartPolicyMonth: 13,
+      minimumRecurringSinglePremiumMonthlyAmount: 50,
+      minimumTopUpStartPolicyMonth: 13,
+      minimumTopUpAmount: 1_000,
+      requiresCommencementPremiumForRecurringSinglePremiumResumption: true,
+    },
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['initial', 'accumulation', 'topup'],
@@ -473,27 +499,33 @@ function buildVariant(
     },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
-      `This supported template models the SGD / MIP 15 (${isAdvancedDeath ? 'Advanced Death' : 'Basic Death'}) corridor only.`,
+      `This supported template models the SGD / MIP 15 (${hasLifeBenefitRider ? 'Advanced Death with Life Benefit Rider' : isAdvancedDeath ? 'Advanced Death' : 'Basic Death'}) corridor only.`,
       'This supported template models regular-premium routing through year 15, top-up routing, recurring single premium routing, initial setup charge, policy charge, admin charge, the published bonus set, surrender charge, partial-withdrawal charge, and premium shortfall charge.',
       ...(isAdvancedDeath
         ? [
-            'The Advanced Death variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window and policy-year-4 lump-sum settlement, after you enter the insured-life details and current net premium base.',
+            hasLifeBenefitRider
+              ? 'The Advanced Death with Life Benefit Rider variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window, policy-year-4 lump-sum settlement, static current multi-life last-life handling, oldest-life MPC rating, youngest-life rider age gating, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base through the policy anniversary immediately after age 99.'
+              : 'The Advanced Death variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window, policy-year-4 lump-sum settlement, and static current multi-life last-life handling, after you enter the insured-life details and current net premium base.',
           ]
         : []),
       'Partial withdrawals from the Accumulation Units Account are not allowed in the first five policy years and are modeled only from policy year 6 onward.',
-      'Performance investment bonus is modeled at the published 1.70% annual rate, but the 102% performance-growth-measure gate remains a manual review assumption.',
+      'Performance investment bonus is modeled at the published 1.70% annual rate together with the published 102% performance-growth-measure gate.',
       'Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the restart month.',
       'Harvest Max keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
     ],
     unsupportedItems: [
       ...(isAdvancedDeath
         ? [
-            'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, multiple-life last-life settlement, and capital-guarantee / Life Benefit Rider handling remain metadata-only for this product.',
+            hasLifeBenefitRider
+              ? 'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, Life Benefit Rider termination / fallback handling, and change-of-life-assured / life-replacement administration remain metadata-only for this product.'
+              : 'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, and capital-guarantee / Life Benefit Rider handling remain metadata-only for this product.',
           ]
         : [
-            'Advanced Death selection, Monthly Protection Charge, multiple-life last-life settlement, and capital-guarantee / Life Benefit Rider handling remain metadata-only for this product.',
+            'Advanced Death selection, Monthly Protection Charge, and capital-guarantee / Life Benefit Rider handling remain metadata-only for this product.',
           ]),
-      'Credit-card charge and add/remove/change-of-life-assured (life-replacement) administration remain metadata-only for this product.',
+      hasLifeBenefitRider
+        ? 'Credit-card charge remain metadata-only for this product.'
+        : 'Credit-card charge and add/remove/change-of-life-assured (life-replacement) administration remain metadata-only for this product.',
     ],
     sourceRefs: [
       page1,
@@ -533,8 +565,13 @@ export function parseTokioMarineHarvestMax(context: ParseContext): IlpCatalogPro
       'tokio-loyalty-bonus',
       'tokio-power-up-bonus',
       'tokio-top-up-routing',
+      'kernel:top-up-start-policy-month-block',
+      'kernel:top-up-amount-gate-block',
       'tokio-post-mip-regular-premium-routing-back-to-initial-account',
       'tokio-recurring-single-premium-routing',
+      'kernel:minimum-recurring-single-premium-start-month',
+      'kernel:minimum-recurring-single-premium-amount',
+      'kernel:committed-premium-rsp-resumption-gate',
       'tokio-recurring-single-premium-manual-resumption-after-premium-holiday',
       'tokio-regular-premium-reduction-consumes-recurring-single-premium-first',
       'tokio-initial-charge-on-initial-account',
@@ -549,22 +586,22 @@ export function parseTokioMarineHarvestMax(context: ParseContext): IlpCatalogPro
       'tokio-premium-increase-restores-shortfall-charge-cessation',
       'tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only',
       'branch:tokio-harvest-max-advanced-death-monthly-protection-charge-accrual',
+      'branch:tokio-current-only-multi-life-life-state',
       'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
       'tokio-harvest-max-credit-card-charge',
       'tokio-harvest-max-advanced-death-payout-handling',
-      'tokio-harvest-max-multiple-life-last-life-settlement',
       'tokio-harvest-max-capital-guarantee-option-and-life-benefit-rider-handling',
       'tokio-harvest-max-change-of-life-assured-and-life-replacement-administration',
     ],
     warnings: [
       'Structured extraction validated against the Harvest Max product summary text layer.',
       'Harvest Max is modeled as split SGD / MIP 15 death-benefit-option variants with published initial setup charge, policy charge, admin charge, bonuses, and appendix charge tables.',
-      'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published first-three-policy-years accrual window and policy-year-4 lump-sum settlement after you enter the insured-life details and current net premium base.',
+      'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published first-three-policy-years accrual window and policy-year-4 lump-sum settlement after you enter the insured-life details and current net premium base with static current multi-life last-life handling, and the Advanced Death with Life Benefit Rider variant extends the same corridor through the policy anniversary immediately after age 99 with oldest-life MPC rating and youngest-life rider age gating.',
       'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
-      'Performance investment bonus retains the published 102% performance-growth-measure gate as a manual review assumption.',
+      'Performance investment bonus also models the published 102% performance-growth-measure gate.',
       'Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.',
       'Regular premiums paid after the minimum investment period are modeled back into the Initial Units Account in line with the product summary.',
     ],
@@ -572,6 +609,7 @@ export function parseTokioMarineHarvestMax(context: ParseContext): IlpCatalogPro
     variants: [
       buildVariant(context.document, 'basic-death'),
       buildVariant(context.document, 'advanced-death'),
+      buildVariant(context.document, 'advanced-death-life-benefit-rider'),
     ],
   }
 }

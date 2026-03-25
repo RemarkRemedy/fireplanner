@@ -27,6 +27,11 @@ describe('parseGreatEasternGreatLifeAdvantage4', () => {
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'kernel:protected-base-assurance',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-tpd-benefit-estimate',
+      'kernel:current-ti-benefit-after-tpd-estimate',
+      'kernel:current-residual-death-benefit-after-tpd-estimate',
       'branch:great-life-advantage-4-premium-charge',
       'branch:great-life-advantage-4-premium-reward',
       'branch:great-life-advantage-4-policy-fee',
@@ -36,8 +41,14 @@ describe('parseGreatEasternGreatLifeAdvantage4', () => {
       'branch:great-life-advantage-4-top-up-charge',
       'branch:great-life-advantage-4-withdrawal-charge',
       'branch:great-life-advantage-4-surrender-charge',
+      'kernel:top-up-amount-gate-block',
+      'kernel:premium-holiday-top-up-block',
+      'kernel:top-up-paid-up-to-date-block',
     ])
     expect(product.metadataOnlyBehaviors).not.toContain('great-life-advantage-4-insurance-charge')
+    expect(product.warnings).toContain(
+      'GREAT Life Advantage 4 is cataloged as a supported V1 corridor. The parser captures the premium-year regular premium charge schedule, premium reward, fixed policy fee, monthly insurance charge, the current-state death / terminal-illness / TPD benefit estimate as the higher of policy value or current basic sum assured plus top-ups less withdrawals including withdrawal charges after current amount owing, with TPD capped by a manual remaining aggregate TPD cap, the current residual death-benefit estimate after a TPD claim today as account value when a manual Continuation Event status is set to triggered, the current TI benefit estimate after a TPD claim today as account value on the same supported continuation surface, first-two-policy-years premium-holiday charge and refund privilege, the published S$1,000 single-premium top-up minimum, premium-holiday and paid-up-to-date top-up blocking, and first-two-policy-years withdrawal / surrender charges, while non-lapse guarantee debt carry, rider-side continuation and deduction behavior, basic-sum-assured and premium-stream state changes, and broader protection-benefit claim handling remain informational only beyond the modeled current death / terminal-illness / TPD benefit estimate, current residual death-after-TPD estimate, current TI-after-TPD estimate, and fee drag.',
+    )
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended-regular-pay'])
 
     const variant = product.variants[0]
@@ -109,5 +120,23 @@ describe('parseGreatEasternGreatLifeAdvantage4', () => {
       }),
     ])
     expect(variant.eecTable).toEqual([1, 1])
+    expect(variant.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: true,
+      blockTopUpsDuringPremiumHoliday: true,
+      blockTopUpsWhenPremiumsNotPaidUpToDate: true,
+      minimumTopUpAmount: 1_000,
+    })
+    expect(variant.warnings).toContain(
+      'GREAT Life Advantage 4 is cataloged as a supported V1 corridor. The parser captures the premium-year regular premium charge schedule, the 2% premium reward path, the fixed S$5 monthly policy fee, the monthly insurance charge, the current-state death / terminal-illness / TPD benefit estimate as the higher of policy value or current basic sum assured plus top-ups less withdrawals including withdrawal charges after current amount owing, with TPD capped by a manual remaining aggregate TPD cap, the current residual death-benefit estimate after a TPD claim today as account value when a manual Continuation Event status is set to triggered, the current TI benefit estimate after a TPD claim today as account value on the same supported continuation surface, the first-two-policy-years premium-holiday charge and refund privilege, the published S$1,000 single-premium top-up minimum, premium-holiday and paid-up-to-date top-up blocking, and the first-two-policy-years withdrawal / surrender charge schedule.',
+    )
+    expect(variant.unsupportedItems).toContain(
+      'The current-state death / terminal-illness / TPD benefit estimate needs manual current basic sum assured and current amount owing inputs because current debt and protected-base history are not reconstructed in V1.',
+    )
+    expect(variant.unsupportedItems).toContain(
+      'The current-state TPD estimate needs a manual remaining aggregate TPD cap input because Great Eastern’s S$5,000,000 aggregate TPD limit is not reconstructed across policies and riders in V1.',
+    )
+    expect(variant.unsupportedItems).toContain(
+      'The current residual death-benefit estimate after a TPD claim today and the current TI benefit estimate after a TPD claim today both need a manual Continuation Event status because qualifying Additional CI UDR attachment and in-force state at TPD admission are not reconstructed in V1.',
+    )
   }, 30_000)
 })

@@ -8,7 +8,26 @@
     "supportStatus": "supported",
     "description": "AIA Platinum Retirement Elite alternate-fund high-OCF stress scenario.",
     "coverageTags": [
-      "ocf-stress"
+      "ocf-stress",
+      "branch:aia-platinum-retirement-elite-regular-premium-charge",
+      "branch:aia-platinum-retirement-elite-regular-supplementary-charge",
+      "branch:aia-platinum-retirement-elite-single-premium-charge",
+      "branch:aia-platinum-retirement-elite-single-supplementary-charge",
+      "branch:aia-platinum-retirement-elite-top-up-premium-charge",
+      "branch:aia-platinum-retirement-elite-premium-holiday-charge",
+      "branch:aia-platinum-retirement-elite-partial-withdrawal-charge",
+      "branch:aia-platinum-retirement-elite-full-surrender-charge",
+      "branch:aia-platinum-retirement-elite-power-up-bonus-no-withdrawal-corridor",
+      "kernel:automatic-lapse-on-account-depletion",
+      "kernel:partial-withdrawal-minimum-remaining-value-block",
+      "kernel:top-up-paid-up-to-date-block",
+      "kernel:top-up-amount-gate-block",
+      "kernel:current-death-benefit-estimate",
+      "kernel:current-accidental-death-benefit-estimate",
+      "kernel:current-ti-benefit-estimate",
+      "kernel:scheduled-payout-manual-assumption",
+      "kernel:scheduled-payout-target-retirement-age-gate",
+      "kernel:lapse-reinstatement-payout-state"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "WA_Sum_201106386R_PRE_Jul2025.pdf",
@@ -23,6 +42,11 @@
     "monthsAlreadyPaid": 0,
     "currentPolicyYear": 1,
     "icpMonths": 1,
+    "assuranceProfile": {
+      "currentAgeNextBirthday": 50,
+      "sex": "female",
+      "smokerStatus": "non-smoker"
+    },
     "mipLength": 5,
     "postMipYears": 0,
     "eecTable": [
@@ -84,7 +108,33 @@
         "grossReturnHigh": 0.067
       }
     ],
-    "bonuses": [],
+    "bonuses": [
+      {
+        "id": "power-up-bonus",
+        "type": "power-up",
+        "label": "Power-up Bonus",
+        "mode": "one-time",
+        "oneTimePayoutBasis": "committed-annual-premium-at-issue",
+        "rate": 0.125,
+        "amount": 0,
+        "appliesTo": [
+          "policy"
+        ],
+        "startPolicyYear": 10,
+        "endPolicyYear": null,
+        "cadenceYears": 5,
+        "requiresPremiumsPaidUpToDate": true,
+        "tieredRates": [],
+        "adjustmentFactorConfig": {
+          "formula": "cumulative-withdrawal-factor-product-over-account-value",
+          "withdrawalAccountIds": [
+            "policy"
+          ],
+          "countFromPolicyYear": 6
+        },
+        "suspensionRules": []
+      }
+    ],
     "chargeRules": [
       {
         "id": "regular-premium-charge",
@@ -265,36 +315,44 @@
       "modeledEconomics": [
         "branch:aia-platinum-retirement-elite-regular-premium-charge",
         "branch:aia-platinum-retirement-elite-regular-supplementary-charge",
+        "branch:aia-platinum-retirement-elite-single-premium-charge",
+        "branch:aia-platinum-retirement-elite-single-supplementary-charge",
         "branch:aia-platinum-retirement-elite-top-up-premium-charge",
         "branch:aia-platinum-retirement-elite-premium-holiday-charge",
         "branch:aia-platinum-retirement-elite-partial-withdrawal-charge",
         "branch:aia-platinum-retirement-elite-full-surrender-charge",
+        "branch:aia-platinum-retirement-elite-power-up-bonus-no-withdrawal-corridor",
+        "kernel:automatic-lapse-on-account-depletion",
+        "kernel:partial-withdrawal-minimum-remaining-value-block",
+        "kernel:top-up-paid-up-to-date-block",
+        "kernel:top-up-amount-gate-block",
+        "kernel:current-death-benefit-estimate",
+        "kernel:current-accidental-death-benefit-estimate",
+        "kernel:current-ti-benefit-estimate",
         "kernel:scheduled-payout-manual-assumption",
+        "kernel:scheduled-payout-target-retirement-age-gate",
         "kernel:lapse-reinstatement-payout-state"
       ],
       "metadataOnlyBehaviors": [
         "aia-platinum-retirement-elite-monthly-retirement-income-election",
         "aia-platinum-retirement-elite-stepped-up-income-option",
-        "aia-platinum-retirement-elite-power-up-bonus",
-        "aia-platinum-retirement-elite-single-premium-corridor",
-        "aia-platinum-retirement-elite-protection-benefits",
         "aia-platinum-retirement-elite-fund-management-charge",
-        "aia-platinum-retirement-elite-top-up-eligibility-gating",
-        "aia-platinum-retirement-elite-fund-switching"
+        "aia-platinum-retirement-elite-fund-switching",
+        "aia-platinum-retirement-elite-usd-and-srs-single-pay-selection"
       ]
     },
     "catalogWarnings": [
-      "AIA Platinum Retirement Elite is cataloged as a supported V1 product. The parser captures the regular-pay 5-year corridor, the regular-premium supplementary charge, the withdrawal / surrender schedules, and scheduled payout capability once a manual payout assumption is supplied, while the single-pay corridor, payout-election inputs, Power-up Bonus adjustment, protection benefits, and fund-level charges remain informational only.",
-      "AIA Platinum Retirement Elite is cataloged as a supported V1 product. The current parser captures the regular-pay 5-year corridor: premium-year regular premium charges, the 2.50% p.a. regular-premium supplementary charge, the premium-holiday charge schedule, the 3% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, and scheduled payout capability once a manual payout assumption is supplied, including lapse suppression in the annual-state model.",
-      "Target Monthly Retirement Income amount, payout-age selection, payout-period selection, and stepped-up-income election remain manual or informational inputs in V1.",
+      "AIA Platinum Retirement Elite is cataloged as a supported V1 product. The parser captures the regular-pay 5-year corridor including annual-state lapse after projected account-value depletion, the SGD single-pay corridor, the regular-premium and single-premium supplementary-charge paths, the withdrawal / surrender schedules for each modeled corridor with the published S$10,000 residual policy-value floor on explicit one-off withdrawals, the Power-up Bonus corridors from the end of policy year 10 and every fifth policy year thereafter including the published cumulative withdrawal-factor adjustment from policy year 6 onward, scheduled payout capability once a manual payout assumption and target-retirement-age input are supplied with the published annual-state start gate, the current-state death and terminal-illness benefit amount as 105% of policy value, and the current accidental-death uplift as 50% of cumulative paid regular premiums or 10% of a manual initial single premium input during the first 5 policy years, while payout-election inputs, accidental-death claim admission / exclusions / settlement, terminal-illness claim admission / exclusions / settlement, fund-level charges, and USD/SRS single-pay selection remain informational only beyond the modeled current ordinary death, accidental death, and terminal-illness benefit amounts.",
+      "AIA Platinum Retirement Elite is cataloged as a supported V1 product. The current parser captures the regular-pay 5-year corridor: premium-year regular premium charges, the 2.50% p.a. regular-premium supplementary charge, the premium-holiday charge schedule, annual-state lapse after projected account-value depletion, the 3% top-up premium charge with blocking in months where regular premiums are not paid up to date and the published S$1,000 minimum on explicit ad-hoc top-ups, the regular-premium withdrawal / surrender charge schedules, the regular-pay Power-up Bonus corridor from the end of policy year 10 and every fifth policy year thereafter including the published cumulative withdrawal-factor adjustment from policy year 6 onward, scheduled payout capability once a manual payout assumption is supplied with the published target-retirement-age start gate, the current-state death and terminal-illness benefit amount as 105% of policy value, and the current accidental-death uplift as 50% of cumulative paid regular premiums during the first 5 policy years, including lapse suppression in the annual-state model.",
+      "Target Monthly Retirement Income amount, payout-period selection, exact month-level commencement timing, and stepped-up-income election remain manual or informational inputs in V1.",
       "The single-pay corridor, including 5% initial premium charge, 0.50% p.a. single-premium supplementary charge, and single-premium withdrawal / surrender charge schedules, remains outside the current executable slice.",
       "This product supports scheduled payout-state, but V1 requires a manual payout assumption. No payout schedule is seeded by default.",
-      "Target Monthly Retirement Income amount, Target Retirement Age, Target Payout Period, and Stepped-up Income Option remain manual-assumption inputs in V1.",
-      "Power-up Bonus remains informational only because it depends on a withdrawal-adjustment factor and separately documented single-premium versus regular-premium policy values.",
+      "Target Monthly Retirement Income amount, Target Payout Period, and Stepped-up Income Option remain manual-assumption inputs in V1. Target Retirement Age is used only as the scheduled-payout start gate in the annual-state model.",
+      "Single-premium Power-up Bonus remains informational only because it depends on separately documented single-premium policy-value tracking.",
       "Single-pay and SRS single-premium corridors remain informational only in V1, including the 5% single-premium charge and single-premium withdrawal / surrender charge schedules.",
-      "Death, accidental death, and terminal illness benefit formulas remain informational only.",
+      "The current-state terminal-illness benefit amount is modeled as the same amount as the current death-benefit estimate, and the current accidental-death amount is modeled as the current death-benefit estimate plus 50% of cumulative paid regular premiums during the first 5 policy years, but accidental-death and terminal-illness claim admission, exclusions, settlement, and policy-termination handling remain informational only.",
       "Fund-level management charges remain informational only because they depend on the selected ILP sub-fund.",
-      "Minimum withdrawal amount, minimum post-withdrawal policy value, top-up eligibility while premiums are outstanding, and top-up suspension remain informational only.",
+      "Top-up suspension remains informational only.",
       "Fund switching mechanics remain informational only."
     ]
   },

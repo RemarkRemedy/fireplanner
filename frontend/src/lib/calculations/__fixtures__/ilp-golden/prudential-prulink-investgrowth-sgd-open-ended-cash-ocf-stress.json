@@ -8,7 +8,14 @@
     "supportStatus": "supported",
     "description": "PRULink InvestGrowth cash alternate-fund high-OCF stress scenario.",
     "coverageTags": [
-      "ocf-stress"
+      "ocf-stress",
+      "branch:prulink-investgrowth-recurring-premium-charge",
+      "branch:prulink-investgrowth-premium-assurance-charge",
+      "branch:prulink-investgrowth-top-up-charge",
+      "branch:prulink-investgrowth-top-up-assurance-charge",
+      "kernel:top-up-amount-gate-block",
+      "kernel:partial-withdrawal-minimum-remaining-value-block",
+      "kernel:current-death-benefit-estimate"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "PRULink InvestGrowth Product Summary.pdf",
@@ -142,10 +149,12 @@
         "branch:prulink-investgrowth-recurring-premium-charge",
         "branch:prulink-investgrowth-premium-assurance-charge",
         "branch:prulink-investgrowth-top-up-charge",
-        "branch:prulink-investgrowth-top-up-assurance-charge"
+        "branch:prulink-investgrowth-top-up-assurance-charge",
+        "kernel:top-up-amount-gate-block",
+        "kernel:partial-withdrawal-minimum-remaining-value-block",
+        "kernel:current-death-benefit-estimate"
       ],
       "metadataOnlyBehaviors": [
-        "prulink-investgrowth-death-benefit",
         "prulink-investgrowth-e-top-up-charge",
         "prulink-investgrowth-withdrawals",
         "prulink-investgrowth-fund-switching",
@@ -153,14 +162,15 @@
       ]
     },
     "catalogWarnings": [
-      "PRULink InvestGrowth is cataloged as a supported V1 product. The parser captures the published recurring-premium charge and premium-event assurance-charge path for standard premiums and standard top-ups, while e-top-up treatment, withdrawals, fund switching, and minimum-premium schedule enforcement remain outside the current engine.",
+      "PRULink InvestGrowth is cataloged as a supported V1 product. The parser captures the published recurring-premium charge and premium-event assurance-charge path for standard premiums and standard top-ups, the published S$2,000 one-off top-up minimum, the published S$1,000 one-off withdrawal minimum and residual-account floor, plus the current-state death benefit as the higher of policy value or 110% of total premiums plus top-ups less withdrawals, while e-top-up treatment, broader withdrawal administration, fund switching, minimum-premium schedule enforcement, and death-benefit exclusions or terminal-illness handling remain outside the current engine.",
       "This cash-funded variant uses the published 3% premium-charge and 1.5% premium-event assurance-charge path.",
       "This open-ended product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.",
+      "The published S$2,000 one-off top-up minimum plus the published S$1,000 one-off withdrawal minimum and residual-account floor are executable on explicit events.",
       "Open-ended products use a default 20-year review horizon in V1; adjust the horizon if you want a different analysis window.",
-      "Death and terminal-illness benefit formulas remain informational only.",
+      "Terminal-illness claim handling and death-benefit exclusions remain informational only beyond the modeled current ordinary death-benefit estimate.",
       "Recurrent-single-premium paid-premium tracking remains informational only in V1.",
       "e-top-up reduced premium-charge and assurance-charge treatment remains informational only.",
-      "Withdrawal administration and fund-switching mechanics remain informational only."
+      "Broader withdrawal administration and fund-switching mechanics remain informational only."
     ]
   },
   "expected": {

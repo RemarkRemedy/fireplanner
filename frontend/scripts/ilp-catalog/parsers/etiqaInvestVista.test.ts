@@ -27,8 +27,19 @@ describe('parseEtiqaInvestVista', () => {
     expect(product.modeledEconomics).toContain('branch:etiqa-vista-policy-charge')
     expect(product.modeledEconomics).toContain('branch:etiqa-vista-startup-bonus')
     expect(product.modeledEconomics).toContain('branch:etiqa-vista-insurance-charge')
+    expect(product.modeledEconomics).toContain('branch:etiqa-vista-premium-shortfall-charge')
+    expect(product.modeledEconomics).toContain('branch:etiqa-vista-premium-shortfall-refund')
+    expect(product.modeledEconomics).toContain('kernel:premium-holiday-top-up-block')
+    expect(product.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
+    expect(product.modeledEconomics).toContain('kernel:partial-withdrawal-amount-increment-block')
+    expect(product.modeledEconomics).toContain('kernel:partial-withdrawal-maximum-amount-block')
+    expect(product.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
+    expect(product.modeledEconomics).toContain('kernel:monthly-rate-bonus-crediting')
+    expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
+    expect(product.modeledEconomics).toContain('kernel:current-ti-benefit-estimate')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(product.metadataOnlyBehaviors).toContain('etiqa-vista-premium-shortfall-charge')
+    expect(product.warnings[0]).toContain('current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap')
+    expect(product.metadataOnlyBehaviors).not.toContain('etiqa-vista-premium-free-period-gated-shortfall-charge')
     expect(product.metadataOnlyBehaviors).not.toContain('etiqa-vista-insurance-charge')
     expect(product.metadataOnlyBehaviors).toContain('etiqa-vista-distribution-paying-fund-threshold-and-withdrawal-consequences')
 
@@ -41,6 +52,31 @@ describe('parseEtiqaInvestVista', () => {
 
     const flexi5 = product.variants.find((entry) => entry.id === 'sgd-mip-10-flexi-5')
     expect(flexi5).toBeDefined()
+    expect(flexi5?.policyStateSupport).toEqual(expect.objectContaining({
+      automaticLapseOnAccountValueDepletion: false,
+      blockTopUpsDuringPremiumHoliday: true,
+      minimumTopUpAmount: 2_500,
+      topUpAmountIncrement: 100,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalAmountIncrement: 100,
+      partialWithdrawalMaximumAmountRules: [
+        {
+          activeWindow: 'during-mip',
+          accountId: 'regular',
+          basis: 'cumulative-paid-regular-premium-less-prior-gross-withdrawals',
+          maximumValueRate: 0.5,
+        },
+      ],
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'account-value',
+          accountId: 'regular',
+          minimumValue: 1_000,
+        },
+      ],
+    }))
+    expect(flexi5?.unsupportedItems).toContain('The current-state death and terminal-illness snapshot needs manual current amount owing and remaining aggregate TI cap inputs because debt and cross-policy TI cap usage are not reconstructed from history in V1.')
     expect(flexi5?.accounts.map((account) => account.id)).toEqual(['regular', 'topup'])
     expect(flexi5?.feeRules).toEqual(
       expect.arrayContaining([
@@ -78,6 +114,13 @@ describe('parseEtiqaInvestVista', () => {
         expect.objectContaining({ id: 'partial-withdrawal-charge', trigger: 'partial-withdrawal' }),
       ]),
     )
+    const flexi3 = product.variants.find((entry) => entry.id === 'sgd-mip-10-flexi-3')
+    expect(flexi3?.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'premium-shortfall-charge', trigger: 'premium-holiday', basis: 'annual-premium-with-overlap-months' }),
+        expect.objectContaining({ id: 'premium-shortfall-charge-refund', trigger: 'premium-holiday-repayment', basis: 'premium-holiday-charge-refund', sourceChargeRuleId: 'premium-shortfall-charge' }),
+      ]),
+    )
     expect(flexi5?.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['regular', 'topup'],
@@ -90,5 +133,17 @@ describe('parseEtiqaInvestVista', () => {
       ]),
       sourceRefs: expect.any(Array),
     })
+    const twentyYear = product.variants.find((entry) => entry.id === 'sgd-mip-20')
+    expect(twentyYear?.bonuses).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'loyalty-bonus',
+          mode: 'monthly-rate',
+          startPolicyYear: 21,
+          rate: 0.001,
+          suspensionRules: [{ trigger: 'partial-withdrawal', suspensionMonths: 12, startOffsetMonths: 1 }],
+        }),
+      ]),
+    )
   }, 30_000)
 })

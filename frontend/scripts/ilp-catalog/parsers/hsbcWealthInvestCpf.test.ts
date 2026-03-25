@@ -30,16 +30,31 @@ describe('parseHsbcWealthInvestCpf', () => {
       'branch:hsbc-life-wealth-invest-cpf-zero-recurring-single-premium-charge',
       'branch:hsbc-life-wealth-invest-cpf-zero-top-up-charge',
       'branch:hsbc-life-wealth-invest-cpf-zero-redemption-fee',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'tokio-recurring-single-premium-routing',
     ])
     expect(product.metadataOnlyBehaviors).toContain('hsbc-life-wealth-invest-cpf-fund-management-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('hsbc-life-wealth-invest-cpf-death-benefit')
+    expect(product.metadataOnlyBehaviors).not.toContain('hsbc-life-wealth-invest-cpf-terminal-illness-benefit')
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-life-wealth-invest-cpf-single-premium-principal-tracking')
+    expect(product.warnings).toContain(
+      'HSBC Life Wealth Invest (CPF) is cataloged as a supported V1 product. The parser captures the published zero-charge single-premium, recurring-single-premium, approved top-up, nil-redemption-fee withdrawal path, and the published S$10,000 residual policy-value floor on explicit one-off partial redemptions for the CPF corridor through the open-ended no-MIP basis, the current-state death and terminal-illness benefit amount as the higher of policy value or the 101%-of-paid-premiums floor after partial withdrawals and current amounts owing, and the current admitted-state TI payable amount through the published automatic-termination TI corridor after manual claim-amount entry, while terminal-illness claim exceptions, switching constraints, free-look behavior, and fund-level charges remain informational only beyond the modeled current ordinary death-benefit and terminal-illness estimates.',
+    )
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended-cpf'])
 
     const variant = product.variants[0]
     expect(variant?.mipBasis).toBe('open-ended')
     expect(variant?.mipLength).toBeNull()
     expect(variant?.eecTable).toEqual([])
+    expect(variant?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 1_000,
+      partialWithdrawalMinimumRemainingValueRules: [
+        { activeWindow: 'policy-term', basis: 'policy-value', minimumValue: 10_000 },
+      ],
+    })
     expect(variant?.accounts).toEqual([
       expect.objectContaining({
         id: 'policy',
@@ -81,5 +96,6 @@ describe('parseHsbcWealthInvestCpf', () => {
       }),
     ])
     expect(variant?.warnings).toContain('Switching fees are currently nil, but switching behavior and CPF eligibility constraints remain outside the current calculator surface.')
+    expect(variant?.unsupportedItems).toContain('The current terminal-illness benefit amount is modeled as the same higher-of policy value or 101%-of-paid-premiums corridor after current amounts owing, and the current admitted-state TI payable amount is supported through the published termination corridor after manual claim-amount entry, but claim exclusions and insurer-side payout mechanics remain informational only.')
   }, 30_000)
 })

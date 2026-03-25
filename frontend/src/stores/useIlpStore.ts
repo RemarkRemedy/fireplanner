@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { IlpAccount, IlpBonusRule, IlpChargeRule, IlpEventChargeRule, IlpFund, IlpPolicyInput } from '@/lib/calculations/ilp'
 import type { IlpPolicySeed } from '@/lib/ilp-catalog/policySeedSchema'
+import { refreshPersistedPolicyFromCatalog } from '@/lib/ilp-catalog/refreshPersistedPolicy'
 import { ilpPolicySchema } from '@/lib/validation/ilpSchema'
 import {
   DEFAULT_ALTERNATIVE_RETURN,
@@ -132,6 +133,8 @@ function cloneChargeRule(rule: IlpChargeRule): IlpChargeRule {
     premiumBaseConfig: rule.premiumBaseConfig
       ? {
           useHigherOfCommencementAndPrevailing: rule.premiumBaseConfig.useHigherOfCommencementAndPrevailing,
+          capRate: rule.premiumBaseConfig.capRate,
+          multiplierYearBasis: rule.premiumBaseConfig.multiplierYearBasis,
           multiplierSchedule: rule.premiumBaseConfig.multiplierSchedule.map((tier) => ({ ...tier })),
         }
       : undefined,
@@ -158,6 +161,7 @@ function clonePolicy(policy: IlpPolicyInput): IlpPolicyInput {
     ...policy,
     eecTable: [...policy.eecTable],
     assuranceProfile: policy.assuranceProfile ? { ...policy.assuranceProfile } : undefined,
+    claimProfile: policy.claimProfile ? { ...policy.claimProfile } : undefined,
     policyEvents: policy.policyEvents?.map((event) => ({ ...event })),
     funds: policy.funds.map(cloneFund),
     accounts: policy.accounts.map(cloneAccount),
@@ -181,6 +185,7 @@ export function createDefaultPolicy(): IlpPolicyInput {
     currentPolicyYear: 1,
     icpMonths: 12,
     assuranceProfile: undefined,
+    claimProfile: undefined,
     accounts: [cloneAccount(DEFAULT_IUA), cloneAccount(DEFAULT_AUA)],
     mipLength: DEFAULT_MIP_LENGTH,
     postMipYears: 0,
@@ -203,6 +208,7 @@ function mergePolicySeed(seed: IlpPolicySeed): IlpPolicyInput {
     ...seed,
     eecTable: [...seed.eecTable],
     assuranceProfile: seed.assuranceProfile ? { ...seed.assuranceProfile } : undefined,
+    claimProfile: seed.claimProfile ? { ...seed.claimProfile } : undefined,
     policyEvents: seed.policyEvents?.map((event) => ({ ...event })),
     funds: seed.funds.map(cloneFund),
     accounts: seed.accounts.map(cloneAccount),
@@ -235,7 +241,13 @@ function sanitizePersistedData(persisted: unknown): IlpStoreData {
   if (Array.isArray(rawPolicies)) {
     policies = rawPolicies.flatMap((policy) => {
       const parsed = ilpPolicySchema.safeParse(policy)
-      return parsed.success ? [parsed.data] : []
+      if (!parsed.success) {
+        return []
+      }
+
+      const refreshed = refreshPersistedPolicyFromCatalog(parsed.data)
+      const refreshedParsed = ilpPolicySchema.safeParse(refreshed)
+      return refreshedParsed.success ? [refreshedParsed.data] : []
     })
 
     if (rawPolicies.length > 0 && policies.length === 0) {

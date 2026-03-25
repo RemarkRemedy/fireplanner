@@ -2,6 +2,7 @@ import path from 'node:path'
 import type {
   IlpCatalogProduct,
   IlpCatalogSourceRef,
+  IlpTemplateBonus,
   IlpTemplateEventChargeRule,
   IlpTemplateFeeRule,
   IlpTemplateVariant,
@@ -68,6 +69,30 @@ function buildRateSchedule(values: readonly number[]): Array<{ startPolicyYear: 
     endPolicyYear: index + 1,
     rate,
   }))
+}
+
+function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
+  const loyaltyPage = sourceRef(2, 'Loyalty Bonus', snippetNear(document, 2, 'Loyalty Bonus', 20))
+
+  return [
+    {
+      id: 'loyalty-bonus',
+      type: 'loyalty',
+      label: 'Loyalty Bonus',
+      mode: 'annual-rate',
+      appliesTo: ['policy'],
+      startPolicyYear: 1,
+      endPolicyYear: null,
+      rate: 0.0022,
+      amount: null,
+      tieredRates: [],
+      notes: [
+        'Models the published 0.22% annual loyalty bonus on the Single Premium Units Account value from the first policy anniversary onward while the policy remains in force.',
+        'The loyalty bonus is allocated in the form of additional units to the Single Premium Units Account using the latest investment allocation instructions.',
+      ],
+      sourceRefs: [loyaltyPage],
+    },
+  ]
 }
 
 function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
@@ -199,9 +224,25 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
         sourceRefs: [page1, page3, page6],
       },
     ],
-    bonuses: [],
+    bonuses: buildBonuses(document),
     feeRules,
     eventChargeRules,
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      minimumRecurringSinglePremiumStartPolicyMonth: 13,
+      minimumRecurringSinglePremiumMonthlyAmount: 100,
+      minimumTopUpStartPolicyMonth: 13,
+      minimumTopUpAmount: 1_000,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'initial-single-premium',
+          accountId: 'policy',
+          minimumValueRate: 0.1,
+        },
+      ],
+    },
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['policy', 'topup'],
@@ -220,12 +261,12 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     eecTable: [...SURRENDER_CHARGE_TABLE],
     exitChargeBasis: 'initial-single-premium-base',
     warnings: [
-      '#goWealth Enrich is cataloged as a supported V1 corridor. The parser captures the published 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the cash-payout-capable manual distribution-mode assumption surface through the open-ended single-premium basis.',
-      'Loyalty bonus, protection benefits, principal-floor handling, and related fund-level charges remain outside the current engine.',
+      '#goWealth Enrich is cataloged as a supported V1 corridor. The parser captures the published 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, the published S$500 minimum one-off partial withdrawal amount plus the 10%-of-initial-single-premium minimum remaining Single Premium Units Account floor, the published 0.22% annual loyalty bonus on the Single Premium Units Account from the first policy anniversary onward, the resident-corridor current-state death benefit as 105% of the Single Premium Units Account value plus 100% of the Top-up Units Account value less current amounts owing, the resident-corridor current accidental-death estimate before age 75 as 120% of the Single Premium Units Account value plus 100% of the Top-up Units Account value less current amounts owing, and the cash-payout-capable manual distribution-mode assumption surface through the open-ended single-premium basis.',
+      'The non-resident 101% death-benefit corridor, accidental-death claim gates and cap aggregation, principal-floor handling, and related fund-level charges remain outside the current engine.',
     ],
     unsupportedItems: [
-      'Loyalty bonus remains informational only.',
-      'Death and accidental death benefit formulas remain informational only.',
+      'The resident-corridor current accidental-death estimate also needs manual current age and current amount owing inputs; the age-75 cut-off is modeled, while residency and Singapore-location claim gates, the 180-day death timing rule, and aggregate accidental-death cap handling remain informational only.',
+      'The non-resident 101% death-benefit corridor remains informational only.',
       'Single-premium protection-state and principal-floor behavior remain informational only.',
       'Fund management fee, switching charge, and third-party banking / currency-conversion charges remain informational only.',
     ],
@@ -250,21 +291,27 @@ export function parseTokioMarineGoWealthEnrich(context: ParseContext): IlpCatalo
       'branch:tokio-marine-gowealth-enrich-establishment-charge',
       'branch:tokio-marine-gowealth-enrich-administrative-charge',
       'branch:tokio-marine-gowealth-enrich-recurring-single-and-top-up-charge',
+      'kernel:minimum-recurring-single-premium-start-month',
+      'kernel:minimum-recurring-single-premium-amount',
+      'kernel:top-up-start-policy-month-block',
+      'kernel:top-up-amount-gate-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
       'branch:tokio-marine-gowealth-enrich-single-premium-partial-withdrawal-charge',
       'branch:tokio-marine-gowealth-enrich-surrender-charge',
+      'branch:tokio-marine-gowealth-enrich-loyalty-bonus',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-marine-gowealth-enrich-loyalty-bonus',
-      'tokio-marine-gowealth-enrich-death-benefit',
-      'tokio-marine-gowealth-enrich-accidental-death-benefit',
+      'tokio-marine-gowealth-enrich-accidental-death-claim-gates-and-cap-aggregation',
       'tokio-marine-gowealth-enrich-principal-floor',
       'tokio-marine-gowealth-enrich-fund-management-fee',
       'tokio-marine-gowealth-enrich-switching-charge',
       'tokio-marine-gowealth-enrich-third-party-charges',
     ],
     warnings: [
-      '#goWealth Enrich is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the cash-payout-capable distribution-mode assumption surface with the published $50 minimum cash-payout threshold plus the 30-day record-date instruction lead time, while loyalty bonus, protection benefits, principal-floor handling, and fund-level charges remain informational only.',
+      '#goWealth Enrich is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, the published S$500 minimum one-off partial withdrawal amount plus the 10%-of-initial-single-premium minimum remaining Single Premium Units Account floor, the published 0.22% annual loyalty bonus on the Single Premium Units Account from the first policy anniversary onward, the resident-corridor current-state death benefit as 105% of the Single Premium Units Account value plus 100% of the Top-up Units Account value less current amounts owing, the resident-corridor current accidental-death estimate before age 75 as 120% of the Single Premium Units Account value plus 100% of the Top-up Units Account value less current amounts owing, and the cash-payout-capable distribution-mode assumption surface with the published $50 minimum cash-payout threshold plus the 30-day record-date instruction lead time, while the non-resident 101% death-benefit corridor, accidental-death claim gates and cap aggregation, principal-floor handling, and fund-level charges remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

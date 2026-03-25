@@ -1,7 +1,7 @@
 import { Fragment } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useChartColors } from '@/lib/chartTheme'
-import type { IlpPolicyAnalysis } from '@/lib/calculations/ilp'
+import type { IlpProjectedPolicyAnalysis } from '@/lib/calculations/ilp'
 import { formatIlpCurrency } from './formatters'
 import {
   CartesianGrid,
@@ -17,7 +17,7 @@ import {
 } from 'recharts'
 
 interface NpvTimelineChartProps {
-  analyses: IlpPolicyAnalysis[]
+  analyses: IlpProjectedPolicyAnalysis[]
 }
 
 export function NpvTimelineChart({ analyses }: NpvTimelineChartProps) {

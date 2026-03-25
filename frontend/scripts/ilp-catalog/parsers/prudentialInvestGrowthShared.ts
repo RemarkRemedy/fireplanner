@@ -123,6 +123,7 @@ export function buildPrudentialInvestGrowthVariant(
           : paymentMode === 'cash'
             ? 'Models the published 3% standard top-up premium charge for cash-funded variants.'
             : 'Models the published 3% standard top-up premium charge for SRS-funded variants.',
+        'Explicit one-off top-ups below the published S$2,000 minimum are blocked.',
         'The reduced e-top-up rate is not modeled automatically and remains metadata-only.',
       ],
       sourceRefs: [page2, page5],
@@ -178,6 +179,14 @@ export function buildPrudentialInvestGrowthVariant(
     bonuses: [],
     feeRules,
     eventChargeRules,
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      minimumTopUpAmount: 2_000,
+      minimumPartialWithdrawalAmount: 1_000,
+      partialWithdrawalMinimumRemainingValueRules: [
+        { activeWindow: 'policy-term', basis: 'policy-value', minimumValue: 1_000 },
+      ],
+    },
     distributionSupport: supportsDirectIncome
       ? {
           mode: 'manual-assumption',
@@ -201,17 +210,25 @@ export function buildPrudentialInvestGrowthVariant(
           ? 'This cash-funded variant uses the published 3% premium-charge and 1.5% premium-event assurance-charge path.'
           : 'This SRS-funded variant uses the published 3% premium-charge and 1.5% premium-event assurance-charge path.',
       'This open-ended product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
+      ...(productMode === 'single-premium'
+        ? ['The current-state death benefit is modeled as the higher of policy value or 110% of total premiums plus top-ups less withdrawals; the published S$2,000 one-off top-up minimum plus the published S$1,000 one-off withdrawal minimum and residual-account floor are also executable, while active cash Direct Income payout history still needs manual review.']
+        : []),
+      ...(productMode === 'recurrent-single-premium'
+        ? ['The published S$2,000 one-off top-up minimum plus the published S$1,000 one-off withdrawal minimum and residual-account floor are executable on explicit events.']
+        : []),
       ...(supportsDirectIncome
         ? ['The Direct Income option is modeled through manual distribution-mode support for the cash-funded corridor.']
         : []),
     ],
     unsupportedItems: [
-      'Death and terminal-illness benefit formulas remain informational only.',
+      productMode === 'single-premium'
+        ? 'Terminal-illness claim handling, death-benefit exclusions, and cash Direct Income payout history remain informational only beyond the modeled current ordinary death-benefit estimate.'
+        : 'Terminal-illness claim handling and death-benefit exclusions remain informational only beyond the modeled current ordinary death-benefit estimate.',
       productMode === 'single-premium'
         ? 'Single-premium principal tracking remains informational only in V1.'
         : 'Recurrent-single-premium paid-premium tracking remains informational only in V1.',
       'e-top-up reduced premium-charge and assurance-charge treatment remains informational only.',
-      'Withdrawal administration and fund-switching mechanics remain informational only.',
+      'Broader withdrawal administration and fund-switching mechanics remain informational only.',
       ...(productMode === 'single-premium' && !supportsDirectIncome
         ? ['Direct Income option mechanics remain informational only.']
         : []),

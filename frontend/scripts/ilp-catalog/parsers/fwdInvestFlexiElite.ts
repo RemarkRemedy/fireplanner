@@ -17,6 +17,18 @@ interface ParseContext {
 type FlexMode = 'flexi-3' | 'flexi-5'
 
 const INITIAL_ACCOUNT_CHARGE_RATE = 0.025
+const CONTRIBUTION_BONUS_RATE = 0.02
+
+const BOOSTER_BONUS_TIERS: Record<FlexMode, Array<{ currency: 'SGD', minAnnualPremium: number | null, maxAnnualPremium: number | null, rate: number }>> = {
+  'flexi-3': [
+    { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.08 },
+    { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: null, rate: 0.16 },
+  ],
+  'flexi-5': [
+    { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.1 },
+    { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: null, rate: 0.26 },
+  ],
+}
 
 const REDEMPTION_FEE_SCHEDULE = [
   { startPolicyYear: 3, endPolicyYear: 3, rate: 0.79 },
@@ -24,6 +36,17 @@ const REDEMPTION_FEE_SCHEDULE = [
   { startPolicyYear: 5, endPolicyYear: 5, rate: 0.5 },
   { startPolicyYear: 6, endPolicyYear: 10, rate: 0.05 },
 ] as const
+
+const PREMIUM_SHORTFALL_CHARGE_SCHEDULE: Record<FlexMode, Array<{ startPolicyYear: number, endPolicyYear: number | null, rate: number }>> = {
+  'flexi-3': [
+    { startPolicyYear: 3, endPolicyYear: 3, rate: 0.79 },
+  ],
+  'flexi-5': [
+    { startPolicyYear: 3, endPolicyYear: 3, rate: 0.79 },
+    { startPolicyYear: 4, endPolicyYear: 4, rate: 0.6 },
+    { startPolicyYear: 5, endPolicyYear: 5, rate: 0.5 },
+  ],
+}
 
 const SURRENDER_CHARGE_SCHEDULE: Record<FlexMode, number[]> = {
   'flexi-3': [1, 1, 0.79, 0.6, 0.5, 0.45, 0.4, 0.2, 0.15, 0.05],
@@ -122,6 +145,24 @@ function buildVariant(document: ExtractedPdfDocument, flexMode: FlexMode): IlpTe
 
   const bonuses: IlpTemplateBonus[] = [
     {
+      id: 'booster-bonus',
+      type: 'sign-up',
+      label: 'Booster Bonus',
+      mode: 'premium-allocation',
+      appliesTo: ['initial'],
+      startPolicyYear: 1,
+      endPolicyYear: 1,
+      annualPremiumTierBasis: 'committed-annual-premium-at-issue',
+      rate: null,
+      amount: null,
+      tieredRates: BOOSTER_BONUS_TIERS[flexMode].map((tier) => ({ ...tier })),
+      notes: [
+        `Applied on each regular premium received during the first policy year for the ${variantLabel} corridor, using the published reward band based on annualised regular premium at issue.`,
+        'Missed regular premiums simply do not earn Booster Bonus; changing the regular premium payment frequency after issue still remains informational only in V1.',
+      ],
+      sourceRefs: [page2],
+    },
+    {
       id: 'annual-premium-bonus',
       type: 'allocation',
       label: 'Annual Premium Bonus',
@@ -136,9 +177,26 @@ function buildVariant(document: ExtractedPdfDocument, flexMode: FlexMode): IlpTe
       tieredRates: [],
       notes: [
         'Applied once on the first regular premium when the policy is issued on the annual premium payment frequency option.',
-        'Booster Bonus, Contribution Bonus, and any later payment-frequency changes remain informational only in V1.',
+        'Booster Bonus and Contribution Bonus are modeled on the published receipt basis; any later payment-frequency changes remain informational only in V1.',
       ],
       sourceRefs: [page2],
+    },
+    {
+      id: 'contribution-bonus',
+      type: 'allocation',
+      label: 'Contribution Bonus',
+      mode: 'premium-allocation',
+      appliesTo: ['initial'],
+      startPolicyYear: flexMode === 'flexi-3' ? 4 : 6,
+      endPolicyYear: 10,
+      rate: CONTRIBUTION_BONUS_RATE,
+      amount: null,
+      tieredRates: [],
+      notes: [
+        `Applied on each regular premium received during the published ${flexMode === 'flexi-3' ? 'policy-year-4-to-10' : 'policy-year-6-to-10'} Contribution Bonus Payment Period for the ${variantLabel} corridor.`,
+        'Missed regular premiums simply do not earn Contribution Bonus, and the payment period is not extended.',
+      ],
+      sourceRefs: [page3],
     },
   ]
 
@@ -155,9 +213,48 @@ function buildVariant(document: ExtractedPdfDocument, flexMode: FlexMode): IlpTe
       allocation: 'equal-split',
       notes: [
         'Models the published 5% premium charge on each accepted top-up premium.',
-        'The regular-premium-paid gate, minimum top-up amount, and investment-strategy routing remain informational only in V1.',
+        'V1 blocks top-ups in policy months where regular premiums are not paid up to date.',
+        'Minimum top-up amount and investment-strategy routing remain informational only in V1.',
       ],
       sourceRefs: [page5, page7],
+    },
+    {
+      id: 'premium-shortfall-charge',
+      label: 'Premium Shortfall Charge',
+      trigger: 'premium-holiday',
+      basis: 'annual-premium-with-overlap-months',
+      appliesTo: ['initial'],
+      fallbackAppliesTo: ['accumulation'],
+      rate: 0,
+      amount: 0,
+      rateSchedule: PREMIUM_SHORTFALL_CHARGE_SCHEDULE[flexMode].map((tier) => ({ ...tier })),
+      activeWindow: 'during-mip',
+      allocation: 'equal-split',
+      notes: [
+        `Models the published premium shortfall charge for the ${variantLabel} corridor during its authored shortfall-charge period.`,
+        'Mark the premium-holiday event with an insurer-approved charge waiver when an admitted Involuntary Unemployment Benefit approval waives the premium shortfall charge for that missed-premium period.',
+        'Mark the same premium-holiday event as charge-refunded when the charge was deducted first and later refunded after admitted Involuntary Unemployment Benefit approval.',
+        'Involuntary Unemployment Benefit approval history, waiting-period gating, and full-repayment restart timing remain informational only in V1.',
+      ],
+      sourceRefs: [page3, page7, page8],
+    },
+    {
+      id: 'premium-shortfall-charge-refund',
+      label: 'Premium Shortfall Charge Refund',
+      trigger: 'premium-holiday',
+      basis: 'source-event-charge-refund',
+      appliesTo: ['initial'],
+      rate: 1,
+      amount: 0,
+      activeWindow: 'during-mip',
+      allocation: 'equal-split',
+      sourceChargeRuleId: 'premium-shortfall-charge',
+      notes: [
+        `Models the published retrospective refund of deducted premium shortfall charge for the ${variantLabel} corridor after admitted Involuntary Unemployment Benefit approval.`,
+        'Use the same premium-holiday event and mark it as charge-refunded when the charge was deducted between the unemployment date and claim notification date and later refunded.',
+        'Waiting-period gating, approval history before the current projection start, and full-repayment restart timing remain informational only in V1.',
+      ],
+      sourceRefs: [page3, page8],
     },
     {
       id: 'initial-account-redemption-fee',
@@ -165,6 +262,11 @@ function buildVariant(document: ExtractedPdfDocument, flexMode: FlexMode): IlpTe
       trigger: 'partial-withdrawal',
       basis: 'event-amount',
       appliesTo: ['initial'],
+      manualWaiverMode: 'capped-free-event',
+      freeEventCount: 2,
+      freeEventStartPolicyYear: 3,
+      freeEventMaxAmountRate: 0.1,
+      freeEventMaxAmountBasis: 'open-balance',
       rate: 0,
       amount: 0,
       rateSchedule: REDEMPTION_FEE_SCHEDULE.map((tier) => ({ ...tier })),
@@ -172,8 +274,11 @@ function buildVariant(document: ExtractedPdfDocument, flexMode: FlexMode): IlpTe
       allocation: 'equal-split',
       notes: [
         `Models the published initial-units-account redemption-fee schedule for the ${variantLabel} corridor.`,
-        'The first-two-policy-year withdrawal lockout, partial-withdrawal limit, minimum withdrawal amount, and minimum account-value rules remain informational only.',
-        'Free Partial Withdrawal Benefit waivers remain informational only in V1.',
+        'Mark a partial-withdrawal event as charge-waived when an admitted Free Partial Withdrawal Benefit request qualifies that withdrawal for redemption-fee waiver treatment.',
+        'When that qualifying flag is present from policy year 3 onward, the first two such withdrawals waive redemption fee only up to 10% of the initial-units-account value at the time of withdrawal; any excess remains chargeable.',
+        'V1 blocks authored initial-units-account withdrawals before policy month 25 and enforces the published minimum-account-value floor on explicit one-off partial-withdrawal events.',
+        'Partial-withdrawal limit formulas, minimum withdrawal amount, and regular-withdrawal elections remain informational only.',
+        'Free Partial Withdrawal Benefit life-event eligibility and proof requirements remain informational only in V1.',
       ],
       sourceRefs: [page9, page11, page12, page13],
     },
@@ -231,18 +336,29 @@ function buildVariant(document: ExtractedPdfDocument, flexMode: FlexMode): IlpTe
       sourceRefs: [page17],
     },
     eecTable: [...SURRENDER_CHARGE_SCHEDULE[flexMode]],
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      blockTopUpsWhenPremiumsNotPaidUpToDate: true,
+      minimumTopUpAmount: 3_000,
+      minimumPartialWithdrawalStartPolicyMonthByAccount: [
+        { accountId: 'initial', startPolicyMonth: 25 },
+      ],
+      partialWithdrawalMinimumRemainingValueRules: [
+        { activeWindow: 'during-mip', basis: 'account-value', accountId: 'initial', minimumValue: 3_000 },
+        { activeWindow: 'after-mip', basis: 'policy-value', minimumValue: 3_000 },
+      ],
+    },
     warnings: [
-      `FWD Invest Flexi Elite (${variantLabel}) is cataloged as a supported V1 product. The parser captures the published initial-account-value charge, the one-time annual-premium bonus under the annual premium-frequency assumption, the monthly insurance charge, the 5% top-up premium charge, the initial-units-account redemption-fee schedule, the initial-units-account surrender-charge schedule, and the reinvest-default distribution-mode assumption surface.`,
-      'Premium shortfall charge remains informational only because the published unemployment waiver, refund, and restart timing cannot be expressed exactly in the current event kernel without overstating chargeable missed-premium months.',
-      'Booster Bonus, Contribution Bonus, payment-frequency changes after issue, Free Partial Withdrawal Benefit, and broader premium-flexibility behavior remain metadata-only.',
+      `FWD Invest Flexi Elite (${variantLabel}) is cataloged as a supported V1 product. The parser captures the published Booster Bonus, Annual Premium Bonus, Contribution Bonus, initial-account-value charge, monthly insurance charge, premium shortfall charge with admitted-state Involuntary Unemployment Benefit charge-waiver and retrospective charge-refund support on premium-holiday events, 5% top-up premium charge with blocking below the published S$3,000 minimum and in policy months where regular premiums are not paid up to date, initial-units-account redemption-fee schedule with admitted-state Free Partial Withdrawal Benefit capped charge-waiver support on qualifying partial-withdrawal events, the initial-units-account policy-month-25 one-off partial-withdrawal gate with the published S$3,000 minimum-account-value floor, initial-units-account surrender-charge schedule, and reinvest-default distribution-mode assumption surface.`,
+      'Involuntary Unemployment Benefit approval history, waiting-period gating, and full-repayment restart timing remain metadata-only.',
+      'Payment-frequency changes after issue, Free Partial Withdrawal Benefit eligibility and proof requirements, and broader premium-flexibility behavior remain metadata-only beyond the modeled initial-account policy-month-25 gate and S$3,000 minimum-account-value floor for explicit one-off partial withdrawals.',
     ],
     unsupportedItems: [
-      'Premium shortfall charge remains informational only because the unemployment waiver, refund, and variant-specific charge periods are not modeled exactly in V1.',
-      'Booster Bonus and Contribution Bonus remain informational only.',
+      'Involuntary Unemployment Benefit approval history, waiting-period gating, and full-repayment restart timing remain informational only beyond the modeled explicit charge-waived / charge-refunded premium-holiday path.',
       'Changing the regular premium payment frequency after issue remains informational only.',
-      'Free Partial Withdrawal Benefit eligibility, capped fee waivers, and life-event proof requirements remain informational only.',
-      'Partial-withdrawal limit formulas, minimum withdrawal requirements, and minimum account-value gates remain informational only.',
-      'Regular-premium reduction and increase windows, top-up eligibility gates, and premium-payment continuation after the minimum investment term remain informational only.',
+      'Free Partial Withdrawal Benefit life-event eligibility and proof requirements remain informational only beyond the modeled explicit charge-waived partial-withdrawal path with two lifetime capped redemption-fee waivers from policy year 3 onward.',
+      'Partial-withdrawal limit formulas, minimum withdrawal requirements, and regular-withdrawal elections remain informational only beyond the modeled initial-account policy-month-25 gate and S$3,000 minimum-account-value floor.',
+      'Regular-premium reduction and increase windows, investment-strategy routing gates, and premium-payment continuation after the minimum investment term remain informational only beyond the modeled S$3,000 minimum top-up amount.',
       'Policy closure charge, fund-switching review rights, pending-transaction sale timing, and change-of-policy-currency handling remain informational only.',
     ],
     sourceRefs: [page1, page2, page3, page5, page6, page7, page8, page9, page10, page11, page12, page13, page17],
@@ -262,22 +378,28 @@ export function parseFwdInvestFlexiElite(context: ParseContext): IlpCatalogProdu
     structureStatus: 'structured',
     economicsStatus: 'supported',
     modeledEconomics: [
+      'kernel:current-death-benefit-estimate',
       'kernel:protected-base-assurance',
+      'branch:fwd-invest-flexi-elite-booster-bonus',
       'branch:fwd-invest-flexi-elite-annual-premium-bonus',
+      'branch:fwd-invest-flexi-elite-contribution-bonus',
       'branch:fwd-invest-flexi-elite-initial-account-charge',
       'branch:fwd-invest-flexi-elite-insurance-charge',
+      'branch:fwd-invest-flexi-elite-premium-shortfall-charge',
       'branch:fwd-invest-flexi-elite-top-up-premium-charge',
       'branch:fwd-invest-flexi-elite-initial-account-redemption-fee',
       'branch:fwd-invest-flexi-elite-initial-account-surrender-charge',
+      'kernel:free-withdrawal-event-cap',
+      'kernel:top-up-amount-gate-block',
+      'kernel:partial-withdrawal-start-policy-month-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
+      'kernel:top-up-paid-up-to-date-block',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'fwd-invest-flexi-elite-premium-shortfall-charge',
       'fwd-invest-flexi-elite-involuntary-unemployment-benefit',
       'fwd-invest-flexi-elite-premium-shortfall-charge-refund',
-      'fwd-invest-flexi-elite-booster-bonus',
-      'fwd-invest-flexi-elite-contribution-bonus',
-      'fwd-invest-flexi-elite-free-partial-withdrawal-benefit',
+      'fwd-invest-flexi-elite-free-partial-withdrawal-eligibility-and-proof',
       'fwd-invest-flexi-elite-partial-withdrawal-limits',
       'fwd-invest-flexi-elite-premium-flexibility-gates',
       'fwd-invest-flexi-elite-regular-withdrawal-option',
@@ -286,8 +408,8 @@ export function parseFwdInvestFlexiElite(context: ParseContext): IlpCatalogProdu
       'fwd-invest-flexi-elite-change-of-policy-currency',
     ],
     warnings: [
-      'FWD Invest Flexi Elite is cataloged as a supported V1 product. The current parser covers the published initial-account-value charge, monthly insurance charge, top-up premium charge, redemption-fee schedule, surrender-charge schedule, and reinvest-default distribution support that fit the existing kernels.',
-      'Premium shortfall / unemployment-waiver behavior, bonuses, Free Partial Withdrawal Benefit, and broader premium-flexibility behavior remain metadata-only.',
+      'FWD Invest Flexi Elite is cataloged as a supported V1 product. The current parser covers the published current-state ordinary death benefit as the higher of 105% of policy value or 101% of the protected premium base, Booster Bonus, Annual Premium Bonus, Contribution Bonus, initial-account-value charge, monthly insurance charge, premium shortfall charge with admitted-state Involuntary Unemployment Benefit charge-waiver and retrospective charge-refund support on premium-holiday events, top-up premium charge with blocking below the published S$3,000 minimum and in policy months where regular premiums are not paid up to date, redemption-fee schedule with admitted-state Free Partial Withdrawal Benefit capped charge-waiver support on qualifying partial-withdrawal events, the initial-units-account policy-month-25 one-off partial-withdrawal gate with the published S$3,000 minimum-account-value floor, surrender-charge schedule, and reinvest-default distribution support that fit the existing kernels.',
+      'Involuntary Unemployment Benefit approval history, waiting-period gating, full-repayment restart timing, Free Partial Withdrawal Benefit eligibility and proof requirements, and broader premium-flexibility behavior remain metadata-only.',
     ],
     archived: false,
     variants: [

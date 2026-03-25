@@ -29,10 +29,23 @@ describe('parseHsbcWealthAbundance', () => {
       'branch:hsbc-abundance-tiered-brc',
       'branch:hsbc-abundance-topup-charge',
       'branch:hsbc-abundance-power-up-restoration',
+      'kernel:monthly-rate-bonus-crediting',
+      'kernel:premium-holiday-top-up-block',
+      'kernel:top-up-start-policy-month-block',
+      'kernel:top-up-amount-gate-block',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-residual-death-benefit-after-ti-estimate',
       'kernel:scheduled-payout-manual-assumption',
+      'kernel:scheduled-payout-start-gate',
+      'kernel:scheduled-payout-minimum-annual-withdrawal-amount',
+      'kernel:scheduled-payout-frequency-eligibility-gate',
       'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-abundance-dividend-payout-threshold')
+    expect(product.metadataOnlyBehaviors).not.toContain('hsbc-abundance-terminal-illness-aggregate-cap-and-post-claim-state')
+    expect(product.metadataOnlyBehaviors).toContain('hsbc-abundance-terminal-illness-cap-overflow-and-post-claim-state')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-abundance-dividend-cash-payout-routing-fallback-and-execution')
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-abundance-dividend-bank-routing')
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-abundance-regular-withdrawal-facility')
@@ -76,21 +89,38 @@ describe('parseHsbcWealthAbundance', () => {
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
     })
+    expect(sgdVariant?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: true,
+      blockTopUpsDuringPremiumHoliday: true,
+      minimumTopUpStartPolicyMonth: 13,
+      minimumTopUpAmount: 100,
+      topUpAmountIncrement: 10,
+    })
+    expect(usdVariant?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: true,
+      blockTopUpsDuringPremiumHoliday: true,
+      minimumTopUpStartPolicyMonth: 13,
+      minimumTopUpAmount: 100,
+      topUpAmountIncrement: 10,
+    })
     expect(usdVariant?.distributionSupport?.notes).toEqual(expect.arrayContaining([
       expect.stringContaining('paid in SGD irrespective of policy currency'),
       expect.stringContaining('published S$30 minimum remain reinvested'),
     ]))
-    expect(product.warnings).toContain(
-      'Wealth Abundance keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface with the published S$30 minimum annual payout threshold; dividend cash-payout routing / fallback / execution remain informational only.',
-    )
-    expect(product.warnings).toContain(
-      'Regular withdrawal is modeled through the manual payout-state kernel; post-holiday recurring-single-premium administrative restart, Life Replacement Option eligibility / underwriting, post-replacement cover resets, and policy-reissue fallback remain metadata-only in V1.',
-    )
+    expect(product.warnings.some((warning) => warning.includes('manual distribution-mode assumption surface with the published S$30 minimum annual payout threshold'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('manual current net protected premium base support once regular-withdrawal assumptions are already active'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('manual current accidental-death regular-premium-floor support once regular-withdrawal assumptions are already active'))).toBe(true)
     expect(usdVariant?.warnings).toContain(
       'Recurring single premium is not available for USD-denominated policies and is therefore omitted from this variant.',
     )
     expect(sgdVariant?.warnings).toContain(
       'Life Replacement Option eligibility / underwriting, post-replacement cover resets, and policy-reissue fallback remain informational only in V1.',
+    )
+    expect(sgdVariant?.unsupportedItems).toContain(
+      'The current accidental-death estimate also needs manual current age and current amount owing inputs and, once regular-withdrawal assumptions are already active, a manual current accidental-death regular-premium floor; age-75 cut-off handling is modeled, while claim exclusions, payout settlement, and post-claim state remain informational only.',
+    )
+    expect(sgdVariant?.unsupportedItems).toContain(
+      'The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both need a manual remaining aggregate TI cap; payout settlement and post-claim state remain informational only.',
     )
     expect(sgdVariant?.unsupportedItems).toContain(
       'Life Replacement Option request timing, replacement eligibility, and underwriting acceptance remain informational only.',
@@ -105,6 +135,9 @@ describe('parseHsbcWealthAbundance', () => {
       mode: 'manual-assumption',
       accountId: 'topup',
       fallbackAccountIds: ['regular'],
+      allowedFrequencies: ['annual', 'semi-annual', 'quarterly', 'monthly'],
+      minimumStartPolicyYear: 11,
+      minimumAnnualWithdrawalAmount: 1_200,
       source: 'policy-redemption',
       notes: expect.arrayContaining([
         expect.stringContaining('Top-up Account first'),
@@ -118,12 +151,26 @@ describe('parseHsbcWealthAbundance', () => {
     })
     expect(sgdVariant?.bonuses).toEqual(expect.arrayContaining([
       expect.objectContaining({
-        id: 'loyalty-bonus',
+        id: 'power-up-bonus',
+        mode: 'monthly-rate',
         suspensionRules: [
-          { trigger: 'partial-withdrawal', suspensionMonths: 12 },
-          { trigger: 'scheduled-payout', suspensionMonths: 12 },
+          { trigger: 'partial-withdrawal', suspensionMonths: 12, startOffsetMonths: 1 },
+          { trigger: 'premium-holiday', suspensionMonths: 12, startOffsetMonths: 1 },
+          { trigger: 'regular-premium-reduction', suspensionMonths: 12, startOffsetMonths: 1 },
+        ],
+      }),
+      expect.objectContaining({
+        id: 'loyalty-bonus',
+        mode: 'monthly-rate',
+        suspensionRules: [
+          { trigger: 'partial-withdrawal', suspensionMonths: 12, startOffsetMonths: 1 },
+          { trigger: 'scheduled-payout', suspensionMonths: 12, startOffsetMonths: 1 },
         ],
       }),
     ]))
+    expect(product.modeledEconomics).toContain('kernel:scheduled-payout-start-gate')
+    expect(product.modeledEconomics).toContain('kernel:scheduled-payout-minimum-annual-withdrawal-amount')
+    expect(product.modeledEconomics).toContain('kernel:scheduled-payout-frequency-eligibility-gate')
+    expect(usdVariant?.scheduledPayoutSupport?.allowedFrequencies).toEqual(['annual', 'semi-annual', 'quarterly'])
   }, 30_000)
 })

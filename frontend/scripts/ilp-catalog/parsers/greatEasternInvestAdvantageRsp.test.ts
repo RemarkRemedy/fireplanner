@@ -28,8 +28,19 @@ describe('parseGreatEasternInvestAdvantageRsp', () => {
       'branch:great-eastern-gia-rsp-recurrent-single-premium-charge',
       'branch:great-eastern-gia-rsp-top-up-premium-charge',
       'branch:great-eastern-gia-rsp-open-ended-zero-surrender-charge',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
     ])
+    expect(product.metadataOnlyBehaviors).not.toContain('great-eastern-gia-rsp-death-benefit')
     expect(product.metadataOnlyBehaviors).not.toContain('great-eastern-gia-rsp-recurrent-single-premium-principal-tracking')
+    expect(product.metadataOnlyBehaviors).not.toContain('great-eastern-gia-rsp-terminal-illness-benefit')
+    expect(product.variants[0]?.unsupportedItems).toContain(
+      'The current-state terminal-illness benefit amount is modeled as the same amount as the current death-benefit estimate after manual current amount owing, but terminal-illness claim admission, exclusions, settlement, and policy termination remain informational only.',
+    )
+    expect(product.variants[0]?.unsupportedItems).not.toContain(
+      'Death and terminal-illness benefit formulas remain informational only.',
+    )
+    expect(product.warnings[0]).toContain('current-state death and terminal-illness benefit amount as the higher of 110% of recurrent single premiums plus top-ups less partial surrenders or account value less manual current amount owing')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-open-ended-cash-or-srs',
       'sgd-open-ended-cpfis',

@@ -197,6 +197,7 @@ function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] 
         activeWindow: rule.activeWindow,
         yearBasis: rule.yearBasis,
         requiresPremiumsPaidUpToDate: rule.requiresPremiumsPaidUpToDate,
+        suspensionRules: rule.suspensionRules?.map((suspensionRule) => ({ ...suspensionRule })),
         startPolicyYear: rule.startPolicyYear,
         endPolicyYear: rule.endPolicyYear,
         appliesTo: [...rule.appliesTo],
@@ -250,7 +251,14 @@ function mapEventChargeRules(variant: IlpTemplateVariant): NonNullable<IlpPolicy
       yearBasis: rule.yearBasis,
       appliesTo: [...rule.appliesTo],
       fallbackAppliesTo: rule.fallbackAppliesTo ? [...rule.fallbackAppliesTo] : undefined,
+      manualWaiverMode: rule.manualWaiverMode,
+      manualWaiverGrantGroup: rule.manualWaiverGrantGroup,
+      manualWaiverMaxGrantCount: rule.manualWaiverMaxGrantCount,
+      manualWaiverMaxOverlapMonths: rule.manualWaiverMaxOverlapMonths,
       freeLifetimeMonths: rule.freeLifetimeMonths,
+      freeLifetimeMonthsStartPolicyYear: rule.freeLifetimeMonthsStartPolicyYear,
+      freeLifetimeMonthsSchedule: rule.freeLifetimeMonthsSchedule?.map((tier) => ({ ...tier })),
+      freeLifetimeMonthsResetOnRepayment: rule.freeLifetimeMonthsResetOnRepayment,
       freeEventCount: rule.freeEventCount,
       freeEventStartPolicyYear: rule.freeEventStartPolicyYear,
       freeEventMaxAmountRate: rule.freeEventMaxAmountRate,
@@ -281,6 +289,8 @@ function mapTemplateBonus(
     type: bonus.type,
     label: bonus.label,
     mode: bonus.mode,
+    oneTimePayoutBasis: bonus.oneTimePayoutBasis,
+    annualPremiumTierBasis: bonus.annualPremiumTierBasis,
     rate: bonus.rate ?? defaultTierRate,
     amount: bonus.amount ?? 0,
     appliesTo: [...bonus.appliesTo],
@@ -291,24 +301,47 @@ function mapTemplateBonus(
     requiresPremiumsPaidUpToDate: bonus.requiresPremiumsPaidUpToDate,
     requiredRegularPremiumPaymentFrequency: bonus.requiredRegularPremiumPaymentFrequency,
     tieredRates: bonus.tieredRates.map((tier) => ({ ...tier })),
+    policyYearRateSchedule: bonus.policyYearRateSchedule?.map((tier) => ({ ...tier })),
+    stepUpPayoutConfig: bonus.stepUpPayoutConfig
+      ? {
+          premiumShortfallChargeYears: bonus.stepUpPayoutConfig.premiumShortfallChargeYears,
+          partialWithdrawalAccountIds: [...bonus.stepUpPayoutConfig.partialWithdrawalAccountIds],
+          countPartialWithdrawalsFromPolicyYear: bonus.stepUpPayoutConfig.countPartialWithdrawalsFromPolicyYear,
+        }
+      : undefined,
     adjustmentFactorConfig: bonus.adjustmentFactorConfig
       ? {
           formula: bonus.adjustmentFactorConfig.formula,
           withdrawalAccountIds: [...bonus.adjustmentFactorConfig.withdrawalAccountIds],
+          includePolicyRepaymentsInPaidRegularPremium: bonus.adjustmentFactorConfig.includePolicyRepaymentsInPaidRegularPremium,
+          countFromPolicyYear: bonus.adjustmentFactorConfig.countFromPolicyYear,
+          policyRepaymentPriorOffsetRules: bonus.adjustmentFactorConfig.policyRepaymentPriorOffsetRules?.map((rule) => ({
+            trigger: rule.trigger,
+            accountIds: rule.accountIds ? [...rule.accountIds] : undefined,
+          })),
         }
       : undefined,
-    suspensionRules: bonus.suspensionRules?.map((rule) => ({ ...rule })) ?? [
-      ...(bonus.notes.some((note) => note.toLowerCase().includes('partial withdrawal'))
-        ? [{ trigger: 'partial-withdrawal' as const, suspensionMonths: 12 }]
-        : []),
-      ...(bonus.notes.some((note) => note.toLowerCase().includes('premium holiday'))
-        ? [{ trigger: 'premium-holiday' as const, suspensionMonths: 12 }]
-        : []),
-      ...(bonus.notes.some((note) => note.toLowerCase().includes('regular premium reduction'))
-        ? [{ trigger: 'regular-premium-reduction' as const, suspensionMonths: 12 }]
-        : []),
-    ],
+    qualificationRules: bonus.qualificationRules?.map((rule) => ({ ...rule })),
+    suspensionRules: bonus.suspensionRules?.map((rule) => ({ ...rule })) ?? (
+      bonus.qualificationRules?.length
+        ? []
+        : [
+            ...(bonus.adjustmentFactorConfig?.formula === 'cumulative-withdrawal-factor-product-over-account-value'
+              ? []
+              : bonus.notes.some((note) => note.toLowerCase().includes('partial withdrawal'))
+              ? [{ trigger: 'partial-withdrawal' as const, suspensionMonths: 12 }]
+              : []),
+            ...(bonus.notes.some((note) => note.toLowerCase().includes('premium holiday'))
+              ? [{ trigger: 'premium-holiday' as const, suspensionMonths: 12 }]
+              : []),
+            ...(bonus.notes.some((note) => note.toLowerCase().includes('regular premium reduction'))
+              ? [{ trigger: 'regular-premium-reduction' as const, suspensionMonths: 12 }]
+              : []),
+          ]
+    ),
     restorationRules: bonus.restorationRules?.map((rule) => ({ ...rule })),
+    excludedValueRules: bonus.excludedValueRules?.map((rule) => ({ ...rule })),
+    preservedValueRules: bonus.preservedValueRules?.map((rule) => ({ ...rule })),
   }
 }
 
@@ -345,15 +378,151 @@ export function templateVariantToPolicySeed(
     assuranceProfile: undefined,
     policyStateSupport: variant.policyStateSupport
       ? {
-          automaticLapseOnAccountValueDepletion: variant.policyStateSupport.automaticLapseOnAccountValueDepletion,
-        }
-      : undefined,
+        automaticLapseOnAccountValueDepletion: variant.policyStateSupport.automaticLapseOnAccountValueDepletion,
+        ...(variant.policyStateSupport.minimumRegularPremiumVariationStartPolicyMonth != null
+          ? {
+              minimumRegularPremiumVariationStartPolicyMonth: variant.policyStateSupport.minimumRegularPremiumVariationStartPolicyMonth,
+            }
+          : {}),
+        ...(variant.policyStateSupport.minimumRegularPremiumAmountByFrequency
+          ? {
+              minimumRegularPremiumAmountByFrequency: {
+                ...variant.policyStateSupport.minimumRegularPremiumAmountByFrequency,
+              },
+            }
+          : {}),
+        ...(variant.policyStateSupport.blockRegularPremiumVariationDuringPremiumHoliday != null
+          ? {
+              blockRegularPremiumVariationDuringPremiumHoliday: variant.policyStateSupport.blockRegularPremiumVariationDuringPremiumHoliday,
+            }
+          : {}),
+        ...(variant.policyStateSupport.blockTopUpsDuringPremiumHoliday != null
+          ? {
+              blockTopUpsDuringPremiumHoliday: variant.policyStateSupport.blockTopUpsDuringPremiumHoliday,
+            }
+          : {}),
+        ...(variant.policyStateSupport.blockTopUpsWhenPremiumsNotPaidUpToDate != null
+          ? {
+              blockTopUpsWhenPremiumsNotPaidUpToDate: variant.policyStateSupport.blockTopUpsWhenPremiumsNotPaidUpToDate,
+            }
+          : {}),
+        ...(variant.policyStateSupport.requiresCommencementPremiumForRecurringSinglePremiumResumption != null
+          ? {
+              requiresCommencementPremiumForRecurringSinglePremiumResumption: variant.policyStateSupport.requiresCommencementPremiumForRecurringSinglePremiumResumption,
+            }
+          : {}),
+        ...(variant.policyStateSupport.minimumPremiumHolidayStartPolicyMonth != null
+          ? {
+              minimumPremiumHolidayStartPolicyMonth: variant.policyStateSupport.minimumPremiumHolidayStartPolicyMonth,
+            }
+          : {}),
+        ...(variant.policyStateSupport.minimumPartialWithdrawalStartPolicyMonthByAccount
+          ? {
+              minimumPartialWithdrawalStartPolicyMonthByAccount: variant.policyStateSupport.minimumPartialWithdrawalStartPolicyMonthByAccount.map((rule) => ({
+                accountId: rule.accountId,
+                startPolicyMonth: rule.startPolicyMonth,
+              })),
+            }
+          : {}),
+        ...(variant.policyStateSupport.minimumPartialWithdrawalAmount != null
+          ? {
+              minimumPartialWithdrawalAmount: variant.policyStateSupport.minimumPartialWithdrawalAmount,
+            }
+          : {}),
+        ...(variant.policyStateSupport.partialWithdrawalAmountIncrement != null
+          ? {
+              partialWithdrawalAmountIncrement: variant.policyStateSupport.partialWithdrawalAmountIncrement,
+            }
+          : {}),
+        ...(variant.policyStateSupport.partialWithdrawalMaximumAmountRules
+          ? {
+              partialWithdrawalMaximumAmountRules: variant.policyStateSupport.partialWithdrawalMaximumAmountRules.map((rule) => ({
+                activeWindow: rule.activeWindow,
+                accountId: rule.accountId,
+                basis: rule.basis,
+                startPolicyYear: rule.startPolicyYear,
+                endPolicyYear: rule.endPolicyYear,
+                maximumValueRate: rule.maximumValueRate,
+              })),
+            }
+          : {}),
+        ...(variant.policyStateSupport.partialWithdrawalMinimumRemainingValueRules
+          ? {
+              partialWithdrawalMinimumRemainingValueRules: variant.policyStateSupport.partialWithdrawalMinimumRemainingValueRules.map((rule) => ({
+                activeWindow: rule.activeWindow,
+                basis: rule.basis,
+                ...(rule.accountId ? { accountId: rule.accountId } : {}),
+                ...(rule.minimumValue != null ? { minimumValue: rule.minimumValue } : {}),
+                ...(rule.minimumValueRate != null ? { minimumValueRate: rule.minimumValueRate } : {}),
+              })),
+            }
+          : {}),
+        ...(variant.policyStateSupport.minimumTopUpStartPolicyMonth != null
+          ? {
+              minimumTopUpStartPolicyMonth: variant.policyStateSupport.minimumTopUpStartPolicyMonth,
+            }
+          : {}),
+        ...(variant.policyStateSupport.minimumTopUpAmount != null
+          ? {
+              minimumTopUpAmount: variant.policyStateSupport.minimumTopUpAmount,
+            }
+          : {}),
+        ...(variant.policyStateSupport.topUpAmountIncrement != null
+          ? {
+              topUpAmountIncrement: variant.policyStateSupport.topUpAmountIncrement,
+            }
+          : {}),
+        ...(variant.policyStateSupport.minimumRecurringSinglePremiumMonthlyAmount != null
+          ? {
+              minimumRecurringSinglePremiumMonthlyAmount: variant.policyStateSupport.minimumRecurringSinglePremiumMonthlyAmount,
+            }
+          : {}),
+        ...(variant.policyStateSupport.minimumRecurringSinglePremiumStartPolicyMonth != null
+          ? {
+              minimumRecurringSinglePremiumStartPolicyMonth: variant.policyStateSupport.minimumRecurringSinglePremiumStartPolicyMonth,
+            }
+          : {}),
+        ...(variant.policyStateSupport.topUpRepaymentClearance
+          ? {
+              topUpRepaymentClearance: {
+                includeMissedPremiums: variant.policyStateSupport.topUpRepaymentClearance.includeMissedPremiums,
+                ...(variant.policyStateSupport.topUpRepaymentClearance.priorOffsetRules
+                  ? {
+                      priorOffsetRules: variant.policyStateSupport.topUpRepaymentClearance.priorOffsetRules.map((rule) => ({
+                        trigger: rule.trigger,
+                        ...(rule.accountIds ? { accountIds: [...rule.accountIds] } : {}),
+                      })),
+                    }
+                  : {}),
+              },
+            }
+          : {}),
+      }
+    : undefined,
     scheduledPayoutSupport: variant.scheduledPayoutSupport
       ? {
           mode: variant.scheduledPayoutSupport.mode,
           accountId: variant.scheduledPayoutSupport.accountId,
           ...(variant.scheduledPayoutSupport.fallbackAccountIds
             ? { fallbackAccountIds: [...variant.scheduledPayoutSupport.fallbackAccountIds] }
+            : {}),
+          ...(variant.scheduledPayoutSupport.minimumStartPolicyYear != null
+            ? { minimumStartPolicyYear: variant.scheduledPayoutSupport.minimumStartPolicyYear }
+            : {}),
+          ...(variant.scheduledPayoutSupport.allowedFrequencies
+            ? { allowedFrequencies: [...variant.scheduledPayoutSupport.allowedFrequencies] }
+            : {}),
+          ...(variant.scheduledPayoutSupport.requiresTargetRetirementAgeStart === true
+            ? { requiresTargetRetirementAgeStart: true }
+            : {}),
+          ...(variant.scheduledPayoutSupport.minimumAnnualWithdrawalAmount != null
+            ? { minimumAnnualWithdrawalAmount: variant.scheduledPayoutSupport.minimumAnnualWithdrawalAmount }
+            : {}),
+          ...(variant.scheduledPayoutSupport.minimumWithdrawalAmountPerOccurrence != null
+            ? { minimumWithdrawalAmountPerOccurrence: variant.scheduledPayoutSupport.minimumWithdrawalAmountPerOccurrence }
+            : {}),
+          ...(variant.scheduledPayoutSupport.minimumRemainingPolicyValue != null
+            ? { minimumRemainingPolicyValue: variant.scheduledPayoutSupport.minimumRemainingPolicyValue }
             : {}),
           source: variant.scheduledPayoutSupport.source,
           ...(variant.scheduledPayoutSupport.payoutStateSupport
@@ -433,6 +602,7 @@ export function templateVariantToPolicySeed(
       variantId: variant.id,
       variantLabel: formatCatalogVariantLabel(variant),
       catalogVersion: manifest.catalogVersion,
+      generatedAt: manifest.generatedAt,
       supportStatus: product.supportStatus,
       economicsStatus: product.economicsStatus,
       structureStatus: product.structureStatus,

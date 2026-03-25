@@ -30,8 +30,11 @@ describe('parseIncomeWealthLinkGl3', () => {
       'branch:income-wealthlink-gl3-top-up-premium-charge',
       'branch:income-wealthlink-gl3-recurring-single-premium-charge',
       'branch:income-wealthlink-gl3-open-ended-zero-surrender-charge',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
       'tokio-recurring-single-premium-routing',
     ])
+    expect(product.metadataOnlyBehaviors).not.toContain('income-wealthlink-gl3-death-benefit')
     expect(product.metadataOnlyBehaviors).toContain('income-wealthlink-gl3-fund-level-annual-management-fee')
     expect(product.metadataOnlyBehaviors).not.toContain('income-wealthlink-gl3-single-premium-principal-tracking')
     expect(product.metadataOnlyBehaviors).not.toContain('income-wealthlink-gl3-regular-top-up-enrollment')
@@ -82,5 +85,9 @@ describe('parseIncomeWealthLinkGl3', () => {
       }),
     ])
     expect(variant?.warnings).toContain('This product currently has no policy fee and no insurance cover charge.')
+    expect(variant?.warnings?.some((warning) => warning.includes('current accidental-death estimate as the published 105%-of-net-premiums corridor during the age-66-to-74 accident window'))).toBe(true)
+    expect(variant?.unsupportedItems).toContain(
+      'Accidental-death claim admission, the 365-day accident timing gate, exclusions, and claim settlement remain informational only beyond the modeled current ordinary and accidental-death benefit estimates.',
+    )
   }, 30_000)
 })

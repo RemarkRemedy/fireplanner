@@ -5,12 +5,14 @@ const ilpRegularPremiumPaymentFrequencySchema = z.enum(['annual', 'semi-annual',
 
 export const ilpPolicyEventSchema = z.object({
   id: z.string().min(1),
-  type: z.enum(['premium-holiday', 'partial-withdrawal', 'regular-premium-reduction', 'regular-premium-increase', 'top-up', 'recurring-single-premium', 'recurring-single-premium-resumption', 'assurance-benefit-reduction', 'assurance-benefit-resumption', 'lapse']),
+  type: z.enum(['premium-holiday', 'partial-withdrawal', 'reinvested-dividend-withdrawal', 'regular-premium-reduction', 'regular-premium-increase', 'policy-repayment', 'top-up', 'recurring-single-premium', 'recurring-single-premium-resumption', 'assurance-benefit-reduction', 'assurance-benefit-resumption', 'lapse']),
   startPolicyMonth: z.number().int().min(1).max(10_000),
   durationMonths: z.number().int().min(1).max(120),
   amount: z.number().min(0).max(100_000_000).optional(),
   accountId: z.string().min(1).optional(),
   chargeWaived: z.boolean().optional(),
+  chargeWaiverGrantId: z.string().min(1).optional(),
+  chargeRefunded: z.boolean().optional(),
   bonusSuspensionWaived: z.boolean().optional(),
   repayMissedPremiums: z.boolean().optional(),
   repaymentAccountId: z.string().min(1).optional(),
@@ -30,6 +32,30 @@ export const ilpPolicyEventSchema = z.object({
       code: z.ZodIssueCode.custom,
       message: 'Partial-withdrawal events must specify the source account',
       path: ['accountId'],
+    })
+  }
+
+  if (event.type === 'reinvested-dividend-withdrawal' && (event.amount == null || event.amount <= 0)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Reinvested-dividend-withdrawal events must include a positive amount',
+      path: ['amount'],
+    })
+  }
+
+  if (event.type === 'reinvested-dividend-withdrawal' && !event.accountId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Reinvested-dividend-withdrawal events must specify the source account',
+      path: ['accountId'],
+    })
+  }
+
+  if (event.type === 'reinvested-dividend-withdrawal' && event.durationMonths !== 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Reinvested-dividend-withdrawal events are single-point events and must use durationMonths = 1',
+      path: ['durationMonths'],
     })
   }
 
@@ -62,6 +88,30 @@ export const ilpPolicyEventSchema = z.object({
       code: z.ZodIssueCode.custom,
       message: 'Recurring-single-premium events must include a positive monthly amount',
       path: ['amount'],
+    })
+  }
+
+  if (event.type === 'policy-repayment' && (event.amount == null || event.amount <= 0)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Policy-repayment events must include a positive amount',
+      path: ['amount'],
+    })
+  }
+
+  if (event.type === 'policy-repayment' && !event.accountId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Policy-repayment events must specify the target account',
+      path: ['accountId'],
+    })
+  }
+
+  if (event.type === 'policy-repayment' && event.durationMonths !== 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Policy-repayment events are single-point events and must use durationMonths = 1',
+      path: ['durationMonths'],
     })
   }
 
@@ -113,6 +163,33 @@ export const ilpPolicyEventSchema = z.object({
       code: z.ZodIssueCode.custom,
       message: 'Charge waiver can only be applied to partial-withdrawal, premium-holiday, or regular-premium-reduction events',
       path: ['chargeWaived'],
+    })
+  }
+
+  if (event.chargeWaiverGrantId && event.chargeWaived !== true) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Charge waiver grant id can only be used on charge-waived events',
+      path: ['chargeWaiverGrantId'],
+    })
+  }
+
+  if (event.chargeRefunded === true
+    && event.type !== 'partial-withdrawal'
+    && event.type !== 'premium-holiday'
+    && event.type !== 'regular-premium-reduction') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Charge refund can only be applied to partial-withdrawal, premium-holiday, or regular-premium-reduction events',
+      path: ['chargeRefunded'],
+    })
+  }
+
+  if (event.chargeWaived === true && event.chargeRefunded === true) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'An event cannot be both charge-waived and charge-refunded',
+      path: ['chargeRefunded'],
     })
   }
 
@@ -197,12 +274,110 @@ export const ilpScheduledPayoutStateSupportSchema = z.object({
 
 export const ilpPolicyStateSupportSchema = z.object({
   automaticLapseOnAccountValueDepletion: z.boolean(),
+  minimumRegularPremiumVariationStartPolicyMonth: z.number().int().min(1).max(1200).optional(),
+  minimumRegularPremiumAmountByFrequency: z.object({
+    annual: z.number().min(0).max(100_000_000).optional(),
+    'semi-annual': z.number().min(0).max(100_000_000).optional(),
+    quarterly: z.number().min(0).max(100_000_000).optional(),
+    monthly: z.number().min(0).max(100_000_000).optional(),
+  }).optional(),
+  blockRegularPremiumVariationDuringPremiumHoliday: z.boolean().optional(),
+  blockTopUpsDuringPremiumHoliday: z.boolean().optional(),
+  blockTopUpsWhenPremiumsNotPaidUpToDate: z.boolean().optional(),
+  minimumTopUpAmount: z.number().min(0).max(100_000_000).optional(),
+  topUpAmountIncrement: z.number().min(0).max(100_000_000).optional(),
+  minimumRecurringSinglePremiumMonthlyAmount: z.number().min(0).max(100_000_000).optional(),
+  minimumRecurringSinglePremiumStartPolicyMonth: z.number().int().min(1).max(1200).optional(),
+  requiresCommencementPremiumForRecurringSinglePremiumResumption: z.boolean().optional(),
+  minimumPremiumHolidayStartPolicyMonth: z.number().int().min(1).max(1200).optional(),
+  minimumPartialWithdrawalStartPolicyMonthByAccount: z.array(z.object({
+    accountId: z.string().min(1),
+    startPolicyMonth: z.number().int().min(1).max(1200),
+  })).min(1).max(10).optional(),
+  minimumPartialWithdrawalAmount: z.number().min(0).max(100_000_000).optional(),
+  partialWithdrawalAmountIncrement: z.number().min(0).max(100_000_000).optional(),
+  partialWithdrawalMaximumAmountRules: z.array(z.object({
+    activeWindow: z.enum(['during-mip', 'after-mip', 'policy-term']),
+    accountId: z.string().min(1),
+    basis: z.enum([
+      'cumulative-paid-regular-premium-less-prior-gross-withdrawals',
+      'account-value-less-prior-withdrawals',
+    ]),
+    startPolicyYear: z.number().int().min(1).max(1200).optional(),
+    endPolicyYear: z.number().int().min(1).max(1200).nullable().optional(),
+    maximumValueRate: z.number().min(0).max(100),
+  })).min(1).max(10).optional(),
+  partialWithdrawalMinimumRemainingValueRules: z.array(z.object({
+    activeWindow: z.enum(['during-mip', 'after-mip', 'policy-term']),
+    basis: z.enum(['account-value', 'policy-value', 'initial-single-premium']),
+    accountId: z.string().min(1).optional(),
+    minimumValue: z.number().min(0).max(100_000_000).optional(),
+    minimumValueRate: z.number().min(0).max(100).optional(),
+  })).min(1).max(10).optional(),
+  minimumTopUpStartPolicyMonth: z.number().int().min(1).max(1200).optional(),
+  topUpRepaymentClearance: z.object({
+    includeMissedPremiums: z.boolean().optional(),
+    priorOffsetRules: z.array(z.object({
+      trigger: z.enum(['partial-withdrawal', 'regular-premium-reduction']),
+      accountIds: z.array(z.string().min(1)).min(1).max(10).optional(),
+    })).min(1).max(5).optional(),
+  }).optional(),
+}).superRefine((support, ctx) => {
+  support.partialWithdrawalMinimumRemainingValueRules?.forEach((rule, index) => {
+    if (rule.basis === 'account-value' && !rule.accountId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'account-value withdrawal minimum rules require accountId',
+        path: ['partialWithdrawalMinimumRemainingValueRules', index, 'accountId'],
+      })
+    }
+
+    if (rule.basis === 'policy-value' && rule.accountId != null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'policy-value withdrawal minimum rules must not define accountId',
+        path: ['partialWithdrawalMinimumRemainingValueRules', index, 'accountId'],
+      })
+    }
+
+    if ((rule.basis === 'account-value' || rule.basis === 'policy-value') && rule.minimumValue == null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'fixed withdrawal minimum rules require minimumValue',
+        path: ['partialWithdrawalMinimumRemainingValueRules', index, 'minimumValue'],
+      })
+    }
+
+    if (rule.basis === 'initial-single-premium') {
+      if (!rule.accountId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'initial-single-premium withdrawal minimum rules require accountId',
+          path: ['partialWithdrawalMinimumRemainingValueRules', index, 'accountId'],
+        })
+      }
+
+      if (rule.minimumValueRate == null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'initial-single-premium withdrawal minimum rules require minimumValueRate',
+          path: ['partialWithdrawalMinimumRemainingValueRules', index, 'minimumValueRate'],
+        })
+      }
+    }
+  })
 })
 
 export const ilpScheduledPayoutSupportSchema = z.object({
   mode: z.literal('manual-assumption'),
   accountId: z.string().min(1),
   fallbackAccountIds: z.array(z.string().min(1)).min(1).max(10).optional(),
+  allowedFrequencies: z.array(z.enum(['annual', 'semi-annual', 'quarterly', 'monthly'])).min(1).max(4).optional(),
+  minimumStartPolicyYear: z.number().int().min(1).max(100).optional(),
+  requiresTargetRetirementAgeStart: z.boolean().optional(),
+  minimumAnnualWithdrawalAmount: z.number().min(1).max(100_000_000).optional(),
+  minimumWithdrawalAmountPerOccurrence: z.number().min(1).max(100_000_000).optional(),
+  minimumRemainingPolicyValue: z.number().min(1).max(100_000_000).optional(),
   source: z.literal('policy-redemption'),
   payoutStateSupport: ilpScheduledPayoutStateSupportSchema.optional(),
 })
@@ -250,6 +425,7 @@ export const ilpScheduledPayoutAssumptionSchema = z.discriminatedUnion('mode', [
     startPolicyYear: z.number().int().min(1).max(100),
     durationYears: z.number().int().min(1).max(100),
     annualPayoutAmount: z.number().min(0).max(100_000_000),
+    frequency: z.enum(['annual', 'semi-annual', 'quarterly', 'monthly']).optional(),
   }),
 ])
 
@@ -269,13 +445,86 @@ export const ilpAssuranceProfileSchema = z.object({
   currentAgeNextBirthday: z.number().int().min(1).max(120),
   sex: z.enum(['male', 'female']),
   smokerStatus: z.enum(['smoker', 'non-smoker']),
+  lifeAssuredMode: z.enum(['single-life', 'multi-life']).optional(),
+  currentOldestLifeAgeNextBirthday: z.number().int().min(1).max(120).optional(),
+  currentOldestLifeSex: z.enum(['male', 'female']).optional(),
+  currentYoungestLifeAgeNextBirthday: z.number().int().min(1).max(120).optional(),
   currentNetRegularPremiumBase: z.number().min(0).max(100_000_000).optional(),
+  currentNetRepaymentBase: z.number().min(0).max(100_000_000).optional(),
   currentSumAssured: z.number().min(0).max(100_000_000).optional(),
   currentWealthAssureValue: z.number().min(0).max(100_000_000).optional(),
   currentBasicSumAssured: z.number().min(0).max(100_000_000).optional(),
+  initialBasicSumAssuredAtIssue: z.number().min(0).max(100_000_000).optional(),
   currentNetSupplementaryPremiumBase: z.number().min(0).max(100_000_000).optional(),
+  currentNetProtectedPremiumBase: z.number().min(0).max(100_000_000).optional(),
+  currentAccidentalDeathFloorAmount: z.number().min(0).max(100_000_000).optional(),
   currentLockedInPolicyValue: z.number().min(0).max(100_000_000).optional(),
   currentAdjustedSinglePremium: z.number().min(0).max(100_000_000).optional(),
+  currentProtectionAge: z.number().int().min(65).max(99).optional(),
+  currentTpdAccelerationRatio: z.number().min(0).max(1).optional(),
+  targetRetirementAge: z.number().int().min(1).max(120).optional(),
+  currentAmountOwing: z.number().min(0).max(100_000_000).optional(),
+  currentDeathBenefitRateTier: z.enum(['net-premium-105', 'net-premium-101']).optional(),
+  currentRetainedMultiplierStatus: z.enum(['multiplier-expired', 'multiplier-retained']).optional(),
+  currentAcceleratedTiPayoutMode: z.enum(['same-as-death-benefit', 'lower-than-death-benefit']).optional(),
+  currentNoLapsePrivilegeMode: z.enum(['not-in-effect', 'expiry-age-85', 'expiry-age-100']).optional(),
+})
+
+const ilpExcludedValueCohortInputSchema = z.object({
+  bonusId: z.string().min(1),
+  accountId: z.string().min(1),
+  amount: z.number().min(0).max(100_000_000),
+  remainingMonths: z.number().int().min(1).max(120).nullable(),
+})
+
+const ilpBonusAdjustmentFactorInputSchema = z.object({
+  bonusId: z.string().min(1),
+  factor: z.number().min(0).max(1),
+})
+
+const ilpCurrentClaimHistorySchema = z.object({
+  family: z.enum(['none', 'ti-advancement', 'tpd-waiver', 'tpd-staged-payout', 'accidental-disability-staged-payout']).optional(),
+  admissionStatus: z.enum(['not-admitted', 'admitted', 'admitted-and-settled']).optional(),
+  remainingWaivedPremiumMonths: z.number().int().min(0).max(1_200).optional(),
+  remainingProtectedDeathCoverBase: z.number().min(0).max(100_000_000).optional(),
+  remainingStagedBenefitBalance: z.number().min(0).max(100_000_000).optional(),
+  refundGateStatus: z.enum(['intact', 'broken']).optional(),
+})
+
+export const ilpClaimProfileSchema = z.object({
+  currentClaimHistory: ilpCurrentClaimHistorySchema.optional(),
+  currentIndebtedness: z.number().min(0).max(100_000_000).optional(),
+  remainingAggregateTiCap: z.number().min(0).max(100_000_000).optional(),
+  remainingAggregateTiCiCap: z.number().min(0).max(100_000_000).optional(),
+  currentTiClaimStatus: z.enum(['not-triggered', 'triggered', 'admitted', 'admitted-and-settled']).optional(),
+  currentTiClaimBenefitAmount: z.number().min(0).max(100_000_000).optional(),
+  currentResidualDeathBenefitAfterTiClaim: z.number().min(0).max(100_000_000).optional(),
+  currentTpdClaimStatus: z.enum(['not-triggered', 'triggered', 'admitted', 'admitted-and-settled']).optional(),
+  currentTpdClaimBenefitAmount: z.number().min(0).max(100_000_000).optional(),
+  remainingAggregateTpdCap: z.number().min(0).max(100_000_000).optional(),
+  currentExcludedClaimBonusValue: z.number().min(0).max(100_000_000).optional(),
+  currentExcludedValueCohorts: z.array(ilpExcludedValueCohortInputSchema).optional(),
+  currentBonusAdjustmentFactors: z.array(ilpBonusAdjustmentFactorInputSchema).optional(),
+  currentInvestPlusSpPowerUpBonusStatus: z.enum(['due-and-uncredited', 'already-credited-or-not-payable']).optional(),
+  currentInvestPlusSpInitialPowerUpBonusAmount: z.number().min(0).max(100_000_000).optional(),
+  currentInvestPlusSpTopUpPowerUpBonusAmount: z.number().min(0).max(100_000_000).optional(),
+  currentInvestPlusSpObservedInitialAccountValueAverage: z.number().min(0).max(100_000_000).optional(),
+  currentInvestPlusSpRepresentativeManagementChargeRate: z.number().min(0).max(1).optional(),
+  currentInvestStarterPolicyChargeRefundAverageAccountValue: z.number().min(0).max(100_000_000).optional(),
+  currentInvestStarterPolicyChargeRefundStatus: z.enum(['due-and-uncredited', 'already-credited-or-not-payable']).optional(),
+  currentRefundEligibleDeathCoiCollected: z.number().min(0).max(100_000_000).optional(),
+  currentDeathCoiRefundStatus: z.enum(['due-and-uncredited', 'already-credited-or-not-payable']).optional(),
+  currentSmartRetireRefundGateStatus: z.enum(['intact', 'broken']).optional(),
+  currentSmartRetireDeathClaimStatus: z.enum(['not-triggered', 'admitted-and-settled']).optional(),
+  currentAccidentalDeathMode: z.enum(['standard-accident', 'restricted-activity-accident']).optional(),
+  currentWopOnTpdClaimStatus: z.enum(['not-triggered', 'admitted', 'admitted-and-settled']).optional(),
+  currentRemainingWopPremiumWaiverMonths: z.number().int().min(0).max(1_200).optional(),
+  currentTpdContinuationEventStatus: z.enum(['triggered', 'not-triggered']).optional(),
+  currentTpdSettlementMode: z.enum(['same-as-death-benefit', 'lower-than-death-benefit']).optional(),
+  currentTpdPayoutStage: z.enum(['full-benefit-payable-now', 'initial-lump-sum-payable-now', 'balance-lump-sum-payable-now']).optional(),
+  currentTpdRemainingBalance: z.number().min(0).max(100_000_000).optional(),
+  currentAccidentalDisabilityPayoutStage: z.enum(['initial-lump-sum-payable-now', 'balance-lump-sum-payable-now']).optional(),
+  currentAccidentalDisabilityRemainingBalance: z.number().min(0).max(100_000_000).optional(),
 })
 
 export const ilpAccountSchema = z.object({
@@ -296,7 +545,15 @@ export const ilpBonusRuleSchema = z.object({
   id: z.string().min(1),
   type: z.enum(['power-up', 'loyalty', 'allocation', 'sign-up', 'custom']),
   label: z.string().min(1),
-  mode: z.enum(['annual-rate', 'premium-allocation', 'one-time']),
+  mode: z.enum(['annual-rate', 'monthly-rate', 'premium-allocation', 'one-time']),
+  oneTimePayoutBasis: z.enum(['fixed-amount', 'committed-annual-premium-at-issue', 'initial-single-premium-at-issue', 'step-up-booster-delta']).optional(),
+  annualPremiumTierBasis: z.enum([
+    'projected-paid-regular-premium-this-year',
+    'committed-annual-premium-at-issue',
+    'initial-basic-sum-assured-at-issue',
+    'initial-basic-sum-assured-multiple-at-issue',
+    'initial-single-premium-at-issue',
+  ]).optional(),
   rate: z.number().min(0).max(1),
   amount: z.number().min(0).max(100_000_000),
   appliesTo: z.array(z.string()).max(20),
@@ -310,21 +567,105 @@ export const ilpBonusRuleSchema = z.object({
     currency: z.enum(['SGD', 'USD']),
     minAnnualPremium: z.number().min(0).nullable(),
     maxAnnualPremium: z.number().min(0).nullable(),
+    minSumAssured: z.number().min(0).nullable().optional(),
+    maxSumAssured: z.number().min(0).nullable().optional(),
+    minSumAssuredMultiple: z.number().min(0).nullable().optional(),
+    maxSumAssuredMultiple: z.number().min(0).nullable().optional(),
     minAccountValue: z.number().min(0).nullable().optional(),
     maxAccountValue: z.number().min(0).nullable().optional(),
     rate: z.number().min(0).max(1),
-  })).max(10).optional(),
-  adjustmentFactorConfig: z.object({
-    formula: z.literal('paid-regular-premium-less-partial-withdrawal-over-annualised-premium'),
-    withdrawalAccountIds: z.array(z.string().min(1)).min(1).max(10),
+  })).max(20).optional(),
+  policyYearRateSchedule: z.array(z.object({
+    startPolicyYear: z.number().int().min(1).max(100),
+    endPolicyYear: z.number().int().min(1).max(100).nullable(),
+    rate: z.number().min(0).max(5),
+  })).max(25).optional(),
+  stepUpPayoutConfig: z.object({
+    premiumShortfallChargeYears: z.number().int().min(1).max(100),
+    partialWithdrawalAccountIds: z.array(z.string().min(1)).min(1).max(10),
+    countPartialWithdrawalsFromPolicyYear: z.number().int().min(1).max(100),
   }).optional(),
+  adjustmentFactorConfig: z.object({
+    formula: z.union([
+      z.literal('paid-regular-premium-less-partial-withdrawal-over-annualised-premium'),
+      z.literal('cumulative-withdrawal-factor-product-over-account-value'),
+    ]),
+    withdrawalAccountIds: z.array(z.string().min(1)).min(1).max(10),
+    includePolicyRepaymentsInPaidRegularPremium: z.boolean().optional(),
+    countFromPolicyYear: z.number().int().min(1).max(100).optional(),
+    policyRepaymentPriorOffsetRules: z.array(z.object({
+      trigger: z.enum(['partial-withdrawal', 'regular-premium-reduction']),
+      accountIds: z.array(z.string().min(1)).min(1).max(10).optional(),
+    })).max(5).optional(),
+  }).optional(),
+  qualificationRules: z.array(z.union([
+    z.object({
+      trigger: z.enum(['premium-holiday', 'partial-withdrawal', 'reinvested-dividend-withdrawal', 'regular-premium-reduction', 'scheduled-payout']),
+      accountIds: z.array(z.string().min(1)).min(1).max(10).optional(),
+      disqualifyThroughPolicyYear: z.number().int().min(1).max(100),
+    }),
+    z.object({
+      trigger: z.enum(['premium-holiday', 'partial-withdrawal', 'reinvested-dividend-withdrawal', 'regular-premium-reduction', 'scheduled-payout']),
+      accountIds: z.array(z.string().min(1)).min(1).max(10).optional(),
+      disqualifyInReferenceYear: z.literal(true),
+    }),
+    z.object({
+      trigger: z.enum(['premium-holiday', 'partial-withdrawal', 'reinvested-dividend-withdrawal', 'regular-premium-reduction', 'scheduled-payout']),
+      accountIds: z.array(z.string().min(1)).min(1).max(10).optional(),
+      disqualifyThroughReferenceYear: z.literal(true),
+    }),
+    z.object({
+      trigger: z.literal('partial-withdrawal'),
+      accountIds: z.array(z.string().min(1)).min(1).max(10).optional(),
+      disqualifyWhenCumulativeAmountExceeds: z.literal('annualised-regular-premium-at-issue'),
+      countFromPolicyYear: z.number().int().min(1).max(100),
+    }),
+    z.object({
+      trigger: z.enum(['premium-holiday', 'partial-withdrawal', 'reinvested-dividend-withdrawal', 'regular-premium-reduction', 'scheduled-payout']),
+      accountIds: z.array(z.string().min(1)).min(1).max(10).optional(),
+      disqualifyIfAnyFromPolicyYear: z.number().int().min(1).max(100),
+    }),
+    z.object({
+      trigger: z.enum(['premium-holiday', 'partial-withdrawal', 'reinvested-dividend-withdrawal', 'regular-premium-reduction', 'scheduled-payout']),
+      accountIds: z.array(z.string().min(1)).min(1).max(10).optional(),
+      disqualifyIfAnyInLookbackMonths: z.number().int().min(1).max(120),
+    }),
+    z.object({
+      formula: z.literal('policy-year-growth-measure'),
+      minimumRatio: z.number().min(0).max(100),
+      rounding: z.literal('floor-whole-percent'),
+    }),
+    z.object({
+      formula: z.literal('cumulative-effective-account-value-ratio'),
+      maximumRatio: z.number().min(0).max(100),
+      includeReinvestedDividendWithdrawals: z.literal(true).optional(),
+    }),
+    z.object({
+      formula: z.literal('no-new-premium-arrears-in-lookback-months'),
+      lookbackMonths: z.number().int().min(1).max(120),
+    }),
+  ])).max(5).optional(),
   suspensionRules: z.array(z.object({
-    trigger: z.enum(['premium-holiday', 'partial-withdrawal', 'regular-premium-reduction', 'scheduled-payout']),
+    trigger: z.enum(['premium-holiday', 'partial-withdrawal', 'reinvested-dividend-withdrawal', 'regular-premium-reduction', 'scheduled-payout']),
     suspensionMonths: z.number().int().min(1).max(120),
+    startOffsetMonths: z.number().int().min(0).max(120).optional(),
+    accountIds: z.array(z.string().min(1)).min(1).max(10).optional(),
   })).max(5).optional(),
   restorationRules: z.array(z.object({
-    trigger: z.enum(['premium-holiday-repayment']),
-    basis: z.enum(['repaid-premium-with-missed-months', 'account-value-plus-repaid-premium-with-missed-months']),
+    trigger: z.enum(['premium-holiday-repayment', 'policy-repayment']),
+    basis: z.enum(['repaid-premium-with-missed-months', 'account-value-plus-repaid-premium-with-missed-months', 'repaid-premium']),
+  })).max(5).optional(),
+  excludedValueRules: z.array(z.object({
+    trigger: z.enum(['premium-holiday-repayment', 'policy-repayment', 'top-up', 'recurring-single-premium']),
+    basis: z.enum(['repaid-premium', 'event-amount']),
+    lookbackMonths: z.number().int().min(1).max(120).optional(),
+    netAmountFactor: z.number().min(0).max(1).optional(),
+  })).max(5).optional(),
+  preservedValueRules: z.array(z.object({
+    trigger: z.literal('partial-withdrawal'),
+    basis: z.literal('event-amount'),
+    accountIds: z.array(z.string().min(1)).min(1).max(10).optional(),
+    requiresBonusSuspensionWaived: z.boolean().optional(),
   })).max(5).optional(),
 }).superRefine((bonus, ctx) => {
   if (bonus.endPolicyYear != null && bonus.endPolicyYear < bonus.startPolicyYear) {
@@ -333,6 +674,43 @@ export const ilpBonusRuleSchema = z.object({
       message: 'endPolicyYear must be greater than or equal to startPolicyYear',
       path: ['endPolicyYear'],
     })
+  }
+
+  if (bonus.mode !== 'one-time' && bonus.oneTimePayoutBasis != null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'oneTimePayoutBasis is only valid for one-time bonuses',
+      path: ['oneTimePayoutBasis'],
+    })
+  }
+
+  if (bonus.oneTimePayoutBasis === 'step-up-booster-delta') {
+    if (bonus.stepUpPayoutConfig == null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'step-up-booster-delta bonuses require stepUpPayoutConfig',
+        path: ['stepUpPayoutConfig'],
+      })
+    }
+
+    if ((bonus.policyYearRateSchedule?.length ?? 0) === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'step-up-booster-delta bonuses require a non-empty policyYearRateSchedule',
+        path: ['policyYearRateSchedule'],
+      })
+    }
+
+    if (
+      bonus.stepUpPayoutConfig != null
+      && bonus.stepUpPayoutConfig.countPartialWithdrawalsFromPolicyYear !== (bonus.startPolicyYear + 1)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'step-up-booster-delta bonuses must start counting partial withdrawals from the first policy year after MIP',
+        path: ['stepUpPayoutConfig', 'countPartialWithdrawalsFromPolicyYear'],
+      })
+    }
   }
 })
 
@@ -343,6 +721,10 @@ export const ilpChargeRuleSchema = z.object({
   activeWindow: z.enum(['during-mip', 'after-mip', 'policy-term']),
   yearBasis: z.enum(['policy-year', 'premium-year']).optional(),
   requiresPremiumsPaidUpToDate: z.boolean().optional(),
+  suspensionRules: z.array(z.object({
+    trigger: z.literal('premium-holiday'),
+    basis: z.literal('prorate-by-overlap-months'),
+  })).max(5).optional(),
   startPolicyYear: z.number().int().min(1).max(100).optional(),
   endPolicyYear: z.number().int().min(1).max(100).nullable().optional(),
   appliesTo: z.array(z.string().min(1)).min(1).max(10),
@@ -368,15 +750,21 @@ export const ilpChargeRuleSchema = z.object({
       'prudential-linkguard-combined',
       'aia-plp2-plus-death',
       'aia-plp2-max-death',
+      'aia-pro-achiever-3-benefit-charge',
+      'aia-venture-benefit-charge',
       'hsbc-flexi-choice-death-ti',
       'hsbc-flexi-max-death-ti',
       'great-eastern-wa4-death-ti',
       'great-eastern-gla4-death-ti',
       'great-eastern-pla-death-ti',
       'fwd-invest-flexi-elite-death',
+      'fwd-invest-repayment-inclusive-death',
       'income-invest-flex-death-ti',
       'income-legacy-flex-solitaire-death-ti',
       'manulife-investready-iii-death-ti',
+      'singlife-savvy-invest-ii-death-ti',
+      'manulife-smartretire-death',
+      'manulife-smartretire-wop-tpd',
       'manulife-manuinvest-duo-death-ti-tpd',
       'tokio-mpc-net-premium-floor',
       'tokio-mpc-locked-in-policy-value',
@@ -695,16 +1083,27 @@ export const ilpEventChargeRuleSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
   trigger: z.enum(['partial-withdrawal', 'regular-premium-reduction', 'premium-holiday', 'premium-holiday-repayment', 'top-up', 'recurring-single-premium']),
-  basis: z.enum(['event-amount', 'account-value', 'premium-reduction-with-startup-recovery', 'premium-reduction-tiered-startup-recovery', 'repaid-premium-with-missed-months', 'annual-premium-with-overlap-months', 'committed-annual-premium-with-overlap-months', 'premium-holiday-charge-refund', 'event-amount-with-overlap-months', 'annual-reduction-with-active-months']),
+  basis: z.enum(['event-amount', 'account-value', 'premium-reduction-with-startup-recovery', 'premium-reduction-tiered-startup-recovery', 'repaid-premium-with-missed-months', 'annual-premium-with-overlap-months', 'committed-annual-premium-with-overlap-months', 'premium-holiday-charge-refund', 'source-event-charge-refund', 'event-amount-with-overlap-months', 'annual-reduction-with-active-months', 'fixed-amount-with-overlap-months']),
   activeWindow: z.enum(['during-mip', 'after-mip', 'policy-term']).optional(),
   yearBasis: z.enum(['policy-year', 'premium-year']).optional(),
   appliesTo: z.array(z.string().min(1)).min(1).max(10),
   fallbackAppliesTo: z.array(z.string().min(1)).min(1).max(10).optional(),
+  manualWaiverMode: z.enum(['full-skip', 'capped-free-event']).optional(),
+  manualWaiverGrantGroup: z.string().min(1).optional(),
+  manualWaiverMaxGrantCount: z.number().int().min(1).max(10).optional(),
+  manualWaiverMaxOverlapMonths: z.number().int().min(1).max(120).optional(),
   freeLifetimeMonths: z.number().int().min(1).max(240).optional(),
+  freeLifetimeMonthsStartPolicyYear: z.number().int().min(1).max(100).optional(),
+  freeLifetimeMonthsSchedule: z.array(z.object({
+    startPolicyYear: z.number().int().min(1).max(100),
+    endPolicyYear: z.number().int().min(1).max(100).nullable(),
+    months: z.number().int().min(1).max(240),
+  })).max(20).optional(),
+  freeLifetimeMonthsResetOnRepayment: z.boolean().optional(),
   freeEventCount: z.number().int().min(1).max(10).optional(),
   freeEventStartPolicyYear: z.number().int().min(1).max(100).optional(),
   freeEventMaxAmountRate: z.number().min(0).max(1).optional(),
-  freeEventMaxAmountBasis: z.enum(['open-balance', 'initial-single-premium']).optional(),
+  freeEventMaxAmountBasis: z.enum(['open-balance', 'initial-single-premium', 'cumulative-paid-regular-premium']).optional(),
   freeAmountPoolRate: z.number().min(0).max(1).optional(),
   freeAmountPoolBasis: z.enum(['open-balance-at-start-policy-year', 'initial-single-premium']).optional(),
   freeAmountPoolReferencePolicyYear: z.number().int().min(1).max(100).optional(),
@@ -734,10 +1133,12 @@ export const ilpEventChargeRuleSchema = z.object({
 
   if (rule.trigger === 'premium-holiday'
     && rule.basis !== 'annual-premium-with-overlap-months'
-    && rule.basis !== 'committed-annual-premium-with-overlap-months') {
+    && rule.basis !== 'committed-annual-premium-with-overlap-months'
+    && rule.basis !== 'source-event-charge-refund'
+    && rule.basis !== 'fixed-amount-with-overlap-months') {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'Premium-holiday event charges must use annual-premium-with-overlap-months or committed-annual-premium-with-overlap-months basis',
+      message: 'Premium-holiday event charges must use annual-premium-with-overlap-months, committed-annual-premium-with-overlap-months, source-event-charge-refund, or fixed-amount-with-overlap-months basis',
       path: ['basis'],
     })
   }
@@ -747,6 +1148,40 @@ export const ilpEventChargeRuleSchema = z.object({
       code: z.ZodIssueCode.custom,
       message: 'freeLifetimeMonths can only be used on premium-holiday event charge rules',
       path: ['freeLifetimeMonths'],
+    })
+  }
+
+  if (rule.freeLifetimeMonthsStartPolicyYear != null && rule.trigger !== 'premium-holiday') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'freeLifetimeMonthsStartPolicyYear can only be used on premium-holiday event charge rules',
+      path: ['freeLifetimeMonthsStartPolicyYear'],
+    })
+  }
+
+  rule.freeLifetimeMonthsSchedule?.forEach((tier, index) => {
+    if (tier.endPolicyYear != null && tier.endPolicyYear < tier.startPolicyYear) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'freeLifetimeMonthsSchedule endPolicyYear must be greater than or equal to startPolicyYear',
+        path: ['freeLifetimeMonthsSchedule', index, 'endPolicyYear'],
+      })
+    }
+  })
+
+  if (rule.freeLifetimeMonthsSchedule != null && rule.trigger !== 'premium-holiday') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'freeLifetimeMonthsSchedule can only be used on premium-holiday event charge rules',
+      path: ['freeLifetimeMonthsSchedule'],
+    })
+  }
+
+  if (rule.freeLifetimeMonthsResetOnRepayment === true && rule.trigger !== 'premium-holiday') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'freeLifetimeMonthsResetOnRepayment can only be used on premium-holiday event charge rules',
+      path: ['freeLifetimeMonthsResetOnRepayment'],
     })
   }
 
@@ -762,6 +1197,25 @@ export const ilpEventChargeRuleSchema = z.object({
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: 'Premium-holiday charge refund rules must reference a source holiday charge rule',
+      path: ['sourceChargeRuleId'],
+    })
+  }
+
+  if (rule.basis === 'source-event-charge-refund'
+    && rule.trigger !== 'partial-withdrawal'
+    && rule.trigger !== 'premium-holiday'
+    && rule.trigger !== 'regular-premium-reduction') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Source-event charge refund rules must trigger on partial-withdrawal, premium-holiday, or regular-premium-reduction',
+      path: ['trigger'],
+    })
+  }
+
+  if (rule.basis === 'source-event-charge-refund' && !rule.sourceChargeRuleId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Source-event charge refund rules must reference a source event charge rule',
       path: ['sourceChargeRuleId'],
     })
   }
@@ -804,6 +1258,42 @@ export const ilpEventChargeRuleSchema = z.object({
       code: z.ZodIssueCode.custom,
       message: 'Free-event max-amount basis requires freeEventMaxAmountRate',
       path: ['freeEventMaxAmountBasis'],
+    })
+  }
+
+  if (rule.manualWaiverMode === 'capped-free-event' && !(rule.trigger === 'partial-withdrawal' && rule.basis === 'event-amount')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'manualWaiverMode = capped-free-event can only be used on partial-withdrawal event-amount rules',
+      path: ['manualWaiverMode'],
+    })
+  }
+
+  if (rule.manualWaiverMode === 'capped-free-event' && rule.freeEventCount == null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'manualWaiverMode = capped-free-event requires freeEventCount',
+      path: ['manualWaiverMode'],
+    })
+  }
+
+  if (rule.manualWaiverMaxGrantCount != null && !rule.manualWaiverGrantGroup) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'manualWaiverMaxGrantCount requires manualWaiverGrantGroup',
+      path: ['manualWaiverMaxGrantCount'],
+    })
+  }
+
+  if (
+    rule.manualWaiverMaxOverlapMonths != null
+    && rule.trigger !== 'premium-holiday'
+    && rule.trigger !== 'regular-premium-reduction'
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'manualWaiverMaxOverlapMonths can only be used on premium-holiday or regular-premium-reduction rules',
+      path: ['manualWaiverMaxOverlapMonths'],
     })
   }
 
@@ -863,10 +1353,12 @@ export const ilpPolicySchema = z.object({
   regularPremiumPaymentFrequency: ilpRegularPremiumPaymentFrequencySchema.optional(),
   initialSinglePremium: z.number().min(0).max(100_000_000).optional(),
   monthsAlreadyPaid: z.number().int().min(0).max(1_200),
+  currentAcceptedRegularPremiumMonths: z.number().int().min(0).max(1_200).optional(),
   currentPolicyYear: z.number().int().min(1).max(100),
   icpMonths: z.number().int().min(0).max(1_200).optional(),
   mipBasis: z.enum(['finite', 'open-ended']).optional(),
   assuranceProfile: ilpAssuranceProfileSchema.optional(),
+  claimProfile: ilpClaimProfileSchema.optional(),
   policyStateSupport: ilpPolicyStateSupportSchema.optional(),
   scheduledPayoutSupport: ilpScheduledPayoutSupportSchema.optional(),
   scheduledPayoutAssumption: ilpScheduledPayoutAssumptionSchema.optional(),
@@ -874,7 +1366,7 @@ export const ilpPolicySchema = z.object({
   distributionAssumption: ilpDistributionAssumptionSchema.optional(),
   policyEvents: z.array(ilpPolicyEventSchema).max(20).optional(),
   accounts: z.array(ilpAccountSchema).min(1).max(10),
-  mipLength: z.number().int().min(5).max(100).nullable().optional(),
+  mipLength: z.number().int().min(1).max(100).nullable().optional(),
   postMipYears: z.number().int().min(0).max(50),
   eecTable: z.array(z.number().min(0).max(1)).max(100),
   eecYearBasis: z.enum(['policy-year', 'premium-year']).optional(),
@@ -889,6 +1381,7 @@ export const ilpPolicySchema = z.object({
     variantId: z.string().min(1),
     variantLabel: z.string().min(1),
     catalogVersion: z.string().min(1),
+    generatedAt: z.string().min(1).optional(),
     supportStatus: z.enum(['supported', 'partial', 'parser-error']),
     economicsStatus: z.enum(['supported', 'partial-modeled-subset', 'metadata-only']),
     structureStatus: z.enum(['structured', 'brochure-partial']),
@@ -927,19 +1420,22 @@ export const ilpPolicySchema = z.object({
     })
   }
 
-  if (mipBasis === 'finite' && policy.mipLength != null && policy.currentPolicyYear >= policy.mipLength) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'Current policy year must be less than MIP length. Mature policies are not supported in V1.',
-      path: ['currentPolicyYear'],
-    })
-  }
-
   if (mipBasis === 'open-ended' && policy.postMipYears < 1) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: 'Open-ended policies must define a positive review horizon in postMipYears',
       path: ['postMipYears'],
+    })
+  }
+
+  if (
+    policy.currentAcceptedRegularPremiumMonths != null
+    && policy.currentAcceptedRegularPremiumMonths > policy.monthsAlreadyPaid
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Current accepted regular premium months cannot exceed monthsAlreadyPaid',
+      path: ['currentAcceptedRegularPremiumMonths'],
     })
   }
 
@@ -1310,6 +1806,36 @@ export const ilpPolicySchema = z.object({
         code: z.ZodIssueCode.custom,
         message: 'scheduledPayoutSupport.fallbackAccountIds must not repeat the primary account',
         path: ['scheduledPayoutSupport', 'fallbackAccountIds', accountIndex],
+      })
+    }
+  })
+
+  policy.policyStateSupport?.minimumPartialWithdrawalStartPolicyMonthByAccount?.forEach((rule, ruleIndex) => {
+    if (!accountIds.includes(rule.accountId)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'policyStateSupport.minimumPartialWithdrawalStartPolicyMonthByAccount accountId must reference an existing account',
+        path: ['policyStateSupport', 'minimumPartialWithdrawalStartPolicyMonthByAccount', ruleIndex, 'accountId'],
+      })
+    }
+  })
+
+  policy.policyStateSupport?.partialWithdrawalMaximumAmountRules?.forEach((rule, ruleIndex) => {
+    if (!accountIds.includes(rule.accountId)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'policyStateSupport.partialWithdrawalMaximumAmountRules accountId must reference an existing account',
+        path: ['policyStateSupport', 'partialWithdrawalMaximumAmountRules', ruleIndex, 'accountId'],
+      })
+    }
+  })
+
+  policy.policyStateSupport?.partialWithdrawalMinimumRemainingValueRules?.forEach((rule, ruleIndex) => {
+    if (rule.accountId != null && !accountIds.includes(rule.accountId)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'policyStateSupport.partialWithdrawalMinimumRemainingValueRules accountId must reference an existing account',
+        path: ['policyStateSupport', 'partialWithdrawalMinimumRemainingValueRules', ruleIndex, 'accountId'],
       })
     }
   })

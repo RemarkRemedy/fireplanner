@@ -27,6 +27,8 @@ describe('parsePrudentialPruVantageProsper', () => {
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:prosper-assurance-charge',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
       'branch:pru-holiday-refund',
       'branch:pru-holiday-fallback',
       'branch:pru-top-up-charge',
@@ -35,6 +37,7 @@ describe('parsePrudentialPruVantageProsper', () => {
       'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toEqual([
+      'pruvantage-prosper-accidental-death-and-claim-exclusions',
       'premium-pass-wealth-share-secondary-life-options',
     ])
 
@@ -67,5 +70,17 @@ describe('parsePrudentialPruVantageProsper', () => {
       ]),
       sourceRefs: expect.any(Array),
     })
+    expect(term15Variant?.warnings).toContain(
+      'The current-state death-benefit estimate is modeled as the higher of the 101%-of-paid-regular-premiums floor net Growth/Flex withdrawals or current Growth/Flex account value, plus Additional Investment Account value, after manual current amount owing.',
+    )
+    expect(term15Variant?.warnings).toContain(
+      'The current accidental-death estimate is modeled as the higher of the 105%-of-paid-regular-premiums floor net Growth/Flex withdrawals or current Growth/Flex account value, plus Additional Investment Account value, after manual current amount owing.',
+    )
+    expect(term15Variant?.unsupportedItems).toContain(
+      'The current-state death-benefit estimate needs a manual current amount owing input because current debt is not reconstructed from history in V1.',
+    )
+    expect(term15Variant?.unsupportedItems).toContain(
+      'Accidental-death pre-existing-condition / suicide exclusions and other death-claim settlement mechanics remain informational only beyond the modeled current ordinary and accidental-death benefit estimates.',
+    )
   }, 30_000)
 })

@@ -1,0 +1,1177 @@
+diff --git a/frontend/docs/ilp-original-single-premium-base-kernel-execution-spec.md b/frontend/docs/ilp-original-single-premium-base-kernel-execution-spec.md
+new file mode 100644
+index 00000000..297fc850
+--- /dev/null
++++ b/frontend/docs/ilp-original-single-premium-base-kernel-execution-spec.md
+@@ -0,0 +1,261 @@
++# ILP Original Single-Premium Base Kernel Execution Spec
++
++Last updated: 2026-03-16
++
++## Goal
++
++Add one bounded kernel slice for open-ended single-premium ILP products that publish:
++
++1. recurring establishment charges as a percentage of the original initial single premium paid on commencement date, and/or
++2. surrender charges as a percentage of that same original initial single-premium base
++
++This slice exists because parser throughput has now hit the same honest blocker on multiple otherwise parser-ready Tokio Marine open-ended single-premium products:
++
++- `#goElite`
++- `#goElite Secure`
++- `#goWealth Enrich`
++
++All three already fit the current open-ended single-premium basis for:
++
++- zero or simple upfront allocation
++- administrative account-value charges
++- recurring-single-premium and top-up charge paths
++- partial withdrawal handling
++- distribution-mode assumption support
++
++The shared missing mechanic is not parser extraction. It is the lack of a reusable runtime base for charges and surrender penalties that reference the original initial single premium rather than current account value.
++
++## Why This Is Next
++
++Recent parser throughput continued until the next three cheapest honest candidates failed for the same reason:
++
++1. `tokio-marine-goelite`
++2. `tokio-marine-goelite-secure`
++3. `tokio-marine-gowealth-enrich`
++
++Repeated source-backed blocker:
++
++- current runtime can deduct a one-time upfront initial single-premium charge before units are created
++- current runtime can deduct recurring account-value and annual-contribution charges
++- current runtime can compute exit charges only from current subject-to-EEC account value
++- current runtime cannot author recurring annualized charges against the original initial single premium paid on commencement date
++- current runtime cannot compute surrender penalties against that original initial single-premium base for open-ended products
++
++That is the mode-machine trigger to switch from parser throughput to kernel mode.
++
++## Proof Products
++
++### Mandatory proof parser
++
++1. `tokio-marine-gowealth-enrich`
++- cleanest proof target
++- one open-ended single-premium cash corridor
++- published recurring establishment charge on original initial single premium
++- published surrender charge on original initial single premium
++- already has executable admin-charge, top-up / recurring-single-premium, partial-withdrawal, and distribution-mode surfaces
++- does not add MPC to the proof slice
++
++### Immediate follow-on parsers after kernel commit
++
++2. `tokio-marine-goelite`
++3. `tokio-marine-goelite-secure`
++
++These should fit immediately once the same original-single-premium base exists.
++
++### Explicitly out of scope for this slice
++
++- locked-in policy value mechanics
++- monthly protection charge / sum-at-risk formulas
++- loyalty bonus / paid-up qualification state
++- fund switching, credit-card, third-party, or fund-level charges
++- protection claim handling
++- product promotion to `supported`
++
++## Source-Backed Contract
++
++The kernel must support this published pattern:
++
++1. the customer pays one initial single premium at policy commencement
++2. that commencement lump sum remains the contractual base for certain later charges
++3. a recurring establishment charge is computed as `% per annum x original initial single premium`
++4. the recurring charge is deducted from current account units over a bounded policy-year window
++5. a surrender charge is computed as `% x original initial single premium`
++6. the surrender charge applies over a bounded policy-year table that is independent of MIP semantics
++
++Important distinctions:
++
++- this is not the same as the existing one-time `initial-single-premium` inception deduction
++- this is not an account-value charge
++- this is not an annual-contribution charge
++- this is not a fake finite-MIP product
++- this is not current-account-value EEC
++
++## Scope
++
++This slice includes exactly:
++
++1. one reusable recurring charge basis for the original initial single premium paid on commencement date
++2. one reusable exit-charge basis for surrender penalties against the original initial single premium
++3. contract/schema/template/runtime mapping for both new bases
++4. direct calculator tests for recurring and surrender behavior
++5. one proof parser consuming the new bases end-to-end
++
++This slice does **not** include:
++
++- principal-floor / capital-guarantee state
++- MPC / assurance-charge expansion
++- loyalty or achievement bonus qualification state
++- rider administration
++- manual claim events
++- parser-specific hacks that bypass the shared basis
++
++## Keep vs Add
++
++### Keep
++
++- existing `initial-single-premium` basis for one-time inception deductions
++- existing `annual-contribution`, `account-value`, `fixed-annual`, and `premium-base-mip-multiplier` behavior
++- existing open-ended no-MIP support
++- existing top-up and recurring-single-premium event-charge behavior
++
++### Add
++
++#### 1. Recurring charge basis
++
++Add one explicit recurring charge basis:
++
++- `initial-single-premium-base`
++
++Meaning:
++
++- base amount is the original gross initial single premium paid on commencement date
++- charge may recur annually over a bounded authored schedule
++- charge amount does **not** shrink with current account value
++- charge amount does **not** depend on current annual contribution
++
++#### 2. Exit charge basis
++
++Add one explicit surrender / exit charge basis:
++
++- `exitChargeBasis: 'account-value' | 'initial-single-premium-base'`
++
++Meaning:
++
++- existing products default to `account-value`
++- open-ended single-premium products may author `initial-single-premium-base`
++- `eecTable` remains the authored rate schedule, but the charge base becomes configurable
++
++### Reuse of existing input
++
++Reuse `initialSinglePremium` as the persisted commencement lump sum base.
++
++Rules:
++
++- the field continues to represent the original gross initial single premium paid on commencement date
++- the existing one-time inception deduction only fires when projection starts at true inception
++- the same persisted value may still be needed after inception to evaluate original-base recurring charges and surrender penalties
++
++Do not add a second parallel “original single premium” field unless implementation proves it is strictly necessary.
++
++## Runtime Definition
++
++### Recurring original-base charge
++
++For any `chargeRule` with basis `initial-single-premium-base`:
++
++1. read the persisted `initialSinglePremium`
++2. resolve the authored annual rate for the current policy year
++3. compute `charge = initialSinglePremium x rate`
++4. allocate and deduct using the authored primary / fallback account order
++5. do not mutate the stored base after deduction
++
++### Exit charge on original base
++
++For any policy with `exitChargeBasis === 'initial-single-premium-base'`:
++
++1. resolve the current exit-charge rate from `eecTable`
++2. compute `exitCharge = initialSinglePremium x exitChargeRate`
++3. use that value for cancel-now penalty and projected surrender rows
++4. do not derive exit charge from account value for that product
++
++### Open-ended products
++
++This slice must work when `mipBasis === 'open-ended'`.
++
++Important:
++
++- open-ended products still do not get fake MIP transitions
++- open-ended products may still have a finite authored surrender-charge schedule through `eecTable`
++- the exit-charge horizon must therefore be independent of MIP state
++
++## Layer Contract
++
++Expected touch points:
++
++- `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/src/lib/ilp-catalog/types.ts`
++- `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/src/lib/ilp-catalog/schema.ts`
++- `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/src/lib/validation/ilpSchema.ts`
++- `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/src/lib/ilp-catalog/templateToPolicy.ts`
++- `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/src/lib/calculations/ilp.ts`
++- `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/src/lib/calculations/ilp.test.ts`
++- `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/src/components/ilp/PolicyInputForm.tsx`
++
++Required authored/runtime additions:
++
++- `chargeRules[].basis` accepts `initial-single-premium-base`
++- policy/runtime contract accepts `exitChargeBasis`
++- validation permits rate schedules on `initial-single-premium-base`
++- template mapping preserves both surfaces without coercing them into existing recurring bases
++- UI warnings stop treating non-zero `initialSinglePremium` after inception as inherently wrong when original-base charges or surrender use it
++
++## Acceptance Criteria
++
++This slice is complete only if all are true:
++
++1. The catalog/runtime contract can represent recurring charges on the original initial single-premium base.
++2. The catalog/runtime contract can represent surrender penalties on that same base.
++3. Existing account-value EEC products behave identically after the refactor.
++4. Existing one-time `initial-single-premium` inception deduction products behave identically after the refactor.
++5. Direct calculator tests prove recurring original-base charges run for the authored years only.
++6. Direct calculator tests prove original-base surrender penalties apply correctly in cancel-now and projection rows.
++7. `tokio-marine-gowealth-enrich` consumes the new bases and passes the full kernel gate.
++8. `npm run golden:check` remains green.
++
++## Direct Calculator Proof Requirements
++
++At minimum add direct calculator tests for:
++
++1. recurring original-single-premium-base charge over a 5-year schedule on an open-ended single-premium product
++2. no regression for existing one-time `initial-single-premium` inception deductions
++3. no regression for existing account-value exit-charge products
++4. original-single-premium-base surrender penalty in both current summary and projected surrender rows
++
++## Implementation Sequence
++
++### Step 1. Extend authored/runtime contract
++
++Add `initial-single-premium-base` and `exitChargeBasis`.
++
++### Step 2. Update validation and template mapping
++
++Allow the new basis to flow end-to-end and keep the UI honest about `initialSinglePremium`.
++
++### Step 3. Extend runtime charge calculation
++
++Evaluate recurring original-base charges without mutating the commencement lump sum.
++
++### Step 4. Extend exit-charge calculation
++
++Decouple exit-charge base from MIP semantics and current account value.
++
++### Step 5. Add direct calculator tests
++
++Protect both the new original-base charge and the existing single-premium deduction / account-value EEC paths.
++
++### Step 6. Upgrade the proof parser
++
++Wire `tokio-marine-gowealth-enrich` to author the establishment charge and surrender charge honestly.
++
++### Step 7. Run the kernel gate
++
++Only after runtime, tests, and proof parser are green should this slice proceed to staging and approval review.
+diff --git a/frontend/scripts/ilp-catalog/parsers/tokioMarineGoWealthEnrich.test.ts b/frontend/scripts/ilp-catalog/parsers/tokioMarineGoWealthEnrich.test.ts
+index e54f22bf..ecf0638e 100644
+--- a/frontend/scripts/ilp-catalog/parsers/tokioMarineGoWealthEnrich.test.ts
++++ b/frontend/scripts/ilp-catalog/parsers/tokioMarineGoWealthEnrich.test.ts
+@@ -27,19 +27,22 @@ describe('parseTokioMarineGoWealthEnrich', () => {
+     expect(product.economicsStatus).toBe('partial-modeled-subset')
+     expect(product.modeledEconomics).toEqual([
+       'branch:tokio-marine-gowealth-enrich-zero-single-premium-charge',
++      'branch:tokio-marine-gowealth-enrich-establishment-charge',
+       'branch:tokio-marine-gowealth-enrich-administrative-charge',
+       'branch:tokio-marine-gowealth-enrich-recurring-single-and-top-up-charge',
+       'branch:tokio-marine-gowealth-enrich-single-premium-partial-withdrawal-charge',
++      'branch:tokio-marine-gowealth-enrich-surrender-charge',
+       'kernel:distribution-mode-assumption',
+     ])
+-    expect(product.metadataOnlyBehaviors).toContain('tokio-marine-gowealth-enrich-establishment-charge')
+-    expect(product.metadataOnlyBehaviors).toContain('tokio-marine-gowealth-enrich-surrender-charge')
++    expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-gowealth-enrich-establishment-charge')
++    expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-gowealth-enrich-surrender-charge')
+     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended-cash'])
+ 
+     const variant = product.variants[0]
+     expect(variant?.mipBasis).toBe('open-ended')
+     expect(variant?.mipLength).toBeNull()
+-    expect(variant?.eecTable).toEqual([])
++    expect(variant?.exitChargeBasis).toBe('initial-single-premium-base')
++    expect(variant?.eecTable).toEqual([0.07, 0.056, 0.042, 0.028, 0.014, 0])
+     expect(variant?.accounts).toEqual([
+       expect.objectContaining({
+         id: 'policy',
+@@ -62,6 +65,17 @@ describe('parseTokioMarineGoWealthEnrich', () => {
+         basis: 'annual-contribution',
+         rate: 0,
+       }),
++      expect.objectContaining({
++        id: 'establishment-charge',
++        basis: 'initial-single-premium-base',
++        rateSchedule: [
++          { startPolicyYear: 1, endPolicyYear: 1, rate: 0.014 },
++          { startPolicyYear: 2, endPolicyYear: 2, rate: 0.014 },
++          { startPolicyYear: 3, endPolicyYear: 3, rate: 0.014 },
++          { startPolicyYear: 4, endPolicyYear: 4, rate: 0.014 },
++          { startPolicyYear: 5, endPolicyYear: 5, rate: 0.014 },
++        ],
++      }),
+       expect.objectContaining({
+         id: 'administrative-charge',
+         basis: 'account-value',
+diff --git a/frontend/scripts/ilp-catalog/parsers/tokioMarineGoWealthEnrich.ts b/frontend/scripts/ilp-catalog/parsers/tokioMarineGoWealthEnrich.ts
+index 0a31d485..e6cc7b11 100644
+--- a/frontend/scripts/ilp-catalog/parsers/tokioMarineGoWealthEnrich.ts
++++ b/frontend/scripts/ilp-catalog/parsers/tokioMarineGoWealthEnrich.ts
+@@ -20,6 +20,23 @@ const PARTIAL_WITHDRAWAL_CHARGE_SCHEDULE = [
+   0,
+ ] as const
+ 
++const ESTABLISHMENT_CHARGE_SCHEDULE = [
++  0.014,
++  0.014,
++  0.014,
++  0.014,
++  0.014,
++] as const
++
++const SURRENDER_CHARGE_TABLE = [
++  0.07,
++  0.056,
++  0.042,
++  0.028,
++  0.014,
++  0,
++] as const
++
+ function normalizeWhitespace(text: string): string {
+   return text.replace(/\s+/g, ' ').trim()
+ }
+@@ -73,6 +90,20 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
+       ],
+       sourceRefs: [page3],
+     },
++    {
++      id: 'establishment-charge',
++      label: 'Establishment Charge',
++      basis: 'initial-single-premium-base',
++      rate: 0,
++      rateSchedule: buildRateSchedule(ESTABLISHMENT_CHARGE_SCHEDULE),
++      amount: 0,
++      appliesTo: ['policy'],
++      activeWindow: 'policy-term',
++      notes: [
++        'Models the published 1.4% p.a. establishment charge on the original gross initial single premium during the first five policy years.',
++      ],
++      sourceRefs: [page6],
++    },
+     {
+       id: 'administrative-charge',
+       label: 'Administrative Charge',
+@@ -184,15 +215,14 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
+       ],
+       sourceRefs: [page5],
+     },
+-    eecTable: [],
++    eecTable: [...SURRENDER_CHARGE_TABLE],
++    exitChargeBasis: 'initial-single-premium-base',
+     warnings: [
+-      '#goWealth Enrich is cataloged as a partial modeled subset in V1. The parser captures the published 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the reinvest-default distribution-mode assumption surface through the open-ended single-premium basis.',
+-      'The initial-premium-based establishment charge, the initial-premium-based surrender charge, loyalty bonus, and protection benefits remain outside the current engine.',
++      '#goWealth Enrich is cataloged as a partial modeled subset in V1. The parser captures the published 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the reinvest-default distribution-mode assumption surface through the open-ended single-premium basis.',
++      'Loyalty bonus and protection benefits remain outside the current engine.',
+       'The published $50 minimum dividend-payout threshold remains informational only.',
+     ],
+     unsupportedItems: [
+-      'The 1.4% p.a. establishment charge on initial single premium for the first five policy years remains informational only because the current engine does not author recurring charges against the original single-premium base.',
+-      'The first-five-policy-years surrender charge remains informational only because it is calculated from the initial single premium rather than the current account value.',
+       'Loyalty bonus remains informational only.',
+       'Death and accidental death benefit formulas remain informational only.',
+       'Single-premium protection-state and principal-floor behavior remain informational only.',
+@@ -216,14 +246,14 @@ export function parseTokioMarineGoWealthEnrich(context: ParseContext): IlpCatalo
+     economicsStatus: 'partial-modeled-subset',
+     modeledEconomics: [
+       'branch:tokio-marine-gowealth-enrich-zero-single-premium-charge',
++      'branch:tokio-marine-gowealth-enrich-establishment-charge',
+       'branch:tokio-marine-gowealth-enrich-administrative-charge',
+       'branch:tokio-marine-gowealth-enrich-recurring-single-and-top-up-charge',
+       'branch:tokio-marine-gowealth-enrich-single-premium-partial-withdrawal-charge',
++      'branch:tokio-marine-gowealth-enrich-surrender-charge',
+       'kernel:distribution-mode-assumption',
+     ],
+     metadataOnlyBehaviors: [
+-      'tokio-marine-gowealth-enrich-establishment-charge',
+-      'tokio-marine-gowealth-enrich-surrender-charge',
+       'tokio-marine-gowealth-enrich-loyalty-bonus',
+       'tokio-marine-gowealth-enrich-death-benefit',
+       'tokio-marine-gowealth-enrich-accidental-death-benefit',
+@@ -234,7 +264,7 @@ export function parseTokioMarineGoWealthEnrich(context: ParseContext): IlpCatalo
+       'tokio-marine-gowealth-enrich-dividend-payout-threshold',
+     ],
+     warnings: [
+-      '#goWealth Enrich is cataloged as a partial modeled subset in V1. The parser captures the published 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the reinvest-default distribution-mode assumption surface, while the initial-premium-based establishment charge, surrender charge, loyalty bonus, and protection benefits remain outside the current engine.',
++      '#goWealth Enrich is cataloged as a partial modeled subset in V1. The parser captures the published 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the reinvest-default distribution-mode assumption surface, while loyalty bonus and protection benefits remain outside the current engine.',
+     ],
+     archived: false,
+     variants: [buildVariant(context.document)],
+diff --git a/frontend/src/components/ilp/PolicyInputForm.tsx b/frontend/src/components/ilp/PolicyInputForm.tsx
+index 780c0784..6427887e 100644
+--- a/frontend/src/components/ilp/PolicyInputForm.tsx
++++ b/frontend/src/components/ilp/PolicyInputForm.tsx
+@@ -89,7 +89,11 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
+   const fundAllocationValid = Math.abs(fundAllocationTotal - 1) < 0.001
+   const assuranceRules = (policy.chargeRules ?? []).filter((rule) => rule.basis === 'assurance-sum-at-risk')
+   const initialSinglePremiumRules = (policy.chargeRules ?? []).filter((rule) => rule.basis === 'initial-single-premium')
+-  const needsInitialSinglePremiumInput = initialSinglePremiumRules.length > 0 || (policy.initialSinglePremium ?? 0) > 0
++  const originalBaseSinglePremiumRules = (policy.chargeRules ?? []).filter((rule) => rule.basis === 'initial-single-premium-base')
++  const usesPersistedInitialSinglePremiumBase = originalBaseSinglePremiumRules.length > 0 || policy.exitChargeBasis === 'initial-single-premium-base'
++  const needsInitialSinglePremiumInput = initialSinglePremiumRules.length > 0
++    || usesPersistedInitialSinglePremiumBase
++    || (policy.initialSinglePremium ?? 0) > 0
+   const assuranceProfile = policy.assuranceProfile
+   const missingAssuranceProfile = assuranceRules.some((rule) => rule.requiresManualInput) && !assuranceProfile
+   const missingRegularPremiumBase = assuranceRules.some((rule) => rule.requiresManualInput && requiresCurrentNetRegularPremiumBase(rule))
+@@ -102,11 +106,15 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
+     && assuranceProfile?.currentBasicSumAssured == null
+   const missingCurrentNetSupplementaryPremiumBase = assuranceRules.some((rule) => rule.requiresManualInput && requiresCurrentNetSupplementaryPremiumBase(rule))
+     && assuranceProfile?.currentNetSupplementaryPremiumBase == null
+-  const missingInitialSinglePremium = initialSinglePremiumRules.length > 0
++  const missingInitialSinglePremium = (initialSinglePremiumRules.length > 0 || usesPersistedInitialSinglePremiumBase)
+     && policy.currentPolicyYear === 1
+     && policy.monthsAlreadyPaid === 0
+     && (policy.initialSinglePremium ?? 0) <= 0
++  const missingPersistedInitialSinglePremium = usesPersistedInitialSinglePremiumBase
++    && (policy.initialSinglePremium ?? 0) <= 0
++    && (policy.currentPolicyYear !== 1 || policy.monthsAlreadyPaid !== 0)
+   const initialSinglePremiumOutsideInception = initialSinglePremiumRules.length > 0
++    && !usesPersistedInitialSinglePremiumBase
+     && (policy.initialSinglePremium ?? 0) > 0
+     && (policy.currentPolicyYear !== 1 || policy.monthsAlreadyPaid !== 0)
+   const assuranceAgeBoundaryWarning = assuranceProfile
+@@ -154,7 +162,10 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
+       ? ['This product also needs the current net RSP + top-up base before the HSBC Flexi Choice Cover charge can be trusted.']
+       : []),
+     ...(missingInitialSinglePremium
+-      ? ['This product publishes an upfront initial single-premium charge. Enter the one-time gross initial single premium lump sum before trusting the seeded starting value.']
++      ? ['This product uses the gross initial single premium as an inception seed and/or continuing charge base. Enter the one-time gross commencement lump sum before trusting the seeded starting value, establishment charges, or surrender penalties.']
++      : []),
++    ...(missingPersistedInitialSinglePremium
++      ? ['This product still needs the original gross initial single premium because recurring establishment charges and/or surrender penalties are based on that commencement lump sum.']
+       : []),
+     ...(initialSinglePremiumOutsideInception
+       ? ['Initial single premium seeding only applies when Current Policy Year = 1 and Months Already Paid = 0. Clear the field or move the policy back to inception if you want the upfront charge to be applied.']
+@@ -894,7 +905,7 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
+                                 })
+                               : undefined,
+                             allocation: value === 'initial-single-premium' ? 'pro-rata-by-value' : rule.allocation,
+-                            rateSchedule: value === 'account-value' || value === 'annual-contribution'
++                            rateSchedule: value === 'account-value' || value === 'annual-contribution' || value === 'initial-single-premium-base'
+                               ? (rule.rateSchedule ?? [])
+                               : undefined,
+                             amountSchedule: value === 'fixed-annual' ? (rule.amountSchedule ?? []) : undefined,
+@@ -910,6 +921,7 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
+                           <SelectItem value="account-value">Account Value</SelectItem>
+                           <SelectItem value="annual-contribution">Annual Contribution</SelectItem>
+                           <SelectItem value="initial-single-premium">Initial Single Premium</SelectItem>
++                          <SelectItem value="initial-single-premium-base">Initial Single Premium Base</SelectItem>
+                           <SelectItem value="assurance-sum-at-risk">Assurance Sum-at-Risk</SelectItem>
+                           <SelectItem value="premium-base-mip-multiplier">Premium-Base AMF</SelectItem>
+                         </SelectContent>
+diff --git a/frontend/src/lib/calculations/ilp.test.ts b/frontend/src/lib/calculations/ilp.test.ts
+index 9d55d07e..6c73644c 100644
+--- a/frontend/src/lib/calculations/ilp.test.ts
++++ b/frontend/src/lib/calculations/ilp.test.ts
+@@ -4080,6 +4080,102 @@ describe('projectIlpPolicy', () => {
+     expect(summary.currentSurrenderValue).toBeCloseTo(400, 6)
+   })
+ 
++  it('applies recurring original-single-premium-base charges for authored years only on open-ended single-premium policies', () => {
++    const policy = makeOpenEndedPolicy({
++      monthlyContribution: 0,
++      initialSinglePremium: 1_000,
++      monthsAlreadyPaid: 0,
++      postMipYears: 6,
++      accounts: [
++        {
++          id: 'policy',
++          label: 'Policy Account',
++          feeRate: 0,
++          currentValue: 0,
++          contributionShare: 0,
++          subjectToEec: false,
++          postMipFeeRate: null,
++          contributionRules: [
++            { phase: 'during-icp', contributionShare: 1 },
++            { phase: 'after-icp', contributionShare: 0 },
++          ],
++        },
++      ],
++      funds: [ZERO_RETURN_FUND],
++      bonuses: [],
++      exitChargeBasis: 'initial-single-premium-base',
++      eecTable: [0.07, 0.056, 0.042, 0.028, 0.014, 0],
++      chargeRules: [
++        {
++          id: 'establishment-charge',
++          label: 'Establishment Charge',
++          basis: 'initial-single-premium-base',
++          activeWindow: 'policy-term',
++          appliesTo: ['policy'],
++          rate: 0,
++          rateSchedule: [
++            { startPolicyYear: 1, endPolicyYear: 5, rate: 0.014 },
++          ],
++          amount: 0,
++          allocation: 'equal-split',
++        },
++      ],
++    })
++
++    const result = projectIlpPolicy(policy, 'mid')
++    const summary = computeSummaryMetrics(policy, result)
++
++    expect(accountRow(result.rows[0], 'policy').grossFee).toBeCloseTo(14, 6)
++    expect(accountRow(result.rows[3], 'policy').grossFee).toBeCloseTo(14, 6)
++    expect(accountRow(result.rows[4], 'policy').grossFee).toBeCloseTo(0, 6)
++    expect(result.rows[3].cumulativeGrossFees).toBeCloseTo(70, 6)
++    expect(result.rows[4].cumulativeGrossFees).toBeCloseTo(70, 6)
++    expect(summary.currentSurrenderValue).toBeCloseTo(916, 6)
++  })
++
++  it('uses original initial single premium as the surrender base for open-ended exit charges', () => {
++    const policy = makeOpenEndedPolicy({
++      monthlyContribution: 0,
++      initialSinglePremium: 1_000,
++      monthsAlreadyPaid: 0,
++      currentPolicyYear: 1,
++      postMipYears: 6,
++      accounts: [
++        {
++          id: 'policy',
++          label: 'Policy Account',
++          feeRate: 0,
++          currentValue: 0,
++          contributionShare: 0,
++          subjectToEec: false,
++          postMipFeeRate: null,
++          contributionRules: [
++            { phase: 'during-icp', contributionShare: 1 },
++            { phase: 'after-icp', contributionShare: 0 },
++          ],
++        },
++      ],
++      eecTable: [0.07, 0.056, 0.042, 0.028, 0.014, 0],
++      exitChargeBasis: 'initial-single-premium-base',
++      funds: [ZERO_RETURN_FUND],
++      bonuses: [],
++      chargeRules: [],
++    })
++
++    const projection = projectIlpPolicy(policy, 'mid')
++    const summary = computeSummaryMetrics(policy, projection)
++    const npv = computeNpvAnalysis(policy, projection)
++
++    expect(summary.cancelNowPenalty).toBeCloseTo(70, 6)
++    expect(summary.currentSurrenderValue).toBeCloseTo(930, 6)
++    expect(projection.rows[0].eecRate).toBeCloseTo(0.056, 6)
++    expect(projection.rows[0].eecCharge).toBeCloseTo(56, 6)
++    expect(projection.rows[0].surrenderValue).toBeCloseTo(944, 6)
++    expect(projection.rows[4].eecRate).toBeCloseTo(0, 6)
++    expect(projection.rows[4].eecCharge).toBeCloseTo(0, 6)
++    expect(npv.surrenderNow.eecCharge).toBeCloseTo(70, 6)
++  })
++
+   it('floors negative close values at zero before EEC is applied', () => {
+     const policy = makeDefaultPolicy({
+       monthlyContribution: 0,
+diff --git a/frontend/src/lib/calculations/ilp.ts b/frontend/src/lib/calculations/ilp.ts
+index 3a07662c..e9070d81 100644
+--- a/frontend/src/lib/calculations/ilp.ts
++++ b/frontend/src/lib/calculations/ilp.ts
+@@ -187,7 +187,7 @@ export interface IlpCumulativePaidPremiumChargeConfig {
+ export interface IlpChargeRule {
+   id: string
+   label: string
+-  basis: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier' | 'cumulative-paid-regular-premium' | 'initial-single-premium'
++  basis: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier' | 'cumulative-paid-regular-premium' | 'initial-single-premium' | 'initial-single-premium-base'
+   activeWindow: 'during-mip' | 'after-mip' | 'policy-term'
+   yearBasis?: 'policy-year' | 'premium-year'
+   startPolicyYear?: number
+@@ -282,6 +282,7 @@ export interface IlpPolicyInput {
+   postMipYears: number
+   eecTable: number[]
+   eecYearBasis?: 'policy-year' | 'premium-year'
++  exitChargeBasis?: 'account-value' | 'initial-single-premium-base'
+   funds: IlpFund[]
+   bonuses: IlpBonusRule[]
+   chargeRules?: IlpChargeRule[]
+@@ -548,6 +549,12 @@ function getMipBasis(input: Pick<IlpPolicyInput, 'mipBasis'>): 'finite' | 'open-
+   return input.mipBasis ?? 'finite'
+ }
+ 
++function getExitChargeBasis(
++  input: Pick<IlpPolicyInput, 'exitChargeBasis'>,
++): 'account-value' | 'initial-single-premium-base' {
++  return input.exitChargeBasis ?? 'account-value'
++}
++
+ function startsAtProjectionInception(
+   input: Pick<IlpPolicyInput, 'currentPolicyYear' | 'monthsAlreadyPaid' | 'initialSinglePremium'>,
+ ): boolean {
+@@ -1993,6 +2000,12 @@ function normalizeRecurringChargeRules(
+     .filter((normalizedRule) => normalizedRule.appliesTo.length > 0)
+ }
+ 
++function getOriginalInitialSinglePremiumBase(
++  input: Pick<IlpPolicyInput, 'initialSinglePremium'>,
++): number {
++  return Math.max(0, input.initialSinglePremium ?? 0)
++}
++
+ function buildInceptionChargeContext(): IlpCashflowYearContext {
+   return {
+     projectionYear: 0,
+@@ -2055,6 +2068,22 @@ function computeInitialSinglePremiumState(
+     }))
+     .filter((normalizedRule) => normalizedRule.appliesTo.length > 0)
+ 
++  const initialSinglePremiumBaseChargeRules = (normalized.input.chargeRules ?? [])
++    .filter((rule) => rule.basis === 'initial-single-premium-base')
++    .filter((rule) => {
++      const referenceYear = getRuleReferenceYear(inceptionContext, rule.yearBasis)
++      const isActive = rule.activeWindow === 'policy-term' || rule.activeWindow === 'during-mip'
++      return isActive
++        && (rule.startPolicyYear == null || referenceYear >= rule.startPolicyYear)
++        && (rule.endPolicyYear == null || referenceYear <= rule.endPolicyYear)
++    })
++    .map((rule) => ({
++      rule,
++      appliesTo: resolveAccountsInDisplayOrder(normalized.input, rule.appliesTo),
++      fallbackAppliesTo: resolveFallbackAccounts(normalized, rule.fallbackAppliesTo),
++    }))
++    .filter((normalizedRule) => normalizedRule.appliesTo.length > 0)
++
+   for (const { rule, appliesTo, fallbackAppliesTo } of initialChargeRules) {
+     const rateCharge = appliesTo.reduce((sum, account) => (
+       sum + ((grossContributionByAccount.get(account.id) ?? 0) * resolveChargeRate(rule, inceptionContext))
+@@ -2073,6 +2102,21 @@ function computeInitialSinglePremiumState(
+     }
+   }
+ 
++  for (const { rule, appliesTo, fallbackAppliesTo } of initialSinglePremiumBaseChargeRules) {
++    const totalCharge = initialSinglePremium * resolveChargeRate(rule, inceptionContext)
++    const allocations = applyChargeAllocationsWithFallback(
++      totalCharge,
++      rule.allocation,
++      appliesTo,
++      fallbackAppliesTo,
++      grossContributionByAccount,
++    )
++
++    for (const [accountId, amount] of allocations.entries()) {
++      chargeByAccount.set(accountId, (chargeByAccount.get(accountId) ?? 0) + amount)
++    }
++  }
++
+   let totalGrossContribution = 0
+   let totalCharge = 0
+   for (const account of normalized.input.accounts) {
+@@ -2100,6 +2144,32 @@ function getEffectiveCurrentValue(
+   return account.currentValue + (initialSinglePremiumState.netContributionByAccount.get(account.id) ?? 0)
+ }
+ 
++function resolveCurrentExitChargeRate(input: IlpPolicyInput): number {
++  if (getExitChargeBasis(input) === 'initial-single-premium-base') {
++    return lookupEecRate(input.currentPolicyYear, input.eecTable)
++  }
++
++  return getMipBasis(input) === 'open-ended'
++    ? 0
++    : lookupEecRate(input.currentPolicyYear, input.eecTable)
++}
++
++function computeExitChargeAmount(
++  input: IlpPolicyInput,
++  exitChargeRate: number,
++  currentValueByAccount: Map<string, number>,
++): number {
++  if (exitChargeRate <= 0) return 0
++
++  if (getExitChargeBasis(input) === 'initial-single-premium-base') {
++    return getOriginalInitialSinglePremiumBase(input) * exitChargeRate
++  }
++
++  return input.accounts
++    .filter((account) => account.subjectToEec)
++    .reduce((sum, account) => sum + (currentValueByAccount.get(account.id) ?? 0) * exitChargeRate, 0)
++}
++
+ function computeCurrentValueSnapshot(
+   input: IlpPolicyInput,
+   initialSinglePremiumState: IlpInitialSinglePremiumState = computeInitialSinglePremiumState(buildNormalizedPolicyInput(input)),
+@@ -2109,15 +2179,12 @@ function computeCurrentValueSnapshot(
+   totalCurrentValue: number
+   cancelNowPenalty: number
+ } {
+-  const eecRateNow = getMipBasis(input) === 'open-ended'
+-    ? 0
+-    : lookupEecRate(input.currentPolicyYear, input.eecTable)
+-  const totalCurrentValue = input.accounts.reduce((sum, account) => (
+-    sum + getEffectiveCurrentValue(account, initialSinglePremiumState)
+-  ), 0)
+-  const cancelNowPenalty = input.accounts
+-    .filter((account) => account.subjectToEec)
+-    .reduce((sum, account) => sum + getEffectiveCurrentValue(account, initialSinglePremiumState) * eecRateNow, 0)
++  const eecRateNow = resolveCurrentExitChargeRate(input)
++  const currentValueByAccount = new Map(
++    input.accounts.map((account) => [account.id, getEffectiveCurrentValue(account, initialSinglePremiumState)]),
++  )
++  const totalCurrentValue = Array.from(currentValueByAccount.values()).reduce((sum, value) => sum + value, 0)
++  const cancelNowPenalty = computeExitChargeAmount(input, eecRateNow, currentValueByAccount)
+ 
+   return {
+     initialSinglePremiumState,
+@@ -2772,6 +2839,21 @@ function computeAdditionalChargeByAccount(
+         }
+         break
+       }
++
++      case 'initial-single-premium-base': {
++        const totalCharge = getOriginalInitialSinglePremiumBase(input) * resolveChargeRate(rule, context)
++        const allocations = applyChargeAllocationsWithFallback(
++          totalCharge,
++          rule.allocation,
++          appliesTo,
++          fallbackAppliesTo,
++          openBalances,
++        )
++        for (const [accountId, amount] of allocations.entries()) {
++          charges.set(accountId, (charges.get(accountId) ?? 0) + amount)
++        }
++        break
++      }
+     }
+   }
+ 
+@@ -3021,7 +3103,9 @@ export function projectIlpPolicy(
+       ? 0
+       : Math.max(0, annualContribution - getRegularPremiumReductionForYear(normalized, context.range))
+     const eecReferenceYear = getEecReferenceYear(input, context)
+-    const eecRate = isPostMip ? 0 : lookupEecRate(eecReferenceYear, input.eecTable)
++    const eecRate = getExitChargeBasis(input) === 'initial-single-premium-base'
++      ? lookupEecRate(eecReferenceYear, input.eecTable)
++      : (isPostMip ? 0 : lookupEecRate(eecReferenceYear, input.eecTable))
+     const openBalances = new Map(
+       input.accounts.map((account) => [account.id, previousClose.get(account.id) ?? getEffectiveCurrentValue(account, initialSinglePremiumState)]),
+     )
+@@ -3160,10 +3244,6 @@ export function projectIlpPolicy(
+       cumulativeBonuses += bonusCredit
+       combinedValue += close
+ 
+-      if (account.subjectToEec) {
+-        eecCharge += close * eecRate
+-      }
+-
+       previousClose.set(account.id, close)
+       accountRows.push({
+         accountId: account.id,
+@@ -3177,6 +3257,8 @@ export function projectIlpPolicy(
+       })
+     }
+ 
++    eecCharge = computeExitChargeAmount(input, eecRate, previousClose)
++
+     rows.push({
+       year,
+       policyYear,
+diff --git a/frontend/src/lib/data/generated/ilpCatalog.manifest.json b/frontend/src/lib/data/generated/ilpCatalog.manifest.json
+index 6005c604..37412a4d 100644
+--- a/frontend/src/lib/data/generated/ilpCatalog.manifest.json
++++ b/frontend/src/lib/data/generated/ilpCatalog.manifest.json
+@@ -1,6 +1,6 @@
+ {
+   "catalogVersion": "0.1.0",
+-  "generatedAt": "2026-03-15T20:19:54.179Z",
++  "generatedAt": "2026-03-15T21:04:55.567Z",
+   "parserVersion": "0.1.0",
+   "sourceStrategy": "manual-pdf-corpus",
+   "productsCount": 92,
+diff --git a/frontend/src/lib/data/generated/ilpCatalog.products.json b/frontend/src/lib/data/generated/ilpCatalog.products.json
+index bbc0c092..be8e7316 100644
+--- a/frontend/src/lib/data/generated/ilpCatalog.products.json
++++ b/frontend/src/lib/data/generated/ilpCatalog.products.json
+@@ -66278,14 +66278,14 @@
+     "economicsStatus": "partial-modeled-subset",
+     "modeledEconomics": [
+       "branch:tokio-marine-gowealth-enrich-zero-single-premium-charge",
++      "branch:tokio-marine-gowealth-enrich-establishment-charge",
+       "branch:tokio-marine-gowealth-enrich-administrative-charge",
+       "branch:tokio-marine-gowealth-enrich-recurring-single-and-top-up-charge",
+       "branch:tokio-marine-gowealth-enrich-single-premium-partial-withdrawal-charge",
++      "branch:tokio-marine-gowealth-enrich-surrender-charge",
+       "kernel:distribution-mode-assumption"
+     ],
+     "metadataOnlyBehaviors": [
+-      "tokio-marine-gowealth-enrich-establishment-charge",
+-      "tokio-marine-gowealth-enrich-surrender-charge",
+       "tokio-marine-gowealth-enrich-loyalty-bonus",
+       "tokio-marine-gowealth-enrich-death-benefit",
+       "tokio-marine-gowealth-enrich-accidental-death-benefit",
+@@ -66296,7 +66296,7 @@
+       "tokio-marine-gowealth-enrich-dividend-payout-threshold"
+     ],
+     "warnings": [
+-      "#goWealth Enrich is cataloged as a partial modeled subset in V1. The parser captures the published 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the reinvest-default distribution-mode assumption surface, while the initial-premium-based establishment charge, surrender charge, loyalty bonus, and protection benefits remain outside the current engine."
++      "#goWealth Enrich is cataloged as a partial modeled subset in V1. The parser captures the published 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the reinvest-default distribution-mode assumption surface, while loyalty bonus and protection benefits remain outside the current engine."
+     ],
+     "archived": false,
+     "variants": [
+@@ -66393,6 +66393,54 @@
+               }
+             ]
+           },
++          {
++            "id": "establishment-charge",
++            "label": "Establishment Charge",
++            "basis": "initial-single-premium-base",
++            "rate": 0,
++            "amount": 0,
++            "appliesTo": [
++              "policy"
++            ],
++            "rateSchedule": [
++              {
++                "startPolicyYear": 1,
++                "endPolicyYear": 1,
++                "rate": 0.014
++              },
++              {
++                "startPolicyYear": 2,
++                "endPolicyYear": 2,
++                "rate": 0.014
++              },
++              {
++                "startPolicyYear": 3,
++                "endPolicyYear": 3,
++                "rate": 0.014
++              },
++              {
++                "startPolicyYear": 4,
++                "endPolicyYear": 4,
++                "rate": 0.014
++              },
++              {
++                "startPolicyYear": 5,
++                "endPolicyYear": 5,
++                "rate": 0.014
++              }
++            ],
++            "activeWindow": "policy-term",
++            "notes": [
++              "Models the published 1.4% p.a. establishment charge on the original gross initial single premium during the first five policy years."
++            ],
++            "sourceRefs": [
++              {
++                "page": 6,
++                "section": "Fees and charges",
++                "excerpt": "Administrative Charge As long as the policy is in-force, an administrative charge of 1.00% p.a. of the Single Premium Units Account value will be deducted monthly in advance on each Policy Monthiversary. We will calculat"
++              }
++            ]
++          },
+           {
+             "id": "administrative-charge",
+             "label": "Administrative Charge",
+@@ -66546,15 +66594,21 @@
+             }
+           ]
+         },
+-        "eecTable": [],
++        "eecTable": [
++          0.07,
++          0.056,
++          0.042,
++          0.028,
++          0.014,
++          0
++        ],
++        "exitChargeBasis": "initial-single-premium-base",
+         "warnings": [
+-          "#goWealth Enrich is cataloged as a partial modeled subset in V1. The parser captures the published 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the reinvest-default distribution-mode assumption surface through the open-ended single-premium basis.",
+-          "The initial-premium-based establishment charge, the initial-premium-based surrender charge, loyalty bonus, and protection benefits remain outside the current engine.",
++          "#goWealth Enrich is cataloged as a partial modeled subset in V1. The parser captures the published 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, and the reinvest-default distribution-mode assumption surface through the open-ended single-premium basis.",
++          "Loyalty bonus and protection benefits remain outside the current engine.",
+           "The published $50 minimum dividend-payout threshold remains informational only."
+         ],
+         "unsupportedItems": [
+-          "The 1.4% p.a. establishment charge on initial single premium for the first five policy years remains informational only because the current engine does not author recurring charges against the original single-premium base.",
+-          "The first-five-policy-years surrender charge remains informational only because it is calculated from the initial single premium rather than the current account value.",
+           "Loyalty bonus remains informational only.",
+           "Death and accidental death benefit formulas remain informational only.",
+           "Single-premium protection-state and principal-floor behavior remain informational only.",
+diff --git a/frontend/src/lib/ilp-catalog/policySeedSchema.ts b/frontend/src/lib/ilp-catalog/policySeedSchema.ts
+index 2a6b8cae..6fc042fe 100644
+--- a/frontend/src/lib/ilp-catalog/policySeedSchema.ts
++++ b/frontend/src/lib/ilp-catalog/policySeedSchema.ts
+@@ -44,6 +44,7 @@ export const ilpPolicySeedSchema = z.object({
+   postMipYears: z.number().int().min(0).max(50),
+   eecTable: z.array(z.number().min(0).max(1)).max(100),
+   eecYearBasis: z.enum(['policy-year', 'premium-year']).optional(),
++  exitChargeBasis: z.enum(['account-value', 'initial-single-premium-base']).optional(),
+   funds: z.array(ilpFundSchema).min(1).max(20),
+   bonuses: z.array(ilpBonusRuleSchema).max(20),
+   chargeRules: z.array(ilpChargeRuleSchema).max(30).optional(),
+@@ -118,6 +119,14 @@ export const ilpPolicySeedSchema = z.object({
+     })
+   }
+ 
++  if (policy.exitChargeBasis === 'initial-single-premium-base' && policy.eecTable.length === 0) {
++    ctx.addIssue({
++      code: z.ZodIssueCode.custom,
++      message: 'Policies using initial-single-premium-base exit charges must define an eecTable',
++      path: ['eecTable'],
++    })
++  }
++
+   if (policy.scheduledPayoutAssumption && !policy.scheduledPayoutSupport) {
+     ctx.addIssue({
+       code: z.ZodIssueCode.custom,
+diff --git a/frontend/src/lib/ilp-catalog/schema.ts b/frontend/src/lib/ilp-catalog/schema.ts
+index 61f78ebe..be1b3438 100644
+--- a/frontend/src/lib/ilp-catalog/schema.ts
++++ b/frontend/src/lib/ilp-catalog/schema.ts
+@@ -60,7 +60,7 @@ export const ilpTemplateBonusSchema = z.object({
+ export const ilpTemplateFeeRuleSchema = z.object({
+   id: z.string().min(1),
+   label: z.string().min(1),
+-  basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier', 'cumulative-paid-regular-premium', 'initial-single-premium']).optional(),
++  basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier', 'cumulative-paid-regular-premium', 'initial-single-premium', 'initial-single-premium-base']).optional(),
+   yearBasis: z.enum(['policy-year', 'premium-year']).optional(),
+   rate: z.number().min(0).max(0.2).nullable(),
+   amount: z.number().min(0).max(100_000_000).nullable().optional(),
+@@ -183,6 +183,7 @@ export const ilpTemplateVariantSchema = z.object({
+   distributionSupport: ilpTemplateDistributionSupportSchema.optional(),
+   eecTable: z.array(z.number().min(0).max(1)).max(100),
+   eecYearBasis: z.enum(['policy-year', 'premium-year']).optional(),
++  exitChargeBasis: z.enum(['account-value', 'initial-single-premium-base']).optional(),
+   warnings: z.array(z.string()),
+   unsupportedItems: z.array(z.string()),
+   sourceRefs: z.array(ilpCatalogSourceRefSchema).min(1),
+@@ -317,6 +318,14 @@ export const ilpTemplateVariantSchema = z.object({
+       }
+     }
+   }
++
++  if (variant.exitChargeBasis === 'initial-single-premium-base' && variant.eecTable.length === 0) {
++    ctx.addIssue({
++      code: z.ZodIssueCode.custom,
++      message: 'Variants using initial-single-premium-base exit charges must author an eecTable',
++      path: ['eecTable'],
++    })
++  }
+ })
+ 
+ export const ilpCatalogProductSchema = z.object({
+diff --git a/frontend/src/lib/ilp-catalog/templateToPolicy.test.ts b/frontend/src/lib/ilp-catalog/templateToPolicy.test.ts
+index 463c1d02..30dd40d1 100644
+--- a/frontend/src/lib/ilp-catalog/templateToPolicy.test.ts
++++ b/frontend/src/lib/ilp-catalog/templateToPolicy.test.ts
+@@ -5013,6 +5013,47 @@ describe('templateVariantToPolicySeed', () => {
+     expect(seed.catalogWarnings?.some((warning) => warning.includes('post-year-10 treatment'))).toBe(true)
+   })
+ 
++  it('maps #goWealth Enrich into an open-ended single-premium seed with original-base establishment and surrender charges', () => {
++    const { manifest, products } = getIlpCatalog()
++    const product = products.find((entry) => entry.id === 'tokio-marine-gowealth-enrich')
++    expect(product).toBeDefined()
++
++    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-cash')
++    expect(variant).toBeDefined()
++
++    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
++    expect(seed.catalogSource?.supportStatus).toBe('partial')
++    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-gowealth-enrich-establishment-charge')
++    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-gowealth-enrich-surrender-charge')
++    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-marine-gowealth-enrich-establishment-charge')
++    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-marine-gowealth-enrich-surrender-charge')
++    expect(seed.monthlyContribution).toBe(0)
++    expect(seed.initialSinglePremium).toBe(0)
++    expect(seed.mipBasis).toBe('open-ended')
++    expect(seed.exitChargeBasis).toBe('initial-single-premium-base')
++    expect(seed.eecTable).toEqual([0.07, 0.056, 0.042, 0.028, 0.014, 0])
++    expect(seed.catalogWarnings?.some((warning) => warning.includes('establishment charges'))).toBe(true)
++    expect(seed.accounts.find((account) => account.id === 'policy')?.feeRate).toBe(0.01)
++    expect(seed.chargeRules).toEqual([
++      expect.objectContaining({
++        id: 'single-premium-charge',
++        basis: 'annual-contribution',
++        rate: 0,
++      }),
++      expect.objectContaining({
++        id: 'establishment-charge',
++        basis: 'initial-single-premium-base',
++        rateSchedule: [
++          { startPolicyYear: 1, endPolicyYear: 1, rate: 0.014 },
++          { startPolicyYear: 2, endPolicyYear: 2, rate: 0.014 },
++          { startPolicyYear: 3, endPolicyYear: 3, rate: 0.014 },
++          { startPolicyYear: 4, endPolicyYear: 4, rate: 0.014 },
++          { startPolicyYear: 5, endPolicyYear: 5, rate: 0.014 },
++        ],
++      }),
++    ])
++  })
++
+   it('preserves template charge allocation, event activeWindow, and rateSchedule-only fee rules', () => {
+     const manifest: IlpCatalogManifest = {
+       generatedAt: '2026-03-13T00:00:00.000Z',
+diff --git a/frontend/src/lib/ilp-catalog/templateToPolicy.ts b/frontend/src/lib/ilp-catalog/templateToPolicy.ts
+index def6fc70..d65d3431 100644
+--- a/frontend/src/lib/ilp-catalog/templateToPolicy.ts
++++ b/frontend/src/lib/ilp-catalog/templateToPolicy.ts
+@@ -13,13 +13,20 @@ const DEFAULT_TEMPLATE_FUND: IlpPolicyInput['funds'][number] = {
+   grossReturnHigh: 0.1,
+ }
+ 
+-function deriveSeedMonthlyContribution(product: IlpCatalogProduct, variant: IlpTemplateVariant): number {
+-  const hasInitialSinglePremiumCharge = variant.feeRules.some((rule) => rule.basis === 'initial-single-premium')
+-  const hasRecurringAfterIcpContribution = variant.accounts.some((account) => (
+-    account.contributionRules.some((rule) => rule.phase === 'after-icp' && rule.contributionShare > 0)
+-  ))
++function usesInitialSinglePremiumBase(variant: IlpTemplateVariant): boolean {
++  return variant.feeRules.some((rule) => (
++    rule.basis === 'initial-single-premium'
++    || rule.basis === 'initial-single-premium-base'
++  )) || variant.exitChargeBasis === 'initial-single-premium-base'
++}
+ 
+-  if (hasInitialSinglePremiumCharge && !hasRecurringAfterIcpContribution) {
++function usesOriginalSinglePremiumBase(variant: IlpTemplateVariant): boolean {
++  return variant.feeRules.some((rule) => rule.basis === 'initial-single-premium-base')
++    || variant.exitChargeBasis === 'initial-single-premium-base'
++}
++
++function deriveSeedMonthlyContribution(product: IlpCatalogProduct, variant: IlpTemplateVariant): number {
++  if (usesInitialSinglePremiumBase(variant)) {
+     return 0
+   }
+ 
+@@ -84,6 +91,7 @@ function mapFeeRuleBasis(
+     case 'premium-base-mip-multiplier':
+     case 'cumulative-paid-regular-premium':
+     case 'initial-single-premium':
++    case 'initial-single-premium-base':
+     case 'fixed-annual':
+     case 'annual-contribution':
+     case 'account-value':
+@@ -110,7 +118,7 @@ function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[]
+ 
+       const isAssurance = rule.basis === 'assurance-sum-at-risk'
+       const isFixedAnnual = rule.basis === 'fixed-annual'
+-      const isInitialSinglePremium = rule.basis === 'initial-single-premium'
++      const isInitialSinglePremium = rule.basis === 'initial-single-premium' || rule.basis === 'initial-single-premium-base'
+ 
+       return {
+         id: rule.id,
+@@ -223,11 +231,12 @@ export function templateVariantToPolicySeed(
+     insurer: product.insurer,
+     currency: variant.currency,
+     monthlyContribution: deriveSeedMonthlyContribution(product, variant),
+-    initialSinglePremium: variant.feeRules.some((rule) => rule.basis === 'initial-single-premium') ? 0 : undefined,
++    initialSinglePremium: usesInitialSinglePremiumBase(variant) ? 0 : undefined,
+     monthsAlreadyPaid: 0,
+     currentPolicyYear: 1,
+     icpMonths: variant.icpMonths,
+     mipBasis: variant.mipBasis,
++    exitChargeBasis: variant.exitChargeBasis,
+     assuranceProfile: undefined,
+     scheduledPayoutSupport: variant.scheduledPayoutSupport
+       ? {
+@@ -310,7 +319,10 @@ export function templateVariantToPolicySeed(
+       ...(variant.distributionSupport
+         ? ['This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.']
+         : []),
+-      ...(variant.feeRules.some((rule) => rule.basis === 'initial-single-premium')
++      ...(usesOriginalSinglePremiumBase(variant)
++        ? ['Enter the one-time gross initial single premium lump sum in Policy Details if you want the starting policy value, original-base establishment charges, and surrender penalties to be modeled honestly.']
++        : []),
++      ...(variant.feeRules.some((rule) => rule.basis === 'initial-single-premium') && !usesOriginalSinglePremiumBase(variant)
+         ? ['Enter the one-time gross initial single premium lump sum in Policy Details if you want the upfront single-premium deduction to seed the starting policy value honestly.']
+         : []),
+       ...(variant.unsupportedItems ?? []),
+diff --git a/frontend/src/lib/ilp-catalog/types.ts b/frontend/src/lib/ilp-catalog/types.ts
+index 1a2cca60..61774215 100644
+--- a/frontend/src/lib/ilp-catalog/types.ts
++++ b/frontend/src/lib/ilp-catalog/types.ts
+@@ -66,7 +66,7 @@ export interface IlpTemplateBonus {
+ export interface IlpTemplateFeeRule {
+   id: string
+   label: string
+-  basis?: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier' | 'cumulative-paid-regular-premium' | 'initial-single-premium'
++  basis?: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier' | 'cumulative-paid-regular-premium' | 'initial-single-premium' | 'initial-single-premium-base'
+   yearBasis?: 'policy-year' | 'premium-year'
+   rate: number | null
+   amount?: number | null
+@@ -188,6 +188,7 @@ export interface IlpTemplateVariant {
+   distributionSupport?: IlpTemplateDistributionSupport
+   eecTable: number[]
+   eecYearBasis?: 'policy-year' | 'premium-year'
++  exitChargeBasis?: 'account-value' | 'initial-single-premium-base'
+   warnings: string[]
+   unsupportedItems: string[]
+   sourceRefs: IlpCatalogSourceRef[]
+diff --git a/frontend/src/lib/validation/ilpSchema.ts b/frontend/src/lib/validation/ilpSchema.ts
+index 68461dc3..add9e7d9 100644
+--- a/frontend/src/lib/validation/ilpSchema.ts
++++ b/frontend/src/lib/validation/ilpSchema.ts
+@@ -269,7 +269,7 @@ export const ilpBonusRuleSchema = z.object({
+ export const ilpChargeRuleSchema = z.object({
+   id: z.string().min(1),
+   label: z.string().min(1),
+-  basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier', 'cumulative-paid-regular-premium', 'initial-single-premium']),
++  basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier', 'cumulative-paid-regular-premium', 'initial-single-premium', 'initial-single-premium-base']),
+   activeWindow: z.enum(['during-mip', 'after-mip', 'policy-term']),
+   yearBasis: z.enum(['policy-year', 'premium-year']).optional(),
+   startPolicyYear: z.number().int().min(1).max(100).optional(),
+@@ -350,10 +350,10 @@ export const ilpChargeRuleSchema = z.object({
+     }
+   })
+ 
+-  if ((rule.rateSchedule?.length ?? 0) > 0 && !(rule.basis === 'account-value' || rule.basis === 'annual-contribution' || rule.basis === 'cumulative-paid-regular-premium' || rule.basis === 'premium-base-mip-multiplier')) {
++  if ((rule.rateSchedule?.length ?? 0) > 0 && !(rule.basis === 'account-value' || rule.basis === 'annual-contribution' || rule.basis === 'cumulative-paid-regular-premium' || rule.basis === 'premium-base-mip-multiplier' || rule.basis === 'initial-single-premium-base')) {
+     ctx.addIssue({
+       code: z.ZodIssueCode.custom,
+-      message: 'Charge rule rate schedules can only be used with account-value, annual-contribution, cumulative-paid-regular-premium, or premium-base-mip-multiplier basis',
++      message: 'Charge rule rate schedules can only be used with account-value, annual-contribution, cumulative-paid-regular-premium, premium-base-mip-multiplier, or initial-single-premium-base basis',
+       path: ['rateSchedule'],
+     })
+   }
+@@ -614,6 +614,7 @@ export const ilpPolicySchema = z.object({
+   postMipYears: z.number().int().min(0).max(50),
+   eecTable: z.array(z.number().min(0).max(1)).max(100),
+   eecYearBasis: z.enum(['policy-year', 'premium-year']).optional(),
++  exitChargeBasis: z.enum(['account-value', 'initial-single-premium-base']).optional(),
+   funds: z.array(ilpFundSchema).min(1).max(20),
+   bonuses: z.array(ilpBonusRuleSchema).max(20),
+   chargeRules: z.array(ilpChargeRuleSchema).max(30).optional(),
+@@ -710,8 +711,11 @@ export const ilpPolicySchema = z.object({
+   const contributionShareSum = policy.accounts.reduce((sum, account) => sum + account.contributionShare, 0)
+   const hasContributionRules = policy.accounts.some((account) => (account.contributionRules?.length ?? 0) > 0)
+   const supportsInitialSinglePremiumRouting = (policy.initialSinglePremium ?? 0) > 0 || (
+-    policy.chargeRules?.some((rule) => rule.basis === 'initial-single-premium') ?? false
+-  )
++    policy.chargeRules?.some((rule) => (
++      rule.basis === 'initial-single-premium'
++      || rule.basis === 'initial-single-premium-base'
++    )) ?? false
++  ) || policy.exitChargeBasis === 'initial-single-premium-base'
+   if (policy.monthlyContribution > 0) {
+     if (!hasContributionRules && Math.abs(contributionShareSum - 1) > SUM_TOLERANCE) {
+       ctx.addIssue({
+@@ -959,6 +963,14 @@ export const ilpPolicySchema = z.object({
+     })
+   }
+ 
++  if (policy.exitChargeBasis === 'initial-single-premium-base' && policy.eecTable.length === 0) {
++    ctx.addIssue({
++      code: z.ZodIssueCode.custom,
++      message: 'Policies using initial-single-premium-base exit charges must define an eecTable',
++      path: ['eecTable'],
++    })
++  }
++
+   if (policy.scheduledPayoutSupport && !accountIds.includes(policy.scheduledPayoutSupport.accountId)) {
+     ctx.addIssue({
+       code: z.ZodIssueCode.custom,

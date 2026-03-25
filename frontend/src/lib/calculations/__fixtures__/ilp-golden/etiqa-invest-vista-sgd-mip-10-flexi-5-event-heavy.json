@@ -11,7 +11,25 @@
       "event-heavy",
       "branch:etiqa-vista-top-up-premium-charge",
       "branch:etiqa-vista-startup-bonus-recovery",
-      "branch:etiqa-vista-partial-withdrawal-charge"
+      "branch:etiqa-vista-premium-shortfall-charge",
+      "branch:etiqa-vista-premium-shortfall-refund",
+      "branch:etiqa-vista-partial-withdrawal-charge",
+      "kernel:current-death-benefit-estimate",
+      "kernel:current-ti-benefit-estimate",
+      "branch:etiqa-vista-startup-bonus",
+      "branch:etiqa-vista-special-bonus",
+      "branch:etiqa-vista-loyalty-bonus",
+      "branch:etiqa-vista-policy-charge",
+      "branch:etiqa-vista-insurance-charge",
+      "branch:etiqa-vista-surrender-charge",
+      "kernel:premium-holiday-top-up-block",
+      "kernel:top-up-amount-gate-block",
+      "kernel:free-withdrawal-event-cap",
+      "kernel:partial-withdrawal-amount-increment-block",
+      "kernel:partial-withdrawal-maximum-amount-block",
+      "kernel:partial-withdrawal-minimum-remaining-value-block",
+      "kernel:monthly-rate-bonus-crediting",
+      "kernel:distribution-mode-assumption"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "EIP_Invest vista_Product Summary.pdf",
@@ -130,7 +148,13 @@
             "rate": 0.32
           }
         ],
-        "suspensionRules": []
+        "suspensionRules": [],
+        "restorationRules": [
+          {
+            "trigger": "premium-holiday-repayment",
+            "basis": "repaid-premium"
+          }
+        ]
       },
       {
         "id": "special-bonus",
@@ -145,7 +169,13 @@
         "startPolicyYear": 6,
         "endPolicyYear": 10,
         "tieredRates": [],
-        "suspensionRules": []
+        "suspensionRules": [],
+        "restorationRules": [
+          {
+            "trigger": "premium-holiday-repayment",
+            "basis": "repaid-premium"
+          }
+        ]
       }
     ],
     "chargeRules": [
@@ -277,6 +307,95 @@
         "allocation": "equal-split"
       },
       {
+        "id": "premium-shortfall-charge",
+        "label": "Premium Shortfall Charge",
+        "trigger": "premium-holiday",
+        "basis": "annual-premium-with-overlap-months",
+        "activeWindow": "during-mip",
+        "appliesTo": [
+          "regular"
+        ],
+        "freeLifetimeMonthsSchedule": [
+          {
+            "startPolicyYear": 8,
+            "endPolicyYear": 10,
+            "months": 60
+          }
+        ],
+        "freeLifetimeMonthsResetOnRepayment": true,
+        "rate": 0,
+        "rateSchedule": [
+          {
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 1
+          },
+          {
+            "startPolicyYear": 2,
+            "endPolicyYear": 2,
+            "rate": 1
+          },
+          {
+            "startPolicyYear": 3,
+            "endPolicyYear": 3,
+            "rate": 0.79
+          },
+          {
+            "startPolicyYear": 4,
+            "endPolicyYear": 4,
+            "rate": 0.6
+          },
+          {
+            "startPolicyYear": 5,
+            "endPolicyYear": 5,
+            "rate": 0.5
+          },
+          {
+            "startPolicyYear": 6,
+            "endPolicyYear": 6,
+            "rate": 0.47
+          },
+          {
+            "startPolicyYear": 7,
+            "endPolicyYear": 7,
+            "rate": 0.44
+          },
+          {
+            "startPolicyYear": 8,
+            "endPolicyYear": 8,
+            "rate": 0.21
+          },
+          {
+            "startPolicyYear": 9,
+            "endPolicyYear": 9,
+            "rate": 0.16
+          },
+          {
+            "startPolicyYear": 10,
+            "endPolicyYear": 10,
+            "rate": 0.08
+          }
+        ],
+        "amount": 0,
+        "requiresManualInput": false,
+        "allocation": "equal-split"
+      },
+      {
+        "id": "premium-shortfall-charge-refund",
+        "label": "Premium Shortfall Charge Refund",
+        "trigger": "premium-holiday-repayment",
+        "basis": "premium-holiday-charge-refund",
+        "activeWindow": "during-mip",
+        "appliesTo": [
+          "regular"
+        ],
+        "rate": 1,
+        "amount": 0,
+        "sourceChargeRuleId": "premium-shortfall-charge",
+        "requiresManualInput": false,
+        "allocation": "equal-split"
+      },
+      {
         "id": "partial-withdrawal-charge",
         "label": "Partial Withdrawal Charge",
         "trigger": "partial-withdrawal",
@@ -285,6 +404,10 @@
         "appliesTo": [
           "regular"
         ],
+        "freeEventCount": 2,
+        "freeEventStartPolicyYear": 4,
+        "freeEventMaxAmountRate": 0.05,
+        "freeEventMaxAmountBasis": "cumulative-paid-regular-premium",
         "rate": 0,
         "rateSchedule": [
           {
@@ -353,6 +476,8 @@
       "economicsStatus": "supported",
       "structureStatus": "structured",
       "modeledEconomics": [
+        "kernel:current-death-benefit-estimate",
+        "kernel:current-ti-benefit-estimate",
         "branch:etiqa-vista-startup-bonus",
         "branch:etiqa-vista-special-bonus",
         "branch:etiqa-vista-loyalty-bonus",
@@ -360,28 +485,35 @@
         "branch:etiqa-vista-insurance-charge",
         "branch:etiqa-vista-top-up-premium-charge",
         "branch:etiqa-vista-startup-bonus-recovery",
+        "branch:etiqa-vista-premium-shortfall-charge",
+        "branch:etiqa-vista-premium-shortfall-refund",
         "branch:etiqa-vista-partial-withdrawal-charge",
         "branch:etiqa-vista-surrender-charge",
+        "kernel:premium-holiday-top-up-block",
+        "kernel:top-up-amount-gate-block",
+        "kernel:free-withdrawal-event-cap",
+        "kernel:partial-withdrawal-amount-increment-block",
+        "kernel:partial-withdrawal-maximum-amount-block",
+        "kernel:partial-withdrawal-minimum-remaining-value-block",
+        "kernel:monthly-rate-bonus-crediting",
         "kernel:distribution-mode-assumption"
       ],
       "metadataOnlyBehaviors": [
-        "etiqa-vista-premium-free-period-gating",
-        "etiqa-vista-premium-shortfall-charge",
-        "etiqa-vista-free-partial-withdrawal-benefit",
+        "etiqa-vista-free-partial-withdrawal-benefit-administration",
         "etiqa-vista-distribution-paying-fund-threshold-and-withdrawal-consequences",
         "etiqa-vista-change-of-life-insured"
       ]
     },
     "catalogWarnings": [
-      "Invest vista is currently modeled as a supported product in V1. The parser captures the bounded accumulation mechanics, monthly insurance charge through manual insured-life inputs, and reinvest-default distribution support, while Premium-Free Period gating, premium shortfall charge, free partial withdrawal allowances, and distribution-paying fund thresholds and withdrawal consequences remain outside the calculator.",
-      "Flexi 5 is modeled as a supported V1 corridor. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge, policy charge, monthly insurance charge through manual insured-life inputs, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
+      "Invest vista is currently modeled as a supported product in V1. The parser captures the current-state death benefit as the sum of the higher of the Regular Premium Account value or the 101%-of-paid-regular-premiums floor plus Top-up Account value after manual current amount owing, the current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap, the current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today through the published partial-TI continuation corridor after manual claim-amount and residual-death input, the bounded accumulation mechanics, monthly insurance charge through manual insured-life inputs, the Premium-Free-Period-gated premium shortfall charge and full-repayment refund/reset corridor across the supported premium terms, ad-hoc top-up blocking during active Premium-Free Period windows, the published S$2,500 minimum ad-hoc top-up in S$100 increments, the published S$500 minimum one-off partial withdrawal amount with S$100 increments, the published two-count free partial withdrawal cap from policy year 4 on the Regular Premium Account, and reinvest-default distribution support, while broader free partial withdrawal limits, minimum holding amount, account-routing administration, top-up product-highlights-sheet limits / approval timing, claim exclusions / insurer-side settlement mechanics, and distribution-paying fund thresholds and withdrawal consequences remain outside the calculator.",
+      "Flexi 5 is modeled as a supported V1 corridor. The parser captures start-up bonus, special bonus (if applicable), loyalty bonus (if applicable), top-up premium charge with blocking during active Premium-Free Period windows, policy charge, the current-state death benefit as the sum of the higher of the Regular Premium Account value or the 101%-of-paid-regular-premiums floor plus Top-up Account value after manual current amount owing, the current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap, the current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today through the published partial-TI continuation corridor after manual claim-amount and residual-death input, monthly insurance charge through manual insured-life inputs, start-up bonus recovery, withdrawal charge, and surrender-charge schedules.",
       "Up to 84 months of Premium-Free Period may be accumulated across the 10-year premium term.",
-      "Premium-Free Period gating, premium-shortfall charge, and free partial withdrawal allowances remain informational only in V1.",
+      "Premium-Free Period gating, premium-shortfall charge after entitlement exhaustion, full-repayment reset, ad-hoc top-up blocking during active Premium-Free Period windows, the published S$500 minimum one-off partial withdrawal amount in S$100 increments, the published 50%-of-cumulative-paid-regular-premiums less prior gross Regular Premium Account withdrawals limit during the premium payment term, the published S$1,000 Regular Premium Account minimum holding floor on explicit regular-account withdrawals, and the published two-count free partial withdrawal cap from policy year 4 are modeled for the Flexi 5 corridor; broader account-routing administration remains informational only in V1.",
       "Distribution-paying fund support is modeled with reinvestment as the default assumption; payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested distributions remain informational only in V1.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.",
-      "Premium-Free Period accumulated-month logic remains informational only.",
-      "Premium shortfall charge and premium repayment reset behavior remain informational only.",
-      "Free Partial Withdrawal Benefit count and 5%-of-total-premiums cap remain informational only.",
+      "The current-state death and terminal-illness snapshot needs manual current amount owing and remaining aggregate TI cap inputs because debt and cross-policy TI cap usage are not reconstructed from history in V1.",
+      "The current admitted-state TI payable amount and residual death-benefit estimate after a TI claim today are supported through the published partial-TI continuation corridor after manual claim-amount and residual-death input, but claim exclusions and insurer-side settlement mechanics remain informational only.",
+      "Free Partial Withdrawal Benefit account-routing order and broader withdrawal administration remain informational only.",
       "Distribution-paying fund minimum S$40 payout threshold, bank-account administration, change-request cutoff, and withdrawal consequences on reinvested distributions remain informational only.",
       "Change of Life insured remains informational only.",
       "Optional riders and guaranteed issue wording remain informational only."
@@ -390,9 +522,9 @@
   "expected": {
     "summary": {
       "totalPremiumsPaid": 88000,
-      "totalFeesCharged": 4987.98,
+      "totalFeesCharged": 4887.75,
       "totalBonusesReceived": 444,
-      "netFeeDrag": 4543.98,
+      "netFeeDrag": 4443.75,
       "currentSurrenderValue": 19590,
       "cancelNowPenalty": 4410
     },
@@ -408,46 +540,46 @@
           "exitYear": 1,
           "policyYear": 9,
           "eecRate": 0.16,
-          "eecCharge": 4031.91,
-          "pvEec": 3768.14,
-          "npvGrossFees": 2629.05,
+          "eecCharge": 4048.78,
+          "pvEec": 3783.91,
+          "npvGrossFees": 2535.53,
           "npvBonuses": 213.08,
-          "totalNpvFees": 6184.1,
-          "netSurrenderValue": 30139.84,
+          "totalNpvFees": 6106.35,
+          "netSurrenderValue": 30228.44,
           "totalContributions": 80800
         },
         {
           "exitYear": 2,
           "policyYear": 10,
           "eecRate": 0.08,
-          "eecCharge": 2535.68,
-          "pvEec": 2214.76,
-          "npvGrossFees": 4528.69,
+          "eecCharge": 2544.58,
+          "pvEec": 2222.54,
+          "npvGrossFees": 4435.03,
           "npvBonuses": 401.75,
-          "totalNpvFees": 6341.7,
-          "netSurrenderValue": 38617.31,
+          "totalNpvFees": 6255.82,
+          "netSurrenderValue": 38719.75,
           "totalContributions": 88000
         }
       ],
       "bestExitYear": 1,
-      "bestExitNpvFees": 6184.1,
+      "bestExitNpvFees": 6106.35,
       "holdToMip": {
-        "npvGrossFees": 4528.69,
+        "npvGrossFees": 4435.03,
         "npvBonuses": 401.75,
-        "totalNpvFees": 6341.7,
-        "finalValue": 41152.99,
+        "totalNpvFees": 6255.82,
+        "finalValue": 41264.33,
         "totalContributions": 88000
       }
     },
     "opportunityCost": {
       "alternativePortfolioValue": 44180.59,
-      "ilpValueAtHorizon": 41152.99,
-      "difference": 3027.6,
+      "ilpValueAtHorizon": 41264.33,
+      "difference": 2916.26,
       "atBestExit": {
         "exitYear": 1,
-        "alternativeValue": 39449.63,
-        "ilpValueAtHorizon": 41152.99,
-        "difference": -1703.36
+        "alternativeValue": 39544.43,
+        "ilpValueAtHorizon": 41264.33,
+        "difference": -1719.9
       }
     },
     "projections": {
@@ -459,23 +591,23 @@
             "policyYear": 9,
             "annualContribution": 13600,
             "annualWithdrawals": 2000,
-            "combinedValue": 33613.36,
+            "combinedValue": 33716.22,
             "eecRate": 0.16,
-            "eecCharge": 3954.32,
-            "surrenderValue": 29659.04,
+            "eecCharge": 3970.78,
+            "surrenderValue": 29745.44,
             "cumulativePremiums": 80800,
-            "cumulativeGrossFees": 2813.39,
+            "cumulativeGrossFees": 2713.33,
             "cumulativeBonuses": 228,
             "accounts": [
               {
                 "accountId": "regular",
                 "open": 21000,
                 "contributionAmount": 7600,
-                "grossFee": 2633.39,
+                "grossFee": 2533.33,
                 "bonusCredit": 228,
-                "netFee": 2405.39,
+                "netFee": 2305.33,
                 "withdrawalAmount": 2000,
-                "close": 24714.51
+                "close": 24817.37
               },
               {
                 "accountId": "topup",
@@ -494,23 +626,23 @@
             "policyYear": 10,
             "annualContribution": 7200,
             "annualWithdrawals": 0,
-            "combinedValue": 39738.29,
+            "combinedValue": 39844.19,
             "eecRate": 0.08,
-            "eecCharge": 2447.25,
-            "surrenderValue": 37291.04,
+            "eecCharge": 2455.72,
+            "surrenderValue": 37388.47,
             "cumulativePremiums": 88000,
-            "cumulativeGrossFees": 4989.49,
+            "cumulativeGrossFees": 4889.26,
             "cumulativeBonuses": 444,
             "accounts": [
               {
                 "accountId": "regular",
-                "open": 24714.51,
+                "open": 24817.37,
                 "contributionAmount": 7200,
-                "grossFee": 2176.09,
+                "grossFee": 2175.94,
                 "bonusCredit": 216,
-                "netFee": 1960.09,
+                "netFee": 1959.94,
                 "withdrawalAmount": 0,
-                "close": 30590.63
+                "close": 30696.53
               },
               {
                 "accountId": "topup",
@@ -534,23 +666,23 @@
             "policyYear": 9,
             "annualContribution": 13600,
             "annualWithdrawals": 2000,
-            "combinedValue": 34171.75,
+            "combinedValue": 34277.22,
             "eecRate": 0.16,
-            "eecCharge": 4031.91,
-            "surrenderValue": 30139.84,
+            "eecCharge": 4048.78,
+            "surrenderValue": 30228.44,
             "cumulativePremiums": 80800,
-            "cumulativeGrossFees": 2813.08,
+            "cumulativeGrossFees": 2713.02,
             "cumulativeBonuses": 228,
             "accounts": [
               {
                 "accountId": "regular",
                 "open": 21000,
                 "contributionAmount": 7600,
-                "grossFee": 2633.08,
+                "grossFee": 2533.02,
                 "bonusCredit": 228,
-                "netFee": 2405.08,
+                "netFee": 2305.02,
                 "withdrawalAmount": 2000,
-                "close": 25199.41
+                "close": 25304.89
               },
               {
                 "accountId": "topup",
@@ -569,23 +701,23 @@
             "policyYear": 10,
             "annualContribution": 7200,
             "annualWithdrawals": 0,
-            "combinedValue": 41152.99,
+            "combinedValue": 41264.33,
             "eecRate": 0.08,
-            "eecCharge": 2535.68,
-            "surrenderValue": 38617.31,
+            "eecCharge": 2544.58,
+            "surrenderValue": 38719.75,
             "cumulativePremiums": 88000,
-            "cumulativeGrossFees": 4987.98,
+            "cumulativeGrossFees": 4887.75,
             "cumulativeBonuses": 444,
             "accounts": [
               {
                 "accountId": "regular",
-                "open": 25199.41,
+                "open": 25304.89,
                 "contributionAmount": 7200,
-                "grossFee": 2174.9,
+                "grossFee": 2174.74,
                 "bonusCredit": 216,
-                "netFee": 1958.9,
+                "netFee": 1958.74,
                 "withdrawalAmount": 0,
-                "close": 31695.97
+                "close": 31807.31
               },
               {
                 "accountId": "topup",
@@ -609,23 +741,23 @@
             "policyYear": 9,
             "annualContribution": 13600,
             "annualWithdrawals": 2000,
-            "combinedValue": 34656.88,
+            "combinedValue": 34764.62,
             "eecRate": 0.16,
-            "eecCharge": 4099.31,
-            "surrenderValue": 30557.56,
+            "eecCharge": 4116.55,
+            "surrenderValue": 30648.07,
             "cumulativePremiums": 80800,
-            "cumulativeGrossFees": 2812.81,
+            "cumulativeGrossFees": 2712.74,
             "cumulativeBonuses": 228,
             "accounts": [
               {
                 "accountId": "regular",
                 "open": 21000,
                 "contributionAmount": 7600,
-                "grossFee": 2632.81,
+                "grossFee": 2532.74,
                 "bonusCredit": 228,
-                "netFee": 2404.81,
+                "netFee": 2304.74,
                 "withdrawalAmount": 2000,
-                "close": 25620.69
+                "close": 25728.43
               },
               {
                 "accountId": "topup",
@@ -644,23 +776,23 @@
             "policyYear": 10,
             "annualContribution": 7200,
             "annualWithdrawals": 0,
-            "combinedValue": 42405.74,
+            "combinedValue": 42521.92,
             "eecRate": 0.08,
-            "eecCharge": 2614.15,
-            "surrenderValue": 39791.59,
+            "eecCharge": 2623.44,
+            "surrenderValue": 39898.47,
             "cumulativePremiums": 88000,
-            "cumulativeGrossFees": 4986.66,
+            "cumulativeGrossFees": 4886.42,
             "cumulativeBonuses": 444,
             "accounts": [
               {
                 "accountId": "regular",
-                "open": 25620.69,
+                "open": 25728.43,
                 "contributionAmount": 7200,
-                "grossFee": 2173.85,
+                "grossFee": 2173.68,
                 "bonusCredit": 216,
-                "netFee": 1957.85,
+                "netFee": 1957.68,
                 "withdrawalAmount": 0,
-                "close": 32676.84
+                "close": 32793.02
               },
               {
                 "accountId": "topup",

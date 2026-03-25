@@ -23,6 +23,7 @@ interface VariantConfig {
   annualPremiumMin: number
   startupBonusTiers: IlpTemplateBonusTier[]
   policyChargeRate: number
+  premiumShortfallRates: number[]
   policyChargeTailRates: Array<{
     minAnnualisedPremiumsPaid: number
     maxAnnualisedPremiumsPaid: number | null
@@ -32,6 +33,11 @@ interface VariantConfig {
   specialBonusStartYear: number
   specialBonusEndYear: number
   premiumFreePeriodNote: string
+  premiumFreePeriodSchedule: Array<{
+    startPolicyYear: number
+    endPolicyYear: number | null
+    months: number
+  }>
 }
 
 const PREMIUM_CHARGE_RATE = 0.03
@@ -45,6 +51,7 @@ const VARIANT_CONFIGS: Record<MipTerm, VariantConfig> = {
       { currency: 'SGD', minAnnualPremium: 9_600, maxAnnualPremium: null, rate: 0.2 },
     ],
     policyChargeRate: 0.023,
+    premiumShortfallRates: [1, 1, 0.79, 0.6, 0.5],
     policyChargeTailRates: [
       { minAnnualisedPremiumsPaid: 0, maxAnnualisedPremiumsPaid: 5, rate: 0.012 },
       { minAnnualisedPremiumsPaid: 6, maxAnnualisedPremiumsPaid: 6, rate: 0.01 },
@@ -57,6 +64,9 @@ const VARIANT_CONFIGS: Record<MipTerm, VariantConfig> = {
     specialBonusStartYear: 6,
     specialBonusEndYear: 10,
     premiumFreePeriodNote: 'Up to 60 months of Premium-Free Period may be accumulated across the 10-year premium payment term.',
+    premiumFreePeriodSchedule: [
+      { startPolicyYear: 7, endPolicyYear: 10, months: 60 },
+    ],
   },
   15: {
     mipLength: 15,
@@ -66,6 +76,7 @@ const VARIANT_CONFIGS: Record<MipTerm, VariantConfig> = {
       { currency: 'SGD', minAnnualPremium: 7_200, maxAnnualPremium: null, rate: 0.3 },
     ],
     policyChargeRate: 0.02,
+    premiumShortfallRates: [1, 1, 0.81, 0.7, 0.6, 0.58, 0.53, 0.51, 0.4],
     policyChargeTailRates: [
       { minAnnualisedPremiumsPaid: 0, maxAnnualisedPremiumsPaid: 8, rate: 0.0113 },
       { minAnnualisedPremiumsPaid: 9, maxAnnualisedPremiumsPaid: 9, rate: 0.01 },
@@ -80,6 +91,10 @@ const VARIANT_CONFIGS: Record<MipTerm, VariantConfig> = {
     specialBonusStartYear: 11,
     specialBonusEndYear: 15,
     premiumFreePeriodNote: 'Up to 84 months of Premium-Free Period may be accumulated across the 15-year premium payment term.',
+    premiumFreePeriodSchedule: [
+      { startPolicyYear: 7, endPolicyYear: 10, months: 12 },
+      { startPolicyYear: 11, endPolicyYear: 15, months: 84 },
+    ],
   },
   20: {
     mipLength: 20,
@@ -89,6 +104,7 @@ const VARIANT_CONFIGS: Record<MipTerm, VariantConfig> = {
       { currency: 'SGD', minAnnualPremium: 4_800, maxAnnualPremium: null, rate: 0.6 },
     ],
     policyChargeRate: 0.0185,
+    premiumShortfallRates: [1, 1, 0.9, 0.75, 0.63, 0.59, 0.55, 0.51, 0.45, 0.4],
     policyChargeTailRates: [
       { minAnnualisedPremiumsPaid: 0, maxAnnualisedPremiumsPaid: 9, rate: 0.0134 },
       { minAnnualisedPremiumsPaid: 10, maxAnnualisedPremiumsPaid: 10, rate: 0.012 },
@@ -107,6 +123,10 @@ const VARIANT_CONFIGS: Record<MipTerm, VariantConfig> = {
     specialBonusStartYear: 16,
     specialBonusEndYear: 20,
     premiumFreePeriodNote: 'Up to 132 months of Premium-Free Period may be accumulated across the 20-year premium payment term.',
+    premiumFreePeriodSchedule: [
+      { startPolicyYear: 7, endPolicyYear: 15, months: 12 },
+      { startPolicyYear: 16, endPolicyYear: 20, months: 132 },
+    ],
   },
 }
 
@@ -139,7 +159,20 @@ function snippetNear(document: ExtractedPdfDocument, pageNumber: number, keyword
   return page.lines.slice(lineIndex, lineIndex + lineWindow).map((line) => line.text).join(' ')
 }
 
-function buildBonuses(config: VariantConfig, page2: IlpCatalogSourceRef, page3: IlpCatalogSourceRef): IlpTemplateBonus[] {
+function buildRateSchedule(values: readonly number[]): Array<{ startPolicyYear: number, endPolicyYear: number | null, rate: number }> {
+  return values.map((rate, index) => ({
+    startPolicyYear: index + 1,
+    endPolicyYear: index + 1,
+    rate: roundRate(rate),
+  }))
+}
+
+function buildBonuses(
+  config: VariantConfig,
+  page2: IlpCatalogSourceRef,
+  page3: IlpCatalogSourceRef,
+  repaymentPage: IlpCatalogSourceRef,
+): IlpTemplateBonus[] {
   return [
     {
       id: 'startup-bonus',
@@ -152,11 +185,15 @@ function buildBonuses(config: VariantConfig, page2: IlpCatalogSourceRef, page3: 
       rate: null,
       amount: null,
       tieredRates: config.startupBonusTiers.map((tier) => ({ ...tier })),
+      restorationRules: [
+        { trigger: 'premium-holiday-repayment', basis: 'repaid-premium' },
+      ],
       notes: [
         'Credited on regular premium received during the first policy year only.',
+        'Full repayment of missed regular premiums restores the published missed Start-up Bonus into the Regular Premium Account.',
         'Top-up premiums do not receive the Start-up Bonus.',
       ],
-      sourceRefs: [page2],
+      sourceRefs: [page2, repaymentPage],
     },
     {
       id: 'special-bonus',
@@ -169,23 +206,27 @@ function buildBonuses(config: VariantConfig, page2: IlpCatalogSourceRef, page3: 
       rate: 0.03,
       amount: null,
       tieredRates: [],
+      restorationRules: [
+        { trigger: 'premium-holiday-repayment', basis: 'repaid-premium' },
+      ],
       notes: [
         'Applied on each regular premium received during the published Special Bonus Period.',
+        'Full repayment of missed regular premiums restores the published missed Special Bonus into the Regular Premium Account.',
       ],
-      sourceRefs: [page2],
+      sourceRefs: [page2, repaymentPage],
     },
     {
       id: 'loyalty-bonus',
       type: 'loyalty',
       label: 'Loyalty Bonus',
-      mode: 'annual-rate',
+      mode: 'monthly-rate',
       appliesTo: ['regular'],
       startPolicyYear: config.mipLength + 1,
       endPolicyYear: null,
       rate: 0.001,
       amount: null,
       tieredRates: [],
-      suspensionRules: [{ trigger: 'partial-withdrawal', suspensionMonths: 12 }],
+      suspensionRules: [{ trigger: 'partial-withdrawal', suspensionMonths: 12, startOffsetMonths: 1 }],
       notes: [
         'Applied monthly on the Regular Premium Account from the month after the premium payment term ends.',
         'No Loyalty Bonus is paid on the Top-up Account.',
@@ -237,7 +278,15 @@ function buildFeeRules(config: VariantConfig, page17: IlpCatalogSourceRef): IlpT
   ]
 }
 
-function buildEventChargeRules(page7: IlpCatalogSourceRef, page17: IlpCatalogSourceRef, page22: IlpCatalogSourceRef): IlpTemplateEventChargeRule[] {
+function buildEventChargeRules(
+  config: VariantConfig,
+  page6: IlpCatalogSourceRef,
+  page7: IlpCatalogSourceRef,
+  page8: IlpCatalogSourceRef,
+  page17: IlpCatalogSourceRef,
+  page19: IlpCatalogSourceRef,
+  page22: IlpCatalogSourceRef,
+): IlpTemplateEventChargeRule[] {
   return [
     {
       id: 'top-up-premium-charge',
@@ -269,6 +318,63 @@ function buildEventChargeRules(page7: IlpCatalogSourceRef, page17: IlpCatalogSou
         'Models the published Start-up Bonus recovery charge when regular premium is reduced.',
       ],
       sourceRefs: [page7, page22],
+    },
+    {
+      id: 'partial-withdrawal-charge',
+      label: 'Partial Withdrawal Charge',
+      trigger: 'partial-withdrawal',
+      basis: 'event-amount',
+      appliesTo: ['regular'],
+      freeEventCount: 2,
+      freeEventStartPolicyYear: 4,
+      freeEventMaxAmountRate: 0.05,
+      freeEventMaxAmountBasis: 'cumulative-paid-regular-premium',
+      rate: 0,
+      rateSchedule: buildRateSchedule(config.surrenderRates),
+      amount: 0,
+      activeWindow: 'during-mip',
+      allocation: 'equal-split',
+      notes: [
+        'Applies to withdrawals from the Regular Premium Account during the premium payment term.',
+        'The first two Regular Premium Account withdrawals from policy year 4 onward are free up to 5% of cumulative regular premiums actually paid at the withdrawal month; only any excess remains chargeable.',
+        'The broader Partial Withdrawal Limit, minimum holding amount, and broader withdrawal administration remain manual in V1.',
+      ],
+      sourceRefs: [page8, page19],
+    },
+    {
+      id: 'premium-shortfall-charge',
+      label: 'Premium Shortfall Charge',
+      trigger: 'premium-holiday',
+      basis: 'annual-premium-with-overlap-months',
+      appliesTo: ['regular'],
+      rate: 0,
+      rateSchedule: buildRateSchedule(config.premiumShortfallRates),
+      amount: 0,
+      activeWindow: 'during-mip',
+      allocation: 'equal-split',
+      freeLifetimeMonthsSchedule: config.premiumFreePeriodSchedule.map((tier) => ({ ...tier })),
+      freeLifetimeMonthsResetOnRepayment: true,
+      notes: [
+        'Models the published premium-shortfall-charge corridor across the premium payment term, with the Premium-Free Period entitlement schedule suppressing charges while unused entitlement months remain.',
+      ],
+      sourceRefs: [page6, page19],
+    },
+    {
+      id: 'premium-shortfall-charge-refund',
+      label: 'Premium Shortfall Charge Refund',
+      trigger: 'premium-holiday-repayment',
+      basis: 'premium-holiday-charge-refund',
+      appliesTo: ['regular'],
+      rate: 1,
+      amount: 0,
+      activeWindow: 'during-mip',
+      allocation: 'equal-split',
+      sourceChargeRuleId: 'premium-shortfall-charge',
+      notes: [
+        'Returns all previously imposed premium shortfall charges without interest after all missed regular premiums are paid back in full.',
+        'Repayment also resets the applicable Premium-Free Period entitlement schedule for later missed-premium events.',
+      ],
+      sourceRefs: [page6, page19],
     },
   ]
 }
@@ -319,7 +425,7 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
         sourceRefs: [page7, page8],
       },
     ],
-    bonuses: buildBonuses(config, page2, page3),
+    bonuses: buildBonuses(config, page2, page3, page6),
     feeRules: [
       ...buildFeeRules(config, page17),
       {
@@ -345,18 +451,42 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
         sourceRefs: [page22, page26],
       },
     ],
-    eventChargeRules: buildEventChargeRules(page7, page17, page22),
+    eventChargeRules: buildEventChargeRules(config, page6, page7, page8, page17, page19, page22),
     eecTable: [...config.surrenderRates],
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      blockTopUpsDuringPremiumHoliday: true,
+      minimumTopUpAmount: 2_500,
+      topUpAmountIncrement: 100,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalAmountIncrement: 100,
+      partialWithdrawalMaximumAmountRules: [
+        {
+          activeWindow: 'during-mip',
+          accountId: 'regular',
+          basis: 'cumulative-paid-regular-premium-less-prior-gross-withdrawals',
+          maximumValueRate: 0.5,
+        },
+      ],
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'account-value',
+          accountId: 'regular',
+          minimumValue: 1_000,
+        },
+      ],
+    },
     warnings: [
-      'Invest smart flex II is modeled as a supported V1 corridor. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, monthly insurance charge through manual insured-life inputs, Start-up Bonus recovery charge, and surrender-charge horizon.',
+      'Invest smart flex II is modeled as a supported V1 corridor. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge with blocking during active Premium-Free Period windows, monthly insurance charge through manual insured-life inputs, Start-up Bonus recovery charge, surrender-charge horizon, the current-state death benefit as the sum of the higher of the Regular Premium Account value or the 101%-of-paid-regular-premiums floor plus Top-up Account value after manual current amount owing, the current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap, and the current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today through the published partial-TI continuation corridor after manual claim-amount and residual-death input.',
       config.premiumFreePeriodNote,
-      'Premium-Free Period entitlement months, premium shortfall charges after that entitlement is exhausted, and free partial withdrawal allowances remain informational only in V1.',
+      'Premium-Free-Period-gated premium shortfall charge, premium shortfall charge after entitlement exhaustion, full-repayment reset, ad-hoc top-up blocking during active Premium-Free Period windows, the published S$2,500 minimum ad-hoc top-up in S$100 increments, the published S$500 minimum one-off partial withdrawal amount with S$100 increments, the published 50%-of-cumulative-paid-regular-premiums less prior gross Regular Premium Account withdrawals limit during the premium payment term, the published S$1,000 Regular Premium Account minimum holding floor on explicit regular-account withdrawals, and the published two-count free partial withdrawal cap from policy year 4 are modeled. Broader account-routing administration and top-up product-highlights-sheet limits / approval timing remain informational only in V1.',
       'Change-of-life-insured effects remain informational only in V1.',
     ],
     unsupportedItems: [
-      'Premium-Free Period entitlement tracking remains informational only.',
-      'Premium shortfall charge remains informational only.',
-      'Free partial withdrawal allowance from the Regular Premium Account remains informational only.',
+      'The current-state death and terminal-illness snapshot needs manual current amount owing and remaining aggregate TI cap inputs because debt and cross-policy TI cap usage are not reconstructed from history in V1.',
+      'The current admitted-state TI payable amount and residual death-benefit estimate after a TI claim today are supported through the published partial-TI continuation corridor after manual claim-amount and residual-death input, but claim exclusions and insurer-side settlement mechanics remain informational only.',
+      'Free partial withdrawal account-routing order and broader withdrawal administration remain informational only.',
       'Change of Life Insured remains informational only.',
       'Optional riders remain informational only.',
     ],
@@ -377,6 +507,8 @@ export function parseEtiqaInvestSmartFlexIi(context: ParseContext): IlpCatalogPr
     structureStatus: 'structured',
     economicsStatus: 'supported',
     modeledEconomics: [
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:etiqa-smart-flex-ii-startup-bonus',
       'branch:etiqa-smart-flex-ii-special-bonus',
       'branch:etiqa-smart-flex-ii-loyalty-bonus',
@@ -384,19 +516,27 @@ export function parseEtiqaInvestSmartFlexIi(context: ParseContext): IlpCatalogPr
       'branch:etiqa-smart-flex-ii-insurance-charge',
       'branch:etiqa-smart-flex-ii-top-up-premium-charge',
       'branch:etiqa-smart-flex-ii-startup-bonus-recovery',
+      'branch:etiqa-smart-flex-ii-premium-shortfall-charge',
+      'branch:etiqa-smart-flex-ii-premium-shortfall-refund',
+      'branch:etiqa-smart-flex-ii-partial-withdrawal-charge',
       'branch:etiqa-smart-flex-ii-surrender-charge',
       'branch:etiqa-smart-flex-ii-top-up-account-routing',
+      'kernel:premium-holiday-top-up-block',
+      'kernel:top-up-amount-gate-block',
+      'kernel:free-withdrawal-event-cap',
+      'kernel:partial-withdrawal-amount-increment-block',
+      'kernel:partial-withdrawal-maximum-amount-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
+      'kernel:monthly-rate-bonus-crediting',
     ],
     metadataOnlyBehaviors: [
-      'etiqa-smart-flex-ii-premium-free-period-entitlement',
-      'etiqa-smart-flex-ii-premium-shortfall-charge',
-      'etiqa-smart-flex-ii-free-partial-withdrawal-limit',
+      'etiqa-smart-flex-ii-free-partial-withdrawal-benefit-administration',
       'etiqa-smart-flex-ii-change-of-life-insured',
       'etiqa-smart-flex-ii-optional-riders',
     ],
     warnings: [
-      'Invest smart flex II is currently modeled as a supported product in V1. The regular-premium / top-up account structure, cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge, monthly insurance charge through manual insured-life inputs, Start-up Bonus recovery charge, and surrender-charge schedule are modeled.',
-      'Premium-Free Period entitlement months, premium shortfall charges after entitlement exhaustion, free partial withdrawal allowances, and change-of-life-insured behavior remain informational only.',
+      'Invest smart flex II is currently modeled as a supported product in V1. The regular-premium / top-up account structure, current-state death benefit as the sum of the higher of the Regular Premium Account value or the 101%-of-paid-regular-premiums floor plus Top-up Account value after manual current amount owing, the current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap, the current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today through the published partial-TI continuation corridor after manual claim-amount and residual-death input, cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge with ad-hoc top-up blocking during active Premium-Free Period windows plus the published S$2,500 minimum ad-hoc top-up in S$100 increments, monthly insurance charge through manual insured-life inputs, Start-up Bonus recovery charge, the Premium-Free-Period-gated premium shortfall charge and full-repayment refund/reset corridor, the published two-count free partial withdrawal cap from policy year 4 on the Regular Premium Account, and surrender-charge schedule are modeled.',
+      'Broader free partial withdrawal limits and administration, top-up product-highlights-sheet limits / approval timing, claim exclusions / insurer-side settlement mechanics, and change-of-life-insured behavior remain informational only.',
     ],
     archived: false,
     variants: TERM_OPTIONS.map((term) => buildVariant(context.document, term)),

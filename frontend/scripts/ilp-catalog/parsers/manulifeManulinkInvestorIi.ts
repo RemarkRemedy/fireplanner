@@ -157,7 +157,8 @@ function buildVariant(document: ExtractedPdfDocument, fundingMode: FundingMode):
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
     unsupportedItems: [
-      'Death and terminal-illness benefit formulas remain informational only.',
+      'The current terminal-illness benefit estimate and current residual death-benefit estimate after a TI claim today both need a manual remaining aggregate TI cap input because the product summary publishes a S$1 million TI limit and a cross-policy TI/CI limit that are not reconstructed from claims history in V1.',
+      'Terminal-illness claim admission / exclusions / settlement, suicide exclusion handling, and claim-notification timing remain informational only beyond the modeled current death, terminal-illness, and residual-after-TI estimates.',
       'Partial-withdrawal and full-surrender administration remain informational only.',
       'Fund-level management fees remain informational only because they vary by chosen ILP sub-fund and are published in the fund summaries.',
       'Fund-switching remains informational only.',
@@ -185,11 +186,12 @@ export function parseManulifeManulinkInvestorIi(context: ParseContext): IlpCatal
       'branch:manulink-investor-ii-top-up-premium-charge',
       'branch:manulink-investor-ii-srs-recurring-single-premium-charge',
       'tokio-recurring-single-premium-routing',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-residual-death-benefit-after-ti-estimate',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'manulink-investor-ii-death-benefit',
-      'manulink-investor-ii-terminal-illness-benefit',
       'manulink-investor-ii-cpf-funding-route',
       'manulink-investor-ii-cpf-dividend-crediting',
       'manulink-investor-ii-partial-withdrawal',
@@ -199,7 +201,7 @@ export function parseManulifeManulinkInvestorIi(context: ParseContext): IlpCatal
       'manulink-investor-ii-lapse-and-termination',
     ],
     warnings: [
-      'Manulink Investor (II) is cataloged as a supported V1 product. The parser captures separate cash and SRS corridors for the published 3% single-premium and top-up charges, the SRS recurring-single-premium charge path, and reinvest-default distribution support through the open-ended no-MIP basis, while protection formulas, CPF funding, and fund-level charges remain informational only.',
+      'Manulink Investor (II) is cataloged as a supported V1 product. The parser captures separate cash and SRS corridors for the published 3% single-premium and top-up charges, the SRS recurring-single-premium charge path, the current-state death benefit as the higher of account value or 1% of single premium, top-up premium, and recurring single premium paid less withdrawals, the current terminal-illness benefit estimate as the lower of the modeled current death benefit and a manual remaining aggregate TI cap subject to the published S$1 million TI limit, the current residual death-benefit estimate after a TI claim today for the supported acceleration corridor, and reinvest-default distribution support through the open-ended no-MIP basis, while terminal-illness claim handling, CPF funding, and fund-level charges remain informational only.',
     ],
     archived: false,
     variants: [

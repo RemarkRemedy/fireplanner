@@ -170,9 +170,16 @@ function buildLoyaltyBonus(term: FlexiTerm, page6: IlpCatalogSourceRef, page8: I
     rate: roundRate(FLEXI_CONFIG[term].loyaltyRate),
     amount: null,
     tieredRates: [],
+    excludedValueRules: [
+      {
+        trigger: 'premium-holiday-repayment',
+        basis: 'repaid-premium',
+      },
+    ],
     notes: [
       'Allocated monthly from the first policy month after MIP on the Regular Premium Account only.',
-      'Repayment-specific Loyalty Bonus exclusions remain informational only in V1.',
+      'Repaid missed regular premiums are tracked as a loyalty-bonus-excluded balance for future projection years in V1.',
+      'Historical repaid missed premiums from before the projection start can be seeded as manual current excluded cohorts for the Loyalty Bonus base in V1.',
     ],
     sourceRefs: [page6, page8],
   }
@@ -320,11 +327,16 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', t
       mode: 'manual-assumption',
       accountId: 'topup',
       fallbackAccountIds: ['regular'],
+      allowedFrequencies: currency === 'USD'
+        ? ['annual', 'semi-annual', 'quarterly']
+        : ['annual', 'semi-annual', 'quarterly', 'monthly'],
+      minimumStartPolicyYear: 6,
+      minimumAnnualWithdrawalAmount: 1_200,
       source: 'policy-redemption',
       notes: [
         'Regular Withdrawal may be paid yearly, half-yearly, quarterly, or monthly after the fifth policy anniversary by redeeming units.',
         'V1 exposes Regular Withdrawal as a manual scheduled-redemption assumption that redeems the Top-up Account first and then the Regular Premium Account.',
-        'The published minimum withdrawal amount, minimum remaining account value, and qualifying life-event gating remain informational only in V1.',
+        'V1 models the published start gate after the fifth policy anniversary, the published annualised minimum Regular Withdrawal threshold, and the published payout-frequency availability by policy currency, while minimum remaining account value checks and qualifying life-event gating remain informational only.',
       ],
       sourceRefs: [page15],
     },
@@ -341,18 +353,26 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', t
       ],
       sourceRefs: [page18],
     },
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: true,
+      blockTopUpsDuringPremiumHoliday: true,
+      minimumTopUpStartPolicyMonth: 13,
+      minimumTopUpAmount: 5_000,
+      topUpAmountIncrement: 10,
+    },
     eecTable: FLEXI_CONFIG[term].eecSchedule.map(roundRate),
     warnings: [
-      'Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus, AMF, top-up premium charge, premium-holiday charge where applicable, partial-withdrawal charge, the current-state death-benefit estimate from regular-premium-paid history and current account balances, manual top-up-first scheduled payout support for Regular Withdrawal, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.',
+      'Wealth Focus is modeled as a supported V1 product. The parser captures Start-up Bonus, Premium Contribution Bonus, Loyalty Bonus including projected repayment-excluded regular-premium balance after premium-holiday backpayment, AMF, top-up premium charge, premium-holiday top-up blocking, premium-holiday charge where applicable, partial-withdrawal charge, the current-state death-benefit estimate from regular-premium-paid history and current account balances after manual current amount owing, the current accidental-death estimate before age 75 as the higher of that ordinary death amount or the 200%-of-paid-regular-premiums floor capped at SGD 2 million plus Top-up Account value after manual current age and current amount owing, including manual current accidental-death regular-premium-floor support once Regular Withdrawal assumptions are already active, the current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap subject to the published SGD 3 million aggregate limit, the current residual death-benefit estimate after a TI claim today for the supported acceleration corridor, manual top-up-first scheduled payout support for Regular Withdrawal, MIP-end surrender charges, and the reinvest-default distribution-mode assumption surface.',
       'Life Replacement Option eligibility / underwriting, post-replacement cover resets, and policy-reissue fallback remain informational only in V1.',
     ],
     unsupportedItems: [
       'Life Replacement Option request timing, replacement eligibility, and underwriting acceptance remain informational only.',
       'Life Replacement Option rider termination, new suicide / incontestability / exclusion periods, and revised expiry-date administration remain informational only.',
       'Life Replacement Option policy-reissue fallback, non-identical replacement-policy terms, and post-replacement premium / term administration remain informational only.',
-      'Accidental Death uplift and claim-cap mechanics remain informational only beyond the current death-benefit estimate.',
-      'Terminal Illness aggregate-cap and post-claim reduction mechanics remain informational only beyond the current death-benefit estimate.',
-      'Claim-side payout settlement remains informational only beyond the current death-benefit estimate.',
+      'The current accidental-death estimate also needs manual current age and current amount owing inputs and, once Regular Withdrawal assumptions are already active, a manual current accidental-death regular-premium floor; age-75 cut-off and the published SGD 2 million cap are modeled, while claim exclusions and settlement remain informational only.',
+      'The current terminal-illness snapshot and residual death-benefit estimate after a TI claim today follow the same current Regular Withdrawal history limitation as the current death-benefit estimate.',
+      'Terminal Illness claim admission, notification valuation timing, and settlement remain informational only beyond the modeled current TI snapshot and residual death-benefit estimate after TI claim today.',
+      'Claim-side payout settlement remains informational only beyond the modeled current death, terminal-illness, and residual-after-TI snapshots.',
     ],
     sourceRefs: [page1, page4, page5, page6, page8, page10, page11, page12, page13, page15, page18],
   }
@@ -373,8 +393,17 @@ export function parseHsbcWealthFocus({ document, sourceChecksumSha256 }: ParseCo
     'branch:wealth-focus-ad-hoc-top-up-routing',
     'kernel:cumulative-free-partial-withdrawal-pool',
     'kernel:current-death-benefit-estimate',
+    'kernel:current-accidental-death-benefit-estimate',
+    'kernel:current-ti-benefit-estimate',
+    'kernel:current-residual-death-benefit-after-ti-estimate',
     'kernel:scheduled-payout-manual-assumption',
+    'kernel:scheduled-payout-start-gate',
+    'kernel:scheduled-payout-minimum-annual-withdrawal-amount',
+    'kernel:scheduled-payout-frequency-eligibility-gate',
     'kernel:distribution-mode-assumption',
+    'kernel:premium-holiday-top-up-block',
+    'kernel:top-up-start-policy-month-block',
+    'kernel:top-up-amount-gate-block',
   ]
 
   if (FLEXI_CONFIG[flexiTerm].phcSchedule.length > 0) {
@@ -397,12 +426,12 @@ export function parseHsbcWealthFocus({ document, sourceChecksumSha256 }: ParseCo
       'wealth-focus-life-replacement-eligibility-and-underwriting',
       'wealth-focus-life-replacement-cover-reset-and-rider-termination',
       'wealth-focus-life-replacement-policy-reissue-fallback',
-      'wealth-focus-accidental-death-uplift-and-claim-cap',
-      'wealth-focus-terminal-illness-aggregate-cap-and-post-claim-reduction',
+      'wealth-focus-accidental-death-claim-settlement-and-exclusions',
+      'wealth-focus-terminal-illness-claim-admission-and-settlement',
       'wealth-focus-claim-side-benefit-settlement',
     ],
     warnings: [
-      `Wealth Focus Flexi ${flexiTerm} is currently modeled as a supported V1 product. Accumulation charges, the cumulative life-event free-withdrawal pool, the current-state death-benefit estimate, the top-up-first manual scheduled-payout surface for Regular Withdrawal, MIP-end surrender charges, regular/top-up routing, the documented bonuses, and reinvest-default distribution support are modeled, while Life Replacement Option eligibility / underwriting, post-replacement cover resets, policy-reissue fallback, accidental-death uplift / claim-cap handling, terminal-illness aggregate-cap / post-claim reduction mechanics, and claim-side benefit settlement remain informational only.`,
+      `Wealth Focus Flexi ${flexiTerm} is currently modeled as a supported V1 product. Accumulation charges, the cumulative life-event free-withdrawal pool, the current-state death-benefit estimate after manual current amount owing, the current accidental-death estimate before age 75 as the higher of the ordinary death amount or the 200%-of-paid-regular-premiums floor capped at SGD 2 million plus Top-up Account value after manual current age and current amount owing, including manual current accidental-death regular-premium-floor support once Regular Withdrawal assumptions are already active, the current terminal-illness snapshot as the lower of the ordinary death amount and a manual remaining aggregate TI cap subject to the published SGD 3 million aggregate limit, the current residual death-benefit estimate after a TI claim today for the supported acceleration corridor, the top-up-first manual scheduled-payout surface for Regular Withdrawal, MIP-end surrender charges, regular/top-up routing, the documented bonuses including projected repayment-excluded Loyalty Bonus base after premium-holiday backpayment plus manual current excluded cohorts for historical repaid premiums, and reinvest-default distribution support are modeled, while Life Replacement Option eligibility / underwriting, post-replacement cover resets, policy-reissue fallback, accidental-death claim exclusions and settlement, terminal-illness claim admission / notification valuation timing / settlement, and claim-side benefit settlement remain informational only beyond the modeled current ordinary death, accidental death, TI, and residual-after-TI snapshot surface.`,
     ],
     archived: false,
     variants: [

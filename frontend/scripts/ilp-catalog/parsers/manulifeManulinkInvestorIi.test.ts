@@ -30,17 +30,31 @@ describe('parseManulifeManulinkInvestorIi', () => {
       'branch:manulink-investor-ii-top-up-premium-charge',
       'branch:manulink-investor-ii-srs-recurring-single-premium-charge',
       'tokio-recurring-single-premium-routing',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-residual-death-benefit-after-ti-estimate',
       'kernel:distribution-mode-assumption',
     ])
+    expect(product.metadataOnlyBehaviors).not.toContain('manulink-investor-ii-death-benefit')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulink-investor-ii-terminal-illness-benefit')
     expect(product.metadataOnlyBehaviors).toContain('manulink-investor-ii-cpf-funding-route')
     expect(product.metadataOnlyBehaviors).not.toContain('manulink-investor-ii-single-premium-principal-tracking')
     expect(product.metadataOnlyBehaviors).not.toContain('manulink-investor-ii-dividend-minimum-threshold')
+    expect(product.warnings[0]).toContain('current-state death benefit as the higher of account value or 1% of single premium, top-up premium, and recurring single premium paid less withdrawals')
+    expect(product.warnings[0]).toContain('current terminal-illness benefit estimate as the lower of the modeled current death benefit and a manual remaining aggregate TI cap subject to the published S$1 million TI limit')
+    expect(product.warnings[0]).toContain('current residual death-benefit estimate after a TI claim today for the supported acceleration corridor')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-open-ended-cash',
       'sgd-open-ended-srs',
     ])
 
     const cashVariant = product.variants.find((variant) => variant.id === 'sgd-open-ended-cash')
+    expect(cashVariant?.unsupportedItems).toContain(
+      'The current terminal-illness benefit estimate and current residual death-benefit estimate after a TI claim today both need a manual remaining aggregate TI cap input because the product summary publishes a S$1 million TI limit and a cross-policy TI/CI limit that are not reconstructed from claims history in V1.',
+    )
+    expect(cashVariant?.unsupportedItems).toContain(
+      'Terminal-illness claim admission / exclusions / settlement, suicide exclusion handling, and claim-notification timing remain informational only beyond the modeled current death, terminal-illness, and residual-after-TI estimates.',
+    )
     expect(cashVariant?.mipBasis).toBe('open-ended')
     expect(cashVariant?.mipLength).toBeNull()
     expect(cashVariant?.eecTable).toEqual([])

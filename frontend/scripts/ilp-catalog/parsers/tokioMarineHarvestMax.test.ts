@@ -27,11 +27,16 @@ describe('parseTokioMarineHarvestMax', () => {
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('tokio-admin-charge-on-initial-account')
     expect(product.modeledEconomics).toContain('branch:tokio-harvest-max-advanced-death-monthly-protection-charge-accrual')
+    expect(product.modeledEconomics).toContain('branch:tokio-current-only-multi-life-life-state')
     expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(product.modeledEconomics).toContain('kernel:minimum-recurring-single-premium-start-month')
+    expect(product.modeledEconomics).toContain('kernel:minimum-recurring-single-premium-amount')
+    expect(product.modeledEconomics).toContain('kernel:committed-premium-rsp-resumption-gate')
+    expect(product.modeledEconomics).toContain('kernel:top-up-start-policy-month-block')
+    expect(product.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
     expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-max-credit-card-charge')
     expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-max-advanced-death-payout-handling')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-max-multiple-life-last-life-settlement')
     expect(product.metadataOnlyBehaviors).toContain('tokio-harvest-max-capital-guarantee-option-and-life-benefit-rider-handling')
     expect(product.metadataOnlyBehaviors).toContain(
       'tokio-harvest-max-change-of-life-assured-and-life-replacement-administration',
@@ -44,10 +49,20 @@ describe('parseTokioMarineHarvestMax', () => {
 
     const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15')
     const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15-advanced-death')
+    const riderVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15-advanced-death-life-benefit-rider')
 
-    expect(product.variants).toHaveLength(2)
+    expect(product.variants).toHaveLength(3)
     expect(basicVariant?.icpMonths).toBe(36)
     expect(advancedVariant?.icpMonths).toBe(36)
+    expect(riderVariant?.icpMonths).toBe(36)
+    expect(basicVariant?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumRecurringSinglePremiumStartPolicyMonth: 13,
+      minimumRecurringSinglePremiumMonthlyAmount: 50,
+      minimumTopUpStartPolicyMonth: 13,
+      minimumTopUpAmount: 1_000,
+      requiresCommencementPremiumForRecurringSinglePremiumResumption: true,
+    })
     expect(basicVariant?.accounts.map((account) => account.id)).toEqual(['initial', 'accumulation', 'topup'])
     expect(advancedVariant?.accounts.map((account) => account.id)).toEqual(['initial', 'accumulation', 'topup'])
     expect(basicVariant?.distributionSupport).toEqual({
@@ -76,6 +91,13 @@ describe('parseTokioMarineHarvestMax', () => {
       { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.41 },
       { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.44 },
       { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.45 },
+    ])
+    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'performance-investment-bonus')?.qualificationRules).toEqual([
+      {
+        formula: 'policy-year-growth-measure',
+        minimumRatio: 1.02,
+        rounding: 'floor-whole-percent',
+      },
     ])
     expect(basicVariant?.feeRules).toEqual(
       expect.arrayContaining([
@@ -150,6 +172,29 @@ describe('parseTokioMarineHarvestMax', () => {
         }),
       ]),
     )
+    expect(riderVariant?.feeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'monthly-protection-charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          fallbackAppliesTo: ['topup', 'initial'],
+          assuranceConfig: {
+            formula: 'tokio-mpc-net-premium-floor',
+            rateTable: 'tokio-mpc-unzo-death',
+            monthlyModalFactor: 1,
+            maxAgeNextBirthday: 99,
+            accrual: {
+              startPolicyYear: 1,
+              endPolicyYear: 3,
+              settlementPolicyYear: 4,
+            },
+          },
+        }),
+      ]),
+    )
     expect(basicVariant?.eventChargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'top-up-premium-charge', rate: 0.05 }),
@@ -180,21 +225,29 @@ describe('parseTokioMarineHarvestMax', () => {
     expect(advancedVariant?.distributionSupport).toEqual(basicVariant?.distributionSupport)
     expect(advancedVariant?.eventChargeRules).toEqual(basicVariant?.eventChargeRules)
     expect(basicVariant?.unsupportedItems).toContain(
-      'Advanced Death selection, Monthly Protection Charge, multiple-life last-life settlement, and capital-guarantee / Life Benefit Rider handling remain metadata-only for this product.',
+      'Advanced Death selection, Monthly Protection Charge, and capital-guarantee / Life Benefit Rider handling remain metadata-only for this product.',
     )
     expect(basicVariant?.unsupportedItems).toContain(
       'Credit-card charge and add/remove/change-of-life-assured (life-replacement) administration remain metadata-only for this product.',
     )
     expect(advancedVariant?.unsupportedItems).toContain(
-      'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, multiple-life last-life settlement, and capital-guarantee / Life Benefit Rider handling remain metadata-only for this product.',
+      'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, and capital-guarantee / Life Benefit Rider handling remain metadata-only for this product.',
     )
     expect(advancedVariant?.unsupportedItems).toContain(
       'Credit-card charge and add/remove/change-of-life-assured (life-replacement) administration remain metadata-only for this product.',
     )
+    expect(riderVariant?.unsupportedItems).toContain(
+      'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, Life Benefit Rider termination / fallback handling, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+    )
+    expect(riderVariant?.unsupportedItems).toContain('Credit-card charge remain metadata-only for this product.')
     expect(basicVariant?.eecTable).toEqual([1, 1, 1, 0.99, 0.99, 0.98, 0.96, 0.95, 0.9, 0.89, 0.88, 0.83, 0.8, 0.75, 0.08])
     expect(advancedVariant?.eecTable).toEqual([1, 1, 1, 0.99, 0.99, 0.98, 0.96, 0.95, 0.9, 0.89, 0.88, 0.83, 0.8, 0.75, 0.08])
+    expect(riderVariant?.eecTable).toEqual([1, 1, 1, 0.99, 0.99, 0.98, 0.96, 0.95, 0.9, 0.89, 0.88, 0.83, 0.8, 0.75, 0.08])
     expect(advancedVariant?.warnings).toContain(
-      'The Advanced Death variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window and policy-year-4 lump-sum settlement, after you enter the insured-life details and current net premium base.',
+      'The Advanced Death variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window, policy-year-4 lump-sum settlement, and static current multi-life last-life handling, after you enter the insured-life details and current net premium base.',
+    )
+    expect(riderVariant?.warnings).toContain(
+      'The Advanced Death with Life Benefit Rider variant also models the published Monthly Protection Charge, including the first-three-policy-years accrual window, policy-year-4 lump-sum settlement, static current multi-life last-life handling, oldest-life MPC rating, youngest-life rider age gating, and the published sum-at-risk valuation across the Initial and Accumulation Units Accounts after you enter the insured-life details and current net premium base through the policy anniversary immediately after age 99.',
     )
     expect(basicVariant?.warnings).toContain(
       'Harvest Max keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',

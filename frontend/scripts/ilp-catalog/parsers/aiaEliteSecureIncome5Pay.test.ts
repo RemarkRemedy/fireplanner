@@ -108,12 +108,22 @@ describe('parseAiaEliteSecureIncome5Pay', () => {
       'branch:aia-elite-secure-income-5p-premium-holiday-charge',
       'branch:aia-elite-secure-income-5p-partial-withdrawal-charge',
       'branch:aia-elite-secure-income-5p-full-surrender-charge',
+      'branch:aia-elite-secure-income-5p-power-up-bonus-no-withdrawal-corridor',
+      'kernel:automatic-lapse-on-account-depletion',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
+      'kernel:top-up-paid-up-to-date-block',
+      'kernel:top-up-amount-gate-block',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'kernel:scheduled-payout-manual-assumption',
       'kernel:lapse-reinstatement-payout-state',
     ])
     expect(product.metadataOnlyBehaviors).toContain('aia-elite-secure-income-5p-secure-monthly-income-election')
-    expect(product.metadataOnlyBehaviors).toContain('aia-elite-secure-income-5p-power-up-bonus')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-5p-withdrawal-adjusted-power-up-bonus')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-5p-death-benefit')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-5p-reinstatement-target-income')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-5p-accidental-death-benefit')
 
     expect(product.variants).toHaveLength(1)
     const variant = product.variants[0]
@@ -121,6 +131,15 @@ describe('parseAiaEliteSecureIncome5Pay', () => {
       id: 'sgd-mip-5',
       currency: 'SGD',
       mipLength: 5,
+      policyStateSupport: {
+        automaticLapseOnAccountValueDepletion: true,
+        blockTopUpsWhenPremiumsNotPaidUpToDate: true,
+        minimumTopUpAmount: 1_000,
+        minimumPartialWithdrawalAmount: 1_000,
+        partialWithdrawalMinimumRemainingValueRules: [
+          { activeWindow: 'policy-term', basis: 'policy-value', minimumValue: 10_000 },
+        ],
+      },
       scheduledPayoutSupport: {
         mode: 'manual-assumption',
         accountId: 'policy',
@@ -138,6 +157,20 @@ describe('parseAiaEliteSecureIncome5Pay', () => {
         id: 'policy',
         feeRate: null,
         subjectToEec: true,
+      }),
+    ])
+    expect(variant.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'power-up-bonus',
+        mode: 'one-time',
+        oneTimePayoutBasis: 'committed-annual-premium-at-issue',
+        rate: 0.125,
+        cadenceYears: 5,
+        adjustmentFactorConfig: {
+          formula: 'cumulative-withdrawal-factor-product-over-account-value',
+          withdrawalAccountIds: ['policy'],
+          countFromPolicyYear: 6,
+        },
       }),
     ])
     expect(variant.feeRules).toEqual([
@@ -199,10 +232,28 @@ describe('parseAiaEliteSecureIncome5Pay', () => {
     ])
     expect(variant.eecTable).toEqual([0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05, 0])
     expect(variant.warnings).toContain(
-      'AIA Elite Secure Income - 5 Pay is cataloged as supported in V1 for the regular-pay corridor. The parser captures the premium-year regular premium charge schedule, a manual-input annual supplementary charge amount from the policy illustration, the 3% top-up premium charge, the premium-holiday charge schedule, the full-surrender / partial-withdrawal charge schedules, and scheduled payout capability through the payout-state kernel, including lapse suppression and permanent Target Monthly Income fallback after Premium Holiday activation or reinstatement in the annual-state model.',
+      'AIA Elite Secure Income - 5 Pay is cataloged as supported in V1 for the regular-pay corridor. The parser captures the premium-year regular premium charge schedule, a manual-input annual supplementary charge amount from the policy illustration, the 3% top-up premium charge with blocking in policy months where regular premiums are not paid up to date and the published S$1,000 minimum on explicit ad-hoc top-ups, the premium-holiday charge schedule, annual-state lapse after projected account-value depletion, the full-surrender / partial-withdrawal charge schedules, the published S$10,000 residual policy-value floor on explicit one-off partial withdrawals, the Power-up Bonus corridor from the end of policy year 10 and every fifth policy year thereafter including the published cumulative withdrawal-factor adjustment from policy year 6 onward, scheduled payout capability through the payout-state kernel, the current-state death and terminal-illness benefit amount as the higher of 105% of policy value or a manual current net protected premium base input, the current admitted-state terminal-illness payable amount as a manual current claim amount, an admitted-and-settled terminal-illness claim as a current policy-termination state, and the current accidental-death uplift as 50% of cumulative paid regular premiums during the first 5 policy years, including permanent Target Monthly Income fallback after Premium Holiday activation or reinstatement in the annual-state model.',
     )
     expect(variant.unsupportedItems).not.toContain(
       'Supplementary charge remains informational only because the annual rate is only stated in the policy illustration.',
+    )
+    expect(variant.unsupportedItems).not.toContain(
+      'Withdrawal-adjusted Power-up Bonus scaling after any partial withdrawal from policy year 6 onward remains informational only.',
+    )
+    expect(variant.unsupportedItems).not.toContain(
+      'Minimum withdrawal amount, minimum post-withdrawal policy value, and top-up eligibility while premiums are outstanding remain informational only.',
+    )
+    expect(variant.unsupportedItems).toContain(
+      'Regular-premium paid history and paid / deemed-paid Secure Monthly Income erosion need a manual current net protected premium base input in V1.',
+    )
+    expect(variant.unsupportedItems).toContain(
+      'The current admitted-state terminal-illness payable amount is supported through manual claim-amount input, and an admitted-and-settled terminal-illness claim is supported as a current policy-termination state, but terminal-illness exclusions and settlement remain informational only.',
+    )
+    expect(variant.unsupportedItems).toContain(
+      'Accidental-death claim admission timing, exclusions, and settlement remain informational only beyond the modeled current ordinary death amount plus the first-5-policy-year 50%-of-paid-regular-premiums uplift.',
+    )
+    expect(variant.unsupportedItems).not.toContain(
+      'Accidental death and terminal illness benefit formulas remain informational only.',
     )
   })
 

@@ -19,7 +19,24 @@
       "tokio-premium-shortfall-charge-non-payment",
       "tokio-premium-shortfall-charge-regular-premium-reduction",
       "tokio-premium-increase-restores-shortfall-charge-cessation",
-      "tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only"
+      "tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only",
+      "tokio-initial-vs-accumulation-regular-premium-routing",
+      "tokio-initial-bonus-tiered-premium-allocation",
+      "tokio-performance-investment-bonus",
+      "tokio-loyalty-bonus",
+      "tokio-power-up-bonus",
+      "tokio-top-up-routing",
+      "tokio-post-mip-regular-premium-routing-back-to-initial-account",
+      "tokio-initial-charge-on-initial-account",
+      "tokio-policy-charge-on-accumulation-account",
+      "tokio-admin-charge-on-initial-account",
+      "tokio-top-up-premium-charge",
+      "tokio-initial-account-surrender-charge",
+      "tokio-accumulation-partial-withdrawal-charge",
+      "branch:tokio-harvest-pro-advanced-death-monthly-protection-charge-accrual",
+      "branch:tokio-current-only-multi-life-life-state",
+      "kernel:current-death-benefit-estimate",
+      "kernel:distribution-mode-assumption"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "TML_UNYG_TPDN_CIZ_Summary.pdf",
@@ -180,6 +197,13 @@
         "startPolicyYear": 4,
         "endPolicyYear": 10,
         "tieredRates": [],
+        "qualificationRules": [
+          {
+            "formula": "policy-year-growth-measure",
+            "minimumRatio": 1.02,
+            "rounding": "floor-whole-percent"
+          }
+        ],
         "suspensionRules": []
       },
       {
@@ -613,33 +637,35 @@
         "tokio-premium-increase-restores-shortfall-charge-cessation",
         "tokio-overlapping-non-payment-and-reduction-shortfall-uses-higher-charge-only",
         "branch:tokio-harvest-pro-advanced-death-monthly-protection-charge-accrual",
+        "branch:tokio-current-only-multi-life-life-state",
         "kernel:current-death-benefit-estimate",
         "kernel:distribution-mode-assumption"
       ],
       "metadataOnlyBehaviors": [
         "tokio-harvest-pro-advanced-death-payout-handling",
-        "tokio-harvest-pro-multiple-life-last-life-settlement",
         "tokio-harvest-pro-change-of-life-assured-and-life-replacement-administration"
       ]
     },
     "catalogWarnings": [
       "Structured extraction validated against the Harvest Pro product summary text layer.",
       "Harvest Pro is modeled as split SGD / MIP 10 death-benefit-option variants with the published initial setup charge, policy investment charge, and admin charge tied to the commencement-date premium commitment.",
-      "The Basic Death variant leaves the published Monthly Protection Charge metadata-only, the Advanced Death variant models the published first-three-policy-years accrual and policy-year-4 catch-up timing after you enter the insured-life details and current net premium base, and the Advanced Death with Life Benefit Rider variant extends that same Monthly Protection Charge corridor through the policy anniversary immediately after age 99 for the single-life corridor.",
+      "The Basic Death variant leaves the published Monthly Protection Charge metadata-only, the Advanced Death variant models the published first-three-policy-years accrual and policy-year-4 catch-up timing after you enter the insured-life details and current net premium base with static current multi-life last-life handling, and the Advanced Death with Life Benefit Rider variant extends that same Monthly Protection Charge corridor through the policy anniversary immediately after age 99 with oldest-life MPC rating and youngest-life rider age gating on the same static current multi-life surface.",
+      "Performance investment bonus also models the published 102% performance-growth-measure gate.",
       "Recurring single premium is modeled as a scheduled stream routed into the Top-up Units Account net of the published 5% premium charge.",
       "Recurring single premium stays blocked after a premium-holiday event until you enter an explicit recurring-single-premium-resumption event for the administrative restart month.",
       "Regular premiums paid after the minimum investment period are modeled back into the Initial Units Account in line with the product summary.",
       "Dividend cash payouts are modeled through the manual distribution-mode assumption surface across the Initial, Accumulation, and Top-up Units Accounts, with payouts below SGD 50 remaining reinvested and cash-payout elections submitted at least 30 days before the record date.",
-      "The Advanced Death and single-life Advanced Death with Life Benefit Rider variants both model the published first-three-policy-years Monthly Protection Charge accrual and policy-year-4 lump-sum catch-up before normal monthly-in-advance deductions resume.",
+      "The Advanced Death and Advanced Death with Life Benefit Rider variants both model the published first-three-policy-years Monthly Protection Charge accrual and policy-year-4 lump-sum catch-up before normal monthly-in-advance deductions resume.",
       "This supported template models the SGD / MIP 10 (Basic Death) corridor only.",
       "This supported template models regular-premium routing through year 10, top-up routing, recurring single premium routing, the published initial setup charge, policy investment charge, admin charge, surrender charge on the Initial Units Account, and the published partial-withdrawal charge schedule.",
       "This supported template also models the published premium shortfall charge for non-payment periods and regular-premium reductions, including the higher-charge rule when both overlap.",
+      "Performance investment bonus also models the published 102% performance-growth-measure gate.",
       "Recurring single premium stays blocked after a premium-holiday event until you add an explicit recurring-single-premium-resumption event for the restart month.",
       "Initial bonus tiers are modeled using the published SGD annualised regular premium bands for this SGD variant.",
       "Harvest Pro keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption, and payouts below the published minimum annual cash-payout amount of S$50 remain reinvested.",
       "Cash payout elections for dividend-paying funds should be submitted at least 30 days before the record date.",
-      "Advanced Death selection, Advanced Death with Life Benefit Rider selection, Monthly Protection Charge, multiple-life last-life settlement, and life replacement administration remain metadata-only for this product."
+      "Advanced Death selection, Advanced Death with Life Benefit Rider selection, Monthly Protection Charge, and life replacement administration remain metadata-only for this product."
     ]
   },
   "expected": {

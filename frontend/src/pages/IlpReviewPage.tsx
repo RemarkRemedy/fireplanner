@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, ChevronDown, ChevronRight, FolderOpen, Plus } from 'lucide-react'
+import { AlertTriangle, FolderOpen, Plus } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -7,20 +7,17 @@ import { Card, CardContent } from '@/components/ui/card'
 import { ProductPickerDialog } from '@/components/ilp/catalog/ProductPickerDialog'
 import { ComparisonTable } from '@/components/ilp/ComparisonTable'
 import { DecisionPanel } from '@/components/ilp/DecisionPanel'
-import { FeeBreakdownSection } from '@/components/ilp/FeeBreakdownSection'
-import { HeadlineInsight } from '@/components/ilp/HeadlineInsight'
 import { FeeWaterfallChart } from '@/components/ilp/FeeWaterfallChart'
 import { NpvTimelineChart } from '@/components/ilp/NpvTimelineChart'
 import { OpportunityCostCard } from '@/components/ilp/OpportunityCostCard'
 import { PolicyInputForm } from '@/components/ilp/PolicyInputForm'
-import { PolicySetupGate } from '@/components/ilp/PolicySetupGate'
 import { PolicyTabs } from '@/components/ilp/PolicyTabs'
 import { ProjectionTable } from '@/components/ilp/ProjectionTable'
 import { SummaryCards } from '@/components/ilp/SummaryCards'
-import { useIlpAnalysis } from '@/hooks/useIlpAnalysis'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import type { IlpProjectedPolicyAnalysis } from '@/lib/calculations/ilp'
+import { analyzeAllPolicies, isProjectedAnalysisEligible } from '@/lib/calculations/ilp'
 import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
-import type { IlpPolicySeed } from '@/lib/ilp-catalog/policySeedSchema'
 import { templateVariantToPolicySeed } from '@/lib/ilp-catalog/templateToPolicy'
 import { ilpPolicySchema } from '@/lib/validation/ilpSchema'
 import { useIlpStore } from '@/stores/useIlpStore'
@@ -35,63 +32,51 @@ function TemplateCatalogSummary() {
   const { products, manifest } = getIlpCatalog()
   const supportedProducts = products.filter((product) => product.supportStatus === 'supported')
   const partialProducts = products.filter((product) => product.supportStatus === 'partial')
-  const [expanded, setExpanded] = useState(false)
 
   return (
     <Card>
       <CardContent className="space-y-4 pt-6">
-        <button
-          type="button"
-          className="flex w-full items-start justify-between text-left"
-          onClick={() => setExpanded(!expanded)}
-        >
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-lg font-semibold">Available Templates</h2>
+            <Badge variant="outline">Catalog {manifest.catalogVersion}</Badge>
+            <Badge>{supportedProducts.length} supported</Badge>
+            <Badge variant="secondary">{partialProducts.length} partial</Badge>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Supported templates are release-gated within their modeled economics. Partial templates stay selectable, but still need document review for metadata-only behavior.
+          </p>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2">
           <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-lg font-semibold">Available Templates</h2>
-              <Badge variant="outline">Catalog {manifest.catalogVersion}</Badge>
-              <Badge>{supportedProducts.length} supported</Badge>
-              <Badge variant="secondary">{partialProducts.length} partial</Badge>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Supported templates are release-gated within their modeled economics. Partial templates stay selectable, but still need document review for metadata-only behavior.
-            </p>
-          </div>
-          {expanded
-            ? <ChevronDown className="mt-1 h-5 w-5 shrink-0 text-muted-foreground" />
-            : <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-muted-foreground" />}
-        </button>
-
-        {expanded && (
-          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="text-sm font-medium">Supported templates</div>
             <div className="space-y-2">
-              <div className="text-sm font-medium">Supported templates</div>
-              <div className="space-y-2">
-                {supportedProducts.map((product) => (
-                  <div key={product.id} className="rounded-md border px-3 py-2">
-                    <div className="font-medium">{product.productName}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {product.insurer} · {product.variants.length} {product.variants.length === 1 ? 'variant' : 'variants'}
-                    </div>
+              {supportedProducts.map((product) => (
+                <div key={product.id} className="rounded-md border px-3 py-2">
+                  <div className="font-medium">{product.productName}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {product.insurer} · {product.variants.length} {product.variants.length === 1 ? 'variant' : 'variants'}
                   </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="text-sm font-medium">Partial templates</div>
-              <div className="space-y-2">
-                {partialProducts.map((product) => (
-                  <div key={product.id} className="rounded-md border px-3 py-2">
-                    <div className="font-medium">{product.productName}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {product.insurer} · {product.variants.length} {product.variants.length === 1 ? 'variant' : 'variants'}
-                    </div>
-                  </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
-        )}
+
+          <div className="space-y-2">
+            <div className="text-sm font-medium">Partial templates</div>
+            <div className="space-y-2">
+              {partialProducts.map((product) => (
+                <div key={product.id} className="rounded-md border px-3 py-2">
+                  <div className="font-medium">{product.productName}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {product.insurer} · {product.variants.length} {product.variants.length === 1 ? 'variant' : 'variants'}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </CardContent>
     </Card>
   )
@@ -99,7 +84,7 @@ function TemplateCatalogSummary() {
 
 export function IlpReviewPage() {
   usePageMeta({
-    title: 'ILP Review: SG FIRE Planner',
+    title: 'ILP Review — SG FIRE Planner',
     description: 'Compare ILP fee drag, surrender penalties, and exit options across multiple policies in one place.',
     path: '/ilp-review',
   })
@@ -110,53 +95,66 @@ export function IlpReviewPage() {
   const addPolicyFromSeed = useIlpStore((state) => state.addPolicyFromSeed)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [catalogError, setCatalogError] = useState<string | null>(null)
-  const [pendingSeed, setPendingSeed] = useState<IlpPolicySeed | null>(null)
 
   function handleCatalogPick(product: ReturnType<typeof getIlpCatalog>['products'][number], variant: ReturnType<typeof getIlpCatalog>['products'][number]['variants'][number]) {
     const seed = templateVariantToPolicySeed(product, variant, getIlpCatalog().manifest)
-    setCatalogError(null)
-    setPickerOpen(false)
-    setPendingSeed(seed)
-  }
-
-  function handleGateConfirm(adjustedSeed: IlpPolicySeed) {
-    const result = addPolicyFromSeed(adjustedSeed)
+    const result = addPolicyFromSeed(seed)
     if (!result.success) {
       setCatalogError(result.errors[0] ?? 'Unable to seed policy from the selected catalog template.')
       return
     }
-    setPendingSeed(null)
-  }
 
-  function handleGateCancel() {
-    setPendingSeed(null)
+    setCatalogError(null)
+    setPickerOpen(false)
   }
 
   const policyEntries = useMemo(() => (
     policies.map((policy) => {
       const parsed = ilpPolicySchema.safeParse(policy)
       return {
-        policy,
+        policy: parsed.success ? parsed.data : policy,
         issues: parsed.success ? [] : parsed.error.issues.map((issue) => issue.message),
         valid: parsed.success,
+        projectedEligible: parsed.success && isProjectedAnalysisEligible(parsed.data),
       }
     })
   ), [policies])
 
-  const { analysis: fullAnalysis, error: analysisError, excludedCount } = useIlpAnalysis()
-  const analysisResult = { analysis: fullAnalysis, error: analysisError }
+  const analysisResult = useMemo(() => {
+    const analyzablePolicies = policyEntries
+      .filter((entry) => entry.valid)
+      .map((entry) => entry.policy)
+
+    if (analyzablePolicies.length === 0) {
+      return { analysis: null, error: null }
+    }
+
+    try {
+      return { analysis: analyzeAllPolicies(analyzablePolicies), error: null }
+    } catch (error) {
+      return {
+        analysis: null,
+        error: error instanceof Error ? error.message : 'Unable to analyze ILP policies.',
+      }
+    }
+  }, [policyEntries])
 
   const selectedEntry = policyEntries.find((entry) => entry.policy.id === selectedPolicyId)
     ?? policyEntries[0]
     ?? null
   const selectedPolicy = selectedEntry?.policy ?? null
   const selectedAnalysis = analysisResult.analysis?.policies.find((analysis) => analysis.policyId === selectedPolicy?.id) ?? null
+  const selectedProjectedAnalysis = selectedAnalysis?.mode === 'projected' ? selectedAnalysis : null
+  const selectedCurrentOnlyAnalysis = selectedAnalysis?.mode === 'current-only' ? selectedAnalysis : null
   const fallbackAnalysis = analysisResult.analysis?.policies[0] ?? null
-  const displayAnalysis = selectedAnalysis ?? fallbackAnalysis
-  const displayPolicy = displayAnalysis
-    ? policyEntries.find((entry) => entry.policy.id === displayAnalysis.policyId)?.policy ?? null
-    : null
-  // excludedCount comes from useIlpAnalysis above
+  const displayAnalysis = selectedProjectedAnalysis ?? selectedCurrentOnlyAnalysis ?? fallbackAnalysis
+  const displayPolicy = selectedCurrentOnlyAnalysis != null
+    ? selectedPolicy
+    : (displayAnalysis
+      ? policyEntries.find((entry) => entry.policy.id === displayAnalysis.policyId)?.policy ?? null
+      : null)
+  const excludedCount = policyEntries.filter((entry) => !entry.valid).length
+  const currentOnlyCount = policyEntries.filter((entry) => entry.valid && !entry.projectedEligible).length
 
   if (policies.length === 0) {
     return (
@@ -191,13 +189,6 @@ export function IlpReviewPage() {
         </Card>
         <TemplateCatalogSummary />
         <ProductPickerDialog open={pickerOpen} onOpenChange={setPickerOpen} onSelect={handleCatalogPick} />
-        {pendingSeed && (
-          <PolicySetupGate
-            seed={pendingSeed}
-            onConfirm={handleGateConfirm}
-            onCancel={handleGateCancel}
-          />
-        )}
       </div>
     )
   }
@@ -219,23 +210,45 @@ export function IlpReviewPage() {
         </div>
       </div>
 
+      <Alert>
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Support boundary</AlertTitle>
+        <AlertDescription>
+          Supported catalog templates are release-gated only within their declared modeled economics. Partial templates remain useful for structured review, but they still require manual verification of metadata-only behavior and unresolved charges.
+        </AlertDescription>
+      </Alert>
+
+      <TemplateCatalogSummary />
+
       <PolicyTabs />
 
       <ProductPickerDialog open={pickerOpen} onOpenChange={setPickerOpen} onSelect={handleCatalogPick} />
-
-      {pendingSeed && (
-        <PolicySetupGate
-          seed={pendingSeed}
-          onConfirm={handleGateConfirm}
-          onCancel={handleGateCancel}
-        />
-      )}
 
       {analysisResult.error && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Analysis paused</AlertTitle>
           <AlertDescription>{analysisResult.error}</AlertDescription>
+        </Alert>
+      )}
+
+      {excludedCount > 0 && (
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>{excludedCount} {excludedCount === 1 ? 'policy' : 'policies'} excluded from analysis</AlertTitle>
+          <AlertDescription>
+            Invalid policies stay editable below, but analysis surfaces only include policies that currently pass validation.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {currentOnlyCount > 0 && (
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>{currentOnlyCount} {currentOnlyCount === 1 ? 'policy stays' : 'policies stay'} in current-snapshot mode</AlertTitle>
+          <AlertDescription>
+            Mature finite-MIP policies now stay in comparison rows and summary cards, but projection charts, NPV, and decision panels remain limited to projection-eligible policies.
+          </AlertDescription>
         </Alert>
       )}
 
@@ -247,10 +260,18 @@ export function IlpReviewPage() {
         </Alert>
       )}
 
-      {/* Headline insight + analysis sections — shown FIRST so users see results immediately */}
+      <PolicyInputForm policy={selectedPolicy} issues={selectedEntry?.issues ?? []} />
+
+      {analysisResult.analysis && (
+        <ComparisonTable
+          analyses={analysisResult.analysis.policies}
+          comparison={analysisResult.analysis.comparison}
+        />
+      )}
+
       {selectedPolicy && displayAnalysis && displayPolicy ? (
         <>
-          {selectedAnalysis == null && (
+          {selectedProjectedAnalysis == null && selectedCurrentOnlyAnalysis == null && (
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Showing analysis for another valid policy</AlertTitle>
@@ -259,19 +280,24 @@ export function IlpReviewPage() {
               </AlertDescription>
             </Alert>
           )}
-          <HeadlineInsight policy={displayPolicy} analysis={displayAnalysis} />
+          {displayAnalysis.mode === 'current-only' && (
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Current snapshot only</AlertTitle>
+              <AlertDescription>
+                This mature finite-MIP policy currently supports today&apos;s value and benefit metrics plus comparison rows only. Projection, NPV, and opportunity-cost panels remain intentionally unavailable in V1.
+              </AlertDescription>
+            </Alert>
+          )}
           <SummaryCards policy={displayPolicy} analysis={displayAnalysis} />
-          <FeeWaterfallChart policy={displayPolicy} analysis={displayAnalysis} />
-          <FeeBreakdownSection policy={displayPolicy} analysis={displayAnalysis} />
-          <DecisionPanel policy={displayPolicy} analysis={displayAnalysis} />
-          <NpvTimelineChart analyses={analysisResult.analysis?.policies ?? [displayAnalysis]} />
-          <OpportunityCostCard policy={displayPolicy} analysis={displayAnalysis} />
-
-          {analysisResult.analysis && (
-            <ComparisonTable
-              analyses={analysisResult.analysis.policies}
-              comparison={analysisResult.analysis.comparison}
-            />
+          {displayAnalysis.mode === 'projected' && (
+            <>
+              <FeeWaterfallChart policy={displayPolicy} analysis={displayAnalysis} />
+              <DecisionPanel policy={displayPolicy} analysis={displayAnalysis} />
+              <NpvTimelineChart analyses={analysisResult.analysis?.policies.filter((analysis): analysis is IlpProjectedPolicyAnalysis => analysis.mode === 'projected') ?? []} />
+              <ProjectionTable policy={displayPolicy} analysis={displayAnalysis} />
+              <OpportunityCostCard policy={displayPolicy} analysis={displayAnalysis} />
+            </>
           )}
         </>
       ) : selectedPolicy ? (
@@ -284,40 +310,9 @@ export function IlpReviewPage() {
         </Alert>
       ) : null}
 
-      {/* Policy configuration — below analysis for catalog-seeded policies */}
-      <PolicyInputForm policy={selectedPolicy} issues={selectedEntry?.issues ?? []} />
-
-      {/* Detailed projection table — reference data at the bottom */}
-      {selectedPolicy && displayAnalysis && displayPolicy && displayAnalysis.mode === 'projected' && (
-        <ProjectionTable policy={displayPolicy} analysis={displayAnalysis} />
-      )}
-
-      {excludedCount > 0 && (
-        <Alert>
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>{excludedCount} policy excluded from comparison</AlertTitle>
-          <AlertDescription>
-            Invalid policies stay editable below, but only valid policies are included in the charts and comparison table so the page remains usable while you edit.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <TemplateCatalogSummary />
-
-      <Alert>
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Support boundary</AlertTitle>
-        <AlertDescription>
-          Supported catalog templates are release-gated only within their declared modeled economics. Partial templates remain useful for structured review, but they still require manual verification of metadata-only behavior and unresolved charges.
-        </AlertDescription>
-      </Alert>
-
-      <div className="rounded-md border px-4 py-3 text-xs text-muted-foreground">
-        <p className="font-medium">Not financial advice.</p>
-        <p className="mt-1">
-          This is an educational tool that calculates fee projections based on published product summaries and your assumptions. It does not constitute financial advice, a recommendation to buy or surrender any policy, or a substitute for consultation with a licensed financial adviser. Verify all figures against your actual policy documents before making any decisions.
-        </p>
-      </div>
+      <p className="text-xs text-muted-foreground">
+        This tool is for educational purposes. It models generic ILP fee structures and does not constitute financial advice. Verify all assumptions against your actual policy documents.
+      </p>
     </div>
   )
 }

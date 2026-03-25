@@ -26,6 +26,8 @@ describe('parseGreatEasternPrestigePortfolio', () => {
     expect(product.supportStatus).toBe('supported')
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
       'branch:great-eastern-prestige-portfolio-premium-charge-manual-input',
       'branch:great-eastern-prestige-portfolio-recurrent-single-premium-charge-manual-input',
       'branch:great-eastern-prestige-portfolio-wrap-fee-manual-input',
@@ -36,6 +38,15 @@ describe('parseGreatEasternPrestigePortfolio', () => {
     ])
     expect(product.metadataOnlyBehaviors).toContain('great-eastern-prestige-portfolio-regular-premium-corridor')
     expect(product.metadataOnlyBehaviors).toContain('great-eastern-prestige-portfolio-regular-premium-surrender-deductions')
+    expect(product.metadataOnlyBehaviors).toContain('great-eastern-prestige-portfolio-accidental-death-claim-exclusions')
+    expect(product.metadataOnlyBehaviors).toContain('great-eastern-prestige-portfolio-basic-sum-assured-history')
+    expect(product.metadataOnlyBehaviors).not.toContain('great-eastern-prestige-portfolio-death-and-accidental-death-benefits')
+    expect(product.warnings).toContain(
+      'Prestige Portfolio is cataloged as a supported V1 corridor for the single-premium cash, single-premium SRS, and recurrent-single-premium SRS paths. The parser captures the quote-driven premium-charge and wrap-fee surfaces through manual input, the published 0.2% p.a. policy fee, the current-state death-benefit estimate as total investment value, the current-state accidental-death estimate as the higher of total investment value or a manual current basic sum assured before age 80 next birthday, the quote-driven top-up and recurrent-single-premium charge paths through manual input, and the nil policy-level withdrawal / surrender charge path through the open-ended basis.',
+    )
+    expect(product.warnings).toContain(
+      'Accidental-death claim admission, exclusions, settlement timing, basic-sum-assured history after future withdrawals, and the regular-premium cash corridor with policy-illustration-specific surrender deductions remain informational only beyond the modeled current ordinary and accidental-death benefit estimates.',
+    )
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-open-ended-single-premium-cash',
       'sgd-open-ended-single-premium-srs',
@@ -90,10 +101,13 @@ describe('parseGreatEasternPrestigePortfolio', () => {
       }),
     ])
     expect(singlePremiumCash?.warnings).toContain(
+      'Prestige Portfolio (Single Premium / Cash) is cataloged as a supported V1 corridor. The parser captures the quote-driven premium-charge surface through manual input, the quote-driven wrap-fee surface through manual input, the published 0.2% p.a. policy fee, the current-state death-benefit estimate as total investment value, the current-state accidental-death estimate as the higher of total investment value or a manual current basic sum assured before age 80 next birthday, the quote-driven top-up premium-charge surface through manual input, and the nil policy-level withdrawal / surrender charge path through the open-ended basis.',
+    )
+    expect(singlePremiumCash?.warnings).toContain(
       'Enter the actual premium-charge and wrap-fee percentages from the issued product quotation before trusting the analysis.',
     )
     expect(singlePremiumCash?.unsupportedItems).toContain(
-      'Regular-premium cash corridor remains informational only because the early-surrender deductions are shown only in the policy illustration rather than as a published fixed catalog schedule.',
+      'Accidental-death claim admission, exclusions, settlement timing, and basic-sum-assured history after future withdrawals remain informational only beyond the modeled current ordinary and accidental-death benefit estimates.',
     )
 
     const singlePremiumSrs = product.variants.find((variant) => variant.id === 'sgd-open-ended-single-premium-srs')

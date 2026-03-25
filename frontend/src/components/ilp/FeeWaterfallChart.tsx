@@ -1,12 +1,12 @@
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import type { IlpPolicyAnalysis, IlpPolicyInput } from '@/lib/calculations/ilp'
+import type { IlpPolicyInput, IlpProjectedPolicyAnalysis } from '@/lib/calculations/ilp'
 import { useChartColors } from '@/lib/chartTheme'
 import { formatIlpCurrency } from './formatters'
 
 interface FeeWaterfallChartProps {
   policy: IlpPolicyInput
-  analysis: IlpPolicyAnalysis
+  analysis: IlpProjectedPolicyAnalysis
 }
 
 export function FeeWaterfallChart({ policy, analysis }: FeeWaterfallChartProps) {

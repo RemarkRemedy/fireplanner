@@ -28,17 +28,25 @@ describe('parseHsbcLifeFlexiProtector', () => {
     expect(product.modeledEconomics).toContain('branch:hsbc-life-flexi-protector-regular-premium-charge')
     expect(product.modeledEconomics).toContain('branch:hsbc-life-flexi-protector-additional-bonus-units')
     expect(product.modeledEconomics).toContain('branch:hsbc-flexi-choice-max-assurance')
+    expect(product.modeledEconomics).toContain('kernel:premium-holiday-top-up-block')
+    expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
+    expect(product.modeledEconomics).toContain('kernel:current-ti-benefit-estimate')
+    expect(product.modeledEconomics).toContain('kernel:current-residual-death-benefit-after-ti-estimate')
+    expect(product.modeledEconomics).toContain('kernel:current-tpd-benefit-estimate')
+    expect(product.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(product.modeledEconomics).toContain('kernel:scheduled-payout-minimum-annual-withdrawal-amount')
     expect(product.modeledEconomics).toContain('branch:hsbc-life-flexi-protector-administration-fee')
-    expect(product.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-ti-and-tpd-cross-policy-benefit-caps')
-    expect(product.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-tpd-staged-adl-payout')
-    expect(product.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-ti-and-tpd-claim-currency-and-post-claim-continuation')
+    expect(product.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-tpd-cross-policy-benefit-caps')
+    expect(product.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-tpd-adl-qualification-and-later-release')
+    expect(product.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-ti-claim-currency-settlement')
+    expect(product.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-tpd-claim-currency-and-post-claim-continuation')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-premium-holiday-lapse-and-no-claim-state')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-reinstatement-and-backpay')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-gio-milestone-eligibility-and-health-conditions')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-gio-cross-policy-and-sum-assured-limits')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-life-replacement-eligibility-and-underwriting')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-life-replacement-cover-reset-and-beneficiary-reset')
-    expect(product.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-regular-withdrawal-facility-and-minimum-holding')
+    expect(product.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-regular-withdrawal-minimum-holding-and-termination')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-policy-change-and-fund-switch-approvals')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-usd-no-monthly-regular-premium-mode')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-usd-no-rsp-corridor')
@@ -127,12 +135,24 @@ describe('parseHsbcLifeFlexiProtector', () => {
       expect.objectContaining({ id: 'recurring-single-premium-charge', rate: 0.05 }),
       expect.objectContaining({ id: 'partial-withdrawal-charge', rate: 0 }),
     ])
+    expect(choiceVariant?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: false,
+      blockTopUpsDuringPremiumHoliday: true,
+    })
     expect(choiceVariant?.distributionSupport).toEqual(
       expect.objectContaining({
         minimumAnnualPayoutAmount: 30,
         defaultMode: 'reinvest',
         cashPayoutAllowedDuringMip: true,
         cashPayoutAllowedAfterMip: true,
+      }),
+    )
+    expect(choiceVariant?.scheduledPayoutSupport).toEqual(
+      expect.objectContaining({
+        mode: 'manual-assumption',
+        accountId: 'policy',
+        minimumAnnualWithdrawalAmount: 1_200,
+        source: 'policy-redemption',
       }),
     )
     expect(maxVariant?.distributionSupport).toEqual(
@@ -144,5 +164,8 @@ describe('parseHsbcLifeFlexiProtector', () => {
       }),
     )
     expect(choiceVariant?.eecTable).toEqual([])
+    expect(choiceVariant?.unsupportedItems).toContain(
+      'The current TPD snapshot is modeled as the amount payable now after entering current indebtedness, the current TPD payout stage, the current-claim-stage TPD cap, and, for later-stage claims, the current remaining TPD balance.',
+    )
   }, 30_000)
 })

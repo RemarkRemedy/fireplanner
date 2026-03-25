@@ -29,11 +29,21 @@ describe('parseHsbcWealthHarvest', () => {
       'branch:hsbc-harvest-pwc',
       'branch:hsbc-harvest-brc',
       'branch:hsbc-harvest-topup-charge',
+      'kernel:monthly-rate-bonus-crediting',
+      'kernel:premium-holiday-top-up-block',
+      'kernel:top-up-amount-gate-block',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-residual-death-benefit-after-ti-estimate',
       'kernel:scheduled-payout-manual-assumption',
+      'kernel:scheduled-payout-start-gate',
+      'kernel:scheduled-payout-minimum-annual-withdrawal-amount',
       'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-harvest-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-harvest-regular-withdrawal-facility')
+    expect(product.metadataOnlyBehaviors).not.toContain('hsbc-harvest-terminal-illness-aggregate-cap-and-post-claim-state')
+    expect(product.metadataOnlyBehaviors).toContain('hsbc-harvest-terminal-illness-cap-overflow-and-post-claim-state')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-harvest-dividend-bank-routing')
 
     const variant = product.variants.find((entry) => entry.id === 'sgd-mip-11')
@@ -59,6 +69,8 @@ describe('parseHsbcWealthHarvest', () => {
     expect(variant?.scheduledPayoutSupport).toEqual({
       mode: 'manual-assumption',
       accountId: 'regular',
+      minimumStartPolicyYear: 12,
+      minimumAnnualWithdrawalAmount: 1_200,
       source: 'policy-redemption',
       notes: expect.arrayContaining([
         expect.stringContaining('policy year 12 onward'),
@@ -70,17 +82,32 @@ describe('parseHsbcWealthHarvest', () => {
         }),
       ],
     })
+    expect(variant?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: true,
+      blockTopUpsDuringPremiumHoliday: true,
+      minimumTopUpAmount: 250,
+      topUpAmountIncrement: 10,
+    })
+    expect(product.modeledEconomics).toContain('kernel:scheduled-payout-start-gate')
+    expect(product.modeledEconomics).toContain('kernel:scheduled-payout-minimum-annual-withdrawal-amount')
     expect(variant?.bonuses).toEqual(expect.arrayContaining([
       expect.objectContaining({
         id: 'loyalty-bonus',
+        mode: 'monthly-rate',
         suspensionRules: [
-          { trigger: 'partial-withdrawal', suspensionMonths: 12 },
-          { trigger: 'scheduled-payout', suspensionMonths: 12 },
+          { trigger: 'partial-withdrawal', suspensionMonths: 12, startOffsetMonths: 1 },
+          { trigger: 'scheduled-payout', suspensionMonths: 12, startOffsetMonths: 1 },
         ],
       }),
     ]))
     expect(variant?.warnings).toContain(
-      'This template captures the modeled regular-premium, top-up, premium-holiday, withdrawal-charge, BRC, and reinvest-default distribution mechanics.',
+      'This template captures the modeled regular-premium, top-up, premium-holiday, withdrawal-charge, BRC, the current-state death-benefit estimate as 102% of total account value after manual current amount owing, the current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap, the current residual death-benefit estimate after a TI claim today for the supported acceleration corridor, and reinvest-default distribution mechanics.',
+    )
+    expect(variant?.unsupportedItems).toContain(
+      'The current-state death-benefit estimate needs a manual current amount owing input because overdue or outstanding policy charges are not reconstructed from history in V1.',
+    )
+    expect(variant?.unsupportedItems).toContain(
+      'The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both need a manual remaining aggregate TI cap, while payout currency, payout timing, and post-claim state remain informational only.',
     )
   }, 30_000)
 })

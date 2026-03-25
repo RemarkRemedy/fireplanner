@@ -10,10 +10,16 @@
     "coverageTags": [
       "baseline",
       "kernel:distribution-mode-assumption",
+      "kernel:current-death-benefit-estimate",
+      "kernel:current-accidental-disability-benefit-estimate",
       "branch:assure-sp-administration-charge",
       "branch:assure-sp-combined-assurance",
+      "branch:assure-sp-single-premium-allocation-enhancement",
       "branch:assure-sp-loyalty-bonus",
-      "branch:assure-sp-iia-surrender-charge"
+      "branch:assure-sp-iia-surrender-charge",
+      "branch:assure-sp-top-up-charge",
+      "branch:assure-sp-first-free-withdrawal",
+      "branch:assure-sp-charged-withdrawal"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "PRUVantage Assure (SP) Product Summary.pdf",
@@ -37,7 +43,7 @@
       "currentWealthAssureValue": 110000
     },
     "mipLength": 8,
-    "postMipYears": 0,
+    "postMipYears": 10,
     "eecTable": [
       0.12,
       0.105,
@@ -102,6 +108,41 @@
       }
     ],
     "bonuses": [
+      {
+        "id": "single-premium-allocation-enhancement",
+        "type": "sign-up",
+        "label": "Single Premium Allocation Enhancement",
+        "mode": "premium-allocation",
+        "annualPremiumTierBasis": "initial-single-premium-at-issue",
+        "rate": 0,
+        "amount": 0,
+        "appliesTo": [
+          "iia"
+        ],
+        "startPolicyYear": 1,
+        "endPolicyYear": 1,
+        "tieredRates": [
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 50000,
+            "maxAnnualPremium": 149999.99,
+            "rate": 0
+          },
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 150000,
+            "maxAnnualPremium": 399999.99,
+            "rate": 0.005
+          },
+          {
+            "currency": "SGD",
+            "minAnnualPremium": 400000,
+            "maxAnnualPremium": null,
+            "rate": 0.01
+          }
+        ],
+        "suspensionRules": []
+      },
       {
         "id": "loyalty-bonus",
         "type": "loyalty",
@@ -246,7 +287,10 @@
       "modeledEconomics": [
         "branch:assure-sp-administration-charge",
         "branch:assure-sp-combined-assurance",
+        "branch:assure-sp-single-premium-allocation-enhancement",
         "branch:assure-sp-loyalty-bonus",
+        "kernel:current-death-benefit-estimate",
+        "kernel:current-accidental-disability-benefit-estimate",
         "branch:assure-sp-top-up-charge",
         "branch:assure-sp-first-free-withdrawal",
         "branch:assure-sp-charged-withdrawal",
@@ -254,31 +298,30 @@
         "kernel:distribution-mode-assumption"
       ],
       "metadataOnlyBehaviors": [
-        "pruvantage-assure-sp-single-premium-allocation-enhancement",
         "pruvantage-assure-sp-change-of-life-assured",
         "pruvantage-assure-sp-sum-assured-wealth-assure-reduction-resumption",
-        "pruvantage-assure-sp-dividend-payout-yield-assumption"
+        "pruvantage-assure-sp-death-claim-exclusions"
       ]
     },
     "catalogWarnings": [
-      "PRUVantage Assure (SP) is cataloged as a supported V1 product. The parser captures the two-account structure, administration charge, combined Appendix A assurance charge, the recurring 8-year loyalty bonus on the Initial Investment Account, top-up premium charge, Initial Investment Account withdrawal / surrender charge schedules including the first-withdrawal free cap tied to original single premium, and reinvest-default distribution support, while the enhanced single-premium allocation tiers and policy-specific dividend-yield election remain informational only.",
-      "This supported template models administration charges, Appendix A combined assurance charges, the recurring 8-year Loyalty Bonus on the Initial Investment Account, top-up premium charges, Initial Investment Account withdrawal / surrender charge schedules including the first-withdrawal 10%-of-original-single-premium free cap, and reinvest-default distribution support.",
-      "The enhanced single-premium allocation tiers remain informational only in V1.",
+      "PRUVantage Assure (SP) is cataloged as a supported V1 product. The parser captures the two-account structure, administration charge, combined Appendix A assurance charge, the published single-premium allocation enhancement tiers on the original initial single premium, the recurring 8-year loyalty bonus on the Initial Investment Account, the current-state death-benefit estimate as the higher of current sum assured, current Wealth Assure Value, or Initial Investment Account value plus Additional Investment Account value after manual current amount owing, a payable-now accidental-disability snapshot from that same corridor once the current accidental-disability payout stage is filled, top-up premium charge, Initial Investment Account withdrawal / surrender charge schedules including the first-withdrawal free cap tied to original single premium, and reinvest-default distribution support, while later accidental-disability release timing and change-of-life-assured / reduction-resumption mechanics remain informational only.",
+      "This supported template models administration charges, Appendix A combined assurance charges, the recurring 8-year Loyalty Bonus on the Initial Investment Account, the current-state death-benefit estimate as the higher of current sum assured, current Wealth Assure Value, or Initial Investment Account value plus Additional Investment Account value after manual current amount owing, top-up premium charges, Initial Investment Account withdrawal / surrender charge schedules including the first-withdrawal 10%-of-original-single-premium free cap, and reinvest-default distribution support.",
+      "The payable-now accidental-disability snapshot is modeled from the same current corridor once the current accidental-disability payout stage is filled.",
       "Enter insured-life details and use the current net regular premium base field as the current net single-premium base to activate the modeled assurance charge path.",
-      "The current ILP engine does not yet model the published 100.5% / 101% single-premium allocation enhancements, so high-tier initial allocations remain conservative in V1.",
+      "Enter current sum assured, current Wealth Assure Value, and current amount owing before trusting the current-state death-benefit estimate.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.",
       "Enter the one-time gross initial single premium lump sum in Policy Details if you want the upfront single-premium deduction to seed the starting policy value honestly.",
-      "Enhanced single-premium allocation tiers (100% / 100.49999999999999% / 101%) remain informational only.",
       "Change of life assured and sum assured / Wealth Assure Value reduction-resumption options remain informational only.",
-      "The published dividend payout election remains informational only insofar as the policy-specific payout yield remains a manual assumption in V1."
+      "The current-state death-benefit estimate needs a manual current amount owing input because outstanding debt is not reconstructed from history in V1.",
+      "Accidental-disability deferment timing, staged later-balance release, disability-status revalidation, suicide and pre-existing-condition exclusions, and broader claim settlement mechanics remain informational only beyond the modeled payable-now accidental-disability snapshot."
     ]
   },
   "expected": {
     "summary": {
       "totalPremiumsPaid": 0,
-      "totalFeesCharged": 955.54,
-      "totalBonusesReceived": 944,
-      "netFeeDrag": 11.54,
+      "totalFeesCharged": 957.51,
+      "totalBonusesReceived": 0,
+      "netFeeDrag": 957.51,
       "currentSurrenderValue": 123460,
       "cancelNowPenalty": 3540
     },
@@ -294,34 +337,154 @@
           "exitYear": 1,
           "policyYear": 8,
           "eecRate": 0.015,
-          "eecCharge": 1817.25,
-          "pvEec": 1698.37,
-          "npvGrossFees": 893.03,
-          "npvBonuses": 882.24,
-          "totalNpvFees": 1709.15,
-          "netSurrenderValue": 128574.15,
+          "eecCharge": 1802.26,
+          "pvEec": 1684.35,
+          "npvGrossFees": 894.87,
+          "npvBonuses": 0,
+          "totalNpvFees": 2579.22,
+          "netSurrenderValue": 127589.45,
+          "totalContributions": 0
+        },
+        {
+          "exitYear": 2,
+          "policyYear": 9,
+          "eecRate": 0,
+          "eecCharge": 0,
+          "pvEec": 0,
+          "npvGrossFees": 907.16,
+          "npvBonuses": 839.55,
+          "totalNpvFees": 67.6,
+          "netSurrenderValue": 133860.33,
+          "totalContributions": 0
+        },
+        {
+          "exitYear": 3,
+          "policyYear": 10,
+          "eecRate": 0,
+          "eecCharge": 0,
+          "pvEec": 0,
+          "npvGrossFees": 916.79,
+          "npvBonuses": 839.55,
+          "totalNpvFees": 77.24,
+          "netSurrenderValue": 137435.32,
+          "totalContributions": 0
+        },
+        {
+          "exitYear": 4,
+          "policyYear": 11,
+          "eecRate": 0,
+          "eecCharge": 0,
+          "pvEec": 0,
+          "npvGrossFees": 925.24,
+          "npvBonuses": 839.55,
+          "totalNpvFees": 85.69,
+          "netSurrenderValue": 141106.88,
+          "totalContributions": 0
+        },
+        {
+          "exitYear": 5,
+          "policyYear": 12,
+          "eecRate": 0,
+          "eecCharge": 0,
+          "pvEec": 0,
+          "npvGrossFees": 932.02,
+          "npvBonuses": 839.55,
+          "totalNpvFees": 92.47,
+          "netSurrenderValue": 144878.49,
+          "totalContributions": 0
+        },
+        {
+          "exitYear": 6,
+          "policyYear": 13,
+          "eecRate": 0,
+          "eecCharge": 0,
+          "pvEec": 0,
+          "npvGrossFees": 936.64,
+          "npvBonuses": 839.55,
+          "totalNpvFees": 97.09,
+          "netSurrenderValue": 148753.91,
+          "totalContributions": 0
+        },
+        {
+          "exitYear": 7,
+          "policyYear": 14,
+          "eecRate": 0,
+          "eecCharge": 0,
+          "pvEec": 0,
+          "npvGrossFees": 938.51,
+          "npvBonuses": 839.55,
+          "totalNpvFees": 98.95,
+          "netSurrenderValue": 152737.35,
+          "totalContributions": 0
+        },
+        {
+          "exitYear": 8,
+          "policyYear": 15,
+          "eecRate": 0,
+          "eecCharge": 0,
+          "pvEec": 0,
+          "npvGrossFees": 938.51,
+          "npvBonuses": 839.55,
+          "totalNpvFees": 98.96,
+          "netSurrenderValue": 156830.7,
+          "totalContributions": 0
+        },
+        {
+          "exitYear": 9,
+          "policyYear": 16,
+          "eecRate": 0,
+          "eecCharge": 0,
+          "pvEec": 0,
+          "npvGrossFees": 938.51,
+          "npvBonuses": 839.55,
+          "totalNpvFees": 98.96,
+          "netSurrenderValue": 161033.76,
+          "totalContributions": 0
+        },
+        {
+          "exitYear": 10,
+          "policyYear": 17,
+          "eecRate": 0,
+          "eecCharge": 0,
+          "pvEec": 0,
+          "npvGrossFees": 938.51,
+          "npvBonuses": 1448.01,
+          "totalNpvFees": -509.49,
+          "netSurrenderValue": 166614.37,
+          "totalContributions": 0
+        },
+        {
+          "exitYear": 11,
+          "policyYear": 18,
+          "eecRate": 0,
+          "eecCharge": 0,
+          "pvEec": 0,
+          "npvGrossFees": 938.51,
+          "npvBonuses": 1448.01,
+          "totalNpvFees": -509.49,
+          "netSurrenderValue": 171079.64,
           "totalContributions": 0
         }
       ],
       "bestExitYear": 1,
-      "bestExitNpvFees": 1709.15,
+      "bestExitNpvFees": 2579.22,
       "holdToMip": {
-        "npvGrossFees": 893.03,
-        "npvBonuses": 882.24,
-        "totalNpvFees": 1709.15,
-        "finalValue": 130391.41,
+        "npvGrossFees": 894.87,
+        "npvBonuses": 0,
+        "totalNpvFees": 2579.22,
+        "finalValue": 129391.7,
         "totalContributions": 0
       }
     },
     "opportunityCost": {
       "alternativePortfolioValue": 132102.2,
-      "ilpValueAtHorizon": 130391.41,
-      "difference": 1710.79,
+      "ilpValueAtHorizon": 129391.7,
+      "difference": 2710.5,
       "atBestExit": {
         "exitYear": 1,
-        "alternativeValue": 128574.15,
-        "ilpValueAtHorizon": 130391.41,
-        "difference": -1817.25
+        "alternativeValue": 127589.45,
+        "ilpValueAtHorizon": 129391.7,
+        "difference": -1802.26
       }
     },
     "projections": {
@@ -333,23 +496,23 @@
             "policyYear": 8,
             "annualContribution": 0,
             "annualWithdrawals": 3810,
-            "combinedValue": 127115.26,
+            "combinedValue": 126139.97,
             "eecRate": 0.015,
-            "eecCharge": 1771.59,
-            "surrenderValue": 125343.67,
+            "eecCharge": 1756.96,
+            "surrenderValue": 124383.01,
             "cumulativePremiums": 0,
-            "cumulativeGrossFees": 961.54,
-            "cumulativeBonuses": 944,
+            "cumulativeGrossFees": 963.47,
+            "cumulativeBonuses": 0,
             "accounts": [
               {
                 "accountId": "iia",
                 "open": 118000,
                 "contributionAmount": 0,
-                "grossFee": 961.54,
-                "bonusCredit": 944,
-                "netFee": 17.54,
+                "grossFee": 963.47,
+                "bonusCredit": 0,
+                "netFee": 963.47,
                 "withdrawalAmount": 3540,
-                "close": 118105.81
+                "close": 117130.52
               },
               {
                 "accountId": "aia",
@@ -360,6 +523,356 @@
                 "netFee": 0,
                 "withdrawalAmount": 270,
                 "close": 9009.45
+              }
+            ]
+          },
+          {
+            "year": 2,
+            "policyYear": 9,
+            "annualContribution": 0,
+            "annualWithdrawals": 3784.2,
+            "combinedValue": 127203.43,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 127203.43,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 997.53,
+            "cumulativeBonuses": 937.04,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 117130.52,
+                "contributionAmount": 0,
+                "grossFee": 34.07,
+                "bonusCredit": 937.04,
+                "netFee": -902.98,
+                "withdrawalAmount": 3513.92,
+                "close": 118184.52
+              },
+              {
+                "accountId": "aia",
+                "open": 9009.45,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 270.28,
+                "close": 9018.91
+              }
+            ]
+          },
+          {
+            "year": 3,
+            "policyYear": 10,
+            "annualContribution": 0,
+            "annualWithdrawals": 3816.1,
+            "combinedValue": 127286.31,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 127286.31,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 1046.69,
+            "cumulativeBonuses": 937.04,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 118184.52,
+                "contributionAmount": 0,
+                "grossFee": 49.15,
+                "bonusCredit": 0,
+                "netFee": 49.15,
+                "withdrawalAmount": 3545.54,
+                "close": 118257.93
+              },
+              {
+                "accountId": "aia",
+                "open": 9018.91,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 270.57,
+                "close": 9028.38
+              }
+            ]
+          },
+          {
+            "year": 4,
+            "policyYear": 11,
+            "annualContribution": 0,
+            "annualWithdrawals": 3818.59,
+            "combinedValue": 127348.16,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 127348.16,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 1116.33,
+            "cumulativeBonuses": 937.04,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 118257.93,
+                "contributionAmount": 0,
+                "grossFee": 69.65,
+                "bonusCredit": 0,
+                "netFee": 69.65,
+                "withdrawalAmount": 3547.74,
+                "close": 118310.3
+              },
+              {
+                "accountId": "aia",
+                "open": 9028.38,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 270.85,
+                "close": 9037.86
+              }
+            ]
+          },
+          {
+            "year": 5,
+            "policyYear": 12,
+            "annualContribution": 0,
+            "annualWithdrawals": 3820.44,
+            "combinedValue": 127385.52,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 127385.52,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 1209.79,
+            "cumulativeBonuses": 937.04,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 118310.3,
+                "contributionAmount": 0,
+                "grossFee": 93.45,
+                "bonusCredit": 0,
+                "netFee": 93.45,
+                "withdrawalAmount": 3549.31,
+                "close": 118338.17
+              },
+              {
+                "accountId": "aia",
+                "open": 9037.86,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 271.14,
+                "close": 9047.35
+              }
+            ]
+          },
+          {
+            "year": 6,
+            "policyYear": 13,
+            "annualContribution": 0,
+            "annualWithdrawals": 3821.57,
+            "combinedValue": 127394.12,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 127394.12,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 1331.17,
+            "cumulativeBonuses": 937.04,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 118338.17,
+                "contributionAmount": 0,
+                "grossFee": 121.38,
+                "bonusCredit": 0,
+                "netFee": 121.38,
+                "withdrawalAmount": 3550.14,
+                "close": 118337.27
+              },
+              {
+                "accountId": "aia",
+                "open": 9047.35,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 271.42,
+                "close": 9056.85
+              }
+            ]
+          },
+          {
+            "year": 7,
+            "policyYear": 14,
+            "annualContribution": 0,
+            "annualWithdrawals": 3821.82,
+            "combinedValue": 127373.27,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 127373.27,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 1481.13,
+            "cumulativeBonuses": 937.04,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 118337.27,
+                "contributionAmount": 0,
+                "grossFee": 149.96,
+                "bonusCredit": 0,
+                "netFee": 149.96,
+                "withdrawalAmount": 3550.12,
+                "close": 118306.91
+              },
+              {
+                "accountId": "aia",
+                "open": 9056.85,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 271.71,
+                "close": 9066.36
+              }
+            ]
+          },
+          {
+            "year": 8,
+            "policyYear": 15,
+            "annualContribution": 0,
+            "annualWithdrawals": 3821.2,
+            "combinedValue": 127319.52,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 127319.52,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 1662.97,
+            "cumulativeBonuses": 937.04,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 118306.91,
+                "contributionAmount": 0,
+                "grossFee": 181.84,
+                "bonusCredit": 0,
+                "netFee": 181.84,
+                "withdrawalAmount": 3549.21,
+                "close": 118243.64
+              },
+              {
+                "accountId": "aia",
+                "open": 9066.36,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 271.99,
+                "close": 9075.88
+              }
+            ]
+          },
+          {
+            "year": 9,
+            "policyYear": 16,
+            "annualContribution": 0,
+            "annualWithdrawals": 3819.59,
+            "combinedValue": 127223.66,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 127223.66,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 1885.6,
+            "cumulativeBonuses": 937.04,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 118243.64,
+                "contributionAmount": 0,
+                "grossFee": 222.63,
+                "bonusCredit": 0,
+                "netFee": 222.63,
+                "withdrawalAmount": 3547.31,
+                "close": 118138.25
+              },
+              {
+                "accountId": "aia",
+                "open": 9075.88,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 272.28,
+                "close": 9085.41
+              }
+            ]
+          },
+          {
+            "year": 10,
+            "policyYear": 17,
+            "annualContribution": 0,
+            "annualWithdrawals": 3816.71,
+            "combinedValue": 128056.04,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 128056.04,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 2152.96,
+            "cumulativeBonuses": 1882.15,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 118138.25,
+                "contributionAmount": 0,
+                "grossFee": 267.36,
+                "bonusCredit": 945.11,
+                "netFee": -677.75,
+                "withdrawalAmount": 3544.15,
+                "close": 118961.09
+              },
+              {
+                "accountId": "aia",
+                "open": 9085.41,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 272.56,
+                "close": 9094.95
+              }
+            ]
+          },
+          {
+            "year": 11,
+            "policyYear": 18,
+            "annualContribution": 0,
+            "annualWithdrawals": 3841.68,
+            "combinedValue": 127861.3,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 127861.3,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 2472.25,
+            "cumulativeBonuses": 1882.15,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 118961.09,
+                "contributionAmount": 0,
+                "grossFee": 319.29,
+                "bonusCredit": 0,
+                "netFee": 319.29,
+                "withdrawalAmount": 3568.83,
+                "close": 118756.8
+              },
+              {
+                "accountId": "aia",
+                "open": 9094.95,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 272.85,
+                "close": 9104.5
               }
             ]
           }
@@ -373,23 +886,23 @@
             "policyYear": 8,
             "annualContribution": 0,
             "annualWithdrawals": 3810,
-            "combinedValue": 130391.41,
+            "combinedValue": 129391.7,
             "eecRate": 0.015,
-            "eecCharge": 1817.25,
-            "surrenderValue": 128574.15,
+            "eecCharge": 1802.26,
+            "surrenderValue": 127589.45,
             "cumulativePremiums": 0,
-            "cumulativeGrossFees": 955.54,
-            "cumulativeBonuses": 944,
+            "cumulativeGrossFees": 957.51,
+            "cumulativeBonuses": 0,
             "accounts": [
               {
                 "accountId": "iia",
                 "open": 118000,
                 "contributionAmount": 0,
-                "grossFee": 955.54,
-                "bonusCredit": 944,
-                "netFee": 11.54,
+                "grossFee": 957.51,
+                "bonusCredit": 0,
+                "netFee": 957.51,
                 "withdrawalAmount": 3540,
-                "close": 121150.21
+                "close": 120150.5
               },
               {
                 "accountId": "aia",
@@ -400,6 +913,356 @@
                 "netFee": 0,
                 "withdrawalAmount": 270,
                 "close": 9241.2
+              }
+            ]
+          },
+          {
+            "year": 2,
+            "policyYear": 9,
+            "annualContribution": 0,
+            "annualWithdrawals": 3881.75,
+            "combinedValue": 133860.33,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 133860.33,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 971.58,
+            "cumulativeBonuses": 961.2,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 120150.5,
+                "contributionAmount": 0,
+                "grossFee": 14.07,
+                "bonusCredit": 961.2,
+                "netFee": -947.14,
+                "withdrawalAmount": 3604.52,
+                "close": 124371.47
+              },
+              {
+                "accountId": "aia",
+                "open": 9241.2,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 277.24,
+                "close": 9488.86
+              }
+            ]
+          },
+          {
+            "year": 3,
+            "policyYear": 10,
+            "annualContribution": 0,
+            "annualWithdrawals": 4015.81,
+            "combinedValue": 137435.32,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 137435.32,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 983.38,
+            "cumulativeBonuses": 961.2,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 124371.47,
+                "contributionAmount": 0,
+                "grossFee": 11.8,
+                "bonusCredit": 0,
+                "netFee": 11.8,
+                "withdrawalAmount": 3731.14,
+                "close": 127692.15
+              },
+              {
+                "accountId": "aia",
+                "open": 9488.86,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 284.67,
+                "close": 9743.17
+              }
+            ]
+          },
+          {
+            "year": 4,
+            "policyYear": 11,
+            "annualContribution": 0,
+            "annualWithdrawals": 4123.06,
+            "combinedValue": 141106.88,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 141106.88,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 994.46,
+            "cumulativeBonuses": 961.2,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 127692.15,
+                "contributionAmount": 0,
+                "grossFee": 11.08,
+                "bonusCredit": 0,
+                "netFee": 11.08,
+                "withdrawalAmount": 3830.76,
+                "close": 131102.59
+              },
+              {
+                "accountId": "aia",
+                "open": 9743.17,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 292.29,
+                "close": 10004.28
+              }
+            ]
+          },
+          {
+            "year": 5,
+            "policyYear": 12,
+            "annualContribution": 0,
+            "annualWithdrawals": 4233.21,
+            "combinedValue": 144878.49,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 144878.49,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 1003.97,
+            "cumulativeBonuses": 961.2,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 131102.59,
+                "contributionAmount": 0,
+                "grossFee": 9.51,
+                "bonusCredit": 0,
+                "netFee": 9.51,
+                "withdrawalAmount": 3933.08,
+                "close": 134606.1
+              },
+              {
+                "accountId": "aia",
+                "open": 10004.28,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 300.13,
+                "close": 10272.4
+              }
+            ]
+          },
+          {
+            "year": 6,
+            "policyYear": 13,
+            "annualContribution": 0,
+            "annualWithdrawals": 4346.35,
+            "combinedValue": 148753.91,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 148753.91,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 1010.9,
+            "cumulativeBonuses": 961.2,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 134606.1,
+                "contributionAmount": 0,
+                "grossFee": 6.93,
+                "bonusCredit": 0,
+                "netFee": 6.93,
+                "withdrawalAmount": 4038.18,
+                "close": 138206.22
+              },
+              {
+                "accountId": "aia",
+                "open": 10272.4,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 308.17,
+                "close": 10547.7
+              }
+            ]
+          },
+          {
+            "year": 7,
+            "policyYear": 14,
+            "annualContribution": 0,
+            "annualWithdrawals": 4462.62,
+            "combinedValue": 152737.35,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 152737.35,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 1013.89,
+            "cumulativeBonuses": 961.2,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 138206.22,
+                "contributionAmount": 0,
+                "grossFee": 3,
+                "bonusCredit": 0,
+                "netFee": 3,
+                "withdrawalAmount": 4146.19,
+                "close": 141906.98
+              },
+              {
+                "accountId": "aia",
+                "open": 10547.7,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 316.43,
+                "close": 10830.38
+              }
+            ]
+          },
+          {
+            "year": 8,
+            "policyYear": 15,
+            "annualContribution": 0,
+            "annualWithdrawals": 4582.12,
+            "combinedValue": 156830.7,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 156830.7,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 1013.91,
+            "cumulativeBonuses": 961.2,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 141906.98,
+                "contributionAmount": 0,
+                "grossFee": 0.01,
+                "bonusCredit": 0,
+                "netFee": 0.01,
+                "withdrawalAmount": 4257.21,
+                "close": 145710.07
+              },
+              {
+                "accountId": "aia",
+                "open": 10830.38,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 324.91,
+                "close": 11120.63
+              }
+            ]
+          },
+          {
+            "year": 9,
+            "policyYear": 16,
+            "annualContribution": 0,
+            "annualWithdrawals": 4704.92,
+            "combinedValue": 161033.76,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 161033.76,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 1013.91,
+            "cumulativeBonuses": 961.2,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 145710.07,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 4371.3,
+                "close": 149615.1
+              },
+              {
+                "accountId": "aia",
+                "open": 11120.63,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 333.62,
+                "close": 11418.66
+              }
+            ]
+          },
+          {
+            "year": 10,
+            "policyYear": 17,
+            "annualContribution": 0,
+            "annualWithdrawals": 4831.01,
+            "combinedValue": 166614.37,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 166614.37,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 1013.91,
+            "cumulativeBonuses": 2158.12,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 149615.1,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 1196.92,
+                "netFee": -1196.92,
+                "withdrawalAmount": 4488.45,
+                "close": 154889.69
+              },
+              {
+                "accountId": "aia",
+                "open": 11418.66,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 342.56,
+                "close": 11724.68
+              }
+            ]
+          },
+          {
+            "year": 11,
+            "policyYear": 18,
+            "annualContribution": 0,
+            "annualWithdrawals": 4998.43,
+            "combinedValue": 171079.64,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 171079.64,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 1013.91,
+            "cumulativeBonuses": 2158.12,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 154889.69,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 4646.69,
+                "close": 159040.73
+              },
+              {
+                "accountId": "aia",
+                "open": 11724.68,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 351.74,
+                "close": 12038.9
               }
             ]
           }
@@ -413,23 +1276,23 @@
             "policyYear": 8,
             "annualContribution": 0,
             "annualWithdrawals": 3810,
-            "combinedValue": 133254.31,
+            "combinedValue": 132233.28,
             "eecRate": 0.015,
-            "eecCharge": 1857.16,
-            "surrenderValue": 131397.15,
+            "eecCharge": 1841.84,
+            "surrenderValue": 130391.43,
             "cumulativePremiums": 0,
-            "cumulativeGrossFees": 950.29,
-            "cumulativeBonuses": 944,
+            "cumulativeGrossFees": 952.3,
+            "cumulativeBonuses": 0,
             "accounts": [
               {
                 "accountId": "iia",
                 "open": 118000,
                 "contributionAmount": 0,
-                "grossFee": 950.29,
-                "bonusCredit": 944,
-                "netFee": 6.29,
+                "grossFee": 952.3,
+                "bonusCredit": 0,
+                "netFee": 952.3,
                 "withdrawalAmount": 3540,
-                "close": 123810.61
+                "close": 122789.58
               },
               {
                 "accountId": "aia",
@@ -440,6 +1303,356 @@
                 "netFee": 0,
                 "withdrawalAmount": 270,
                 "close": 9443.7
+              }
+            ]
+          },
+          {
+            "year": 2,
+            "policyYear": 9,
+            "annualContribution": 0,
+            "annualWithdrawals": 3967,
+            "combinedValue": 139812.57,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 139812.57,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 952.32,
+            "cumulativeBonuses": 982.32,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 122789.58,
+                "contributionAmount": 0,
+                "grossFee": 0.02,
+                "bonusCredit": 982.32,
+                "netFee": -982.3,
+                "withdrawalAmount": 3683.69,
+                "close": 129903.3
+              },
+              {
+                "accountId": "aia",
+                "open": 9443.7,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 283.31,
+                "close": 9909.27
+              }
+            ]
+          },
+          {
+            "year": 3,
+            "policyYear": 10,
+            "annualContribution": 0,
+            "annualWithdrawals": 4194.38,
+            "combinedValue": 146705.33,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 146705.33,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 952.32,
+            "cumulativeBonuses": 982.32,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 129903.3,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 3897.1,
+                "close": 136307.53
+              },
+              {
+                "accountId": "aia",
+                "open": 9909.27,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 297.28,
+                "close": 10397.8
+              }
+            ]
+          },
+          {
+            "year": 4,
+            "policyYear": 11,
+            "annualContribution": 0,
+            "annualWithdrawals": 4401.16,
+            "combinedValue": 153937.9,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 153937.9,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 952.32,
+            "cumulativeBonuses": 982.32,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 136307.53,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 4089.23,
+                "close": 143027.49
+              },
+              {
+                "accountId": "aia",
+                "open": 10397.8,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 311.93,
+                "close": 10910.41
+              }
+            ]
+          },
+          {
+            "year": 5,
+            "policyYear": 12,
+            "annualContribution": 0,
+            "annualWithdrawals": 4618.14,
+            "combinedValue": 161527.04,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 161527.04,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 952.32,
+            "cumulativeBonuses": 982.32,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 143027.49,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 4290.82,
+                "close": 150078.75
+              },
+              {
+                "accountId": "aia",
+                "open": 10910.41,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 327.31,
+                "close": 11448.3
+              }
+            ]
+          },
+          {
+            "year": 6,
+            "policyYear": 13,
+            "annualContribution": 0,
+            "annualWithdrawals": 4845.81,
+            "combinedValue": 169490.33,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 169490.33,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 952.32,
+            "cumulativeBonuses": 982.32,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 150078.75,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 4502.36,
+                "close": 157477.63
+              },
+              {
+                "accountId": "aia",
+                "open": 11448.3,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 343.45,
+                "close": 12012.7
+              }
+            ]
+          },
+          {
+            "year": 7,
+            "policyYear": 14,
+            "annualContribution": 0,
+            "annualWithdrawals": 5084.71,
+            "combinedValue": 177846.2,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 177846.2,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 952.32,
+            "cumulativeBonuses": 982.32,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 157477.63,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 4724.33,
+                "close": 165241.28
+              },
+              {
+                "accountId": "aia",
+                "open": 12012.7,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 360.38,
+                "close": 12604.92
+              }
+            ]
+          },
+          {
+            "year": 8,
+            "policyYear": 15,
+            "annualContribution": 0,
+            "annualWithdrawals": 5335.39,
+            "combinedValue": 186614.02,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 186614.02,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 952.32,
+            "cumulativeBonuses": 982.32,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 165241.28,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 4957.24,
+                "close": 173387.67
+              },
+              {
+                "accountId": "aia",
+                "open": 12604.92,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 378.15,
+                "close": 13226.35
+              }
+            ]
+          },
+          {
+            "year": 9,
+            "policyYear": 16,
+            "annualContribution": 0,
+            "annualWithdrawals": 5598.42,
+            "combinedValue": 195814.09,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 195814.09,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 952.32,
+            "cumulativeBonuses": 982.32,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 173387.67,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 5201.63,
+                "close": 181935.68
+              },
+              {
+                "accountId": "aia",
+                "open": 13226.35,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 396.79,
+                "close": 13878.41
+              }
+            ]
+          },
+          {
+            "year": 10,
+            "policyYear": 17,
+            "annualContribution": 0,
+            "annualWithdrawals": 5874.42,
+            "combinedValue": 207038.63,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 207038.63,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 952.32,
+            "cumulativeBonuses": 2437.8,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 181935.68,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 1455.49,
+                "netFee": -1455.49,
+                "withdrawalAmount": 5458.07,
+                "close": 192476.02
+              },
+              {
+                "accountId": "aia",
+                "open": 13878.41,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 416.35,
+                "close": 14562.61
+              }
+            ]
+          },
+          {
+            "year": 11,
+            "policyYear": 18,
+            "annualContribution": 0,
+            "annualWithdrawals": 6211.16,
+            "combinedValue": 217245.63,
+            "eecRate": 0,
+            "eecCharge": 0,
+            "surrenderValue": 217245.63,
+            "cumulativePremiums": 0,
+            "cumulativeGrossFees": 952.32,
+            "cumulativeBonuses": 2437.8,
+            "accounts": [
+              {
+                "accountId": "iia",
+                "open": 192476.02,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 5774.28,
+                "close": 201965.08
+              },
+              {
+                "accountId": "aia",
+                "open": 14562.61,
+                "contributionAmount": 0,
+                "grossFee": 0,
+                "bonusCredit": 0,
+                "netFee": 0,
+                "withdrawalAmount": 436.88,
+                "close": 15280.55
               }
             ]
           }

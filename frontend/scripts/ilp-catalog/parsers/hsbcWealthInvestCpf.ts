@@ -134,14 +134,21 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     bonuses: [],
     feeRules,
     eventChargeRules,
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 1_000,
+      partialWithdrawalMinimumRemainingValueRules: [
+        { activeWindow: 'policy-term', basis: 'policy-value', minimumValue: 10_000 },
+      ],
+    },
     eecTable: [],
     warnings: [
-      'HSBC Life Wealth Invest (CPF) is cataloged as a supported V1 product. The parser captures the published zero-charge single-premium, recurring-single-premium, approved top-up, and nil-redemption-fee withdrawal path for the CPF corridor through the open-ended no-MIP basis.',
+      'HSBC Life Wealth Invest (CPF) is cataloged as a supported V1 product. The parser captures the published zero-charge single-premium, recurring-single-premium, approved top-up, nil-redemption-fee withdrawal path, and the published S$10,000 residual policy-value floor on explicit one-off partial redemptions for the CPF corridor through the open-ended no-MIP basis.',
       'Switching fees are currently nil, but switching behavior and CPF eligibility constraints remain outside the current calculator surface.',
       'This open-ended single-premium product uses the no-MIP basis; the review horizon is chosen in the policy seed rather than by product contract.',
     ],
     unsupportedItems: [
-      'Death and terminal-illness benefit formulas remain informational only.',
+      'The current terminal-illness benefit amount is modeled as the same higher-of policy value or 101%-of-paid-premiums corridor after current amounts owing, and the current admitted-state TI payable amount is supported through the published termination corridor after manual claim-amount entry, but claim exclusions and insurer-side payout mechanics remain informational only.',
       'Recurring single premium enrollment approval, allocation-change requests, and failed-deduction handling remain informational only.',
       'Fund-level management charges and additional ILP-sub-fund charges remain informational only because they depend on the selected fund mix and are not a single product-level rate.',
       'Switching administration and CPF fund-eligibility constraints remain informational only.',
@@ -168,11 +175,12 @@ export function parseHsbcWealthInvestCpf(context: ParseContext): IlpCatalogProdu
       'branch:hsbc-life-wealth-invest-cpf-zero-recurring-single-premium-charge',
       'branch:hsbc-life-wealth-invest-cpf-zero-top-up-charge',
       'branch:hsbc-life-wealth-invest-cpf-zero-redemption-fee',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'tokio-recurring-single-premium-routing',
     ],
     metadataOnlyBehaviors: [
-      'hsbc-life-wealth-invest-cpf-death-benefit',
-      'hsbc-life-wealth-invest-cpf-terminal-illness-benefit',
       'hsbc-life-wealth-invest-cpf-fund-management-charge',
       'hsbc-life-wealth-invest-cpf-additional-ilp-sub-fund-charges',
       'hsbc-life-wealth-invest-cpf-switching-eligibility-constraints',
@@ -180,7 +188,7 @@ export function parseHsbcWealthInvestCpf(context: ParseContext): IlpCatalogProdu
       'hsbc-life-wealth-invest-cpf-termination',
     ],
     warnings: [
-      'HSBC Life Wealth Invest (CPF) is cataloged as a supported V1 product. The parser captures the published zero-charge single-premium, recurring-single-premium, approved top-up, and nil-redemption-fee withdrawal path for the CPF corridor through the open-ended no-MIP basis, while protection formulas, switching constraints, and fund-level charges remain informational only.',
+      'HSBC Life Wealth Invest (CPF) is cataloged as a supported V1 product. The parser captures the published zero-charge single-premium, recurring-single-premium, approved top-up, nil-redemption-fee withdrawal path, and the published S$10,000 residual policy-value floor on explicit one-off partial redemptions for the CPF corridor through the open-ended no-MIP basis, the current-state death and terminal-illness benefit amount as the higher of policy value or the 101%-of-paid-premiums floor after partial withdrawals and current amounts owing, and the current admitted-state TI payable amount through the published automatic-termination TI corridor after manual claim-amount entry, while terminal-illness claim exceptions, switching constraints, free-look behavior, and fund-level charges remain informational only beyond the modeled current ordinary death-benefit and terminal-illness estimates.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

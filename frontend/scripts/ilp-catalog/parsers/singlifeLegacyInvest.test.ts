@@ -26,10 +26,28 @@ describe('parseSinglifeLegacyInvest', () => {
     expect(product.supportStatus).toBe('supported')
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('branch:singlife-legacy-invest-welcome-bonus')
+    expect(product.modeledEconomics).toContain('branch:singlife-legacy-invest-special-booster')
+    expect(product.modeledEconomics).toContain('branch:singlife-legacy-invest-maturity-bonus')
     expect(product.modeledEconomics).toContain('branch:singlife-legacy-invest-premium-shortfall-charge')
+    expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
+    expect(product.modeledEconomics).toContain('kernel:current-ti-benefit-estimate')
     expect(product.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(product.modeledEconomics).toContain('kernel:scheduled-payout-per-occurrence-minimum')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(product.metadataOnlyBehaviors).not.toContain('singlife-legacy-invest-special-booster')
+    expect(product.metadataOnlyBehaviors).not.toContain('singlife-legacy-invest-maturity-bonus')
+    expect(product.metadataOnlyBehaviors).not.toContain('singlife-legacy-invest-terminal-illness-benefit')
+    expect(product.metadataOnlyBehaviors).not.toContain('singlife-legacy-invest-protection-benefits')
     expect(product.metadataOnlyBehaviors).not.toContain('singlife-legacy-invest-dividend-cashout-threshold')
+    expect(product.metadataOnlyBehaviors).not.toContain('singlife-legacy-invest-free-partial-withdrawal-benefit')
+    expect(product.metadataOnlyBehaviors).toContain('singlife-legacy-invest-free-partial-withdrawal-benefit-eligibility-and-limits')
+    expect(product.warnings.some((warning) => warning.includes('current-state death and terminal-illness benefit amount as the higher of 101% of total basic regular premiums paid plus top-ups less withdrawals or account value less manual current amount owing'))).toBe(true)
+    expect(product.warnings).toContain(
+      'Qualifying Free Partial Withdrawal Benefit withdrawals can be represented in V1 with event-level charge waivers, while life-stage gating, non-life-stage gating, sequencing, withdrawal limits, and non-SGD or alternate-term corridors remain informational only beyond the modeled current ordinary death and terminal-illness benefit amount. An admitted-and-settled terminal-illness claim is supported as a current policy-termination state.',
+    )
+    expect(product.warnings).not.toContain(
+      'Special Booster, Maturity Bonus, terminal illness, Free Partial Withdrawal Benefit sequencing, and non-SGD or alternate-term corridors remain informational only.',
+    )
 
     const variant = product.variants[0]
     expect(variant?.id).toBe('sgd-mip-10-term-15')
@@ -44,11 +62,27 @@ describe('parseSinglifeLegacyInvest', () => {
         ],
       }),
       expect.objectContaining({
+        id: 'special-booster',
+        mode: 'one-time',
+        oneTimePayoutBasis: 'committed-annual-premium-at-issue',
+        rate: 0.25,
+        startPolicyYear: 10,
+        endPolicyYear: 10,
+        requiresPremiumsPaidUpToDate: true,
+      }),
+      expect.objectContaining({
         id: 'loyalty-bonus',
         mode: 'annual-rate',
         rate: 0.003,
         startPolicyYear: 11,
         endPolicyYear: 14,
+      }),
+      expect.objectContaining({
+        id: 'maturity-bonus',
+        mode: 'annual-rate',
+        rate: 0.03,
+        startPolicyYear: 15,
+        endPolicyYear: 15,
       }),
     ])
     expect(variant?.feeRules).toEqual([
@@ -65,6 +99,9 @@ describe('parseSinglifeLegacyInvest', () => {
       expect.objectContaining({
         id: 'partial-withdrawal-charge',
         yearBasis: 'policy-year',
+        notes: expect.arrayContaining([
+          expect.stringContaining('chargeWaived'),
+        ]),
         rateSchedule: [
           { startPolicyYear: 1, endPolicyYear: 1, rate: 1 },
           { startPolicyYear: 2, endPolicyYear: 2, rate: 1 },
@@ -98,9 +135,11 @@ describe('parseSinglifeLegacyInvest', () => {
     expect(variant?.scheduledPayoutSupport).toEqual({
       mode: 'manual-assumption',
       accountId: 'policy',
+      minimumWithdrawalAmountPerOccurrence: 500,
       source: 'policy-redemption',
       notes: expect.arrayContaining([
         expect.stringContaining('annually, semi-annually, quarterly, or monthly'),
+        expect.stringContaining('published $500 minimum'),
       ]),
       sourceRefs: [
         expect.objectContaining({
@@ -128,5 +167,8 @@ describe('parseSinglifeLegacyInvest', () => {
       ],
     })
     expect(variant?.eecTable).toEqual([1, 1, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.25, 0.2])
+    expect(variant?.unsupportedItems).toContain('Special Booster is modeled for the fully-paid 10-year regular-premium corridor, but any reduction for still-unpaid basic regular premiums due during the premium payment term remains informational only.')
+    expect(variant?.unsupportedItems).toContain('Free Partial Withdrawal Benefit life-stage gating, non-life-stage gating, penalty-free sequencing, and withdrawal limits remain informational only.')
+    expect(variant?.unsupportedItems).toContain('The current-state terminal-illness benefit amount is modeled as an early payout of the current death-benefit estimate after manual current amount owing, and an admitted-and-settled terminal-illness claim is supported as a current policy-termination state, but pre-settlement claim admission, exclusions, and other post-claim policy effects remain informational only.')
   }, 30_000)
 })

@@ -1,0 +1,1909 @@
+# ILP Lane Checklist
+
+This file is the working lane tracker for ILP support expansion.
+
+Use it to preserve live mechanic-first context across compression and turn boundaries.
+
+Rules:
+- Treat executable mechanic unlocks as progress.
+- Do not treat corpus refreshes, catalog rebuilds, review-queue cleanup, or wording-only parser edits as progress by themselves.
+- Prefer one bounded shared seam plus fanout over one-policy feature grinding.
+- Mark items complete only when the mechanic is honestly executable and the smallest proving gates are green.
+
+## Current Lane Shape
+
+- Primary workflow: mechanic first, then fanout to exact or near-exact consumers.
+- Secondary view: per-policy coverage only to show what is now unlocked or still blocked.
+- Current active repo: `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend`
+- Current live cursor:
+  - the HSBC monthly-rate bonus family is now landed on the existing `monthly-rate` seam
+  - that HSBC bonus slice is intentionally narrow:
+    - source-monthly account-value bonuses now credit monthly on the seeded/runtime path rather than being approximated through annual-rate support
+    - `startOffsetMonths: 1` now implements the published `subsequent 12 policy months` suspension window where the prepared summaries say bonus suspension begins after the triggering month
+    - landed consumers are `HSBC Life Wealth Harvest`, `HSBC Life Wealth Abundance`, and `HSBC Life Wealth Voyage`
+    - `Wealth Harvest` now models monthly loyalty-bonus crediting with subsequent-12-month suspension after partial withdrawal or regular withdrawal
+    - `Wealth Abundance` now models monthly power-up and loyalty-bonus crediting with subsequent-12-month suspension after the published partial-withdrawal / premium-holiday / premium-reduction / regular-withdrawal triggers
+    - `Wealth Voyage` now models monthly power-up and loyalty-bonus crediting with the same subsequent-12-month suspension windows, and the regular-withdrawal loyalty limb is no longer metadata-only
+    - richer payout-day timing state beyond the current scheduled-redemption assumption surface remains informational only
+  - the Tokio recurring-single-premium minimum family is now landed on a bounded monthly-equivalent amount seam
+  - that RSP-minimum slice is intentionally narrow:
+    - explicit recurring-single-premium events below the published monthly-equivalent floor are blocked before they enter the runtime
+    - the landed floors are `S$50` monthly-equivalent for the screened Tokio regular-pay SGD family and `S$100` monthly-equivalent for the screened open-ended single-premium SGD family
+    - landed consumers are `Harvest Builder@Future`, `Wealth Builder@Future`, `Harvest Max`, `Harvest Flexi`, `Wealth Flexi`, `Wealth Flexi-Link 3.12`, `Wealth Flexi-Link 5.10`, `Affluence@Future`, `#goAffluence`, `#goLuxe`, `TM Atlas Wealth`, `#goAssure`, `Wealth Pro (II)`, `Wealth Max (II)`, `#goWealth Enrich`, `#goElite`, and `#goElite Secure`
+    - published maximum recurring single premium tables remain informational only
+  - the Tokio recurring-single-premium start-gate family is now also landed on a bounded eligibility seam
+  - that RSP-start-gate slice is intentionally narrow:
+    - explicit recurring-single-premium events before policy month `13` are blocked before they enter the runtime
+    - the landed start gate applies to `Harvest Builder@Future`, `Wealth Builder@Future`, `Harvest Max`, `Harvest Flexi`, `Wealth Flexi`, `Wealth Flexi-Link 3.12`, `Wealth Flexi-Link 5.10`, `Affluence@Future`, `#goAffluence`, `#goLuxe`, `TM Atlas Wealth`, `#goAssure`, `Wealth Pro (II)`, `Wealth Max (II)`, `#goWealth Enrich`, `#goElite`, and `#goElite Secure`
+    - published maximum recurring single premium tables and insurer-defined increase / reduction minimums remain informational only
+  - the Tokio ad-hoc top-up start/month minimum family is now landed on the existing top-up seams
+  - that Tokio top-up slice is intentionally narrow:
+    - explicit ad-hoc `top-up` events before policy month `13` are blocked before they enter the runtime
+    - explicit ad-hoc `top-up` events below the published `S$1,000` minimum are blocked before they enter projection cashflows
+    - landed consumers are `Harvest Max`, `Harvest Flexi`, `Wealth Flexi`, `Wealth Pro (II)`, `Wealth Max (II)`, `#goWealth Enrich`, `#goElite`, and `#goElite Secure`
+    - published maximum top-up tables and broader insurer approval timing remain informational only
+  - `Tokio Marine TM Atlas Wealth` is now landed on the existing one-off partial-withdrawal minimum / start-month / remaining-value seams
+  - that Atlas slice is intentionally narrow:
+    - explicit one-off partial withdrawals below `S$500` are blocked
+    - `accumulation` withdrawals start from policy month `13`
+    - `initial` withdrawals start from policy month `301`
+    - one-off partial withdrawals that would leave policy value below `S$3,000` are blocked
+    - regular-withdrawal behavior and selected-fund residual-value conditions remain informational only
+  - `Tokio Marine Affluence@Future` is now landed on the same existing one-off partial-withdrawal seams
+  - that Affluence slice is intentionally narrow:
+    - explicit one-off partial withdrawals below `S$500` are blocked
+    - `accumulation` and `topup` withdrawals start from policy month `25`
+    - `initial` withdrawals start from policy month `181`
+    - one-off partial withdrawals that would leave policy value below `S$3,000` are blocked
+    - regular-withdrawal behavior and selected-fund residual-value conditions remain informational only
+  - `Prestige Legacy Advantage` is now landed on the existing ad-hoc top-up minimum seam as an intentionally narrow top-up-only fanout
+  - that Prestige slice is intentionally narrow:
+    - explicit single-premium top-ups below `S$1,000` are blocked
+    - withdrawal-side death-benefit, non-lapse, and residual-fund effects remain informational only
+  - `Tiq Invest` is now landed on the existing ad-hoc top-up minimum / increment seam plus the one-off partial-withdrawal minimum / remaining-value seams
+  - that Tiq slice is intentionally narrow:
+    - explicit ad-hoc top-ups below `S$500` are blocked
+    - explicit ad-hoc top-ups that are not in `S$100` increments are blocked
+    - explicit one-off partial withdrawals below `S$200` are blocked
+    - explicit one-off partial withdrawals that would leave policy value below `S$200` are blocked on this one-Packaged-fund policy
+  - Tiq top-up approval, recurring top-up cadence-specific minimums, and Packaged-fund allocation administration remain informational only
+  - `PRULink InvestGrowth` and `PRULink InvestGrowth (SP)` are now landed on the existing ad-hoc top-up minimum and one-off partial-withdrawal minimum / floor seams
+  - that Prudential slice is intentionally narrow:
+    - explicit ad-hoc top-ups below `S$2,000` are blocked
+    - explicit one-off partial withdrawals below `S$1,000` are blocked
+    - one-off partial withdrawals that would leave policy value below `S$1,000` are blocked
+    - broader withdrawal administration, fund switching, and e-top-up reduced-charge treatment remain informational
+  - `Etiqa Invest plus SP` is now landed on the existing one-off partial-withdrawal minimum / increment / remaining-value seams
+  - that Invest plus SP slice is intentionally narrow:
+    - explicit one-off partial withdrawals below `S$500` are blocked
+    - explicit one-off partial withdrawals that are not in `S$100` increments are blocked
+    - one-off partial withdrawals that would leave policy/account value below `S$1,000` are blocked
+    - top-up approval, maximum top-up limits, and fund-allocation administration remain informational only
+  - `Singlife Legacy Invest` and `HSBC Life Goal Builder II` are now landed on the scheduled-redemption per-occurrence minimum seam
+  - that scheduled-redemption slice is intentionally narrow:
+    - manual scheduled-redemption assumptions now honor the published per-withdrawal minimum once payout frequency is supplied
+    - `Singlife Legacy Invest` blocks annual / semi-annual / quarterly / monthly scheduled redemptions whose per-occurrence amount falls below `$500`
+    - `HSBC Life Goal Builder II` blocks scheduled redemptions whose per-occurrence amount falls below `$250`, while the already-landed start-policy-year seam still controls when the regular-withdrawal path may begin
+    - minimum remaining account value, per-fund holding, sub-fund selection, pending-transaction resumption, and commencement timing remain informational only
+  - `HSBC Life Wealth Abundance`, `HSBC Life Wealth Voyage`, and `HSBC Wealth Focus Flexi 1/3/5` are now landed on the scheduled-redemption payout-frequency eligibility seam
+  - that frequency-eligibility slice is intentionally narrow:
+    - manual scheduled-redemption assumptions now block payout frequencies the published corridor disallows for the selected policy currency
+    - SGD variants still allow annual / semi-annual / quarterly / monthly regular withdrawals
+    - USD variants now block monthly regular withdrawals while still allowing annual / semi-annual / quarterly schedules
+    - minimum holding checks, proportional sub-fund redemption, and insurer suspension / termination remain informational only
+  - `Tokio Marine Harvest Builder@Future`, `Tokio Marine Wealth Builder@Future`, and `Tokio Marine Wealth Flexi-Link 3.12` are now landed on the scheduled-redemption minimum remaining policy value seam
+  - that Tokio scheduled-redemption floor slice is intentionally narrow:
+    - manual scheduled-redemption assumptions now block payouts that would leave total policy value below the published `S$3,000` Minimum Account Value / Minimum Account Value floor on the existing annualized payout surface
+    - the existing scheduled-payout bonus-disqualification limbs are now executable on that same manual scheduled-redemption surface for the landed Tokio consumers
+    - selected-fund residual holdings, pending-transaction sequencing, and exact intra-year payout timing remain informational only
+  - `HSBC Life Flexi Protector` is now landed on a first-step manual scheduled-redemption plus minimum annual-withdrawal slice
+  - that Flexi Protector slice is intentionally narrow:
+    - manual scheduled-redemption assumptions from the policy account are now supported
+    - annual payout amounts below `S$1,200` are blocked
+    - the published semi-annual / quarterly / monthly thresholds are represented through the same annualised scalar
+    - multiples-of-`S$10`, minimum holding amount, and insurer suspension / termination control remain informational only
+  - `TM Atlas Wealth` is now landed on a first-step regular-premium-variation floor slice
+  - that Atlas slice is intentionally narrow:
+    - explicit `regular-premium-reduction` events before policy month `13` are blocked
+    - later reductions that would push the selected payment mode below the published SGD minimum regular-premium table are blocked
+    - exact-floor reductions remain allowed
+    - insurer-defined minimum increase / reduction amounts and broader issuance-time minimum-premium checks remain informational only
+  - `Harvest Builder@Future` and `Wealth Builder@Future` are now landed on the same explicit regular-premium-variation floor seam
+  - those Tokio slices are intentionally narrow:
+    - explicit `regular-premium-reduction` events before policy month `61` are blocked
+    - later reductions that would push the selected payment mode below the published SGD minimum regular-premium table are blocked
+    - exact-floor reductions remain allowed at the published `annual 6000 / semi-annual 3000 / quarterly 1500 / monthly 500` floor
+    - insurer-defined minimum increase / reduction amounts and broader issuance-time minimum-premium checks remain informational only
+  - `Wealth Flexi-Link 3.12` and `Wealth Flexi-Link 5.10` are now landed on the same explicit regular-premium-variation floor seam
+  - those WFL slices are intentionally narrow:
+    - explicit `regular-premium-reduction` events before the published start gate are blocked
+    - the published start gates are policy month `37` for `Wealth Flexi-Link 3.12` and policy month `61` for `Wealth Flexi-Link 5.10`
+    - later reductions that would push the selected payment mode below the published SGD minimum regular-premium table are blocked
+    - exact-floor reductions remain allowed at the published `annual 6000 / semi-annual 3000 / quarterly 1500 / monthly 500` floor
+    - insurer-defined minimum increase / reduction amounts and broader issuance-time minimum-premium checks remain informational only
+  - `Invest Flex`, `Invest Flex Vantage`, and `Invest Flex TriVantage` are now landed on the explicit regular-premium-variation start-gate / minimum-floor seams plus active premium-holiday blocking
+  - that Income slice is intentionally narrow:
+    - explicit `regular-premium-reduction` and `regular-premium-increase` events before the published start gate are blocked
+    - the published start gate is policy month `49` for `Invest Flex` and `Invest Flex Vantage`, and policy month `25` for `Invest Flex TriVantage`
+    - later explicit `regular-premium-reduction` events that would push the selected payment mode below the published minimum regular-premium table are blocked
+    - exact-floor reductions remain allowed
+    - explicit premium-variation events are blocked while premium holiday is active
+    - insurer-defined minimum increase / reduction amounts remain informational only
+  - `Tokio Marine #goAssure` is now landed on the same explicit regular-premium-variation start-gate / minimum-floor seams
+  - that #goAssure slice is intentionally narrow:
+    - explicit `regular-premium-reduction` and `regular-premium-increase` events before policy month `49` are blocked
+    - later explicit `regular-premium-reduction` events that would push the selected payment mode below the published SGD `annual 3600 / semi-annual 1800 / quarterly 900 / monthly 300` floor are blocked
+    - exact-floor reductions remain allowed
+    - insurer-defined minimum increase / reduction amounts remain informational only
+  - `Tokio Marine #goAssure` is now also landed on a bounded simplified Wellness Bonus slice
+  - that Wellness Bonus slice is intentionally narrow:
+    - the published `3.50%` Wellness Bonus core amount for the SGD `10-year` corridor is now carried into projection as a simplified `policy year 15` `Accumulation Units Account` credit
+    - fully-paid / no-premium-holiday / no-regular-premium-reduction / no-Accumulation-Units-Account-withdrawal / no-claim qualification conditions remain informational only
+    - the source-stated delayed / locked payout basis remains informational only
+  - `FWD Invest First Max` is now landed on the same explicit regular-premium-variation start-gate / minimum-floor seams
+  - that First Max slice is intentionally narrow:
+    - explicit `regular-premium-reduction` and `regular-premium-increase` events before policy month `25` are blocked
+    - later explicit `regular-premium-reduction` events that would push the selected payment mode below the published SGD `annual 6000 / semi-annual 3000 / quarterly 1500 / monthly 500` floor are blocked
+    - exact-floor reductions remain allowed
+    - application-form minimum increase / reduction amounts and increase-layer administration remain informational only
+  - the screened FWD `minimum withdrawal requirements` family stays rejected for now because the prepared summaries point to request-form requirements instead of a fixed published static amount
+  - the Great Eastern regular-pay `single-premium top-up minimum S$1,000` family is now landed on the existing ad-hoc top-up amount seam:
+    - `GREAT Life Advantage 4`
+    - `GREAT Wealth Advantage 4`
+    - `Investment-linked Insurance Plan 2`
+  - that Great Eastern slice is intentionally narrow:
+    - explicit ad-hoc top-ups below `S$1,000` are blocked
+    - the already-landed premium-holiday and paid-up-to-date top-up gates still apply independently
+    - fund-level `S$200` allocation minimums, underwriting acceptance, and broader top-up administration remain informational
+  - `Tokio Marine #goClassic` and `Tokio Marine #goClassic Secure` are now landed on the existing one-off partial-withdrawal seams
+  - that Tokio slice is intentionally narrow:
+    - explicit one-off withdrawals are fee-free at the policy level
+    - `accumulation` withdrawals start from policy month `25`
+    - `initial` withdrawals start from policy month `301`
+    - explicit one-off withdrawals below `S$500` are blocked
+    - withdrawals that would leave total policy value below `S$3,000` are blocked
+  - the separate regular-withdrawal path and selected-fund residual-value conditions remain informational only
+  - `Manulife InvestReady (III)` Jan-2026, `Manulife InvestReady (III)` Sep-2025, and `Manulife InvestReady Growth` are now landed on the existing one-off partial-withdrawal minimum and residual policy-value floor seams
+  - the landed InvestReady withdrawal slice is intentionally narrow: explicit one-off withdrawals must be at least `S$500` and must not leave policy value below `S$1,000`
+  - the separate MIP partial-withdrawal amount-limit tables and the separate life-stage / flexibility corridors remain informational only
+  - the missed AIA one-off withdrawal minimum family is now also landed on the same seam:
+    - `AIA Invest Easy (Cash/SRS)`
+    - `AIA Invest Easy (CPF)`
+    - `AIA Pro Lifetime Protector (II)`
+  - that AIA slice is intentionally narrow: explicit one-off withdrawals must be at least `S$1,000`, and the already-landed residual policy-value floors still apply where published
+  - the FWD regular-pay `ad-hoc top-up minimum S$3,000` family is now landed on the existing top-up-amount seam:
+    - `FWD Invest First Horizon`
+    - `FWD Invest First Summit`
+    - `FWD Invest Flexi Elite`
+    - `FWD Invest Flexi VII`
+  - that FWD slice is intentionally narrow:
+    - explicit ad-hoc top-ups below `S$3,000` are blocked
+    - the already-landed delayed-start, paid-up-to-date, and repayment-clearance top-up gates still apply independently where published
+    - broader top-up approval, maximum caps, and fund-allocation administration remain informational
+  - the exact Etiqa regular-pay `Partial Withdrawal Limit = 50% of total regular Premium paid - prior gross regular-account withdrawals` family is now landed on a new bounded regular-account withdrawal seam:
+    - `Invest flex prime II`
+    - `Invest flex pro`
+    - `Invest vista`
+    - `Invest smart flex II`
+    - `Invest Smart Vista`
+    - `Invest flex wealth II`
+    - `Invest Wealth Purpose`
+  - that Etiqa withdrawal-limit slice is intentionally narrow:
+    - explicit one-off `regular`-account partial withdrawals above the published limit are blocked during MIP
+    - the limit is reduced by prior gross `regular`-account withdrawals, including reconstructed partial-withdrawal charge where applicable
+    - explicit one-off `regular`-account withdrawals that would leave the `regular` account below `S$1,000` are blocked
+    - account-routing order, top-up-account-first fallback, and broader withdrawal administration remain informational
+  - `Manulife InvestReady (III)` Jan-2026 and `Manulife InvestReady (III)` Sep-2025 are now landed on the existing mode-specific premium-variation floor seam
+  - that InvestReady slice is intentionally narrow:
+    - explicit `regular-premium-reduction` events before Flexi Start are still blocked by the existing start gate
+    - later explicit `regular-premium-reduction` events are blocked when they would push the selected payment mode below the published `$40` reduced-premium floor
+    - exact-floor reductions remain allowed
+    - annual-mode clawback on later payment-mode changes remains informational
+  - current adjacent screen result: the clean Tokio regular-premium-variation floor family is now landed for `TM Atlas Wealth`, `Harvest Builder@Future`, `Wealth Builder@Future`, `Wealth Flexi-Link 3.12`, and `Wealth Flexi-Link 5.10`
+  - next move is a fresh bounded shared-mechanic screen rather than more blind Tokio premium-variation fanout
+
+## Mechanic Backlog
+
+- [x] Premium-holiday ad-hoc top-up blocking
+  - First proving consumer: `HSBC Life Flexi Protector`
+  - Shared seam: `policyStateSupport.blockTopUpsDuringPremiumHoliday`
+  - Runtime status: landed
+  - Landed consumers:
+    - `HSBC Life Flexi Protector`
+    - `HSBC Life Wealth Harvest`
+    - `HSBC Life Wealth Abundance`
+    - `HSBC Life Wealth Accelerate`
+    - `HSBC Life Wealth Voyage`
+    - `HSBC Wealth Focus Flexi 1/3/5`
+    - `Great Eastern GREAT Life Advantage 4`
+    - `Great Eastern Investment-linked Insurance Plan 2`
+    - `Etiqa Invest smart flex II`
+    - `Etiqa Invest Smart Vista`
+    - `Etiqa Invest flex prime II`
+    - `Etiqa Invest flex pro`
+    - `Etiqa Invest flex wealth II`
+    - `Etiqa Invest Wealth Purpose`
+  - Out of scope:
+    - holiday administration beyond current event model
+    - reinstatement / claim-side settlement consequences
+    - broader no-lapse / debt-carry families
+
+- [x] Automatic lapse on account-value depletion
+  - First proving consumer: `AIA Platinum Wealth Venture 2.0`
+  - Shared seam: `policyStateSupport.automaticLapseOnAccountValueDepletion`
+  - Runtime status: landed
+  - Landed consumers:
+    - `AIA Platinum Wealth Venture 2.0`
+    - `Etiqa Invest starter`
+    - `AIA Platinum Retirement Elite`
+    - `AIA Wealth Venture`
+  - Blocked nearby families:
+    - `AIA Platinum Wealth Elite 2.0`
+    - `AIA Platinum Wealth Legacy`
+    - `AIA Pro Lifetime Protector (II)`
+  - Block reason:
+    - published `No Lapse Privilege` means cheap auto-lapse fanout would overclaim
+
+- [x] Ad-hoc top-up block when premiums are not paid up to date
+  - First proving consumer: `AIA Pro Lifetime Protector (II)`
+  - Shared seam: `policyStateSupport.blockTopUpsWhenPremiumsNotPaidUpToDate`
+  - Runtime status: landed
+  - Landed consumers:
+    - `AIA Pro Lifetime Protector (II)`
+    - `AIA Wealth Venture`
+    - `AIA Platinum Wealth Venture 2.0`
+    - `AIA Platinum Retirement Elite`
+    - `AIA Pro Achiever 3`
+    - `AIA Elite Secure Income - 5 Pay`
+    - `Great Eastern GREAT Wealth Advantage 4`
+    - `Great Eastern Investment-linked Insurance Plan 2`
+    - `Great Eastern GREAT Life Advantage 4`
+    - `AIA Platinum Wealth Elite 2.0`
+    - `AIA Platinum Wealth Legacy`
+    - `FWD Invest Flexi Elite`
+  - Out of scope:
+    - year/cap/top-up-vintage restrictions not reducible to paid-up-to-date state
+
+- [x] Top-up repayment-clearance gating
+  - First proving consumer: `FWD Invest Flexi VII`
+  - Shared seam: repayment-offset clearance before top-up acceptance
+  - Runtime status: landed
+  - Landed consumers:
+    - `FWD Invest Flexi VII`
+    - `FWD Invest First Horizon`
+  - Executable coverage:
+    - minimum top-up start month
+    - missed-premium repayment clearance
+    - prior `initial`-account withdrawal repayment clearance
+    - regular-premium-reduction difference repayment clearance
+
+- [x] Ad-hoc top-up minimum-amount and fixed-increment gating
+  - First proving consumer:
+    - `Etiqa Invest smart flex II`
+  - Shared seam:
+    - `policyStateSupport.minimumTopUpAmount`
+    - `policyStateSupport.topUpAmountIncrement`
+    - `kernel:top-up-amount-gate-block`
+  - Runtime status: landed
+  - Landed consumers:
+    - `Etiqa Invest smart flex II`
+    - `Etiqa Invest Smart Vista`
+    - `Etiqa Invest flex prime II`
+    - `Etiqa Invest flex pro`
+    - `Etiqa Invest vista`
+    - `Etiqa Invest flex wealth II`
+    - `Etiqa Invest Wealth Purpose`
+    - `AIA Wealth Venture`
+    - `AIA Platinum Wealth Venture 2.0`
+    - `AIA Platinum Retirement Elite`
+    - `AIA Pro Achiever 3.0`
+    - `AIA Elite Secure Income - 5 Pay`
+    - `AIA Elite Secure Income - Single Premium`
+    - `AIA Invest Easy (Cash/SRS)`
+    - `AIA Invest Easy (CPF)`
+    - `Manulife InvestReady Growth`
+    - `Manulife InvestReady (III)`
+    - `Manulife InvestReady (III) Sep-2025`
+    - `Manulife SmartRetire (V) - Sum`
+    - `Manulife SmartRetire (V) - Income`
+    - `PRULink InvestGrowth`
+    - `PRULink InvestGrowth (SP)`
+    - `Prestige Legacy Advantage`
+    - `Tiq Invest`
+    - `FWD Invest First Horizon`
+    - `FWD Invest First Summit`
+    - `FWD Invest Flexi Elite`
+    - `FWD Invest Flexi VII`
+    - `GREAT Life Advantage 4`
+    - `GREAT Wealth Advantage 4`
+    - `Investment-linked Insurance Plan 2`
+    - `HSBC Life Wealth Harvest`
+    - `HSBC Life Wealth Abundance`
+    - `HSBC Life Wealth Voyage`
+    - `HSBC Wealth Focus Flexi 1/3/5`
+    - `Tokio Marine Harvest Max`
+    - `Tokio Marine Harvest Flexi`
+    - `Tokio Marine Wealth Flexi`
+    - `Tokio Marine Wealth Pro (II)`
+    - `Tokio Marine Wealth Max (II)`
+    - `Tokio Marine #goWealth Enrich`
+    - `Tokio Marine #goElite`
+    - `Tokio Marine #goElite Secure`
+  - Source-backed contract:
+    - explicit ad-hoc `top-up` events must meet the published minimum amount before entering projection cashflows
+    - current landed minimums are:
+      - `S$2,500` for the Etiqa regular-pay family
+      - `S$2,500` for `Manulife InvestReady Growth`
+      - `S$2,500` for `Manulife InvestReady (III)`
+      - `S$2,500` for `Manulife InvestReady (III) Sep-2025`
+      - `S$2,500` for `Manulife SmartRetire (V) - Sum`
+      - `S$2,500` for `Manulife SmartRetire (V) - Income`
+      - `S$2,000` for `PRULink InvestGrowth` and `PRULink InvestGrowth (SP)`
+      - `S$3,000` for `FWD Invest First Horizon`
+      - `S$3,000` for `FWD Invest First Summit`
+      - `S$3,000` for `FWD Invest Flexi Elite`
+      - `S$3,000` for `FWD Invest Flexi VII`
+      - `S$1,000` for the clean AIA regular-pay family
+      - `S$1,000` for `AIA Elite Secure Income - Single Premium`
+      - `S$1,000` for `AIA Invest Easy (Cash/SRS)` and `AIA Invest Easy (CPF)`
+      - `S$1,000` for `Prestige Legacy Advantage`
+      - `S$1,000` for the landed Great Eastern regular-pay family
+      - `S$500` for `Tiq Invest`
+      - `US$/S$250` for `HSBC Life Wealth Harvest`
+      - `US$/S$100` for `HSBC Life Wealth Abundance`
+      - `US$/S$5,000` for `HSBC Life Wealth Voyage`
+      - `US$/S$5,000` for `HSBC Wealth Focus Flexi 1/3/5`
+      - `S$1,000` for `Tokio Marine Harvest Max`
+      - `S$1,000` for `Tokio Marine Harvest Flexi`
+      - `S$1,000` for `Tokio Marine Wealth Flexi`
+      - `S$1,000` for `Tokio Marine Wealth Pro (II)`
+      - `S$1,000` for `Tokio Marine Wealth Max (II)`
+      - `S$1,000` for `Tokio Marine #goWealth Enrich`
+      - `S$1,000` for `Tokio Marine #goElite`
+      - `S$1,000` for `Tokio Marine #goElite Secure`
+    - explicit ad-hoc `top-up` events must also align to the published fixed increment
+    - current landed increments are:
+      - `S$100` for the Etiqa regular-pay family
+      - `S$100` for `Tiq Invest`
+      - `US$/S$10` for the landed HSBC family
+    - where the source also publishes a delayed eligibility gate, explicit ad-hoc `top-up` events must start no earlier than the published policy month
+    - current landed delayed-start consumers are:
+      - `HSBC Life Wealth Abundance` from policy month `13`
+      - `HSBC Life Wealth Voyage` from policy month `13`
+      - `HSBC Wealth Focus Flexi 1/3/5` from policy month `13`
+      - `Tokio Marine Harvest Max` from policy month `13`
+      - `Tokio Marine Harvest Flexi` from policy month `13`
+      - `Tokio Marine Wealth Flexi` from policy month `13`
+      - `Tokio Marine Wealth Pro (II)` from policy month `13`
+      - `Tokio Marine Wealth Max (II)` from policy month `13`
+      - `Tokio Marine #goWealth Enrich` from policy month `13`
+      - `Tokio Marine #goElite` from policy month `13`
+      - `Tokio Marine #goElite Secure` from policy month `13`
+    - active Premium-Free Period blocking still applies first through the already-landed holiday seam
+  - Out of scope:
+    - recurring top-up cadence-specific minimums
+    - maximum top-up caps
+    - Product Highlights Sheet limits and fund-specific restrictions
+    - insurer approval timing
+
+- [x] Flexi-start regular-premium-variation start-month gating
+  - First proving consumers:
+    - `Manulife InvestReady (III)`
+    - `Manulife InvestReady (III) Sep-2025`
+  - Shared seam:
+    - `policyStateSupport.minimumRegularPremiumVariationStartPolicyMonth`
+    - `kernel:regular-premium-variation-start-gate`
+  - Runtime status: landed
+  - Landed consumers:
+    - `Manulife InvestReady (III)`
+    - `Manulife InvestReady (III) Sep-2025`
+    - `Invest Flex`
+    - `Invest Flex Vantage`
+    - `Invest Flex TriVantage`
+    - `Tokio Marine #goAssure`
+  - Source-backed contract:
+    - authored `regular-premium-reduction` and `regular-premium-increase` events are blocked before the published Flexi Start date
+    - current landed thresholds are:
+      - `sgd-mip-5-flexi-1`: policy month `13`
+      - `sgd-mip-5-flexi-4`: policy month `49`
+      - `sgd-mip-6-flexi-2`: policy month `25`
+      - `sgd-mip-7-flexi-5`: policy month `61`
+      - `sgd-mip-10-flexi-3`: policy month `37`
+      - `sgd-mip-10-flexi-5`: policy month `61`
+      - `sgd-mip-10-flexi-8`: policy month `97`
+      - `sgd-mip-13-flexi-10`: policy month `121`
+    - the gate applies to both reductions and increases
+  - Out of scope:
+    - the published `$40` minimum reduced premium floor after Flexi Start
+    - any mode-of-payment-sensitive floor enforcement
+    - annual-mode clawback after payment-mode changes
+
+- [x] Authored partial-withdrawal start-month and minimum-remaining-value gating
+  - First proving consumer: `FWD Invest First Summit`
+  - Shared seam:
+    - `policyStateSupport.minimumPartialWithdrawalStartPolicyMonthByAccount`
+    - `policyStateSupport.partialWithdrawalMinimumRemainingValueRules`
+  - Runtime status: landed
+  - Landed consumers:
+    - `FWD Invest First Summit`
+    - `FWD Invest First Max`
+    - `FWD Invest Flexi VII`
+    - `FWD Invest Flexi Elite`
+    - `FWD Invest First Horizon`
+    - `Manulife InvestReady (III)`
+    - `Manulife InvestReady (III) Sep-2025`
+    - `Manulife InvestReady Growth`
+    - `AIA Pro Lifetime Protector (II)`
+    - `Etiqa Invest plus SP`
+    - `AIA Invest Easy (CPF)`
+    - `AIA Wealth Venture`
+    - `AIA Platinum Wealth Venture 2.0`
+    - `AIA Platinum Retirement Elite`
+    - `AIA Elite Secure Income - 5 Pay`
+    - `AIA Elite Secure Income - Single Premium`
+    - `HSBC Life Wealth Invest (Cash)`
+    - `HSBC Life Wealth Invest (SRS)`
+    - `HSBC Life Wealth Invest (CPF)`
+    - `Tokio Marine #goClassic`
+    - `Tokio Marine #goClassic Secure`
+    - `Tokio Marine TM Atlas Wealth`
+    - `Tokio Marine Affluence@Future`
+  - Source-backed contract:
+    - authored one-off partial withdrawals begin only from the published policy-month gate for the targeted account when the source publishes a start-month rule
+    - current landed start-month consumers use policy month `25`, with the monitored account varying by family:
+      - `accumulation` for `FWD Invest First Summit` and `FWD Invest First Max`
+      - `initial` for `FWD Invest Flexi VII` and `FWD Invest Flexi Elite`
+      - `policy` for `AIA Pro Lifetime Protector (II)`
+    - during MIP, the monitored remaining value after the withdrawal must stay at or above the published floor for the monitored account
+    - after MIP, the total policy value after the withdrawal must stay at or above the published floor
+    - single-premium fixed-floor consumers can reuse the same minimum-remaining-value seam without a separate start-month gate:
+      - `Manulife InvestReady (III)`, `Manulife InvestReady (III) Sep-2025`, and `Manulife InvestReady Growth` with a `policy value >= S$1,000` floor
+      - `Etiqa Invest plus SP` with a `policy/account value >= S$1,000` floor
+      - `AIA Invest Easy (CPF)` with a `policy value >= S$1,000` floor
+      - `AIA Wealth Venture`, `AIA Platinum Wealth Venture 2.0`, `AIA Platinum Retirement Elite`, `AIA Elite Secure Income - 5 Pay`, and `AIA Elite Secure Income - Single Premium` with a `policy value >= S$10,000` floor
+      - `HSBC Life Wealth Invest (Cash)`, `HSBC Life Wealth Invest (SRS)`, and `HSBC Life Wealth Invest (CPF)` with a `policy value >= S$10,000` floor
+      - `Tokio Marine #goClassic` and `Tokio Marine #goClassic Secure` with `policy value >= S$3,000`, plus account-specific start gates of month `25` for `accumulation` and month `301` for `initial`
+      - `Tokio Marine TM Atlas Wealth` with `policy value >= S$3,000`, plus account-specific start gates of month `13` for `accumulation` and month `301` for `initial`
+      - `Tokio Marine Affluence@Future` with `policy value >= S$3,000`, plus account-specific start gates of month `25` for `accumulation` and `topup`, and month `181` for `initial`
+    - account-id references are now schema-validated so typos cannot silently disable the gate
+  - Out of scope:
+    - regular-withdrawal scheduling
+    - broader withdrawal-limit formulas and layer-ordering contracts
+    - increase-layer withdrawal ordering / redemption-fee circularity families
+
+- [x] Minimum one-off partial-withdrawal / partial-redemption amount gating
+  - First proving consumers:
+    - `AIA Wealth Venture`
+    - `HSBC Life Wealth Invest (CPF)`
+  - Shared seam:
+    - `policyStateSupport.minimumPartialWithdrawalAmount`
+  - Runtime status: landed
+  - Landed consumers:
+    - `Etiqa Invest plus SP`
+    - `Manulife InvestReady (III)`
+    - `Manulife InvestReady (III) Sep-2025`
+    - `Manulife InvestReady Growth`
+    - `PRULink InvestGrowth`
+    - `PRULink InvestGrowth (SP)`
+    - `AIA Invest Easy (Cash/SRS)`
+    - `AIA Invest Easy (CPF)`
+    - `AIA Pro Lifetime Protector (II)`
+    - `AIA Wealth Venture`
+    - `AIA Platinum Wealth Venture 2.0`
+    - `AIA Platinum Retirement Elite`
+    - `AIA Elite Secure Income - 5 Pay`
+    - `AIA Elite Secure Income - Single Premium`
+    - `HSBC Life Wealth Invest (Cash)`
+    - `HSBC Life Wealth Invest (SRS)`
+    - `HSBC Life Wealth Invest (CPF)`
+    - `Tokio Marine #goClassic`
+    - `Tokio Marine #goClassic Secure`
+    - `Tokio Marine TM Atlas Wealth`
+    - `Tokio Marine Affluence@Future`
+  - Source-backed contract:
+    - explicit one-off `partial-withdrawal` / partial-redemption events below the published static minimum amount are rejected before the remaining-value floor is evaluated
+    - exact-threshold withdrawals remain allowed when the other landed withdrawal gates still pass
+    - current landed thresholds are:
+      - `S$500` for `Etiqa Invest plus SP`
+      - `S$500` for `Manulife InvestReady (III)`, `Manulife InvestReady (III) Sep-2025`, and `Manulife InvestReady Growth`
+      - `S$1,000` for `PRULink InvestGrowth` and `PRULink InvestGrowth (SP)`
+      - `S$500` for `Tokio Marine #goClassic`, `Tokio Marine #goClassic Secure`, `Tokio Marine TM Atlas Wealth`, and `Tokio Marine Affluence@Future`
+      - `S$1,000` for the landed AIA and HSBC families
+  - Out of scope:
+    - variable or account-specific minimum withdrawal amount formulas
+    - minimum holding amount / remaining-value floors beyond the separate landed seams
+    - regular-withdrawal scheduling and insurer-side approval flow
+
+- [x] One-off partial-withdrawal amount increment gating
+  - First proving consumer:
+    - `Etiqa Invest smart flex II`
+  - Shared seam:
+    - `policyStateSupport.partialWithdrawalAmountIncrement`
+    - `kernel:partial-withdrawal-amount-increment-block`
+  - Runtime status: landed
+  - Landed consumers:
+    - `Etiqa Invest plus SP`
+    - `Etiqa Invest smart flex II`
+    - `Etiqa Invest Smart Vista`
+    - `Etiqa Invest flex prime II`
+    - `Etiqa Invest flex pro`
+    - `Etiqa Invest vista`
+    - `Etiqa Invest flex wealth II`
+    - `Etiqa Invest Wealth Purpose`
+  - Source-backed contract:
+    - explicit one-off `partial-withdrawal` events must meet the published static minimum amount and also align to the published fixed increment
+    - current landed increment is `S$100`
+    - exact multiple amounts remain allowed when the other landed withdrawal gates still pass
+  - Out of scope:
+    - broader Partial Withdrawal Limit formulas
+    - minimum holding / remaining-value floors beyond the separate landed seams
+    - account-routing order and insurer approval timing
+
+- [x] Partial-withdrawal minimum remaining-value floor based on committed initial single premium
+  - First proving consumer: `FWD Invest Goal 1`
+  - Shared seam reused:
+    - `policyStateSupport.partialWithdrawalMinimumRemainingValueRules`
+    - new threshold basis: `initial-single-premium`
+  - Runtime status: landed
+  - Landed consumers:
+    - `FWD Invest Goal 1`
+  - Source-backed contract:
+    - explicit one-off partial withdrawals remain fee-free at the policy level
+    - withdrawals are allowed throughout the policy term only if the remaining initial-units-account value stays at or above `10%` of the committed initial single premium
+    - the threshold is computed from the committed initial single premium supplied in policy input, not from the current account value
+  - Out of scope:
+    - minimum withdrawal transaction amount
+    - fund-selection routing
+    - pending-transaction execution timing
+    - multi-life last-survivor administration
+
+- [x] Premium-shortfall free-month threshold starting from a later policy year
+  - First proving consumer: `ManuInvest Duo`
+  - Shared seam:
+    - `eventChargeRules[].freeLifetimeMonthsStartPolicyYear`
+  - Runtime status: landed
+  - Landed consumers:
+    - `ManuInvest Duo`
+  - Source-backed contract:
+    - premium-shortfall charge remains active during MIP
+    - Premium Flexibility Benefit suppresses premium-shortfall charges only from policy year 6 onward
+    - missed premium before policy year 6 does not consume the published 24/36/48-month allowance
+    - the allowance does not reset on repayment unless a rule explicitly opts in
+  - Out of scope:
+    - supplementary-benefit continuation and deduction during Premium Flexibility Benefit
+    - grace-period and administrative restart workflow beyond explicit premium-holiday events
+    - broader missed-premium families that need a different allowance basis or reset contract
+
+- [x] Later-start premium-holiday free-month window on an existing charge rule
+  - First proving consumers:
+    - `Invest Flex`
+    - `Invest Flex Vantage`
+  - Shared seam reused:
+    - `eventChargeRules[].freeLifetimeMonthsStartPolicyYear`
+  - Runtime status: landed
+  - Landed consumers:
+    - `Invest Flex`
+    - `Invest Flex Vantage`
+  - Source-backed contract:
+    - premium-holiday charge still applies during MIP
+    - from the 5th policy anniversary, premium holiday can continue without charge for an MIP-specific free-month window
+    - VS1 / VS2 free windows are `5y=0`, `10y=60`, `15y=60`, `20y=120`
+    - after the published free window is exhausted, the charge table resumes if premium holiday continues during MIP
+  - Out of scope:
+    - premium-holiday eligibility gates that start only from a later anniversary
+    - no-lapse / reinstatement / rider-side continuation behavior
+    - `Invest Flex TriVantage`, whose Appendix 4 `NA` table already encodes the no-charge corridor directly
+
+- [x] Premium-holiday eligibility start gating
+  - First proving consumer:
+    - `AstraLink (VA2)`
+  - Shared seam:
+    - `policyStateSupport.minimumPremiumHolidayStartPolicyMonth`
+  - Runtime status: landed
+  - Landed consumers:
+    - `AstraLink (VA2)`
+    - `Tokio Marine Harvest Builder@Future`
+    - `Tokio Marine Wealth Builder@Future`
+    - `Tokio Marine Affluence@Future`
+    - `Tokio Marine #goAffluence`
+    - `Tokio Marine Wealth Flexi-Link 3.12`
+    - `Tokio Marine Wealth Flexi-Link 5.10`
+    - `Tokio Marine TM Atlas Wealth`
+    - `Tokio Marine #goLuxe`
+  - Source-backed contract:
+    - authored premium-holiday support begins only from the published anniversary gate for each product
+    - current landed thresholds are:
+      - policy month `13` for `AstraLink (VA2)` and `TM Atlas Wealth`
+      - policy month `25` for `Harvest Builder@Future`, `Wealth Builder@Future`, `Affluence@Future`, `#goAffluence`, `Wealth Flexi-Link 3.12`, and `Wealth Flexi-Link 5.10`
+      - policy month `37` for `#goLuxe`
+    - premium-holiday charge still applies from that start gate during MIP where the product publishes it
+    - the published charge-free premium-holiday window starts later only where a separate landed charge-free seam exists
+    - top-ups remain blocked during active premium holiday
+  - Out of scope:
+    - pre-threshold forced termination / no-payout behavior from missed premiums before the published gate
+    - No Lapse Guarantee debt carry and amount-owed recovery
+    - reinstatement workflow beyond the existing manual surface
+
+- [x] Monthly-rate bonus crediting with subsequent-12-month suspension windows
+  - First proving consumer: `Etiqa Invest Wealth Purpose`
+  - Shared seam:
+    - `bonus.mode = monthly-rate`
+    - `suspensionRules[].startOffsetMonths`
+  - Runtime status: landed
+  - Landed consumers:
+    - `Etiqa Invest Wealth Purpose`
+    - `Etiqa Invest smart flex II`
+    - `Etiqa Invest Smart Vista`
+    - `Etiqa Invest flex wealth II`
+    - `Etiqa Invest flex prime II`
+    - `Etiqa Invest flex pro`
+    - `Etiqa Invest vista`
+    - `HSBC Life Wealth Harvest`
+    - `HSBC Life Wealth Abundance`
+    - `HSBC Life Wealth Voyage`
+  - Source-backed contract:
+    - monthly bonus crediting can apply after premium term or during MIP depending on the product family
+    - where the prepared summary says `subsequent 12 policy months`, the landed seam uses `startOffsetMonths: 1`
+    - landed trigger windows now cover the exact published nearby cases:
+      - regular-account partial withdrawal
+      - scheduled-payout / regular-withdrawal assumptions
+      - premium holiday
+      - regular-premium reduction
+    - the Etiqa family remains the exact post-premium-term regular-account loyalty contract with no top-up-account loyalty credit
+  - Out of scope:
+    - broader monthly-bonus generalization beyond the landed Etiqa and HSBC account-value bonus families
+    - families where the suspension contract is not the same exact `subsequent 12 months` rule
+    - timing-sensitive payout families that need more exact post-MIP withdrawal state than the current scheduled-redemption assumption surface exposes
+
+- [x] Bonus lookback qualification window
+  - First proving consumer: `FWD Invest First Max`
+  - Shared seam:
+    - `qualificationRules[].disqualifyIfAnyInLookbackMonths`
+    - `qualificationRules[].formula = no-new-premium-arrears-in-lookback-months`
+  - Runtime status: landed
+  - Landed consumers:
+    - `FWD Invest First Max`
+    - `Tokio Marine Harvest Builder@Future`
+    - `Tokio Marine Wealth Builder@Future`
+    - `Tokio Marine Wealth Flexi-Link 5.10`
+    - `Income Invest Flex`
+    - `Income Invest Flex Vantage`
+    - `Income Invest Flex TriVantage`
+  - Out of scope:
+    - regular-withdrawal timing that depends on unavailable post-MIP scheduled-withdrawal state
+    - published approved/free-withdrawal exceptions that say the loyalty bonus is unaffected and therefore need bonus-basis preservation rather than a plain eligibility waiver
+
+- [x] Recurring single premium resumption gated by restoration to the commencement-date premium
+  - First proving consumer: `Tokio Marine Wealth Flexi-Link 5.10`
+  - Shared seam:
+    - `policyStateSupport.requiresCommencementPremiumForRecurringSinglePremiumResumption`
+    - `kernel:committed-premium-rsp-resumption-gate`
+  - Runtime status: landed
+  - Landed consumers:
+    - `Tokio Marine Wealth Flexi-Link 5.10`
+    - `Tokio Marine Wealth Flexi-Link 3.12`
+    - `Tokio Marine Harvest Builder@Future`
+    - `Tokio Marine Wealth Builder@Future`
+    - `Tokio Marine Affluence@Future`
+    - `Tokio Marine #goLuxe`
+    - `Tokio Marine #goAffluence`
+    - `Tokio Marine TM Atlas Wealth`
+  - Source-backed contract:
+    - recurring single premium stays blocked after non-payment / premium holiday
+    - a manual recurring-single-premium resumption can reactivate only when the regular premium amount at that resumption month is restored to the commencement-date amount
+  - Out of scope:
+    - broader non-payment administration beyond explicit premium-holiday plus resumption events
+    - products whose source requires additional approval / underwriting state beyond the existing event model
+    - historical restoration state before projection start
+
+- [x] Minimum recurring single premium monthly-equivalent amount gating
+  - First proving consumer: `Tokio Marine Harvest Builder@Future`
+  - Shared seam:
+    - `policyStateSupport.minimumRecurringSinglePremiumMonthlyAmount`
+    - `kernel:minimum-recurring-single-premium-amount`
+  - Runtime status: landed
+  - Landed consumers:
+    - `Tokio Marine Harvest Builder@Future`
+    - `Tokio Marine Wealth Builder@Future`
+    - `Tokio Marine Harvest Max`
+    - `Tokio Marine Harvest Flexi`
+    - `Tokio Marine Wealth Flexi`
+    - `Tokio Marine Wealth Flexi-Link 3.12`
+    - `Tokio Marine Wealth Flexi-Link 5.10`
+    - `Tokio Marine Affluence@Future`
+    - `Tokio Marine #goAffluence`
+    - `Tokio Marine #goLuxe`
+    - `Tokio Marine TM Atlas Wealth`
+    - `Tokio Marine #goAssure`
+    - `Tokio Marine Wealth Pro (II)`
+    - `Tokio Marine Wealth Max (II)`
+    - `Tokio Marine #goWealth Enrich`
+    - `Tokio Marine #goElite`
+    - `Tokio Marine #goElite Secure`
+  - Source-backed contract:
+    - explicit recurring-single-premium events below the published monthly-equivalent minimum are blocked
+    - the landed Tokio regular-pay SGD family uses the published annual / half-yearly / quarterly / monthly table reduced to the shared monthly-equivalent floor of `S$50`
+    - the landed Tokio open-ended single-premium SGD family uses the published annual / half-yearly / quarterly / monthly table reduced to the shared monthly-equivalent floor of `S$100`
+  - Out of scope:
+    - published maximum recurring single premium tables
+    - insurer-defined recurring-single-premium increase / reduction minimums
+
+- [x] Minimum recurring single premium start-month gating
+  - First proving consumer: `Tokio Marine Harvest Builder@Future`
+  - Shared seam:
+    - `policyStateSupport.minimumRecurringSinglePremiumStartPolicyMonth`
+    - `kernel:minimum-recurring-single-premium-start-month`
+  - Runtime status: landed
+  - Landed consumers:
+    - `Tokio Marine Harvest Builder@Future`
+    - `Tokio Marine Wealth Builder@Future`
+    - `Tokio Marine Harvest Max`
+    - `Tokio Marine Harvest Flexi`
+    - `Tokio Marine Wealth Flexi`
+    - `Tokio Marine Wealth Flexi-Link 3.12`
+    - `Tokio Marine Wealth Flexi-Link 5.10`
+    - `Tokio Marine Affluence@Future`
+    - `Tokio Marine #goAffluence`
+    - `Tokio Marine #goLuxe`
+    - `Tokio Marine TM Atlas Wealth`
+    - `Tokio Marine #goAssure`
+    - `Tokio Marine Wealth Pro (II)`
+    - `Tokio Marine Wealth Max (II)`
+    - `Tokio Marine #goWealth Enrich`
+    - `Tokio Marine #goElite`
+    - `Tokio Marine #goElite Secure`
+  - Source-backed contract:
+    - explicit recurring-single-premium events before the published earliest commencement month are blocked
+    - the landed Tokio SGD family uses the shared `policy month 13` start gate expressed in the prepared summaries as `after 1 year from the commencement date`
+  - Out of scope:
+    - published maximum recurring single premium tables
+    - insurer-defined recurring-single-premium increase / reduction minimums
+    - approval timing, due-date handling, and policy-monthiversary processing outside the explicit authored event month
+
+- [x] Loyalty-bonus basis preservation for qualifying approved/free withdrawals
+  - First proving consumer: `Income Invest Flex`
+  - Shared seam:
+    - `bonuses[].preservedValueRules`
+    - `kernel:bonus-preserved-value-cohorts`
+  - Runtime status: landed
+  - Landed consumers:
+    - `Income Invest Flex`
+    - `Income Invest Flex Vantage`
+    - `Income Invest Flex TriVantage`
+  - Source-backed contract:
+    - qualifying Life Events Withdrawal Benefit withdrawals can waive the withdrawal charge
+    - qualifying withdrawals should not reduce the modeled loyalty-bonus basis
+    - ordinary withdrawals still disqualify loyalty bonus through the existing 12-month lookback gate
+  - Out of scope:
+    - benefit eligibility timing / documentary proof / usage limits
+    - 10% of prevailing policy value cap
+    - historical pre-projection qualified withdrawals
+    - broader scheduled-withdrawal or multi-account basis-preservation families
+
+- [x] AIA Pro Achiever 3 premium-holiday charge
+  - First proving consumer: `AIA Pro Achiever 3.0`
+  - Shared seam reused: explicit premium-holiday event-charge support
+  - Runtime status: landed
+  - Out of scope:
+    - `Premium Pass`
+    - premium-reduction policy-value mechanics
+
+- [x] FWD Invest First Max booster-bonus suppression under explicit premium-holiday path
+  - First proving consumer: `FWD Invest First Max`
+  - Runtime status: landed
+  - Note:
+    - support is intentionally narrowed to the explicit `premium-holiday` path, not generic missed-premium administration
+
+- [x] Manulife InvestReady (III) Sep-2025 Step-up Booster Bonus
+  - First proving consumer: `Manulife InvestReady (III) Sep-2025`
+  - Shared seam: policy-year rate schedule + step-up booster delta payout basis
+  - Runtime status: landed
+
+- [x] Event-level qualified withdrawal waivers on existing charge / bonus-suspension seams
+  - First proving consumer: `Singlife Savvy Invest II`
+  - Shared seam reused:
+    - `partial-withdrawal.chargeWaived`
+    - `partial-withdrawal.bonusSuspensionWaived`
+  - Runtime status: landed
+  - Landed consumers:
+    - `Singlife Savvy Invest II`
+    - `Singlife Legacy Invest`
+    - `Income Legacy Flex Solitaire`
+  - Out of scope:
+    - benefit timing / proof / use-count administration
+    - allowable partial-withdrawal-limit override mechanics
+    - source clauses that say the bonus amount itself is not affected rather than only preserving eligibility
+
+- [x] Manual qualified capped partial-withdrawal charge waivers
+  - First proving consumer: `FWD Invest Flexi Elite`
+  - Shared seam:
+    - `eventChargeRules[].manualWaiverMode = capped-free-event`
+    - existing `free-withdrawal-event-cap` runtime path reused only for manually qualified partial-withdrawal events
+  - Runtime status: landed
+  - Landed consumers:
+    - `FWD Invest Flexi Elite`
+  - Source-backed contract:
+    - a manually qualified partial-withdrawal event can waive charge only up to the published per-event cap
+    - excess above the cap remains chargeable
+    - only the published first-N qualifying events consume the waiver count
+  - Out of scope:
+    - event eligibility / proof / approval timing
+    - non-partial-withdrawal waiver caps
+    - mixed lifetime counters shared across partial-withdrawal and non-withdrawal waiver benefits
+
+- [x] Tokio manual charge-waiver grant limits across approved-event families
+  - First proving consumer: `Tokio Marine #goAssure`
+  - Shared seam:
+    - `policyEvents[].chargeWaiverGrantId`
+    - `eventChargeRules[].manualWaiverGrantGroup`
+    - `eventChargeRules[].manualWaiverMaxGrantCount`
+    - `eventChargeRules[].manualWaiverMaxOverlapMonths`
+  - Runtime status: landed
+  - Landed consumers:
+    - `Tokio Marine #goAssure`
+    - `Tokio Marine Wealth Pro (II)`
+    - `Tokio Marine Wealth Max (II)`
+    - `Tokio Marine Wealth Flexi-Link 3.12`
+    - `Tokio Marine Wealth Flexi-Link 5.10`
+  - Source-backed contract:
+    - approved waivers can consume a shared per-policy lifetime grant count when the source says `3 times per lifetime`
+    - approved premium-shortfall waivers can stop charges only for the published overlap-month cap
+    - approved partial-withdrawal waivers can reuse the same grant counter only where the source also publishes a per-event withdrawal-charge waiver
+  - Known honest split:
+    - `#goAssure`, `Wealth Pro (II)`, and `Wealth Max (II)` use the mixed withdrawal-plus-shortfall family
+    - `Wealth Flexi-Link 3.12` and `Wealth Flexi-Link 5.10` use the shortfall-only six-month branch
+  - Out of scope:
+    - approval timing / proof / exclusions
+    - first-assured coverage and insurer discretionary variation of benefit grant counts
+    - product clauses that preserve a separate allowable partial-withdrawal limit rather than only waiving the charge
+
+- [x] Free partial-withdrawal event cap on cumulative paid regular premiums
+  - First proving consumers:
+    - `Etiqa Invest flex prime II`
+    - `Etiqa Invest smart flex II`
+  - Shared seam:
+    - `partial-withdrawal.freeEventCount`
+    - `partial-withdrawal.freeEventStartPolicyYear`
+    - `partial-withdrawal.freeEventMaxAmountBasis = cumulative-paid-regular-premium`
+  - Runtime status: landed
+  - Landed consumers:
+    - `Etiqa Invest flex prime II`
+    - `Etiqa Invest flex pro`
+    - `Etiqa Invest vista`
+    - `Etiqa Invest smart flex II`
+    - `Etiqa Invest Smart Vista`
+    - `Etiqa Invest flex wealth II`
+    - `Etiqa Invest Wealth Purpose`
+  - Source-backed contract:
+    - two free partial withdrawals across the premium payment term
+    - starts from policy year 4
+    - each free withdrawal is capped at 5% of cumulative regular premiums actually paid
+    - only the excess above the cap remains chargeable
+  - Out of scope:
+    - broader Partial Withdrawal Limit
+    - minimum holding amount enforcement
+    - withdrawal request / insurer approval administration
+
+- [x] Regular-account partial-withdrawal maximum-amount gating from cumulative paid regular premiums
+  - First proving consumers:
+    - `Etiqa Invest flex prime II`
+    - `Etiqa Invest smart flex II`
+  - Shared seam:
+    - `policyStateSupport.partialWithdrawalMaximumAmountRules`
+    - `basis = cumulative-paid-regular-premium-less-prior-gross-withdrawals`
+  - Runtime status: landed
+  - Landed consumers:
+    - `Etiqa Invest flex prime II`
+    - `Etiqa Invest flex pro`
+    - `Etiqa Invest vista`
+    - `Etiqa Invest smart flex II`
+    - `Etiqa Invest Smart Vista`
+    - `Etiqa Invest flex wealth II`
+    - `Etiqa Invest Wealth Purpose`
+  - Source-backed contract:
+    - explicit one-off `regular`-account partial withdrawals during MIP are blocked above `50%` of cumulative regular premiums actually paid by the event month
+    - the available limit is reduced by prior gross `regular`-account withdrawals
+    - prior gross withdrawals include the prior event amount plus reconstructed partial-withdrawal charge where the landed runtime already models that charge
+    - when the remaining published limit falls below the landed `S$500` minimum one-off withdrawal amount, no further explicit one-off `regular`-account withdrawal is allowed
+    - the published `S$1,000` `regular`-account minimum holding floor is enforced on the same seeded path for the landed consumers
+  - Out of scope:
+    - account-routing order and top-up-account-first fallback
+    - broader withdrawal request / insurer approval administration
+    - any clause that depends on a different withdrawal basis than cumulative paid regular premiums less prior gross regular-account withdrawals
+
+- [x] Tokio one-off partial-withdrawal maximum-amount gating from account value less prior requested withdrawals
+  - First proving consumers:
+    - `Tokio Marine Wealth Flexi`
+    - `Tokio Marine #goLuxe`
+  - Shared seam:
+    - `policyStateSupport.partialWithdrawalMaximumAmountRules`
+    - `basis = account-value-less-prior-withdrawals`
+    - policy-year-banded maximum-amount windows
+  - Runtime status: landed
+  - Landed consumers:
+    - `Tokio Marine Harvest Flexi`
+    - `Tokio Marine Wealth Flexi`
+    - `Tokio Marine #goLuxe`
+  - Source-backed contract:
+    - explicit one-off `accumulation`-account partial withdrawals during MIP are blocked above the published policy-year-banded percentage of the event-time available Accumulation Units Account value
+    - the available published limit is reduced by prior requested withdrawals from the same account
+    - the landed seeded/runtime path composes this cap with the already-landed account start-month gates, `S$500` minimum one-off withdrawal amount, and `S$3,000` minimum remaining policy-value floor
+  - Out of scope:
+    - selected-fund minimum-holding thresholds
+    - regular-withdrawal administration
+    - special full-Accumulation-Units-Account handling in the terminal MIP year beyond the current account-balance surface
+    - non-SGD withdrawal corridors
+
+- [x] Tokio open-ended single-premium one-off withdrawal minimum and initial-single-premium floor gating
+  - First proving consumers:
+    - `Tokio Marine #goWealth Enrich`
+    - `Tokio Marine #goElite Secure`
+  - Shared seam:
+    - `policyStateSupport.minimumPartialWithdrawalAmount`
+    - `policyStateSupport.partialWithdrawalMinimumRemainingValueRules`
+    - `basis = initial-single-premium`
+  - Runtime status: landed
+  - Landed consumers:
+    - `Tokio Marine #goWealth Enrich`
+    - `Tokio Marine #goElite`
+    - `Tokio Marine #goElite Secure`
+  - Source-backed contract:
+    - explicit one-off partial withdrawals are blocked below the published `S$500` minimum transaction amount
+    - explicit one-off partial withdrawals are also blocked when the remaining Single Premium Units Account value would fall below `10%` of the initial single premium paid on commencement date
+    - the landed seeded/runtime path composes that floor with the already-landed open-ended single-premium charge schedules where applicable, including the first-three-policy-years single-premium partial-withdrawal charge on `#goWealth Enrich`
+  - Out of scope:
+    - selected-fund minimum-holding thresholds
+    - pending-transaction execution timing
+    - fund-switching administration
+    - locked-in-value reduction workflow and aggregation-limit administration on `#goElite Secure`
+
+- [x] Scheduled-redemption minimum annual withdrawal amount gating
+  - First proving consumer: `HSBC Wealth Harvest`
+  - Shared seam:
+    - `scheduledPayoutSupport.minimumAnnualWithdrawalAmount`
+  - Runtime status: landed
+  - Landed consumers:
+    - `HSBC Life Flexi Protector`
+    - `HSBC Life Wealth Harvest`
+    - `HSBC Life Wealth Abundance`
+    - `HSBC Life Wealth Voyage`
+    - `HSBC Wealth Focus Flexi 1`
+    - `HSBC Wealth Focus Flexi 3`
+    - `HSBC Wealth Focus Flexi 5`
+  - Source-backed contract:
+    - manual scheduled-redemption support now enforces the published annualised minimum Regular Withdrawal threshold before any payout routing occurs
+    - annual payout amounts below `1,200` in policy currency are blocked for the landed HSBC family, including `HSBC Life Flexi Protector`
+    - exact-threshold scheduled redemptions remain allowed
+    - top-up-first fallback routing still works once the threshold is met where the landed product exposes fallback routing
+  - Out of scope:
+    - minimum holding / remaining Regular Premium Account value checks
+    - insurer suspension / termination control over the Regular Withdrawal facility
+    - frequency-specific availability and multiples-of-$10 administration
+    - proportional sub-fund redemption mechanics
+
+- [x] Scheduled-redemption per-occurrence minimum withdrawal amount gating
+  - First proving consumer: `Singlife Legacy Invest`
+  - Shared seam:
+    - `scheduledPayoutSupport.minimumWithdrawalAmountPerOccurrence`
+    - `scheduledPayoutAssumption.frequency`
+    - `kernel:scheduled-payout-per-occurrence-minimum`
+  - Runtime status: landed
+  - Landed consumers:
+    - `Singlife Legacy Invest`
+    - `HSBC Life Goal Builder II`
+  - Source-backed contract:
+    - manual scheduled-redemption support now enforces the published per-withdrawal minimum by dividing the authored annual payout amount across the selected payout frequency
+    - `Singlife Legacy Invest` now blocks annual / semi-annual / quarterly / monthly scheduled-redemption assumptions whose per-occurrence amount would fall below `$500`
+    - `HSBC Life Goal Builder II` now blocks scheduled-redemption assumptions whose per-occurrence amount would fall below `$250`
+    - exact-threshold scheduled redemptions remain allowed when the other landed payout gates still pass
+  - Out of scope:
+    - minimum remaining account value checks
+    - per-fund holding checks
+    - sub-fund-selection and pending-transaction resumption
+    - insurer acceptance / commencement timing
+    - payout-date alignment within the policy year
+
+- [x] Scheduled-redemption payout-frequency eligibility gating
+  - First proving consumer: `HSBC Life Wealth Abundance`
+  - Shared seam:
+    - `scheduledPayoutSupport.allowedFrequencies`
+    - `scheduledPayoutAssumption.frequency`
+    - `kernel:scheduled-payout-frequency-eligibility-gate`
+  - Runtime status: landed
+  - Landed consumers:
+    - `HSBC Life Wealth Abundance`
+    - `HSBC Life Wealth Voyage`
+    - `HSBC Wealth Focus Flexi 1`
+    - `HSBC Wealth Focus Flexi 3`
+    - `HSBC Wealth Focus Flexi 5`
+  - Source-backed contract:
+    - manual scheduled-redemption support now blocks payout frequencies that the published regular-withdrawal corridor disallows for the selected policy currency
+    - the SGD variants keep annual / semi-annual / quarterly / monthly regular-withdrawal availability
+    - the USD variants now block monthly regular-withdrawal assumptions while still allowing annual / semi-annual / quarterly schedules
+    - annualised minimum-withdrawal thresholds and start-policy-year gates still compose independently
+  - Out of scope:
+    - minimum holding / remaining-value checks
+    - proportional sub-fund redemption mechanics
+    - insurer acceptance / commencement timing
+    - insurer suspension / termination control over the Regular Withdrawal facility
+
+- [x] Scheduled-redemption minimum start policy year gating
+  - First proving consumer: `HSBC Life Goal Builder II`
+  - Shared seam:
+    - `scheduledPayoutSupport.minimumStartPolicyYear`
+  - Runtime status: landed
+  - Landed consumers:
+    - `HSBC Life Goal Builder II`
+    - `HSBC Life Wealth Harvest`
+    - `HSBC Life Wealth Abundance`
+    - `HSBC Life Wealth Voyage`
+    - `HSBC Wealth Focus Flexi 1`
+    - `HSBC Wealth Focus Flexi 3`
+    - `HSBC Wealth Focus Flexi 5`
+  - Source-backed contract:
+    - manual scheduled-redemption support now blocks payouts before the published regular-withdrawal eligibility year
+    - `Goal Builder II` starts only after the relevant surrender-penalty period:
+      - 5-pay starts from policy year `9`
+      - 10-pay starts from policy year `11`
+      - 15-pay starts from policy year `16`
+    - `Wealth Harvest` starts from policy year `12`
+    - `Wealth Abundance` starts after the MIP, i.e. policy year `11`
+    - `Wealth Voyage` starts after the MIP, i.e. policy year `16`, `21`, or `26` depending on selected MIP
+    - `Wealth Focus Flexi 1/3/5` starts after the fifth policy anniversary, i.e. policy year `6`
+    - once the start gate is met, the existing manual scheduled-payout routing and annual-threshold logic still apply
+  - Out of scope:
+    - per-withdrawal minimum amount rules that depend on payout frequency
+    - minimum holding / remaining-value checks
+    - insurer acceptance / commencement timing and suspension / termination control
+    - proportional sub-fund redemption mechanics
+
+- [x] Scheduled-redemption target-retirement-age start gating
+  - First proving consumer: `AIA Platinum Retirement Elite`
+  - Shared seam:
+    - `scheduledPayoutSupport.requiresTargetRetirementAgeStart`
+  - Runtime status: landed
+  - Landed consumers:
+    - `AIA Platinum Retirement Elite`
+    - `Manulife SmartRetire (V) - Income`
+  - Source-backed contract:
+    - manual scheduled-redemption support now blocks payouts before the annual-state projection reaches the authored target retirement age threshold
+    - the effective start gate is the later of:
+      - `scheduledPayoutSupport.minimumStartPolicyYear`, if present
+      - the projected policy year where `currentAgeNextBirthday` reaches `targetRetirementAge`
+    - this is now wired for both the regular-pay and SGD single-pay PRE corridors
+    - this is now wired for SmartRetire Income’s `Target Retirement Income` path as well, including the current death-benefit shortcut that previously suppressed itself whenever a current-year scheduled redemption existed
+    - once the start gate is met, the existing manual scheduled-payout routing and payout-state logic still apply
+  - Out of scope:
+    - payout amount election
+    - payout-period election
+    - stepped-up income election
+    - exact month-level policy-anniversary alignment
+    - insurer acceptance / commencement timing
+    - products whose payout start is keyed to a different manual field than `targetRetirementAge`
+
+- [x] Scheduled-redemption minimum remaining policy value floor
+  - First proving consumer: `Tokio Marine Harvest Builder@Future`
+  - Shared seam:
+    - `scheduledPayoutSupport.minimumRemainingPolicyValue`
+    - `kernel:scheduled-payout-minimum-remaining-policy-value`
+  - Runtime status: landed
+  - Landed consumers:
+    - `Tokio Marine Harvest Builder@Future`
+    - `Tokio Marine Wealth Builder@Future`
+    - `Tokio Marine Wealth Flexi-Link 3.12`
+    - `Tokio Marine Wealth Flexi-Link 5.10`
+  - Source-backed contract:
+    - manual scheduled-redemption support now blocks payouts that would leave total policy value below the published `S$3,000` Minimum Account Value / Minimum Account Value floor on the current annualized payout surface
+    - `Harvest Builder@Future` and `Wealth Builder@Future` now enforce that floor from policy year `11` onward on the `accumulation` account with `topup` fallback
+    - `Wealth Flexi-Link 3.12` now enforces that floor from policy year `13` onward on the same `accumulation` plus `topup` fallback path
+    - `Wealth Flexi-Link 5.10` now enforces that floor from policy year `11` onward on the same `accumulation` plus `topup` fallback path
+    - the existing scheduled-payout qualification limb on the landed Tokio bonus rules is now executable because scheduled-redemption assumptions are represented on the runtime bonus-trigger path
+  - Out of scope:
+    - selected-fund residual holdings
+    - pending-transaction sequencing
+    - exact intra-year payout timing
+    - adjacent products whose residual-value contract also depends on eligible-rider value or other combined residual thresholds
+
+- [x] Mode-specific minimum regular-premium floor on explicit premium-variation events
+  - First proving consumer: `TM Atlas Wealth`
+  - Shared seam:
+    - `policyStateSupport.minimumRegularPremiumAmountByFrequency`
+    - existing `policyStateSupport.minimumRegularPremiumVariationStartPolicyMonth`
+    - `kernel:regular-premium-variation-minimum-floor`
+  - Runtime status: landed
+  - Landed consumers:
+    - `TM Atlas Wealth`
+    - `Harvest Builder@Future`
+    - `Wealth Builder@Future`
+    - `Wealth Flexi-Link 3.12`
+    - `Wealth Flexi-Link 5.10`
+    - `Invest Flex`
+    - `Invest Flex Vantage`
+    - `Invest Flex TriVantage`
+    - `Tokio Marine #goAssure`
+    - `FWD Invest First Max`
+    - `Manulife InvestReady (III)` Jan-2026
+    - `Manulife InvestReady (III)` Sep-2025
+  - Source-backed contract:
+    - explicit `regular-premium-reduction` events before the published variation-start month are blocked by the existing start gate
+    - later explicit `regular-premium-reduction` events are blocked when they would push the selected payment mode below the published minimum regular-premium amount
+    - exact-floor reductions remain allowed
+    - the Atlas SGD monthly floor is now enforced at `S$630`, with the equivalent annual / semi-annual / quarterly table also carried in support metadata
+    - the Harvest Builder@Future and Wealth Builder@Future SGD monthly floor is now enforced at `S$500`, with the equivalent annual / semi-annual / quarterly table also carried in support metadata
+    - the Wealth Flexi-Link 3.12 and Wealth Flexi-Link 5.10 SGD monthly floor is now enforced at `S$500`, with the equivalent annual / semi-annual / quarterly table also carried in support metadata
+    - the Invest Flex and Invest Flex Vantage floors are now enforced at the published MIP-specific table, with the active proving corridor carrying the `10-year` `annual 6000 / semi-annual 3000 / quarterly 1500 / monthly 500` floor
+    - the Invest Flex TriVantage floor is now enforced at the published `annual 48000 / semi-annual 24000 / quarterly 12000 / monthly 4000` table
+    - the #goAssure floor is now enforced at the published `10-year` `annual 3600 / semi-annual 1800 / quarterly 900 / monthly 300` table
+    - the FWD Invest First Max floor is now enforced at the published SGD `10-year` `annual 6000 / semi-annual 3000 / quarterly 1500 / monthly 500` table
+    - the Manulife InvestReady (III) Jan-2026 and Sep-2025 post-Flexi reduced-premium floor is now enforced at the published `$40` minimum for all payment frequencies
+  - Out of scope:
+    - insurer-defined minimum increase / reduction amounts
+    - initial issuance-time minimum-premium acceptance
+    - imported legacy policies already below the published floor
+
+- [x] Explicit regular-premium variation blocked during active premium holiday
+  - First proving consumers:
+    - `Invest Flex`
+    - `Invest Flex Vantage`
+    - `Invest Flex TriVantage`
+  - Shared seam:
+    - `policyStateSupport.blockRegularPremiumVariationDuringPremiumHoliday`
+    - `kernel:regular-premium-variation-premium-holiday-block`
+  - Runtime status: landed
+  - Landed consumers:
+    - `Invest Flex`
+    - `Invest Flex Vantage`
+    - `Invest Flex TriVantage`
+  - Source-backed contract:
+    - explicit `regular-premium-reduction` and `regular-premium-increase` events are blocked when their authored start month falls inside an active premium-holiday window
+    - this is intentionally narrower than insurer-side administrative timing; it only applies to authored explicit premium-variation events
+  - Out of scope:
+    - insurer approval timing
+    - premium-variation requests queued before or after holiday outside the authored event month
+    - broader administrative workflow around variation processing
+
+## Next Candidates
+
+- [ ] Screen next bounded shared mechanic if the approved/free-withdrawal exception seam is too broad
+  - Prefer:
+    - another shared executable seam
+    - strong prepared/evidence substrate
+    - low parser-only risk
+  - Current screen result:
+    - the exact Etiqa monthly-rate family is exhausted in prepared artifacts and already exposed in code for `Invest Wealth Purpose`, `Invest smart flex II`, `Invest Smart Vista`, `Invest flex wealth II`, `Invest flex prime II`, `Invest flex pro`, and `Invest vista`
+    - the exact Etiqa free partial-withdrawal family is now exhausted for `Invest flex prime II`, `Invest flex pro`, `Invest vista`, `Invest smart flex II`, `Invest Smart Vista`, `Invest flex wealth II`, and `Invest Wealth Purpose`
+    - `AIA Pro Achiever 3` premium-reduction state looks real but is currently too large to treat as a thin reuse slice because it likely needs a new accounting layer rather than a scalar flag
+    - `AstraLink (VA2)` premium-holiday eligibility start gating is now landed, but the current prepared-artifact screen has not proven a clean second consumer for the same seam
+    - Great Eastern regular-pay premium / loyalty bonus withdrawal gates are already executable through existing paid-up plus 12-month suspension support
+    - the bounded `bonus-preserved-value-cohorts` seam is now landed for the Income Life Events family, but no clean second family has been proven yet
+    - the exact Tokio recurring-single-premium minimum family is now landed for `Harvest Builder@Future`, `Wealth Builder@Future`, `Harvest Max`, `Harvest Flexi`, `Wealth Flexi`, `Wealth Flexi-Link 3.12`, `Wealth Flexi-Link 5.10`, `Affluence@Future`, `#goAffluence`, `#goLuxe`, `TM Atlas Wealth`, `#goAssure`, `Wealth Pro (II)`, `Wealth Max (II)`, `#goWealth Enrich`, `#goElite`, and `#goElite Secure`
+    - the exact Tokio recurring-single-premium start-gate family is now also landed for the same screened seventeen-product set
+    - the exact Tokio ad-hoc top-up start-month / minimum family is now landed for `Harvest Max`, `Harvest Flexi`, `Wealth Flexi`, `Wealth Pro (II)`, `Wealth Max (II)`, `#goWealth Enrich`, `#goElite`, and `#goElite Secure`
+    - published maximum recurring-single-premium tables, maximum top-up tables, and broader insurer-side top-up approval timing remain separate seams, so there is no more cheap reuse in that exact Tokio eligibility family
+    - the FWD authored one-off partial-withdrawal floor seam is now landed for `Invest First Summit`, `Invest First Max`, `Invest Flexi VII`, `Invest Flexi Elite`, and `Invest First Horizon`
+    - the remaining nearby FWD withdrawal families are no longer cheap reuse:
+      - `wa-sum-200501737h-ilp01-sp-may2023` is a single-premium 10%-of-committed-base floor family, not the fixed S$3,000 / month-25 contract
+      - broader partial-withdrawal limit formulas and regular-withdrawal elections remain separate seams
+    - the adjacent single-premium floor family is now landed for `FWD Invest Goal 1`, and the quick prepared-artifact screen has not yet shown a second consumer on the same exact `10% of committed initial single premium` floor contract
+    - the fixed `minimum partial-withdrawal amount S$1,000` seam is now landed for the AIA `policy value >= S$10,000` family and the HSBC Life Wealth Invest family
+    - the HSBC scheduled-redemption `minimum annual withdrawal amount` seam is now landed for `Wealth Harvest`, `Wealth Abundance`, `Wealth Voyage`, and `Wealth Focus Flexi 1/3/5`
+    - the adjacent HSBC scheduled-redemption `payout frequency eligibility` seam is now landed for `Wealth Abundance`, `Wealth Voyage`, and `Wealth Focus Flexi 1/3/5`
+    - the adjacent HSBC scheduled-redemption `minimum start policy year` seam is now landed for `Goal Builder II`, `Wealth Harvest`, `Wealth Abundance`, `Wealth Voyage`, and `Wealth Focus Flexi 1/3/5`
+    - the PRE / SmartRetire scheduled-redemption `target retirement age` start gate is now landed on `AIA Platinum Retirement Elite` and `Manulife SmartRetire (V) - Income`
+    - `AIA Elite Secure Income` is not a cheap same-seam fanout yet because its source is keyed to a selected payout age / Secure Monthly Income election rather than the existing `targetRetirementAge` field
+    - `HSBC Life Flexi Protector` is now landed on the first-step manual scheduled-redemption plus annual-threshold slice, so it is no longer a live blocker on the adjacent HSBC payout family
+    - the nearest visually similar follow-on remains `Prestige Legacy Advantage`, but it is still not a cheap reuse because it adds a second residual-fund threshold and explicit death-benefit / non-lapse side effects after withdrawal
+    - next best move is still a fresh bounded shared-mechanic screen rather than more blind static withdrawal-threshold fanout
+
+## Rejected Or Deferred Candidates
+
+These are here to stop wasteful re-screening after compression.
+
+- [ ] `Tokio Marine Wealth Max (II)` / `Tokio Marine Wealth Pro (II)` growth-gate reuse
+  - Deferred reason:
+    - prepared summaries did not publish the required `102%` policy-year growth measure, so the candidate was rejected as not honestly source-backed
+
+- [ ] `AIA Platinum Wealth Elite 2.0` / `AIA Platinum Wealth Legacy` / `AIA Pro Lifetime Protector (II)` no-lapse fanout
+  - Deferred reason:
+    - published `No Lapse Privilege` means the current auto-lapse seam would overclaim without a new conditional no-lapse / debt-carry seam
+
+- [ ] `ManuInvest Duo` reinvested-dividend loyalty fanout
+  - Deferred reason:
+    - source uses a broader `no withdrawals` contract and ties reinvested-dividend withdrawal to partial-withdrawal charging, so the narrower InvestReady seam does not port honestly
+
+- [ ] `Premium Flexibility Benefit` cheap fanout beyond `ManuInvest Duo`
+  - Deferred reason:
+    - the quick prepared-artifact screen only found `ManuInvest Duo` on the exact `starts from policy year 6 and grants 2/3/4 years of annualised-premium allowance` contract, so there is no immediate second consumer for blind reuse
+
+- [ ] `AstraLink (VA2)` on the later-start free-month seam alone
+  - Deferred reason:
+    - the source also says premium holiday itself only starts from the 2nd anniversary, so pure `freeLifetimeMonthsStartPolicyYear` fanout would still overclaim without a separate eligibility gate
+
+- [ ] `FWD Invest First Horizon` repayment-bonus follow-on
+  - Deferred reason:
+    - runtime and parser already execute the repayment-adjusted loyalty path; this was not a real executable gap
+
+- [ ] `AIA Pro Achiever 3` premium-reduction accounting
+  - Deferred reason:
+    - current screening suggests this is not a thin seam on top of existing `regular-premium-reduction` events; it likely needs a new accounting layer for Premium Reduction Policy Value and Premium Reduction Top-Up units before the published death-benefit and charge bases can be modeled honestly
+
+- [ ] `Tokio Marine GoAffluence` richer approved-waiver follow-on
+  - Deferred reason:
+    - Claude review confirmed the Retrenchment Benefit is not a plain charge-waiver fanout: it waives future premiums rather than just charges, includes dependent medical / retrenchment-side state, and the partial-withdrawal leg is already nil-charge, so the landed manual grant-limit seam does not unlock a real executable delta there
+
+- [ ] `Great Eastern Prestige Legacy Advantage` free partial withdrawal annual allowance
+  - Deferred reason:
+    - the allowance starts after MIP and interacts with current-sum-assured / current-benefit tracking, so it is not a thin reuse slice on the new Etiqa cumulative-paid free-event-cap seam
+
+- [ ] `Prestige Legacy Advantage` partial-withdrawal floor cheap reuse
+  - Deferred reason:
+    - the source adds a second explicit residual-fund threshold of `S$500` plus policy-side death-benefit and non-lapse side effects, so it is not a clean one-flag reuse of the landed `policy value >= S$10,000` seam
+
+- [x] `HSBC Life Flexi Protector` regular-withdrawal first-step manual scheduled-payout unlock
+  - Resolved note:
+    - landed as a bounded base manual scheduled-redemption plus `S$1,200` annual-threshold slice; the remaining multiples-of-`S$10`, minimum holding amount, and insurer suspension / termination controls stay informational
+
+- [ ] `AIA Elite Secure Income` direct reuse of the PRE target-retirement-age scheduled-payout gate
+  - Deferred reason:
+    - the source is keyed to selected payout age / Secure Monthly Income election rather than the existing `targetRetirementAge` field, so reusing the PRE seam directly would blur two distinct manual-input contracts
+
+- [ ] `Singlife Legacy Invest` scheduled-withdrawal minimum-threshold fanout
+  - Deferred reason:
+    - landed via the new per-occurrence scheduled-redemption seam; do not re-screen as an annualized-threshold candidate
+
+- [ ] `FWD minimum withdrawal requirements` cheap fanout
+  - Deferred reason:
+    - the screened FWD summaries keep pointing to request-form-driven `minimum withdrawal requirements` rather than a fixed published static threshold, so this is not an honest reuse of the landed static one-off withdrawal amount seam
+
+- [ ] `Manulink Investor (II)` / `ManuInvest Duo` ad-hoc top-up minimum cheap reuse
+  - Deferred reason:
+    - the nearby prepared summaries publish `minimum top-up premium ... per fund` contracts, but the current `top-up` event surface only carries one total amount and no authored per-fund allocation threshold, so reusing `minimumTopUpAmount` alone would overclaim
+
+- [x] `ManuInvest Duo` Welcome Bonus ratio-grid unlock
+  - Landed slice:
+    - added a bounded issue-time `sum insured / committed annual premium` bonus tier basis for premium-allocation bonuses
+    - landed the full `MIP x annual premium band x sum-insured multiple` Welcome Bonus grid on `ManuInvest Duo`
+    - the executable slice covers the core year-1 bonus-credit amount only; broader loyalty / benefit interactions still remain informational
+
+- [ ] `AstraLink (VA2)` Investment Bonus parser-only bonus unlock
+  - Deferred reason:
+    - the published Investment Bonus uses the same issue-time sum-assured-multiple geometry, plus alternate rider-specific tables; this is not honestly expressible on the current template without a new ratio-aware bonus tier basis
+
+- [ ] `AIA Platinum Wealth Elite 2.0` / `AIA Pro Lifetime Protector (II)` vitality-linked bonus unlock
+  - Deferred reason:
+    - the remaining vitality-linked bonus families depend on external AIA Vitality status state and membership continuity, so there is no honest parser-only core-bonus slice without a new manual-input or external-state seam
+
+## Open Kernel Gaps
+
+These are real blockers that likely need a new bounded seam rather than parser fanout.
+
+- [ ] Conditional no-lapse / debt-carry state for published `No Lapse Privilege` families
+- [ ] Post-MIP scheduled-withdrawal timing state where bonus qualification depends on exact withdrawal timing rather than coarse annual presence
+- [ ] Broader monthly-rate bonus generalization beyond the landed Etiqa and HSBC account-value bonus families
+- [ ] Broader bonus-basis preservation beyond the landed Income Life Events family
+  - Current seam covers:
+    - event-amount preservation on annual-rate loyalty bonuses
+    - same-account partial withdrawals represented explicitly in projection events
+  - Still missing:
+    - historical pre-projection preserved cohorts
+    - multi-account or alternate-basis preservation
+    - scheduled-withdrawal / payout exceptions that preserve bonus basis
+
+## Source Anchors
+
+- Monthly-rate bonus crediting with subsequent-12-month suspension windows
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-wealth-purpose-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-smart-vista-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-vista-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/hsbc-life-wealth-harvest-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/hsbc-life-wealth-abundance-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/hsbc-life-wealth-voyage-product-summary.json`
+- Bonus lookback qualification window
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unzo-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-uoab-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/vs1-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/vs2-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/vs3-summary.json`
+- Loyalty-bonus basis preservation for qualifying approved/free withdrawals
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/vs1-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/vs2-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/vs3-summary.json`
+- Event-level qualified withdrawal waivers on existing charge / bonus-suspension seams
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/singlifesavvyinvestii-ps-dec25.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/singlifelegacyinvest-ps-dec25.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/va3r-va3s-summary.json`
+- Tokio manual charge-waiver grant limits across approved-event families
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unya-tpdy-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unzs-tpdn-ciz-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unzv-tpdn-ciz-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-uoab-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-uoan-tpdn-cin-summary.json`
+- Recurring single premium resumption gated by restoration to the commencement-date premium
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-uoan-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unzo-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unzl-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-uoab-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unza-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unyf-tpdn-ciz-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unya-tpdy-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unwo-tpdn-cin-summary.json`
+- Minimum recurring single premium monthly-equivalent amount gating
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unzo-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-uoab-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unzs-tpdn-ciz-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unzv-tpdn-ciz-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unza-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unwo-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unya-tpdy-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-ulp-tpdn-ciz-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-ulh-tpdn-ciz-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-uli-tpdn-ciz-summary.json`
+- Minimum recurring single premium start-month gating
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unzo-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-uoab-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unzs-tpdn-ciz-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unzv-tpdn-ciz-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unza-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unwo-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unya-tpdy-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-ulp-tpdn-ciz-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-ulh-tpdn-ciz-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-uli-tpdn-ciz-summary.json`
+- Manual qualified capped partial-withdrawal charge waivers
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/fwd-invest-flexi-elite-summary.json`
+- Free partial-withdrawal event cap on cumulative paid regular premiums
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-flex-prime-ii-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-flex-pro-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-vista-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-smart-flex-ii-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-smart-vista-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-flex-wealth-ii-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-wealth-purpose-product-summary.json`
+- Tokio one-off partial-withdrawal maximum-amount gating from account value less prior requested withdrawals
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unzy-tpdn-ciz-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unyj-tpdn-ciz-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unyf-tpdn-ciz-summary.json`
+- Tokio open-ended single-premium one-off withdrawal minimum and initial-single-premium floor gating
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-ulp-tpdn-ciz-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-ulh-tpdn-ciz-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-uli-tpdn-ciz-summary.json`
+- Great Eastern open-ended current death / terminal-illness benefit corridor
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/ps-en-great-invest-advantage-sp-sg-v3-0.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/ps-en-great-invest-advantage-rsp-sg-v3-0.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/ps-en-great-invest-advantage-2-sp-sg-v2-0.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/ps-en-great-invest-advantage2-rsp-v2-0.json`
+- Great Eastern regular-pay current death / terminal-illness / TPD corridor
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/ps-en-great-life-advantage-4-sg-v2-0.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/ps-en-great-wealth-advantage-4-sg-v2-0.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/ps-gel-investment-linked-insurance-plan-2-v3-0.json`
+- Prudential current death / accidental claim corridor
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/pruvantage-assure-ii-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/pruvantage-prosper-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/pruvantage-wealth-ii-product-summary.json`
+- Mature finite current-only analysis mode
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/audit/finite-mip-current-snapshot-platform-discovery.md`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/audit/mature-finite-current-only-analysis-contract.md`
+- Ad-hoc top-up minimum-amount and fixed-increment gating
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-smart-flex-ii-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-smart-vista-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-flex-prime-ii-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-flex-pro-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-vista-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-flex-wealth-ii-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-wealth-purpose-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-mirg-pdtsum.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-mir03-pdtsum.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-msrs5-pdtsum.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-sum-201106386r-esisp-jul2025.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-sum-201106386r-noncpfie-oct2024.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-sum-201106386r-cpfie-oct2024.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/ps-en-great-life-advantage-4-sg-v2-0.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/ps-en-great-wealth-advantage-4-sg-v2-0.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/ps-gel-investment-linked-insurance-plan-2-v3-0.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/prulink-investgrowth-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/prulink-investgrowth-sp-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/ps-en-prestige-legacy-advantage-sg-v2-0.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-tiq-invest-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/fwd-invest-first-horizon-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/fwd-invest-first-summit-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/fwd-invest-flexi-elite-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/fwd-invest-flexi-vii-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unyr-tpdn-ciz-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unyj-tpdn-ciz-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unzy-tpdn-ciz-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unzv-tpdn-ciz-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unzs-tpdn-ciz-summary.json`
+- Regular-account partial-withdrawal maximum-amount gating from cumulative paid regular premiums
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-flex-prime-ii-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-flex-pro-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-vista-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-smart-flex-ii-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-smart-vista-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-flex-wealth-ii-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-wealth-purpose-product-summary.json`
+- Authored partial-withdrawal start-month and minimum-remaining-value gating
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/fwd-invest-first-summit-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-sum-200501737h-ilp05-rp-feb2024.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/fwd-invest-flexi-vii-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/fwd-invest-flexi-elite-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/fwd-invest-first-horizon-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-mir03-pdtsum.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-mirp-pdtsum.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-mirg-pdtsum.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-sum-201106386r-plp-ii-oct2024.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-plus-sp-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-sum-201106386r-cpfie-oct2024.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-sum-201106386r-awv-jan2026.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-sum-201106386r-pwv2-0-apr2025.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-sum-201106386r-pre-jul2025.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-sum-201106386r-esi5p-jul2025.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-sum-201106386r-esisp-jul2025.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/hsbc-life-wealth-invest-cash-srs-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/hsbc-life-wealth-invest-cpf-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unwu-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unxn-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unwo-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unza-tpdn-cin-summary.json`
+- Minimum one-off partial-withdrawal / partial-redemption amount gating
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-mir03-pdtsum.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-mirp-pdtsum.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-mirg-pdtsum.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-sum-201106386r-noncpfie-oct2024.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-sum-201106386r-cpfie-oct2024.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-sum-201106386r-plp-ii-oct2024.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-sum-201106386r-awv-jan2026.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-sum-201106386r-pwv2-0-apr2025.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-sum-201106386r-pre-jul2025.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-sum-201106386r-esi5p-jul2025.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-sum-201106386r-esisp-jul2025.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/hsbc-life-wealth-invest-cash-srs-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/hsbc-life-wealth-invest-cpf-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unwu-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unxn-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unwo-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unza-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/prulink-investgrowth-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/prulink-investgrowth-sp-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-tiq-invest-summary.json`
+- One-off partial-withdrawal amount increment gating
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-plus-sp-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-smart-flex-ii-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-smart-vista-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-flex-prime-ii-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-flex-pro-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-vista-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-flex-wealth-ii-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/eip-invest-wealth-purpose-product-summary.json`
+- Scheduled-redemption minimum annual withdrawal amount gating
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/hsbc-life-flexi-protector-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/hsbc-life-wealth-harvest-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/hsbc-life-wealth-abundance-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/hsbc-life-wealth-voyage-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wf-ps-v1-51-mip10flexi1.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wf-ps-v1-51-mip10flexi3.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wf-ps-v1-51-mip10flexi5.json`
+- Mode-specific minimum regular-premium floor on explicit premium-variation events
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unwo-tpdn-cin-summary.json`
+- Scheduled-redemption per-occurrence minimum withdrawal amount gating
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/singlifelegacyinvest-ps-dec25.json`
+- Scheduled-redemption payout-frequency eligibility gating
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/hsbc-life-wealth-abundance-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/hsbc-life-wealth-voyage-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wf-ps-v1-51-mip10flexi1.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wf-ps-v1-51-mip10flexi3.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wf-ps-v1-51-mip10flexi5.json`
+- Scheduled-redemption minimum start policy year gating
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/gbii-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/hsbc-life-wealth-harvest-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/hsbc-life-wealth-abundance-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/hsbc-life-wealth-voyage-product-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wf-ps-v1-51-mip10flexi1.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wf-ps-v1-51-mip10flexi3.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wf-ps-v1-51-mip10flexi5.json`
+- Scheduled-redemption target-retirement-age start gating
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-sum-201106386r-pre-jul2025.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-msrs5-pdtsum.json`
+- Partial-withdrawal minimum remaining-value floor based on committed initial single premium
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-sum-200501737h-ilp01-sp-may2023.json`
+- Premium-shortfall free-month threshold starting from a later policy year
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-mid01-pdtsum.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-mid01-brochure.json`
+- Later-start premium-holiday free-month window on an existing charge rule
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/vs1-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/vs2-summary.json`
+- Premium-holiday eligibility start gating
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/va2-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unzo-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unzl-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unza-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unyd-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-uoab-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-uoan-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unwo-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unyf-tpdn-ciz-summary.json`
+- Flexi-start regular-premium-variation start gating
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-mir03-pdtsum.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/wa-mirp-pdtsum.json`
+- Mode-specific minimum regular-premium floor on explicit premium-variation events
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unwo-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unzo-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-unzl-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-uoab-tpdn-cin-summary.json`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/fixtures/prepared/tml-uoan-tpdn-cin-summary.json`
+- AIA no-lapse blocked set
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/parsers/aiaPlatinumWealthElite2.ts`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/parsers/aiaPlatinumWealthLegacy.ts`
+  - `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend/scripts/ilp-catalog/parsers/aiaProLifetimeProtectorIi.ts`
+
+## Known Honest Limits
+
+- `premium-holiday` support does not model reinstatement workflow, claim-side settlement, or broader debt-carry / no-lapse behavior.
+- `bonus-lookback-qualification-window` does not claim exact post-MIP scheduled-withdrawal timing when the runtime only knows coarse annual presence.
+- `bonus-lookback-qualification-window` also does not claim published approved/free-withdrawal exceptions when those clauses say the loyalty bonus is unaffected and therefore imply preserved bonus basis rather than only preserved eligibility.
+- `chargeWaived` / `bonusSuspensionWaived` fanout is honest only for products whose source wording preserves fee or eligibility treatment; it is not enough for source clauses that say the bonus amount itself is unaffected.
+- `bonus-preserved-value-cohorts` is currently honest only for explicit projected partial-withdrawal events where the source says the loyalty-bonus amount is unaffected:
+  - current support is limited to annual-rate loyalty bonuses
+  - preserved basis is event-amount based, not a broader historical reconstructed basis
+  - pre-projection qualified withdrawals still need explicit seeded cohort support if we ever claim them
+- `manualWaiverMode = capped-free-event` is honest only for manually qualified partial-withdrawal benefits where the runtime can apply the published cap/count and leave eligibility / proof / approval timing manual.
+- `manual-charge-waiver-grant-limits` is honest only when the source can be expressed as explicit approved events plus published cap/count rules:
+  - approval timing / proof / exclusions remain manual
+  - first-assured coverage remains manual
+  - product clauses that preserve a separate allowable withdrawal limit still need another seam
+- `committed-premium-rsp-resumption-gate` is honest only for products whose source uses the same explicit manual-resumption contract:
+  - the check is evaluated at the authored recurring-single-premium-resumption month
+- `minimumRecurringSinglePremiumMonthlyAmount` is honest only for products whose published recurring-single-premium minimum table can be reduced to the shared monthly event surface:
+  - it blocks authored explicit recurring-single-premium events below the published monthly-equivalent floor
+  - it does not claim published maximum recurring-single-premium caps or insurer-defined increase / reduction minima
+- `minimumRecurringSinglePremiumStartPolicyMonth` is honest only for authored explicit recurring-single-premium events:
+  - it blocks unsupported early recurring-single-premium events from entering the runtime
+  - it does not by itself model published maximum recurring-single-premium caps or insurer-defined increase / reduction minima
+  - it does not model insurer approval timing, due-date handling, or policy-monthiversary processing outside the explicit authored event month
+- `current-death-benefit-estimate` and `current-ti-benefit-estimate` are honest only as current snapshots:
+  - they use current policy value plus explicit event history and any required manual current inputs such as `currentAmountOwing`
+  - they do not model claim admission, claim settlement timing, policy termination, or post-claim continuation unless a separate staged-claim surface is landed
+- mature finite `current-only` analysis mode is honest only for current-snapshot surfaces:
+  - mature finite policies remain editable and analyzable in summary cards and comparison rows
+  - projection charts, NPV, fee waterfall, decision panel, and opportunity-cost panels remain intentionally unavailable
+  - product-specific current-support inputs still follow each product's separate current snapshot limits
+- `scheduledPayoutSupport.requiresTargetRetirementAgeStart` is honest only at annual-state resolution:
+  - payout start is gated by projected `currentAgeNextBirthday` reaching `targetRetirementAge`
+  - exact monthiversary / insurer-acceptance timing remains manual
+  - SmartRetire current death-benefit suppression now respects the same gate instead of assuming any current-year scheduled payout is already active
+  - a later premium restoration still needs a later explicit resumption event
+  - broader non-payment administration outside explicit premium-holiday and recurring-single-premium-resumption events remains informational
+- `freeLifetimeMonthsStartPolicyYear` is honest only when the published missed-premium allowance is explicitly deferred to a later policy year:
+  - missed months before the threshold still trigger the premium-shortfall charge
+  - those pre-threshold months do not consume the later free-month allowance
+  - repayment reset behavior remains off unless the source explicitly says the allowance refreshes after repayment
+- the same seam is also honest for premium-holiday charge rules with later-start charge-free windows:
+  - the threshold only delays when free months begin counting
+  - it does not by itself make premium holiday unavailable before that policy year
+  - a separate eligibility-start seam is still needed when the source says premium holiday itself begins only from a later anniversary
+- `minimumPremiumHolidayStartPolicyMonth` is honest only for authored explicit premium-holiday events:
+  - it blocks unsupported early premium-holiday events from entering the runtime
+  - it does not by itself model the source-forced termination path before that threshold
+  - no-lapse debt carry and reinstatement still need separate seams if we ever claim them
+- `minimumRegularPremiumAmountByFrequency` is honest only for authored explicit `regular-premium-reduction` events:
+  - it blocks reductions that would push the selected payment frequency below the published floor
+  - exact-floor reductions remain allowed
+  - insurer-defined minimum increase / reduction increments and imported legacy policies already below the floor remain outside the current seam
+- authored partial-withdrawal start-month / minimum-remaining-value gating is honest only for explicit one-off `partial-withdrawal` events:
+  - the start-month and floor checks run on the runtime’s available-before-withdrawal balance surface, not on regular-withdrawal scheduling
+  - exact floor equality is allowed; only post-deduction balances below the published minimum are blocked
+  - account ids are now validated against the authored account set so mis-typed rules fail fast instead of silently no-oping
+  - current supported threshold bases are:
+    - fixed currency minimums on `account-value` or `policy-value`
+    - percentage floors on `initial-single-premium`
+  - when the source also publishes a separate MIP partial-withdrawal amount-limit table, that table still needs a separate seam and must remain informational
+  - broader withdrawal-limit formulas and layer-ordering rules still need separate seams if we ever claim them
+- `partialWithdrawalMaximumAmountRules` with `basis = account-value-less-prior-withdrawals` is honest only for explicit one-off withdrawals whose source pegs the cap to a named account’s current value and subtracts prior requested withdrawals from that same account:
+  - the basis uses the runtime’s event-time available-before-withdrawal account balance, not the raw opening balance and not a brochure-only notional account value
+  - prior withdrawals are prior requested event amounts, not reconstructed gross withdrawals with synthetic fee addbacks
+  - selected-fund minimum-holding rules, regular-withdrawal administration, and special end-of-MIP full-account clauses remain separate seams
+  - for `Tokio Marine #goClassic`, `Tokio Marine #goClassic Secure`, `Tokio Marine TM Atlas Wealth`, and `Tokio Marine Affluence@Future`, the separate regular-withdrawal path and selected-fund residual-value conditions remain informational
+- `minimumPartialWithdrawalAmount` is honest only for published static minimum transaction amounts on explicit one-off `partial-withdrawal` / partial-redemption events:
+  - the minimum-amount gate runs before the landed remaining-value floor checks
+  - exact-threshold withdrawals are allowed if the other landed withdrawal gates still pass
+  - variable formulas, currency-conversion rules, and insurer-side approval flow remain outside the current seam
+- `partialWithdrawalAmountIncrement` is honest only for published fixed increment rules on explicit one-off `partial-withdrawal` events:
+  - the increment gate runs after the landed minimum-amount check and before the landed remaining-value floor checks
+  - exact multiples are allowed if the other landed withdrawal gates still pass
+  - varying account-order formulas, broader Partial Withdrawal Limit rules, and insurer-side approval flow remain outside the current seam
+- `minimumTopUpAmount` / `topUpAmountIncrement` is honest only for published fixed ad-hoc top-up thresholds on explicit `top-up` events:
+  - the minimum-amount gate blocks under-threshold ad-hoc top-ups before they enter projection cashflows
+  - the fixed-increment gate blocks non-multiple ad-hoc top-ups before they enter projection cashflows
+  - active Premium-Free Period, paid-up-to-date, and repayment-clearance top-up gates still apply independently when authored
+  - recurring top-up cadence rules, maximum caps, fund-specific limits, and insurer approval timing remain outside the current seam
+- `minimumRegularPremiumVariationStartPolicyMonth` is honest only for authored explicit premium-variation events:
+  - it blocks `regular-premium-reduction` and `regular-premium-increase` events before the published Flexi Start month
+  - it does not itself claim any post-Flexi minimum reduced-premium floor; that belongs to `minimumRegularPremiumAmountByFrequency`
+  - it does not claim insurer approval timing or payment-mode-change clawback handling
+- `minimumRegularPremiumAmountByFrequency` is honest only for explicit `regular-premium-reduction` events on products with a published fixed per-mode minimum premium table:
+  - it composes with the existing variation-start gate and blocks reductions that would push the selected payment mode below the configured floor
+  - exact-floor reductions remain allowed
+  - it does not enforce insurer-defined minimum increase / reduction increments
+  - it does not claim initial issuance-time minimum-premium acceptance or grandfathered legacy-premium handling
+- `scheduledPayoutSupport.minimumAnnualWithdrawalAmount` is honest only for products whose published Regular Withdrawal thresholds can be represented as one annualised scalar:
+  - the gate checks the annualised scheduled-redemption assumption before payout routing
+  - exact-threshold payouts are allowed
+  - minimum holding / remaining-value checks, per-frequency availability, multiples-of-$10 rules, and insurer suspension / termination control remain informational
+- `scheduledPayoutSupport.minimumStartPolicyYear` is honest only for products whose published Regular Withdrawal eligibility can be expressed as a coarse policy-year gate:
+  - the gate blocks scheduled payouts before the authored start year while preserving the user-authored duration window
+  - it does not model insurer acceptance / commencement timing or rescheduling of an invalid early request
+  - it is not enough for products whose minimum withdrawal contract depends on payout frequency or per-fund minimum holdings
+- `scheduledPayoutSupport.minimumRemainingPolicyValue` is honest only on the current annualized scheduled-redemption surface:
+  - the gate blocks a scheduled payout only when the authored annual payout would leave total policy value below the configured floor after same-year explicit partial withdrawals
+  - exact-threshold payouts are allowed
+  - selected-fund residual holdings, pending-transaction sequencing, and exact intra-year payout timing remain informational
+  - adjacent products whose published residual-value contract also depends on eligible-rider value or other combined residual thresholds still need a separate seam
+- `scheduledPayoutSupport.requiresTargetRetirementAgeStart` is honest only at the engine’s annual age resolution:
+  - the gate uses `currentAgeNextBirthday` plus policy-year progression against a manual `targetRetirementAge`
+  - it composes with `minimumStartPolicyYear` by taking the later effective start
+  - it does not model exact month-level policy-anniversary alignment, payout-election timing, or insurer-side commencement / approval behavior
+  - it is not enough for products whose payout start is keyed to a different manual election field than `targetRetirementAge`
+- The landed monthly-rate bonus seam is currently honest only for the exact Etiqa and HSBC account-value bonus families:
+  - the supported contract is monthly crediting plus a published `subsequent 12 policy months` suspension window
+  - scheduled-payout / regular-withdrawal linkage is still represented through the coarse manual scheduled-redemption assumption surface rather than exact payout-day timing state
+  - this is sufficient for the landed `Invest Wealth Purpose`, `Invest smart flex II`, `Invest Smart Vista`, `Invest flex wealth II`, `Invest flex prime II`, `Invest flex pro`, `Invest vista`, `HSBC Life Wealth Harvest`, `HSBC Life Wealth Abundance`, and `HSBC Life Wealth Voyage` slices, but it is not yet a general solution for timing-sensitive monthly bonus families
+- Etiqa `monthly-rate` loyalty support is limited to the exact post-premium-term regular-account contract:
+  - no top-up-account loyalty credit
+  - subsequent 12 policy months after a regular-account partial withdrawal are suspended
+  - resume on the 13th policy month after withdrawal
+- Etiqa free partial-withdrawal support is limited to the exact two-count / 5%-of-cumulative-paid-regular-premium contract:
+  - broader Partial Withdrawal Limit is still informational
+  - minimum holding amount is still informational
+  - request / approval administration is still informational
+- `partialWithdrawalMaximumAmountRules` is currently honest only for the exact Etiqa regular-account contract:
+  - the gate only applies to explicit one-off `partial-withdrawal` events with `accountId = regular`
+  - it reconstructs prior gross withdrawals from prior explicit withdrawals plus the landed partial-withdrawal charge surface where that charge basis is already executable
+  - account-routing order, top-up-account fallback, and withdrawal approval flow remain informational
+  - it is not yet a generic withdrawal-limit seam for products whose source keys the limit to other bases or insurer-discretionary treatment
+- `AIA Pro Achiever 3` still treats `Premium Pass`, `Premium Reward`, and premium-reduction accounting as outside the current executable surface.
+
+## Next Slice Recipe
+
+- Mechanic under screen:
+  - next bounded shared mechanic with at least one strong nearby fanout
+- First candidate to revisit only if bounded enough:
+  - no active single candidate yet
+- Acceptance gate:
+  - prove the source-backed contract unlocks executable behavior rather than only preserving wording support
+- Pivot rule:
+  - if the nearby family needs no-lapse debt-carry, rider continuation, or insurer-side holiday approval state, stop the cheap fanout and screen the next bounded shared mechanic instead
+  - Current screen result:
+    - the bonus-gap screen is now materially narrower than the original dashboard prompt suggested:
+    - `Manulife InvestReady Growth` and the other common welcome / loyalty / power-up families were already landed before this pass
+    - the remaining real metadata-only bonus gaps are mostly ratio-based, external-status-based, or delayed-account-value bonuses rather than easy parser fanout
+  - `Tokio Marine #goAssure` is now landed on a bounded simplified Wellness Bonus slice:
+    - the core `3.50%` amount is now present in seeded/runtime projection as a `policy year 15` `Accumulation Units Account` bonus credit
+    - qualification conditions and the source-stated delayed / locked payout basis remain informational
+  - `ManuInvest Duo` Welcome Bonus is now landed on a bounded ratio-aware bonus tier seam:
+    - the engine now supports issue-time `sum insured / committed annual premium` tier lookup for premium-allocation bonuses without widening into general computed bonus fields
+    - the seeded/runtime path now carries the full published Welcome Bonus grid into year-1 `bonusCredit`
+  - `AstraLink (VA2)` Investment Bonus is still blocked as the nearest follow-on:
+    - the product uses the same issue-time ratio geometry, but with alternate rider-specific tables that are not yet honest on the current bounded seam
+  - the remaining AIA Vitality / PowerUp-style bonus gaps are external-status-driven rather than basic bonus-credit amount fanout
+  - the HSBC monthly-rate bonus family is now landed on the existing `bonus.mode = monthly-rate` plus `suspensionRules[].startOffsetMonths` seam for `HSBC Life Wealth Harvest`, `HSBC Life Wealth Abundance`, and `HSBC Life Wealth Voyage`
+  - that slice turns source-monthly bonus crediting into real seeded/runtime support and closes the remaining metadata-only regular-withdrawal loyalty limb on `Wealth Voyage`
+  - the exact prepared-artifact HSBC family now looks exhausted, so the next move should be a fresh bounded shared-mechanic screen rather than more blind HSBC bonus fanout
+  - the Tokio scheduled-redemption `minimum remaining policy value` seam is now landed for `Harvest Builder@Future`, `Wealth Builder@Future`, `Wealth Flexi-Link 3.12`, and `Wealth Flexi-Link 5.10`
+  - the adjacent Tokio residual-value candidates with eligible-rider or combined residual thresholds are not cheap reuse, so this family should also be treated as exhausted for blind fanout
+  - the later-start free-window family is now landed for `Invest Flex` and `Invest Flex Vantage`
+  - the full prepared-artifact Tokio premium-holiday start-gate family is now landed for `Harvest Builder@Future`, `Wealth Builder@Future`, `Affluence@Future`, `#goAffluence`, `Wealth Flexi-Link 3.12`, `Wealth Flexi-Link 5.10`, `TM Atlas Wealth`, and `#goLuxe`
+  - the fixed `partial-withdrawal minimum remaining-value` seam has now landed on `Etiqa Invest plus SP`, `AIA Pro Lifetime Protector (II)`, `AIA Invest Easy (CPF)`, the AIA `policy value >= S$10,000` family, and the HSBC Life Wealth Invest `minimum holding amount S$10,000` family
+  - the fixed `minimum partial-withdrawal amount S$1,000` seam is now landed for the same adjacent AIA and HSBC families where the source publishes a static threshold
+  - the exact Etiqa regular-pay `Partial Withdrawal Limit = 50% of total regular Premium paid - prior gross regular-account withdrawals` family is now landed for `Invest flex prime II`, `Invest flex pro`, `Invest vista`, `Invest smart flex II`, `Invest Smart Vista`, `Invest flex wealth II`, and `Invest Wealth Purpose`
+  - the landed Etiqa slice also enforces the published `regular`-account `minimum holding amount S$1,000` on the same explicit one-off withdrawal path, while account-routing order and broader withdrawal administration remain informational
+  - the exact Etiqa regular-pay `ad-hoc top-up minimum S$2,500 in S$100 increments` family is now landed for `Invest smart flex II`, `Invest Smart Vista`, `Invest flex prime II`, `Invest flex pro`, `Invest vista`, `Invest flex wealth II`, and `Invest Wealth Purpose`
+  - the Great Eastern regular-pay `single-premium top-up minimum S$1,000` family is now landed for `GREAT Life Advantage 4`, `GREAT Wealth Advantage 4`, and `Investment-linked Insurance Plan 2`, reusing the already-landed premium-holiday and paid-up-to-date top-up gates
+  - the Great Eastern fund-level `S$200` minimum allocation per selected fund and underwriting / acceptance workflow remain informational, so this slice is not a broader top-up-allocation unlock
+  - `Prestige Legacy Advantage` is now landed on the same seam as an intentionally narrow top-up-only slice with the published `S$1,000` single-premium top-up minimum
+  - `Prestige Legacy Advantage` partial-withdrawal effects remain deferred because the source adds a second residual-fund threshold plus death-benefit and non-lapse side effects
+  - `PRULink InvestGrowth` and `PRULink InvestGrowth (SP)` are now landed on the existing top-up-amount and one-off partial-withdrawal seams with the published `S$2,000` top-up minimum plus the published `S$1,000` one-off withdrawal minimum and residual-account floor
+  - `PRULink InvestGrowth` fund switching, broader withdrawal administration, and e-top-up reduced-charge treatment remain informational, so this slice is not a broader Prudential withdrawal/fund-admin unlock
+  - the clean AIA regular-pay `ad-hoc top-up minimum S$1,000` family is now landed for `AIA Wealth Venture`, `AIA Platinum Wealth Venture 2.0`, `AIA Platinum Retirement Elite`, `AIA Pro Achiever 3.0`, and `AIA Elite Secure Income - 5 Pay`
+  - `AIA Elite Secure Income - Single Premium` is now landed on the same seam with the published `Top-Up Premiums $1,000` ad-hoc-only contract
+  - the adjacent `AIA Invest Easy` single-premium family is now landed for `AIA Invest Easy (Cash/SRS)` and `AIA Invest Easy (CPF)` on the same ad-hoc top-up minimum seam
+  - `Manulife InvestReady Growth` is now landed on the same seam with the published `$2,500` total-amount ad-hoc top-up minimum
+  - `Manulife InvestReady (III)` Jan-2026 and `Manulife InvestReady (III)` Sep-2025 are now landed on the same seam with the published `$2,500` total-amount ad-hoc top-up minimum
+  - `Manulife InvestReady (III)` Jan-2026, `Manulife InvestReady (III)` Sep-2025, and `Manulife InvestReady Growth` are now also landed on the existing one-off partial-withdrawal seams with the published `$500` minimum and `$1,000` residual policy-value floor
+  - `Tokio Marine #goClassic` and `Tokio Marine #goClassic Secure` are now landed on the same one-off partial-withdrawal seams with the published `S$500` minimum, `policy value >= S$3,000` floor, and account-specific start gates of month `25` for `accumulation` and month `301` for `initial`
+  - the separate `Regular Withdrawal` path and selected-fund residual-value conditions in the Tokio summaries remain informational, so this slice is not a broader withdrawal-limit or scheduled-withdrawal unlock
+  - `AIA Invest Easy (Cash/SRS)`, `AIA Invest Easy (CPF)`, and `AIA Pro Lifetime Protector (II)` are now also landed on the existing one-off partial-withdrawal minimum seam with the published `S$1,000` threshold, while the already-landed residual policy-value floors stay enforced separately
+  - the separate InvestReady MIP partial-withdrawal amount-limit tables and life-stage / flexibility corridors remain informational, so this slice is not a broader withdrawal-limit unlock
+  - `Manulife SmartRetire (V) - Sum` and `Manulife SmartRetire (V) - Income` are now landed on the same seam with the published `$2,500` total-amount ad-hoc top-up minimum, while their `up to 10 funds` and `minimum 10% per fund` allocation rules remain informational
+  - recurring top-up cadence-specific minimums for `AIA Invest Easy` remain informational, so this is not a broader recurring-top-up unlock
+  - `Tiq Invest` is now landed on the same top-up seam with the published `S$500` ad-hoc minimum in `S$100` increments, and on the same one-off withdrawal seams with the published `S$200` minimum and `S$200` remaining-value floor on its one-Packaged-fund policy
+  - `Tiq Invest` top-up approval, recurring top-up minimums by payment frequency, and Packaged-fund allocation administration remain informational, so this slice is not a broader packaged-fund administration unlock
+  - `TM Atlas Wealth` is now landed on the existing one-off partial-withdrawal seams with the published `S$500` minimum, `policy value >= S$3,000` floor, and account-specific start gates of month `13` for `accumulation` and month `301` for `initial`
+  - `TM Atlas Wealth` is now also landed on the explicit premium-variation floor seam with the published SGD minimum regular-premium table and the published after-first-policy-year variation start gate
+  - `Harvest Builder@Future` and `Wealth Builder@Future` are now landed on the same seam with the published after-first-five-policy-years variation start gate and the published SGD `annual 6000 / semi-annual 3000 / quarterly 1500 / monthly 500` floor table
+  - `Wealth Flexi-Link 3.12` and `Wealth Flexi-Link 5.10` are now landed on the same seam with the published after-first-three-policy-years / after-first-five-policy-years variation start gates and the published SGD `annual 6000 / semi-annual 3000 / quarterly 1500 / monthly 500` floor table
+  - `Affluence@Future` is now landed on the same one-off partial-withdrawal seams with the published `S$500` minimum, `policy value >= S$3,000` floor, and account-specific start gates of month `25` for `accumulation` and `topup`, and month `181` for `initial`
+  - the separate `Regular Withdrawal` path and selected-fund residual-value conditions in the `TM Atlas Wealth` and `Affluence@Future` summaries remain informational, so these slices are not broader Tokio withdrawal-limit or scheduled-withdrawal unlocks
+  - the FWD regular-pay `S$3,000` ad-hoc top-up minimum family is now landed for `Invest First Horizon`, `Invest First Summit`, `Invest Flexi Elite`, and `Invest Flexi VII`
+  - the already-landed delayed-start, paid-up-to-date, and repayment-clearance seams still compose independently for those FWD products, so this slice is not a broader top-up-approval or repayment-state unlock
+  - `AIA Elite Secure Income - Single Premium` remains intentionally deferred from the separate regular-pay paid-up-to-date batch because it does not share that gate shape
+  - the strongest nearby remaining top-up-minimum consumers now split into two buckets:
+    - clean total-amount `$2,500` Manulife summaries that may still be cheap reuse if their parser wording can stay ad-hoc-only
+    - `per fund` contracts such as `Manulink Investor (II)` that should not be treated as cheap reuse of the current total-amount gate
+  - the exact Etiqa `minimum S$500 one-off partial withdrawal in S$100 increments` family is now landed for `Invest smart flex II`, `Invest Smart Vista`, `Invest flex prime II`, `Invest flex pro`, `Invest vista`, `Invest flex wealth II`, and `Invest Wealth Purpose`
+  - the exact Tokio `policy month 13 + ad-hoc top-up minimum S$1,000` family is now landed for `Harvest Max`, `Harvest Flexi`, `Wealth Flexi`, `Wealth Pro (II)`, `Wealth Max (II)`, `#goWealth Enrich`, `#goElite`, and `#goElite Secure`
+  - published maximum top-up tables and broader insurer approval timing remain informational for that Tokio family, so the cheap same-shape fanout is exhausted
+  - the exact Tokio one-off partial-withdrawal cap family keyed to policy-year-banded percentages of Accumulation Units Account value less prior requested withdrawals is now landed for `Harvest Flexi`, `Wealth Flexi`, and `#goLuxe`
+  - selected-fund minimum-holding thresholds, regular-withdrawal administration, and special full-Accumulation-Units-Account handling remain separate seams for that Tokio family, so the cheap same-shape fanout is exhausted after those three consumers
+  - the Tokio open-ended single-premium one-off withdrawal family is now landed for `#goWealth Enrich`, `#goElite`, and `#goElite Secure` on the existing `S$500` minimum plus `10% of initial single premium` residual-floor seam
+  - selected-fund minimum-holding thresholds, pending-transaction execution timing, fund-switching administration, and the locked-in-value reduction workflow on `#goElite Secure` remain separate seams, so this exact family is also exhausted for cheap reuse
+  - the Great Eastern open-ended current death / terminal-illness benefit family is now landed for `GREAT Invest Advantage (SP)`, `GREAT Invest Advantage (RSP)`, `GREAT Invest Advantage 2 (SP)`, and `GREAT Invest Advantage 2 (RSP)` on the existing current-benefit estimate kernels plus manual `currentAmountOwing`
+  - that Great Eastern current-protection slice is intentionally narrow:
+    - the current death and terminal-illness benefit estimate is modeled as the higher of the published `110%` premium floor less partial surrenders or current account value less manual `currentAmountOwing`
+    - the recurrent-single-premium, initial-single-premium, and top-up premium-charge paths remain executable on the seeded/runtime surface for the open-ended variants
+    - terminal-illness claim admission, exclusions, settlement, and surrender-destination handling remain informational only
+  - the Prudential current-protection family is now also landed for `PRUVantage Assure II`, `PRUVantage Prosper`, and `PRUVantage Wealth II`
+  - that Prudential slice is intentionally narrow:
+    - `PRUVantage Assure II` now supports a current death-benefit estimate plus a payable-now accidental-disability snapshot from the same current corridor once the staged payout state is filled
+    - `PRUVantage Prosper` now supports current death and accidental-death estimates from the published paid-premium floor versus current account-value corridor
+    - `PRUVantage Wealth II` now supports current death, accidental-death, and payable-now accidental-disability snapshots from the same current corridor
+    - claim exclusions, later staged release timing, Premium Pass / Wealth Share, and secondary-life or change-of-life-assured options remain informational only
+  - the earlier screened HSBC ad-hoc top-up threshold family is now also landed, so it is no longer the live cursor
+  - the HSBC scheduled-redemption `minimum annual withdrawal amount` seam is now landed for `Wealth Harvest`, `Wealth Abundance`, `Wealth Voyage`, and `Wealth Focus Flexi 1/3/5`
+  - the adjacent HSBC scheduled-redemption `payout frequency eligibility` seam is now landed for `Wealth Abundance`, `Wealth Voyage`, and `Wealth Focus Flexi 1/3/5`
+  - the adjacent HSBC scheduled-redemption `minimum start policy year` seam is now landed for `Goal Builder II`, `Wealth Harvest`, `Wealth Abundance`, `Wealth Voyage`, and `Wealth Focus Flexi 1/3/5`
+  - the AIA PRE / SmartRetire scheduled-redemption `target retirement age` start-gate seam is now landed for both PRE corridors and `Manulife SmartRetire (V) - Income`
+  - `AIA Elite Secure Income` remains deferred from this seam because its start condition is a separate selected payout-age / Secure Monthly Income contract
+  - `HSBC Life Flexi Protector` is now landed on the first-step manual scheduled-redemption plus annual-threshold slice, so it is no longer part of the adjacent HSBC scheduled-withdrawal blocker set
+  - `Goal Builder II` is now landed on the per-occurrence scheduled-redemption seam, so the adjacent HSBC payout family is no longer the live cursor
+  - the table-free Tokio one-off withdrawal family now looks exhausted after `#goClassic`, `#goClassic Secure`, `TM Atlas Wealth`, and `Affluence@Future`
+  - the clean Tokio premium-variation floor family now looks exhausted across the prepared-summary set already screened in this lane after `#goAssure`
+  - `FWD Invest First Max` is now landed on the same explicit premium-variation start/floor seam with the published month-25 gate and SGD `annual 6000 / semi-annual 3000 / quarterly 1500 / monthly 500` floor
+  - the quick adjacent FWD brochure screen did not surface the same fixed minimum regular-premium table cleanly for `Invest First Horizon`, `Invest First Summit`, or `Invest Flexi Elite`, so they are not cheap same-shape fanouts yet
+  - next move should be a fresh bounded shared-mechanic screen rather than more blind premium-variation fanout
+
+## Verification Anchors
+
+Use the smallest gates that prove the active slice.
+
+- Parser gate:
+  - touched parser test(s)
+- Seed/support gate:
+  - touched template-to-policy and seeded runtime proofs when product-level support or warnings change
+  - targeted `src/lib/ilp-catalog/templateToPolicy.test.ts` case(s)
+- Runtime gate:
+  - targeted `src/lib/calculations/ilp.test.ts` case(s)
+- Catalog gate:
+  - `npm run -s catalog:build` only when seeded/generated catalog consumers need the new support surface
+- Optional sanity:
+  - JSON parse of generated catalog artifacts
+
+## Policy Coverage Notes
+
+This is not a full 92-product matrix. It is the working coverage view for policies touched or actively adjacent to this lane.
+
+### Singlife Life Stage Benefit Waiver Family
+
+- [x] `Singlife Savvy Invest II`
+  - landed:
+    - in-MIP partial-withdrawal charge waiver via `chargeWaived`
+    - post-MIP loyalty-bonus eligibility preservation via `bonusSuspensionWaived`
+  - still manual:
+    - Life Stage Benefit timing / proof / use-count administration
+    - Appendix B allowable partial-withdrawal-limit override mechanics
+
+### Singlife Free Withdrawal Waiver Family
+
+- [x] `Singlife Legacy Invest`
+  - landed:
+    - in-charge-period partial-withdrawal charge waiver via `chargeWaived`
+  - still manual:
+    - life-stage and non-life-stage benefit qualification
+    - sequencing across the two free-withdrawal benefits
+
+### Income Withdrawal Access Option Waiver Subset
+
+- [x] `Income Legacy Flex Solitaire`
+  - landed:
+    - qualifying premium-account Withdrawal Access Option withdrawals can be represented with `chargeWaived`
+    - qualifying Withdrawal Access Option withdrawals and qualifying top-up-account withdrawals can be represented with `bonusSuspensionWaived`
+  - still manual:
+    - withdrawal timing, 5%-of-prevailing-premium-account-value cap, and once-per-policy-year administration
+    - adjusted-sum-assured exceptions and No Lapse Guarantee exceptions after qualifying withdrawals
+    - top-up-account first-12-month charge timing
+    - withdrawal-limit mechanics
+
+### Etiqa Monthly Loyalty Family
+
+- [x] `Invest Wealth Purpose`
+- [x] `Invest smart flex II`
+- [x] `Invest Smart Vista`
+
+### Income 12-Month Loyalty Lookback Family
+
+- [x] `Invest Flex`
+- [x] `Invest Flex Vantage`
+- [x] `Invest Flex TriVantage`
+- [x] `Invest flex wealth II`
+- [x] `Invest flex prime II`
+- [x] `Invest flex pro`
+- [x] `Invest vista`
+
+### Income Life Events Preserved-Basis Family
+
+- [x] `Income Invest Flex`
+- [x] `Income Invest Flex Vantage`
+- [x] `Income Invest Flex TriVantage`
+
+Landed:
+- qualifying Life Events withdrawals can be represented with `chargeWaived` plus `bonusSuspensionWaived`
+- qualifying represented withdrawals preserve modeled loyalty-bonus basis through `preservedValueRules`
+
+Still manual:
+- benefit timing / proof / usage limits
+- 10% of prevailing policy value cap
+- pre-projection qualified-withdrawal history
+
+### Great Eastern Current Protection Family
+
+- [x] `GREAT Life Advantage 4`
+- [x] `GREAT Wealth Advantage 4`
+- [x] `Investment-linked Insurance Plan 2`
+
+Landed:
+- current death / terminal-illness / TPD benefit corridor on the seeded/runtime path
+- current TPD cap handling through manual remaining aggregate TPD cap input
+- current admitted-state TI payable amount on the supported full-termination TI corridor for `GREAT Wealth Advantage 4` and `Investment-linked Insurance Plan 2`
+
+Still manual:
+- claim exclusions, settlement, and broader post-claim continuation
+- `GREAT Life Advantage 4` rider-side continuation / deduction and non-lapse debt-carry behavior
+- `Investment-linked Insurance Plan 2` TPD continuation-event state, rider-premium deduction treatment, and broader change-of-life-assured / AFR administration
+
+### Mature Finite Current-Only Mode
+
+- [x] `Manulife SmartRetire (V) - Sum`
+- [x] `Manulife SmartRetire (V) - Income`
+
+Landed:
+- mature finite policies stay editable and analyzable in `current-only` mode once they are no longer projection-eligible
+- summary cards and comparison rows remain available on the same page
+- SmartRetire later-corridor current death-benefit and refund-gate inputs still render on the current-only surface
+
+Still unavailable:
+- projection table, fee waterfall, NPV, decision panel, and opportunity-cost panels
+- any claim-settlement or post-claim continuation behavior beyond the existing current snapshot kernels
+
+### AIA No-Lapse Blocked Set
+
+- [ ] `AIA Platinum Wealth Elite 2.0`
+- [ ] `AIA Platinum Wealth Legacy`
+- [ ] `AIA Pro Lifetime Protector (II)`
+
+Block reason:
+- `No Lapse Privilege` means current auto-lapse seam is not honest for these products.
+
+### FWD Repayment-Clearance Family
+
+- [x] `FWD Invest Flexi VII`
+- [x] `FWD Invest First Horizon`
+- [ ] Further fanout only if the source publishes the same repayment-precedence contract
+
+### Tokio Manual Charge-Waiver Family
+
+- [x] `#goAssure`
+- [x] `Wealth Pro (II)`
+- [x] `Wealth Max (II)`
+- [x] `Wealth Flexi-Link 3.12`
+- [x] `Wealth Flexi-Link 5.10`
+
+Still manual:
+- approval timing / proof / exclusions
+- first-assured coverage
+- discretionary variation of benefit grant counts
+- product-specific withdrawal-limit side effects beyond simple charge waiver
+
+## Working Notes
+
+- Generated catalog output may change during this lane, but generated refresh is not itself progress.
+- If a candidate only improves warnings, metadata, or parser phrasing, skip it.
+- If a product needs a broader new state model, note it here and do not fake support with parser-only changes.
+- Add rejected candidates here when they are tempting enough that we might otherwise waste time re-screening them later.

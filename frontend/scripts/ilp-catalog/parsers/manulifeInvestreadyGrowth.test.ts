@@ -28,26 +28,37 @@ describe('parseManulifeInvestreadyGrowth', () => {
     expect(product.modeledEconomics).toEqual([
       'kernel:protected-base-assurance',
       'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'kernel:current-residual-death-benefit-after-ti-estimate',
+      'branch:manulife-investready-growth-welcome-bonus',
       'branch:manulife-investready-growth-annual-premium-bonus',
+      'branch:manulife-investready-growth-premium-bonus',
+      'branch:manulife-investready-growth-booster-bonus',
+      'branch:manulife-investready-growth-loyalty-bonus',
       'branch:manulife-investready-growth-administrative-charge',
       'branch:manulife-investready-growth-premium-shortfall-charge',
       'branch:manulife-investready-growth-top-up-charge',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
       'branch:manulife-investready-growth-partial-withdrawal-charge',
       'branch:manulife-investready-growth-full-surrender-charge',
+      'kernel:top-up-amount-gate-block',
       'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-growth-post-flexi-premium-variation')
-    expect(product.metadataOnlyBehaviors).toContain('manulife-investready-growth-ti-acceleration-limits-and-claim-timing')
+    expect(product.metadataOnlyBehaviors).toContain('manulife-investready-growth-ti-claim-admission-settlement-and-notification-timing')
     expect(product.metadataOnlyBehaviors).toContain('manulife-investready-growth-reinstatement-underwriting-and-pre-existing-condition-exclusions')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-growth-reinstatement')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-growth-benefit-payout-handling')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-growth-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-growth-annual-premium-bonus')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-growth-welcome-bonus')
+    expect(product.metadataOnlyBehaviors).not.toContain('manulife-investready-growth-loyalty-bonus')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-mip-15-flexi-10',
       'sgd-mip-20-flexi-10',
     ])
-    expect(product.warnings.some((warning) => warning.includes('amount-owed deductions'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('current-state death-benefit estimate net of manually entered current amount owing'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('current terminal-illness benefit estimate as the lower of the modeled current death benefit, a manual remaining aggregate TI cap, and a manual remaining aggregate TI + CI cap'))).toBe(true)
     expect(product.warnings.some((warning) => warning.includes('pre-existing-condition exclusions'))).toBe(true)
 
     const firstVariant = product.variants[0]
@@ -64,6 +75,18 @@ describe('parseManulifeInvestreadyGrowth', () => {
         ],
       }),
     ])
+    expect(firstVariant?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'policy-value',
+          minimumValue: 1_000,
+        },
+      ],
+      minimumTopUpAmount: 2_500,
+    })
     expect(firstVariant?.feeRules).toEqual([
       expect.objectContaining({
         id: 'cost-of-insurance',
@@ -104,6 +127,14 @@ describe('parseManulifeInvestreadyGrowth', () => {
     })
     expect(firstVariant?.bonuses).toEqual([
       expect.objectContaining({
+        id: 'welcome-bonus',
+        mode: 'premium-allocation',
+        tieredRates: [
+          { currency: 'SGD', minAnnualPremium: 3_600, maxAnnualPremium: 9_599.99, rate: 0.15 },
+          { currency: 'SGD', minAnnualPremium: 9_600, maxAnnualPremium: null, rate: 0.45 },
+        ],
+      }),
+      expect.objectContaining({
         id: 'annual-premium-bonus',
         mode: 'premium-allocation',
         rate: 0.03,
@@ -111,6 +142,52 @@ describe('parseManulifeInvestreadyGrowth', () => {
         endPolicyYear: 1,
         requiresPremiumsPaidUpToDate: true,
         requiredRegularPremiumPaymentFrequency: 'annual',
+      }),
+      expect.objectContaining({
+        id: 'premium-bonus',
+        mode: 'premium-allocation',
+        startPolicyYear: 11,
+        endPolicyYear: null,
+        rate: 0.02,
+        requiresPremiumsPaidUpToDate: true,
+        qualificationRules: [
+          {
+            trigger: 'partial-withdrawal',
+            accountIds: ['policy'],
+            disqualifyWhenCumulativeAmountExceeds: 'annualised-regular-premium-at-issue',
+            countFromPolicyYear: 16,
+          },
+        ],
+      }),
+      expect.objectContaining({
+        id: 'booster-bonus',
+        mode: 'one-time',
+        oneTimePayoutBasis: 'committed-annual-premium-at-issue',
+        startPolicyYear: 15,
+        endPolicyYear: 15,
+        rate: 0.35,
+        qualificationRules: [
+          {
+            formula: 'cumulative-effective-account-value-ratio',
+            maximumRatio: 1,
+            includeReinvestedDividendWithdrawals: true,
+          },
+          {
+            trigger: 'premium-holiday',
+            disqualifyThroughPolicyYear: 10,
+          },
+        ],
+      }),
+      expect.objectContaining({
+        id: 'loyalty-bonus',
+        mode: 'annual-rate',
+        startPolicyYear: 16,
+        endPolicyYear: null,
+        rate: 0.003,
+        qualificationRules: [
+          { trigger: 'partial-withdrawal', disqualifyInReferenceYear: true },
+          { trigger: 'reinvested-dividend-withdrawal', disqualifyInReferenceYear: true },
+        ],
       }),
     ])
     expect(firstVariant?.eventChargeRules).toEqual([
@@ -160,13 +237,60 @@ describe('parseManulifeInvestreadyGrowth', () => {
       }),
     ])
     expect(firstVariant?.eecTable).toEqual([1, 1, 0.9, 0.8, 0.62, 0.49, 0.46, 0.32, 0.26, 0.21, 0.18, 0.15, 0.12, 0.08, 0.08])
-    expect(firstVariant?.warnings).toContain('15 Years Flexi 10 is cataloged as a supported V1 corridor. The parser captures the published administrative-charge path using the accumulated minimum-premium base, the one-time annual-premium bonus when the seed uses annual premium frequency, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the current-state death-benefit estimate from that same floor, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the in-MIP partial-withdrawal charge schedule, the in-MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.')
+    expect(firstVariant?.warnings).toContain('15 Years Flexi 10 is cataloged as a supported V1 corridor. The parser captures the published Welcome Bonus tiers, the one-time annual-premium bonus when the seed uses annual premium frequency, the published Premium Bonus from Flexi Start with the post-MIP cumulative-withdrawal threshold subset, the published Booster Bonus end-of-MIP qualification including reinvested-dividend-withdrawal addbacks, the published Loyalty Bonus rate with the 12-month withdrawal disqualification subset, the administrative-charge path using the accumulated minimum-premium base, the 101% paid-premium-floor COI formula after you enter the insured-life details and current premium bases, the current-state death-benefit estimate net of manually entered current amount owing, the current terminal-illness benefit estimate as the lower of the modeled current death benefit, a manual remaining aggregate TI cap, and a manual remaining aggregate TI + CI cap, subject to the published S$1,000,000 TI limit, the current residual death-benefit estimate after a TI claim today for the supported acceleration corridor, the premium-shortfall charge before Flexi Start, the prevailing 5.0% top-up charge, the published $2,500 minimum on explicit ad-hoc top-ups, the published $500 minimum on explicit one-off partial withdrawals with the $1,000 residual policy-value floor, the in-MIP partial-withdrawal charge schedule, the in-MIP full-surrender charge schedule, and the reinvest-default distribution-mode assumption surface.')
     expect(firstVariant?.warnings).toContain('The administrative-charge base is interpreted as the future value of annualised regular basic premiums payable through the 10-year Flexi Start window, accumulated at 6% per annum. Keep monthly contribution aligned to the committed regular basic premium because post-Flexi premium variation remains informational only in V1.')
+    expect(firstVariant?.warnings).toContain('Booster Bonus end-of-MIP qualification is modeled for the seeded reinvest-default corridor using projected account value, partial withdrawals, cash distributions, reinvested-dividend withdrawals, and deducted COI history; terminal-illness claim admission / settlement / notification valuation timing, the separate partial-withdrawal flexibility corridor, and fund-level management charges remain informational only.')
     expect(firstVariant?.unsupportedItems).toContain('The partial-withdrawal flexibility corridor from policy year 6 and the life-stage-event waiver remain informational only.')
-    expect(firstVariant?.unsupportedItems).toContain('Terminal-illness acceleration limits, amount-owed deductions, claim-notification valuation timing, and post-claim continuation remain informational only beyond the current death-benefit estimate.')
+    expect(firstVariant?.unsupportedItems).toContain('Current amount owing, the remaining aggregate TI cap, and the remaining aggregate TI + CI cap must still be entered manually for the current death / terminal-illness and residual-after-TI estimates; claim-notification valuation timing, TI claim admission, and settlement remain informational only.')
 
     const secondVariant = product.variants[1]
     expect(secondVariant?.mipLength).toBe(20)
+    expect(secondVariant?.bonuses[0]).toEqual(expect.objectContaining({
+      id: 'welcome-bonus',
+      tieredRates: [
+        { currency: 'SGD', minAnnualPremium: 2_400, maxAnnualPremium: 9_599.99, rate: 0.3 },
+        { currency: 'SGD', minAnnualPremium: 9_600, maxAnnualPremium: null, rate: 0.6 },
+      ],
+    }))
+    expect(secondVariant?.bonuses[2]).toEqual(expect.objectContaining({
+      id: 'premium-bonus',
+      startPolicyYear: 11,
+      rate: 0.02,
+      qualificationRules: [
+        {
+          trigger: 'partial-withdrawal',
+          accountIds: ['policy'],
+          disqualifyWhenCumulativeAmountExceeds: 'annualised-regular-premium-at-issue',
+          countFromPolicyYear: 21,
+        },
+      ],
+    }))
+    expect(secondVariant?.bonuses[3]).toEqual(expect.objectContaining({
+      id: 'booster-bonus',
+      startPolicyYear: 20,
+      endPolicyYear: 20,
+      rate: 0.35,
+        qualificationRules: [
+          {
+            formula: 'cumulative-effective-account-value-ratio',
+            maximumRatio: 1,
+            includeReinvestedDividendWithdrawals: true,
+          },
+          {
+            trigger: 'premium-holiday',
+          disqualifyThroughPolicyYear: 10,
+        },
+      ],
+    }))
+    expect(secondVariant?.bonuses[4]).toEqual(expect.objectContaining({
+      id: 'loyalty-bonus',
+      startPolicyYear: 21,
+      rate: 0.003,
+      qualificationRules: [
+        { trigger: 'partial-withdrawal', disqualifyInReferenceYear: true },
+        { trigger: 'reinvested-dividend-withdrawal', disqualifyInReferenceYear: true },
+      ],
+    }))
     expect(secondVariant?.feeRules[1]).toEqual(expect.objectContaining({
       id: 'administrative-charge',
       rateSchedule: [

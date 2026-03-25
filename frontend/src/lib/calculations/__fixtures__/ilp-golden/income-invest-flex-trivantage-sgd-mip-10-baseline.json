@@ -16,7 +16,17 @@
       "branch:income-vs3-investment-bonus",
       "branch:income-vs3-loyalty-bonus",
       "branch:income-vs3-surrender-charge",
-      "kernel:distribution-mode-assumption"
+      "kernel:current-death-benefit-estimate",
+      "kernel:current-ti-benefit-estimate",
+      "kernel:distribution-mode-assumption",
+      "kernel:bonus-lookback-qualification-window",
+      "branch:income-vs3-premium-holiday-charge",
+      "branch:income-vs3-partial-withdrawal-charge",
+      "branch:income-vs3-ad-hoc-top-up-routing",
+      "kernel:regular-premium-variation-start-gate",
+      "kernel:regular-premium-variation-minimum-floor",
+      "kernel:regular-premium-variation-premium-holiday-block",
+      "kernel:bonus-preserved-value-cohorts"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "VS3_Summary.pdf",
@@ -156,10 +166,24 @@
         "startPolicyYear": 10,
         "endPolicyYear": null,
         "tieredRates": [],
-        "suspensionRules": [
+        "qualificationRules": [
           {
-            "trigger": "premium-holiday",
-            "suspensionMonths": 12
+            "trigger": "partial-withdrawal",
+            "accountIds": [
+              "policy"
+            ],
+            "disqualifyIfAnyInLookbackMonths": 12
+          }
+        ],
+        "suspensionRules": [],
+        "preservedValueRules": [
+          {
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "accountIds": [
+              "policy"
+            ],
+            "requiresBonusSuspensionWaived": true
           }
         ]
       }
@@ -359,6 +383,9 @@
       "structureStatus": "structured",
       "modeledEconomics": [
         "kernel:protected-base-assurance",
+        "kernel:current-death-benefit-estimate",
+        "kernel:current-ti-benefit-estimate",
+        "kernel:bonus-lookback-qualification-window",
         "branch:income-vs3-policy-fee",
         "branch:income-vs3-death-ti-insurance-cover-charge",
         "branch:income-vs3-regular-premium-allocation-uplift",
@@ -368,6 +395,10 @@
         "branch:income-vs3-partial-withdrawal-charge",
         "branch:income-vs3-surrender-charge",
         "branch:income-vs3-ad-hoc-top-up-routing",
+        "kernel:regular-premium-variation-start-gate",
+        "kernel:regular-premium-variation-minimum-floor",
+        "kernel:regular-premium-variation-premium-holiday-block",
+        "kernel:bonus-preserved-value-cohorts",
         "kernel:distribution-mode-assumption"
       ],
       "metadataOnlyBehaviors": [
@@ -379,23 +410,24 @@
       ]
     },
     "catalogWarnings": [
-      "Invest Flex TriVantage is cataloged as a supported V1 product. The parser captures the regular-premium fee, protection charge, charge and bonus path, and reinvest-default distribution support, while secondary-insured replacement mechanics, life-event eligibility administration, and fund-level distribution-election constraints remain informational only.",
-      "Invest Flex TriVantage is cataloged as a supported V1 product. The parser captures the policy fee, death / TI insurance cover charge after the 2nd policy anniversary once insured-life inputs are supplied, regular-premium allocation uplifts, investment bonus, loyalty bonus, top-up routing, premium-holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support.",
-      "Qualifying Life Events Withdrawal Benefit withdrawals can be represented in V1 by using the event-level charge and bonus-suspension waiver overrides, while eligibility timing, documentary proof, and usage-count limits remain manual.",
-      "Secondary-insured replacement mechanics, future premium option, and the published minimum distribution amount remain informational only.",
+      "Invest Flex TriVantage is cataloged as a supported V1 product. The parser captures the regular-premium fee, protection charge, the current-state death and terminal-illness benefit amount during the first policy year as policy value less a manual current excluded claim bonus value and after the first policy year as the higher of 101% of net premiums paid or policy value, the current admitted-state TI payable amount through the published full-termination TI corridor after manual claim-amount entry, an admitted-and-settled TI claim as a current policy-termination state, charge and bonus path, and reinvest-default distribution support, while terminal-illness definitions / exclusions / settlement, secondary-insured replacement mechanics, life-event eligibility administration, and fund-level distribution-election constraints remain informational only.",
+      "Invest Flex TriVantage is cataloged as a supported V1 product. The parser captures the policy fee, death / TI insurance cover charge after the 2nd policy anniversary once insured-life inputs are supplied, the current-state death and terminal-illness benefit amount during the first policy year as policy value less a manual current excluded claim bonus value and after the first policy year as the higher of 101% of net premiums paid or policy value, regular-premium allocation uplifts, investment bonus, loyalty bonus, premium-variation start and minimum-floor gating with active premium-holiday variation blocking, top-up routing, premium-holiday charge, partial-withdrawal charge, surrender-charge schedules, and reinvest-default distribution support.",
+      "Qualifying Life Events Withdrawal Benefit withdrawals can be represented in V1 by using the event-level charge and bonus-suspension waiver overrides, which preserves the modeled loyalty-bonus basis after the withdrawal, while eligibility timing, documentary proof, the 10%-of-policy-value cap, and usage-count limits remain manual.",
+      "Secondary-insured replacement mechanics, future premium option, the published minimum distribution amount, and insurer-defined minimum premium-change increments remain informational only. The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.",
       "Secondary insured appointment, removal, and insured-replacement mechanics remain informational only.",
       "Life Events Withdrawal Benefit eligibility timing, documentary proof, and use-count limits remain manual.",
       "Future Premium Option remains informational only.",
-      "The published minimum distribution amount and fund-level payout processing remain informational only."
+      "The published minimum distribution amount and fund-level payout processing remain informational only.",
+      "The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state, but terminal-illness definitions, exclusions, and insurer-side settlement mechanics remain informational only."
     ]
   },
   "expected": {
     "summary": {
       "totalPremiumsPaid": 97200,
-      "totalFeesCharged": 4911.18,
-      "totalBonusesReceived": 328.25,
-      "netFeeDrag": 4582.93,
+      "totalFeesCharged": 4911.51,
+      "totalBonusesReceived": 0,
+      "netFeeDrag": 4911.51,
       "currentSurrenderValue": 16500,
       "cancelNowPenalty": 13500
     },
@@ -447,34 +479,34 @@
           "exitYear": 4,
           "policyYear": 10,
           "eecRate": 0.05,
-          "eecCharge": 3925.86,
-          "pvEec": 2995.02,
-          "npvGrossFees": 4072.97,
-          "npvBonuses": 250.42,
-          "totalNpvFees": 6817.57,
-          "netSurrenderValue": 74591.4,
+          "eecCharge": 3908.56,
+          "pvEec": 2981.82,
+          "npvGrossFees": 4073.22,
+          "npvBonuses": 0,
+          "totalNpvFees": 7055.05,
+          "netSurrenderValue": 74262.64,
           "totalContributions": 97200
         }
       ],
       "bestExitYear": 4,
-      "bestExitNpvFees": 6817.57,
+      "bestExitNpvFees": 7055.05,
       "holdToMip": {
-        "npvGrossFees": 4072.97,
-        "npvBonuses": 250.42,
-        "totalNpvFees": 6817.57,
-        "finalValue": 78517.26,
+        "npvGrossFees": 4073.22,
+        "npvBonuses": 0,
+        "totalNpvFees": 7055.05,
+        "finalValue": 78171.2,
         "totalContributions": 97200
       }
     },
     "opportunityCost": {
       "alternativePortfolioValue": 69579.52,
-      "ilpValueAtHorizon": 78517.26,
-      "difference": -8937.74,
+      "ilpValueAtHorizon": 78171.2,
+      "difference": -8591.68,
       "atBestExit": {
         "exitYear": 4,
-        "alternativeValue": 74591.4,
-        "ilpValueAtHorizon": 78517.26,
-        "difference": -3925.86
+        "alternativeValue": 74262.64,
+        "ilpValueAtHorizon": 78171.2,
+        "difference": -3908.56
       }
     },
     "projections": {
@@ -561,23 +593,23 @@
             "policyYear": 10,
             "annualContribution": 10800,
             "annualWithdrawals": 0,
-            "combinedValue": 73821.02,
+            "combinedValue": 73498.91,
             "eecRate": 0.05,
-            "eecCharge": 3691.05,
-            "surrenderValue": 70129.97,
+            "eecCharge": 3674.95,
+            "surrenderValue": 69823.97,
             "cumulativePremiums": 97200,
-            "cumulativeGrossFees": 4786.75,
-            "cumulativeBonuses": 312.96,
+            "cumulativeGrossFees": 4787.06,
+            "cumulativeBonuses": 0,
             "accounts": [
               {
                 "accountId": "policy",
                 "open": 62591.91,
                 "contributionAmount": 10800,
-                "grossFee": 1612.3,
-                "bonusCredit": 312.96,
-                "netFee": 1299.34,
+                "grossFee": 1612.61,
+                "bonusCredit": 0,
+                "netFee": 1612.61,
                 "withdrawalAmount": 0,
-                "close": 73821.02
+                "close": 73498.91
               }
             ]
           }
@@ -666,23 +698,23 @@
             "policyYear": 10,
             "annualContribution": 10800,
             "annualWithdrawals": 0,
-            "combinedValue": 78517.26,
+            "combinedValue": 78171.2,
             "eecRate": 0.05,
-            "eecCharge": 3925.86,
-            "surrenderValue": 74591.4,
+            "eecCharge": 3908.56,
+            "surrenderValue": 74262.64,
             "cumulativePremiums": 97200,
-            "cumulativeGrossFees": 4911.18,
-            "cumulativeBonuses": 328.25,
+            "cumulativeGrossFees": 4911.51,
+            "cumulativeBonuses": 0,
             "accounts": [
               {
                 "accountId": "policy",
                 "open": 65649.66,
                 "contributionAmount": 10800,
-                "grossFee": 1681.23,
-                "bonusCredit": 328.25,
-                "netFee": 1352.98,
+                "grossFee": 1681.57,
+                "bonusCredit": 0,
+                "netFee": 1681.57,
                 "withdrawalAmount": 0,
-                "close": 78517.26
+                "close": 78171.2
               }
             ]
           }
@@ -771,23 +803,23 @@
             "policyYear": 10,
             "annualContribution": 10800,
             "annualWithdrawals": 0,
-            "combinedValue": 83044.7,
+            "combinedValue": 82675.54,
             "eecRate": 0.05,
-            "eecCharge": 4152.24,
-            "surrenderValue": 78892.47,
+            "eecCharge": 4133.78,
+            "surrenderValue": 78541.77,
             "cumulativePremiums": 97200,
-            "cumulativeGrossFees": 5027.64,
-            "cumulativeBonuses": 342.73,
+            "cumulativeGrossFees": 5027.99,
+            "cumulativeBonuses": 0,
             "accounts": [
               {
                 "accountId": "policy",
                 "open": 68545.63,
                 "contributionAmount": 10800,
-                "grossFee": 1746.44,
-                "bonusCredit": 342.73,
-                "netFee": 1403.71,
+                "grossFee": 1746.79,
+                "bonusCredit": 0,
+                "netFee": 1746.79,
                 "withdrawalAmount": 0,
-                "close": 83044.7
+                "close": 82675.54
               }
             ]
           }

@@ -31,11 +31,18 @@ describe('parseTokioMarineWealthFlexi', () => {
     expect(product.modeledEconomics).toContain('tokio-policy-charge-on-accumulation-account')
     expect(product.modeledEconomics).toContain('tokio-admin-charge-on-accumulation-account')
     expect(product.modeledEconomics).toContain('branch:tokio-wealth-flexi-advanced-death-monthly-protection-charge')
+    expect(product.modeledEconomics).toContain('branch:tokio-current-only-multi-life-life-state')
     expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(product.modeledEconomics).toContain('kernel:minimum-recurring-single-premium-start-month')
+    expect(product.modeledEconomics).toContain('kernel:minimum-recurring-single-premium-amount')
+    expect(product.modeledEconomics).toContain('kernel:committed-premium-rsp-resumption-gate')
+    expect(product.modeledEconomics).toContain('kernel:top-up-start-policy-month-block')
+    expect(product.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
+    expect(product.modeledEconomics).toContain('kernel:partial-withdrawal-maximum-amount-block')
+    expect(product.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
     expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-advanced-death-payout-handling')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-benefit-payout-handling')
-    expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-multiple-life-last-life-settlement')
     expect(product.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-change-of-life-assured-and-life-replacement-administration')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-multiple-life-and-life-replacement-administration')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-life-benefit-rider')
@@ -51,6 +58,52 @@ describe('parseTokioMarineWealthFlexi', () => {
     expect(advancedVariant).toBeDefined()
     expect(riderVariant).toBeDefined()
     expect(basicVariant?.icpMonths).toBe(1)
+    expect(basicVariant?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumRecurringSinglePremiumStartPolicyMonth: 13,
+      minimumRecurringSinglePremiumMonthlyAmount: 50,
+      minimumPartialWithdrawalStartPolicyMonthByAccount: [
+        { accountId: 'accumulation', startPolicyMonth: 25 },
+        { accountId: 'topup', startPolicyMonth: 25 },
+      ],
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalMaximumAmountRules: [
+        {
+          activeWindow: 'during-mip',
+          accountId: 'accumulation',
+          basis: 'account-value-less-prior-withdrawals',
+          startPolicyYear: 3,
+          endPolicyYear: 3,
+          maximumValueRate: 0.3,
+        },
+        {
+          activeWindow: 'during-mip',
+          accountId: 'accumulation',
+          basis: 'account-value-less-prior-withdrawals',
+          startPolicyYear: 4,
+          endPolicyYear: 4,
+          maximumValueRate: 0.4,
+        },
+        {
+          activeWindow: 'during-mip',
+          accountId: 'accumulation',
+          basis: 'account-value-less-prior-withdrawals',
+          startPolicyYear: 5,
+          endPolicyYear: 9,
+          maximumValueRate: 0.5,
+        },
+      ],
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'policy-value',
+          minimumValue: 3_000,
+        },
+      ],
+      minimumTopUpStartPolicyMonth: 13,
+      minimumTopUpAmount: 1_000,
+      requiresCommencementPremiumForRecurringSinglePremiumResumption: true,
+    })
     expect(basicVariant?.accounts.map((account) => account.id)).toEqual(['accumulation', 'topup'])
     expect(basicVariant?.accounts[0]?.subjectToEec).toBe(true)
     expect(basicVariant?.feeRules).toEqual(
@@ -160,7 +213,7 @@ describe('parseTokioMarineWealthFlexi', () => {
     )
     expect(advancedVariant?.feeRules.filter((rule) => rule.id === 'monthly-protection-charge')).toHaveLength(1)
     expect(advancedVariant?.warnings).toContain(
-      'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base.',
+      'The Advanced Death variant also models the published Monthly Protection Charge during the minimum investment period after you enter the insured-life details and current net premium base with static current multi-life last-life handling.',
     )
     expect(riderVariant?.feeRules).toEqual(
       expect.arrayContaining([
@@ -182,13 +235,16 @@ describe('parseTokioMarineWealthFlexi', () => {
     )
     expect(riderVariant?.feeRules.filter((rule) => rule.id === 'monthly-protection-charge')).toHaveLength(1)
     expect(riderVariant?.warnings).toContain(
-      'The Advanced Death with Life Benefit Rider variant also models the published Monthly Protection Charge after you enter the insured-life details and current net premium base through the policy anniversary immediately after age 99.',
+      'The Advanced Death with Life Benefit Rider variant also models the published Monthly Protection Charge after you enter the insured-life details and current net premium base through the policy anniversary immediately after age 99 with oldest-life MPC rating and youngest-life rider age gating on the same static current multi-life surface.',
     )
     expect(riderVariant?.unsupportedItems).toContain(
-      'Advanced Death Benefit and Life Benefit Rider payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, multiple-life last-life settlement, oldest/youngest-life rider-term and Monthly Protection Charge recalculation, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+      'Advanced Death Benefit and Life Benefit Rider payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
     )
     expect(advancedVariant?.unsupportedItems).toContain(
-      'Advanced Death Benefit payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, Advanced Death Benefit with Life Benefit Rider selection, multiple-life last-life settlement, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+      'Advanced Death Benefit payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, Advanced Death Benefit with Life Benefit Rider selection, and change-of-life-assured / life-replacement administration remain metadata-only for this product.',
+    )
+    expect(basicVariant?.unsupportedItems).toContain(
+      'Selected-fund minimum-holding rules, regular-withdrawal administration, and policy-year-10 full Accumulation Units Account withdrawal handling beyond the current account-balance surface remain informational only.',
     )
     expect(riderVariant?.sourceRefs.some((ref) => ref.page === 15)).toBe(true)
     expect(advancedVariant?.sourceRefs.some((ref) => ref.page === 15)).toBe(true)

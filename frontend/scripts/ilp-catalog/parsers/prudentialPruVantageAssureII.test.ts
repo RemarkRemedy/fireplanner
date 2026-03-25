@@ -25,8 +25,11 @@ describe('parsePrudentialPruVantageAssureII', () => {
     expect(product.productName).toBe('PRUVantage Assure II')
     expect(product.supportStatus).toBe('supported')
     expect(product.economicsStatus).toBe('supported')
+    expect(product.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
+    expect(product.modeledEconomics).toContain('kernel:current-accidental-disability-benefit-estimate')
     expect(product.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(product.metadataOnlyBehaviors).toEqual([
+      'pruvantage-assure-ii-death-claim-exclusions',
       'premium-pass-wealth-share-change-of-life-assured-options',
     ])
 
@@ -59,5 +62,14 @@ describe('parsePrudentialPruVantageAssureII', () => {
       ]),
       sourceRefs: expect.any(Array),
     })
+    expect(term15Variant?.warnings).toContain(
+      'The current-state death-benefit estimate is modeled as the higher of current sum assured, current Wealth Assure Value, or current Growth/Flex account value, plus Additional Investment Account value, after manual current amount owing.',
+    )
+    expect(term15Variant?.warnings).toContain(
+      'The payable-now accidental-disability snapshot is modeled from the same current corridor once the current accidental-disability payout stage is filled.',
+    )
+    expect(term15Variant?.unsupportedItems).toContain(
+      'The current-state death-benefit estimate needs a manual current amount owing input because outstanding debt is not reconstructed from history in V1.',
+    )
   }, 30_000)
 })

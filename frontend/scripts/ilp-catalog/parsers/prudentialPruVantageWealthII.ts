@@ -148,6 +148,7 @@ function buildWelcomeBonuses(term: PremiumTerm, page4: IlpCatalogSourceRef, page
 
 function buildVariant(document: ExtractedPdfDocument, term: PremiumTerm): IlpTemplateVariant {
   const page2 = sourceRef(2, 'Accounts', snippetNear(document, 2, 'Accounts:'))
+  const page3 = sourceRef(3, 'Death Benefit', snippetNear(document, 3, 'Death Benefit:'))
   const page4 = sourceRef(4, 'Welcome Bonus', snippetNear(document, 4, 'Welcome Bonus Tables'))
   const page4Dividends = sourceRef(4, 'Dividend-paying funds', snippetNear(document, 4, 'Funds that distribute dividends only', 8))
   const page5 = sourceRef(5, 'Loyalty Bonus and Administration Charge', snippetNear(document, 5, 'Loyalty Bonus'))
@@ -316,11 +317,18 @@ function buildVariant(document: ExtractedPdfDocument, term: PremiumTerm): IlpTem
     warnings: [
       'Set the actual Growth/Flex regular-premium split before trusting the fee-drag output. The seeded draft defaults to 50/50.',
       dividendElectionNote,
+      'The current-state death-benefit estimate is modeled as the higher of the 101%-of-paid-regular-premiums floor net Growth/Flex withdrawals or current Growth/Flex account value, plus Additional Investment Account value, after manual current amount owing.',
+      'The current accidental-death estimate is modeled as the higher of the 105%-of-paid-regular-premiums floor net Growth/Flex withdrawals or current Growth/Flex account value, plus Additional Investment Account value, after manual current amount owing when cash dividend payouts are not active.',
+      'The payable-now accidental-disability snapshot is modeled from the same current corridor once the current accidental-disability payout stage is filled.',
     ],
     unsupportedItems: [
+      'The current-state death-benefit estimate needs a manual current amount owing input because current debt is not reconstructed from history in V1.',
+      'Cash dividend-payout history from the Growth Account is not reconstructed from today’s static snapshot, so the current-state death and accidental-death estimates are omitted whenever manual cash payout mode is active.',
+      'Accidental-death pre-existing-condition / suicide exclusions and other death-claim settlement mechanics remain informational only beyond the modeled current ordinary and accidental-death benefit estimates.',
+      'Accidental-disability deferment timing, staged later-balance release, disability-status revalidation, pre-existing-condition / suicide exclusions, and broader claim settlement mechanics remain informational only beyond the modeled payable-now accidental-disability snapshot.',
       'Premium Pass, Wealth Share, and secondary-life/ownership options remain informational only.',
     ],
-    sourceRefs: [page2, page4, page4Dividends, page5, page10, page11, page12, page14],
+    sourceRefs: [page2, page3, page4, page4Dividends, page5, page10, page11, page12, page14],
   }
 }
 
@@ -339,6 +347,9 @@ export function parsePrudentialPruVantageWealthII(context: ParseContext): IlpCat
     structureStatus: 'structured',
     economicsStatus: 'supported',
     modeledEconomics: [
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
+      'kernel:current-accidental-disability-benefit-estimate',
       'branch:pru-holiday-refund',
       'branch:pru-holiday-fallback',
       'branch:pru-top-up-charge',
@@ -347,12 +358,11 @@ export function parsePrudentialPruVantageWealthII(context: ParseContext): IlpCat
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'premium-pass',
-      'wealth-share',
-      'secondary-life-ownership-options',
+      'pruvantage-wealth-ii-accidental-death-and-claim-exclusions',
+      'premium-pass-wealth-share-secondary-life-options',
     ],
     warnings: [
-      'This template focuses on fee drag, exit economics, and Growth Account dividend elections through the manual distribution-mode kernel. Protection and ownership features are retained as warnings only.',
+      'This template captures fee drag, exit economics, the current-state death-benefit estimate as the higher of the 101%-of-paid-regular-premiums floor net Growth/Flex withdrawals or current Growth/Flex account value plus Additional Investment Account value after manual current amount owing, the current accidental-death estimate as the higher of the 105%-of-paid-regular-premiums floor net Growth/Flex withdrawals or current Growth/Flex account value plus Additional Investment Account value after manual current amount owing when cash dividend payouts are not active, a payable-now accidental-disability snapshot from that same corridor once the current accidental-disability payout stage is filled, and Growth Account dividend-election support through the manual distribution-mode kernel. Accidental-death pre-existing-condition / suicide exclusions, later accidental-disability release timing, Premium Pass, Wealth Share, and secondary-life options remain informational only.',
     ],
     archived: false,
     variants,

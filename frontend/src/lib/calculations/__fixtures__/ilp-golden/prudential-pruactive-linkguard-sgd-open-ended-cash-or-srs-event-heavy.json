@@ -10,7 +10,13 @@
     "coverageTags": [
       "event-heavy",
       "branch:pruactive-linkguard-top-up-premium-charge",
-      "branch:pruactive-linkguard-zero-partial-withdrawal-charge"
+      "branch:pruactive-linkguard-zero-partial-withdrawal-charge",
+      "branch:pruactive-linkguard-premium-year-premium-charge",
+      "branch:pruactive-linkguard-administration-charge",
+      "branch:pruactive-linkguard-combined-assurance-charge",
+      "kernel:current-death-benefit-estimate",
+      "kernel:current-ti-benefit-estimate",
+      "kernel:current-tpd-benefit-estimate"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "PRUActive LinkGuard Product Summary.pdf",
@@ -222,6 +228,9 @@
         "branch:pruactive-linkguard-premium-year-premium-charge",
         "branch:pruactive-linkguard-administration-charge",
         "branch:pruactive-linkguard-combined-assurance-charge",
+        "kernel:current-death-benefit-estimate",
+        "kernel:current-ti-benefit-estimate",
+        "kernel:current-tpd-benefit-estimate",
         "branch:pruactive-linkguard-top-up-premium-charge",
         "branch:pruactive-linkguard-zero-partial-withdrawal-charge"
       ],
@@ -237,12 +246,14 @@
       ]
     },
     "catalogWarnings": [
-      "PRUActive LinkGuard is cataloged as a supported core corridor in V1. The parser models the premium-year regular premium charge schedule, the fixed S$5 monthly administration charge, the guaranteed Appendix A Death / TPD / TI assurance charge, the 3% Investment Booster (Lump Sum) premium charge, and the nil policy-level partial-withdrawal charge path, while retained multiplier options, No Lapse Period debt carry, surrender mechanics, rider charges, and claim-side payout settlement remain metadata-only.",
-      "This supported template models the SGD open-ended core corridor with the premium-year regular premium charge schedule, the fixed S$5 monthly administration charge, the guaranteed Appendix A Death / TPD / TI assurance charge, the 3% Investment Booster (Lump Sum) premium charge, and the nil policy-level partial-withdrawal charge path.",
-      "Optional retention of the Multiplier benefit after age 50, No Lapse Period debt carry, surrender-charge-on-allocated-premiums, and non-core rider charges remain informational only.",
+      "PRUActive LinkGuard is cataloged as a supported core corridor in V1. The parser models the premium-year regular premium charge schedule, the fixed S$5 monthly administration charge, the guaranteed Appendix A Death / TPD / TI assurance charge, the current-state death / terminal-illness / payable-now TPD estimates using manual current sum assured / amount owing / current Accelerated TI payout mode / current TPD settlement stage / post-age-50 retained multiplier status / current remaining TPD balance for later-stage claims, the 3% Investment Booster (Lump Sum) premium charge, and the nil policy-level partial-withdrawal charge path, while No Lapse Period debt carry, surrender mechanics, rider charges, and deeper claim-side payout settlement remain metadata-only.",
+      "This supported template models the SGD open-ended core corridor with the premium-year regular premium charge schedule, the fixed S$5 monthly administration charge, the guaranteed Appendix A Death / TPD / TI assurance charge, the current-state death / terminal-illness / payable-now TPD estimates after entering the current sum assured, amount owing, the current Accelerated TI payout mode, and the current TPD settlement stage, the 3% Investment Booster (Lump Sum) premium charge, and the nil policy-level partial-withdrawal charge path.",
+      "Post-age-50 current death, terminal-illness, and initial TPD estimates also need the retained Multiplier benefit status. Later staged TPD payouts also need the current remaining TPD balance. No Lapse Period debt carry, surrender-charge-on-allocated-premiums, and non-core rider charges remain informational only.",
+      "The current death-benefit estimate is modeled after entering the current sum assured, current amount owing, and, after age 50, the retained Multiplier benefit status.",
+      "The current Accelerated Terminal Illness estimate is modeled after entering the current sum assured, current amount owing, whether the current Accelerated TI payout still matches the death-benefit corridor, and, after age 50, the retained Multiplier benefit status.",
+      "The current Total and Permanent Disability estimate is modeled as the payable-now staged claim amount after entering whether the present TPD claim still matches the death-benefit corridor, whether the currently payable stage is the initial lump sum or the later balance lump sum, and, for later-stage claims, the current remaining TPD balance.",
       "Open-ended products use a default 20-year review horizon in V1; adjust the horizon if you want a different analysis window.",
-      "Death, terminal illness, and total and permanent disability claim-side payout settlement remains metadata-only beyond the modeled Appendix A assurance-charge corridor.",
-      "Optional retention of the Multiplier benefit after age 50 remains informational only.",
+      "Death, terminal illness, and total and permanent disability claim-side settlement remains metadata-only beyond the modeled current death / terminal-illness / payable-now TPD snapshots and Appendix A assurance-charge corridor, including deferment timing, later-balance release timing, cease-disability stop-payment handling, and post-claim continuation.",
       "Medical, occupational, and hazardous-activity extra loadings remain informational only.",
       "Critical illness, pre-critical illness, and other supplementary rider charges remain informational only.",
       "No Lapse Period amount-owed carry and reinstatement behavior remain informational only.",

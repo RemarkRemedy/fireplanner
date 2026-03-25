@@ -29,15 +29,20 @@ describe('parseIncomeLegacyFlexSolitaire', () => {
       'branch:income-legacy-flex-solitaire-regular-premium-charge',
       'branch:income-legacy-flex-solitaire-policy-fee',
       'branch:income-legacy-flex-solitaire-insurance-cover-charge',
+      'branch:income-legacy-flex-solitaire-loyalty-bonus',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'branch:income-legacy-flex-solitaire-top-up-premium-charge',
       'branch:income-legacy-flex-solitaire-premium-holiday-charge',
       'branch:income-legacy-flex-solitaire-appendix-2-withdrawal-and-surrender-charge',
       'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('income-legacy-flex-solitaire-single-premium-corridor')
-    expect(product.metadataOnlyBehaviors).toContain('income-legacy-flex-solitaire-loyalty-bonus')
+    expect(product.metadataOnlyBehaviors).toContain('income-legacy-flex-solitaire-terminal-illness-and-claim-settlement')
+    expect(product.metadataOnlyBehaviors).not.toContain('income-legacy-flex-solitaire-loyalty-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('income-legacy-flex-solitaire-policy-fee')
     expect(product.metadataOnlyBehaviors).not.toContain('income-legacy-flex-solitaire-insurance-cover-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('income-legacy-flex-solitaire-protection-benefits')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-regular-mip-5',
       'sgd-regular-mip-10',
@@ -136,6 +141,38 @@ describe('parseIncomeLegacyFlexSolitaire', () => {
       ]),
       sourceRefs: expect.any(Array),
     })
+    expect(term10?.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'loyalty-bonus',
+        mode: 'annual-rate',
+        appliesTo: ['premium'],
+        startPolicyYear: 11,
+        endPolicyYear: null,
+        rate: 0.005,
+        suspensionRules: [{ trigger: 'partial-withdrawal', suspensionMonths: 12 }],
+      }),
+    ])
+    expect(term10?.warnings).toContain(
+      'Legacy Flex Solitaire is cataloged as supported in V1 for the 10-year regular-premium corridor. The parser captures the premium-year regular premium charge schedule, a manual-input policy-fee amount for policy years 1-4, the manual-input Appendix 1 insurance-cover-charge corridor, the current-state death and terminal-illness benefit estimate as the higher of adjusted sum assured or policy value via a manual current adjusted sum assured input, the published Loyalty Bonus rate with the supported partial-withdrawal suspension subset, the top-up premium charge, the premium-holiday charge schedule, the premium-account Appendix 2 partial-withdrawal / surrender charge schedule, and the published reinvest-only distribution baseline.',
+    )
+    expect(term10?.warnings).toContain(
+      'Qualifying Withdrawal Access Option withdrawals can be represented in V1 with event-level charge and loyalty-bonus-suspension waivers, and qualifying top-up-account withdrawals can be represented with event-level loyalty-bonus-suspension waivers, while timing, caps, once-per-policy-year administration, adjusted-sum-assured exceptions, and No Lapse Guarantee exceptions remain informational only.',
+    )
+    expect(term10?.unsupportedItems).toContain(
+      'The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state, but terminal-illness definitions, exclusions, insurer-side settlement, secondary-insured continuation, bequest option behavior, and other protection-side claim mechanics remain informational only beyond the supported current death / terminal-illness benefit estimate and insurance-cover-charge corridor.',
+    )
+    expect(term10?.unsupportedItems).toContain(
+      'Automatic adjusted-sum-assured updates after top-ups, charged withdrawals, withdrawal-access exceptions, and sum-assured reductions remain informational only, so the current adjusted sum assured must be maintained manually for the insurance-cover-charge corridor and current death / terminal-illness benefit estimate.',
+    )
+    expect(term10?.unsupportedItems).toContain(
+      'Withdrawal Access Option timing, 5%-of-prevailing-premium-account-value limits, once-per-policy-year administration, and top-up-account first-12-month charge timing remain informational only in V1.',
+    )
+    expect(term10?.bonuses[0]?.notes).toContain(
+      'Qualifying Withdrawal Access Option withdrawals and top-up-account withdrawals can be represented in V1 by setting bonusSuspensionWaived on the recorded partial-withdrawal event.',
+    )
+    expect(term10?.eventChargeRules[2]?.notes).toContain(
+      'Qualifying Withdrawal Access Option withdrawals can be represented in V1 by setting chargeWaived on the premium-account partial-withdrawal event.',
+    )
     expect(term10?.eecTable).toEqual([0.9, 0.8, 0.7, 0.6, 0.55, 0.5, 0.45, 0.4, 0.3, 0.2])
   }, 30_000)
 })

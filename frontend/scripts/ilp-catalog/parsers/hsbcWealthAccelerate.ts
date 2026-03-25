@@ -186,6 +186,11 @@ function buildVariant(
             rate: roundRate(mipLength === 25 ? powerUpRates.mip25Upper : powerUpRates.mip30Upper),
           },
         ],
+    suspensionRules: [
+      { trigger: 'partial-withdrawal', suspensionMonths: 12 },
+      { trigger: 'premium-holiday', suspensionMonths: 12 },
+      { trigger: 'regular-premium-reduction', suspensionMonths: 12 },
+    ],
     restorationRules: [
       {
         trigger: 'premium-holiday-repayment',
@@ -210,6 +215,9 @@ function buildVariant(
     rate: roundRate(mipLength === 25 ? loyaltyRates.mip25 : loyaltyRates.mip30),
     amount: null,
     tieredRates: [],
+    suspensionRules: [
+      { trigger: 'partial-withdrawal', suspensionMonths: 12 },
+    ],
     restorationRules: [
       {
         trigger: 'premium-holiday-repayment',
@@ -347,6 +355,10 @@ function buildVariant(
       ],
       sourceRefs: [page8],
     },
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: true,
+      blockTopUpsDuringPremiumHoliday: true,
+    },
     eecTable,
     warnings: [
       'This template captures generic product mechanics plus reinvest-default distribution support. Personal policy fields still need user input.',
@@ -397,6 +409,9 @@ export function parseHsbcWealthAccelerate(context: ParseContext): IlpCatalogProd
       'branch:hsbc-bonus-suspension',
       'branch:hsbc-premium-reduction-brc',
       'branch:hsbc-top-up-routing',
+      'kernel:premium-holiday-top-up-block',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
@@ -405,6 +420,7 @@ export function parseHsbcWealthAccelerate(context: ParseContext): IlpCatalogProd
     ],
     warnings: [
       'Structured extraction validated against the product summary text layer. Premium-holiday repayment is modeled for full back-pay immediately after the latest holiday period; other holiday edge cases still require manual review.',
+      'Wealth Accelerate models the current-state death-benefit estimate after the first 18 policy months: before age 66 it uses 101% of total account value plus 15% of total account value net of cumulative top-ups and recurring single premiums, capped at the published currency limit, and from age 66 onward it uses 101% of total account value; both paths require a manual current amount owing input. The current terminal-illness snapshot is modeled after the same first-18-month gate as the lower of that death corridor and a manual remaining aggregate TI cap, and the admitted-state TI payable amount plus current residual death-benefit snapshot after a TI claim today are supported through manual claim-amount and residual-death inputs.',
       'Wealth Accelerate keeps reinvestment as the default for dividend-paying funds, while cash payout can be explored through the manual distribution-mode assumption surface with the published S$30 minimum annual payout threshold.',
     ],
     archived: false,

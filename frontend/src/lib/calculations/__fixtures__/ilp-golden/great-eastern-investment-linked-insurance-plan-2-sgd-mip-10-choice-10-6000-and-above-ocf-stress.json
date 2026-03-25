@@ -10,7 +10,23 @@
     "coverageTags": [
       "ocf-stress",
       "branch:great-eastern-ilp2-loyalty-bonus",
-      "branch:great-eastern-ilp2-surrender-charge"
+      "branch:great-eastern-ilp2-surrender-charge",
+      "kernel:protected-base-assurance",
+      "kernel:current-death-benefit-estimate",
+      "kernel:current-ti-benefit-estimate",
+      "kernel:current-tpd-benefit-estimate",
+      "branch:great-eastern-ilp2-welcome-bonus",
+      "branch:great-eastern-ilp2-premium-bonus",
+      "branch:great-eastern-ilp2-policy-fee-rate",
+      "branch:great-eastern-ilp2-choice10-fixed-policy-fee",
+      "branch:great-eastern-ilp2-insurance-charge",
+      "branch:great-eastern-ilp2-premium-holiday-charge",
+      "branch:great-eastern-ilp2-premium-holiday-charge-refund",
+      "kernel:premium-holiday-top-up-block",
+      "kernel:top-up-paid-up-to-date-block",
+      "kernel:top-up-amount-gate-block",
+      "branch:great-eastern-ilp2-top-up-premium-charge",
+      "branch:great-eastern-ilp2-partial-withdrawal-charge"
     ],
     "catalogVersion": "0.1.0",
     "sourceFileName": "PS_GEL_Investment Linked Insurance Plan 2_v3.0.pdf",
@@ -405,6 +421,9 @@
       "structureStatus": "structured",
       "modeledEconomics": [
         "kernel:protected-base-assurance",
+        "kernel:current-death-benefit-estimate",
+        "kernel:current-ti-benefit-estimate",
+        "kernel:current-tpd-benefit-estimate",
         "branch:great-eastern-ilp2-welcome-bonus",
         "branch:great-eastern-ilp2-premium-bonus",
         "branch:great-eastern-ilp2-loyalty-bonus",
@@ -413,6 +432,9 @@
         "branch:great-eastern-ilp2-insurance-charge",
         "branch:great-eastern-ilp2-premium-holiday-charge",
         "branch:great-eastern-ilp2-premium-holiday-charge-refund",
+        "kernel:premium-holiday-top-up-block",
+        "kernel:top-up-paid-up-to-date-block",
+        "kernel:top-up-amount-gate-block",
         "branch:great-eastern-ilp2-top-up-premium-charge",
         "branch:great-eastern-ilp2-partial-withdrawal-charge",
         "branch:great-eastern-ilp2-surrender-charge"
@@ -426,20 +448,23 @@
       ]
     },
     "catalogWarnings": [
-      "Investment-linked Insurance Plan 2 is cataloged as a supported V1 corridor. The parser captures the published bonus path, policy fee, monthly insurance charge, premium-holiday charge, the Choice 10 premium-holiday-charge refund path, top-up charge, and partial-withdrawal / surrender schedules, while application-gated mechanics such as TPD continuation events, change-of-life-assured handling, and AFR administration remain metadata only.",
-      "Investment-linked Insurance Plan 2 is modeled as a supported V1 corridor. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, monthly insurance charge, premium-holiday charge, the Choice 10 premium-holiday-charge refund path, top-up premium charge, and the published partial-withdrawal / surrender charge schedules.",
-      "TPD continuation-event behavior, rider-premium deductions from account value, change-of-life-assured mechanics, and AFR administration remain informational only in V1.",
+      "Investment-linked Insurance Plan 2 is cataloged as a supported V1 corridor. The parser captures the published bonus path, policy fee, monthly insurance charge, the current-state death / terminal-illness / TPD benefit estimate as the higher of policy value or the 101%-of-paid-premiums floor after partial withdrawals including withdrawal charges and current amount owing, with TPD capped by a manual remaining aggregate TPD cap, the current admitted-state TI payable amount through the published full-termination TI corridor after manual claim-amount entry, an admitted-and-settled TI claim as a current policy-termination state, premium-holiday charge, the Choice 10 premium-holiday-charge refund path, the published S$1,000 single-premium top-up minimum, premium-holiday and paid-up-to-date top-up blocking, and partial-withdrawal / surrender schedules, while TPD continuation-event state, rider premium-deduction treatment, Choice 10 fixed-fee-threshold transitions, change-of-life-assured handling, automatic fund rebalancing administration, and terminal-illness exclusions / settlement / broader post-claim continuation remain informational only beyond the modeled current death / terminal-illness / TPD benefit estimate.",
+      "Investment-linked Insurance Plan 2 is modeled as a supported V1 corridor. The parser captures Welcome Bonus, Premium Bonus, Loyalty Bonus, policy fee, monthly insurance charge, the current-state death / terminal-illness / TPD benefit estimate as the higher of policy value or the 101% paid-premium floor after partial withdrawals including withdrawal charges and current amount owing, with TPD capped by a manual remaining aggregate TPD cap, the current admitted-state TI payable amount through the published full-termination TI corridor after manual claim-amount entry, an admitted-and-settled TI claim as a current policy-termination state, premium-holiday charge, the Choice 10 premium-holiday-charge refund path, the published S$1,000 single-premium top-up minimum, premium-holiday and paid-up-to-date top-up blocking, and the published partial-withdrawal / surrender charge schedules.",
+      "TPD continuation-event behavior, rider-premium deductions from account value, change-of-life-assured mechanics, AFR administration, and terminal-illness exclusions / settlement / broader post-claim continuation remain informational only in V1.",
       "This Choice 10 high-annualised-premium variant assumes the additional S$5 monthly policy fee does not apply throughout the modeled path unless you manually switch variants after a premium change.",
-      "Administrative gating on top-ups, premium reductions, change of life assured, and AFR remains informational only.",
+      "The current-state death / terminal-illness / TPD benefit estimate needs a manual current amount owing input because current debt is not reconstructed from history in V1.",
+      "The current-state TPD benefit estimate also needs a manual remaining aggregate TPD cap because the published S$5 million aggregate insurer limit is not reconstructed from cross-policy history in V1.",
+      "The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state, but TPD continuation-event state plus terminal-illness exclusions / settlement / broader post-claim continuation remain informational only beyond the modeled current death / terminal-illness / TPD benefit estimate.",
+      "Administrative gating on premium reductions, change of life assured, and AFR remains informational only.",
       "Choice 10 prevailing-annualised-premium transitions across the S$6,000 fixed-fee threshold are not modeled dynamically; switch variants manually if the threshold changes after a premium reduction."
     ]
   },
   "expected": {
     "summary": {
       "totalPremiumsPaid": 86400,
-      "totalFeesCharged": 1118.69,
-      "totalBonusesReceived": 123,
-      "netFeeDrag": 995.69,
+      "totalFeesCharged": 1118.82,
+      "totalBonusesReceived": 0,
+      "netFeeDrag": 1118.82,
       "currentSurrenderValue": 34850,
       "cancelNowPenalty": 6150
     },
@@ -455,34 +480,34 @@
           "exitYear": 1,
           "policyYear": 10,
           "eecRate": 0.05,
-          "eecCharge": 2586.43,
-          "pvEec": 2417.22,
-          "npvGrossFees": 1045.51,
-          "npvBonuses": 114.95,
-          "totalNpvFees": 3347.78,
-          "netSurrenderValue": 49142.11,
+          "eecCharge": 2579.94,
+          "pvEec": 2411.16,
+          "npvGrossFees": 1045.63,
+          "npvBonuses": 0,
+          "totalNpvFees": 3456.79,
+          "netSurrenderValue": 49018.93,
           "totalContributions": 86400
         }
       ],
       "bestExitYear": 1,
-      "bestExitNpvFees": 3347.78,
+      "bestExitNpvFees": 3456.79,
       "holdToMip": {
-        "npvGrossFees": 1045.51,
-        "npvBonuses": 114.95,
-        "totalNpvFees": 3347.78,
-        "finalValue": 51728.53,
+        "npvGrossFees": 1045.63,
+        "npvBonuses": 0,
+        "totalNpvFees": 3456.79,
+        "finalValue": 51598.87,
         "totalContributions": 86400
       }
     },
     "opportunityCost": {
       "alternativePortfolioValue": 46889.5,
-      "ilpValueAtHorizon": 51728.53,
-      "difference": -4839.03,
+      "ilpValueAtHorizon": 51598.87,
+      "difference": -4709.37,
       "atBestExit": {
         "exitYear": 1,
-        "alternativeValue": 49142.11,
-        "ilpValueAtHorizon": 51728.53,
-        "difference": -2586.43
+        "alternativeValue": 49018.93,
+        "ilpValueAtHorizon": 51598.87,
+        "difference": -2579.94
       }
     },
     "projections": {
@@ -494,23 +519,23 @@
             "policyYear": 10,
             "annualContribution": 9600,
             "annualWithdrawals": 0,
-            "combinedValue": 50250.91,
+            "combinedValue": 50125.8,
             "eecRate": 0.05,
-            "eecCharge": 2512.55,
-            "surrenderValue": 47738.37,
+            "eecCharge": 2506.29,
+            "surrenderValue": 47619.51,
             "cumulativePremiums": 86400,
-            "cumulativeGrossFees": 1120.13,
-            "cumulativeBonuses": 123,
+            "cumulativeGrossFees": 1120.26,
+            "cumulativeBonuses": 0,
             "accounts": [
               {
                 "accountId": "policy",
                 "open": 41000,
                 "contributionAmount": 9600,
-                "grossFee": 1120.13,
-                "bonusCredit": 123,
-                "netFee": 997.13,
+                "grossFee": 1120.26,
+                "bonusCredit": 0,
+                "netFee": 1120.26,
                 "withdrawalAmount": 0,
-                "close": 50250.91
+                "close": 50125.8
               }
             ]
           }
@@ -524,23 +549,23 @@
             "policyYear": 10,
             "annualContribution": 9600,
             "annualWithdrawals": 0,
-            "combinedValue": 51728.53,
+            "combinedValue": 51598.87,
             "eecRate": 0.05,
-            "eecCharge": 2586.43,
-            "surrenderValue": 49142.11,
+            "eecCharge": 2579.94,
+            "surrenderValue": 49018.93,
             "cumulativePremiums": 86400,
-            "cumulativeGrossFees": 1118.69,
-            "cumulativeBonuses": 123,
+            "cumulativeGrossFees": 1118.82,
+            "cumulativeBonuses": 0,
             "accounts": [
               {
                 "accountId": "policy",
                 "open": 41000,
                 "contributionAmount": 9600,
-                "grossFee": 1118.69,
-                "bonusCredit": 123,
-                "netFee": 995.69,
+                "grossFee": 1118.82,
+                "bonusCredit": 0,
+                "netFee": 1118.82,
                 "withdrawalAmount": 0,
-                "close": 51728.53
+                "close": 51598.87
               }
             ]
           }
@@ -554,23 +579,23 @@
             "policyYear": 10,
             "annualContribution": 9600,
             "annualWithdrawals": 0,
-            "combinedValue": 53034.06,
+            "combinedValue": 52900.37,
             "eecRate": 0.05,
-            "eecCharge": 2651.7,
-            "surrenderValue": 50382.35,
+            "eecCharge": 2645.02,
+            "surrenderValue": 50255.36,
             "cumulativePremiums": 86400,
-            "cumulativeGrossFees": 1117.42,
-            "cumulativeBonuses": 123,
+            "cumulativeGrossFees": 1117.55,
+            "cumulativeBonuses": 0,
             "accounts": [
               {
                 "accountId": "policy",
                 "open": 41000,
                 "contributionAmount": 9600,
-                "grossFee": 1117.42,
-                "bonusCredit": 123,
-                "netFee": 994.42,
+                "grossFee": 1117.55,
+                "bonusCredit": 0,
+                "netFee": 1117.55,
                 "withdrawalAmount": 0,
-                "close": 53034.06
+                "close": 52900.37
               }
             ]
           }

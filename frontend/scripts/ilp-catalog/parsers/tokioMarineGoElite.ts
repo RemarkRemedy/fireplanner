@@ -179,6 +179,22 @@ function buildVariant(document: ExtractedPdfDocument, variantId: 'sgd-open-ended
     bonuses: [],
     feeRules,
     eventChargeRules,
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      minimumRecurringSinglePremiumStartPolicyMonth: 13,
+      minimumRecurringSinglePremiumMonthlyAmount: 100,
+      minimumTopUpStartPolicyMonth: 13,
+      minimumTopUpAmount: 1_000,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'initial-single-premium',
+          accountId: 'policy',
+          minimumValueRate: 0.1,
+        },
+      ],
+    },
     distributionSupport: {
       mode: 'manual-assumption',
       accountIds: ['policy', 'topup'],
@@ -201,12 +217,13 @@ function buildVariant(document: ExtractedPdfDocument, variantId: 'sgd-open-ended
     exitChargeBasis: 'initial-single-premium-base',
     warnings: [
       isCash
-        ? '#goElite (Cash) is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the cash-payout or reinvestment distribution assumption surface through the open-ended single-premium basis.'
-        : '#goElite (SRS) is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the reinvest-only distribution-mode surface through the open-ended single-premium basis.',
-      'Recurring single premium and top-up availability only after one policy year remains informational only.',
+        ? '#goElite (Cash) is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, the published S$500 minimum one-off partial withdrawal amount plus the 10%-of-initial-single-premium minimum remaining Single Premium Units Account floor, and the cash-payout or reinvestment distribution assumption surface through the open-ended single-premium basis.'
+        : '#goElite (SRS) is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, the published S$500 minimum one-off partial withdrawal amount plus the 10%-of-initial-single-premium minimum remaining Single Premium Units Account floor, and the reinvest-only distribution-mode surface through the open-ended single-premium basis.',
     ],
     unsupportedItems: [
-      'Death and accidental-death benefit formulas remain informational only.',
+      'The resident-corridor current death benefit needs a manual current amount owing input because indebtedness is not reconstructed from history in V1.',
+      'The resident-corridor current accidental-death estimate also needs manual current age and current amount owing inputs; the age-75 cut-off is modeled, while residency and Singapore-location claim gates, the 180-day death timing rule, aggregate accidental-death cap handling, and multi-life last-survivor settlement remain informational only.',
+      'The non-resident 101% death-benefit corridor remains informational only.',
       'Fund management fee and third-party banking / currency-conversion charges remain informational only.',
     ],
     sourceRefs: [page1, page3, page5, page6],
@@ -230,17 +247,25 @@ export function parseTokioMarineGoElite(context: ParseContext): IlpCatalogProduc
       'branch:tokio-marine-goelite-establishment-charge',
       'branch:tokio-marine-goelite-administrative-charge',
       'branch:tokio-marine-goelite-recurring-single-and-top-up-charge',
+      'kernel:minimum-recurring-single-premium-start-month',
+      'kernel:minimum-recurring-single-premium-amount',
+      'kernel:top-up-start-policy-month-block',
+      'kernel:top-up-amount-gate-block',
+      'kernel:partial-withdrawal-minimum-remaining-value-block',
       'branch:tokio-marine-goelite-zero-partial-withdrawal-charge',
       'branch:tokio-marine-goelite-surrender-charge',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-accidental-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
     metadataOnlyBehaviors: [
-      'tokio-marine-goelite-protection-benefits',
-      'tokio-marine-goelite-rsp-and-top-up-eligibility-gating',
+      'tokio-marine-goelite-non-resident-101-death-benefit',
+      'tokio-marine-goelite-accidental-death-claim-gates-and-cap-aggregation',
+      'tokio-marine-goelite-multi-life-last-survivor',
       'tokio-marine-goelite-fund-level-and-third-party-charges',
     ],
     warnings: [
-      '#goElite is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, and the cash-vs-SRS distribution-mode support surface with the published $50 minimum cash-payout threshold plus the 30-day record-date instruction lead time on the cash corridor; protection benefits and fund-level charges remain informational only.',
+      '#goElite is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, the published S$500 minimum one-off partial withdrawal amount plus the 10%-of-initial-single-premium minimum remaining Single Premium Units Account floor, the resident-corridor current-state death benefit as 105% of the Single Premium Units Account value plus 100% of the Top-up Units Account value less current amounts owing, the resident-corridor current accidental-death estimate before age 75 as 110% of the Single Premium Units Account value plus 100% of the Top-up Units Account value less current amounts owing, and the cash-vs-SRS distribution-mode support surface with the published $50 minimum cash-payout threshold plus the 30-day record-date instruction lead time on the cash corridor; the non-resident 101% death-benefit corridor, accidental-death claim gates and cap aggregation, multi-life last-survivor handling, and fund-level charges remain informational only.',
     ],
     archived: false,
     variants: [
