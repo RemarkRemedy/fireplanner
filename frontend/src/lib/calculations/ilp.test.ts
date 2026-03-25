@@ -16000,7 +16000,7 @@ describe('computeOpportunityCost', () => {
 })
 
 describe('computeSummaryMetrics', () => {
-  it('anchors summary totals to MIP end and ignores postMipYears', () => {
+  it('anchors summary totals to full projection horizon including postMipYears', () => {
     const withPostMip = computeSummaryMetrics(
       makeDefaultPolicy({ postMipYears: 10 }),
       projectIlpPolicy(makeDefaultPolicy({ postMipYears: 10 }), 'mid'),
@@ -16010,9 +16010,10 @@ describe('computeSummaryMetrics', () => {
       projectIlpPolicy(makeDefaultPolicy(), 'mid'),
     )
 
+    // Premiums are the same (contributions stop at MIP end regardless)
     expect(withPostMip.totalPremiumsPaid).toBe(withoutPostMip.totalPremiumsPaid)
-    expect(withPostMip.totalFeesCharged).toBeCloseTo(withoutPostMip.totalFeesCharged, 2)
-    expect(withPostMip.totalBonusesReceived).toBeCloseTo(withoutPostMip.totalBonusesReceived, 2)
+    // But fees accumulate over the longer horizon (account management fees continue post-MIP)
+    expect(withPostMip.totalFeesCharged).toBeGreaterThan(withoutPostMip.totalFeesCharged)
   })
 
   it('uses current balances for surrender value and cancel-now penalty', () => {

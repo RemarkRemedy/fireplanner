@@ -118,7 +118,7 @@ function buildVariant(document: ExtractedPdfDocument, variantId: 'sgd-open-ended
     {
       id: 'single-premium-charge',
       label: 'Single Premium Charge',
-      basis: 'annual-contribution',
+      basis: 'initial-single-premium',
       rate: 0,
       amount: 0,
       appliesTo: ['policy'],

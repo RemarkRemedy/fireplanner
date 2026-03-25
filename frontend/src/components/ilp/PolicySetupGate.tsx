@@ -16,8 +16,9 @@ interface PolicySetupGateProps {
 
 export function PolicySetupGate({ seed, onConfirm, onCancel, prospect }: PolicySetupGateProps) {
   const isSinglePremium = (seed.initialSinglePremium ?? 0) > 0 || seed.monthlyContribution === 0
+  const defaultIsp = (seed.initialSinglePremium ?? 0) > 0 ? seed.initialSinglePremium! : (prospect ? 50000 : 0)
   const [monthlyContribution, setMonthlyContribution] = useState(seed.monthlyContribution)
-  const [initialSinglePremium, setInitialSinglePremium] = useState(seed.initialSinglePremium ?? 0)
+  const [initialSinglePremium, setInitialSinglePremium] = useState(defaultIsp)
   const [currentPolicyYear, setCurrentPolicyYear] = useState(prospect ? 1 : seed.currentPolicyYear)
   const [monthsAlreadyPaid, setMonthsAlreadyPaid] = useState(prospect ? 0 : seed.monthsAlreadyPaid)
   const [postMipYears, setPostMipYears] = useState(seed.postMipYears ?? 10)
