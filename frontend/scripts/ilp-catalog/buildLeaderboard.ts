@@ -14,6 +14,8 @@ import type { IlpPolicyInput } from '../../src/lib/calculations/ilp.js'
 import { analyzeIlpPolicy } from '../../src/lib/calculations/ilp.js'
 import { templateVariantToPolicySeed } from '../../src/lib/ilp-catalog/templateToPolicy.js'
 import type { IlpCatalogManifest, IlpCatalogProduct } from '../../src/lib/ilp-catalog/types.js'
+import type { IlpPolicySeed } from '../../src/lib/ilp-catalog/policySeedSchema.js'
+import { ilpPolicySchema } from '../../src/lib/validation/ilpSchema.js'
 import { createDefaultPolicy } from '../../src/stores/useIlpStore.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -45,15 +47,26 @@ interface LeaderboardRow {
 }
 
 /**
- * Minimal seed-to-policy merge for build-time use.
- * Replicates the store's mergePolicySeed logic without Zustand dependency.
+ * Merge a seed with defaults to produce a valid IlpPolicyInput.
+ * Uses createDefaultPolicy for base values, then overrides with seed fields.
+ * Mirrors the store's mergePolicySeed logic. Validates via Zod to catch
+ * type mismatches at build time rather than letting them reach the engine.
  */
-function seedToPolicy(seed: Record<string, unknown>): IlpPolicyInput {
+function seedToValidatedPolicy(seed: IlpPolicySeed): IlpPolicyInput {
   const base = createDefaultPolicy()
-  return {
+  const merged = {
     ...base,
     ...seed,
-  } as IlpPolicyInput
+    // Deep-clone nested arrays (same as store's mergePolicySeed)
+    eecTable: [...(seed.eecTable ?? base.eecTable)],
+    funds: (seed.funds ?? base.funds).map((f) => ({ ...f })),
+    accounts: (seed.accounts ?? base.accounts).map((a) => ({ ...a })),
+    bonuses: (seed.bonuses ?? base.bonuses).map((b) => ({ ...b })),
+    chargeRules: (seed.chargeRules ?? base.chargeRules).map((r) => ({ ...r })),
+    eventChargeRules: (seed.eventChargeRules ?? base.eventChargeRules).map((r) => ({ ...r })),
+    policyEvents: seed.policyEvents?.map((e) => ({ ...e })) ?? [],
+  }
+  return ilpPolicySchema.parse(merged)
 }
 
 function deriveBonusModellingStatus(product: IlpCatalogProduct): 'modelled' | 'metadata-only' | 'none' {
@@ -107,7 +120,7 @@ async function main() {
           monthsAlreadyPaid: STANDARD_MONTHS_PAID,
         }
 
-        const policy = seedToPolicy(standardizedSeed as Record<string, unknown>)
+        const policy = seedToValidatedPolicy(standardizedSeed)
         const analysis = analyzeIlpPolicy(policy)
         const { summary } = analysis
 

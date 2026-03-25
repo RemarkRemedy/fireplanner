@@ -55,9 +55,9 @@ function ExitSetupForm({ seed, onConfirm, onCancel }: ExitSetupFormProps) {
     onConfirm(adjustedSeed, accountBalances)
   }
 
-  const horizonYears = seed.mipLength != null
+  const horizonYears = Math.max(1, seed.mipLength != null
     ? seed.mipLength + (seed.postMipYears ?? 0) - (currentPolicyYear - 1)
-    : (seed.postMipYears ?? 20)
+    : (seed.postMipYears ?? 20))
 
   return (
     <Card className="border-primary/30">
@@ -164,7 +164,6 @@ export function IlpExitCalculatorPage() {
   })
 
   const addPolicyFromSeed = useIlpStore((state) => state.addPolicyFromSeed)
-  const updatePolicy = useIlpStore((state) => state.updatePolicy)
 
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pendingSeed, setPendingSeed] = useState<IlpPolicySeed | null>(null)
@@ -192,21 +191,21 @@ export function IlpExitCalculatorPage() {
   }
 
   function handleExitSetupConfirm(adjustedSeed: IlpPolicySeed, accountBalances: Record<string, number>) {
+    // Add to store to get a validated IlpPolicyInput, then immediately read it back
     const result = addPolicyFromSeed(adjustedSeed)
     if (!result.success) return
 
-    // Update per-account currentValue fields
-    const store = useIlpStore.getState()
-    const policy = store.policies.find((p) => p.id === result.policyId)
+    // Read the policy once and apply account balances locally (no second store write)
+    const policy = useIlpStore.getState().policies.find((p) => p.id === result.policyId)
     if (policy) {
-      const updatedAccounts = policy.accounts.map((account) => ({
-        ...account,
-        currentValue: accountBalances[account.id] ?? account.currentValue,
-      }))
-      updatePolicy(result.policyId, { accounts: updatedAccounts })
-      // Read the updated policy
-      const updatedPolicy = useIlpStore.getState().policies.find((p) => p.id === result.policyId)
-      if (updatedPolicy) setExitPolicy(updatedPolicy)
+      const policyWithBalances: IlpPolicyInput = {
+        ...policy,
+        accounts: policy.accounts.map((account) => ({
+          ...account,
+          currentValue: accountBalances[account.id] ?? account.currentValue,
+        })),
+      }
+      setExitPolicy(policyWithBalances)
     }
 
     setPendingSeed(null)

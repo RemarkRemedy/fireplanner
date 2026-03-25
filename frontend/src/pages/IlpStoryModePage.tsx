@@ -10,7 +10,7 @@ import { OpportunityCostCard } from '@/components/ilp/OpportunityCostCard'
 import { PolicySetupGate } from '@/components/ilp/PolicySetupGate'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { analyzeIlpPolicy } from '@/lib/calculations/ilp'
-import type { IlpPolicyAnalysis, IlpPolicyInput } from '@/lib/calculations/ilp'
+import type { IlpPolicyInput } from '@/lib/calculations/ilp'
 import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
 import type { IlpPolicySeed } from '@/lib/ilp-catalog/policySeedSchema'
 import { templateVariantToPolicySeed } from '@/lib/ilp-catalog/templateToPolicy'
@@ -120,14 +120,25 @@ export function IlpStoryModePage() {
 
   // Compute analysis for the active policy (existing or just-created)
   const activePolicy = storyPolicy ?? existingPolicy
-  const analysis: IlpPolicyAnalysis | null = useMemo(() => {
-    if (!activePolicy) return null
+  const analysisResult = useMemo(() => {
+    if (!activePolicy) return { analysis: null, error: null }
     try {
-      return analyzeIlpPolicy(activePolicy)
-    } catch {
-      return null
+      return { analysis: analyzeIlpPolicy(activePolicy), error: null }
+    } catch (err) {
+      return { analysis: null, error: err instanceof Error ? err.message : 'Unable to analyze this policy.' }
     }
   }, [activePolicy])
+  const { analysis, error: analysisError } = analysisResult
+
+  // Derive default seed for single-variant products (no state update needed)
+  const defaultSeed = useMemo(() => {
+    if (!catalogProduct || catalogProduct.variants.length !== 1) return null
+    const { manifest } = getIlpCatalog()
+    return templateVariantToPolicySeed(catalogProduct, catalogProduct.variants[0], manifest)
+  }, [catalogProduct])
+
+  // Effective seed: user-selected seed takes priority, then auto-derived default
+  const effectiveSeed = pendingSeed ?? defaultSeed
 
   // --- Product not found ---
   if (!productId || !catalogProduct) {
@@ -145,7 +156,7 @@ export function IlpStoryModePage() {
   }
 
   // --- Step 1: Variant selection (if multiple variants) ---
-  if (!existingPolicy && !pendingSeed && !storyPolicy) {
+  if (!existingPolicy && !effectiveSeed && !storyPolicy) {
     if (catalogProduct.variants.length > 1 && !selectedVariant) {
       return (
         <div className="flex min-h-[50vh] flex-col items-center justify-center px-4">
@@ -160,18 +171,10 @@ export function IlpStoryModePage() {
         </div>
       )
     }
-
-    // Single variant or variant just selected: create seed and show setup gate
-    if (!pendingSeed) {
-      const variant = selectedVariant ?? catalogProduct.variants[0]
-      const { manifest } = getIlpCatalog()
-      const seed = templateVariantToPolicySeed(catalogProduct, variant, manifest)
-      setPendingSeed(seed)
-    }
   }
 
   // --- Step 2: Setup gate (confirm premium etc.) ---
-  if (pendingSeed && !storyPolicy && !existingPolicy) {
+  if (effectiveSeed && !storyPolicy && !existingPolicy) {
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center px-4">
         <div className="w-full max-w-lg space-y-4">
@@ -202,6 +205,18 @@ export function IlpStoryModePage() {
   }
 
   // --- Step 3: Story screens ---
+  if (analysisError) {
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center">
+        <h1 className="text-2xl font-bold">Analysis failed</h1>
+        <p className="text-sm text-muted-foreground">{analysisError}</p>
+        <Link to="/ilp-review" className="text-primary hover:underline">
+          Try the full dashboard
+        </Link>
+      </div>
+    )
+  }
+
   if (!activePolicy || !analysis) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
@@ -213,7 +228,7 @@ export function IlpStoryModePage() {
   const midProjection = analysis.projections.mid
 
   return (
-    <div className="h-[100dvh] snap-y snap-mandatory overflow-y-auto">
+    <div className="h-[100dvh] snap-y snap-proximity overflow-y-auto">
       {/* Screen 1: The Hook */}
       <StoryScreen id="story-hook">
         <div className="space-y-2 text-center">

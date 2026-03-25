@@ -9,8 +9,8 @@ const MODES = [
     description: 'See the real fee cost of any ILP product in 4 screens. Year-by-year fee decomposition, bonus reality check, and exit math.',
     icon: BarChart3,
     href: '/ilp/compare',
-    cta: 'Browse products',
-    note: 'Pick a product, confirm your premium, see the story.',
+    cta: 'Pick a product',
+    note: 'Browse the catalog, then see the fee story for any product.',
   },
   {
     title: 'I have an ILP',
@@ -22,10 +22,10 @@ const MODES = [
   },
   {
     title: "I'm researching",
-    description: 'Compare fee drag across 92 products from 11 insurers. Sortable, filterable, and standardized for apples-to-apples comparison.',
+    description: 'Compare fee drag across all products. Sortable, filterable, and standardized for apples-to-apples comparison.',
     icon: Search,
     href: '/ilp/compare',
-    cta: 'Browse the leaderboard',
+    cta: 'Open the leaderboard',
     note: 'Standardized at S$350/mo, mid return scenario.',
   },
 ] as const

@@ -17,8 +17,8 @@ import { PolicySetupGate } from '@/components/ilp/PolicySetupGate'
 import { PolicyTabs } from '@/components/ilp/PolicyTabs'
 import { ProjectionTable } from '@/components/ilp/ProjectionTable'
 import { SummaryCards } from '@/components/ilp/SummaryCards'
+import { useIlpAnalysis } from '@/hooks/useIlpAnalysis'
 import { usePageMeta } from '@/hooks/usePageMeta'
-import { analyzeAllPolicies } from '@/lib/calculations/ilp'
 import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
 import type { IlpPolicySeed } from '@/lib/ilp-catalog/policySeedSchema'
 import { templateVariantToPolicySeed } from '@/lib/ilp-catalog/templateToPolicy'
@@ -143,21 +143,8 @@ export function IlpReviewPage() {
     })
   ), [policies])
 
-  const analysisResult = useMemo(() => {
-    const validPolicies = policyEntries.filter((entry) => entry.valid).map((entry) => entry.policy)
-    if (validPolicies.length === 0) {
-      return { analysis: null, error: null }
-    }
-
-    try {
-      return { analysis: analyzeAllPolicies(validPolicies), error: null }
-    } catch (error) {
-      return {
-        analysis: null,
-        error: error instanceof Error ? error.message : 'Unable to analyze ILP policies.',
-      }
-    }
-  }, [policyEntries])
+  const { analysis: fullAnalysis, error: analysisError, excludedCount } = useIlpAnalysis()
+  const analysisResult = { analysis: fullAnalysis, error: analysisError }
 
   const selectedEntry = policyEntries.find((entry) => entry.policy.id === selectedPolicyId)
     ?? policyEntries[0]
@@ -169,7 +156,7 @@ export function IlpReviewPage() {
   const displayPolicy = displayAnalysis
     ? policyEntries.find((entry) => entry.policy.id === displayAnalysis.policyId)?.policy ?? null
     : null
-  const excludedCount = policyEntries.filter((entry) => !entry.valid).length
+  // excludedCount comes from useIlpAnalysis above
 
   if (policies.length === 0) {
     return (
