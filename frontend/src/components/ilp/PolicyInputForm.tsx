@@ -1,4 +1,5 @@
-import { AlertTriangle, Plus, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { AlertTriangle, ChevronDown, ChevronRight, Lock, Plus, Trash2 } from 'lucide-react'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -89,8 +90,12 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
   const setBonus = useIlpStore((state) => state.setBonus)
   const addBonus = useIlpStore((state) => state.addBonus)
   const removeBonus = useIlpStore((state) => state.removeBonus)
+  const [showCatalogChargeRules, setShowCatalogChargeRules] = useState(false)
+  const [showCatalogEventChargeRules, setShowCatalogEventChargeRules] = useState(false)
 
   if (!policy) return null
+
+  const isCatalogSeeded = policy.catalogSource != null
 
   const contributionShareTotal = policy.accounts.reduce((sum, account) => sum + account.contributionShare, 0)
   const contributionShareTarget = policy.monthlyContribution > 0 ? 1 : 0
@@ -876,6 +881,38 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
         <AccordionItem value="charges">
           <AccordionTrigger>Charge Rules</AccordionTrigger>
           <AccordionContent className="space-y-4">
+            {isCatalogSeeded ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Lock className="h-4 w-4 shrink-0" />
+                  <span>{policy.chargeRules?.length ?? 0} recurring charge {(policy.chargeRules?.length ?? 0) === 1 ? 'rule' : 'rules'} from catalog template. These reflect the product's published fee schedule.</span>
+                </div>
+                {(policy.chargeRules?.length ?? 0) > 0 && (
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowCatalogChargeRules(!showCatalogChargeRules)}
+                  >
+                    {showCatalogChargeRules ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                    {showCatalogChargeRules ? 'Hide details' : 'Show details (read-only)'}
+                  </button>
+                )}
+                {showCatalogChargeRules && (policy.chargeRules ?? []).map((rule) => (
+                  <Card key={rule.id} className="opacity-75">
+                    <CardContent className="py-3 text-sm">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                        <span className="font-medium">{rule.label}</span>
+                        <Badge variant="outline">{rule.basis ?? 'account-value'}</Badge>
+                        <Badge variant="secondary">{rule.activeWindow}</Badge>
+                        {rule.rate > 0 && <span>{formatIlpPercent(rule.rate)}/yr</span>}
+                        {(rule.amount ?? 0) > 0 && <span>${rule.amount}/yr</span>}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+            <>
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-medium">Recurring Charge Rules</h3>
@@ -1625,6 +1662,8 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                 </CardContent>
               </Card>
             ))}
+            </>
+            )}
           </AccordionContent>
         </AccordionItem>
 
@@ -2079,6 +2118,36 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
               ))}
             </div>
 
+            {isCatalogSeeded ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Lock className="h-4 w-4 shrink-0" />
+                  <span>{policy.eventChargeRules?.length ?? 0} event charge {(policy.eventChargeRules?.length ?? 0) === 1 ? 'rule' : 'rules'} from catalog template. These reflect the product's published event charge schedule.</span>
+                </div>
+                {(policy.eventChargeRules?.length ?? 0) > 0 && (
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowCatalogEventChargeRules(!showCatalogEventChargeRules)}
+                  >
+                    {showCatalogEventChargeRules ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                    {showCatalogEventChargeRules ? 'Hide details' : 'Show details (read-only)'}
+                  </button>
+                )}
+                {showCatalogEventChargeRules && (policy.eventChargeRules ?? []).map((rule) => (
+                  <Card key={rule.id} className="opacity-75">
+                    <CardContent className="py-3 text-sm">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                        <span className="font-medium">{rule.label}</span>
+                        <Badge variant="outline">{rule.trigger}</Badge>
+                        <Badge variant="secondary">{rule.basis}</Badge>
+                        {rule.rate > 0 && <span>{formatIlpPercent(rule.rate)}</span>}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -2395,6 +2464,7 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                 </Card>
               ))}
             </div>
+            )}
           </AccordionContent>
         </AccordionItem>
 
