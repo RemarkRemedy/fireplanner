@@ -61,7 +61,7 @@ export function ComparisonTable({ analyses, comparison }: ComparisonTableProps) 
                           ? formatIlpPercent(rawValue)
                           : row.unit === 'years' && typeof rawValue === 'number'
                             ? `${formatIlpNumber(rawValue)} yr`
-                            : String(rawValue ?? '—')
+                            : String(rawValue ?? 'N/A')
                       const highlight = bestValue != null && rawValue === bestValue
 
                       return (
