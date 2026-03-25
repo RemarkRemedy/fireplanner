@@ -79,7 +79,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
           <div>
             <CardTitle>Fee Breakdown</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Returns are not guaranteed, but fees are. This breakdown shows exactly what you will pay, year by year.
+              Returns are not guaranteed, but fees are. This breakdown shows the projected fees under your assumptions, year by year.
             </p>
           </div>
           <Tabs value={scenario} onValueChange={(value) => setScenario(value as ReturnScenario)}>
@@ -207,7 +207,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                         <td className="sticky left-0 z-10 border-r bg-inherit px-3 py-2 font-medium">
                           <div className="flex items-center gap-2">
                             <span>{row.policyYear}</span>
-                            {isBestExit && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">Best Exit</span>}
+                            {isBestExit && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">Lowest Fee Year</span>}
                           </div>
                         </td>
                         <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.contribution, policy.currency)}</td>

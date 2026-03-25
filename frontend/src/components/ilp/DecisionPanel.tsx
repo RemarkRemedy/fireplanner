@@ -20,14 +20,14 @@ export function DecisionPanel({ policy, analysis }: DecisionPanelProps) {
       title: 'Cancel Now',
       feeDrag: analysis.npvAnalysis.surrenderNow.npvFees,
       primaryValue: `Net surrender ${formatIlpCurrency(analysis.npvAnalysis.surrenderNow.netSurrenderValue, policy.currency)}`,
-      detail: `You would lose ${formatIlpCurrency(analysis.npvAnalysis.surrenderNow.eecCharge, policy.currency)} to EEC today.`,
+      detail: `EEC charge today: ${formatIlpCurrency(analysis.npvAnalysis.surrenderNow.eecCharge, policy.currency)}.`,
     },
     {
-      id: 'best-exit',
-      title: `Best Future Exit (Year ${analysis.npvAnalysis.bestExitYear})`,
+      id: 'lowest-fee-year',
+      title: `Lowest Fee Year (Year ${analysis.npvAnalysis.bestExitYear})`,
       feeDrag: analysis.npvAnalysis.bestExitNpvFees,
       primaryValue: `Surrender ${formatIlpCurrency(bestExitOption.netSurrenderValue, policy.currency)}`,
-      detail: `Exit in policy year ${bestExitOption.policyYear} after continuing contributions in the meantime.`,
+      detail: `Policy year ${bestExitOption.policyYear}, assuming contributions continue until then.`,
     },
     {
       id: 'hold-to-mip',
@@ -44,9 +44,9 @@ export function DecisionPanel({ policy, analysis }: DecisionPanelProps) {
   return (
     <div className="space-y-3">
       <div>
-        <h2 className="text-lg font-semibold">Decision Panel</h2>
+        <h2 className="text-lg font-semibold">Exit Scenarios</h2>
         <p className="text-sm text-muted-foreground">
-          Lowest fee drag is informative, but it is not a recommendation by itself. Read it alongside surrender value, projected final value, and opportunity cost.
+          Three scenarios showing fee costs at different exit points. These are calculations based on your inputs, not financial advice. Consult a licensed financial adviser before making policy decisions.
         </p>
       </div>
 
@@ -60,7 +60,7 @@ export function DecisionPanel({ policy, analysis }: DecisionPanelProps) {
               <CardHeader>
                 <div className="flex items-start justify-between gap-3">
                   <CardTitle className="text-base">{option.title}</CardTitle>
-                  {isLowestFeeDrag && <Badge variant="outline">Lowest Fee Drag</Badge>}
+                  {isLowestFeeDrag && <Badge variant="outline">Lowest NPV Fees</Badge>}
                 </div>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">

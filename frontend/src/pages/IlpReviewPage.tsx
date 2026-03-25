@@ -396,9 +396,12 @@ export function IlpReviewPage() {
         </AlertDescription>
       </Alert>
 
-      <p className="text-xs text-muted-foreground">
-        This tool is for educational purposes. It models generic ILP fee structures and does not constitute financial advice. Verify all assumptions against your actual policy documents.
-      </p>
+      <div className="rounded-md border px-4 py-3 text-xs text-muted-foreground">
+        <p className="font-medium">Not financial advice.</p>
+        <p className="mt-1">
+          This is an educational tool that calculates fee projections based on published product summaries and your assumptions. It does not constitute financial advice, a recommendation to buy or surrender any policy, or a substitute for consultation with a licensed financial adviser. Verify all figures against your actual policy documents before making any decisions.
+        </p>
+      </div>
     </div>
   )
 }
