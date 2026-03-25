@@ -79,7 +79,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
           <div>
             <CardTitle>Fee Breakdown</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Year-by-year fee decomposition by category. Fees are charged on account value, so they scale with market returns.
+              Returns are not guaranteed, but fees are. This breakdown shows exactly what you will pay, year by year.
             </p>
           </div>
           <Tabs value={scenario} onValueChange={(value) => setScenario(value as ReturnScenario)}>

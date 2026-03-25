@@ -16,7 +16,9 @@ import { PolicyTabs } from '@/components/ilp/PolicyTabs'
 import { ProjectionTable } from '@/components/ilp/ProjectionTable'
 import { SummaryCards } from '@/components/ilp/SummaryCards'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import type { IlpPolicyAnalysis } from '@/lib/calculations/ilp'
 import { analyzeAllPolicies } from '@/lib/calculations/ilp'
+import { formatIlpCurrency, formatIlpPercent } from '@/components/ilp/formatters'
 import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
 import { templateVariantToPolicySeed } from '@/lib/ilp-catalog/templateToPolicy'
 import { ilpPolicySchema } from '@/lib/validation/ilpSchema'
@@ -26,6 +28,48 @@ function issueMessagesFromPolicy(policy: unknown): string[] {
   const parsed = ilpPolicySchema.safeParse(policy)
   if (parsed.success) return []
   return parsed.error.issues.map((issue) => issue.message)
+}
+
+interface HeadlineInsightProps {
+  policy: { name: string; currency: 'SGD' | 'USD' }
+  analysis: IlpPolicyAnalysis
+}
+
+function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
+  const { summary } = analysis
+  const feePctOfPremiums = summary.totalPremiumsPaid > 0
+    ? summary.netFeeDrag / summary.totalPremiumsPaid
+    : 0
+
+  return (
+    <Card className="border-primary/20 bg-primary/5">
+      <CardContent className="space-y-3 pt-6">
+        <p className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
+          Returns are not guaranteed, but fees are.
+        </p>
+        <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
+          <div>
+            <div className="text-3xl font-bold">{formatIlpCurrency(summary.netFeeDrag, policy.currency)}</div>
+            <div className="text-sm text-muted-foreground">net fees over the analysis horizon</div>
+          </div>
+          <div>
+            <div className="text-2xl font-semibold">{formatIlpPercent(feePctOfPremiums)}</div>
+            <div className="text-sm text-muted-foreground">of your premiums</div>
+          </div>
+          {summary.totalBonusesReceived > 0 && (
+            <div>
+              <div className="text-2xl font-semibold text-emerald-700 dark:text-emerald-400">{formatIlpCurrency(summary.totalBonusesReceived, policy.currency)}</div>
+              <div className="text-sm text-muted-foreground">returned as bonuses</div>
+            </div>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {policy.name}. Gross fees {formatIlpCurrency(summary.totalFeesCharged, policy.currency)}, bonuses offset {formatIlpCurrency(summary.totalBonusesReceived, policy.currency)}.
+          {analysis.mode === 'projected' && ` Cancel-now penalty: ${formatIlpCurrency(summary.cancelNowPenalty, policy.currency)}.`}
+        </p>
+      </CardContent>
+    </Card>
+  )
 }
 
 function TemplateCatalogSummary() {
@@ -213,16 +257,6 @@ export function IlpReviewPage() {
         </div>
       </div>
 
-      <Alert>
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Support boundary</AlertTitle>
-        <AlertDescription>
-          Supported catalog templates are release-gated only within their declared modeled economics. Partial templates remain useful for structured review, but they still require manual verification of metadata-only behavior and unresolved charges.
-        </AlertDescription>
-      </Alert>
-
-      <TemplateCatalogSummary />
-
       <PolicyTabs />
 
       <ProductPickerDialog open={pickerOpen} onOpenChange={setPickerOpen} onSelect={handleCatalogPick} />
@@ -235,16 +269,6 @@ export function IlpReviewPage() {
         </Alert>
       )}
 
-      {excludedCount > 0 && (
-        <Alert>
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>{excludedCount} policy excluded from comparison</AlertTitle>
-          <AlertDescription>
-            Invalid policies stay editable below, but only valid policies are included in the charts and comparison table so the page remains usable while you edit.
-          </AlertDescription>
-        </Alert>
-      )}
-
       {catalogError && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
@@ -253,15 +277,7 @@ export function IlpReviewPage() {
         </Alert>
       )}
 
-      <PolicyInputForm policy={selectedPolicy} issues={selectedEntry?.issues ?? []} />
-
-      {analysisResult.analysis && (
-        <ComparisonTable
-          analyses={analysisResult.analysis.policies}
-          comparison={analysisResult.analysis.comparison}
-        />
-      )}
-
+      {/* Headline insight + analysis sections — shown FIRST so users see results immediately */}
       {selectedPolicy && displayAnalysis && displayPolicy ? (
         <>
           {selectedAnalysis == null && (
@@ -273,13 +289,20 @@ export function IlpReviewPage() {
               </AlertDescription>
             </Alert>
           )}
+          <HeadlineInsight policy={displayPolicy} analysis={displayAnalysis} />
           <SummaryCards policy={displayPolicy} analysis={displayAnalysis} />
           <FeeWaterfallChart policy={displayPolicy} analysis={displayAnalysis} />
           <FeeBreakdownSection policy={displayPolicy} analysis={displayAnalysis} />
           <DecisionPanel policy={displayPolicy} analysis={displayAnalysis} />
           <NpvTimelineChart analyses={analysisResult.analysis?.policies ?? [displayAnalysis]} />
-          <ProjectionTable policy={displayPolicy} analysis={displayAnalysis} />
           <OpportunityCostCard policy={displayPolicy} analysis={displayAnalysis} />
+
+          {analysisResult.analysis && (
+            <ComparisonTable
+              analyses={analysisResult.analysis.policies}
+              comparison={analysisResult.analysis.comparison}
+            />
+          )}
         </>
       ) : selectedPolicy ? (
         <Alert variant="destructive">
@@ -290,6 +313,34 @@ export function IlpReviewPage() {
           </AlertDescription>
         </Alert>
       ) : null}
+
+      {/* Policy configuration — below analysis for catalog-seeded policies */}
+      <PolicyInputForm policy={selectedPolicy} issues={selectedEntry?.issues ?? []} />
+
+      {/* Detailed projection table — reference data at the bottom */}
+      {selectedPolicy && displayAnalysis && displayPolicy && displayAnalysis.mode === 'projected' && (
+        <ProjectionTable policy={displayPolicy} analysis={displayAnalysis} />
+      )}
+
+      {excludedCount > 0 && (
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>{excludedCount} policy excluded from comparison</AlertTitle>
+          <AlertDescription>
+            Invalid policies stay editable below, but only valid policies are included in the charts and comparison table so the page remains usable while you edit.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <TemplateCatalogSummary />
+
+      <Alert>
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Support boundary</AlertTitle>
+        <AlertDescription>
+          Supported catalog templates are release-gated only within their declared modeled economics. Partial templates remain useful for structured review, but they still require manual verification of metadata-only behavior and unresolved charges.
+        </AlertDescription>
+      </Alert>
 
       <p className="text-xs text-muted-foreground">
         This tool is for educational purposes. It models generic ILP fee structures and does not constitute financial advice. Verify all assumptions against your actual policy documents.
