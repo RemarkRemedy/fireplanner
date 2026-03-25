@@ -1,34 +1,9 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { BarChart3, Calculator, Search } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
+import { ProductPickerDialog } from '@/components/ilp/catalog/ProductPickerDialog'
 import { usePageMeta } from '@/hooks/usePageMeta'
-
-const MODES = [
-  {
-    title: "I'm considering an ILP",
-    description: 'See the real fee cost of any ILP product in 4 screens. Year-by-year fee decomposition, bonus reality check, and exit math.',
-    icon: BarChart3,
-    href: '/ilp/compare',
-    cta: 'Pick a product',
-    note: 'Browse the catalog, then see the fee story for any product.',
-  },
-  {
-    title: 'I have an ILP',
-    description: 'Enter your current policy details and find out if staying or exiting makes more financial sense under your circumstances.',
-    icon: Calculator,
-    href: '/ilp/exit',
-    cta: 'Calculate exit options',
-    note: 'You will need your latest policy statement.',
-  },
-  {
-    title: "I'm researching",
-    description: 'Compare fee drag across all products. Sortable, filterable, and standardized for apples-to-apples comparison.',
-    icon: Search,
-    href: '/ilp/compare',
-    cta: 'Open the leaderboard',
-    note: 'Standardized at S$350/mo, mid return scenario.',
-  },
-] as const
 
 export function IlpLandingPage() {
   usePageMeta({
@@ -36,6 +11,9 @@ export function IlpLandingPage() {
     description: 'Independent ILP fee analysis for Singapore. Year-by-year fee decomposition, exit math, and product comparison for 92 products.',
     path: '/ilp',
   })
+
+  const navigate = useNavigate()
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 px-4 py-8">
@@ -53,25 +31,68 @@ export function IlpLandingPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        {MODES.map((mode) => (
-          <Link key={mode.href + mode.title} to={mode.href} className="group">
-            <Card className="h-full transition-colors group-hover:border-primary group-hover:shadow-sm">
-              <CardContent className="flex h-full flex-col gap-4 pt-6">
-                <mode.icon className="h-8 w-8 text-primary" />
-                <div className="flex-1 space-y-2">
-                  <h2 className="text-lg font-semibold">{mode.title}</h2>
-                  <p className="text-sm text-muted-foreground">{mode.description}</p>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-primary group-hover:underline">
-                    {mode.cta}
-                  </span>
-                  <p className="mt-1 text-xs text-muted-foreground">{mode.note}</p>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
+        {/* Mode 1: Prospects — opens product picker, then navigates to story mode */}
+        <button type="button" onClick={() => setPickerOpen(true)} className="group text-left">
+          <Card className="h-full transition-colors group-hover:border-primary group-hover:shadow-sm">
+            <CardContent className="flex h-full flex-col gap-4 pt-6">
+              <BarChart3 className="h-8 w-8 text-primary" />
+              <div className="flex-1 space-y-2">
+                <h2 className="text-lg font-semibold">I'm considering an ILP</h2>
+                <p className="text-sm text-muted-foreground">
+                  See the real fee cost of any ILP product in 4 screens. Year-by-year fee decomposition, bonus reality check, and exit math.
+                </p>
+              </div>
+              <div>
+                <span className="text-sm font-medium text-primary group-hover:underline">
+                  Pick a product
+                </span>
+                <p className="mt-1 text-xs text-muted-foreground">Select your product and see its fee story.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </button>
+
+        {/* Mode 2: Existing holders */}
+        <Link to="/ilp/exit" className="group">
+          <Card className="h-full transition-colors group-hover:border-primary group-hover:shadow-sm">
+            <CardContent className="flex h-full flex-col gap-4 pt-6">
+              <Calculator className="h-8 w-8 text-primary" />
+              <div className="flex-1 space-y-2">
+                <h2 className="text-lg font-semibold">I have an ILP</h2>
+                <p className="text-sm text-muted-foreground">
+                  Enter your current policy details and find out if staying or exiting makes more financial sense under your circumstances.
+                </p>
+              </div>
+              <div>
+                <span className="text-sm font-medium text-primary group-hover:underline">
+                  Calculate exit options
+                </span>
+                <p className="mt-1 text-xs text-muted-foreground">You will need your latest policy statement.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        {/* Mode 3: Researchers */}
+        <Link to="/ilp/compare" className="group">
+          <Card className="h-full transition-colors group-hover:border-primary group-hover:shadow-sm">
+            <CardContent className="flex h-full flex-col gap-4 pt-6">
+              <Search className="h-8 w-8 text-primary" />
+              <div className="flex-1 space-y-2">
+                <h2 className="text-lg font-semibold">I'm researching</h2>
+                <p className="text-sm text-muted-foreground">
+                  Compare fee drag across all products. Sortable, filterable, and standardized for apples-to-apples comparison.
+                </p>
+              </div>
+              <div>
+                <span className="text-sm font-medium text-primary group-hover:underline">
+                  Open the leaderboard
+                </span>
+                <p className="mt-1 text-xs text-muted-foreground">Standardized at S$350/mo, mid return scenario.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       <div className="space-y-3 text-center text-xs text-muted-foreground">
@@ -83,6 +104,15 @@ export function IlpLandingPage() {
           Privacy-first. All computation runs in your browser. No data is sent to any server.
         </p>
       </div>
+
+      <ProductPickerDialog
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onSelect={(product, _variant) => {
+          setPickerOpen(false)
+          navigate(`/ilp/story/${product.id}`)
+        }}
+      />
     </div>
   )
 }
