@@ -24,6 +24,7 @@ const IlpReviewPage = lazy(() => import('@/pages/IlpReviewPage').then(m => ({ de
 const IlpStoryModePage = lazy(() => import('@/pages/IlpStoryModePage').then(m => ({ default: m.IlpStoryModePage })))
 const IlpExitCalculatorPage = lazy(() => import('@/pages/IlpExitCalculatorPage').then(m => ({ default: m.IlpExitCalculatorPage })))
 const IlpLeaderboardPage = lazy(() => import('@/pages/IlpLeaderboardPage').then(m => ({ default: m.IlpLeaderboardPage })))
+const IlpLandingPage = lazy(() => import('@/pages/IlpLandingPage').then(m => ({ default: m.IlpLandingPage })))
 
 function PageLoader() {
   return (
@@ -98,6 +99,7 @@ export const router = createBrowserRouter([
       { path: '/withdrawal', element: page(WithdrawalPage) },
       { path: '/stress-test', element: page(StressTestPage) },
       { path: '/health-check', element: page(HealthCheckPage) },
+      { path: '/ilp', element: page(IlpLandingPage) },
       { path: '/ilp-review', element: page(IlpReviewPage) },
       { path: '/ilp/story/:productId', element: page(IlpStoryModePage) },
       { path: '/ilp/exit', element: page(IlpExitCalculatorPage) },
