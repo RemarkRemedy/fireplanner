@@ -411,7 +411,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
 
             {/* Card 5: Summary */}
             {currentIndex === 4 && (
-              <WrappedCard gradient={gradients[4]} direction={direction} scrollable>
+              <WrappedCard gradient={gradients[4]} direction={direction} compact>
                 <motion.p variants={staggerChild} className="text-xs uppercase tracking-widest text-white/60 font-medium">
                   Your fee summary
                 </motion.p>

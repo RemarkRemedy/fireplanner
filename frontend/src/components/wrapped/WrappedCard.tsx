@@ -6,14 +6,14 @@ interface WrappedCardProps {
   gradient: string
   direction: number
   children: ReactNode
-  /** Allow vertical scrolling for content-heavy cards (e.g. summary). */
-  scrollable?: boolean
+  /** Use compact spacing for content-heavy cards (e.g. summary). */
+  compact?: boolean
 }
 
-export function WrappedCard({ gradient, direction, children, scrollable }: WrappedCardProps) {
+export function WrappedCard({ gradient, direction, children, compact }: WrappedCardProps) {
   return (
     <motion.div
-      className={`absolute inset-0 flex flex-col items-center px-8 text-white ${scrollable ? 'overflow-y-auto pt-16 pb-24' : 'justify-center'}`}
+      className="absolute inset-0 flex flex-col items-center justify-center px-8 text-white"
       style={{ background: gradient, boxShadow: 'inset 0 0 60px rgba(255,255,255,0.04)' }}
       custom={direction}
       variants={cardVariants}
@@ -32,7 +32,7 @@ export function WrappedCard({ gradient, direction, children, scrollable }: Wrapp
         }}
       />
       <motion.div
-        className="flex flex-col items-center text-center max-w-lg w-full gap-6 z-10"
+        className={`flex flex-col items-center text-center max-w-lg w-full z-10 ${compact ? 'gap-3' : 'gap-6'}`}
         variants={staggerContainer}
         initial="enter"
         animate="center"
