@@ -1,4 +1,4 @@
-import type { IlpFund, IlpProjectionResult, IlpYearRow, ReturnScenario } from '@/lib/calculations/ilp'
+import type { IlpFund, IlpPolicyInput, IlpProjectionResult, IlpYearRow, ReturnScenario } from '@/lib/calculations/ilp'
 
 export interface IlpFeeBreakdownRow {
   policyYear: number
@@ -24,9 +24,15 @@ export interface IlpFeeBreakdownRow {
   cumulativeImplicitFundFees: number
 }
 
+export interface IlpInceptionCharge {
+  label: string
+  amount: number
+}
+
 export interface IlpFeeBreakdownResult {
   rows: IlpFeeBreakdownRow[]
   blendedOcf: number
+  inceptionCharges: IlpInceptionCharge[]
   totals: {
     accountFee: number
     additionalCharges: number
@@ -51,14 +57,28 @@ function computeBlendedOcf(funds: IlpFund[]): number {
   return funds.reduce((sum, fund) => sum + fund.allocation * fund.ocf, 0)
 }
 
+function computeInceptionCharges(policy?: IlpPolicyInput): IlpInceptionCharge[] {
+  if (!policy) return []
+  const isp = policy.initialSinglePremium ?? 0
+  if (isp <= 0) return []
+  return (policy.chargeRules ?? [])
+    .filter((rule) => 'basis' in rule && rule.basis === 'initial-single-premium' && rule.rate > 0)
+    .map((rule) => ({
+      label: 'label' in rule && typeof rule.label === 'string' ? rule.label : 'Single Premium Charge',
+      amount: isp * rule.rate,
+    }))
+}
+
 export function buildFeeBreakdown(
   projection: IlpProjectionResult,
   funds?: IlpFund[],
+  policy?: IlpPolicyInput,
 ): IlpFeeBreakdownResult {
   let cumulativeGrossFees = 0
   let cumulativeBonuses = 0
   let cumulativeImplicitFundFees = 0
   const blendedOcf = funds ? computeBlendedOcf(funds) : 0
+  const inceptionCharges = computeInceptionCharges(policy)
 
   const totals = {
     accountFee: 0,
@@ -122,7 +142,7 @@ export function buildFeeBreakdown(
     }
   })
 
-  return { rows, blendedOcf, totals }
+  return { rows, blendedOcf, inceptionCharges, totals }
 }
 
 export function pickProjection(
