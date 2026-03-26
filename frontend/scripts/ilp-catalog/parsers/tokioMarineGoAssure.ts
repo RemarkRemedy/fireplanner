@@ -78,6 +78,10 @@ function snippetNear(document: ExtractedPdfDocument, pageNumber: number, keyword
 function buildFeeRules(document: ExtractedPdfDocument): IlpTemplateFeeRule[] {
   const page13 = sourceRef(13, 'Initial Charge', snippetNear(document, 13, 'Initial Charge', 22))
   const page14 = sourceRef(14, 'Policy Charge', snippetNear(document, 14, 'Policy Charge', 24))
+  const page19 = sourceRef(19, 'Monthly Protection Charges (Death)', snippetNear(document, 19, 'Monthly Rates for Monthly Protection Charges', 40))
+  const page20 = sourceRef(20, 'Monthly Protection Charges (Death continued)', snippetNear(document, 20, 'Monthly Rates for Monthly Protection Charges', 40))
+  const page21 = sourceRef(21, 'Monthly Protection Charges (TPD)', snippetNear(document, 21, 'Monthly Rates for Monthly Protection Charges', 40))
+  const page22 = sourceRef(22, 'Monthly Protection Charges (TPD continued)', snippetNear(document, 22, 'Monthly Rates for Monthly Protection Charges', 40))
 
   return [
     {
@@ -118,6 +122,60 @@ function buildFeeRules(document: ExtractedPdfDocument): IlpTemplateFeeRule[] {
         'If the Accumulation Units Account is insufficient, the remaining deduction falls back to the Initial Units Account and/or Top-up Units Account.',
       ],
       sourceRefs: [page14],
+    },
+    {
+      id: 'monthly-protection-charge-death',
+      label: 'Monthly Protection Charge (Death)',
+      basis: 'assurance-sum-at-risk',
+      rate: 0,
+      amount: 0,
+      appliesTo: ['accumulation'],
+      assuranceValueAppliesTo: ['initial', 'accumulation'],
+      fallbackAppliesTo: ['initial', 'topup'],
+      activeWindow: 'policy-term',
+      assuranceConfig: {
+        formula: 'tokio-mpc-goassure-basic-sum-at-risk',
+        rateTable: 'tokio-goassure-mpc-death',
+        monthlyModalFactor: 1,
+        sumAssuredRateMultiplierTiers: [
+          { minSumAssured: 100_000, maxSumAssured: 199_999, multiplier: 1 },
+          { minSumAssured: 200_000, maxSumAssured: 299_999, multiplier: 0.95 },
+          { minSumAssured: 300_000, maxSumAssured: null, multiplier: 0.9 },
+        ],
+      },
+      notes: [
+        'Models the published monthly protection charge on the Death basic sum at risk for the SGD 10-year corridor using the goAssure smoker-specific rate tables.',
+        'The charge deducts from the Accumulation Units Account first and falls back to the Initial Units Account and/or Top-up Units Account if needed.',
+        'V1 needs manual current Basic Sum Assured and Protection Age inputs because withdrawal-adjusted protection history is not reconstructed from source state.',
+      ],
+      sourceRefs: [page19, page20],
+    },
+    {
+      id: 'monthly-protection-charge-tpd',
+      label: 'Monthly Protection Charge (TPD)',
+      basis: 'assurance-sum-at-risk',
+      rate: 0,
+      amount: 0,
+      appliesTo: ['accumulation'],
+      assuranceValueAppliesTo: ['initial', 'accumulation'],
+      fallbackAppliesTo: ['initial', 'topup'],
+      activeWindow: 'policy-term',
+      assuranceConfig: {
+        formula: 'tokio-mpc-goassure-tpd-sum-at-risk',
+        rateTable: 'tokio-goassure-mpc-tpd',
+        monthlyModalFactor: 1,
+        sumAssuredRateMultiplierTiers: [
+          { minSumAssured: 100_000, maxSumAssured: 199_999, multiplier: 1 },
+          { minSumAssured: 200_000, maxSumAssured: 299_999, multiplier: 0.95 },
+          { minSumAssured: 300_000, maxSumAssured: null, multiplier: 0.9 },
+        ],
+      },
+      notes: [
+        'Models the published monthly protection charge on TPD sum at risk using the goAssure smoker-specific TPD rate tables and the manual current TPD acceleration ratio input.',
+        'The charge ends from Protection Age onward because the source states monthly protection charges are deducted only up to the policy anniversary at Protection Age.',
+        'V1 needs manual current Basic Sum Assured, Protection Age, and TPD acceleration ratio inputs because withdrawal-adjusted protection history is not reconstructed from source state.',
+      ],
+      sourceRefs: [page21, page22],
     },
   ]
 }
@@ -455,7 +513,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: [...SURRENDER_CHARGE_TABLE],
     warnings: [
-      '#goAssure is cataloged as a supported V1 corridor. The parser captures the SGD 10-year cash corridor: three-account regular-premium / top-up routing, the published Initial Bonus corridor for policy years 1 to 4 via manual initial basic sum assured at issue bands, the published initial-charge schedule, the premium-base policy charge during MIP, recurring-single-premium and top-up charges, the partial-withdrawal charge schedule, the premium-shortfall charge schedules, the 10-year surrender-charge table, the current-state death-benefit estimate before and after Protection Age via manual current Protection Age / amount-owing / basic-sum-assured inputs, the current terminal-illness snapshot as the lower of that current death corridor and a manual remaining aggregate TI cap, the current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today through the published partial-TI continuation corridor after manual claim-amount and residual-death input, the current TPD benefit estimate before Protection Age via the same current death corridor plus a manual current TPD acceleration ratio and remaining aggregate TPD cap, and the manual distribution-mode assumption surface.',
+      '#goAssure is cataloged as a supported V1 corridor. The parser captures the SGD 10-year cash corridor: three-account regular-premium / top-up routing, the published Initial Bonus corridor for policy years 1 to 4 via manual initial basic sum assured at issue bands, the published initial-charge schedule, the premium-base policy charge during MIP, recurring-single-premium and top-up charges, the modeled Monthly Protection Charge corridors for Death basic sum at risk and TPD sum at risk using the published smoker-specific rate tables plus manual current Basic Sum Assured / Protection Age / TPD acceleration ratio inputs, the partial-withdrawal charge schedule, the premium-shortfall charge schedules, the 10-year surrender-charge table, the current-state death-benefit estimate before and after Protection Age via manual current Protection Age / amount-owing / basic-sum-assured inputs, the current terminal-illness snapshot as the lower of that current death corridor and a manual remaining aggregate TI cap, the current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today through the published partial-TI continuation corridor after manual claim-amount and residual-death input, the current TPD benefit estimate before Protection Age via the same current death corridor plus a manual current TPD acceleration ratio and remaining aggregate TPD cap, and the manual distribution-mode assumption surface.',
       'Dividend cash payouts are partially modeled through the manual distribution-mode assumption surface: during the minimum contribution period, Initial Units Account dividends stay reinvested while Accumulation Units Account and Top-up Units Account dividends may be paid in cash; after the minimum contribution period, Initial Units Account dividends join the cash-payout corridor; distribution-option changes should be submitted at least 30 days before the Record Date; and the published $50 per-dividend minimum payout threshold remains informational only.',
       'Explicit regular-premium variation now honors the published after-first-four-policy-years start gate and the SGD minimum regular premium table for annual / semi-annual / quarterly / monthly payment modes. Tokio-defined minimum increase / reduction amounts remain informational only.',
       'Recurring single premium events before policy month 13 or below the published monthly-equivalent minimum of S$50 are blocked; the published maximum recurring single premium table and insurer-defined increase / reduction minimums remain informational only.',
@@ -468,7 +526,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     ],
     unsupportedItems: [
       'Waiver approval timing, hospitalisation / retrenchment proof, medical and unemployment exclusions, first-assured coverage, and Tokio’s discretionary variation of benefit grant counts remain informational only beyond the modeled explicit chargeWaived plus optional shared chargeWaiverGrantId event path.',
-      'Monthly Protection Charge, sum-at-risk formulas, Guaranteed Extra Protection, terminal-illness exclusions / settlement, post-TPD continuation state, and broader protection-side claim behavior remain informational only beyond the modeled current TI snapshot and current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today.',
+      'Guaranteed Extra Protection, terminal-illness exclusions / settlement, post-TPD continuation state, and broader protection-side claim behavior remain informational only beyond the modeled Monthly Protection Charge, current TI snapshot, and current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today.',
       'Credit-card charge, administrative charge nil surface, policy-currency-change charge nil surface, and third-party charges remain informational only.',
       'The published $50 per-dividend minimum payout threshold, plus detailed dividend-payment processing and settlement handling, remain informational only.',
     ],
@@ -492,6 +550,7 @@ export function parseTokioMarineGoAssure(context: ParseContext): IlpCatalogProdu
       'branch:tokio-marine-goassure-initial-bonus',
       'branch:tokio-marine-goassure-initial-charge',
       'branch:tokio-marine-goassure-policy-charge',
+      'branch:tokio-marine-goassure-monthly-protection-charge',
       'branch:tokio-marine-goassure-recurring-single-and-top-up-charge',
       'branch:tokio-marine-goassure-partial-withdrawal-charge',
       'branch:tokio-marine-goassure-premium-shortfall-charge',
@@ -511,13 +570,12 @@ export function parseTokioMarineGoAssure(context: ParseContext): IlpCatalogProdu
     ],
     metadataOnlyBehaviors: [
       'tokio-marine-goassure-waiver-approval-gating-and-limits',
-      'tokio-marine-goassure-monthly-protection-charge',
       'tokio-marine-goassure-guaranteed-extra-protection',
       'tokio-marine-goassure-dividend-payout-threshold',
       'tokio-marine-goassure-third-party-charges',
     ],
     warnings: [
-      '#goAssure is cataloged as a supported V1 product. The parser captures the SGD 10-year cash corridor charge surfaces, the policy-year-1-to-4 Initial Bonus corridor via manual initial basic sum assured at issue bands, a simplified year-15 Wellness Bonus credit on the Accumulation Units Account for the published 3.50% core bonus amount, the current-state death-benefit estimate before and after Protection Age via manual current Protection Age / amount-owing / basic-sum-assured inputs, the current terminal-illness snapshot as the lower of that current death corridor and a manual remaining aggregate TI cap, the current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today through the published partial-TI continuation corridor after manual claim-amount and residual-death input, the current TPD benefit estimate before Protection Age via the same current death corridor plus a manual current TPD acceleration ratio and remaining aggregate TPD cap, and distribution-mode assumption support, including phase-specific dividend cash-payout account eligibility and the 30-day record-date instruction lead time, while the published $50 per-dividend minimum payout threshold, Wellness Bonus qualification and exact delayed-payout basis, waiver mechanics, Monthly Protection Charge, terminal-illness exclusions / settlement, post-TPD continuation state, and broader protection-side claim behavior remain informational only.',
+      '#goAssure is cataloged as a supported V1 product. The parser captures the SGD 10-year cash corridor charge surfaces, the policy-year-1-to-4 Initial Bonus corridor via manual initial basic sum assured at issue bands, a simplified year-15 Wellness Bonus credit on the Accumulation Units Account for the published 3.50% core bonus amount, the Monthly Protection Charge corridors for Death basic sum at risk and TPD sum at risk using the published smoker-specific rate tables plus manual current Basic Sum Assured / Protection Age / TPD acceleration ratio inputs, the current-state death-benefit estimate before and after Protection Age via manual current Protection Age / amount-owing / basic-sum-assured inputs, the current terminal-illness snapshot as the lower of that current death corridor and a manual remaining aggregate TI cap, the current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today through the published partial-TI continuation corridor after manual claim-amount and residual-death input, the current TPD benefit estimate before Protection Age via the same current death corridor plus a manual current TPD acceleration ratio and remaining aggregate TPD cap, and distribution-mode assumption support, including phase-specific dividend cash-payout account eligibility and the 30-day record-date instruction lead time, while the published $50 per-dividend minimum payout threshold, Wellness Bonus qualification and exact delayed-payout basis, waiver mechanics, terminal-illness exclusions / settlement, post-TPD continuation state, Guaranteed Extra Protection, and broader protection-side claim behavior remain informational only.',
     ],
     archived: false,
     variants: [

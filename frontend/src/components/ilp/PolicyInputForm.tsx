@@ -71,6 +71,8 @@ function requiresCurrentBasicSumAssured(rule: IlpChargeRule): boolean {
   return rule.assuranceConfig?.formula === 'hsbc-flexi-choice-death-ti'
     || rule.assuranceConfig?.formula === 'hsbc-flexi-max-death-ti'
     || rule.assuranceConfig?.formula === 'great-eastern-gla4-death-ti'
+    || rule.assuranceConfig?.formula === 'tokio-mpc-goassure-basic-sum-at-risk'
+    || rule.assuranceConfig?.formula === 'tokio-mpc-goassure-tpd-sum-at-risk'
 }
 
 function requiresCurrentNetSupplementaryPremiumBase(rule: IlpChargeRule): boolean {
@@ -98,6 +100,8 @@ function supportsTokioCurrentLifeState(rule: IlpChargeRule): boolean {
   return rule.assuranceConfig?.formula === 'tokio-mpc-net-premium-floor'
     || rule.assuranceConfig?.formula === 'tokio-mpc-locked-in-policy-value'
     || rule.assuranceConfig?.formula === 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium'
+    || rule.assuranceConfig?.formula === 'tokio-mpc-goassure-basic-sum-at-risk'
+    || rule.assuranceConfig?.formula === 'tokio-mpc-goassure-tpd-sum-at-risk'
 }
 
 function supportsCurrentTiClaimSnapshot(rule: IlpChargeRule): boolean {
@@ -320,6 +324,7 @@ function supportsCurrentAcceptedRegularPremiumMonths(policy: IlpPolicyInput): bo
 
 function supportsInitialBasicSumAssuredAtIssueBonus(policy: IlpPolicyInput): boolean {
   return policy.bonuses.some((bonus) => bonus.annualPremiumTierBasis === 'initial-basic-sum-assured-at-issue')
+    || (policy.chargeRules ?? []).some((rule) => rule.basis === 'insured-amount-at-issue')
 }
 
 function isSmartRetireDeathBenefitProduct(policy: IlpPolicyInput): boolean {
@@ -642,8 +647,10 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
     && assuranceProfile?.currentAgeNextBirthday != null
     && supportsSmartRetireLaterDeathBenefit
   const supportsSmartRetireRefundGate = supportsSmartRetireCurrentOrFutureCoiRefund
+  const smartRetireTargetRetirementAge = assuranceProfile?.targetRetirementAge
   const supportsSmartRetirePastDueCoiRefund = supportsSmartRetireCurrentOrFutureCoiRefund
-    && assuranceProfile.currentAgeNextBirthday >= assuranceProfile.targetRetirementAge
+    && smartRetireTargetRetirementAge != null
+    && assuranceProfile.currentAgeNextBirthday >= smartRetireTargetRetirementAge
   const smartRetireCurrentAgeNextBirthday = assuranceProfile?.currentAgeNextBirthday ?? 35
   const smartRetireNeedsBasicSumAssured = supportsSmartRetireLaterDeathBenefit
     && assuranceProfile?.targetRetirementAge != null
@@ -1041,6 +1048,9 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
   ]
   const eecChartData = policy.eecTable.map((rate, index) => ({ year: index + 1, rate: rate * 100 }))
   const updateChargeRules = (chargeRules: IlpChargeRule[]) => updatePolicy(policy.id, { chargeRules })
+  const updateCatalogChargeRule = (ruleId: string, patch: Partial<IlpChargeRule>) => updateChargeRules(
+    (policy.chargeRules ?? []).map((rule) => (rule.id === ruleId ? { ...rule, ...patch } : rule)),
+  )
   const upsertAssuranceProfile = (patch: Partial<NonNullable<IlpPolicyInput['assuranceProfile']>>) => updatePolicy(policy.id, {
     assuranceProfile: {
       currentAgeNextBirthday: assuranceProfile?.currentAgeNextBirthday ?? 35,
@@ -1804,7 +1814,7 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                             />
                             <NumberInput
                               label="Remaining Exclusion Runway (Months)"
-                              value={cohort.remainingMonths}
+                              value={cohort.remainingMonths ?? 24}
                               onChange={(value) => {
                                 const nextCohorts = goalBuilderHistoricalExcludedSupplementaryPremiumCohorts.map((entry, entryIndex) => (
                                   entryIndex === index
@@ -2787,11 +2797,11 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                     onClick={() => setShowCatalogChargeRules(!showCatalogChargeRules)}
                   >
                     {showCatalogChargeRules ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-                    {showCatalogChargeRules ? 'Hide details' : 'Show details (read-only)'}
+                    {showCatalogChargeRules ? 'Hide details' : 'Show details'}
                   </button>
                 )}
                 {showCatalogChargeRules && (policy.chargeRules ?? []).map((rule) => (
-                  <Card key={rule.id} className="opacity-75">
+                  <Card key={rule.id} className={cn(!(rule.requiresManualInput && rule.basis === 'fixed-annual') && 'opacity-75')}>
                     <CardContent className="py-3 text-sm">
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                         <span className="font-medium">{rule.label}</span>
@@ -2799,7 +2809,24 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                         <Badge variant="secondary">{rule.activeWindow}</Badge>
                         {rule.rate > 0 && <span>{formatIlpPercent(rule.rate)}/yr</span>}
                         {(rule.amount ?? 0) > 0 && <span>${rule.amount}/yr</span>}
+                        {rule.requiresManualInput && <Badge variant="default">Manual input</Badge>}
                       </div>
+                      {rule.requiresManualInput && rule.basis === 'fixed-annual' && (
+                        <div className="mt-3 max-w-sm">
+                          <CurrencyInput
+                            label={`Annual Amount (${policy.currency})`}
+                            value={rule.amount ?? 0}
+                            onChange={(value) => updateCatalogChargeRule(rule.id, { amount: value })}
+                          />
+                        </div>
+                      )}
+                      {rule.notes && rule.notes.length > 0 && (
+                        <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                          {rule.notes.map((note, noteIndex) => (
+                            <p key={`${rule.id}-note-${noteIndex}`}>{note}</p>
+                          ))}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}

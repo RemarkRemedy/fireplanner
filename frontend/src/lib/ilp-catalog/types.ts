@@ -5,6 +5,7 @@ export type IlpCatalogCurrency = 'SGD' | 'USD'
 export type IlpCatalogSourceDocumentType = 'summary' | 'brochure'
 export type IlpCatalogSourceClass = 'summary' | 'brochure-only'
 export type IlpMipBasis = 'finite' | 'open-ended'
+export type IlpRegularPremiumPaymentFrequency = 'annual' | 'semi-annual' | 'quarterly' | 'monthly'
 
 export interface IlpCatalogSourceRef {
   page: number
@@ -161,7 +162,7 @@ export interface IlpTemplateBonus {
 export interface IlpTemplateFeeRule {
   id: string
   label: string
-  basis?: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier' | 'premium-base-mip-multiplier-capped-account-value' | 'cumulative-paid-regular-premium' | 'initial-single-premium' | 'initial-single-premium-base'
+  basis?: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'insured-amount-at-issue' | 'premium-base-mip-multiplier' | 'premium-base-mip-multiplier-capped-account-value' | 'cumulative-paid-regular-premium' | 'initial-single-premium' | 'initial-single-premium-base'
   yearBasis?: 'policy-year' | 'premium-year'
   requiresPremiumsPaidUpToDate?: boolean
   suspensionRules?: Array<{
@@ -179,6 +180,7 @@ export interface IlpTemplateFeeRule {
       | 'aia-plp2-plus-death'
       | 'aia-plp2-max-death'
       | 'aia-pro-achiever-3-benefit-charge'
+      | 'aia-venture-benefit-charge'
       | 'hsbc-flexi-choice-death-ti'
       | 'hsbc-flexi-max-death-ti'
       | 'great-eastern-wa4-death-ti'
@@ -196,8 +198,12 @@ export interface IlpTemplateFeeRule {
       | 'tokio-mpc-net-premium-floor'
       | 'tokio-mpc-locked-in-policy-value'
       | 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium'
+      | 'tokio-mpc-goassure-basic-sum-at-risk'
+      | 'tokio-mpc-goassure-tpd-sum-at-risk'
     rateTable?:
       | 'tokio-mpc-unzo-death'
+      | 'tokio-goassure-mpc-death'
+      | 'tokio-goassure-mpc-tpd'
     monthlyModalFactor: number
     maxAgeNextBirthday?: number
     policyYearRateMultiplierSchedule?: Array<{
@@ -222,6 +228,11 @@ export interface IlpTemplateFeeRule {
       withdrawalReductionAccountIds: string[]
     }
   }
+  issueAgeRateTiers?: Array<{
+    minIssueAgeNextBirthday: number
+    maxIssueAgeNextBirthday: number | null
+    rate: number
+  }>
   premiumBaseConfig?: {
     useHigherOfCommencementAndPrevailing: boolean
     capRate?: number

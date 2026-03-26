@@ -605,7 +605,7 @@
           {
             "id": "single-premium-charge",
             "label": "Single Premium Charge",
-            "basis": "annual-contribution",
+            "basis": "initial-single-premium",
             "rate": 0.05,
             "amount": 0,
             "appliesTo": [
@@ -3072,6 +3072,8 @@
       "branch:aia-platinum-wealth-elite-2-premium-holiday-charge",
       "branch:aia-platinum-wealth-elite-2-partial-withdrawal-charge",
       "branch:aia-platinum-wealth-elite-2-full-surrender-charge",
+      "branch:aia-platinum-wealth-elite-2-administration-charge",
+      "branch:aia-platinum-wealth-elite-2-insurance-risk-charge-manual-input",
       "kernel:top-up-paid-up-to-date-block",
       "kernel:current-death-benefit-estimate",
       "kernel:current-ti-benefit-estimate",
@@ -3080,8 +3082,6 @@
     "metadataOnlyBehaviors": [
       "aia-platinum-wealth-elite-2-single-premium-corridor",
       "aia-platinum-wealth-elite-2-premium-term-extension",
-      "aia-platinum-wealth-elite-2-administration-charge",
-      "aia-platinum-wealth-elite-2-insurance-risk-charge",
       "aia-platinum-wealth-elite-2-free-legacy-cover",
       "aia-platinum-wealth-elite-2-no-lapse-privilege",
       "aia-platinum-wealth-elite-2-income-withdrawal-privilege",
@@ -3092,7 +3092,7 @@
       "aia-platinum-wealth-elite-2-fund-switching-and-rebalancing"
     ],
     "warnings": [
-      "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the regular-premium withdrawal / surrender charge schedules, the current-state death benefit as the higher of current insured amount or policy value via a manual current insured amount input, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, premium-term extension, administration charge, insurance risk charge, no-lapse mechanics, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface."
+      "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the regular-premium withdrawal / surrender charge schedules, the first-layer administration charge via issue-age and initial insured-amount inputs, a manual-input insurance-risk-charge placeholder sourced from the policy illustration, the current-state death benefit as the higher of current insured amount or policy value via a manual current insured amount input, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, premium-term extension, Free Legacy Cover waivers, no-lapse mechanics, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface."
     ],
     "archived": false,
     "variants": [
@@ -3194,6 +3194,107 @@
                 "section": "Regular premium and top-up allocation",
                 "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
               },
+              {
+                "page": 4,
+                "section": "Premium charge and charge schedule",
+                "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+              }
+            ]
+          },
+          {
+            "id": "administration-charge",
+            "label": "Administration Charge",
+            "basis": "insured-amount-at-issue",
+            "rate": 0,
+            "amount": 0,
+            "issueAgeRateTiers": [
+              {
+                "minIssueAgeNextBirthday": 1,
+                "maxIssueAgeNextBirthday": 20,
+                "rate": 0.0016
+              },
+              {
+                "minIssueAgeNextBirthday": 21,
+                "maxIssueAgeNextBirthday": 25,
+                "rate": 0.0018
+              },
+              {
+                "minIssueAgeNextBirthday": 26,
+                "maxIssueAgeNextBirthday": 30,
+                "rate": 0.0024
+              },
+              {
+                "minIssueAgeNextBirthday": 31,
+                "maxIssueAgeNextBirthday": 35,
+                "rate": 0.0032
+              },
+              {
+                "minIssueAgeNextBirthday": 36,
+                "maxIssueAgeNextBirthday": 40,
+                "rate": 0.004
+              },
+              {
+                "minIssueAgeNextBirthday": 41,
+                "maxIssueAgeNextBirthday": 45,
+                "rate": 0.0053
+              },
+              {
+                "minIssueAgeNextBirthday": 46,
+                "maxIssueAgeNextBirthday": 50,
+                "rate": 0.0066
+              },
+              {
+                "minIssueAgeNextBirthday": 51,
+                "maxIssueAgeNextBirthday": 60,
+                "rate": 0.0092
+              },
+              {
+                "minIssueAgeNextBirthday": 61,
+                "maxIssueAgeNextBirthday": 65,
+                "rate": 0.0104
+              },
+              {
+                "minIssueAgeNextBirthday": 66,
+                "maxIssueAgeNextBirthday": 70,
+                "rate": 0.0126
+              }
+            ],
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": 4,
+            "notes": [
+              "Models the published first-layer administration charge as insured amount at issue multiplied by the issue-age annual administration-charge rate during the first four policy years.",
+              "This executable slice assumes the original issue-date insured amount only. Change-of-insured layering and new-layer resets remain informational only.",
+              "The engine derives issue age from current Age Next Birthday and Current Policy Year, and needs the initial insured amount at issue to price the charge."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium charge and charge schedule",
+                "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+              }
+            ]
+          },
+          {
+            "id": "insurance-risk-charge",
+            "label": "Insurance Risk Charge",
+            "basis": "fixed-annual",
+            "rate": 0,
+            "amount": 0,
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Manual-input approximation for the monthly Insurance Risk Charge deducted on the prevailing insured-amount-less-policy-value corridor.",
+              "Enter the annualized Insurance Risk Charge from the policy illustration. If the illustration shows a monthly amount, multiply it by 12.",
+              "Applicable rates depend on underwriting class, Free Legacy Cover waiver state, and other illustration factors that are not fully published in the summary."
+            ],
+            "sourceRefs": [
               {
                 "page": 4,
                 "section": "Premium charge and charge schedule",
@@ -3349,14 +3450,14 @@
           0
         ],
         "warnings": [
-          "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the regular-premium withdrawal / surrender charge schedules, the current-state death benefit as the higher of current insured amount or policy value via a manual current insured amount input, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, premium-term extension, administration charge, insurance risk charge, no-lapse mechanics, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.",
+          "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the regular-premium withdrawal / surrender charge schedules, the first-layer administration charge via issue-age and initial insured-amount inputs, a manual-input insurance-risk-charge placeholder sourced from the policy illustration, the current-state death benefit as the higher of current insured amount or policy value via a manual current insured amount input, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, premium-term extension, Free Legacy Cover waivers, no-lapse mechanics, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.",
           "The current executable slice intentionally excludes the optional extension of the regular premium term beyond five years."
         ],
         "unsupportedItems": [
           "Single-pay corridor and the 5% single-premium charge remain informational only in V1.",
           "Optional extension of the regular premium term beyond five years remains informational only in V1.",
-          "Administration charge remains informational only because it depends on issue-age and change-of-insured layering state.",
-          "Insurance Risk Charge, Free Legacy Cover, and No Lapse Privilege debt accrual remain informational only.",
+          "Administration charge is modeled for the first issue-date insured-amount layer only. Change-of-insured layering and new-layer charge resets remain informational only.",
+          "Insurance Risk Charge is modeled only as a manual-input annualized placeholder because the applicable insurer illustration rate depends on underwriting and Free Legacy Cover state. Free Legacy Cover and No Lapse Privilege debt accrual remain informational only.",
           "Income Withdrawal Privilege, vitality-linked bonuses, and change-of-insured effects remain informational only.",
           "The current death benefit needs a manual current insured amount input because withdrawals, Income Withdrawal Privilege usage, and claim-side reductions are not reconstructed from history in V1.",
           "Death Benefit Bequest Option and other protection-side payout handling remain informational only.",
@@ -3416,6 +3517,8 @@
       "branch:aia-platinum-wealth-legacy-premium-holiday-charge",
       "branch:aia-platinum-wealth-legacy-partial-withdrawal-charge",
       "branch:aia-platinum-wealth-legacy-full-surrender-charge",
+      "branch:aia-platinum-wealth-legacy-administration-charge-manual-input",
+      "branch:aia-platinum-wealth-legacy-insurance-risk-charge-manual-input",
       "kernel:top-up-paid-up-to-date-block",
       "kernel:current-death-benefit-estimate",
       "kernel:current-ti-benefit-estimate",
@@ -3423,8 +3526,6 @@
     ],
     "metadataOnlyBehaviors": [
       "aia-platinum-wealth-legacy-single-premium-corridor",
-      "aia-platinum-wealth-legacy-administration-charge",
-      "aia-platinum-wealth-legacy-insurance-risk-charge",
       "aia-platinum-wealth-legacy-no-lapse-privilege",
       "aia-platinum-wealth-legacy-expiry-age-election",
       "aia-platinum-wealth-legacy-fund-management-charge",
@@ -3432,7 +3533,7 @@
       "aia-platinum-wealth-legacy-no-fund-switching"
     ],
     "warnings": [
-      "AIA Platinum Wealth Legacy is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the published regular-premium partial-withdrawal / surrender charge schedules, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, administration charge, insurance risk charge, no-lapse activation or expiry election mechanics, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface."
+      "AIA Platinum Wealth Legacy is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the published regular-premium partial-withdrawal / surrender charge schedules, manual-input administration-charge and insurance-risk-charge placeholders sourced from the policy illustration, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, no-lapse activation or expiry election mechanics, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface."
     ],
     "archived": false,
     "variants": [
@@ -3534,6 +3635,56 @@
                 "section": "Regular premium and top-up allocation",
                 "excerpt": "Approximate excerpt; keyword \"100% of Regular Premium less Premium Charge\" not found on page. Regular Number of (Premium - Premium Charge) ÷ Bid Price = Units Amount First policy ($10,000 - 36% x $10,000) ÷ $1.00 = 6,400"
               },
+              {
+                "page": 3,
+                "section": "Premium charge and charge schedule",
+                "excerpt": "(Premium - Premium Charge) ÷ Bid Price = Units Amount First policy ($10,000 - 36% x $10,000) ÷ $1.00 = 6,400 year Second ($10,000 - 18% x $10,000) ÷ $1.00 = 8,200 policy year If you did not pay regular premium on the pre"
+              }
+            ]
+          },
+          {
+            "id": "administration-charge",
+            "label": "Administration Charge",
+            "basis": "fixed-annual",
+            "rate": 0,
+            "amount": 0,
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": 10,
+            "notes": [
+              "Manual-input approximation for the published monthly administration charge corridor during the first 10 policy years.",
+              "Enter the annualized administration charge from the policy illustration. If the illustration shows a monthly amount, multiply it by 12.",
+              "Rate depends on entry age and insured amount. The published summary does not include rate tables."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Premium charge and charge schedule",
+                "excerpt": "(Premium - Premium Charge) ÷ Bid Price = Units Amount First policy ($10,000 - 36% x $10,000) ÷ $1.00 = 6,400 year Second ($10,000 - 18% x $10,000) ÷ $1.00 = 8,200 policy year If you did not pay regular premium on the pre"
+              }
+            ]
+          },
+          {
+            "id": "insurance-risk-charge",
+            "label": "Insurance Risk Charge",
+            "basis": "fixed-annual",
+            "rate": 0,
+            "amount": 0,
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Manual-input approximation for the monthly Insurance Risk Charge deducted on the prevailing sum-at-risk corridor.",
+              "Enter the annualized Insurance Risk Charge from the policy illustration. If the illustration shows a monthly amount, multiply it by 12.",
+              "Applicable rates depend on underwriting class and insurer illustration factors that are not published in the summary."
+            ],
+            "sourceRefs": [
               {
                 "page": 3,
                 "section": "Premium charge and charge schedule",
@@ -3713,13 +3864,13 @@
           0.05
         ],
         "warnings": [
-          "AIA Platinum Wealth Legacy is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the published regular-premium partial-withdrawal / surrender charge schedules, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, administration charge, insurance risk charge, no-lapse activation or expiry election mechanics, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface."
+          "AIA Platinum Wealth Legacy is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the published regular-premium partial-withdrawal / surrender charge schedules, manual-input administration-charge and insurance-risk-charge placeholders sourced from the policy illustration, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, no-lapse activation or expiry election mechanics, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface."
         ],
         "unsupportedItems": [
           "Single-pay corridor and the 5% single-premium charge remain informational only in V1.",
-          "Administration charge remains informational only because the applicable rates live in the policy illustration rather than the product summary.",
+          "Administration charge is modeled only as a manual-input annualized placeholder because the applicable age / insured-amount rates live in the policy illustration rather than the product summary.",
           "The current death benefit needs manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs because adjusted partial withdrawals and no-lapse history are not reconstructed from history in V1.",
-          "Insurance Risk Charge, No Lapse Privilege activation or termination, and expiry-age election mechanics remain informational only.",
+          "Insurance Risk Charge is modeled only as a manual-input annualized placeholder because the applicable standard / non-standard life rates live in the policy illustration rather than the product summary. No Lapse Privilege activation or termination and expiry-age election mechanics remain informational only.",
           "Adjusted partial withdrawal, layer creation from insured-amount changes, and minimum-insured-amount gating remain informational only.",
           "The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both need manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs because adjusted partial withdrawals and TI usage are not reconstructed from history in V1.",
           "Terminal-illness claim exclusions, settlement workflow, and non-manual post-claim state remain informational only beyond the modeled current terminal-illness and residual-after-TI snapshot surface.",
@@ -10305,7 +10456,7 @@
           {
             "id": "single-premium-charge",
             "label": "Single Premium Charge",
-            "basis": "annual-contribution",
+            "basis": "initial-single-premium",
             "rate": 0,
             "amount": 0,
             "appliesTo": [
@@ -10533,7 +10684,7 @@
           {
             "id": "single-premium-charge",
             "label": "Single Premium Charge",
-            "basis": "annual-contribution",
+            "basis": "initial-single-premium",
             "rate": 0,
             "amount": 0,
             "appliesTo": [
@@ -45890,7 +46041,7 @@
           {
             "id": "single-premium-charge",
             "label": "Single Premium Charge",
-            "basis": "annual-contribution",
+            "basis": "initial-single-premium",
             "rate": 0,
             "amount": 0,
             "appliesTo": [
@@ -48408,7 +48559,7 @@
           {
             "id": "single-premium-charge",
             "label": "Single Premium Charge",
-            "basis": "annual-contribution",
+            "basis": "initial-single-premium",
             "rate": 0,
             "amount": 0,
             "appliesTo": [
@@ -91330,7 +91481,7 @@
           {
             "id": "single-premium-charge",
             "label": "Single Premium Charge (CPF)",
-            "basis": "annual-contribution",
+            "basis": "initial-single-premium",
             "rate": 0,
             "amount": 0,
             "appliesTo": [
@@ -96178,6 +96329,7 @@
       "branch:tokio-marine-goassure-initial-bonus",
       "branch:tokio-marine-goassure-initial-charge",
       "branch:tokio-marine-goassure-policy-charge",
+      "branch:tokio-marine-goassure-monthly-protection-charge",
       "branch:tokio-marine-goassure-recurring-single-and-top-up-charge",
       "branch:tokio-marine-goassure-partial-withdrawal-charge",
       "branch:tokio-marine-goassure-premium-shortfall-charge",
@@ -96197,13 +96349,12 @@
     ],
     "metadataOnlyBehaviors": [
       "tokio-marine-goassure-waiver-approval-gating-and-limits",
-      "tokio-marine-goassure-monthly-protection-charge",
       "tokio-marine-goassure-guaranteed-extra-protection",
       "tokio-marine-goassure-dividend-payout-threshold",
       "tokio-marine-goassure-third-party-charges"
     ],
     "warnings": [
-      "#goAssure is cataloged as a supported V1 product. The parser captures the SGD 10-year cash corridor charge surfaces, the policy-year-1-to-4 Initial Bonus corridor via manual initial basic sum assured at issue bands, a simplified year-15 Wellness Bonus credit on the Accumulation Units Account for the published 3.50% core bonus amount, the current-state death-benefit estimate before and after Protection Age via manual current Protection Age / amount-owing / basic-sum-assured inputs, the current terminal-illness snapshot as the lower of that current death corridor and a manual remaining aggregate TI cap, the current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today through the published partial-TI continuation corridor after manual claim-amount and residual-death input, the current TPD benefit estimate before Protection Age via the same current death corridor plus a manual current TPD acceleration ratio and remaining aggregate TPD cap, and distribution-mode assumption support, including phase-specific dividend cash-payout account eligibility and the 30-day record-date instruction lead time, while the published $50 per-dividend minimum payout threshold, Wellness Bonus qualification and exact delayed-payout basis, waiver mechanics, Monthly Protection Charge, terminal-illness exclusions / settlement, post-TPD continuation state, and broader protection-side claim behavior remain informational only."
+      "#goAssure is cataloged as a supported V1 product. The parser captures the SGD 10-year cash corridor charge surfaces, the policy-year-1-to-4 Initial Bonus corridor via manual initial basic sum assured at issue bands, a simplified year-15 Wellness Bonus credit on the Accumulation Units Account for the published 3.50% core bonus amount, the Monthly Protection Charge corridors for Death basic sum at risk and TPD sum at risk using the published smoker-specific rate tables plus manual current Basic Sum Assured / Protection Age / TPD acceleration ratio inputs, the current-state death-benefit estimate before and after Protection Age via manual current Protection Age / amount-owing / basic-sum-assured inputs, the current terminal-illness snapshot as the lower of that current death corridor and a manual remaining aggregate TI cap, the current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today through the published partial-TI continuation corridor after manual claim-amount and residual-death input, the current TPD benefit estimate before Protection Age via the same current death corridor plus a manual current TPD acceleration ratio and remaining aggregate TPD cap, and distribution-mode assumption support, including phase-specific dividend cash-payout account eligibility and the 30-day record-date instruction lead time, while the published $50 per-dividend minimum payout threshold, Wellness Bonus qualification and exact delayed-payout basis, waiver mechanics, terminal-illness exclusions / settlement, post-TPD continuation state, Guaranteed Extra Protection, and broader protection-side claim behavior remain informational only."
     ],
     "archived": false,
     "variants": [
@@ -96682,6 +96833,122 @@
                 "excerpt": "Policy Charge During the minimum contribution period, a policy charge will be deducted monthly from the Accumulation Units Account from the 49th policy month and payable until the end of Minimum Contribution Period based"
               }
             ]
+          },
+          {
+            "id": "monthly-protection-charge-death",
+            "label": "Monthly Protection Charge (Death)",
+            "basis": "assurance-sum-at-risk",
+            "rate": 0,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "tokio-mpc-goassure-basic-sum-at-risk",
+              "rateTable": "tokio-goassure-mpc-death",
+              "monthlyModalFactor": 1,
+              "sumAssuredRateMultiplierTiers": [
+                {
+                  "minSumAssured": 100000,
+                  "maxSumAssured": 199999,
+                  "multiplier": 1
+                },
+                {
+                  "minSumAssured": 200000,
+                  "maxSumAssured": 299999,
+                  "multiplier": 0.95
+                },
+                {
+                  "minSumAssured": 300000,
+                  "maxSumAssured": null,
+                  "multiplier": 0.9
+                }
+              ]
+            },
+            "appliesTo": [
+              "accumulation"
+            ],
+            "assuranceValueAppliesTo": [
+              "initial",
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "initial",
+              "topup"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published monthly protection charge on the Death basic sum at risk for the SGD 10-year corridor using the goAssure smoker-specific rate tables.",
+              "The charge deducts from the Accumulation Units Account first and falls back to the Initial Units Account and/or Top-up Units Account if needed.",
+              "V1 needs manual current Basic Sum Assured and Protection Age inputs because withdrawal-adjusted protection history is not reconstructed from source state."
+            ],
+            "sourceRefs": [
+              {
+                "page": 19,
+                "section": "Monthly Protection Charges (Death)",
+                "excerpt": "Monthly Rates for Monthly Protection Charges (For Death), Per $1,000 Basic Sum at Risk Male Male Female Female Age Non-Smoker Smoker Non-Smoker Smoker Next Birthday ($) ($) ($) ($) 1 0.0298 0.0298 0.0256 0.0256 2 0.0298 "
+              },
+              {
+                "page": 20,
+                "section": "Monthly Protection Charges (Death continued)",
+                "excerpt": "Monthly Rates for Monthly Protection Charges (For Death) (Per $1,000 Basic Sum at Risk)(Cont’) Male Male Female Female Age Next Birthday Non-Smoker Smoker Non-Smoker Smoker ($) ($) ($) ($) 56 0.3066 0.5342 0.2130 0.3708 "
+              }
+            ]
+          },
+          {
+            "id": "monthly-protection-charge-tpd",
+            "label": "Monthly Protection Charge (TPD)",
+            "basis": "assurance-sum-at-risk",
+            "rate": 0,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "tokio-mpc-goassure-tpd-sum-at-risk",
+              "rateTable": "tokio-goassure-mpc-tpd",
+              "monthlyModalFactor": 1,
+              "sumAssuredRateMultiplierTiers": [
+                {
+                  "minSumAssured": 100000,
+                  "maxSumAssured": 199999,
+                  "multiplier": 1
+                },
+                {
+                  "minSumAssured": 200000,
+                  "maxSumAssured": 299999,
+                  "multiplier": 0.95
+                },
+                {
+                  "minSumAssured": 300000,
+                  "maxSumAssured": null,
+                  "multiplier": 0.9
+                }
+              ]
+            },
+            "appliesTo": [
+              "accumulation"
+            ],
+            "assuranceValueAppliesTo": [
+              "initial",
+              "accumulation"
+            ],
+            "fallbackAppliesTo": [
+              "initial",
+              "topup"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published monthly protection charge on TPD sum at risk using the goAssure smoker-specific TPD rate tables and the manual current TPD acceleration ratio input.",
+              "The charge ends from Protection Age onward because the source states monthly protection charges are deducted only up to the policy anniversary at Protection Age.",
+              "V1 needs manual current Basic Sum Assured, Protection Age, and TPD acceleration ratio inputs because withdrawal-adjusted protection history is not reconstructed from source state."
+            ],
+            "sourceRefs": [
+              {
+                "page": 21,
+                "section": "Monthly Protection Charges (TPD)",
+                "excerpt": "Monthly Rates for Monthly Protection Charges (For TPD), Per $1,000 TPD Sum at Risk Male Male Female Female Age Non-Smoker Smoker Non-Smoker Smoker Next Birthday ($) ($) ($) ($) 1 0.0053 0.0053 0.0053 0.0053 2 0.0053 0.00"
+              },
+              {
+                "page": 22,
+                "section": "Monthly Protection Charges (TPD continued)",
+                "excerpt": "Monthly Rates for Monthly Protection Charges (For TPD) (Per $1,000 TPD Sum at Risk)(Cont’) Male Male Female Female Age Next Birthday Non-Smoker Smoker Non-Smoker Smoker ($) ($) ($) ($) 56 0.0727 0.1265 0.0614 0.1072 57 0"
+              }
+            ]
           }
         ],
         "eventChargeRules": [
@@ -97032,7 +97299,7 @@
           0.08
         ],
         "warnings": [
-          "#goAssure is cataloged as a supported V1 corridor. The parser captures the SGD 10-year cash corridor: three-account regular-premium / top-up routing, the published Initial Bonus corridor for policy years 1 to 4 via manual initial basic sum assured at issue bands, the published initial-charge schedule, the premium-base policy charge during MIP, recurring-single-premium and top-up charges, the partial-withdrawal charge schedule, the premium-shortfall charge schedules, the 10-year surrender-charge table, the current-state death-benefit estimate before and after Protection Age via manual current Protection Age / amount-owing / basic-sum-assured inputs, the current terminal-illness snapshot as the lower of that current death corridor and a manual remaining aggregate TI cap, the current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today through the published partial-TI continuation corridor after manual claim-amount and residual-death input, the current TPD benefit estimate before Protection Age via the same current death corridor plus a manual current TPD acceleration ratio and remaining aggregate TPD cap, and the manual distribution-mode assumption surface.",
+          "#goAssure is cataloged as a supported V1 corridor. The parser captures the SGD 10-year cash corridor: three-account regular-premium / top-up routing, the published Initial Bonus corridor for policy years 1 to 4 via manual initial basic sum assured at issue bands, the published initial-charge schedule, the premium-base policy charge during MIP, recurring-single-premium and top-up charges, the modeled Monthly Protection Charge corridors for Death basic sum at risk and TPD sum at risk using the published smoker-specific rate tables plus manual current Basic Sum Assured / Protection Age / TPD acceleration ratio inputs, the partial-withdrawal charge schedule, the premium-shortfall charge schedules, the 10-year surrender-charge table, the current-state death-benefit estimate before and after Protection Age via manual current Protection Age / amount-owing / basic-sum-assured inputs, the current terminal-illness snapshot as the lower of that current death corridor and a manual remaining aggregate TI cap, the current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today through the published partial-TI continuation corridor after manual claim-amount and residual-death input, the current TPD benefit estimate before Protection Age via the same current death corridor plus a manual current TPD acceleration ratio and remaining aggregate TPD cap, and the manual distribution-mode assumption surface.",
           "Dividend cash payouts are partially modeled through the manual distribution-mode assumption surface: during the minimum contribution period, Initial Units Account dividends stay reinvested while Accumulation Units Account and Top-up Units Account dividends may be paid in cash; after the minimum contribution period, Initial Units Account dividends join the cash-payout corridor; distribution-option changes should be submitted at least 30 days before the Record Date; and the published $50 per-dividend minimum payout threshold remains informational only.",
           "Explicit regular-premium variation now honors the published after-first-four-policy-years start gate and the SGD minimum regular premium table for annual / semi-annual / quarterly / monthly payment modes. Tokio-defined minimum increase / reduction amounts remain informational only.",
           "Recurring single premium events before policy month 13 or below the published monthly-equivalent minimum of S$50 are blocked; the published maximum recurring single premium table and insurer-defined increase / reduction minimums remain informational only.",
@@ -97045,7 +97312,7 @@
         ],
         "unsupportedItems": [
           "Waiver approval timing, hospitalisation / retrenchment proof, medical and unemployment exclusions, first-assured coverage, and Tokio’s discretionary variation of benefit grant counts remain informational only beyond the modeled explicit chargeWaived plus optional shared chargeWaiverGrantId event path.",
-          "Monthly Protection Charge, sum-at-risk formulas, Guaranteed Extra Protection, terminal-illness exclusions / settlement, post-TPD continuation state, and broader protection-side claim behavior remain informational only beyond the modeled current TI snapshot and current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today.",
+          "Guaranteed Extra Protection, terminal-illness exclusions / settlement, post-TPD continuation state, and broader protection-side claim behavior remain informational only beyond the modeled Monthly Protection Charge, current TI snapshot, and current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today.",
           "Credit-card charge, administrative charge nil surface, policy-currency-change charge nil surface, and third-party charges remain informational only.",
           "The published $50 per-dividend minimum payout threshold, plus detailed dividend-payment processing and settlement handling, remain informational only."
         ],
@@ -97849,7 +98116,7 @@
           {
             "id": "single-premium-charge",
             "label": "Single Premium Charge",
-            "basis": "annual-contribution",
+            "basis": "initial-single-premium",
             "rate": 0,
             "amount": 0,
             "appliesTo": [
@@ -98268,7 +98535,7 @@
           {
             "id": "single-premium-charge",
             "label": "Single Premium Charge",
-            "basis": "annual-contribution",
+            "basis": "initial-single-premium",
             "rate": 0,
             "amount": 0,
             "appliesTo": [
@@ -102771,7 +103038,7 @@
           {
             "id": "single-premium-charge",
             "label": "Single Premium Charge",
-            "basis": "annual-contribution",
+            "basis": "initial-single-premium",
             "rate": 0,
             "amount": 0,
             "appliesTo": [

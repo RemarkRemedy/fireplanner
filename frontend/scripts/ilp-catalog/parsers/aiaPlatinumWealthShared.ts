@@ -41,6 +41,14 @@ interface AiaPlatinumWealthConfig {
   holidayPage: number
   topUpPage: number
   nonPaymentPage: number
+  buildAdditionalFeeRules?: (refs: {
+    overviewRef: IlpCatalogSourceRef
+    premiumRef: IlpCatalogSourceRef
+    chargeRef: IlpCatalogSourceRef
+    holidayRef: IlpCatalogSourceRef
+    topUpRef: IlpCatalogSourceRef
+    nonPaymentRef: IlpCatalogSourceRef
+  }) => IlpTemplateFeeRule[]
 }
 
 function normalizeWhitespace(text: string): string {
@@ -133,6 +141,14 @@ function buildVariant(document: ExtractedPdfDocument, config: AiaPlatinumWealthC
       ],
       sourceRefs: [premiumRef, chargeRef],
     },
+    ...(config.buildAdditionalFeeRules?.({
+      overviewRef,
+      premiumRef,
+      chargeRef,
+      holidayRef,
+      topUpRef,
+      nonPaymentRef,
+    }) ?? []),
   ]
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [

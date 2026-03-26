@@ -1151,7 +1151,7 @@ describe('templateVariantToPolicySeed', () => {
       { phase: 'top-up', contributionShare: 1 },
     ])
     expect(seed.chargeRules).toEqual([
-      {
+      expect.objectContaining({
         id: 'administration-charge',
         label: 'Administration Charge',
         basis: 'account-value',
@@ -1162,7 +1162,7 @@ describe('templateVariantToPolicySeed', () => {
         rate: 0.025,
         amount: 0,
         allocation: 'equal-split',
-      },
+      }),
     ])
     expect(seed.eventChargeRules?.map((rule) => rule.id)).toEqual([
       'top-up-premium-charge',
@@ -1776,25 +1776,16 @@ describe('templateVariantToPolicySeed', () => {
       { phase: 'top-up', contributionShare: 1 },
     ])
     expect(seed.chargeRules).toEqual([
-      {
+      expect.objectContaining({
         id: 'initial-single-premium-charge',
         label: 'Initial Single Premium Charge (Cash / SRS)',
         basis: 'initial-single-premium',
         activeWindow: 'policy-term',
-        startPolicyYear: undefined,
-        endPolicyYear: undefined,
         appliesTo: ['policy'],
-        fallbackAppliesTo: undefined,
-        rateSchedule: undefined,
-        amountSchedule: undefined,
         rate: 0.03,
         amount: 0,
-        assuranceConfig: undefined,
-        premiumBaseConfig: undefined,
-        cumulativePaidPremiumConfig: undefined,
-        requiresManualInput: undefined,
         allocation: 'pro-rata-by-value',
-      },
+      }),
     ])
     expect(seed.eventChargeRules).toEqual([
       expect.objectContaining({
@@ -10895,13 +10886,24 @@ describe('templateVariantToPolicySeed', () => {
       automaticLapseOnAccountValueDepletion: false,
       blockTopUpsWhenPremiumsNotPaidUpToDate: true,
     })
-    expect(seed.chargeRules).toEqual([
+    expect(seed.chargeRules).toEqual(expect.arrayContaining([
       expect.objectContaining({
         id: 'regular-premium-charge',
         basis: 'annual-contribution',
         yearBasis: 'premium-year',
       }),
-    ])
+      expect.objectContaining({
+        id: 'administration-charge',
+        basis: 'insured-amount-at-issue',
+        startPolicyYear: 1,
+        endPolicyYear: 4,
+      }),
+      expect.objectContaining({
+        id: 'insurance-risk-charge',
+        basis: 'fixed-annual',
+        requiresManualInput: true,
+      }),
+    ]))
     expect(seed.eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'top-up-premium-charge',
@@ -10937,6 +10939,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-paid-up-to-date-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-platinum-wealth-legacy-administration-charge-manual-input')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-platinum-wealth-legacy-insurance-risk-charge-manual-input')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-ti-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-residual-death-benefit-after-ti-estimate')
@@ -10948,13 +10952,25 @@ describe('templateVariantToPolicySeed', () => {
       automaticLapseOnAccountValueDepletion: false,
       blockTopUpsWhenPremiumsNotPaidUpToDate: true,
     })
-    expect(seed.chargeRules).toEqual([
+    expect(seed.chargeRules).toEqual(expect.arrayContaining([
       expect.objectContaining({
         id: 'regular-premium-charge',
         basis: 'annual-contribution',
         yearBasis: 'premium-year',
       }),
-    ])
+      expect.objectContaining({
+        id: 'administration-charge',
+        basis: 'fixed-annual',
+        requiresManualInput: true,
+        startPolicyYear: 1,
+        endPolicyYear: 10,
+      }),
+      expect.objectContaining({
+        id: 'insurance-risk-charge',
+        basis: 'fixed-annual',
+        requiresManualInput: true,
+      }),
+    ]))
     expect(seed.eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'top-up-premium-charge',
@@ -10989,6 +11005,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-goassure-initial-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-goassure-policy-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-goassure-monthly-protection-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-goassure-premium-shortfall-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('tokio-explicit-charge-waiver-for-partial-withdrawal-and-shortfall-events')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:free-withdrawal-event-cap')
@@ -11001,7 +11018,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-ti-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-tpd-benefit-estimate')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-marine-goassure-monthly-protection-charge')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-marine-goassure-monthly-protection-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-marine-goassure-guaranteed-extra-protection')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-marine-goassure-dividend-payout-threshold')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-marine-goassure-waiver-approval-gating-and-limits')
@@ -11088,6 +11105,28 @@ describe('templateVariantToPolicySeed', () => {
           fallbackAppliesTo: ['initial', 'topup'],
           rate: 0.01,
           activeWindow: 'during-mip',
+        }),
+        expect.objectContaining({
+          id: 'monthly-protection-charge-death',
+          basis: 'assurance-sum-at-risk',
+          appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          fallbackAppliesTo: ['initial', 'topup'],
+          assuranceConfig: expect.objectContaining({
+            formula: 'tokio-mpc-goassure-basic-sum-at-risk',
+            rateTable: 'tokio-goassure-mpc-death',
+          }),
+        }),
+        expect.objectContaining({
+          id: 'monthly-protection-charge-tpd',
+          basis: 'assurance-sum-at-risk',
+          appliesTo: ['accumulation'],
+          assuranceValueAppliesTo: ['initial', 'accumulation'],
+          fallbackAppliesTo: ['initial', 'topup'],
+          assuranceConfig: expect.objectContaining({
+            formula: 'tokio-mpc-goassure-tpd-sum-at-risk',
+            rateTable: 'tokio-goassure-mpc-tpd',
+          }),
         }),
       ]),
     )
@@ -11210,7 +11249,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.chargeRules).toEqual([
       expect.objectContaining({
         id: 'single-premium-charge',
-        basis: 'annual-contribution',
+        basis: 'initial-single-premium',
         rate: 0,
       }),
       expect.objectContaining({
@@ -11374,7 +11413,7 @@ describe('templateVariantToPolicySeed', () => {
       expect.arrayContaining([
         expect.objectContaining({
           id: 'single-premium-charge',
-          basis: 'annual-contribution',
+          basis: 'initial-single-premium',
           rate: 0,
         }),
         expect.objectContaining({
@@ -11450,7 +11489,7 @@ describe('templateVariantToPolicySeed', () => {
       expect.arrayContaining([
         expect.objectContaining({
           id: 'single-premium-charge',
-          basis: 'annual-contribution',
+          basis: 'initial-single-premium',
           rate: 0,
         }),
         expect.objectContaining({
@@ -11567,27 +11606,20 @@ describe('templateVariantToPolicySeed', () => {
     const seed = templateVariantToPolicySeed(product, variant, manifest)
 
     expect(seed.chargeRules).toEqual([
-      {
+      expect.objectContaining({
         id: 'tiered-admin',
         label: 'Tiered Admin Charge',
         basis: 'account-value',
         activeWindow: 'policy-term',
-        startPolicyYear: undefined,
-        endPolicyYear: undefined,
         appliesTo: ['growth', 'flex'],
-        fallbackAppliesTo: undefined,
         rateSchedule: [
           { startPolicyYear: 1, endPolicyYear: 5, rate: 0.02 },
           { startPolicyYear: 6, endPolicyYear: null, rate: 0.01 },
         ],
-        amountSchedule: undefined,
         rate: 0,
         amount: 0,
-        assuranceConfig: undefined,
-        premiumBaseConfig: undefined,
-        requiresManualInput: undefined,
         allocation: 'equal-split',
-      },
+      }),
     ])
     expect(seed.eventChargeRules).toEqual([
       {

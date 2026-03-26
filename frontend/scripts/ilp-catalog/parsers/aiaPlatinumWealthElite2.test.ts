@@ -100,6 +100,8 @@ describe('parseAiaPlatinumWealthElite2', () => {
       'branch:aia-platinum-wealth-elite-2-premium-holiday-charge',
       'branch:aia-platinum-wealth-elite-2-partial-withdrawal-charge',
       'branch:aia-platinum-wealth-elite-2-full-surrender-charge',
+      'branch:aia-platinum-wealth-elite-2-administration-charge',
+      'branch:aia-platinum-wealth-elite-2-insurance-risk-charge-manual-input',
       'kernel:top-up-paid-up-to-date-block',
       'kernel:current-death-benefit-estimate',
       'kernel:current-ti-benefit-estimate',
@@ -107,9 +109,9 @@ describe('parseAiaPlatinumWealthElite2', () => {
     ])
     expect(product.metadataOnlyBehaviors).toContain('aia-platinum-wealth-elite-2-no-lapse-privilege')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-elite-2-protection-benefits')
-    expect(product.warnings).toContain(
-      'AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the regular-premium withdrawal / surrender charge schedules, the current-state death benefit as the higher of current insured amount or policy value via a manual current insured amount input, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, premium-term extension, administration charge, insurance risk charge, no-lapse mechanics, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.',
-    )
+    expect(product.warnings.some((warning) => warning.includes('regular-pay 5-year corridor'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('administration charge'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('manual-input insurance-risk-charge placeholder'))).toBe(true)
 
     const variant = product.variants[0]
     expect(variant).toMatchObject({
@@ -120,12 +122,24 @@ describe('parseAiaPlatinumWealthElite2', () => {
         blockTopUpsWhenPremiumsNotPaidUpToDate: true,
       },
     })
-    expect(variant.feeRules).toEqual([
+    expect(variant.feeRules).toEqual(expect.arrayContaining([
       expect.objectContaining({
         id: 'regular-premium-charge',
         yearBasis: 'premium-year',
       }),
-    ])
+      expect.objectContaining({
+        id: 'administration-charge',
+        basis: 'insured-amount-at-issue',
+        startPolicyYear: 1,
+        endPolicyYear: 4,
+      }),
+      expect.objectContaining({
+        id: 'insurance-risk-charge',
+        basis: 'fixed-annual',
+        requiresManualInput: true,
+        activeWindow: 'policy-term',
+      }),
+    ]))
     expect(variant.eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'top-up-premium-charge',
