@@ -287,12 +287,14 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                         <EventRuleTooltip rules={feeColumnInfo.event} currency={policy.currency} />
                       </span>
                     </th>
-                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">
-                      <span className="inline-flex items-center gap-0.5">
-                        Fund Mgt
-                        <FundFeeTooltip funds={policy.funds} />
-                      </span>
-                    </th>
+                    {includeOcf && (
+                      <th className="px-2 py-2 text-right font-medium text-muted-foreground">
+                        <span className="inline-flex items-center gap-0.5">
+                          Fund Mgt
+                          <FundFeeTooltip funds={policy.funds} />
+                        </span>
+                      </th>
+                    )}
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">Gross Fee</th>
                     <th className="px-2 py-2 text-right font-medium text-emerald-700 dark:text-emerald-400">
                       <span className="inline-flex items-center gap-0.5">
@@ -314,7 +316,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                       <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0), policy.currency)}</td>
                       <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>
                       <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>
-                      <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>
+                      {includeOcf && <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>}
                       <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0), policy.currency)}</td>
                       <td className="px-2 py-2 text-right tabular-nums text-emerald-700 dark:text-emerald-400">{formatIlpCurrency(0, policy.currency)}</td>
                       <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0), policy.currency)}</td>
@@ -350,10 +352,10 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                         <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.additionalCharges, policy.currency)}</td>
                         <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.assuranceCharges, policy.currency)}</td>
                         <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.eventCharges, policy.currency)}</td>
-                        <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.implicitFundFee, policy.currency)}</td>
-                        <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(row.totalGrossFee, policy.currency)}</td>
+                        {includeOcf && <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.implicitFundFee, policy.currency)}</td>}
+                        <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(includeOcf ? row.totalGrossFee : row.grossFee, policy.currency)}</td>
                         <td className="px-2 py-2 text-right tabular-nums text-emerald-700 dark:text-emerald-400">{formatIlpCurrency(row.bonusCredits, policy.currency)}</td>
-                        <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(row.netFee, policy.currency)}</td>
+                        <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency((includeOcf ? row.totalGrossFee : row.grossFee) - row.bonusCredits, policy.currency)}</td>
                         <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.withdrawals, policy.currency)}</td>
                         <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.closingValue, policy.currency)}</td>
                       </tr>
@@ -367,10 +369,10 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                     <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(breakdown.totals.additionalCharges, policy.currency)}</td>
                     <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(breakdown.totals.assuranceCharges, policy.currency)}</td>
                     <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(breakdown.totals.eventCharges, policy.currency)}</td>
-                    <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(breakdown.totals.implicitFundFee, policy.currency)}</td>
-                    <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(breakdown.totals.totalGrossFee, policy.currency)}</td>
+                    {includeOcf && <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(breakdown.totals.implicitFundFee, policy.currency)}</td>}
+                    <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(includeOcf ? breakdown.totals.totalGrossFee : breakdown.totals.grossFee, policy.currency)}</td>
                     <td className="px-2 py-2 text-right tabular-nums text-emerald-700 dark:text-emerald-400">{formatIlpCurrency(breakdown.totals.bonusCredits, policy.currency)}</td>
-                    <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(breakdown.totals.netFee, policy.currency)}</td>
+                    <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency((includeOcf ? breakdown.totals.totalGrossFee : breakdown.totals.grossFee) - breakdown.totals.bonusCredits, policy.currency)}</td>
                     <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(breakdown.rows.reduce((s, r) => s + r.withdrawals, 0), policy.currency)}</td>
                     <td className="px-2 py-2" />
                   </tr>
