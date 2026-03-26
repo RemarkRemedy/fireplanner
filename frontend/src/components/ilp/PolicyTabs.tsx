@@ -60,17 +60,10 @@ export function PolicyTabs() {
               {policies.map((policy) => {
                 const active = policy.id === selectedPolicyId
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={policy.id}
-                    role="button"
-                    tabIndex={0}
                     onClick={() => selectPolicy(policy.id)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault()
-                        selectPolicy(policy.id)
-                      }
-                    }}
                     className={cn(
                       'min-w-[220px] rounded-lg border px-4 py-3 text-left transition-colors',
                       active
@@ -127,7 +120,7 @@ export function PolicyTabs() {
                         </Button>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 )
               })}
             </div>
