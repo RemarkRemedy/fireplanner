@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { NumberInput } from '@/components/shared/NumberInput'
+import { PercentInput } from '@/components/shared/PercentInput'
 import type { IlpPolicySeed } from '@/lib/ilp-catalog/policySeedSchema'
 
 interface PolicySetupGateProps {
@@ -22,12 +23,18 @@ export function PolicySetupGate({ seed, onConfirm, onCancel, prospect }: PolicyS
   const [currentPolicyYear, setCurrentPolicyYear] = useState(prospect ? 1 : seed.currentPolicyYear)
   const [monthsAlreadyPaid, setMonthsAlreadyPaid] = useState(prospect ? 0 : seed.monthsAlreadyPaid)
   const [postMipYears, setPostMipYears] = useState(seed.postMipYears ?? 10)
+  const defaultOcf = seed.funds.reduce((sum, f) => sum + f.allocation * f.ocf, 0)
+  const [fundFee, setFundFee] = useState(defaultOcf)
 
   const horizonYears = seed.mipLength != null
     ? seed.mipLength + postMipYears - (currentPolicyYear - 1)
     : postMipYears
 
   function handleConfirm() {
+    // Scale each fund's OCF proportionally so blended OCF matches the user's input
+    const scaleFactor = defaultOcf > 0 ? fundFee / defaultOcf : 1
+    const adjustedFunds = seed.funds.map((f) => ({ ...f, ocf: f.ocf * scaleFactor }))
+
     onConfirm({
       ...seed,
       monthlyContribution,
@@ -35,6 +42,7 @@ export function PolicySetupGate({ seed, onConfirm, onCancel, prospect }: PolicyS
       currentPolicyYear: prospect ? 1 : currentPolicyYear,
       monthsAlreadyPaid: prospect ? 0 : monthsAlreadyPaid,
       postMipYears,
+      funds: adjustedFunds,
     })
   }
 
@@ -76,6 +84,12 @@ export function PolicySetupGate({ seed, onConfirm, onCancel, prospect }: PolicyS
               currency={seed.currency}
             />
           )}
+          <PercentInput
+            label="Fund management fee (p.a.)"
+            value={fundFee}
+            onChange={setFundFee}
+            tooltip="Annual fee charged by the fund manager. Most ILP sub-funds charge 1.0-1.5% p.a. Check your fund's Product Highlight Sheet for the exact rate."
+          />
           {prospect ? (
             <NumberInput
               label="Projection Horizon"
