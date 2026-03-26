@@ -62,29 +62,19 @@ function seedToValidatedPolicy(seed: IlpPolicySeed): IlpPolicyInput {
     funds: (seed.funds ?? base.funds).map((f) => ({ ...f })),
     accounts: (seed.accounts ?? base.accounts).map((a) => ({ ...a })),
     bonuses: (seed.bonuses ?? base.bonuses).map((b) => ({ ...b })),
-    chargeRules: (seed.chargeRules ?? base.chargeRules).map((r) => ({ ...r })),
-    eventChargeRules: (seed.eventChargeRules ?? base.eventChargeRules).map((r) => ({ ...r })),
+    chargeRules: (seed.chargeRules ?? base.chargeRules ?? []).map((r) => ({ ...r })),
+    eventChargeRules: (seed.eventChargeRules ?? base.eventChargeRules ?? []).map((r) => ({ ...r })),
     policyEvents: seed.policyEvents?.map((e) => ({ ...e })) ?? [],
   }
   return ilpPolicySchema.parse(merged)
 }
 
 function deriveBonusModellingStatus(product: IlpCatalogProduct): 'modelled' | 'metadata-only' | 'none' {
-  const hasModelledBonuses = product.variants.some((v) =>
-    v.bonuses.some((b) => b.type !== 'metadata-only'),
-  )
+  const hasModelledBonuses = product.variants.some((v) => v.bonuses.length > 0)
   if (hasModelledBonuses) return 'modelled'
 
-  const hasMetadataOnlyBonuses = product.variants.some((v) =>
-    v.bonuses.some((b) => b.type === 'metadata-only'),
-  )
-  if (hasMetadataOnlyBonuses) return 'metadata-only'
-
-  // Check metadataOnlyBehaviors for bonus-related entries
-  const hasBonusBehaviors = product.variants.some((v) =>
-    v.metadataOnlyBehaviors?.some((b) =>
-      /bonus|welcome|loyalty|power.?up|booster|achievement|vitality|perpetual|accumulation/i.test(b),
-    ),
+  const hasBonusBehaviors = product.metadataOnlyBehaviors.some((behavior) =>
+    /bonus|welcome|loyalty|power.?up|booster|achievement|vitality|perpetual|accumulation/i.test(behavior),
   )
   if (hasBonusBehaviors) return 'metadata-only'
 

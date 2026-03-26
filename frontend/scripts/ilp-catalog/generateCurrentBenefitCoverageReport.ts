@@ -23,8 +23,6 @@ type CoverageNeedle =
   | 'kernel:current-tpd-benefit-estimate'
   | 'kernel:current-residual-death-benefit-after-tpd-estimate'
 
-type CoverageKind = 'calculator' | 'review' | 'template'
-
 type CoverageRow = {
   productId: string
   productName: string

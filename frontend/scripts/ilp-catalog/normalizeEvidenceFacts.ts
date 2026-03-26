@@ -6,7 +6,6 @@ import type { IlpCatalogSourceDocumentType } from '../../src/lib/ilp-catalog/typ
 
 const ROOT_DIR = path.resolve(import.meta.dirname, '../..')
 const FIXTURES_DIR = path.join(ROOT_DIR, 'scripts/ilp-catalog/fixtures')
-const EVIDENCE_DIR = path.join(FIXTURES_DIR, 'evidence')
 const FACTS_DIR = path.join(FIXTURES_DIR, 'facts')
 const EVIDENCE_MANIFEST_PATH = path.join(FIXTURES_DIR, 'evidence-manifest.json')
 const FACTS_MANIFEST_PATH = path.join(FIXTURES_DIR, 'facts-manifest.json')
