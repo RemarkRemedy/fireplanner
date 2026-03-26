@@ -19,7 +19,7 @@ export const ilpTemplateAccountSchema = z.object({
   postMipFeeRate: z.number().min(0).max(0.2).nullable(),
   subjectToEec: z.boolean(),
   contributionRules: z.array(ilpTemplateContributionRuleSchema),
-  sourceRefs: z.array(ilpCatalogSourceRefSchema).min(1),
+  sourceRefs: z.array(ilpCatalogSourceRefSchema),
 })
 
 export const ilpTemplateBonusTierSchema = z.object({
@@ -151,7 +151,7 @@ export const ilpTemplateBonusSchema = z.object({
     requiresBonusSuspensionWaived: z.boolean().optional(),
   })).max(5).optional(),
   notes: z.array(z.string()),
-  sourceRefs: z.array(ilpCatalogSourceRefSchema).min(1),
+  sourceRefs: z.array(ilpCatalogSourceRefSchema),
 })
 
 export const ilpTemplateFeeRuleSchema = z.object({
@@ -258,7 +258,7 @@ export const ilpTemplateFeeRuleSchema = z.object({
   startPolicyYear: z.number().int().min(1).max(100).optional(),
   endPolicyYear: z.number().int().min(1).max(100).nullable().optional(),
   notes: z.array(z.string()),
-  sourceRefs: z.array(ilpCatalogSourceRefSchema).min(1),
+  sourceRefs: z.array(ilpCatalogSourceRefSchema),
 }).superRefine((rule, ctx) => {
   if (rule.basis !== 'assurance-sum-at-risk' && rule.assuranceValueAppliesTo) {
     ctx.addIssue({
@@ -345,7 +345,7 @@ export const ilpTemplateEventChargeRuleSchema = z.object({
   activeWindow: z.enum(['during-mip', 'after-mip', 'policy-term']),
   allocation: z.enum(['pro-rata-by-value', 'pro-rata-by-contribution-share', 'equal-split']),
   notes: z.array(z.string()),
-  sourceRefs: z.array(ilpCatalogSourceRefSchema).min(1),
+  sourceRefs: z.array(ilpCatalogSourceRefSchema),
 }).superRefine((rule, ctx) => {
   if (rule.manualWaiverMode === 'capped-free-event' && (rule.trigger !== 'partial-withdrawal' || rule.basis !== 'event-amount')) {
     ctx.addIssue({
@@ -432,7 +432,7 @@ export const ilpTemplateScheduledPayoutSupportSchema = z.object({
     stateAfterReinstatement: z.enum(['secure-income', 'target-income']).optional(),
   }).optional(),
   notes: z.array(z.string()).min(1),
-  sourceRefs: z.array(ilpCatalogSourceRefSchema).min(1),
+  sourceRefs: z.array(ilpCatalogSourceRefSchema),
 }).superRefine((bonus, ctx) => {
   if (bonus.oneTimePayoutBasis === 'step-up-booster-delta') {
     if (bonus.stepUpPayoutConfig == null) {
@@ -480,7 +480,7 @@ export const ilpTemplateDistributionSupportSchema = z.object({
   cashPayoutAllowedAfterMip: z.boolean(),
   source: z.literal('distribution-paying-funds'),
   notes: z.array(z.string()).min(1),
-  sourceRefs: z.array(ilpCatalogSourceRefSchema).min(1),
+  sourceRefs: z.array(ilpCatalogSourceRefSchema),
 })
 
 export const ilpTemplatePolicyStateSupportSchema = z.object({
@@ -597,7 +597,7 @@ export const ilpTemplateVariantSchema = z.object({
   exitChargeBasis: z.enum(['account-value', 'initial-single-premium-base']).optional(),
   warnings: z.array(z.string()),
   unsupportedItems: z.array(z.string()),
-  sourceRefs: z.array(ilpCatalogSourceRefSchema).min(1),
+  sourceRefs: z.array(ilpCatalogSourceRefSchema),
 }).superRefine((variant, ctx) => {
   const accountIds = new Set(variant.accounts.map((account) => account.id))
   const mipBasis = variant.mipBasis ?? 'finite'
