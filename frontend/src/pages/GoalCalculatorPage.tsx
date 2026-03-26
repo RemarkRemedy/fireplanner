@@ -1,0 +1,273 @@
+import { useReducer, useCallback, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { usePageMeta } from '@/hooks/usePageMeta'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
+import { GoalPicker } from '@/components/goal-calculator/GoalPicker'
+import { GoalConfig } from '@/components/goal-calculator/GoalConfig'
+import { BasicsForm } from '@/components/goal-calculator/BasicsForm'
+import { Results } from '@/components/goal-calculator/Results'
+import { GOAL_TILES } from '@/lib/data/goal-defaults'
+import {
+  computeMonthlySavingsNeeded,
+  mapGoalToHouseholdGoalItem,
+} from '@/lib/calculations/goal-calculator'
+import type { GoalTileId } from '@/lib/data/goal-defaults'
+import type {
+  GoalCalcGoal,
+  GoalCalcBasics,
+  SmartGoalInputs,
+  CostBreakdown,
+} from '@/lib/calculations/goal-calculator'
+
+// ============================================================
+// State machine
+// ============================================================
+
+type Step = 'pick' | 'config' | 'basics' | 'results'
+
+interface State {
+  step: Step
+  activeTileId: GoalTileId | null
+  goals: GoalCalcGoal[]
+  basics: GoalCalcBasics | null
+}
+
+type Action =
+  | { type: 'SELECT_TILE'; tileId: GoalTileId }
+  | { type: 'COMPLETE_CONFIG'; goal: GoalCalcGoal }
+  | { type: 'COMPLETE_BASICS'; basics: GoalCalcBasics }
+  | { type: 'ADD_ANOTHER' }
+  | { type: 'EDIT_BASICS' }
+  | { type: 'BACK_TO_PICK' }
+  | { type: 'BACK_TO_CONFIG' }
+  | { type: 'START_OVER' }
+
+const initialState: State = {
+  step: 'pick',
+  activeTileId: null,
+  goals: [],
+  basics: null,
+}
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case 'SELECT_TILE':
+      return { ...state, step: 'config', activeTileId: action.tileId }
+
+    case 'COMPLETE_CONFIG':
+      // If basics already exist, recompute monthlySavingsNeeded and go straight to results.
+      // Otherwise go to basics first.
+      if (state.basics) {
+        const years = action.goal.targetAge - state.basics.age
+        const monthlySavingsNeeded = computeMonthlySavingsNeeded(
+          action.goal.totalCostToday,
+          state.basics.existingSavings,
+          years,
+        )
+        const available = state.basics.monthlyIncome - state.basics.monthlyExpenses
+        const feasible = monthlySavingsNeeded <= available
+        const shortfallPerMonth = feasible ? 0 : monthlySavingsNeeded - available
+
+        const updatedGoal: GoalCalcGoal = {
+          ...action.goal,
+          monthlySavingsNeeded,
+          feasible,
+          shortfallPerMonth,
+        }
+
+        return {
+          ...state,
+          step: 'results',
+          activeTileId: null,
+          goals: [...state.goals, updatedGoal],
+        }
+      }
+      return {
+        ...state,
+        step: 'basics',
+        goals: [...state.goals, action.goal],
+      }
+
+    case 'COMPLETE_BASICS': {
+      // Recompute monthlySavingsNeeded for all goals with the new basics
+      const basics = action.basics
+      const available = basics.monthlyIncome - basics.monthlyExpenses
+
+      const updatedGoals = state.goals.map((goal) => {
+        const years = goal.targetAge - basics.age
+        const monthlySavingsNeeded = computeMonthlySavingsNeeded(
+          goal.totalCostToday,
+          basics.existingSavings,
+          years,
+        )
+        const feasible = monthlySavingsNeeded <= available
+        const shortfallPerMonth = feasible ? 0 : monthlySavingsNeeded - available
+        return { ...goal, monthlySavingsNeeded, feasible, shortfallPerMonth }
+      })
+
+      return {
+        ...state,
+        step: 'results',
+        basics,
+        goals: updatedGoals,
+      }
+    }
+
+    case 'ADD_ANOTHER':
+      return { ...state, step: 'pick', activeTileId: null }
+
+    case 'EDIT_BASICS':
+      return { ...state, step: 'basics' }
+
+    case 'BACK_TO_PICK':
+      return { ...state, step: 'pick', activeTileId: null }
+
+    case 'BACK_TO_CONFIG':
+      // If we're going back from basics, the last goal was added as a stub.
+      // Remove it so the user can re-configure.
+      return {
+        ...state,
+        step: 'config',
+      }
+
+    case 'START_OVER':
+      return initialState
+
+    default:
+      return state
+  }
+}
+
+// ============================================================
+// Page component
+// ============================================================
+
+export function GoalCalculatorPage() {
+  usePageMeta({
+    title: 'Singapore Goal Calculator: Can You Afford It?',
+    description:
+      'Free goal calculator for Singapore. Figure out how much to save monthly for an HDB, condo, car, wedding, or any big purchase.',
+    path: '/goal-calculator',
+  })
+
+  const [state, dispatch] = useReducer(reducer, initialState)
+  const [transferring, setTransferring] = useState(false)
+  const navigate = useNavigate()
+  const addGoal = useHouseholdPlanStore((s) => s.addGoal)
+
+  // Tiles already added as goals should be disabled in the picker
+  const disabledTiles = state.goals
+    .map((g) => {
+      const tile = GOAL_TILES.find((t) => t.category === g.category)
+      return tile?.id
+    })
+    .filter((id): id is GoalTileId => id != null)
+
+  const handleSelectTile = useCallback(
+    (tileId: GoalTileId) => dispatch({ type: 'SELECT_TILE', tileId }),
+    [],
+  )
+
+  const handleCompleteConfig = useCallback(
+    (config: {
+      label: string
+      targetAge: number
+      totalCost: number
+      breakdown: CostBreakdown
+      smartInputs?: SmartGoalInputs
+    }) => {
+      const tile = GOAL_TILES.find((t) => t.id === state.activeTileId)
+      if (!tile) return
+
+      const goal: GoalCalcGoal = {
+        id: crypto.randomUUID(),
+        category: tile.category,
+        label: config.label,
+        targetAge: config.targetAge,
+        smartInputs: config.smartInputs,
+        totalCostToday: config.totalCost,
+        breakdown: config.breakdown,
+        monthlySavingsNeeded: 0,
+        feasible: true,
+        shortfallPerMonth: 0,
+      }
+
+      dispatch({ type: 'COMPLETE_CONFIG', goal })
+    },
+    [state.activeTileId],
+  )
+
+  const handleCompleteBasics = useCallback(
+    (basics: GoalCalcBasics) => dispatch({ type: 'COMPLETE_BASICS', basics }),
+    [],
+  )
+
+  const handleContinueToPlanner = useCallback(() => {
+    if (transferring) return
+    setTransferring(true)
+
+    for (const goal of state.goals) {
+      addGoal(mapGoalToHouseholdGoalItem(goal))
+    }
+
+    navigate('/inputs')
+  }, [transferring, state.goals, addGoal, navigate])
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Minimal standalone header */}
+      <header className="border-b">
+        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
+          <Link to="/" className="font-bold text-lg">
+            FIRE Planner
+          </Link>
+          <Link
+            to="/inputs"
+            className="text-sm text-primary hover:underline"
+          >
+            Full Planner
+          </Link>
+        </div>
+      </header>
+
+      {/* Main content */}
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        {state.step === 'pick' && (
+          <GoalPicker
+            onSelect={handleSelectTile}
+            disabledTiles={disabledTiles}
+          />
+        )}
+
+        {state.step === 'config' && state.activeTileId && (
+          <GoalConfig
+            tileId={state.activeTileId}
+            currentAge={state.basics?.age ?? null}
+            onComplete={handleCompleteConfig}
+            onBack={() => dispatch({ type: 'BACK_TO_PICK' })}
+          />
+        )}
+
+        {state.step === 'basics' && (
+          <BasicsForm
+            initial={state.basics}
+            onComplete={handleCompleteBasics}
+            onBack={() => dispatch({ type: 'BACK_TO_CONFIG' })}
+          />
+        )}
+
+        {state.step === 'results' && state.basics && (
+          <Results
+            goals={state.goals}
+            basics={state.basics}
+            onAddAnother={() => dispatch({ type: 'ADD_ANOTHER' })}
+            onEditBasics={() => dispatch({ type: 'EDIT_BASICS' })}
+            onStartOver={() => dispatch({ type: 'START_OVER' })}
+            onContinueToPlanner={handleContinueToPlanner}
+            transferring={transferring}
+          />
+        )}
+      </main>
+    </div>
+  )
+}

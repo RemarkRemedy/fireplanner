@@ -27,6 +27,7 @@ const ComparePage = lazy(() => import('@/pages/ComparePage').then(m => ({ defaul
 const StampDutyCalculatorPage = lazy(() => import('@/pages/StampDutyCalculatorPage').then(m => ({ default: m.StampDutyCalculatorPage })))
 const SrsCalculatorPage = lazy(() => import('@/pages/SrsCalculatorPage').then(m => ({ default: m.SrsCalculatorPage })))
 const AdminEmailsPage = lazy(() => import('@/pages/AdminEmailsPage').then(m => ({ default: m.AdminEmailsPage })))
+const GoalCalculatorPage = lazy(() => import('@/pages/GoalCalculatorPage').then(m => ({ default: m.GoalCalculatorPage })))
 const WrappedPage = lazy(() => import('@/pages/WrappedPage').then(m => ({ default: m.WrappedPage })))
 
 function PageLoader() {
@@ -104,6 +105,8 @@ export const router = createBrowserRouter([
   },
   // Admin (outside PlannerRouteShell, no store dependencies)
   { path: '/admin/emails', element: page(AdminEmailsPage) },
+  // Goal calculator (standalone page, outside PlannerRouteShell)
+  { path: '/goal-calculator', element: page(GoalCalculatorPage) },
   // Quick estimate redirects to retirement calculator (which now has the actual calculator)
   { path: '/quick-estimate', element: <Navigate to="/retirement-calculator" replace /> },
   // Main app routes (inside PlannerRouteShell)
