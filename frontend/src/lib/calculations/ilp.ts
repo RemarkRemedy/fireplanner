@@ -298,6 +298,10 @@ export interface IlpBonusRule {
   restorationRules?: IlpBonusRestorationRule[]
   excludedValueRules?: IlpBonusExcludedValueRule[]
   preservedValueRules?: IlpBonusPreservedValueRule[]
+  /** Source references from the policy document (page, section, excerpt). Display-only metadata. */
+  sourceRefs?: Array<{ page: number; section: string; excerpt: string }>
+  /** Parser notes describing the bonus rule. Display-only metadata. */
+  notes?: string[]
 }
 
 export interface IlpBonusTier {
@@ -557,6 +561,10 @@ export interface IlpEventChargeRule {
   exclusiveGroup?: string
   groupResolution?: 'max-total-charge'
   allocation: 'pro-rata-by-value' | 'pro-rata-by-contribution-share' | 'equal-split'
+  /** Source references from the policy document (page, section, excerpt). Display-only metadata. */
+  sourceRefs?: Array<{ page: number; section: string; excerpt: string }>
+  /** Parser notes describing the event charge rule. Display-only metadata. */
+  notes?: string[]
 }
 
 export interface IlpCatalogSource {

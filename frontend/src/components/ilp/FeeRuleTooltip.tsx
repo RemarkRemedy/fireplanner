@@ -245,6 +245,8 @@ function BonusRuleContent({ bonuses }: { bonuses: IlpBonusRule[] }) {
                 </ul>
               </div>
             )}
+
+            <SourceRefBlock sourceRefs={bonus.sourceRefs} />
           </div>
         )
       })}
@@ -307,6 +309,8 @@ function EventRuleContent({ rules }: { rules: IlpEventChargeRule[] }) {
               Up to {(rule.freeAmountPoolRate * 100).toFixed(0)}% of {(rule.freeAmountPoolBasis ?? 'balance').replace(/-/g, ' ')} charge-free
             </p>
           )}
+
+          <SourceRefBlock sourceRefs={rule.sourceRefs} />
         </div>
       ))}
     </div>

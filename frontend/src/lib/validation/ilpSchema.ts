@@ -667,6 +667,12 @@ export const ilpBonusRuleSchema = z.object({
     accountIds: z.array(z.string().min(1)).min(1).max(10).optional(),
     requiresBonusSuspensionWaived: z.boolean().optional(),
   })).max(5).optional(),
+  sourceRefs: z.array(z.object({
+    page: z.number().int().min(1),
+    section: z.string(),
+    excerpt: z.string(),
+  })).max(5).optional(),
+  notes: z.array(z.string()).max(10).optional(),
 }).superRefine((bonus, ctx) => {
   if (bonus.endPolicyYear != null && bonus.endPolicyYear < bonus.startPolicyYear) {
     ctx.addIssue({
@@ -1128,6 +1134,12 @@ export const ilpEventChargeRuleSchema = z.object({
   exclusiveGroup: z.string().min(1).optional(),
   groupResolution: z.enum(['max-total-charge']).optional(),
   allocation: z.enum(['pro-rata-by-value', 'pro-rata-by-contribution-share', 'equal-split']),
+  sourceRefs: z.array(z.object({
+    page: z.number().int().min(1),
+    section: z.string(),
+    excerpt: z.string(),
+  })).max(5).optional(),
+  notes: z.array(z.string()).max(10).optional(),
 }).superRefine((rule, ctx) => {
   rule.rateSchedule?.forEach((tier, index) => {
     if (tier.endPolicyYear != null && tier.endPolicyYear < tier.startPolicyYear) {

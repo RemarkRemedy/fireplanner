@@ -277,6 +277,8 @@ function mapEventChargeRules(variant: IlpTemplateVariant): NonNullable<IlpPolicy
       exclusiveGroup: rule.exclusiveGroup,
       groupResolution: rule.groupResolution,
       allocation: rule.allocation ?? 'equal-split',
+      sourceRefs: rule.sourceRefs?.length ? rule.sourceRefs.map((ref) => ({ ...ref })) : undefined,
+      notes: rule.notes?.length ? [...rule.notes] : undefined,
     }))
 }
 
@@ -344,6 +346,8 @@ function mapTemplateBonus(
     restorationRules: bonus.restorationRules?.map((rule) => ({ ...rule })),
     excludedValueRules: bonus.excludedValueRules?.map((rule) => ({ ...rule })),
     preservedValueRules: bonus.preservedValueRules?.map((rule) => ({ ...rule })),
+    sourceRefs: bonus.sourceRefs?.length ? bonus.sourceRefs.map((ref) => ({ ...ref })) : undefined,
+    notes: bonus.notes?.length ? [...bonus.notes] : undefined,
   }
 }
 
