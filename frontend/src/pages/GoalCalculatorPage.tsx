@@ -217,8 +217,8 @@ export function GoalCalculatorPage() {
       {/* Minimal standalone header */}
       <header className="border-b">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
-          <Link to="/" className="font-bold text-lg">
-            FIRE Planner
+          <Link to="/goal-calculator" className="font-bold text-lg">
+            SG FIRE Planner
           </Link>
           <Link
             to="/inputs"
