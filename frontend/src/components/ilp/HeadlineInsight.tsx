@@ -182,7 +182,7 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
               <div>
                 <span className="text-sm font-medium">Plus {formatIlpPercent(blendedOcf)} p.a. in fund charges</span>
                 <p className="text-xs text-muted-foreground">
-                  Charged by the fund manager, not the insurer. You would pay this with any investment product. Actively managed funds with higher fees may deliver outperformance that justifies the cost.
+                  Charged by the fund manager, not the insurer. All investment products have fund-level fees, though rates vary widely: a passive ETF might charge 0.03-0.5% p.a. versus 1-2% for an actively managed fund. Higher fees may be justified if the fund consistently delivers outperformance after costs.
                 </p>
               </div>
               {fundCharges > 0 && (
