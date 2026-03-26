@@ -1,7 +1,7 @@
 # Goal Calculator Design Spec
 
 **Date:** 2026-03-26
-**Status:** Draft
+**Status:** Approved
 **Route:** `/goal-calculator`
 
 ## Problem
@@ -46,7 +46,7 @@ User taps one tile to proceed.
 
 **HDB:**
 - Flat type: 3-room / 4-room / 5-room / Executive
-- New (BTO) vs Resale
+- New (BTO) vs Resale. For BTO, show a note: "BTO flats typically have a 3-5 year wait. Plan your target age accordingly."
 - Auto-computes: price range midpoint, down payment (HDB loan: 10% CPF; bank loan: 25% with 5% cash minimum; rules defined in `goal-defaults.ts` per HDB guidelines since `lib/calculations/hdb.ts` only covers CPF refund/subletting), BSD, legal fees (~$3K), renovation budget estimate (~$30-50K depending on flat type)
 
 **Condo:**
@@ -62,7 +62,7 @@ User taps one tile to proceed.
 - COE category: Cat A (up to 1600cc) / Cat B (above 1600cc)
 - New vs Used
 - Price range selector
-- Auto-computes: purchase cost breakdown (COE + OMV + ARF). Running costs (insurance, road tax, fuel) are out of scope for V1; show purchase cost only, same pattern as property down payment
+- Auto-computes: purchase cost breakdown (COE + estimated OMV + ARF). OMV is not a user input; `goal-defaults.ts` provides a price-range-to-OMV lookup (e.g., "$30-50K car" maps to estimated OMV ~$20K). Running costs (insurance, road tax, fuel) are out of scope for V1; show purchase cost only, same pattern as property down payment
 
 **Simple goals (everything else):**
 - Amount (in today's dollars)
@@ -74,7 +74,7 @@ User taps one tile to proceed.
 Single form, 4 fields. Framed as: "To calculate your plan, we need a few details."
 
 - **Age** (number input)
-- **Monthly income** (currency input, gross salary)
+- **Monthly take-home pay** (currency input, labeled "Monthly take-home pay (after CPF)" so user enters net income, not gross. This avoids overstating savings capacity by ~20% for SG employees without requiring CPF engine integration.)
 - **Monthly expenses** (currency input)
 - **Existing savings** (currency input, liquid savings + investments)
 
@@ -95,7 +95,7 @@ Supporting details:
 
 ### Step 5: Add Another Goal (Optional)
 
-"Want to plan for something else too?" button. Returns to the goal picker (Step 1). Basics are remembered but cannot be edited after initial entry. A "Start over" button resets all state. Up to 3 goals total.
+"Want to plan for something else too?" button. Returns to the goal picker (Step 1). Basics are remembered and can be re-edited via an "Edit basics" link on the results screen (navigates back to step 3, recalculates on return). A "Start over" button resets all state. Up to 3 goals total.
 
 When multiple goals exist, the results view shows:
 - Each goal's individual savings requirement
@@ -170,7 +170,7 @@ All in real (today's dollar) terms. Consistent with the main planner's steady-st
 
 ### Core math
 
-1. **Available monthly savings** = monthlyIncome - monthlyExpenses
+1. **Available monthly savings** = monthlyTakeHomePay - monthlyExpenses
 2. **Time horizon** = (targetAge - age) in months
 3. **Future value of existing savings** = existingSavings * (1 + r)^years, where r = 0.036 (conservative 3.6% real return)
 4. **Gap** = totalCostToday - futureValueOfSavings (floored at 0)
@@ -189,8 +189,9 @@ Simplified FIRE calculation:
 - Required nest egg = annualExpenses * 28 (3.6% SWR rule)
 - Annual savings without goals = (monthlyIncome - monthlyExpenses) * 12
 - Annual savings with goals = annual savings - (sum of all goals' monthlySavingsNeeded * 12)
-- Years to FIRE without goals = required nest egg / annual savings without goals (ignoring growth for simplicity)
-- Years to FIRE with goals = required nest egg / annual savings with goals
+- Adjusted portfolio base = existingSavings - (sum of existing savings allocated toward goals). This prevents double-counting savings that are earmarked for goals.
+- Years to FIRE without goals = `calculateYearsToFire(0.036, annualSavingsWithoutGoals, existingSavings, requiredNestEgg)` from `lib/calculations/fire.ts`
+- Years to FIRE with goals = `calculateYearsToFire(0.036, annualSavingsWithGoals, adjustedPortfolioBase, requiredNestEgg)` from `lib/calculations/fire.ts`
 - Impact = difference in years
 
 This is intentionally simplified and does NOT use the full planner's FIRE calculation engine (which accounts for CPF, Monte Carlo, withdrawal strategies, etc.). The goal calculator uses back-of-envelope math only. Accuracy is not the goal here; the "aha moment" nudge toward the full planner is.
@@ -237,7 +238,7 @@ All data in `goal-defaults.ts` tagged with `GOAL_DATA_VINTAGE` date for maintena
 | Goal calc field | Target | Store |
 |----------------|--------|-------|
 | basics.age | `currentAge` | `useProfileStore` |
-| basics.monthlyIncome * 12 | `annualIncome` | `useProfileStore` |
+| basics.monthlyTakeHomePay * 12 | `annualIncome` | `useProfileStore` (note: this is take-home, not gross. The full planner's income section expects gross salary with CPF computed automatically. The user will need to adjust this when they fill in the Income tab.) |
 | basics.monthlyExpenses * 12 | `annualExpenses` | `useProfileStore` |
 | basics.existingSavings | `liquidNetWorth` | `useProfileStore` |
 | Each goal | `financialGoals[]` entry | `useProfileStore` |
