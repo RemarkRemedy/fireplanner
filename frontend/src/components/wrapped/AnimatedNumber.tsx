@@ -17,7 +17,9 @@ export function AnimatedNumber({ value, format, delay = 0, className }: Animated
     const to = value
     prevValue.current = value
 
-    if (!isFinite(from) || from === to) {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    if (!isFinite(from) || from === to || prefersReducedMotion) {
       rafId.current = requestAnimationFrame(() => setDisplay(to))
       return
     }
