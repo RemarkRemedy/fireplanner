@@ -60,7 +60,7 @@ describe('parseTokioMarineWealthEnhancerCpfis', () => {
     expect(variant?.feeRules).toEqual([
       expect.objectContaining({
         id: 'single-premium-charge',
-        basis: 'annual-contribution',
+        basis: 'initial-single-premium',
         activeWindow: 'policy-term',
         rate: 0,
       }),

@@ -174,7 +174,7 @@ describe('parseAiaEliteSecureIncomeSp', () => {
     expect(variant.feeRules).toEqual([
       expect.objectContaining({
         id: 'single-premium-charge',
-        basis: 'annual-contribution',
+        basis: 'initial-single-premium',
         rate: 0.05,
       }),
       expect.objectContaining({
