@@ -18,6 +18,7 @@ import type { IlpPolicyInput, IlpProjectedPolicyAnalysis, ReturnScenario } from 
 import { getMipEndProjectionIndex } from '@/lib/calculations/ilp'
 import { buildFeeBreakdown } from '@/lib/calculations/ilpFeeBreakdown'
 import { useChartColors } from '@/lib/chartTheme'
+import { FeeRuleTooltip } from './FeeRuleTooltip'
 import { formatIlpCurrency } from './formatters'
 
 interface FeeBreakdownSectionProps {
@@ -34,40 +35,14 @@ const DEFAULT_FEE_CATEGORIES = [
 ] as const
 
 /** Derive specific labels and tooltips from the policy's charge rules instead of generic names. */
-function deriveAdditionalChargeLabel(policy: IlpPolicyInput): { label: string; tooltip: string } {
+function deriveAdditionalChargeInfo(policy: IlpPolicyInput) {
   const rules = (policy.chargeRules ?? []).filter((r) =>
     r.basis === 'annual-contribution' || r.basis === 'fixed-annual' || r.basis === 'cumulative-paid-regular-premium',
   )
-  if (rules.length === 0) return { label: 'Additional', tooltip: 'Premium-based and other recurring charges.' }
+  if (rules.length === 0) return { label: 'Additional', rules }
 
-  const parts: string[] = []
-  for (const rule of rules) {
-    // Rate schedule summary
-    if (rule.rateSchedule && rule.rateSchedule.length > 0) {
-      const rates = rule.rateSchedule.map((t) => {
-        const pct = `${(t.rate * 100).toFixed(0)}%`
-        return t.endPolicyYear === null ? `Year ${t.startPolicyYear}+: ${pct}` : `Year ${t.startPolicyYear}: ${pct}`
-      }).join(', ')
-      parts.push(`${rule.label} (${rates})`)
-    } else if (rule.amountSchedule && rule.amountSchedule.length > 0) {
-      const amt = rule.amountSchedule[0].amount
-      parts.push(`${rule.label} (S$${amt}/yr)`)
-    } else if (rule.rate > 0) {
-      parts.push(`${rule.label} (${(rule.rate * 100).toFixed(1)}%)`)
-    } else {
-      parts.push(rule.label)
-    }
-
-    // Source reference from the policy document
-    if (rule.sourceRefs && rule.sourceRefs.length > 0) {
-      const ref = rule.sourceRefs[0]
-      parts.push(`[p.${ref.page}: "${ref.excerpt.slice(0, 120)}${ref.excerpt.length > 120 ? '...' : ''}"]`)
-    }
-  }
-
-  // Short label for column header
   const label = rules.length === 1 ? rules[0].label.replace(/ Charge$/, '') : 'Premium + Policy'
-  return { label, tooltip: parts.join(' ') }
+  return { label, rules }
 }
 
 type FeeCategoryKey = typeof DEFAULT_FEE_CATEGORIES[number]['key']
@@ -85,7 +60,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
   const [includeOcf, setIncludeOcf] = useState(true)
   const [useRealValues, setUseRealValues] = useState(false)
   const colors = useChartColors()
-  const additionalLabel = deriveAdditionalChargeLabel(policy)
+  const additionalInfo = deriveAdditionalChargeInfo(policy)
   const projection = analysis.projections[scenario]
   const breakdown = useMemo(() => buildFeeBreakdown(projection, policy.funds, policy), [projection, policy.funds, policy])
   const mipEndIndex = getMipEndProjectionIndex(policy)
@@ -201,13 +176,13 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                   <Tooltip
                     formatter={(value: number, name: string) => [
                       formatIlpCurrency(Math.abs(value), policy.currency),
-                      name === 'bonusCredits' ? 'Bonus Credits' : name === 'additionalCharges' ? additionalLabel.label : DEFAULT_FEE_CATEGORIES.find((c) => c.key === name)?.label ?? name,
+                      name === 'bonusCredits' ? 'Bonus Credits' : name === 'additionalCharges' ? additionalInfo.label : DEFAULT_FEE_CATEGORIES.find((c) => c.key === name)?.label ?? name,
                     ]}
                     labelFormatter={(label: number) => `Policy Year ${label}`}
                   />
                   <Legend
                     formatter={(value: string) =>
-                      value === 'bonusCredits' ? 'Bonus Credits' : value === 'additionalCharges' ? additionalLabel.label : DEFAULT_FEE_CATEGORIES.find((c) => c.key === value)?.label ?? value
+                      value === 'bonusCredits' ? 'Bonus Credits' : value === 'additionalCharges' ? additionalInfo.label : DEFAULT_FEE_CATEGORIES.find((c) => c.key === value)?.label ?? value
                     }
                   />
                   <Bar dataKey="accountFee" stackId="fees" fill={categoryColors.accountFee} />
@@ -272,7 +247,12 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                     <th className="sticky left-0 z-30 border-r bg-background px-3 py-2 text-left font-medium text-muted-foreground">PY</th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">Contribution</th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground" title="Annual percentage of account value">Account Mgt</th>
-                    <th className="px-2 py-2 text-right font-medium text-muted-foreground" title={additionalLabel.tooltip}>{additionalLabel.label}</th>
+                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">
+                      <span className="inline-flex items-center gap-0.5">
+                        {additionalInfo.label}
+                        <FeeRuleTooltip rules={additionalInfo.rules} />
+                      </span>
+                    </th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground" title="Cost-of-insurance for death/TI/TPD coverage">Assurance</th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground" title="Charges triggered by withdrawals, premium holidays, etc.">Event</th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground" title="Ongoing fund charges deducted inside fund NAV">Fund Mgt</th>
@@ -362,8 +342,10 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
             <h3 className="text-sm font-medium">Fee Categories Explained</h3>
             <div className="grid gap-3 sm:grid-cols-2">
               {DEFAULT_FEE_CATEGORIES.map((category) => {
-                const label = category.key === 'additionalCharges' ? additionalLabel.label : category.label
-                const description = category.key === 'additionalCharges' ? additionalLabel.tooltip : category.description
+                const label = category.key === 'additionalCharges' ? additionalInfo.label : category.label
+                const description = category.key === 'additionalCharges' && additionalInfo.rules.length > 0
+                  ? additionalInfo.rules.map((r) => r.label).join(', ')
+                  : category.description
                 return (
                   <div key={category.key} className="rounded-md border p-3">
                     <div className="flex items-center gap-2">
