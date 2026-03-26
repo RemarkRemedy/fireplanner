@@ -1,10 +1,10 @@
-import { Building2, Building, Home, Car, Heart, Plane, GraduationCap, Rocket, Plus } from 'lucide-react'
+import { Building2, Building, Home, Car, Heart, Plane, GraduationCap, Briefcase, Target } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { GOAL_TILES } from '@/lib/data/goal-defaults'
 import type { GoalTileId } from '@/lib/data/goal-defaults'
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-  Building2, Building, Home, Car, Heart, Plane, GraduationCap, Rocket, Plus,
+  Building2, Building, Home, Car, Heart, Plane, GraduationCap, Briefcase, Target,
 }
 
 interface GoalPickerProps {
