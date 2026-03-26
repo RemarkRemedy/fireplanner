@@ -195,14 +195,7 @@ test.describe('Goal Calculator', () => {
 
     // GoalConfig for Car
     await expect(page.getByText('Car').first()).toBeVisible()
-    // Car config already has COE category defaults set; just set target age
-    const targetAgeInput2 = page
-      .locator('label')
-      .filter({ hasText: 'Target age' })
-      .locator('..')
-      .locator('input')
-    // Default target age: current age (25) + 5 = 30; that's valid
-    // Leave it as is and click Continue
+    // Car config already has COE category defaults set; leave target age at default and continue
     await page.getByRole('button', { name: 'Continue' }).click()
 
     // After second goal config, basics already exist so we go straight to results

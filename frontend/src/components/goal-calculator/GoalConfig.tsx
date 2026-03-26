@@ -119,7 +119,7 @@ function HdbConfig({
 
   const breakdown = useMemo(() => computeSmartGoalCost(smartInputs), [smartInputs])
 
-  const valid = currentAge !== null && targetAge > currentAge
+  const valid = currentAge === null ? targetAge >= 18 : targetAge > currentAge
 
   return (
     <ConfigShell title="HDB Flat" onBack={onBack}>
@@ -220,7 +220,7 @@ function CondoConfig({
 
   const breakdown = useMemo(() => computeSmartGoalCost(smartInputs), [smartInputs])
 
-  const valid = currentAge !== null && targetAge > currentAge
+  const valid = currentAge === null ? targetAge >= 18 : targetAge > currentAge
 
   return (
     <ConfigShell title="Condo" onBack={onBack}>
@@ -292,7 +292,7 @@ function LandedConfig({
 
   const breakdown = useMemo(() => computeSmartGoalCost(smartInputs), [smartInputs])
 
-  const valid = currentAge !== null && targetAge > currentAge
+  const valid = currentAge === null ? targetAge >= 18 : targetAge > currentAge
 
   return (
     <ConfigShell title="Landed Property" onBack={onBack}>
@@ -370,7 +370,7 @@ function CarConfig({
 
   const breakdown = useMemo(() => computeSmartGoalCost(smartInputs), [smartInputs])
 
-  const valid = currentAge !== null && targetAge > currentAge
+  const valid = currentAge === null ? targetAge >= 18 : targetAge > currentAge
 
   return (
     <ConfigShell title="Car" onBack={onBack}>
@@ -466,7 +466,7 @@ function SimpleGoalConfig({
   const defaultAmount = SIMPLE_GOAL_DEFAULTS[tileId]
   const [amount, setAmount] = useState(defaultAmount)
 
-  const valid = currentAge !== null && targetAge > currentAge && amount > 0
+  const valid = currentAge === null ? targetAge >= 18 : targetAge > currentAge && amount > 0
 
   const breakdown: CostBreakdown = useMemo(
     () => ({ items: [{ label: tile.label, amount }], total: amount }),
