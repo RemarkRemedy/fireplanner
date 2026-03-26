@@ -223,33 +223,23 @@ export function IlpStoryModePage() {
 
   return (
     <div>
-      {/* Screen 1: The Hook */}
-      <StoryScreen id="story-hook">
-        <div className="space-y-2 text-center">
-          <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            {catalogProduct.insurer}
-          </p>
-          <h1 className="text-3xl font-bold">{catalogProduct.productName}</h1>
-        </div>
-        <button
-          type="button"
-          className="rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
-          onClick={() => setShowFeeStory(true)}
-        >
-          Replay fee story
-        </button>
-        <p className="text-center text-xs text-muted-foreground">
-          Based on {activePolicy.currency} {activePolicy.accounts[0]?.monthlyContribution
-            ? `${activePolicy.accounts[0].monthlyContribution}/mo`
-            : 'your'
-          } premium, mid return scenario. Not financial advice.
-        </p>
-        <ScrollHint targetId="story-fees" label="Where does your money go?" />
-      </StoryScreen>
-
-      {/* Screen 2: Where Your Money Goes */}
+      {/* Screen 1: Fee Breakdown (landing after story closes) */}
       <StoryScreen id="story-fees" wide>
-        <h2 className="text-2xl font-bold">Where your money goes</h2>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              {catalogProduct.insurer}
+            </p>
+            <h1 className="text-2xl font-bold">{catalogProduct.productName}</h1>
+          </div>
+          <button
+            type="button"
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+            onClick={() => setShowFeeStory(true)}
+          >
+            Replay fee story
+          </button>
+        </div>
         <FeeBreakdownSection policy={activePolicy} analysis={analysis} />
         <ScrollHint targetId="story-bonuses" label="What about bonuses?" />
       </StoryScreen>
