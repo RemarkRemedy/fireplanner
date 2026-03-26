@@ -261,7 +261,6 @@ function StoryDetailView({ policy, analysis, catalogProduct, onReplay }: {
             Replay fee story
           </button>
         </div>
-        <FeeBreakdownSection policy={policy} analysis={analysis} />
         <FeeImpactChart
           tiers={feeImpact.tiers}
           timeSeries={feeImpact.timeSeries}
@@ -272,6 +271,7 @@ function StoryDetailView({ policy, analysis, catalogProduct, onReplay }: {
           initialSinglePremium={policy.initialSinglePremium}
           useReal
         />
+        <FeeBreakdownSection policy={policy} analysis={analysis} />
         <ScrollHint targetId="story-bonuses" label="What about bonuses?" />
       </StoryScreen>
 
