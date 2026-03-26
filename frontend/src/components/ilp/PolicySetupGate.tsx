@@ -30,7 +30,11 @@ export function PolicySetupGate({ seed, onConfirm, onCancel, prospect }: PolicyS
     ? seed.mipLength + postMipYears - (currentPolicyYear - 1)
     : postMipYears
 
+  const activePremium = isSinglePremium ? initialSinglePremium : monthlyContribution
+  const isValid = activePremium > 0 && fundFee >= 0 && fundFee <= 0.05 && horizonYears >= 1 && horizonYears <= 50
+
   function handleConfirm() {
+    if (!isValid) return
     // Scale each fund's OCF proportionally so blended OCF matches the user's input
     const scaleFactor = defaultOcf > 0 ? fundFee / defaultOcf : 1
     const adjustedFunds = seed.funds.map((f) => ({ ...f, ocf: f.ocf * scaleFactor }))
@@ -129,7 +133,7 @@ export function PolicySetupGate({ seed, onConfirm, onCancel, prospect }: PolicyS
         </div>
 
         <div className="flex items-center gap-3">
-          <Button onClick={handleConfirm} className="gap-2">
+          <Button onClick={handleConfirm} disabled={!isValid} className="gap-2">
             Show me the fees
             <ArrowRight className="h-4 w-4" />
           </Button>

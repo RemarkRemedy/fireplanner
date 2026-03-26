@@ -25,7 +25,8 @@ interface IlpFeeStoryProps {
   onClose: () => void
 }
 
-const TOTAL_CARDS = 5
+// Card indices: 0=PriceTag, 1=Breakdown, 2=HiddenFee, 3=CompoundEffect (conditional), 4=Summary
+const BASE_CARDS = ['priceTag', 'breakdown', 'hiddenFee', 'compoundEffect', 'summary'] as const
 
 function countMetadataOnlyBonuses(policy: IlpPolicyInput): string[] {
   if (!policy.catalogSource?.metadataOnlyBehaviors) return []
@@ -55,6 +56,9 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
   const feeImpact = useFeeImpact(policy, analysis, useReal)
 
   const horizonYears = feeImpact.horizonYears
+  const hasCompoundCard = feeImpact.tiers.length > 0
+  const activeCards = hasCompoundCard ? BASE_CARDS : BASE_CARDS.filter((c) => c !== 'compoundEffect')
+  const totalCards = activeCards.length
 
   // Nominal fund charges
   const nominalFundCharges = useMemo(() => {
@@ -81,12 +85,12 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
 
   const blendedOcf = policy.funds.reduce((sum, fund) => sum + fund.allocation * fund.ocf, 0)
 
-  const { annualDragPct, tiers: feeImpactTiers } = feeImpact
+  const { annualDragPct } = feeImpact
 
   // Navigation
   const goForward = useCallback(() => {
     if (isTransitioning.current) return
-    if (currentIndex >= TOTAL_CARDS - 1) return
+    if (currentIndex >= totalCards - 1) return
     isTransitioning.current = true
     setDirection(1)
     setCurrentIndex((i) => i + 1)
@@ -150,7 +154,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
       // No-navigate zone: lower 40% of summary card
       const rect = e.currentTarget.getBoundingClientRect()
       const yRatio = (e.clientY - rect.top) / rect.height
-      if (currentIndex === TOTAL_CARDS - 1 && yRatio > 0.6) return
+      if (currentIndex === totalCards - 1 && yRatio > 0.6) return
 
       // Tap zones: left 30% = back, right 70% = forward
       const x = e.clientX - rect.left
@@ -161,13 +165,14 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
     [goBack, goForward, currentIndex]
   )
 
-  const gradients = [
-    ILP_GRADIENTS.priceTag,
-    ILP_GRADIENTS.breakdown,
-    ILP_GRADIENTS.hiddenFee,
-    ILP_GRADIENTS.compound,
-    ILP_GRADIENTS.summary,
-  ]
+  const gradientMap: Record<string, string> = {
+    priceTag: ILP_GRADIENTS.priceTag,
+    breakdown: ILP_GRADIENTS.breakdown,
+    hiddenFee: ILP_GRADIENTS.hiddenFee,
+    compoundEffect: ILP_GRADIENTS.compound,
+    summary: ILP_GRADIENTS.summary,
+  }
+  const currentGradient = gradientMap[activeCards[currentIndex]] ?? ILP_GRADIENTS.summary
 
   const basisLabel = useReal ? "in today's dollars" : 'nominal'
 
@@ -190,8 +195,13 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
         <AnimatePresence mode="wait" custom={direction}>
           <div key={currentIndex}>
             {/* Card 1: The Price Tag */}
-            {currentIndex === 0 && (
-              <WrappedCard gradient={gradients[0]} direction={direction}>
+            {activeCards[currentIndex] === 'priceTag' && (
+              <WrappedCard gradient={currentGradient} direction={direction}>
+                {policy.catalogSource?.productName && (
+                  <motion.p variants={staggerChild} className="text-xs uppercase tracking-widest text-white/40 font-medium">
+                    {policy.catalogSource.productName}
+                  </motion.p>
+                )}
                 <motion.p variants={staggerChild} className="text-xs uppercase tracking-widest text-white/60 font-medium">
                   Returns are not guaranteed, but fees are.
                 </motion.p>
@@ -213,8 +223,8 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
             )}
 
             {/* Card 2: Where It Goes */}
-            {currentIndex === 1 && (
-              <WrappedCard gradient={gradients[1]} direction={direction}>
+            {activeCards[currentIndex] === 'breakdown' && (
+              <WrappedCard gradient={currentGradient} direction={direction}>
                 <motion.p variants={staggerChild} className="text-xs uppercase tracking-widest text-white/60 font-medium">
                   Where your fees go
                 </motion.p>
@@ -259,8 +269,8 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
             )}
 
             {/* Card 3: The Hidden Fee */}
-            {currentIndex === 2 && (
-              <WrappedCard gradient={gradients[2]} direction={direction}>
+            {activeCards[currentIndex] === 'hiddenFee' && (
+              <WrappedCard gradient={currentGradient} direction={direction}>
                 <motion.p variants={staggerChild} className="text-xs uppercase tracking-widest text-white/60 font-medium">
                   The fee you'll never see on a statement
                 </motion.p>
@@ -287,8 +297,8 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
             )}
 
             {/* Card 4: The Compound Effect */}
-            {currentIndex === 3 && feeImpactTiers.length > 0 && (
-              <WrappedCard gradient={gradients[3]} direction={direction}>
+            {activeCards[currentIndex] === 'compoundEffect' && (
+              <WrappedCard gradient={currentGradient} direction={direction}>
                 <motion.p variants={staggerChild} className="text-xs uppercase tracking-widest text-white/60 font-medium">
                   The compound effect
                 </motion.p>
@@ -312,8 +322,8 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
             )}
 
             {/* Card 5: Summary */}
-            {currentIndex === 4 && (
-              <WrappedCard gradient={gradients[4]} direction={direction} compact>
+            {activeCards[currentIndex] === 'summary' && (
+              <WrappedCard gradient={currentGradient} direction={direction} compact>
                 <motion.p variants={staggerChild} className="text-xs uppercase tracking-widest text-white/60 font-medium">
                   Your fee summary
                 </motion.p>
@@ -377,7 +387,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
 
       {/* Progress bar overlay */}
       <div className="absolute top-0 left-0 right-0 z-10">
-        <WrappedProgressBar total={TOTAL_CARDS} current={currentIndex} />
+        <WrappedProgressBar total={totalCards} current={currentIndex} />
       </div>
 
       {/* Close button */}
@@ -410,7 +420,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
       </div>
 
       {/* Skip to summary */}
-      {currentIndex < TOTAL_CARDS - 1 && currentIndex > 0 && (
+      {currentIndex < totalCards - 1 && currentIndex > 0 && (
         <button
           className="absolute bottom-8 right-4 z-10 text-white/60 hover:text-white text-xs transition-colors"
           onClick={(e) => {
@@ -418,7 +428,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
             if (isTransitioning.current) return
             isTransitioning.current = true
             setDirection(1)
-            setCurrentIndex(TOTAL_CARDS - 1)
+            setCurrentIndex(totalCards - 1)
             setTimeout(() => { isTransitioning.current = false }, 350)
           }}
         >
@@ -427,7 +437,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
       )}
 
       {/* Navigation hint on first card */}
-      {currentIndex === 0 && (
+      {activeCards[currentIndex] === 'priceTag' && (
         <div className="absolute bottom-8 left-0 right-0 z-10 flex justify-center">
           <p className="text-white/80 text-sm motion-safe:animate-pulse">Tap or swipe to continue</p>
         </div>

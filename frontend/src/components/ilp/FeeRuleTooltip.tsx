@@ -12,6 +12,9 @@ import {
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { Info } from 'lucide-react'
 import type { IlpBonusRule, IlpChargeRule, IlpEventChargeRule, IlpFund } from '@/lib/calculations/ilp'
+import { formatIlpCurrency } from './formatters'
+
+type IlpCurrency = 'SGD' | 'USD'
 
 // ---------------------------------------------------------------------------
 // Shared shell — handles mobile (Popover/tap) vs desktop (Tooltip/hover)
@@ -26,7 +29,7 @@ function InfoTooltipShell({ children, label }: { children: React.ReactNode; labe
     return (
       <Popover>
         <PopoverTrigger asChild>
-          <button type="button" aria-label={label} className={`${triggerClassName} relative before:absolute before:content-[''] before:-inset-3`}>
+          <button type="button" aria-label={label} className={`${triggerClassName} relative before:absolute before:content-[''] before:-inset-4`}>
             <Info className="h-3.5 w-3.5" />
           </button>
         </PopoverTrigger>
@@ -103,7 +106,7 @@ function RateScheduleTable({ schedule }: { schedule: Array<{ startPolicyYear: nu
   )
 }
 
-function FeeRuleContent({ rules }: { rules: IlpChargeRule[] }) {
+function FeeRuleContent({ rules, currency }: { rules: IlpChargeRule[]; currency: IlpCurrency }) {
   return (
     <div className="space-y-3">
       {rules.map((rule) => (
@@ -115,7 +118,7 @@ function FeeRuleContent({ rules }: { rules: IlpChargeRule[] }) {
           )}
 
           {rule.amountSchedule && rule.amountSchedule.length > 0 && (
-            <p className="mt-1 text-xs">S${rule.amountSchedule[0].amount}/year</p>
+            <p className="mt-1 text-xs">{formatIlpCurrency(rule.amountSchedule[0].amount, currency)}/year</p>
           )}
 
           {rule.rate > 0 && (!rule.rateSchedule || rule.rateSchedule.length === 0) && (
@@ -129,11 +132,11 @@ function FeeRuleContent({ rules }: { rules: IlpChargeRule[] }) {
   )
 }
 
-export function FeeRuleTooltip({ rules }: { rules: IlpChargeRule[] }) {
+export function FeeRuleTooltip({ rules, currency = 'SGD' }: { rules: IlpChargeRule[]; currency?: IlpCurrency }) {
   if (rules.length === 0) return null
   return (
     <InfoTooltipShell label="Fee rule details">
-      <FeeRuleContent rules={rules} />
+      <FeeRuleContent rules={rules} currency={currency} />
     </InfoTooltipShell>
   )
 }
@@ -169,7 +172,7 @@ const TRIGGER_LABELS: Record<string, string> = {
   'recurring-single-premium': 'Recurring single premium',
 }
 
-function BonusRuleContent({ bonuses }: { bonuses: IlpBonusRule[] }) {
+function BonusRuleContent({ bonuses, currency }: { bonuses: IlpBonusRule[]; currency: IlpCurrency }) {
   return (
     <div className="space-y-3">
       {bonuses.map((bonus) => {
@@ -189,7 +192,7 @@ function BonusRuleContent({ bonuses }: { bonuses: IlpBonusRule[] }) {
               <p className="mt-1 text-xs tabular-nums">{(bonus.rate * 100).toFixed(1)}% p.a.</p>
             )}
             {bonus.amount > 0 && (
-              <p className="mt-1 text-xs tabular-nums">S${bonus.amount.toLocaleString()}</p>
+              <p className="mt-1 text-xs tabular-nums">{formatIlpCurrency(bonus.amount, currency)}</p>
             )}
 
             {/* Rate schedule */}
@@ -204,7 +207,7 @@ function BonusRuleContent({ bonuses }: { bonuses: IlpBonusRule[] }) {
                   {bonus.tieredRates.map((tier, i) => (
                     <tr key={i} className="border-t border-white/10">
                       <td className="py-0.5 pr-2 text-muted-foreground">
-                        {tier.minAnnualPremium != null ? `S$${tier.minAnnualPremium.toLocaleString()}` : ''}
+                        {tier.minAnnualPremium != null ? formatIlpCurrency(tier.minAnnualPremium, currency) : ''}
                         {tier.maxAnnualPremium != null ? `-${tier.maxAnnualPremium.toLocaleString()}` : '+'}
                       </td>
                       <td className="py-0.5 tabular-nums font-medium">{(tier.rate * 100).toFixed(1)}%</td>
@@ -254,11 +257,11 @@ function BonusRuleContent({ bonuses }: { bonuses: IlpBonusRule[] }) {
   )
 }
 
-export function BonusRuleTooltip({ bonuses }: { bonuses: IlpBonusRule[] }) {
+export function BonusRuleTooltip({ bonuses, currency = 'SGD' }: { bonuses: IlpBonusRule[]; currency?: IlpCurrency }) {
   if (bonuses.length === 0) return null
   return (
     <InfoTooltipShell label="Bonus rule details">
-      <BonusRuleContent bonuses={bonuses} />
+      <BonusRuleContent bonuses={bonuses} currency={currency} />
     </InfoTooltipShell>
   )
 }
@@ -267,7 +270,7 @@ export function BonusRuleTooltip({ bonuses }: { bonuses: IlpBonusRule[] }) {
 // 3. Event Charge Rule
 // ---------------------------------------------------------------------------
 
-function EventRuleContent({ rules }: { rules: IlpEventChargeRule[] }) {
+function EventRuleContent({ rules, currency }: { rules: IlpEventChargeRule[]; currency: IlpCurrency }) {
   return (
     <div className="space-y-3">
       {rules.map((rule) => (
@@ -290,7 +293,7 @@ function EventRuleContent({ rules }: { rules: IlpEventChargeRule[] }) {
 
           {/* Fixed amount */}
           {rule.amount > 0 && (
-            <p className="mt-1 text-xs tabular-nums">S${rule.amount.toLocaleString()}</p>
+            <p className="mt-1 text-xs tabular-nums">{formatIlpCurrency(rule.amount, currency)}</p>
           )}
 
           {/* Free event allowances */}
@@ -317,11 +320,11 @@ function EventRuleContent({ rules }: { rules: IlpEventChargeRule[] }) {
   )
 }
 
-export function EventRuleTooltip({ rules }: { rules: IlpEventChargeRule[] }) {
+export function EventRuleTooltip({ rules, currency = 'SGD' }: { rules: IlpEventChargeRule[]; currency?: IlpCurrency }) {
   if (rules.length === 0) return null
   return (
     <InfoTooltipShell label="Event charge details">
-      <EventRuleContent rules={rules} />
+      <EventRuleContent rules={rules} currency={currency} />
     </InfoTooltipShell>
   )
 }

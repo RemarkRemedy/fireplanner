@@ -265,25 +265,25 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">
                       <span className="inline-flex items-center gap-0.5">
                         Account Mgt
-                        <FeeRuleTooltip rules={feeColumnInfo.accountMgt} />
+                        <FeeRuleTooltip rules={feeColumnInfo.accountMgt} currency={policy.currency} />
                       </span>
                     </th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">
                       <span className="inline-flex items-center gap-0.5">
                         {feeColumnInfo.additional.label}
-                        <FeeRuleTooltip rules={feeColumnInfo.additional.rules} />
+                        <FeeRuleTooltip rules={feeColumnInfo.additional.rules} currency={policy.currency} />
                       </span>
                     </th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">
                       <span className="inline-flex items-center gap-0.5">
                         Assurance
-                        <FeeRuleTooltip rules={feeColumnInfo.assurance} />
+                        <FeeRuleTooltip rules={feeColumnInfo.assurance} currency={policy.currency} />
                       </span>
                     </th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">
                       <span className="inline-flex items-center gap-0.5">
                         Event
-                        <EventRuleTooltip rules={feeColumnInfo.event} />
+                        <EventRuleTooltip rules={feeColumnInfo.event} currency={policy.currency} />
                       </span>
                     </th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">
@@ -296,7 +296,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                     <th className="px-2 py-2 text-right font-medium text-emerald-700 dark:text-emerald-400">
                       <span className="inline-flex items-center gap-0.5">
                         Bonus
-                        <BonusRuleTooltip bonuses={feeColumnInfo.bonuses} />
+                        <BonusRuleTooltip bonuses={feeColumnInfo.bonuses} currency={policy.currency} />
                       </span>
                     </th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">Net Fee</th>

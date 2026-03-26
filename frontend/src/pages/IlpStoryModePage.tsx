@@ -82,7 +82,13 @@ function VariantPicker({
           >
             <div className="font-medium">
               {variant.currency} / {variant.mipBasis === 'open-ended' ? 'Open-ended' : `MIP ${variant.mipLength}`}
-              {variant.id.includes('advanced') ? ' (Advanced)' : ''}
+              {(() => {
+                const suffix = variant.id.split('-').pop()
+                if (suffix && !['sgd', 'usd', 'sp', 'rsp'].includes(suffix) && !/^\d+$/.test(suffix)) {
+                  return ` (${suffix.charAt(0).toUpperCase() + suffix.slice(1)})`
+                }
+                return ''
+              })()}
             </div>
             <div className="text-xs text-muted-foreground">
               {variant.accounts.length} account{variant.accounts.length === 1 ? '' : 's'}, {variant.feeRules.length} fee rules

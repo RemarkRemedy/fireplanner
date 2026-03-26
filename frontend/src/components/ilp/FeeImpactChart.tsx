@@ -45,14 +45,21 @@ export function FeeImpactChart({
 
   const content = (
     <div className="space-y-4">
-      <div>
-        <p className={`text-sm font-semibold ${dark ? '' : ''}`}>
-          Returns compound, but fees compound too.
-        </p>
-        <p className={`text-xs ${dark ? 'text-white/60' : 'text-muted-foreground'}`}>
+      {!dark && (
+        <div>
+          <p className="text-sm font-semibold">
+            Returns compound, but fees compound too.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            What your portfolio could be worth after {horizonYears} years at 7% gross return ({basisLabel}). {contributionLabel}
+          </p>
+        </div>
+      )}
+      {dark && (
+        <p className="text-xs text-white/60">
           What your portfolio could be worth after {horizonYears} years at 7% gross return ({basisLabel}). {contributionLabel}
         </p>
-      </div>
+      )}
 
       <div className="space-y-2">
         {tiers.map((tier) => (
