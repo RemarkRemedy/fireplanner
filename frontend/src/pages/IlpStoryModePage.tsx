@@ -255,11 +255,11 @@ export function IlpStoryModePage() {
       </StoryScreen>
 
       {/* Screen 3: The Bonus Reality Check */}
-      <StoryScreen id="story-bonuses">
+      <StoryScreen id="story-bonuses" wide>
         <h2 className="text-2xl font-bold">The bonus reality check</h2>
         {analysis.summary.totalBonusesReceived > 0 ? (
           <Card>
-            <CardContent className="space-y-4 pt-6">
+            <CardContent className="space-y-4 p-6">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="rounded-lg border p-4">
                   <div className="text-sm text-muted-foreground">Total bonuses received</div>
@@ -296,7 +296,7 @@ export function IlpStoryModePage() {
       </StoryScreen>
 
       {/* Screen 4: The Exit Math */}
-      <StoryScreen id="story-exit">
+      <StoryScreen id="story-exit" wide>
         <h2 className="text-2xl font-bold">Your exit options</h2>
         <DecisionPanel policy={activePolicy} analysis={analysis} />
         <OpportunityCostCard policy={activePolicy} analysis={analysis} />
