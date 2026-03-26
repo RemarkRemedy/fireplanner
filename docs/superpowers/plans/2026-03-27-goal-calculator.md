@@ -205,7 +205,8 @@ export function computeCondoDownPayment(price: number): { total: number; cashMin
 type CoeCategory = 'A' | 'B'
 type CarCondition = 'new' | 'used'
 
-const COE_ESTIMATES: Record<CoeCategory, number> = { A: 90000, B: 110000 }
+// COE premium estimates — volatile, review quarterly. Source: OneMotoring bidding results.
+export const COE_ESTIMATES: Record<CoeCategory, number> = { A: 90000, B: 110000 }
 
 // Price range to estimated OMV lookup (simplified)
 const OMV_BY_PRICE_RANGE: Record<number, number> = {
@@ -217,9 +218,12 @@ const OMV_BY_PRICE_RANGE: Record<number, number> = {
   80000: 55000,
 }
 
+// ARF brackets — statutory nominal thresholds, do not inflation-adjust. Source: LTA fee schedule.
+export const ARF_BRACKETS: [number, number][] = [[20000, 1.0], [30000, 1.4], [Infinity, 1.8]]
+
 export function computeArf(omv: number): number {
   let arf = 0
-  const brackets: [number, number][] = [[20000, 1.0], [30000, 1.4], [Infinity, 1.8]]
+  const brackets = ARF_BRACKETS
   let remaining = omv
   for (const [width, rate] of brackets) {
     const taxable = Math.min(remaining, width)
@@ -246,7 +250,7 @@ export function getCarPurchaseCost(
   // Find closest OMV estimate from lookup
   const priceKeys = Object.keys(OMV_BY_PRICE_RANGE).map(Number).sort((a, b) => a - b)
   const closest = priceKeys.reduce((prev, curr) =>
-    Math.abs(curr - priceRange / 1000) < Math.abs(prev - priceRange / 1000) ? curr : prev
+    Math.abs(curr - priceRange) < Math.abs(prev - priceRange) ? curr : prev
   )
   const omv = OMV_BY_PRICE_RANGE[closest] ?? priceRange * 0.4
   const arf = computeArf(omv)
@@ -630,6 +634,7 @@ export function computeSmartGoalCost(inputs: SmartGoalInputs): CostBreakdown {
     items.push(
       { label: 'Down payment (25%)', amount: dp.total },
       { label: 'BSD', amount: bsd },
+      { label: 'ABSD (first property, SC)', amount: 0 },
       { label: 'Legal fees', amount: legal },
       { label: 'Renovation', amount: reno },
     )
@@ -642,6 +647,7 @@ export function computeSmartGoalCost(inputs: SmartGoalInputs): CostBreakdown {
     items.push(
       { label: 'Down payment (25%)', amount: dp.total },
       { label: 'BSD', amount: bsd },
+      { label: 'ABSD (first property, SC)', amount: 0 },
       { label: 'Legal fees', amount: legal },
       { label: 'Renovation', amount: reno },
     )
@@ -867,6 +873,7 @@ import { useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { NumberInput } from '@/components/shared/NumberInput'
 import { ArrowLeft, Info } from 'lucide-react'
@@ -1026,9 +1033,9 @@ export function GoalConfig({ tileId, currentAge, onComplete, onBack }: GoalConfi
             <>
               {tileId === 'custom' && (
                 <div className="space-y-2">
-                  <Label>What are you saving for?</Label>
-                  <input
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  <Label htmlFor="custom-goal-label">What are you saving for?</Label>
+                  <Input
+                    id="custom-goal-label"
                     placeholder="e.g. Engagement ring"
                     value={customLabel}
                     onChange={e => setCustomLabel(e.target.value)}
@@ -1108,7 +1115,7 @@ export function BasicsForm({ initial, onComplete, onBack }: BasicsFormProps) {
 
   const ageError = age < 18 || age > 70 ? 'Must be between 18 and 70' : undefined
   const incomeError = monthlyIncome <= 0 ? 'Must be greater than 0' : undefined
-  const expensesError = monthlyExpenses >= monthlyIncome ? 'Must be less than your income' : undefined
+  const expensesError = monthlyExpenses <= 0 ? 'Must be greater than 0' : monthlyExpenses >= monthlyIncome ? 'Must be less than your income' : undefined
 
   const canSubmit = !ageError && !incomeError && !expensesError && age >= 18
 
@@ -1163,6 +1170,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Plus, RefreshCw, ArrowRight, Pencil } from 'lucide-react'
 import {
+  REAL_RETURN,
   computeMonthlySavingsNeeded,
   computeGoalFeasibility,
   computeMultiGoalStacking,
@@ -1221,12 +1229,12 @@ export function Results({ goals, basics, onAddAnother, onEditBasics, onStartOver
   }, [enrichedGoals, basics, goals.length])
 
   const totalMonthlySavings = enrichedGoals.reduce((sum, g) => sum + g.monthlySavingsNeeded, 0)
-  const savingsAllocatedToGoals = enrichedGoals.reduce((sum, g) => {
-    const years = g.targetAge - basics.age
-    const fvSavings = basics.existingSavings * Math.pow(1.036, years)
-    const gap = g.totalCostToday - fvSavings
-    return sum + (gap < 0 ? basics.existingSavings : Math.min(basics.existingSavings, g.totalCostToday))
-  }, 0) / Math.max(enrichedGoals.length, 1) // approximate per-goal share
+  // Total existing savings allocated toward goals (not per-goal average).
+  // Split evenly across goals as a simplification.
+  const savingsAllocatedToGoals = Math.min(
+    basics.existingSavings,
+    enrichedGoals.reduce((sum, g) => sum + g.totalCostToday, 0)
+  )
 
   const retirement = useMemo(() => {
     return computeRetirementImpact(basics, totalMonthlySavings, savingsAllocatedToGoals)
@@ -1315,8 +1323,8 @@ export function Results({ goals, basics, onAddAnother, onEditBasics, onStartOver
       {/* Retirement impact (subtle) */}
       {!retirement.fullyCommitted && retirement.deltaYears > 0 && isFinite(retirement.deltaYears) && (
         <p className="text-center text-xs text-muted-foreground">
-          These goals would shift your estimated retirement age by ~{Math.round(retirement.deltaYears)} years.
-          <br />Want the full picture? Try the full planner below.
+          These goals would shift your estimated retirement age by ~{Math.round(retirement.deltaYears)} years (estimate based on 28x annual expenses).
+          <br />The full planner uses your actual settings for a more precise picture.
         </p>
       )}
       {retirement.fullyCommitted && (
@@ -1446,6 +1454,7 @@ export function GoalCalculatorPage() {
   usePageMeta({
     title: 'Goal Calculator | SG FIRE Planner',
     description: 'Can you afford your next big goal? Plan for a condo, car, wedding, or any life goal with our free Singapore goal calculator.',
+    path: '/goal-calculator',
   })
 
   const [state, dispatch] = useReducer(reducer, initialState)
