@@ -90,6 +90,8 @@ describe('parseAiaPlatinumWealthLegacy', () => {
       'branch:aia-platinum-wealth-legacy-premium-holiday-charge',
       'branch:aia-platinum-wealth-legacy-partial-withdrawal-charge',
       'branch:aia-platinum-wealth-legacy-full-surrender-charge',
+      'branch:aia-platinum-wealth-legacy-administration-charge-manual-input',
+      'branch:aia-platinum-wealth-legacy-insurance-risk-charge-manual-input',
       'kernel:top-up-paid-up-to-date-block',
       'kernel:current-death-benefit-estimate',
       'kernel:current-ti-benefit-estimate',
@@ -97,9 +99,8 @@ describe('parseAiaPlatinumWealthLegacy', () => {
     ])
     expect(product.metadataOnlyBehaviors).toContain('aia-platinum-wealth-legacy-no-lapse-privilege')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-legacy-protection-benefits')
-    expect(product.warnings).toContain(
-      'AIA Platinum Wealth Legacy is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the published regular-premium partial-withdrawal / surrender charge schedules, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, administration charge, insurance risk charge, no-lapse activation or expiry election mechanics, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.',
-    )
+    expect(product.warnings.some((warning) => warning.includes('regular-pay 5-year corridor'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('manual-input administration-charge and insurance-risk-charge placeholders sourced from the policy illustration'))).toBe(true)
 
     const variant = product.variants[0]
     expect(variant).toMatchObject({
@@ -111,12 +112,25 @@ describe('parseAiaPlatinumWealthLegacy', () => {
         blockTopUpsWhenPremiumsNotPaidUpToDate: true,
       },
     })
-    expect(variant.feeRules).toEqual([
+    expect(variant.feeRules).toEqual(expect.arrayContaining([
       expect.objectContaining({
         id: 'regular-premium-charge',
         yearBasis: 'premium-year',
       }),
-    ])
+      expect.objectContaining({
+        id: 'administration-charge',
+        basis: 'fixed-annual',
+        requiresManualInput: true,
+        startPolicyYear: 1,
+        endPolicyYear: 10,
+      }),
+      expect.objectContaining({
+        id: 'insurance-risk-charge',
+        basis: 'fixed-annual',
+        requiresManualInput: true,
+        activeWindow: 'policy-term',
+      }),
+    ]))
     expect(variant.eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'top-up-premium-charge',

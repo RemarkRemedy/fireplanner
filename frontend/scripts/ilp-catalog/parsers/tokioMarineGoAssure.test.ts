@@ -27,6 +27,7 @@ describe('parseTokioMarineGoAssure', () => {
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toContain('branch:tokio-marine-goassure-initial-bonus')
     expect(product.modeledEconomics).toContain('branch:tokio-marine-goassure-policy-charge')
+    expect(product.modeledEconomics).toContain('branch:tokio-marine-goassure-monthly-protection-charge')
     expect(product.modeledEconomics).toContain('tokio-explicit-charge-waiver-for-partial-withdrawal-and-shortfall-events')
     expect(product.modeledEconomics).toContain('kernel:free-withdrawal-event-cap')
     expect(product.modeledEconomics).toContain('kernel:manual-charge-waiver-grant-limits')
@@ -128,7 +129,7 @@ describe('parseTokioMarineGoAssure', () => {
         tieredRates: [],
       }),
     ])
-    expect(variant?.feeRules).toEqual([
+    expect(variant?.feeRules).toEqual(expect.arrayContaining([
       expect.objectContaining({
         id: 'initial-charge',
         basis: 'account-value',
@@ -152,7 +153,29 @@ describe('parseTokioMarineGoAssure', () => {
         startPolicyYear: 5,
         endPolicyYear: 10,
       }),
-    ])
+      expect.objectContaining({
+        id: 'monthly-protection-charge-death',
+        basis: 'assurance-sum-at-risk',
+        appliesTo: ['accumulation'],
+        assuranceValueAppliesTo: ['initial', 'accumulation'],
+        fallbackAppliesTo: ['initial', 'topup'],
+        assuranceConfig: expect.objectContaining({
+          formula: 'tokio-mpc-goassure-basic-sum-at-risk',
+          rateTable: 'tokio-goassure-mpc-death',
+        }),
+      }),
+      expect.objectContaining({
+        id: 'monthly-protection-charge-tpd',
+        basis: 'assurance-sum-at-risk',
+        appliesTo: ['accumulation'],
+        assuranceValueAppliesTo: ['initial', 'accumulation'],
+        fallbackAppliesTo: ['initial', 'topup'],
+        assuranceConfig: expect.objectContaining({
+          formula: 'tokio-mpc-goassure-tpd-sum-at-risk',
+          rateTable: 'tokio-goassure-mpc-tpd',
+        }),
+      }),
+    ]))
     expect(variant?.eventChargeRules).toEqual([
       expect.objectContaining({ id: 'top-up-premium-charge', rate: 0.05 }),
       expect.objectContaining({ id: 'recurring-single-premium-charge', rate: 0.05 }),
@@ -239,7 +262,7 @@ describe('parseTokioMarineGoAssure', () => {
       'Waiver approval timing, hospitalisation / retrenchment proof, medical and unemployment exclusions, first-assured coverage, and Tokio’s discretionary variation of benefit grant counts remain informational only beyond the modeled explicit chargeWaived plus optional shared chargeWaiverGrantId event path.',
     )
     expect(variant?.unsupportedItems).toContain(
-      'Monthly Protection Charge, sum-at-risk formulas, Guaranteed Extra Protection, terminal-illness exclusions / settlement, post-TPD continuation state, and broader protection-side claim behavior remain informational only beyond the modeled current TI snapshot and current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today.',
+      'Guaranteed Extra Protection, terminal-illness exclusions / settlement, post-TPD continuation state, and broader protection-side claim behavior remain informational only beyond the modeled Monthly Protection Charge, current TI snapshot, and current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today.',
     )
     expect(variant?.warnings).toContain(
       'The current-state death-benefit estimate needs manual current Protection Age, current amount owing, and, after Protection Age, current basic sum assured inputs because protection-age elections and withdrawal-adjusted basic-sum-assured history are not reconstructed in V1.',

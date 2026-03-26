@@ -17,6 +17,8 @@ import {
   PRUVANTAGE_ASSURE_II_COMBINED_RATE_TABLE,
   PRUVANTAGE_PROSPER_ACCIDENTAL_DEATH_RATE_TABLE,
   PRUVANTAGE_PROSPER_DEATH_RATE_TABLE,
+  TOKIO_GOASSURE_MPC_DEATH_RATE_TABLE,
+  TOKIO_GOASSURE_MPC_TPD_RATE_TABLE,
   TOKIO_MPC_UNZO_DEATH_RATE_TABLE,
 } from '@/lib/data/ilpAssuranceTables'
 import {
@@ -436,8 +438,12 @@ export interface IlpAssuranceChargeConfig {
     | 'tokio-mpc-net-premium-floor'
     | 'tokio-mpc-locked-in-policy-value'
     | 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium'
+    | 'tokio-mpc-goassure-basic-sum-at-risk'
+    | 'tokio-mpc-goassure-tpd-sum-at-risk'
   rateTable?:
     | 'tokio-mpc-unzo-death'
+    | 'tokio-goassure-mpc-death'
+    | 'tokio-goassure-mpc-tpd'
   monthlyModalFactor: number
   maxAgeNextBirthday?: number
   policyYearRateMultiplierSchedule?: Array<{
@@ -487,7 +493,7 @@ export interface IlpCumulativePaidPremiumChargeConfig {
 export interface IlpChargeRule {
   id: string
   label: string
-  basis: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'premium-base-mip-multiplier' | 'premium-base-mip-multiplier-capped-account-value' | 'cumulative-paid-regular-premium' | 'initial-single-premium' | 'initial-single-premium-base'
+  basis: 'account-value' | 'annual-contribution' | 'fixed-annual' | 'assurance-sum-at-risk' | 'insured-amount-at-issue' | 'premium-base-mip-multiplier' | 'premium-base-mip-multiplier-capped-account-value' | 'cumulative-paid-regular-premium' | 'initial-single-premium' | 'initial-single-premium-base'
   activeWindow: 'during-mip' | 'after-mip' | 'policy-term'
   yearBasis?: 'policy-year' | 'premium-year'
   requiresPremiumsPaidUpToDate?: boolean
@@ -501,6 +507,11 @@ export interface IlpChargeRule {
   amountSchedule?: IlpChargeAmountTier[]
   rate: number
   amount: number
+  issueAgeRateTiers?: Array<{
+    minIssueAgeNextBirthday: number
+    maxIssueAgeNextBirthday: number | null
+    rate: number
+  }>
   assuranceConfig?: IlpAssuranceChargeConfig
   premiumBaseConfig?: IlpPremiumBaseChargeConfig
   cumulativePaidPremiumConfig?: IlpCumulativePaidPremiumChargeConfig
@@ -1454,6 +1465,8 @@ type IlpAssuranceFormulaFamily =
   | 'tokio-mpc-net-premium-floor'
   | 'tokio-mpc-locked-in-policy-value'
   | 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium'
+  | 'tokio-mpc-goassure-basic-sum-at-risk'
+  | 'tokio-mpc-goassure-tpd-sum-at-risk'
 
 interface IlpTokioProtectionState {
   lockedInPolicyValue: number
@@ -3554,10 +3567,12 @@ function getPolicyRepayments(
 
 function isTokioAssuranceFormula(
   formula: IlpAssuranceChargeConfig['formula'],
-): formula is Extract<IlpAssuranceChargeConfig['formula'], 'tokio-mpc-net-premium-floor' | 'tokio-mpc-locked-in-policy-value' | 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium'> {
+): formula is Extract<IlpAssuranceChargeConfig['formula'], 'tokio-mpc-net-premium-floor' | 'tokio-mpc-locked-in-policy-value' | 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium' | 'tokio-mpc-goassure-basic-sum-at-risk' | 'tokio-mpc-goassure-tpd-sum-at-risk'> {
   return formula === 'tokio-mpc-net-premium-floor'
     || formula === 'tokio-mpc-locked-in-policy-value'
     || formula === 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium'
+    || formula === 'tokio-mpc-goassure-basic-sum-at-risk'
+    || formula === 'tokio-mpc-goassure-tpd-sum-at-risk'
 }
 
 function usesStaticTokioMultiLifeProfile(
@@ -3654,6 +3669,10 @@ function getAssuranceFormulaFamily(
       return 'tokio-mpc-locked-in-policy-value'
     case 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium':
       return 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium'
+    case 'tokio-mpc-goassure-basic-sum-at-risk':
+      return 'tokio-mpc-goassure-basic-sum-at-risk'
+    case 'tokio-mpc-goassure-tpd-sum-at-risk':
+      return 'tokio-mpc-goassure-tpd-sum-at-risk'
     default:
       return assertNever(config.formula)
   }
@@ -3724,9 +3743,15 @@ function resolveAssuranceRate(
     case 'tokio-mpc-net-premium-floor':
     case 'tokio-mpc-locked-in-policy-value':
     case 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium':
+    case 'tokio-mpc-goassure-basic-sum-at-risk':
+    case 'tokio-mpc-goassure-tpd-sum-at-risk':
       switch (rule.assuranceConfig.rateTable) {
         case 'tokio-mpc-unzo-death':
           return applyAssuranceRateMultipliers(rule, lookupAssuranceRate(TOKIO_MPC_UNZO_DEATH_RATE_TABLE, riskClass, ageNextBirthday), policyYear, currentSumAssured)
+        case 'tokio-goassure-mpc-death':
+          return applyAssuranceRateMultipliers(rule, lookupAssuranceRate(TOKIO_GOASSURE_MPC_DEATH_RATE_TABLE, riskClass, ageNextBirthday), policyYear, currentSumAssured)
+        case 'tokio-goassure-mpc-tpd':
+          return applyAssuranceRateMultipliers(rule, lookupAssuranceRate(TOKIO_GOASSURE_MPC_TPD_RATE_TABLE, riskClass, ageNextBirthday), policyYear, currentSumAssured)
         default:
           return 0
       }
@@ -4041,6 +4066,91 @@ function computeTokioMpcNetPremiumFloorSumAtRisk(
   )
 
   return Math.max(0, midpointNetPremiumBase - (midpointApplicableValue * TOKIO_MPC_PROTECTED_BASE_FLOOR_MULTIPLIER))
+}
+
+function getCumulativePartialWithdrawalsByAccountThroughMonth(
+  normalized: IlpNormalizedPolicyInput,
+  accountIds: string[],
+  policyMonth: number,
+): number {
+  if (accountIds.length === 0 || policyMonth <= normalized.input.monthsAlreadyPaid) {
+    return 0
+  }
+
+  const accountIdSet = new Set(accountIds)
+  return normalized.events.partialWithdrawals.reduce((sum, event) => (
+    event.amount != null
+    && event.amount > 0
+    && event.startPolicyMonth > normalized.input.monthsAlreadyPaid
+    && event.startPolicyMonth <= policyMonth
+    && event.accountId != null
+    && accountIdSet.has(event.accountId)
+      ? sum + event.amount
+      : sum
+  ), 0)
+}
+
+function computeTokioGoassureBasicSumAtRisk(
+  normalized: IlpNormalizedPolicyInput,
+  profile: IlpAssuranceProfile,
+  context: IlpCashflowYearContext,
+  midpointApplicableValue: number,
+): number {
+  if (profile.currentBasicSumAssured == null || profile.currentProtectionAge == null) {
+    return 0
+  }
+
+  const coverageAgeAtStart = getAssuranceCoverageAgeNextBirthday(
+    profile,
+    'tokio-mpc-goassure-basic-sum-at-risk',
+    context.projectionYear,
+  )
+  if (coverageAgeAtStart >= profile.currentProtectionAge) {
+    return 0
+  }
+
+  const protectedWithdrawalAccounts = ['initial', 'accumulation']
+  const withdrawalsBeforeYear = getCumulativePartialWithdrawalsByAccountThroughMonth(
+    normalized,
+    protectedWithdrawalAccounts,
+    context.range.startPolicyMonth - 1,
+  )
+  const withdrawalsThroughYearEnd = getCumulativePartialWithdrawalsByAccountThroughMonth(
+    normalized,
+    protectedWithdrawalAccounts,
+    context.range.endPolicyMonth,
+  )
+  const basicSumAssuredAtStart = Math.max(0, profile.currentBasicSumAssured - withdrawalsBeforeYear)
+  const basicSumAssuredAtEnd = Math.max(0, profile.currentBasicSumAssured - withdrawalsThroughYearEnd)
+  const midpointBasicSumAssured = Math.max(0, (basicSumAssuredAtStart + basicSumAssuredAtEnd) / 2)
+
+  return Math.max(0, midpointBasicSumAssured - midpointApplicableValue)
+}
+
+function computeTokioGoassureTpdSumAtRisk(
+  normalized: IlpNormalizedPolicyInput,
+  profile: IlpAssuranceProfile,
+  context: IlpCashflowYearContext,
+  midpointApplicableValue: number,
+): number {
+  if (profile.currentTpdAccelerationRatio == null || profile.currentProtectionAge == null) {
+    return 0
+  }
+
+  const coverageAgeAtStart = getAssuranceCoverageAgeNextBirthday(
+    profile,
+    'tokio-mpc-goassure-tpd-sum-at-risk',
+    context.projectionYear,
+  )
+  if (coverageAgeAtStart >= profile.currentProtectionAge) {
+    return 0
+  }
+
+  return Math.max(
+    0,
+    computeTokioGoassureBasicSumAtRisk(normalized, profile, context, midpointApplicableValue)
+      * profile.currentTpdAccelerationRatio,
+  )
 }
 
 function getInitialTokioProtectionStateForRule(
@@ -4464,6 +4574,14 @@ function computeAssuranceChargeByAccount(
         nextTokioProtectionStateByRule.set(rule.id, tokioProtectionResult.nextState)
         break
       }
+
+      case 'tokio-mpc-goassure-basic-sum-at-risk':
+        sumAtRisk = computeTokioGoassureBasicSumAtRisk(normalized, profile, context, midpointApplicableValue)
+        break
+
+      case 'tokio-mpc-goassure-tpd-sum-at-risk':
+        sumAtRisk = computeTokioGoassureTpdSumAtRisk(normalized, profile, context, midpointApplicableValue)
+        break
     }
 
     const annualizedCharge = resolveAssuranceRate(
@@ -10100,6 +10218,29 @@ function resolveChargeRate(
   return matchedTier?.rate ?? rule.rate
 }
 
+function getIssueAgeNextBirthdayAtIssue(input: Pick<IlpPolicyInput, 'currentPolicyYear' | 'assuranceProfile'>): number | undefined {
+  const currentAgeNextBirthday = input.assuranceProfile?.currentAgeNextBirthday
+  if (currentAgeNextBirthday == null) {
+    return undefined
+  }
+
+  return Math.max(1, currentAgeNextBirthday - Math.max(input.currentPolicyYear, 1) + 1)
+}
+
+function resolveIssueAgeRate(
+  input: Pick<IlpPolicyInput, 'currentPolicyYear' | 'assuranceProfile'>,
+  rule: IlpChargeRule,
+): number {
+  const issueAgeNextBirthday = getIssueAgeNextBirthdayAtIssue(input)
+  const matchedTier = rule.issueAgeRateTiers?.find((tier) => (
+    issueAgeNextBirthday != null
+    && issueAgeNextBirthday >= tier.minIssueAgeNextBirthday
+    && (tier.maxIssueAgeNextBirthday == null || issueAgeNextBirthday <= tier.maxIssueAgeNextBirthday)
+  ))
+
+  return matchedTier?.rate ?? rule.rate
+}
+
 function getRecurringChargeSuspensionMultiplier(
   rule: IlpChargeRule,
   context: IlpCashflowYearContext,
@@ -10636,6 +10777,22 @@ function computeAdditionalChargeByAccount(
 
       case 'assurance-sum-at-risk':
         break
+
+      case 'insured-amount-at-issue': {
+        const insuredAmountAtIssue = Math.max(0, normalized.input.assuranceProfile?.initialBasicSumAssuredAtIssue ?? 0)
+        const totalCharge = insuredAmountAtIssue * resolveIssueAgeRate(normalized.input, rule) * suspensionMultiplier
+        const allocations = applyChargeAllocationsWithFallback(
+          totalCharge,
+          rule.allocation,
+          appliesTo,
+          fallbackAppliesTo,
+          openBalances,
+        )
+        for (const [accountId, amount] of allocations.entries()) {
+          charges.set(accountId, (charges.get(accountId) ?? 0) + amount)
+        }
+        break
+      }
 
       case 'premium-base-mip-multiplier': {
         const totalCharge = computePremiumBaseMultiplierCharge(normalized, context, rule) * suspensionMultiplier

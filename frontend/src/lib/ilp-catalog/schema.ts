@@ -192,7 +192,7 @@ export const ilpTemplateBonusSchema = z.object({
 export const ilpTemplateFeeRuleSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
-  basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier', 'premium-base-mip-multiplier-capped-account-value', 'cumulative-paid-regular-premium', 'initial-single-premium', 'initial-single-premium-base']).optional(),
+  basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'insured-amount-at-issue', 'premium-base-mip-multiplier', 'premium-base-mip-multiplier-capped-account-value', 'cumulative-paid-regular-premium', 'initial-single-premium', 'initial-single-premium-base']).optional(),
   yearBasis: z.enum(['policy-year', 'premium-year']).optional(),
   requiresPremiumsPaidUpToDate: z.boolean().optional(),
   suspensionRules: z.array(z.object({
@@ -228,9 +228,13 @@ export const ilpTemplateFeeRuleSchema = z.object({
       'tokio-mpc-net-premium-floor',
       'tokio-mpc-locked-in-policy-value',
       'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium',
+      'tokio-mpc-goassure-basic-sum-at-risk',
+      'tokio-mpc-goassure-tpd-sum-at-risk',
     ]),
     rateTable: z.enum([
       'tokio-mpc-unzo-death',
+      'tokio-goassure-mpc-death',
+      'tokio-goassure-mpc-tpd',
     ]).optional(),
     monthlyModalFactor: z.number().min(0).max(1),
     maxAgeNextBirthday: z.number().int().min(1).max(122).optional(),
@@ -256,6 +260,11 @@ export const ilpTemplateFeeRuleSchema = z.object({
       withdrawalReductionAccountIds: z.array(z.string().min(1)).min(1).max(10),
     }).optional(),
   }).optional(),
+  issueAgeRateTiers: z.array(z.object({
+    minIssueAgeNextBirthday: z.number().int().min(1).max(120),
+    maxIssueAgeNextBirthday: z.number().int().min(1).max(120).nullable(),
+    rate: z.number().min(0).max(1),
+  })).max(25).optional(),
   premiumBaseConfig: z.object({
     useHigherOfCommencementAndPrevailing: z.boolean(),
     capRate: z.number().min(0).max(1).optional(),

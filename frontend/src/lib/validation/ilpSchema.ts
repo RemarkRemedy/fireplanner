@@ -730,7 +730,7 @@ export const ilpBonusRuleSchema = z.object({
 export const ilpChargeRuleSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
-  basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'premium-base-mip-multiplier', 'premium-base-mip-multiplier-capped-account-value', 'cumulative-paid-regular-premium', 'initial-single-premium', 'initial-single-premium-base']),
+  basis: z.enum(['account-value', 'annual-contribution', 'fixed-annual', 'assurance-sum-at-risk', 'insured-amount-at-issue', 'premium-base-mip-multiplier', 'premium-base-mip-multiplier-capped-account-value', 'cumulative-paid-regular-premium', 'initial-single-premium', 'initial-single-premium-base']),
   activeWindow: z.enum(['during-mip', 'after-mip', 'policy-term']),
   yearBasis: z.enum(['policy-year', 'premium-year']).optional(),
   requiresPremiumsPaidUpToDate: z.boolean().optional(),
@@ -782,9 +782,13 @@ export const ilpChargeRuleSchema = z.object({
       'tokio-mpc-net-premium-floor',
       'tokio-mpc-locked-in-policy-value',
       'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium',
+      'tokio-mpc-goassure-basic-sum-at-risk',
+      'tokio-mpc-goassure-tpd-sum-at-risk',
     ]),
     rateTable: z.enum([
       'tokio-mpc-unzo-death',
+      'tokio-goassure-mpc-death',
+      'tokio-goassure-mpc-tpd',
     ]).optional(),
     monthlyModalFactor: z.number().min(0).max(1),
     maxAgeNextBirthday: z.number().int().min(1).max(122).optional(),
@@ -810,6 +814,11 @@ export const ilpChargeRuleSchema = z.object({
       withdrawalReductionAccountIds: z.array(z.string().min(1)).min(1).max(10),
     }).optional(),
   }).optional(),
+  issueAgeRateTiers: z.array(z.object({
+    minIssueAgeNextBirthday: z.number().int().min(1).max(120),
+    maxIssueAgeNextBirthday: z.number().int().min(1).max(120).nullable(),
+    rate: z.number().min(0).max(1),
+  })).max(25).optional(),
   premiumBaseConfig: z.object({
     useHigherOfCommencementAndPrevailing: z.boolean(),
     capRate: z.number().min(0).max(1).optional(),
@@ -917,6 +926,32 @@ export const ilpChargeRuleSchema = z.object({
       code: z.ZodIssueCode.custom,
       message: 'tokioProtectionState can only be used on Tokio locked-in-policy-value assurance formulas',
       path: ['assuranceConfig', 'tokioProtectionState'],
+    })
+  }
+
+  rule.issueAgeRateTiers?.forEach((tier, index) => {
+    if (tier.maxIssueAgeNextBirthday != null && tier.maxIssueAgeNextBirthday < tier.minIssueAgeNextBirthday) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Issue-age rate tiers must have maxIssueAgeNextBirthday greater than or equal to minIssueAgeNextBirthday',
+        path: ['issueAgeRateTiers', index, 'maxIssueAgeNextBirthday'],
+      })
+    }
+  })
+
+  if (rule.issueAgeRateTiers && rule.basis !== 'insured-amount-at-issue') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'issueAgeRateTiers can only be used with insured-amount-at-issue charge rules',
+      path: ['issueAgeRateTiers'],
+    })
+  }
+
+  if (rule.basis === 'insured-amount-at-issue' && (rule.issueAgeRateTiers?.length ?? 0) === 0 && rule.rate <= 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'insured-amount-at-issue charge rules must define a positive rate or issueAgeRateTiers',
+      path: ['issueAgeRateTiers'],
     })
   }
 

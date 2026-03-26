@@ -145,6 +145,7 @@ function mapFeeRuleBasis(
 ): IlpChargeRule['basis'] {
   switch (basis) {
     case 'assurance-sum-at-risk':
+    case 'insured-amount-at-issue':
     case 'premium-base-mip-multiplier':
     case 'premium-base-mip-multiplier-capped-account-value':
     case 'cumulative-paid-regular-premium':
@@ -209,6 +210,7 @@ function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] 
         amountSchedule: rule.amountSchedule?.map((tier) => ({ ...tier })),
         rate: isFixedAnnual || isAssurance ? 0 : (rule.rate ?? 0),
         amount: isAssurance ? 0 : (rule.amount ?? 0),
+        issueAgeRateTiers: rule.issueAgeRateTiers?.map((tier) => ({ ...tier })),
         assuranceConfig: rule.assuranceConfig
           ? {
               ...rule.assuranceConfig,

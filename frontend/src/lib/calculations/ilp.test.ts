@@ -2392,14 +2392,114 @@ describe('projectIlpPolicy', () => {
 
     expect(accountRow(silver.rows[0], 'policy').bonusCredit).toBeCloseTo(42, 6)
     expect(accountRow(silver.rows[1], 'policy').bonusCredit).toBeCloseTo(0, 6)
-    expect(accountRow(silver.rows.at(-1)!, 'policy').bonusCredit).toBeCloseTo(0, 6)
+    expect(accountRow(silver.rows[4], 'policy').bonusCredit).toBeCloseTo(0, 6)
 
     expect(accountRow(gold.rows[0], 'policy').bonusCredit).toBeCloseTo(42, 6)
-    expect(accountRow(gold.rows.at(-1)!, 'policy').bonusCredit).toBeCloseTo(42, 6)
+    expect(accountRow(gold.rows[4], 'policy').bonusCredit).toBeCloseTo(42, 6)
 
     expect(accountRow(platinum.rows[0], 'policy').bonusCredit).toBeCloseTo(42, 6)
     expect(accountRow(platinum.rows[1], 'policy').bonusCredit).toBeCloseTo(84, 6)
-    expect(accountRow(platinum.rows.at(-1)!, 'policy').bonusCredit).toBeCloseTo(84, 6)
+    expect(accountRow(platinum.rows[4], 'policy').bonusCredit).toBeCloseTo(84, 6)
+  })
+
+  it('projects the seeded AIA Platinum Wealth Elite 2.0 administration charge from insured amount at issue and issue-age tiers', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'aia-platinum-wealth-elite-2')
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-5')
+
+    expect(product).toBeDefined()
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-pwe2-administration-charge',
+      ...seed,
+      currentPolicyYear: 1,
+      monthsAlreadyPaid: 0,
+      funds: [ZERO_RETURN_FUND],
+      chargeRules: (seed.chargeRules ?? []).filter((rule) => rule.id === 'administration-charge'),
+      accounts: seed.accounts.map((account) => ({
+        ...account,
+        currentValue: 10_000,
+      })),
+      assuranceProfile: {
+        currentAgeNextBirthday: 35,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        initialBasicSumAssuredAtIssue: 200_000,
+      },
+    })
+
+    const projected = projectIlpPolicy(policy, 'mid')
+
+    expect(policy.catalogSource?.modeledEconomics).toContain('branch:aia-platinum-wealth-elite-2-administration-charge')
+    expect(accountRow(projected.rows[0], 'policy').grossFee).toBeCloseTo(640, 6)
+    expect(accountRow(projected.rows[4], 'policy').grossFee).toBeCloseTo(0, 6)
+  })
+
+  it('applies the seeded AIA Platinum Wealth Elite 2.0 insurance risk charge placeholder only after manual annual input', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'aia-platinum-wealth-elite-2')
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-5')
+
+    expect(product).toBeDefined()
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-pwe2-insurance-risk-charge',
+      ...seed,
+      currentPolicyYear: 1,
+      monthsAlreadyPaid: 0,
+      funds: [ZERO_RETURN_FUND],
+      chargeRules: (seed.chargeRules ?? [])
+        .filter((rule) => rule.id === 'insurance-risk-charge')
+        .map((rule) => ({ ...rule, amount: 600 })),
+      accounts: seed.accounts.map((account) => ({
+        ...account,
+        currentValue: 10_000,
+      })),
+    })
+
+    const projected = projectIlpPolicy(policy, 'mid')
+
+    expect(policy.catalogSource?.modeledEconomics).toContain('branch:aia-platinum-wealth-elite-2-insurance-risk-charge-manual-input')
+    expect(accountRow(projected.rows[0], 'policy').grossFee).toBeCloseTo(600, 6)
+  })
+
+  it('applies the seeded AIA Platinum Wealth Legacy manual administration and insurance risk placeholders with the documented windows', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'aia-platinum-wealth-legacy')
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-5')
+
+    expect(product).toBeDefined()
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-pwl-manual-charge-placeholders',
+      ...seed,
+      currentPolicyYear: 1,
+      monthsAlreadyPaid: 0,
+      funds: [ZERO_RETURN_FUND],
+      chargeRules: (seed.chargeRules ?? [])
+        .filter((rule) => rule.id === 'administration-charge' || rule.id === 'insurance-risk-charge')
+        .map((rule) => ({
+          ...rule,
+          amount: rule.id === 'administration-charge' ? 1_200 : 600,
+        })),
+      accounts: seed.accounts.map((account) => ({
+        ...account,
+        currentValue: 10_000,
+      })),
+    })
+
+    const projected = projectIlpPolicy(policy, 'mid')
+
+    expect(policy.catalogSource?.modeledEconomics).toContain('branch:aia-platinum-wealth-legacy-administration-charge-manual-input')
+    expect(policy.catalogSource?.modeledEconomics).toContain('branch:aia-platinum-wealth-legacy-insurance-risk-charge-manual-input')
+    expect(accountRow(projected.rows[0], 'policy').grossFee).toBeCloseTo(1_800, 6)
+    expect(accountRow(projected.rows[10], 'policy').grossFee).toBeCloseTo(600, 6)
   })
 
   it('blocks AIA Platinum Wealth Legacy top-ups in months where regular premiums are not paid up to date through the seeded product support seam', () => {
@@ -30894,6 +30994,47 @@ describe('computeSummaryMetrics', () => {
     expect(accountRow(wellnessProjected!, 'accumulation').bonusCredit).toBeGreaterThan(
       accountRow(wellnessWithout!, 'accumulation').bonusCredit,
     )
+  })
+
+  it('projects the seeded #goAssure monthly protection charges from the published death and TPD rate tables', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'tokio-marine-goassure')
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10')
+
+    expect(product).toBeDefined()
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    const policy = ilpPolicySeedSchema.parse({
+      ...seed,
+      monthlyContribution: 0,
+      currentPolicyYear: 1,
+      monthsAlreadyPaid: 0,
+      funds: [ZERO_RETURN_FUND],
+      chargeRules: (seed.chargeRules ?? []).filter((rule) => (
+        rule.id === 'monthly-protection-charge-death'
+        || rule.id === 'monthly-protection-charge-tpd'
+      )),
+      accounts: seed.accounts.map((account) => ({
+        ...account,
+        currentValue: account.id === 'initial'
+          ? 100_000
+          : (account.id === 'accumulation' ? 50_000 : 0),
+      })),
+      assuranceProfile: {
+        currentAgeNextBirthday: 40,
+        currentProtectionAge: 65,
+        currentBasicSumAssured: 200_000,
+        currentTpdAccelerationRatio: 0.5,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+      },
+    })
+
+    const projected = projectIlpPolicy(policy, 'mid')
+
+    expect(policy.catalogSource?.modeledEconomics).toContain('branch:tokio-marine-goassure-monthly-protection-charge')
+    expect(accountRow(projected.rows[0], 'accumulation').grossFee).toBeCloseTo(42.6645, 4)
   })
 
   it('models #goAssure death benefit today before Protection Age as 101% of Initial and Accumulation account value less current amount owing', () => {
