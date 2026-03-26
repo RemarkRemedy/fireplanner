@@ -64,12 +64,13 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
   // Blended OCF is already a per-annum % — just read it from the funds
   const blendedOcf = policy.funds.reduce((sum, fund) => sum + fund.allocation * fund.ocf, 0)
 
-  // All-in annual drag: annualized net cost as % of average portfolio value
+  // All-in annual drag: always real-basis (a rate is basis-independent)
   const avgPortfolioValue = analysis.mode === 'projected'
     ? analysis.projections.mid.rows.reduce((sum, row) => sum + row.combinedValue, 0) / analysis.projections.mid.rows.length
     : 0
+  const realNetCost = summary.realWrapperFees + (includeOcf ? summary.realFundCharges : 0) + summary.inceptionCharges - summary.realBonuses
   const annualDragPct = avgPortfolioValue > 0 && horizonYears > 0
-    ? (netCost / horizonYears) / avgPortfolioValue
+    ? (realNetCost / horizonYears) / avgPortfolioValue
     : 0
 
   const [showFeeImpact, setShowFeeImpact] = useState(false)
@@ -85,6 +86,7 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
   const { feeImpactTiers, feeImpactTimeSeries } = useMemo(() => {
     if (horizonYears <= 0) return { feeImpactTiers: [], feeImpactTimeSeries: [] }
     const grossReturn = 0.07
+    const inflationRate = policy.inflationRate
     const monthly = policy.monthlyContribution
     const isp = policy.initialSinglePremium ?? 0
     const isSp = isp > 0 && monthly === 0
@@ -93,30 +95,33 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
     const tiers = tierDefs.map((tier) => {
       const netReturn = grossReturn - tier.drag
       const monthlyRate = Math.pow(1 + netReturn, 1 / 12) - 1
-      const finalValue = isSp
+      const nominalValue = isSp
         ? isp * Math.pow(1 + netReturn, horizonYears)
         : monthly > 0
           ? monthly * ((Math.pow(1 + monthlyRate, horizonYears * 12) - 1) / monthlyRate)
           : 0
+      const finalValue = useReal ? nominalValue / Math.pow(1 + inflationRate, horizonYears) : nominalValue
       return { ...tier, finalValue }
     })
 
     for (let year = 0; year <= horizonYears; year++) {
       const point: Record<string, number> = { year }
+      const inflationDiscount = useReal ? Math.pow(1 + inflationRate, year) : 1
       for (const tier of tierDefs) {
         const netReturn = grossReturn - tier.drag
         const monthlyRate = Math.pow(1 + netReturn, 1 / 12) - 1
-        point[tier.key] = isSp
+        const nominalValue = isSp
           ? isp * Math.pow(1 + netReturn, year)
           : monthly > 0 && year > 0
             ? monthly * ((Math.pow(1 + monthlyRate, year * 12) - 1) / monthlyRate)
             : 0
+        point[tier.key] = nominalValue / inflationDiscount
       }
       timeSeries.push(point)
     }
 
     return { feeImpactTiers: tiers, feeImpactTimeSeries: timeSeries }
-  }, [horizonYears, policy.monthlyContribution, policy.initialSinglePremium, tierDefs])
+  }, [horizonYears, policy.monthlyContribution, policy.initialSinglePremium, policy.inflationRate, useReal, tierDefs])
 
   const basisLabel = useReal ? "in today's dollars" : 'nominal'
 
