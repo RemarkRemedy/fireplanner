@@ -26,7 +26,7 @@ export function GoalPicker({ onSelect, disabledTiles = [] }: GoalPickerProps) {
           return (
             <Card
               key={tile.id}
-              className={`cursor-pointer transition-all hover:border-primary hover:shadow-md ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
+              className={`cursor-pointer transition-all duration-150 hover:border-primary hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-md ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
               onClick={() => !disabled && onSelect(tile.id)}
             >
               <CardContent className="!py-8 flex flex-col items-center gap-3 text-center">
