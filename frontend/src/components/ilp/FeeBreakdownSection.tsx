@@ -18,7 +18,7 @@ import type { IlpPolicyInput, IlpProjectedPolicyAnalysis, ReturnScenario } from 
 import { getMipEndProjectionIndex } from '@/lib/calculations/ilp'
 import { buildFeeBreakdown } from '@/lib/calculations/ilpFeeBreakdown'
 import { useChartColors } from '@/lib/chartTheme'
-import { FeeRuleTooltip } from './FeeRuleTooltip'
+import { FeeRuleTooltip, BonusRuleTooltip, EventRuleTooltip, FundFeeTooltip } from './FeeRuleTooltip'
 import { formatIlpCurrency } from './formatters'
 
 interface FeeBreakdownSectionProps {
@@ -280,10 +280,25 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                         <FeeRuleTooltip rules={feeColumnInfo.assurance} />
                       </span>
                     </th>
-                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">Event</th>
-                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">Fund Mgt</th>
+                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">
+                      <span className="inline-flex items-center gap-0.5">
+                        Event
+                        <EventRuleTooltip rules={feeColumnInfo.event} />
+                      </span>
+                    </th>
+                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">
+                      <span className="inline-flex items-center gap-0.5">
+                        Fund Mgt
+                        <FundFeeTooltip funds={policy.funds} />
+                      </span>
+                    </th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">Gross Fee</th>
-                    <th className="px-2 py-2 text-right font-medium text-emerald-700 dark:text-emerald-400">Bonus</th>
+                    <th className="px-2 py-2 text-right font-medium text-emerald-700 dark:text-emerald-400">
+                      <span className="inline-flex items-center gap-0.5">
+                        Bonus
+                        <BonusRuleTooltip bonuses={feeColumnInfo.bonuses} />
+                      </span>
+                    </th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">Net Fee</th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">Withdrawals</th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">Closing Value</th>
