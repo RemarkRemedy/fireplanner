@@ -16,6 +16,7 @@
       "branch:aia-platinum-wealth-elite-2-top-up-premium-charge",
       "branch:aia-platinum-wealth-elite-2-premium-holiday-charge",
       "branch:aia-platinum-wealth-elite-2-partial-withdrawal-charge",
+      "branch:aia-platinum-wealth-elite-2-vitality-bonus",
       "kernel:top-up-paid-up-to-date-block",
       "kernel:current-residual-death-benefit-after-ti-estimate"
     ],
@@ -88,7 +89,86 @@
         "grossReturnHigh": 0.07
       }
     ],
-    "bonuses": [],
+    "bonuses": [
+      {
+        "id": "vitality-fund-boost",
+        "type": "allocation",
+        "label": "Vitality Fund Boost",
+        "mode": "premium-allocation",
+        "rate": 0,
+        "amount": 0,
+        "appliesTo": [
+          "policy"
+        ],
+        "startPolicyYear": 1,
+        "endPolicyYear": 5,
+        "requiresPremiumsPaidUpToDate": true,
+        "tieredRates": [],
+        "policyYearRateSchedule": [
+          {
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0.01
+          },
+          {
+            "startPolicyYear": 2,
+            "endPolicyYear": 5,
+            "rate": 0
+          }
+        ],
+        "vitalityStatusRateSchedule": [
+          {
+            "status": "bronze",
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0
+          },
+          {
+            "status": "bronze",
+            "startPolicyYear": 2,
+            "endPolicyYear": 5,
+            "rate": 0
+          },
+          {
+            "status": "silver",
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0.01
+          },
+          {
+            "status": "silver",
+            "startPolicyYear": 2,
+            "endPolicyYear": 5,
+            "rate": 0
+          },
+          {
+            "status": "gold",
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0.01
+          },
+          {
+            "status": "gold",
+            "startPolicyYear": 2,
+            "endPolicyYear": 5,
+            "rate": 0.01
+          },
+          {
+            "status": "platinum",
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": 0.01
+          },
+          {
+            "status": "platinum",
+            "startPolicyYear": 2,
+            "endPolicyYear": 5,
+            "rate": 0.02
+          }
+        ],
+        "suspensionRules": []
+      }
+    ],
     "chargeRules": [
       {
         "id": "regular-premium-charge",
@@ -233,10 +313,14 @@
         "branch:aia-platinum-wealth-elite-2-premium-holiday-charge",
         "branch:aia-platinum-wealth-elite-2-partial-withdrawal-charge",
         "branch:aia-platinum-wealth-elite-2-full-surrender-charge",
+        "branch:aia-platinum-wealth-elite-2-vitality-bonus",
         "kernel:top-up-paid-up-to-date-block",
         "kernel:current-death-benefit-estimate",
         "kernel:current-ti-benefit-estimate",
         "kernel:current-residual-death-benefit-after-ti-estimate"
+      ],
+      "coveredElsewhereBehaviors": [
+        "aia-platinum-wealth-elite-2-fund-management-charge"
       ],
       "metadataOnlyBehaviors": [
         "aia-platinum-wealth-elite-2-single-premium-corridor",
@@ -247,21 +331,19 @@
         "aia-platinum-wealth-elite-2-no-lapse-privilege",
         "aia-platinum-wealth-elite-2-income-withdrawal-privilege",
         "aia-platinum-wealth-elite-2-death-benefit-bequest-option",
-        "aia-platinum-wealth-elite-2-fund-management-charge",
         "aia-platinum-wealth-elite-2-change-of-insured-and-layering",
-        "aia-platinum-wealth-elite-2-vitality-bonus",
         "aia-platinum-wealth-elite-2-fund-switching-and-rebalancing"
       ]
     },
     "catalogWarnings": [
-      "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the regular-premium withdrawal / surrender charge schedules, the current-state death benefit as the higher of current insured amount or policy value via a manual current insured amount input, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, premium-term extension, administration charge, insurance risk charge, no-lapse mechanics, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.",
-      "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the regular-premium withdrawal / surrender charge schedules, the current-state death benefit as the higher of current insured amount or policy value via a manual current insured amount input, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, premium-term extension, administration charge, insurance risk charge, no-lapse mechanics, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.",
+      "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the regular-premium withdrawal / surrender charge schedules, a static-assumption Vitality Fund Boost schedule for the regular-pay corridor, the current-state death benefit as the higher of current insured amount or policy value via a manual current insured amount input, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, premium-term extension, administration charge, insurance risk charge, no-lapse mechanics, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.",
+      "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the regular-premium withdrawal / surrender charge schedules, a static-assumption Vitality Fund Boost schedule for the regular-pay corridor, the current-state death benefit as the higher of current insured amount or policy value via a manual current insured amount input, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, premium-term extension, administration charge, insurance risk charge, no-lapse mechanics, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.",
       "The current executable slice intentionally excludes the optional extension of the regular premium term beyond five years.",
       "Single-pay corridor and the 5% single-premium charge remain informational only in V1.",
       "Optional extension of the regular premium term beyond five years remains informational only in V1.",
       "Administration charge remains informational only because it depends on issue-age and change-of-insured layering state.",
       "Insurance Risk Charge, Free Legacy Cover, and No Lapse Privilege debt accrual remain informational only.",
-      "Income Withdrawal Privilege, vitality-linked bonuses, and change-of-insured effects remain informational only.",
+      "Income Withdrawal Privilege and change-of-insured effects remain informational only, while Vitality Fund Boost is modeled under a static assumed status for the regular-pay corridor only.",
       "The current death benefit needs a manual current insured amount input because withdrawals, Income Withdrawal Privilege usage, and claim-side reductions are not reconstructed from history in V1.",
       "Death Benefit Bequest Option and other protection-side payout handling remain informational only.",
       "The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both need manual current insured amount and remaining aggregate TI cap inputs because claim-side reductions and TI usage are not reconstructed from history in V1.",
