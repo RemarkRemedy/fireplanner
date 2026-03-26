@@ -42,6 +42,7 @@ function deriveAdditionalChargeLabel(policy: IlpPolicyInput): { label: string; t
 
   const parts: string[] = []
   for (const rule of rules) {
+    // Rate schedule summary
     if (rule.rateSchedule && rule.rateSchedule.length > 0) {
       const rates = rule.rateSchedule.map((t) => {
         const pct = `${(t.rate * 100).toFixed(0)}%`
@@ -56,11 +57,17 @@ function deriveAdditionalChargeLabel(policy: IlpPolicyInput): { label: string; t
     } else {
       parts.push(rule.label)
     }
+
+    // Source reference from the policy document
+    if (rule.sourceRefs && rule.sourceRefs.length > 0) {
+      const ref = rule.sourceRefs[0]
+      parts.push(`[p.${ref.page}: "${ref.excerpt.slice(0, 120)}${ref.excerpt.length > 120 ? '...' : ''}"]`)
+    }
   }
 
   // Short label for column header
   const label = rules.length === 1 ? rules[0].label.replace(/ Charge$/, '') : 'Premium + Policy'
-  return { label, tooltip: parts.join('. ') + '.' }
+  return { label, tooltip: parts.join(' ') }
 }
 
 type FeeCategoryKey = typeof DEFAULT_FEE_CATEGORIES[number]['key']

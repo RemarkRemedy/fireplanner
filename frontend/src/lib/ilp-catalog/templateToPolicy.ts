@@ -236,6 +236,8 @@ function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] 
           : undefined,
         requiresManualInput: rule.requiresManualInput,
         allocation: isFixedAnnual || isAssurance || isInitialSinglePremium ? 'pro-rata-by-value' : 'equal-split',
+        sourceRefs: rule.sourceRefs?.map((ref) => ({ ...ref })),
+        notes: rule.notes ? [...rule.notes] : undefined,
       }
     })
 }

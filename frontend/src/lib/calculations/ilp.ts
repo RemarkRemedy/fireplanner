@@ -496,6 +496,10 @@ export interface IlpChargeRule {
   cumulativePaidPremiumConfig?: IlpCumulativePaidPremiumChargeConfig
   requiresManualInput?: boolean
   allocation: 'pro-rata-by-value' | 'pro-rata-by-contribution-share' | 'equal-split'
+  /** Source references from the policy document (page, section, excerpt). Display-only metadata. */
+  sourceRefs?: Array<{ page: number; section: string; excerpt: string }>
+  /** Parser notes describing the charge rule. Display-only metadata. */
+  notes?: string[]
 }
 
 export interface IlpChargeRateTier {
@@ -704,6 +708,12 @@ export interface IlpSummaryMetrics {
   realBonuses: number
   /** Net fee drag discounted at inflation rate (today's purchasing power). */
   realNetFeeDrag: number
+  /** Inception charges (e.g., single premium charge) at year 0, no discounting. */
+  inceptionCharges: number
+  /** Implicit fund management fees (OCF) discounted at inflation rate. */
+  realFundCharges: number
+  /** Wrapper-only fees discounted at inflation rate (realGrossFees minus inceptionCharges minus realFundCharges). */
+  realWrapperFees: number
   currentSurrenderValue: number
   cancelNowPenalty: number
   currentDeathBenefitEstimate?: number
@@ -11930,17 +11940,27 @@ export function computeSummaryMetrics(
   const mipEndRow = projection.rows[getMipEndProjectionIndex(input)]
   const horizonEndRow = projection.rows[projection.rows.length - 1]
 
-  // Compute inflation-adjusted (real) NPV of fees and bonuses over the full horizon
-  let realGrossFees = 0
+  // Compute inception charges (e.g., single premium charge deducted before units purchased)
+  const inceptionCharge = (input.chargeRules ?? [])
+    .filter((rule) => rule.basis === 'initial-single-premium' && rule.rate > 0)
+    .reduce((sum, rule) => sum + (input.initialSinglePremium ?? 0) * rule.rate, 0)
+
+  // Compute inflation-adjusted (real) NPV of fees, bonuses, and fund charges over the full horizon
+  const blendedOcf = input.funds.reduce((sum, fund) => sum + fund.allocation * fund.ocf, 0)
+  let realWrapperFees = 0
+  let realFundCharges = 0
   let realBonuses = 0
   for (const row of projection.rows) {
     const inflationFactor = Math.pow(1 + input.inflationRate, row.year)
     const previousRow = projection.rows[row.year - 2]
     const grossFeesThisYear = row.cumulativeGrossFees - (previousRow?.cumulativeGrossFees ?? 0)
     const bonusesThisYear = row.cumulativeBonuses - (previousRow?.cumulativeBonuses ?? 0)
-    realGrossFees += grossFeesThisYear / inflationFactor
+    const openingValue = row.accounts.reduce((sum, account) => sum + account.open, 0)
+    realWrapperFees += grossFeesThisYear / inflationFactor
+    realFundCharges += (openingValue * blendedOcf) / inflationFactor
     realBonuses += bonusesThisYear / inflationFactor
   }
+  const realGrossFees = inceptionCharge + realWrapperFees + realFundCharges
 
   const currentValueSnapshot = computeCurrentValueSnapshot(input, initialSinglePremiumState)
   const currentDeathBenefitEstimate = computeCurrentDeathBenefitEstimate(
@@ -11990,13 +12010,16 @@ export function computeSummaryMetrics(
   )
 
   return applyCurrentAdmittedTpdClaimState(input, applyCurrentAdmittedTiClaimState(input, {
-    totalPremiumsPaid: horizonEndRow.cumulativePremiums,
-    totalFeesCharged: horizonEndRow.cumulativeGrossFees,
+    totalPremiumsPaid: horizonEndRow.cumulativePremiums + inceptionCharge,
+    totalFeesCharged: horizonEndRow.cumulativeGrossFees + inceptionCharge,
     totalBonusesReceived: horizonEndRow.cumulativeBonuses,
-    netFeeDrag: horizonEndRow.cumulativeGrossFees - horizonEndRow.cumulativeBonuses,
+    netFeeDrag: horizonEndRow.cumulativeGrossFees + inceptionCharge - horizonEndRow.cumulativeBonuses,
     realGrossFees,
     realBonuses,
     realNetFeeDrag: realGrossFees - realBonuses,
+    inceptionCharges: inceptionCharge,
+    realFundCharges,
+    realWrapperFees,
     currentSurrenderValue: currentValueSnapshot.totalCurrentValue - currentValueSnapshot.cancelNowPenalty,
     cancelNowPenalty: currentValueSnapshot.cancelNowPenalty,
     currentDeathBenefitEstimate,
@@ -12070,6 +12093,9 @@ export function computeCurrentOnlySummaryMetrics(
     realGrossFees: 0,
     realBonuses: 0,
     realNetFeeDrag: 0,
+    inceptionCharges: 0,
+    realFundCharges: 0,
+    realWrapperFees: 0,
     currentSurrenderValue: currentValueSnapshot.totalCurrentValue - currentValueSnapshot.cancelNowPenalty,
     cancelNowPenalty: currentValueSnapshot.cancelNowPenalty,
     currentDeathBenefitEstimate,
