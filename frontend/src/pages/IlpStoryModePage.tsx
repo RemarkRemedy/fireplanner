@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { ArrowRight, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { HeadlineInsight } from '@/components/ilp/HeadlineInsight'
+import { IlpFeeStory } from '@/components/ilp/IlpFeeStory'
 import { FeeBreakdownSection } from '@/components/ilp/FeeBreakdownSection'
 import { DecisionPanel } from '@/components/ilp/DecisionPanel'
 import { OpportunityCostCard } from '@/components/ilp/OpportunityCostCard'
@@ -236,7 +236,7 @@ export function IlpStoryModePage() {
           </p>
           <h1 className="text-3xl font-bold">{catalogProduct.productName}</h1>
         </div>
-        <HeadlineInsight policy={activePolicy} analysis={analysis} />
+        <IlpFeeStory policy={activePolicy} analysis={analysis} />
         <p className="text-center text-xs text-muted-foreground">
           Based on {activePolicy.currency} {activePolicy.accounts[0]?.monthlyContribution
             ? `${activePolicy.accounts[0].monthlyContribution}/mo`
