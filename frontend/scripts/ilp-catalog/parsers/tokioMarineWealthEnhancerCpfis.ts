@@ -177,10 +177,12 @@ export function parseTokioMarineWealthEnhancerCpfis(context: ParseContext): IlpC
       'kernel:current-death-benefit-estimate',
       'tokio-recurring-single-premium-routing',
     ],
-    metadataOnlyBehaviors: [
-      'tokio-marine-wealth-enhancer-cpfis-single-premium-policy-value-tracking',
+    coveredElsewhereBehaviors: [
       'tokio-marine-wealth-enhancer-cpfis-fund-management-fee',
       'tokio-marine-wealth-enhancer-cpfis-accounting-and-custody-fees',
+    ],
+    metadataOnlyBehaviors: [
+      'tokio-marine-wealth-enhancer-cpfis-single-premium-policy-value-tracking',
       'tokio-marine-wealth-enhancer-cpfis-fund-switching',
       'tokio-marine-wealth-enhancer-cpfis-lapse-and-termination',
     ],

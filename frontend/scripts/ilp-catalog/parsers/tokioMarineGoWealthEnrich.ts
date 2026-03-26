@@ -303,12 +303,14 @@ export function parseTokioMarineGoWealthEnrich(context: ParseContext): IlpCatalo
       'kernel:current-accidental-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [
+      'tokio-marine-gowealth-enrich-fund-management-fee',
+      'tokio-marine-gowealth-enrich-third-party-charges',
+    ],
     metadataOnlyBehaviors: [
       'tokio-marine-gowealth-enrich-accidental-death-claim-gates-and-cap-aggregation',
       'tokio-marine-gowealth-enrich-principal-floor',
-      'tokio-marine-gowealth-enrich-fund-management-fee',
       'tokio-marine-gowealth-enrich-switching-charge',
-      'tokio-marine-gowealth-enrich-third-party-charges',
     ],
     warnings: [
       '#goWealth Enrich is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, the first-three-policy-years single-premium partial-withdrawal charge schedule, the published S$500 minimum one-off partial withdrawal amount plus the 10%-of-initial-single-premium minimum remaining Single Premium Units Account floor, the published 0.22% annual loyalty bonus on the Single Premium Units Account from the first policy anniversary onward, the resident-corridor current-state death benefit as 105% of the Single Premium Units Account value plus 100% of the Top-up Units Account value less current amounts owing, the resident-corridor current accidental-death estimate before age 75 as 120% of the Single Premium Units Account value plus 100% of the Top-up Units Account value less current amounts owing, and the cash-payout-capable distribution-mode assumption surface with the published $50 minimum cash-payout threshold plus the 30-day record-date instruction lead time, while the non-resident 101% death-benefit corridor, accidental-death claim gates and cap aggregation, principal-floor handling, and fund-level charges remain informational only.',

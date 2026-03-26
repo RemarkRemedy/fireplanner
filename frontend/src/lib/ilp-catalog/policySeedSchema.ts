@@ -11,6 +11,7 @@ import {
   ilpPolicyStateSupportSchema,
   ilpScheduledPayoutAssumptionSchema,
   ilpScheduledPayoutSupportSchema,
+  ilpVitalityStatusSchema,
 } from '@/lib/validation/ilpSchema'
 
 export const ilpPolicySeedSchema = z.object({
@@ -23,6 +24,7 @@ export const ilpPolicySeedSchema = z.object({
   monthsAlreadyPaid: z.number().int().min(0).max(1_200),
   currentAcceptedRegularPremiumMonths: z.number().int().min(0).max(1_200).optional(),
   currentPolicyYear: z.number().int().min(1).max(100),
+  vitalityStatus: ilpVitalityStatusSchema.optional(),
   icpMonths: z.number().int().min(0).max(1_200).optional(),
   mipBasis: z.enum(['finite', 'open-ended']).optional(),
   assuranceProfile: ilpAssuranceProfileSchema.optional(),
@@ -110,6 +112,7 @@ export const ilpPolicySeedSchema = z.object({
     economicsStatus: z.enum(['supported', 'partial-modeled-subset', 'metadata-only']),
     structureStatus: z.enum(['structured', 'brochure-partial']),
     modeledEconomics: z.array(z.string().min(1)).max(40),
+    coveredElsewhereBehaviors: z.array(z.string().min(1)).max(60).default([]),
     metadataOnlyBehaviors: z.array(z.string().min(1)).max(40),
   }).optional(),
   catalogWarnings: z.array(z.string().min(1)).max(20).optional(),

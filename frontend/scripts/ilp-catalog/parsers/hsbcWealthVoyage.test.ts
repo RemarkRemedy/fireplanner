@@ -34,8 +34,10 @@ describe('parseHsbcWealthVoyage', () => {
     expect(product.modeledEconomics).toContain('kernel:top-up-start-policy-month-block')
     expect(product.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
     expect(product.modeledEconomics).toContain('kernel:monthly-rate-bonus-crediting')
+    expect(product.modeledEconomics).toContain('branch:wealth-voyage-premium-holiday-charge')
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-voyage-terminal-illness-aggregate-cap-and-post-claim-state')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-voyage-terminal-illness-cap-overflow-and-post-claim-state')
+    expect(product.metadataOnlyBehaviors).not.toContain('hsbc-voyage-premium-holiday-charge-after-free-duration')
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-voyage-premium-holiday-backpay-amf-reconciliation')
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-voyage-dividend-payout-threshold')
     expect(product.metadataOnlyBehaviors).toContain('hsbc-voyage-dividend-cash-payout-routing-fallback-and-execution')
@@ -175,6 +177,25 @@ describe('parseHsbcWealthVoyage', () => {
           trigger: 'top-up',
           basis: 'event-amount',
           rate: 0.03,
+        }),
+        expect.objectContaining({
+          id: 'premium-holiday-charge',
+          trigger: 'premium-holiday',
+          basis: 'annual-premium-with-overlap-months',
+          freeLifetimeMonths: 24,
+          freeLifetimeMonthsStartPolicyYear: 3,
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 1, rate: 0 },
+            { startPolicyYear: 2, endPolicyYear: 2, rate: 0 },
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.85 },
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.68 },
+            { startPolicyYear: 5, endPolicyYear: 5, rate: 0.56 },
+            { startPolicyYear: 6, endPolicyYear: 6, rate: 0.5 },
+            { startPolicyYear: 7, endPolicyYear: 7, rate: 0.5 },
+            { startPolicyYear: 8, endPolicyYear: 8, rate: 0.5 },
+            { startPolicyYear: 9, endPolicyYear: 9, rate: 0.5 },
+            { startPolicyYear: 10, endPolicyYear: 10, rate: 0.5 },
+          ],
         }),
         expect.objectContaining({
           id: 'missed-amf-on-premium-holiday-repayment',

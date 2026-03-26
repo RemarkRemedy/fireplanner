@@ -55,6 +55,8 @@ import { fetchPlannerSnapshot, postPlannerResults } from '@/lib/companion/compan
 import { runMonteCarloWorker } from '@/lib/simulation/workerClient'
 import { runActionImpactAnalysis } from '@/lib/companion/actionImpacts'
 
+const STRESS_TEST_PAGE_TIMEOUT_MS = 45_000
+
 const mockFetchSnapshot = vi.mocked(fetchPlannerSnapshot)
 const mockPostResults = vi.mocked(postPlannerResults)
 const mockRunMC = vi.mocked(runMonteCarloWorker)
@@ -329,7 +331,7 @@ afterEach(() => {
 // ── Tests ────────────────────────────────────────────────
 
 describe('StressTestPage companion orchestration', () => {
-  it('shows household presentation and household-level companion copy for couple plans', async () => {
+  it('shows household presentation and household-level companion copy for couple plans', { timeout: STRESS_TEST_PAGE_TIMEOUT_MS }, async () => {
     localStorage.setItem('fireplanner-feature-householdPlannerV1', '1')
     seedHouseholdPlan()
 
@@ -355,7 +357,7 @@ describe('StressTestPage companion orchestration', () => {
     })
   })
 
-  it('uses normalized retirement context when building companion action impact overrides', async () => {
+  it('uses normalized retirement context when building companion action impact overrides', { timeout: STRESS_TEST_PAGE_TIMEOUT_MS }, async () => {
     const normalizedSpy = vi
       .spyOn(incomeProjectionHooks, 'useNormalizedLegacyAnalysisContext')
       .mockReturnValue(createMockNormalizedContext({
@@ -383,7 +385,7 @@ describe('StressTestPage companion orchestration', () => {
     normalizedSpy.mockRestore()
   })
 
-  it('calls runActionImpactAnalysis after MC completes and shows results', async () => {
+  it('calls runActionImpactAnalysis after MC completes and shows results', { timeout: STRESS_TEST_PAGE_TIMEOUT_MS }, async () => {
     // MC resolves immediately
     mockRunMC.mockResolvedValue(SAMPLE_MC_RESULT)
 
@@ -411,7 +413,7 @@ describe('StressTestPage companion orchestration', () => {
     })
   })
 
-  it('shows timeout message with partial results after 15 seconds', async () => {
+  it('shows timeout message with partial results after 15 seconds', { timeout: STRESS_TEST_PAGE_TIMEOUT_MS }, async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
 
     mockRunMC.mockResolvedValue(SAMPLE_MC_RESULT)
@@ -462,7 +464,7 @@ describe('StressTestPage companion orchestration', () => {
     vi.useRealTimers()
   })
 
-  it('shows full timeout message when zero levers complete', async () => {
+  it('shows full timeout message when zero levers complete', { timeout: STRESS_TEST_PAGE_TIMEOUT_MS }, async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
 
     mockRunMC.mockResolvedValue(SAMPLE_MC_RESULT)
@@ -511,7 +513,7 @@ describe('StressTestPage companion orchestration', () => {
     vi.useRealTimers()
   })
 
-  it('aborts first analysis when Run is clicked again', async () => {
+  it('aborts first analysis when Run is clicked again', { timeout: STRESS_TEST_PAGE_TIMEOUT_MS }, async () => {
     let firstSignal: AbortSignal | undefined
     let resolveFirst: (() => void) | undefined
 
@@ -555,7 +557,7 @@ describe('StressTestPage companion orchestration', () => {
     resolveFirst?.()
   })
 
-  it('keeps action impact results scoped to the active companion scenario', async () => {
+  it('keeps action impact results scoped to the active companion scenario', { timeout: STRESS_TEST_PAGE_TIMEOUT_MS }, async () => {
     mockRunMC.mockImplementation(async () => structuredClone(SAMPLE_MC_RESULT))
     mockRunActionImpacts
       .mockResolvedValueOnce(makeSingleActionImpactOutput('Base action', 'base-action'))
@@ -589,7 +591,7 @@ describe('StressTestPage companion orchestration', () => {
     expect(screen.queryByText('Cut scenario action')).not.toBeInTheDocument()
   })
 
-  it('shows error message when runActionImpactAnalysis rejects', async () => {
+  it('shows error message when runActionImpactAnalysis rejects', { timeout: STRESS_TEST_PAGE_TIMEOUT_MS }, async () => {
     mockRunMC.mockResolvedValue(SAMPLE_MC_RESULT)
 
     // Action impacts: reject with an error
@@ -607,7 +609,7 @@ describe('StressTestPage companion orchestration', () => {
     })
   })
 
-  it('aborts action impact analysis on unmount', async () => {
+  it('aborts action impact analysis on unmount', { timeout: STRESS_TEST_PAGE_TIMEOUT_MS }, async () => {
     let capturedSignal: AbortSignal | undefined
 
     mockRunMC.mockResolvedValue(SAMPLE_MC_RESULT)

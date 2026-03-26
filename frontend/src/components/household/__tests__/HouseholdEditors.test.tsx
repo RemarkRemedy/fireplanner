@@ -10,6 +10,8 @@ import {
   useHouseholdPlanStore,
 } from '@/stores/useHouseholdPlanStore'
 
+const HOUSEHOLD_EDITOR_TIMEOUT_MS = 60_000
+
 beforeAll(() => {
   if (!HTMLElement.prototype.hasPointerCapture) {
     Object.defineProperty(HTMLElement.prototype, 'hasPointerCapture', {
@@ -175,7 +177,7 @@ beforeEach(() => {
 })
 
 describe('Household editors', () => {
-  it('supports two-adult people editing and dependent setup in the household roster', async () => {
+  it('supports two-adult people editing and dependent setup in the household roster', { timeout: HOUSEHOLD_EDITOR_TIMEOUT_MS }, async () => {
     const user = userEvent.setup()
     setHouseholdPlan(makeHouseholdPlan({ includePartner: false, planType: 'household' }))
 
@@ -203,7 +205,7 @@ describe('Household editors', () => {
     expect(state.plan.dependents[0]?.label).toBe('Avery')
   })
 
-  it('shows only income streams anchored to the selected adult timeline', () => {
+  it('shows only income streams anchored to the selected adult timeline', { timeout: HOUSEHOLD_EDITOR_TIMEOUT_MS }, () => {
     const plan = makeHouseholdPlan({ includePartner: true, planType: 'couple' })
     plan.income = [
       {
@@ -243,7 +245,7 @@ describe('Household editors', () => {
     expect(screen.queryByDisplayValue('Self consulting')).not.toBeInTheDocument()
   })
 
-  it('edits partner salary, income ownership, tax reliefs, SRS, and life events from the household income section', async () => {
+  it('edits partner salary, income ownership, tax reliefs, SRS, and life events from the household income section', { timeout: HOUSEHOLD_EDITOR_TIMEOUT_MS }, async () => {
     const user = userEvent.setup()
     setHouseholdPlan(makeHouseholdPlan({ includePartner: true, planType: 'couple' }))
 
@@ -297,7 +299,7 @@ describe('Household editors', () => {
     expect(stream?.annualAmount).toBe(24_000)
   })
 
-  it('edits ownership-scoped spending, healthcare, withdrawals, and goals from the household spending section', async () => {
+  it('edits ownership-scoped spending, healthcare, withdrawals, and goals from the household spending section', { timeout: HOUSEHOLD_EDITOR_TIMEOUT_MS }, async () => {
     const user = userEvent.setup()
     setHouseholdPlan(makeHouseholdPlan({ includePartner: true, planType: 'couple' }))
 

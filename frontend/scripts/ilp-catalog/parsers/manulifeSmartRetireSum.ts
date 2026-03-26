@@ -368,6 +368,7 @@ export function parseManulifeSmartRetireSum({ document, sourceChecksumSha256 }: 
       'kernel:automatic-lapse-on-account-depletion',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: ['manulife-smartretire-v-sum-fund-management-charge'],
     metadataOnlyBehaviors: [
       'manulife-smartretire-v-sum-target-retirement-sum-withdrawal',
       'manulife-smartretire-v-sum-regular-income-drawdown',
@@ -377,7 +378,6 @@ export function parseManulifeSmartRetireSum({ document, sourceChecksumSha256 }: 
       'manulife-smartretire-v-sum-flexi-start-premium-variation',
       'manulife-smartretire-v-sum-reinstatement-underwriting-and-exclusion-resets',
       'manulife-smartretire-v-sum-reinvested-dividend-withdrawal',
-      'manulife-smartretire-v-sum-fund-management-charge',
       'manulife-smartretire-v-sum-fund-switching-and-redirection',
     ],
     warnings: [

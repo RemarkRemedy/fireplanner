@@ -826,16 +826,18 @@ export function parseFwdInvestFirstHorizon(context: ParseContext): IlpCatalogPro
       'kernel:top-up-start-policy-month-block',
       'kernel:top-up-repayment-clearance-block',
     ],
+    coveredElsewhereBehaviors: [
+      'fwd-invest-first-horizon-policy-closure-charge',
+      'fwd-invest-first-horizon-fund-level-charges',
+    ],
     metadataOnlyBehaviors: [
       'fwd-invest-first-horizon-premium-pause-waiver',
       'fwd-invest-first-horizon-support-benefit-waiver',
       'fwd-invest-first-horizon-repayment-bonus-restoration',
       'fwd-invest-first-horizon-top-up-repayment-waterfall',
       'fwd-invest-first-horizon-withdrawal-eligibility-gates',
-      'fwd-invest-first-horizon-policy-closure-charge',
       'fwd-invest-first-horizon-change-of-person-insured',
       'fwd-invest-first-horizon-fund-switching',
-      'fwd-invest-first-horizon-fund-level-charges',
     ],
     warnings: [
       'FWD Invest First Horizon is cataloged as a supported V1 product. The parser currently covers the published current-state ordinary death benefit as the higher of 105% of policy value or the 101% protected premium-and-repayment base, the current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap subject to the published S$2 million per-life limit, Booster Bonus, Loyalty Bonus including the post-premium-payment-term no-initial-account-withdrawal corridor, and the 20-year and 25-year regular-premium corridors through the fixed-premium-base initial-account charge, Appendix B insurance charge with manual repayment-base input, premium shortfall charge with admitted-state charge-waiver and retrospective charge-refund support on premium-holiday events, premium-reduction charge with admitted-state charge-waiver and retrospective charge-refund support on reduction events, top-up premium charge with blocking below the published S$3,000 minimum, before policy month 13, and until aggregate repayment-clearance for missed premiums, prior initial-account withdrawals, and regular-premium-reduction differences, the initial-units-account policy-month-25 one-off partial-withdrawal gate with the published S$3,000 minimum remaining-value floor, initial-account redemption-fee, and surrender-charge surfaces that fit the existing charge and surrender kernels.',

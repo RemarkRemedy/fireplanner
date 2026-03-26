@@ -5,6 +5,7 @@ export type IlpCatalogCurrency = 'SGD' | 'USD'
 export type IlpCatalogSourceDocumentType = 'summary' | 'brochure'
 export type IlpCatalogSourceClass = 'summary' | 'brochure-only'
 export type IlpMipBasis = 'finite' | 'open-ended'
+export type IlpVitalityStatus = 'bronze' | 'silver' | 'gold' | 'platinum'
 
 export interface IlpCatalogSourceRef {
   page: number
@@ -64,6 +65,12 @@ export interface IlpTemplateBonus {
   amount: number | null
   tieredRates: IlpTemplateBonusTier[]
   policyYearRateSchedule?: Array<{
+    startPolicyYear: number
+    endPolicyYear: number | null
+    rate: number
+  }>
+  vitalityStatusRateSchedule?: Array<{
+    status: IlpVitalityStatus
     startPolicyYear: number
     endPolicyYear: number | null
     rate: number
@@ -426,6 +433,7 @@ export interface IlpCatalogProduct {
   structureStatus: IlpCatalogStructureStatus
   economicsStatus: IlpCatalogEconomicsStatus
   modeledEconomics: string[]
+  coveredElsewhereBehaviors?: string[]
   metadataOnlyBehaviors: string[]
   warnings: string[]
   archived: boolean

@@ -191,12 +191,12 @@ export function parseManulifeManulinkInvestorIi(context: ParseContext): IlpCatal
       'kernel:current-residual-death-benefit-after-ti-estimate',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: ['manulink-investor-ii-fund-management-fee'],
     metadataOnlyBehaviors: [
       'manulink-investor-ii-cpf-funding-route',
       'manulink-investor-ii-cpf-dividend-crediting',
       'manulink-investor-ii-partial-withdrawal',
       'manulink-investor-ii-full-surrender',
-      'manulink-investor-ii-fund-management-fee',
       'manulink-investor-ii-fund-switching',
       'manulink-investor-ii-lapse-and-termination',
     ],

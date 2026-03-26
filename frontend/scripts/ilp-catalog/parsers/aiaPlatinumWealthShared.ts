@@ -30,6 +30,7 @@ interface AiaPlatinumWealthConfig {
   regularFullSurrenderChargeSchedule?: readonly number[]
   regularPartialWithdrawalChargeSchedule?: readonly number[]
   modeledEconomics: string[]
+  coveredElsewhereBehaviors?: string[]
   metadataOnlyBehaviors: string[]
   productWarning: string
   unsupportedItems: string[]
@@ -251,6 +252,7 @@ export function buildAiaPlatinumWealthProduct(
     structureStatus: 'structured',
     economicsStatus,
     modeledEconomics: config.modeledEconomics,
+    coveredElsewhereBehaviors: config.coveredElsewhereBehaviors ?? [],
     metadataOnlyBehaviors: config.metadataOnlyBehaviors,
     warnings: [
       `${config.productName} is cataloged as a ${catalogWarningLabel}. ${config.productWarning}`,

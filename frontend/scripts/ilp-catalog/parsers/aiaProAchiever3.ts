@@ -406,12 +406,12 @@ export function parseAiaProAchiever3({ document, sourceChecksumSha256 }: ParseCo
       'kernel:current-accidental-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: ['aia-pro-achiever-3-fund-management-charge'],
     metadataOnlyBehaviors: [
       'aia-pro-achiever-3-premium-pass',
       'aia-pro-achiever-3-premium-reduction',
       'aia-pro-achiever-3-premium-reward',
       'aia-pro-achiever-3-secondary-insured-option',
-      'aia-pro-achiever-3-fund-management-charge',
     ],
     warnings: [
       'AIA Pro Achiever 3.0 is cataloged as a supported V1 product for the regular-pay corridor. The parser models the 10-year IIP Welcome Bonus tiers for premium years 1 to 3, the Special Bonus ladder from premium year 10 onward, the premium-charge corridor, the published Appendix A Benefit Charge corridor, the Supplementary Charge corridor including explicit premium-holiday overlap suppression, the Premium Holiday Charge schedule during active premium-holiday months, the 5% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, the current accidental-death uplift as 100% of cumulative paid regular premiums during the first 2 policy years, and reinvest-default dividend support with cash payout allowed only after IIP, while Premium Pass entitlement/activation, premium-reduction mechanics, premium rewards, and protection-side claim handling beyond the modeled current ordinary death, accidental-death, Benefit Charge, Supplementary Charge, and Premium Holiday Charge estimates remain outside the current engine; seeded premium-holiday months that would have qualified for Premium Pass may still show false-positive Premium Holiday Charges because Premium Pass state is not modeled in V1.',

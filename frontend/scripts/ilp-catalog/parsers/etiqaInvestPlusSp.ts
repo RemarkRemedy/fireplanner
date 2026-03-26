@@ -105,6 +105,21 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       ],
       sourceRefs: [page1, page10],
     },
+    {
+      id: 'representative-management-charge',
+      label: 'Representative Management Charge',
+      basis: 'account-value',
+      rate: 0.0075,
+      amount: null,
+      appliesTo: ['policy', 'topup'],
+      activeWindow: 'policy-term',
+      requiresManualInput: true,
+      notes: [
+        'Modeled at the published maximum annual representative management charge of 0.75% on the initial account value and each top-up account value.',
+        'The actual application-agreed rate may be lower and remains a manual input assumption in V1.',
+      ],
+      sourceRefs: [page10],
+    },
   ]
 
   const eventChargeRules: IlpTemplateEventChargeRule[] = [
@@ -206,7 +221,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     },
     eecTable: [...FULL_SURRENDER_CHARGE_SCHEDULE],
     warnings: [
-      'Invest plus SP is cataloged as a supported V1 product for the initial single-premium corridor only. The parser captures zero initial subscription charge, the initial-account policy-charge schedule, the 4.00% top-up premium charge, the initial-account surrender / partial-withdrawal charge tables, the published S$500 minimum withdrawal amount in multiples of S$100 plus the published S$1,000 post-withdrawal minimum remaining-account-value floor on explicit one-off partial withdrawals, the current ordinary death-benefit estimate as the higher of account value or 101% of net premium, and reinvest-default distribution support.',
+      'Invest plus SP is cataloged as a supported V1 product for the initial single-premium corridor only. The parser captures zero initial subscription charge, the initial-account policy-charge schedule, the representative management charge at the published maximum manual-input rate, the 4.00% top-up premium charge, the initial-account surrender / partial-withdrawal charge tables, the published S$500 minimum withdrawal amount in multiples of S$100 plus the published S$1,000 post-withdrawal minimum remaining-account-value floor on explicit one-off partial withdrawals, the current ordinary death-benefit estimate as the higher of account value or 101% of net premium, and reinvest-default distribution support.',
       'Current-due Power-up Bonus is modeled through manual current initial-account and top-up-account bonus-credit amounts. Future recurring Initial Account Power-up Bonus is modeled through the published three-year cadence after a manual observed-average input seeds the current incomplete block, and future recurring Top-up Account Power-up Bonus is modeled for new projection-start top-ups after a manual representative-management-charge rate is supplied.',
       'Historical top-up-vintage rolling-average qualification, pre-projection top-up vintages, and top-up-specific charge clocks outside the modeled future new-top-up bonus lane remain informational only in V1.',
       'Grace-period top-up funding, reinstatement, and free-look handling remain informational only.',
@@ -215,7 +230,6 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     unsupportedItems: [
       'Historical top-up-vintage Power-up Bonus qualification and rolling average accounting for vintages that started before the current projection remain informational only.',
       'Top-up-specific surrender charge clocks remain informational only, and top-up-specific policy-charge / partial-withdrawal charge clocks are only modeled for new projection-start top-up bonus qualification.',
-      'Representative management charge remains informational only outside the modeled future new-top-up Power-up Bonus lane because the application-agreed rate can vary up to 0.75% per annum.',
       'Fund-level management fees, dividend payout thresholds, change-request cutoffs, and withdrawal consequences on reinvested dividends remain informational only.',
       'Grace-period top-up funding remains informational only.',
       'Reinstatement remains informational only.',
@@ -240,6 +254,7 @@ export function parseEtiqaInvestPlusSp(context: ParseContext): IlpCatalogProduct
     modeledEconomics: [
       'branch:etiqa-invest-plus-sp-zero-single-premium-charge',
       'branch:etiqa-invest-plus-sp-policy-charge',
+      'branch:etiqa-invest-plus-sp-representative-management-charge',
       'branch:etiqa-invest-plus-sp-top-up-premium-charge',
       'branch:etiqa-invest-plus-sp-initial-partial-withdrawal-charge',
       'branch:etiqa-invest-plus-sp-initial-surrender-charge',
@@ -251,18 +266,17 @@ export function parseEtiqaInvestPlusSp(context: ParseContext): IlpCatalogProduct
       'kernel:partial-withdrawal-minimum-remaining-value-block',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: ['etiqa-invest-plus-sp-fund-management-fee'],
     metadataOnlyBehaviors: [
       'etiqa-invest-plus-sp-historical-top-up-power-up-bonus-vintage-accounting',
       'etiqa-invest-plus-sp-top-up-vintage-accounting',
-      'etiqa-invest-plus-sp-representative-management-charge',
-      'etiqa-invest-plus-sp-fund-management-fee',
       'etiqa-invest-plus-sp-dividend-threshold-and-withdrawal-consequences',
       'etiqa-invest-plus-sp-grace-period-top-up-funding',
       'etiqa-invest-plus-sp-reinstatement',
       'etiqa-invest-plus-sp-free-look',
     ],
     warnings: [
-      'Invest plus SP is cataloged as a supported V1 product for the initial single-premium corridor only. The parser captures zero initial subscription charge, the initial-account policy-charge schedule, the 4.00% top-up premium charge, the initial-account surrender / partial-withdrawal charge tables, the current ordinary death-benefit estimate as the higher of account value or 101% of net premium, reinvest-default distribution support, current-due Power-up Bonus crediting through manual initial-account and top-up-account amounts plus status, future recurring Initial Account Power-up Bonus through the published three-year cadence after a manual observed-average input seeds the current incomplete block, and future recurring Top-up Account Power-up Bonus for new projection-start top-ups after a manual representative-management-charge rate is supplied, including top-up-specific policy-charge and partial-withdrawal-charge clocks inside that projected new-top-up lane. Historical top-up-vintage rolling-average qualification, pre-projection top-up vintages, representative-management-charge effects outside that new-top-up lane, top-up-vintage post-charge accounting, and grace-period / reinstatement / free-look administration remain informational only.',
+      'Invest plus SP is cataloged as a supported V1 product for the initial single-premium corridor only. The parser captures zero initial subscription charge, the initial-account policy-charge schedule, the representative management charge at the published maximum manual-input rate on the initial account and top-up account, the 4.00% top-up premium charge, the initial-account surrender / partial-withdrawal charge tables, the current ordinary death-benefit estimate as the higher of account value or 101% of net premium, reinvest-default distribution support, current-due Power-up Bonus crediting through manual initial-account and top-up-account amounts plus status, future recurring Initial Account Power-up Bonus through the published three-year cadence after a manual observed-average input seeds the current incomplete block, and future recurring Top-up Account Power-up Bonus for new projection-start top-ups after a manual representative-management-charge rate is supplied, including top-up-specific policy-charge and partial-withdrawal-charge clocks inside that projected new-top-up lane. Historical top-up-vintage rolling-average qualification, pre-projection top-up vintages, top-up-vintage post-charge accounting, and grace-period / reinstatement / free-look administration remain informational only.',
     ],
     archived: false,
     variants: [buildVariant(context.document)],

@@ -2313,6 +2313,62 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[0], 'policy').contributionAmount).toBe((policy.monthlyContribution * 12) + 2_000)
   })
 
+  it('applies AIA Platinum Wealth Elite 2.0 Vitality Fund Boost using the seeded static Vitality assumption schedule', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'aia-platinum-wealth-elite-2')
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-5')
+
+    expect(product).toBeDefined()
+    expect(variant).toBeDefined()
+
+    const baseSeed = templateVariantToPolicySeed(product!, variant!, manifest)
+
+    const buildPolicy = (vitalityStatus: NonNullable<typeof baseSeed.vitalityStatus>) => ilpPolicySeedSchema.parse({
+      ...baseSeed,
+      vitalityStatus,
+      funds: [ZERO_RETURN_FUND],
+      bonuses: baseSeed.bonuses.map((bonus) => ({
+        ...bonus,
+        rate: 0,
+        policyYearRateSchedule: bonus.vitalityStatusRateSchedule
+          ?.filter((tier) => tier.status === vitalityStatus)
+          .map(({ startPolicyYear, endPolicyYear, rate }) => ({
+            startPolicyYear,
+            endPolicyYear,
+            rate,
+          })),
+      })),
+      accounts: baseSeed.accounts.map((account) => ({
+        ...account,
+        currentValue: 0,
+      })),
+      currentPolicyYear: 1,
+      monthsAlreadyPaid: 0,
+    })
+
+    const bronze = projectIlpPolicy(buildPolicy('bronze'), 'mid')
+    const silver = projectIlpPolicy(buildPolicy('silver'), 'mid')
+    const gold = projectIlpPolicy(buildPolicy('gold'), 'mid')
+    const platinum = projectIlpPolicy(buildPolicy('platinum'), 'mid')
+
+    expect(baseSeed.vitalityStatus).toBe('silver')
+    expect(baseSeed.catalogSource?.modeledEconomics).toContain('branch:aia-platinum-wealth-elite-2-vitality-bonus')
+
+    expect(accountRow(bronze.rows[0], 'policy').bonusCredit).toBeCloseTo(0, 6)
+    expect(accountRow(bronze.rows.at(-1)!, 'policy').bonusCredit).toBeCloseTo(0, 6)
+
+    expect(accountRow(silver.rows[0], 'policy').bonusCredit).toBeCloseTo(42, 6)
+    expect(accountRow(silver.rows[1], 'policy').bonusCredit).toBeCloseTo(0, 6)
+    expect(accountRow(silver.rows.at(-1)!, 'policy').bonusCredit).toBeCloseTo(0, 6)
+
+    expect(accountRow(gold.rows[0], 'policy').bonusCredit).toBeCloseTo(42, 6)
+    expect(accountRow(gold.rows.at(-1)!, 'policy').bonusCredit).toBeCloseTo(42, 6)
+
+    expect(accountRow(platinum.rows[0], 'policy').bonusCredit).toBeCloseTo(42, 6)
+    expect(accountRow(platinum.rows[1], 'policy').bonusCredit).toBeCloseTo(84, 6)
+    expect(accountRow(platinum.rows.at(-1)!, 'policy').bonusCredit).toBeCloseTo(84, 6)
+  })
+
   it('blocks AIA Platinum Wealth Legacy top-ups in months where regular premiums are not paid up to date through the seeded product support seam', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'aia-platinum-wealth-legacy')
@@ -13902,6 +13958,51 @@ describe('projectIlpPolicy', () => {
       accountRow(withRepaymentSpecificRules.rows[0], 'regular').bonusCredit
       - accountRow(withoutRepaymentSpecificRules.rows[0], 'regular').bonusCredit,
     ).toBeCloseTo(6, 6)
+  })
+
+  it('applies HSBC Wealth Voyage premium-holiday charges after the 24-month free duration through the seeded product support seam', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'hsbc-life-wealth-voyage')
+    if (!product) {
+      throw new Error('Missing catalog product hsbc-life-wealth-voyage')
+    }
+
+    const variant = product.variants.find((entry) => entry.id === 'sgd-mip-20')
+    if (!variant) {
+      throw new Error('Missing catalog variant hsbc-life-wealth-voyage/sgd-mip-20')
+    }
+
+    const seed = templateVariantToPolicySeed(product, variant, manifest)
+    const holidayPolicy = ilpPolicySchema.parse({
+      id: 'hsbc-wealth-voyage-sgd-mip-20-holiday-charge',
+      ...seed,
+      currentPolicyYear: 6,
+      monthsAlreadyPaid: 72,
+      postMipYears: 0,
+      funds: [ZERO_RETURN_FUND],
+      accounts: seed.accounts.map((account) => ({
+        ...account,
+        currentValue: account.id === 'regular' ? 20_000 : 0,
+      })),
+      policyEvents: [
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 49,
+          durationMonths: 36,
+        },
+      ],
+    })
+
+    const withoutPhc = projectIlpPolicy({
+      ...holidayPolicy,
+      eventChargeRules: holidayPolicy.eventChargeRules.filter((rule) => rule.id !== 'premium-holiday-charge'),
+    }, 'mid')
+    const withPhc = projectIlpPolicy(holidayPolicy, 'mid')
+
+    expect(
+      accountRow(withPhc.rows[0], 'regular').grossFee - accountRow(withoutPhc.rows[0], 'regular').grossFee,
+    ).toBeCloseTo(2_100, 6)
   })
 
   it('skips premium-holiday charges until the free lifetime holiday duration is exhausted', () => {
@@ -35989,6 +36090,48 @@ describe('computeSummaryMetrics', () => {
     const expectedBonus = (projectedVintageBalanceSum / 36) * 0.003
 
     expect(accountRow(projection.rows[1], 'topup').bonusCredit).toBeCloseTo(expectedBonus, 2)
+  })
+
+  it('applies the published maximum Invest plus SP representative management charge across initial and top-up accounts through the seeded product support seam', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'etiqa-invest-plus-sp')
+    if (!product) {
+      throw new Error('Missing catalog product etiqa-invest-plus-sp')
+    }
+
+    const variant = product.variants.find((entry) => entry.id === 'sgd-open-ended-single-premium-initial-only')
+    if (!variant) {
+      throw new Error('Missing catalog variant etiqa-invest-plus-sp/sgd-open-ended-single-premium-initial-only')
+    }
+
+    const seed = templateVariantToPolicySeed(product, variant, manifest)
+    const policy = ilpPolicySchema.parse({
+      id: 'etiqa-invest-plus-sp-representative-management-charge',
+      ...seed,
+      currentPolicyYear: 2,
+      monthsAlreadyPaid: 12,
+      postMipYears: 30,
+      monthlyContribution: 0,
+      initialSinglePremium: 100_000,
+      funds: [ZERO_RETURN_FUND],
+      accounts: seed.accounts.map((account) => ({
+        ...account,
+        currentValue: account.id === 'policy' ? 100_000 : 20_000,
+      })),
+    })
+
+    const withoutRepresentativeCharge = projectIlpPolicy({
+      ...policy,
+      chargeRules: policy.chargeRules.filter((rule) => rule.id !== 'representative-management-charge'),
+    }, 'mid')
+    const withRepresentativeCharge = projectIlpPolicy(policy, 'mid')
+
+    expect(
+      accountRow(withRepresentativeCharge.rows[0], 'policy').grossFee
+      + accountRow(withRepresentativeCharge.rows[0], 'topup').grossFee
+      - accountRow(withoutRepresentativeCharge.rows[0], 'policy').grossFee
+      - accountRow(withoutRepresentativeCharge.rows[0], 'topup').grossFee,
+    ).toBeCloseTo(900, 6)
   })
 
   it('models WealthLink (GL3) death benefit today at 105% of net premiums before the first policy anniversary after age 65', () => {

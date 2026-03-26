@@ -63,6 +63,12 @@ export const ilpTemplateBonusSchema = z.object({
     endPolicyYear: z.number().int().min(1).max(100).nullable(),
     rate: z.number().min(0).max(5),
   })).max(25).optional(),
+  vitalityStatusRateSchedule: z.array(z.object({
+    status: z.enum(['bronze', 'silver', 'gold', 'platinum']),
+    startPolicyYear: z.number().int().min(1).max(100),
+    endPolicyYear: z.number().int().min(1).max(100).nullable(),
+    rate: z.number().min(0).max(5),
+  })).max(25).optional(),
   stepUpPayoutConfig: z.object({
     premiumShortfallChargeYears: z.number().int().min(1).max(100),
     partialWithdrawalAccountIds: z.array(z.string().min(1)).min(1).max(10),
@@ -864,6 +870,7 @@ export const ilpCatalogProductSchema = z.object({
   structureStatus: z.enum(['structured', 'brochure-partial']),
   economicsStatus: z.enum(['supported', 'partial-modeled-subset', 'metadata-only']),
   modeledEconomics: z.array(z.string().min(1)).max(40),
+  coveredElsewhereBehaviors: z.array(z.string().min(1)).max(60).default([]),
   metadataOnlyBehaviors: z.array(z.string().min(1)).max(40),
   warnings: z.array(z.string()),
   archived: z.boolean(),

@@ -300,6 +300,7 @@ export function parseAiaProLifetimeProtectorIi({ document, sourceChecksumSha256 
       'kernel:top-up-paid-up-to-date-block',
       'kernel:current-death-benefit-estimate',
     ],
+    coveredElsewhereBehaviors: ['aia-pro-lifetime-protector-ii-fund-management-charge'],
     metadataOnlyBehaviors: [
       'aia-pro-lifetime-protector-ii-no-lapse-privilege',
       'aia-pro-lifetime-protector-ii-insured-amount-variation',
@@ -309,7 +310,6 @@ export function parseAiaProLifetimeProtectorIi({ document, sourceChecksumSha256 
       'aia-pro-lifetime-protector-ii-aia-vitality-powerup-dollar',
       'aia-pro-lifetime-protector-ii-optional-riders',
       'aia-pro-lifetime-protector-ii-fund-switching-and-rebalancing',
-      'aia-pro-lifetime-protector-ii-fund-management-charge',
       'aia-pro-lifetime-protector-ii-reinstatement-underwriting-and-extra-mortality',
       'aia-pro-lifetime-protector-ii-termination-limits',
     ],

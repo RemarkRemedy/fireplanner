@@ -258,11 +258,11 @@ export function parseTokioMarineGoElite(context: ParseContext): IlpCatalogProduc
       'kernel:current-accidental-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: ['tokio-marine-goelite-fund-level-and-third-party-charges'],
     metadataOnlyBehaviors: [
       'tokio-marine-goelite-non-resident-101-death-benefit',
       'tokio-marine-goelite-accidental-death-claim-gates-and-cap-aggregation',
       'tokio-marine-goelite-multi-life-last-survivor',
-      'tokio-marine-goelite-fund-level-and-third-party-charges',
     ],
     warnings: [
       '#goElite is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, the published S$500 minimum one-off partial withdrawal amount plus the 10%-of-initial-single-premium minimum remaining Single Premium Units Account floor, the resident-corridor current-state death benefit as 105% of the Single Premium Units Account value plus 100% of the Top-up Units Account value less current amounts owing, the resident-corridor current accidental-death estimate before age 75 as 110% of the Single Premium Units Account value plus 100% of the Top-up Units Account value less current amounts owing, and the cash-vs-SRS distribution-mode support surface with the published $50 minimum cash-payout threshold plus the 30-day record-date instruction lead time on the cash corridor; the non-resident 101% death-benefit corridor, accidental-death claim gates and cap aggregation, multi-life last-survivor handling, and fund-level charges remain informational only.',

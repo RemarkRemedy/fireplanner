@@ -22,6 +22,7 @@ interface AiaInvestEasyConfig {
   topUpChargeRate: number
   recurringTopUpChargeRate: number
   modeledEconomics: string[]
+  coveredElsewhereBehaviors?: string[]
   metadataOnlyBehaviors: string[]
   warnings: string[]
   unsupportedItems: string[]
@@ -224,6 +225,7 @@ export function buildAiaInvestEasyProduct(
     structureStatus: 'structured',
     economicsStatus: 'supported',
     modeledEconomics: config.modeledEconomics,
+    coveredElsewhereBehaviors: config.coveredElsewhereBehaviors ?? [],
     metadataOnlyBehaviors: config.metadataOnlyBehaviors,
     warnings: [
       `${config.productName} is cataloged as a supported V1 product. ${config.warnings[0]}`,

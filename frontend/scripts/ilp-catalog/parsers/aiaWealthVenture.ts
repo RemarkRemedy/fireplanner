@@ -472,9 +472,9 @@ export function parseAiaWealthVenture({ document, sourceChecksumSha256 }: ParseC
       'kernel:current-accidental-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: ['aia-wealth-venture-fund-management-charge'],
     metadataOnlyBehaviors: [
       'aia-wealth-venture-secondary-insured-option',
-      'aia-wealth-venture-fund-management-charge',
       'aia-wealth-venture-fund-switching',
     ],
     warnings: [

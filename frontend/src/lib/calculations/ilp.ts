@@ -276,6 +276,12 @@ export interface IlpBonusRule {
     endPolicyYear: number | null
     rate: number
   }>
+  vitalityStatusRateSchedule?: Array<{
+    status: 'bronze' | 'silver' | 'gold' | 'platinum'
+    startPolicyYear: number
+    endPolicyYear: number | null
+    rate: number
+  }>
   stepUpPayoutConfig?: {
     premiumShortfallChargeYears: number
     partialWithdrawalAccountIds: string[]
@@ -580,6 +586,7 @@ export interface IlpPolicyInput {
   monthsAlreadyPaid: number
   currentAcceptedRegularPremiumMonths?: number
   currentPolicyYear: number
+  vitalityStatus?: 'bronze' | 'silver' | 'gold' | 'platinum'
   icpMonths?: number
   mipBasis?: 'finite' | 'open-ended'
   assuranceProfile?: IlpAssuranceProfile

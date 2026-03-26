@@ -4,6 +4,8 @@ import { formatCatalogVariantLabel } from '@/lib/ilp-catalog/labels'
 import type { IlpCatalogManifest, IlpCatalogProduct, IlpTemplateAccount, IlpTemplateBonus, IlpTemplateFeeRule, IlpTemplateVariant } from '@/lib/ilp-catalog/types'
 import { ilpPolicySeedSchema, type IlpPolicySeed } from '@/lib/ilp-catalog/policySeedSchema'
 
+type IlpResolvedVitalityStatus = NonNullable<IlpPolicyInput['vitalityStatus']>
+
 const DEFAULT_TEMPLATE_FUND: IlpPolicyInput['funds'][number] = {
   name: 'Default ILP Fund',
   allocation: 1,
@@ -281,8 +283,17 @@ function mapEventChargeRules(variant: IlpTemplateVariant): NonNullable<IlpPolicy
 function mapTemplateBonus(
   bonus: IlpTemplateBonus,
   currency: IlpPolicyInput['currency'],
+  vitalityStatus: IlpResolvedVitalityStatus,
 ): IlpPolicyInput['bonuses'][number] {
   const defaultTierRate = bonus.tieredRates.find((tier) => tier.currency === currency)?.rate ?? 0
+  const vitalityStatusRateSchedule = bonus.vitalityStatusRateSchedule?.map((tier) => ({ ...tier }))
+  const resolvedPolicyYearRateSchedule = vitalityStatusRateSchedule
+    ?.filter((tier) => tier.status === vitalityStatus)
+    .map(({ startPolicyYear, endPolicyYear, rate }) => ({
+      startPolicyYear,
+      endPolicyYear,
+      rate,
+    }))
 
   return {
     id: bonus.id,
@@ -291,7 +302,7 @@ function mapTemplateBonus(
     mode: bonus.mode,
     oneTimePayoutBasis: bonus.oneTimePayoutBasis,
     annualPremiumTierBasis: bonus.annualPremiumTierBasis,
-    rate: bonus.rate ?? defaultTierRate,
+    rate: resolvedPolicyYearRateSchedule != null ? 0 : (bonus.rate ?? defaultTierRate),
     amount: bonus.amount ?? 0,
     appliesTo: [...bonus.appliesTo],
     startPolicyYear: bonus.startPolicyYear,
@@ -301,7 +312,8 @@ function mapTemplateBonus(
     requiresPremiumsPaidUpToDate: bonus.requiresPremiumsPaidUpToDate,
     requiredRegularPremiumPaymentFrequency: bonus.requiredRegularPremiumPaymentFrequency,
     tieredRates: bonus.tieredRates.map((tier) => ({ ...tier })),
-    policyYearRateSchedule: bonus.policyYearRateSchedule?.map((tier) => ({ ...tier })),
+    policyYearRateSchedule: resolvedPolicyYearRateSchedule ?? bonus.policyYearRateSchedule?.map((tier) => ({ ...tier })),
+    vitalityStatusRateSchedule,
     stepUpPayoutConfig: bonus.stepUpPayoutConfig
       ? {
           premiumShortfallChargeYears: bonus.stepUpPayoutConfig.premiumShortfallChargeYears,
@@ -362,6 +374,11 @@ export function templateVariantToPolicySeed(
   const eventChargeRules = mapEventChargeRules(variant)
   const accountsWithoutRegularRules = variant.accounts.filter((account) => account.contributionRules.length === 0)
   const defaultContributionShare = accountsWithoutRegularRules.length > 0 ? (1 / accountsWithoutRegularRules.length) : 0
+  const vitalityStatus: IlpResolvedVitalityStatus | undefined = variant.bonuses.some((bonus) => (
+    (bonus.vitalityStatusRateSchedule?.length ?? 0) > 0
+  ))
+    ? 'silver'
+    : undefined
 
   return ilpPolicySeedSchema.parse({
     name: `${product.productName} (${formatCatalogVariantLabel(variant)})`,
@@ -372,6 +389,7 @@ export function templateVariantToPolicySeed(
     initialSinglePremium: seedsInitialSinglePremiumRouting(variant) ? 0 : undefined,
     monthsAlreadyPaid: 0,
     currentPolicyYear: 1,
+    vitalityStatus,
     icpMonths: variant.icpMonths,
     mipBasis: variant.mipBasis,
     exitChargeBasis: variant.exitChargeBasis,
@@ -593,7 +611,7 @@ export function templateVariantToPolicySeed(
     eecTable: [...variant.eecTable],
     eecYearBasis: variant.eecYearBasis,
     funds: [{ ...DEFAULT_TEMPLATE_FUND }],
-    bonuses: variant.bonuses.map((bonus) => mapTemplateBonus(bonus, variant.currency)),
+    bonuses: variant.bonuses.map((bonus) => mapTemplateBonus(bonus, variant.currency, vitalityStatus ?? 'silver')),
     chargeRules,
     eventChargeRules,
     catalogSource: {
@@ -607,6 +625,7 @@ export function templateVariantToPolicySeed(
       economicsStatus: product.economicsStatus,
       structureStatus: product.structureStatus,
       modeledEconomics: [...product.modeledEconomics],
+      coveredElsewhereBehaviors: [...(product.coveredElsewhereBehaviors ?? [])],
       metadataOnlyBehaviors: [...product.metadataOnlyBehaviors],
     },
     catalogWarnings: [

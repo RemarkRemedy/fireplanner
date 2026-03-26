@@ -375,6 +375,10 @@ export function parseFwdInvestFirstMax(context: ParseContext): IlpCatalogProduct
       'kernel:partial-withdrawal-start-policy-month-block',
       'kernel:partial-withdrawal-minimum-remaining-value-block',
     ],
+    coveredElsewhereBehaviors: [
+      'fwd-invest-first-max-policy-closure-charge',
+      'fwd-invest-first-max-fund-management-charge',
+    ],
     metadataOnlyBehaviors: [
       'fwd-invest-first-max-accumulation-bonus-current-year-top-up-proration',
       'fwd-invest-first-max-maturity-benefit',
@@ -383,10 +387,8 @@ export function parseFwdInvestFirstMax(context: ParseContext): IlpCatalogProduct
       'fwd-invest-first-max-regular-premium-variation-application-form-minimums',
       'fwd-invest-first-max-missed-premium-grace-period',
       'fwd-invest-first-max-minimum-withdrawal-rules',
-      'fwd-invest-first-max-policy-closure-charge',
       'fwd-invest-first-max-change-of-person-insured',
       'fwd-invest-first-max-change-of-policy-currency',
-      'fwd-invest-first-max-fund-management-charge',
     ],
     warnings: [
       'FWD Invest First Max is cataloged as a supported V1 corridor. The current parser covers the SGD 10-year base-layer corridor: the published Booster Bonus, Loyalty Bonus, the Accumulation Bonus base-value schedule with a 60-month qualification window, initial-account charge, accumulation-account charge, the current-state death-benefit estimate as 105% of policy value, top-up and recurring-single premium charges, zero redemption fee, and the 10-year surrender-charge schedule.',

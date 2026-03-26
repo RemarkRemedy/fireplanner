@@ -65,6 +65,12 @@ const EEC_SCHEDULES: Record<VoyageMip, number[]> = {
   25: [1, 1, 0.98, 0.8, 0.67, 0.58, 0.52, 0.47, 0.43, 0.39, 0.36, 0.34, 0.31, 0.29, 0.28, 0.27, 0.23, 0.17, 0.11, 0.11, 0.1, 0.1, 0.09, 0.07, 0.05],
 }
 
+const PHC_SCHEDULES: Record<VoyageMip, number[]> = {
+  15: [0, 0, 0.74, 0.57, 0.47, 0.45, 0.45, 0.45],
+  20: [0, 0, 0.85, 0.68, 0.56, 0.5, 0.5, 0.5, 0.5, 0.5],
+  25: [0, 0, 0.98, 0.8, 0.67, 0.58, 0.52, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+}
+
 function normalizeWhitespace(text: string): string {
   return text.replace(/\s+/g, ' ').trim()
 }
@@ -302,6 +308,30 @@ function buildVariant(document: ExtractedPdfDocument, currency: 'SGD' | 'USD', m
       sourceRefs: [page9, page14],
     },
     {
+      id: 'premium-holiday-charge',
+      label: 'Premium Holiday Charge',
+      trigger: 'premium-holiday',
+      basis: 'annual-premium-with-overlap-months',
+      appliesTo: ['regular'],
+      rate: 0,
+      rateSchedule: PHC_SCHEDULES[mipLength].map((value, index) => ({
+        startPolicyYear: index + 1,
+        endPolicyYear: index + 1,
+        rate: roundRate(value),
+      })),
+      amount: 0,
+      activeWindow: 'during-mip',
+      freeLifetimeMonths: 24,
+      freeLifetimeMonthsStartPolicyYear: 3,
+      allocation: 'equal-split',
+      notes: [
+        'Premium holiday is only available after the first two policy years and during the selected MIP.',
+        'The published Maximum Free Premium Holiday Duration of 24 policy months is modeled as a lifetime free window before the PHC schedule applies.',
+        'Once the free premium-holiday duration is exhausted and premium holiday continues during the MIP, the monthly PHC applies on annualised regular premium until regular premium payment resumes or the MIP ends.',
+      ],
+      sourceRefs: [page9],
+    },
+    {
       id: 'bonus-recovery-charge-y1',
       label: 'Bonus Recovery Charge (Policy Year 1 Start-up Bonus)',
       trigger: 'regular-premium-reduction',
@@ -479,6 +509,7 @@ export function parseHsbcWealthVoyage(context: ParseContext): IlpCatalogProduct 
       'hsbc-voyage-loyalty-bonus-partial-withdrawal-subset',
       'kernel:monthly-rate-bonus-crediting',
       'hsbc-voyage-topup-premium-charge',
+      'branch:wealth-voyage-premium-holiday-charge',
       'hsbc-voyage-partial-withdrawal-charge',
       'hsbc-voyage-eec',
       'kernel:premium-holiday-top-up-block',
@@ -496,14 +527,13 @@ export function parseHsbcWealthVoyage(context: ParseContext): IlpCatalogProduct 
     ],
     metadataOnlyBehaviors: [
       'hsbc-voyage-terminal-illness-cap-overflow-and-post-claim-state',
-      'hsbc-voyage-premium-holiday-charge-after-free-duration',
       'hsbc-voyage-dividend-cash-payout-routing-fallback-and-execution',
       'hsbc-voyage-life-replacement-eligibility-and-underwriting',
       'hsbc-voyage-life-replacement-cover-reset-and-rider-termination',
       'hsbc-voyage-life-replacement-policy-reissue-fallback',
     ],
     warnings: [
-      'Wealth Voyage is cataloged as a supported V1 product. Premium-base AMF, start-up bonus, bonus recovery charge, top-up charge, partial-withdrawal charge, surrender mechanics, monthly power-up and loyalty bonus crediting with the published subsequent-12-month suspension windows on partial withdrawals, premium holiday, regular-premium reduction, and manual regular-withdrawal assumptions, the current-state death-benefit estimate as the higher of the Regular Premium Account value or the 101%-of-paid-regular-premiums floor plus Top-up Account value after manual current amount owing, including manual current net protected premium base support once regular-withdrawal assumptions are already active, the current accidental-death estimate before age 75 as the higher of that ordinary death amount or the 200%-of-paid-regular-premiums floor capped at S$2 million plus Top-up Account value after manual current age and current amount owing, including manual current accidental-death regular-premium-floor support once regular-withdrawal assumptions are already active, the current terminal-illness snapshot as the lower of the ordinary death amount and a manual remaining aggregate TI cap, the current residual death-benefit estimate after a TI claim today for the supported acceleration corridor, manual regular-withdrawal payout support with the published annualised minimum withdrawal threshold, premium-holiday repayment AMF deduction with Power-up Bonus reinstatement, and reinvest-default distribution support are modeled; premium-holiday charge after the free duration, minimum holding checks, accidental-death claim exclusions and settlement, payout settlement, dividend cash-payout routing / fallback / execution, and Life Replacement Option eligibility, cover-reset, and policy-reissue administration remain informational only beyond the modeled current ordinary death, accidental death, terminal-illness, and residual-after-TI snapshot surface.',
+      'Wealth Voyage is cataloged as a supported V1 product. Premium-base AMF, start-up bonus, bonus recovery charge, top-up charge, the published Premium Holiday Charge after the 24-month free premium-holiday duration, partial-withdrawal charge, surrender mechanics, monthly power-up and loyalty bonus crediting with the published subsequent-12-month suspension windows on partial withdrawals, premium holiday, regular-premium reduction, and manual regular-withdrawal assumptions, the current-state death-benefit estimate as the higher of the Regular Premium Account value or the 101%-of-paid-regular-premiums floor plus Top-up Account value after manual current amount owing, including manual current net protected premium base support once regular-withdrawal assumptions are already active, the current accidental-death estimate before age 75 as the higher of that ordinary death amount or the 200%-of-paid-regular-premiums floor capped at S$2 million plus Top-up Account value after manual current age and current amount owing, including manual current accidental-death regular-premium-floor support once regular-withdrawal assumptions are already active, the current terminal-illness snapshot as the lower of the ordinary death amount and a manual remaining aggregate TI cap, the current residual death-benefit estimate after a TI claim today for the supported acceleration corridor, manual regular-withdrawal payout support with the published annualised minimum withdrawal threshold, premium-holiday repayment AMF deduction with Power-up Bonus reinstatement, and reinvest-default distribution support are modeled; minimum holding checks, accidental-death claim exclusions and settlement, payout settlement, dividend cash-payout routing / fallback / execution, and Life Replacement Option eligibility, cover-reset, and policy-reissue administration remain informational only beyond the modeled current ordinary death, accidental death, terminal-illness, and residual-after-TI snapshot surface.',
     ],
     archived: false,
     variants: [

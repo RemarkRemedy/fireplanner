@@ -292,6 +292,7 @@ export function parseGreatEasternGreatLifeAdvantage4({ document, sourceChecksumS
       'kernel:premium-holiday-top-up-block',
       'kernel:top-up-paid-up-to-date-block',
     ],
+    coveredElsewhereBehaviors: ['great-life-advantage-4-fund-level-fees'],
     metadataOnlyBehaviors: [
       'great-life-advantage-4-non-lapse-guarantee-debt',
       'great-life-advantage-4-continuation-event',
@@ -300,7 +301,6 @@ export function parseGreatEasternGreatLifeAdvantage4({ document, sourceChecksumS
       'great-life-advantage-4-rider-charge-deductions',
       'great-life-advantage-4-child-cover',
       'great-life-advantage-4-gisa-option',
-      'great-life-advantage-4-fund-level-fees',
       'great-life-advantage-4-afr-and-fund-switching',
     ],
     warnings: [

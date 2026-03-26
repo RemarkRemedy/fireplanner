@@ -220,9 +220,11 @@ export function parseHsbcWealthInvestCashSrs(context: ParseContext): IlpCatalogP
       'tokio-recurring-single-premium-routing',
       'kernel:distribution-mode-assumption',
     ],
-    metadataOnlyBehaviors: [
+    coveredElsewhereBehaviors: [
       'hsbc-life-wealth-invest-cash-srs-fund-management-charge',
       'hsbc-life-wealth-invest-cash-srs-additional-ilp-sub-fund-charges',
+    ],
+    metadataOnlyBehaviors: [
       'hsbc-life-wealth-invest-cash-srs-dividend-bank-account-routing',
       'hsbc-life-wealth-invest-cash-srs-fund-switching',
       'hsbc-life-wealth-invest-cash-srs-free-look-refund',

@@ -36,7 +36,8 @@ describe('parseHsbcWealthInvestCashSrs', () => {
       'tokio-recurring-single-premium-routing',
       'kernel:distribution-mode-assumption',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('hsbc-life-wealth-invest-cash-srs-fund-management-charge')
+    expect(product.coveredElsewhereBehaviors).toContain('hsbc-life-wealth-invest-cash-srs-fund-management-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('hsbc-life-wealth-invest-cash-srs-fund-management-charge')
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-life-wealth-invest-cash-srs-death-benefit')
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-life-wealth-invest-cash-srs-terminal-illness-benefit')
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-life-wealth-invest-cash-srs-single-premium-principal-tracking')

@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 const SUM_TOLERANCE = 0.001
 const ilpRegularPremiumPaymentFrequencySchema = z.enum(['annual', 'semi-annual', 'quarterly', 'monthly'])
+export const ilpVitalityStatusSchema = z.enum(['bronze', 'silver', 'gold', 'platinum'])
 
 export const ilpPolicyEventSchema = z.object({
   id: z.string().min(1),
@@ -576,6 +577,12 @@ export const ilpBonusRuleSchema = z.object({
     rate: z.number().min(0).max(1),
   })).max(20).optional(),
   policyYearRateSchedule: z.array(z.object({
+    startPolicyYear: z.number().int().min(1).max(100),
+    endPolicyYear: z.number().int().min(1).max(100).nullable(),
+    rate: z.number().min(0).max(5),
+  })).max(25).optional(),
+  vitalityStatusRateSchedule: z.array(z.object({
+    status: ilpVitalityStatusSchema,
     startPolicyYear: z.number().int().min(1).max(100),
     endPolicyYear: z.number().int().min(1).max(100).nullable(),
     rate: z.number().min(0).max(5),
@@ -1355,6 +1362,7 @@ export const ilpPolicySchema = z.object({
   monthsAlreadyPaid: z.number().int().min(0).max(1_200),
   currentAcceptedRegularPremiumMonths: z.number().int().min(0).max(1_200).optional(),
   currentPolicyYear: z.number().int().min(1).max(100),
+  vitalityStatus: ilpVitalityStatusSchema.optional(),
   icpMonths: z.number().int().min(0).max(1_200).optional(),
   mipBasis: z.enum(['finite', 'open-ended']).optional(),
   assuranceProfile: ilpAssuranceProfileSchema.optional(),
@@ -1386,6 +1394,7 @@ export const ilpPolicySchema = z.object({
     economicsStatus: z.enum(['supported', 'partial-modeled-subset', 'metadata-only']),
     structureStatus: z.enum(['structured', 'brochure-partial']),
     modeledEconomics: z.array(z.string().min(1)).max(40),
+    coveredElsewhereBehaviors: z.array(z.string().min(1)).max(60).default([]),
     metadataOnlyBehaviors: z.array(z.string().min(1)).max(40),
   }).optional(),
   catalogWarnings: z.array(z.string().min(1)).max(20).optional(),

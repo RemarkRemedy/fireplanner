@@ -223,16 +223,18 @@ export function parseGreatEasternPrestigePortfolio(context: ParseContext): IlpCa
       'branch:great-eastern-prestige-portfolio-partial-withdrawal-zero-charge',
       'branch:great-eastern-prestige-portfolio-open-ended-zero-surrender-charge',
     ],
+    coveredElsewhereBehaviors: [
+      'great-eastern-prestige-portfolio-post-issue-fee-changes',
+      'great-eastern-prestige-portfolio-fund-level-fees',
+    ],
     metadataOnlyBehaviors: [
       'great-eastern-prestige-portfolio-regular-premium-corridor',
       'great-eastern-prestige-portfolio-regular-premium-surrender-deductions',
       'great-eastern-prestige-portfolio-accidental-death-claim-exclusions',
       'great-eastern-prestige-portfolio-basic-sum-assured-history',
       'great-eastern-prestige-portfolio-srs-return-destination',
-      'great-eastern-prestige-portfolio-fund-switching',
       'great-eastern-prestige-portfolio-minimum-transaction-guards',
-      'great-eastern-prestige-portfolio-post-issue-fee-changes',
-      'great-eastern-prestige-portfolio-fund-level-fees',
+      'great-eastern-prestige-portfolio-fund-switching',
     ],
     warnings: [
       'Prestige Portfolio is cataloged as a supported V1 corridor for the single-premium cash, single-premium SRS, and recurrent-single-premium SRS paths. The parser captures the quote-driven premium-charge and wrap-fee surfaces through manual input, the published 0.2% p.a. policy fee, the current-state death-benefit estimate as total investment value, the current-state accidental-death estimate as the higher of total investment value or a manual current basic sum assured before age 80 next birthday, the quote-driven top-up and recurrent-single-premium charge paths through manual input, and the nil policy-level withdrawal / surrender charge path through the open-ended basis.',
