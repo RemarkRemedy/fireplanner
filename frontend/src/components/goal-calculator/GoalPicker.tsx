@@ -29,7 +29,7 @@ export function GoalPicker({ onSelect, disabledTiles = [] }: GoalPickerProps) {
               className={`cursor-pointer transition-all hover:border-primary hover:shadow-md ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
               onClick={() => !disabled && onSelect(tile.id)}
             >
-              <CardContent className="pt-6 flex flex-col items-center gap-2 text-center">
+              <CardContent className="pt-6 pb-6 flex flex-col items-center gap-2 text-center">
                 {Icon && <Icon className="h-8 w-8 text-primary" />}
                 <span className="font-medium text-sm">{tile.label}</span>
               </CardContent>
