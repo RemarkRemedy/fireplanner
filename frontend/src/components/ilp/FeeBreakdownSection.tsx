@@ -12,6 +12,7 @@ import {
   YAxis,
 } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
 import type { IlpPolicyInput, IlpProjectedPolicyAnalysis, ReturnScenario } from '@/lib/calculations/ilp'
@@ -166,11 +167,11 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
             </Tabs>
             <div className="flex flex-wrap gap-3 text-xs">
               <label className="flex cursor-pointer items-center gap-1.5">
-                <input type="checkbox" checked={includeOcf} onChange={(e) => setIncludeOcf(e.target.checked)} className="rounded" />
+                <Checkbox checked={includeOcf} onCheckedChange={(v) => setIncludeOcf(v === true)} />
                 Include fund fees (OCF)
               </label>
               <label className="flex cursor-pointer items-center gap-1.5">
-                <input type="checkbox" checked={useRealValues} onChange={(e) => setUseRealValues(e.target.checked)} className="rounded" />
+                <Checkbox checked={useRealValues} onCheckedChange={(v) => setUseRealValues(v === true)} />
                 Today's dollars
               </label>
             </div>
