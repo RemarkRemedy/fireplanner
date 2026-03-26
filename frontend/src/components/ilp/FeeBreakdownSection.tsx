@@ -166,14 +166,14 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
               </TabsList>
             </Tabs>
             <div className="flex flex-wrap gap-3 text-xs">
-              <label className="flex cursor-pointer items-center gap-1.5">
-                <Checkbox checked={includeOcf} onCheckedChange={(v) => setIncludeOcf(v === true)} />
-                Include fund fees (OCF)
-              </label>
-              <label className="flex cursor-pointer items-center gap-1.5">
-                <Checkbox checked={useRealValues} onCheckedChange={(v) => setUseRealValues(v === true)} />
-                Today's dollars
-              </label>
+              <div className="flex items-center gap-1.5">
+                <Checkbox id="include-ocf" checked={includeOcf} onCheckedChange={(v) => setIncludeOcf(v === true)} />
+                <label htmlFor="include-ocf" className="cursor-pointer">Include fund fees (OCF)</label>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Checkbox id="use-real-values" checked={useRealValues} onCheckedChange={(v) => setUseRealValues(v === true)} />
+                <label htmlFor="use-real-values" className="cursor-pointer">Today's dollars</label>
+              </div>
             </div>
           </div>
         </CardHeader>

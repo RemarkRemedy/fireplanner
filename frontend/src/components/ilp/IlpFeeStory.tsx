@@ -411,7 +411,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
           </button>
           <button
             type="button"
-            className={`rounded-full px-3 py-1 transition-colors ${!useReal ? 'bg-white/20 text-white' : 'text-white/50'}`}
+            className={`rounded-full px-3 py-1 transition-colors ${!useReal ? 'bg-white/20 text-white' : 'text-white/60'}`}
             onClick={(e) => { e.stopPropagation(); setUseReal(false) }}
           >
             Nominal
