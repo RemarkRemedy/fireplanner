@@ -111,7 +111,7 @@ export function IlpStoryModePage() {
   const [selectedVariant, setSelectedVariant] = useState<IlpTemplateVariant | null>(null)
   const [pendingSeed, setPendingSeed] = useState<IlpPolicySeed | null>(null)
   const [storyPolicy, setStoryPolicy] = useState<IlpPolicyInput | null>(null)
-  const [showFeeStory, setShowFeeStory] = useState(false)
+  const [showFeeStory, setShowFeeStory] = useState(true)
 
   // Check if we already have this product in the store (persisted from prior session)
   const existingPolicy = useMemo(() => {
@@ -192,7 +192,10 @@ export function IlpStoryModePage() {
               if (result.success) {
                 // Find the just-added policy
                 const added = useIlpStore.getState().policies.find((p) => p.id === result.policyId)
-                if (added) setStoryPolicy(added)
+                if (added) {
+                  setStoryPolicy(added)
+                  setShowFeeStory(true)
+                }
               }
               setPendingSeed(null)
             }}
@@ -227,6 +230,11 @@ export function IlpStoryModePage() {
     )
   }
 
+  // Auto-launch story on first render when we have data
+  if (showFeeStory) {
+    return <IlpFeeStory policy={activePolicy} analysis={analysis} onClose={() => setShowFeeStory(false)} />
+  }
+
   return (
     <div>
       {/* Screen 1: The Hook */}
@@ -242,11 +250,8 @@ export function IlpStoryModePage() {
           className="rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
           onClick={() => setShowFeeStory(true)}
         >
-          See your fee story
+          Replay fee story
         </button>
-        {showFeeStory && (
-          <IlpFeeStory policy={activePolicy} analysis={analysis} onClose={() => setShowFeeStory(false)} />
-        )}
         <p className="text-center text-xs text-muted-foreground">
           Based on {activePolicy.currency} {activePolicy.accounts[0]?.monthlyContribution
             ? `${activePolicy.accounts[0].monthlyContribution}/mo`
