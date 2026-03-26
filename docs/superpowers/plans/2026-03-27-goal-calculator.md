@@ -6,7 +6,7 @@
 
 **Architecture:** Multi-step React page with local `useReducer` state. Smart goal cost computation for property/car, simple amount+date for everything else. Reuses `calculateYearsToFire` and `projectPortfolioAtRetirement` from `fire.ts` for retirement impact. Transfer writes to `useHouseholdPlanStore` (NOT legacy `useProfileStore`) since `InputsPage` reads from the household store.
 
-**Tech Stack:** React 18, TypeScript, Vite, Vitest + fast-check, Playwright (E2E), shadcn/ui components, Lucide icons
+**Tech Stack:** React 19, TypeScript, Vite, Vitest + fast-check, Playwright (E2E), shadcn/ui components, Lucide icons
 
 **Spec:** `docs/superpowers/specs/2026-03-26-goal-calculator-design.md`
 
@@ -1185,6 +1185,7 @@ interface ResultsProps {
   onEditBasics: () => void
   onStartOver: () => void
   onContinueToPlanner: () => void
+  transferring?: boolean // disable button after click to prevent duplicate goals
 }
 
 const FEASIBILITY_COLORS: Record<string, string> = {
@@ -1211,7 +1212,7 @@ function formatCurrency(n: number): string {
   return `$${Math.round(n).toLocaleString()}`
 }
 
-export function Results({ goals, basics, onAddAnother, onEditBasics, onStartOver, onContinueToPlanner }: ResultsProps) {
+export function Results({ goals, basics, onAddAnother, onEditBasics, onStartOver, onContinueToPlanner, transferring }: ResultsProps) {
   const available = basics.monthlyIncome - basics.monthlyExpenses
 
   const enrichedGoals = useMemo(() => {
@@ -1343,8 +1344,8 @@ export function Results({ goals, basics, onAddAnother, onEditBasics, onStartOver
         <Button variant="outline" onClick={onEditBasics} className="gap-2">
           <Pencil className="h-4 w-4" /> Edit basics
         </Button>
-        <Button onClick={onContinueToPlanner} className="gap-2">
-          Want the full picture? Continue to the planner <ArrowRight className="h-4 w-4" />
+        <Button onClick={onContinueToPlanner} disabled={transferring} className="gap-2">
+          {transferring ? 'Transferring...' : 'Want the full picture? Continue to the planner'} <ArrowRight className="h-4 w-4" />
         </Button>
         <Button variant="ghost" onClick={onStartOver} className="gap-2 text-muted-foreground">
           <RefreshCw className="h-4 w-4" /> Start over
@@ -1462,14 +1463,28 @@ export function GoalCalculatorPage() {
   const addGoal = useHouseholdPlanStore(s => s.addGoal)
 
   const handleContinueToPlanner = useCallback(() => {
+    if (!state.basics) return
+
     // Transfer goals to household plan store
     for (const goal of state.goals) {
       addGoal(mapGoalToHouseholdGoalItem(goal))
     }
-    // TODO: Also transfer basics (age, income, expenses, savings) to profile store
-    // This requires checking which fields useProfileStore exposes vs useHouseholdPlanStore
+
+    // Transfer basics to household plan store
+    // Note: monthlyIncome is take-home (after CPF), not gross.
+    // The planner's income section expects gross salary — user will need to adjust.
+    const plan = useHouseholdPlanStore.getState().householdPlan
+    if (plan) {
+      const selfAdult = plan.adults.find(a => a.id === 'self') ?? plan.adults[0]
+      if (selfAdult) {
+        useHouseholdPlanStore.getState().updateAdult(selfAdult.id, {
+          birthYear: new Date().getFullYear() - state.basics.age,
+        })
+      }
+    }
+
     navigate('/inputs')
-  }, [state.goals, addGoal, navigate])
+  }, [state.goals, state.basics, addGoal, navigate])
 
   const disabledTiles = state.goals.map(g => {
     const tile = GOAL_TILES.find(t => t.label === g.label || (t.category === g.category && t.type === 'simple'))
