@@ -66,7 +66,7 @@ export function FeeImpactChart({
           <div key={tier.label} className="flex items-center justify-between gap-3 text-sm">
             <div className="min-w-0">
               <div style={{ color: tier.color }}>{tier.label}</div>
-              <div className={`text-xs ${dark ? 'text-white/50' : 'text-muted-foreground'}`}>
+              <div className={`text-xs ${dark ? 'text-white/60' : 'text-muted-foreground'}`}>
                 {formatIlpPercent(tier.drag)} p.a. fee drag
               </div>
             </div>

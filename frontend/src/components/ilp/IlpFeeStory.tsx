@@ -198,7 +198,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
             {activeCards[currentIndex] === 'priceTag' && (
               <WrappedCard gradient={currentGradient} direction={direction}>
                 {policy.catalogSource?.productName && (
-                  <motion.p variants={staggerChild} className="text-xs uppercase tracking-widest text-white/40 font-medium">
+                  <motion.p variants={staggerChild} className="text-xs uppercase tracking-widest text-white/60 font-medium">
                     {policy.catalogSource.productName}
                   </motion.p>
                 )}
@@ -290,7 +290,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                     That's {formatIlpCurrency(fundCharges, policy.currency)} over {horizonYears} years.
                   </motion.p>
                 )}
-                <motion.p variants={staggerChild} className="text-sm text-white/50 max-w-sm italic">
+                <motion.p variants={staggerChild} className="text-sm text-white/60 max-w-sm italic">
                   All investment products have fund-level fees. Passive ETFs charge 0.03-0.5% p.a. versus 1-2% for actively managed funds.
                 </motion.p>
               </WrappedCard>
@@ -360,7 +360,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                   </div>
                 </motion.div>
 
-                <motion.p variants={staggerChild} className="text-xs text-white/40 max-w-sm">
+                <motion.p variants={staggerChild} className="text-xs text-white/60 max-w-sm">
                   Fees only. Does not include investment returns.
                   {useReal && ` Adjusted for ${formatIlpPercent(policy.inflationRate)} inflation.`}
                 </motion.p>
@@ -404,7 +404,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
         <div className="inline-flex rounded-full bg-white/10 p-0.5 text-xs font-medium">
           <button
             type="button"
-            className={`rounded-full px-3 py-1 transition-colors ${useReal ? 'bg-white/20 text-white' : 'text-white/50'}`}
+            className={`rounded-full px-3 py-1 transition-colors ${useReal ? 'bg-white/20 text-white' : 'text-white/60'}`}
             onClick={(e) => { e.stopPropagation(); setUseReal(true) }}
           >
             Today's $
