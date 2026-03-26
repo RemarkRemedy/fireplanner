@@ -169,9 +169,7 @@ export function NotebookIframe({
       clearTimeout(spinnerTimer)
       clearTimeout(fallbackTimer)
     }
-    // onStateChange is stabilized via useCallback in parent
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [onStateChange])
 
   const handleLoad = () => {
     if (!hasTransitioned.current) {
@@ -230,7 +228,7 @@ export function NotebookIframe({
 
 **Key implementation notes for the agent:**
 - `hasTransitioned` ref prevents double-firing (both load event and timeout racing).
-- The `eslint-disable` comment is intentional: we want the effect to run once on mount, and `onStateChange` is stabilized via `useCallback` in the parent.
+- `onStateChange` is in the deps array but is stable (parent wraps it in `useCallback([], [])`), so the effect runs once on mount.
 - `sandbox` attribute restricts the iframe's capabilities while allowing NotebookLM to function.
 - When `state === 'fallback'`, this component returns `null`. The parent (`NotebookWidget`) checks its own `iframeMode` state and renders `NotebookFallback` instead.
 
@@ -260,7 +258,7 @@ Create `frontend/src/components/ilp/NotebookWidget/NotebookWidget.tsx`:
 
 ```tsx
 import { useCallback, useEffect, useState } from 'react'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { MessageCircle, Minus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -305,7 +303,7 @@ export function NotebookWidget({
   const [showButton, setShowButton] = useState(defaultOpen)
   const [iframeMode, setIframeMode] = useState<IframeMode>('loading')
   const isDesktop = useMediaQuery('(min-width: 768px)')
-  const shouldReduceMotion = useReducedMotion()
+  const shouldReduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
 
   // Delay button entrance
   useEffect(() => {
@@ -383,6 +381,14 @@ export function NotebookWidget({
       <span className="text-[10px] text-muted-foreground">
         Powered by Google NotebookLM
       </span>
+      {!isDesktop && (
+        <button
+          onClick={handleDismiss}
+          className="mt-1 block w-full text-[10px] text-muted-foreground underline hover:text-foreground"
+        >
+          Don't show again
+        </button>
+      )}
     </div>
   )
 
@@ -502,20 +508,9 @@ export function NotebookWidget({
             className="flex h-[calc(100vh-20px)] flex-col rounded-t-xl p-0"
           >
             <SheetHeader className="border-b bg-primary/5 px-4 py-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <MessageCircle className="h-5 w-5 text-primary" />
-                  <SheetTitle>{title}</SheetTitle>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={handleDismiss}
-                  aria-label="Close product guide"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+              <div className="flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-primary" />
+                <SheetTitle>{title}</SheetTitle>
               </div>
             </SheetHeader>
             {panelBody}
@@ -529,11 +524,12 @@ export function NotebookWidget({
 ```
 
 **Key implementation notes for the agent:**
-- **Positioning:** Floating button at `bottom-[13.5rem]` mobile / `bottom-24` desktop to stack above FeedbackFab (`bottom-[10.5rem]` mobile / `bottom-6` desktop). Desktop panel at `bottom-6` (overlays FeedbackFab at z-50 > z-40).
+- **Positioning:** Floating button at `bottom-[13.5rem]` mobile / `bottom-24` desktop to stack above existing mobile FABs (Help FAB at `bottom-16`, Share FAB at `bottom-28`, both `md:hidden`). Desktop panel at `bottom-6` since no competing fixed elements exist on desktop.
 - **AnimatePresence keys:** `notebook-fab` and `notebook-panel` keys are required for framer-motion to track mount/unmount for exit animations.
 - **iframeMode persists across open/close:** If the iframe failed once, reopening the panel shows the fallback directly without re-attempting.
 - **Desktop uses `role="dialog"` + Escape key handler** instead of Radix Dialog. This avoids the backdrop and focus trap while maintaining accessibility. Mobile uses Radix Sheet which provides focus trap and overlay natively.
-- **`shouldReduceMotion`:** When true, animations use `duration: 0` for instant transitions.
+- **`shouldReduceMotion`:** Uses the codebase's established `useMediaQuery('(prefers-reduced-motion: reduce)')` pattern (not framer-motion's `useReducedMotion`). When true, animations use `duration: 0` for instant transitions.
+- **Mobile Sheet:** Does NOT render a custom X button — `SheetContent` already renders a built-in `<SheetPrimitive.Close>` at top-right. "Don't show again" link in footer handles permanent dismissal.
 
 - [ ] **Step 2: Create the barrel export**
 
