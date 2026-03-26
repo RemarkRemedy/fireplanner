@@ -178,7 +178,18 @@
             "rate": 0.22
           }
         ],
-        "suspensionRules": []
+        "suspensionRules": [],
+        "sourceRefs": [
+          {
+            "page": 2,
+            "section": "Initial Bonus",
+            "excerpt": "Initial Bonus While the policy is in force, an initial bonus will be paid in the first policy year upon receipt of each regular premium to boost your investment. Initial bonus = Initial bonus rate x each regular premium "
+          }
+        ],
+        "notes": [
+          "Tier is based on the published SGD annualised regular premium band.",
+          "Allocated to the Accumulation Units Account in the first policy year."
+        ]
       },
       {
         "id": "performance-investment-bonus-policy-years-4-6",
@@ -200,7 +211,18 @@
             "rounding": "floor-whole-percent"
           }
         ],
-        "suspensionRules": []
+        "suspensionRules": [],
+        "sourceRefs": [
+          {
+            "page": 3,
+            "section": "Performance Investment Bonus",
+            "excerpt": "Performance Investment Bonus While the policy is in-force, an annual performance investment bonus will be paid at the end of each policy year, th starting from the end of the fourth (4) policy year, if the performance gr"
+          }
+        ],
+        "notes": [
+          "Annual performance investment bonus on the Accumulation Units Account value from the end of policy year 4 to the end of policy year 6.",
+          "The bonus is credited only when the published performance growth measure for that policy year is at least 102%, rounded down to the nearest whole percent."
+        ]
       },
       {
         "id": "performance-investment-bonus-policy-years-7-10",
@@ -222,7 +244,18 @@
             "rounding": "floor-whole-percent"
           }
         ],
-        "suspensionRules": []
+        "suspensionRules": [],
+        "sourceRefs": [
+          {
+            "page": 3,
+            "section": "Performance Investment Bonus",
+            "excerpt": "Performance Investment Bonus While the policy is in-force, an annual performance investment bonus will be paid at the end of each policy year, th starting from the end of the fourth (4) policy year, if the performance gr"
+          }
+        ],
+        "notes": [
+          "Annual performance investment bonus on the Accumulation Units Account value from the end of policy year 7 to the end of policy year 10.",
+          "The bonus is credited only when the published performance growth measure for that policy year is at least 102%, rounded down to the nearest whole percent."
+        ]
       },
       {
         "id": "performance-investment-bonus-after-mip",
@@ -244,7 +277,18 @@
             "rounding": "floor-whole-percent"
           }
         ],
-        "suspensionRules": []
+        "suspensionRules": [],
+        "sourceRefs": [
+          {
+            "page": 3,
+            "section": "Performance Investment Bonus",
+            "excerpt": "Performance Investment Bonus While the policy is in-force, an annual performance investment bonus will be paid at the end of each policy year, th starting from the end of the fourth (4) policy year, if the performance gr"
+          }
+        ],
+        "notes": [
+          "Annual performance investment bonus on the Accumulation Units Account value after the minimum investment period.",
+          "The bonus is credited only when the published performance growth measure for that policy year is at least 102%, rounded down to the nearest whole percent."
+        ]
       }
     ],
     "chargeRules": [
@@ -273,7 +317,18 @@
           ]
         },
         "requiresManualInput": false,
-        "allocation": "equal-split"
+        "allocation": "equal-split",
+        "sourceRefs": [
+          {
+            "page": 9,
+            "section": "Initial Charge / Policy Charge / Admin Charge",
+            "excerpt": "Initial Setup Charge / Initial Charge Initial setup charge is also known as “Initial Charge” and such terms are used interchangeably. While the policy is in-force, an initial setup charge will be deducted monthly in adva"
+          }
+        ],
+        "notes": [
+          "Models the published monthly policy investment charge during the minimum investment period using annualised regular premium committed at commencement date multiplied by the current policy year.",
+          "Regular-premium reduction, non-payment, and withdrawals do not change the charge base once the policy is in force."
+        ]
       },
       {
         "id": "admin-charge",
@@ -291,7 +346,18 @@
         "rate": 0.05,
         "amount": 0,
         "requiresManualInput": false,
-        "allocation": "equal-split"
+        "allocation": "equal-split",
+        "sourceRefs": [
+          {
+            "page": 9,
+            "section": "Initial Charge / Policy Charge / Admin Charge",
+            "excerpt": "Initial Setup Charge / Initial Charge Initial setup charge is also known as “Initial Charge” and such terms are used interchangeably. While the policy is in-force, an initial setup charge will be deducted monthly in adva"
+          }
+        ],
+        "notes": [
+          "Models the published admin charge as 5% of regular premium received from policy year 4 through the minimum investment period.",
+          "At annual engine granularity, the monthly deduction following each premium receipt is represented as an annual charge on paid regular premium for the year."
+        ]
       },
       {
         "id": "monthly-protection-charge",
@@ -313,7 +379,29 @@
           "maxAgeNextBirthday": 99
         },
         "requiresManualInput": false,
-        "allocation": "pro-rata-by-value"
+        "allocation": "pro-rata-by-value",
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Death Benefit Options",
+            "excerpt": "(i) Basic Death Benefit: 101% of Accumulation Units Account value plus 100% of Top-up Units Account value less *%UWI22* indebtedness; or Product Summary (ii) Advanced Death Benefit: During minimum investment period, high"
+          },
+          {
+            "page": 9,
+            "section": "Initial Charge / Policy Charge / Admin Charge",
+            "excerpt": "Initial Setup Charge / Initial Charge Initial setup charge is also known as “Initial Charge” and such terms are used interchangeably. While the policy is in-force, an initial setup charge will be deducted monthly in adva"
+          },
+          {
+            "page": 15,
+            "section": "Appendix A Monthly Protection Charge Rates",
+            "excerpt": "Monthly Rates for Monthly Protection Charges (For Death), Per $1,000 Sum at Risk Age Next Male Female Age Next Male Female Birthday ($) ($) Birthday ($) ($) 1 0.02590 0.02230 51 0.16850 0.12050 2 0.02590 0.02230 52 0.187"
+          }
+        ],
+        "notes": [
+          "Models the published Monthly Protection Charge for the single-life Advanced Death Benefit with Life Benefit Rider corridor through the policy anniversary immediately after age 99.",
+          "Sum at risk is the published net premium less 101% of the Accumulation Units Account value, floored at zero.",
+          "The charge is deducted monthly in advance from the Accumulation Units Account, with outstanding amounts deducted from the Top-up Units Account if needed."
+        ]
       }
     ],
     "policyEvents": [],

@@ -164,6 +164,23 @@
             "trigger": "premium-holiday-repayment",
             "basis": "repaid-premium"
           }
+        ],
+        "sourceRefs": [
+          {
+            "page": 2,
+            "section": "Start-up Bonus and Special Bonus",
+            "excerpt": "3. Start-up Bonus While the Policy is in force, a one-time Start-up Bonus will be credited to the Regular Premium Account for the first Policy year upon receipt of the regular Premium You paid. The applicable Start-up Bo"
+          },
+          {
+            "page": 6,
+            "section": "Premium repayment and missed premiums",
+            "excerpt": "10. Premium Repayment You may request to repay all the missed regular Premium, subject to Our approval. You will be required to repay all the missed regular Premium under the Policy including the next regular Premium due"
+          }
+        ],
+        "notes": [
+          "Credited on regular premium received during the first policy year only.",
+          "Full repayment of missed regular premiums restores the published missed Start-up Bonus into the Regular Premium Account.",
+          "Top-up premiums do not receive the Start-up Bonus."
         ]
       },
       {
@@ -185,6 +202,22 @@
             "trigger": "premium-holiday-repayment",
             "basis": "repaid-premium"
           }
+        ],
+        "sourceRefs": [
+          {
+            "page": 2,
+            "section": "Start-up Bonus and Special Bonus",
+            "excerpt": "3. Start-up Bonus While the Policy is in force, a one-time Start-up Bonus will be credited to the Regular Premium Account for the first Policy year upon receipt of the regular Premium You paid. The applicable Start-up Bo"
+          },
+          {
+            "page": 6,
+            "section": "Premium repayment and missed premiums",
+            "excerpt": "10. Premium Repayment You may request to repay all the missed regular Premium, subject to Our approval. You will be required to repay all the missed regular Premium under the Policy including the next regular Premium due"
+          }
+        ],
+        "notes": [
+          "Applied on each regular premium received during the published Special Bonus Period.",
+          "Full repayment of missed regular premiums restores the published missed Special Bonus into the Regular Premium Account."
         ]
       },
       {
@@ -206,6 +239,17 @@
             "suspensionMonths": 12,
             "startOffsetMonths": 1
           }
+        ],
+        "sourceRefs": [
+          {
+            "page": 3,
+            "section": "Loyalty Bonus",
+            "excerpt": "5. Loyalty Bonus While the Policy is in force, a Loyalty Bonus will be credited to the Regular Premium Account on each Policy monthiversary starting from the Policy monthiversary immediately after the end of the premium "
+          }
+        ],
+        "notes": [
+          "Applied monthly on the Regular Premium Account from the month after the premium payment term ends.",
+          "No Loyalty Bonus is paid on the Top-up Account."
         ]
       }
     ],
@@ -233,7 +277,17 @@
           ]
         },
         "requiresManualInput": false,
-        "allocation": "equal-split"
+        "allocation": "equal-split",
+        "sourceRefs": [
+          {
+            "page": 18,
+            "section": "Policy Charge",
+            "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
+          }
+        ],
+        "notes": [
+          "Modeled from the published monthly policy charge formula using the policy-issue annual premium base and the lower of policy year and selected premium payment term."
+        ]
       },
       {
         "id": "policy-charge-after-premium-term",
@@ -259,7 +313,17 @@
           ]
         },
         "requiresManualInput": false,
-        "allocation": "equal-split"
+        "allocation": "equal-split",
+        "sourceRefs": [
+          {
+            "page": 18,
+            "section": "Policy Charge",
+            "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
+          }
+        ],
+        "notes": [
+          "Models the post-premium-term tail policy charge using the fixed premium payment term multiplier."
+        ]
       },
       {
         "id": "insurance-charge",
@@ -280,7 +344,24 @@
           "maxAgeNextBirthday": 99
         },
         "requiresManualInput": false,
-        "allocation": "pro-rata-by-value"
+        "allocation": "pro-rata-by-value",
+        "sourceRefs": [
+          {
+            "page": 22,
+            "section": "Start-up Bonus Recovery and Insurance Charge",
+            "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+          },
+          {
+            "page": 27,
+            "section": "Appendix A insurance charge table",
+            "excerpt": "Appendix A – Insurance Charge Table Annual Insurance Charge for Death Benefit and TI Benefit (per S$1,000 Net Sum At Risk) Female Non- ANB Male Non-Smoker Male Smoker Female Smoker Smoker 1 0.162 0.162 0.171 0.171 2 0.14"
+          }
+        ],
+        "notes": [
+          "Models the published 101% of total regular premium paid less regular-account withdrawals, less Regular Premium Account value net-sum-at-risk formula.",
+          "Enter the insured-life details and current net regular premiums paid base before trusting the monthly insurance-charge output.",
+          "If the net sum at risk is zero or negative, no insurance charge is due."
+        ]
       }
     ],
     "policyEvents": [],
