@@ -322,6 +322,14 @@ export function Results({
 
   return (
     <div className="space-y-6 max-w-xl mx-auto">
+      {/* Heading */}
+      <div className="text-center space-y-1">
+        <h2 className="text-2xl font-bold tracking-tight">Your savings plan</h2>
+        <p className="text-sm text-muted-foreground">
+          You can save {formatCurrency(available)}/mo from your take-home pay.
+        </p>
+      </div>
+
       {/* Per-goal result cards */}
       {goals.map((goal, i) => (
         <GoalResultCard
