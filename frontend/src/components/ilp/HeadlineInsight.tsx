@@ -83,13 +83,23 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
     { label: 'High-cost product', key: 'highCost', drag: 0.025, color: colors.danger },
   ], [annualDragPct, colors])
 
-  const { feeImpactTiers, feeImpactTimeSeries } = useMemo(() => {
-    if (horizonYears <= 0) return { feeImpactTiers: [], feeImpactTimeSeries: [] }
+  const { zeroFeeValue, feeImpactTiers, feeImpactTimeSeries } = useMemo(() => {
+    if (horizonYears <= 0) return { zeroFeeValue: 0, feeImpactTiers: [], feeImpactTimeSeries: [] }
     const grossReturn = 0.07
     const inflationRate = policy.inflationRate
     const monthly = policy.monthlyContribution
     const isp = policy.initialSinglePremium ?? 0
     const isSp = isp > 0 && monthly === 0
+    const inflationFactor = Math.pow(1 + inflationRate, horizonYears)
+
+    // Zero-fee baseline: what you'd have at 7% gross with no fees at all
+    const zeroFeeMonthlyRate = Math.pow(1 + grossReturn, 1 / 12) - 1
+    const zeroFeeNominal = isSp
+      ? isp * Math.pow(1 + grossReturn, horizonYears)
+      : monthly > 0
+        ? monthly * ((Math.pow(1 + zeroFeeMonthlyRate, horizonYears * 12) - 1) / zeroFeeMonthlyRate)
+        : 0
+    const baseline = useReal ? zeroFeeNominal / inflationFactor : zeroFeeNominal
 
     const timeSeries: Array<Record<string, number>> = []
     const tiers = tierDefs.map((tier) => {
@@ -100,7 +110,7 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
         : monthly > 0
           ? monthly * ((Math.pow(1 + monthlyRate, horizonYears * 12) - 1) / monthlyRate)
           : 0
-      const finalValue = useReal ? nominalValue / Math.pow(1 + inflationRate, horizonYears) : nominalValue
+      const finalValue = useReal ? nominalValue / inflationFactor : nominalValue
       return { ...tier, finalValue }
     })
 
@@ -120,7 +130,7 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
       timeSeries.push(point)
     }
 
-    return { feeImpactTiers: tiers, feeImpactTimeSeries: timeSeries }
+    return { zeroFeeValue: baseline, feeImpactTiers: tiers, feeImpactTimeSeries: timeSeries }
   }, [horizonYears, policy.monthlyContribution, policy.initialSinglePremium, policy.inflationRate, useReal, tierDefs])
 
   const basisLabel = useReal ? "in today's dollars" : 'nominal'
@@ -175,8 +185,7 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
             </p>
             <div className="space-y-2">
               {feeImpactTiers.map((tier) => {
-                const best = feeImpactTiers[0]
-                const diff = tier.finalValue - best.finalValue
+                const diff = tier.finalValue - zeroFeeValue
                 return (
                   <div key={tier.label} className="flex items-center justify-between gap-3 text-sm">
                     <div className="min-w-0">
