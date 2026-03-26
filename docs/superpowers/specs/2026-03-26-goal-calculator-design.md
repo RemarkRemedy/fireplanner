@@ -36,6 +36,8 @@ Visual grid of goal tiles with icons:
 | Starting a Business | Rocket | Simple |
 | Something Else | Plus | Simple |
 
+Goal tile categories map to existing `GoalCategory` type: HDB/Condo/Landed all map to `'housing'`, Car maps to `'vehicle'`, Starting a Business and Something Else both map to `'other'`. The tile is a UI affordance; the stored category uses the existing enum.
+
 User taps one tile to proceed.
 
 ### Step 2: Goal Configuration
@@ -45,7 +47,7 @@ User taps one tile to proceed.
 **HDB:**
 - Flat type: 3-room / 4-room / 5-room / Executive
 - New (BTO) vs Resale
-- Auto-computes: price range midpoint, down payment (HDB loan: 10% CPF, bank loan: 25% with 5% cash), BSD, legal fees (~$3K), renovation budget estimate (~$30-50K depending on flat type)
+- Auto-computes: price range midpoint, down payment (HDB loan: 10% CPF; bank loan: 25% with 5% cash minimum; rules defined in `goal-defaults.ts` per HDB guidelines since `lib/calculations/hdb.ts` only covers CPF refund/subletting), BSD, legal fees (~$3K), renovation budget estimate (~$30-50K depending on flat type)
 
 **Condo:**
 - Price bracket: ~$1M / ~$1.5M / ~$2M+
@@ -60,11 +62,12 @@ User taps one tile to proceed.
 - COE category: Cat A (up to 1600cc) / Cat B (above 1600cc)
 - New vs Used
 - Price range selector
-- Auto-computes: COE cost (current estimate), ARF, insurance, road tax, 10-year total cost of ownership (purchase + running costs)
+- Auto-computes: purchase cost breakdown (COE + OMV + ARF). Running costs (insurance, road tax, fuel) are out of scope for V1; show purchase cost only, same pattern as property down payment
 
 **Simple goals (everything else):**
 - Amount (in today's dollars)
 - Target age ("By when?")
+- For "Something Else": also a custom label field (free text, e.g. "Engagement ring")
 
 ### Step 3: Your Basics
 
@@ -75,6 +78,8 @@ Single form, 4 fields. Framed as: "To calculate your plan, we need a few details
 - **Monthly expenses** (currency input)
 - **Existing savings** (currency input, liquid savings + investments)
 
+**Validation rules:** Age: 18-70, required. Monthly income: > 0, required. Monthly expenses: >= 0, must be < monthly income (otherwise no savings capacity). Existing savings: >= 0. Target age (in goal config): must be > current age. Use inline error display matching the shared `CurrencyInput`/`NumberInput` error convention. Calculate button is disabled until all fields pass validation.
+
 ### Step 4: Results
 
 The headline answer: **"Save $X/month to reach your goal by age Y."**
@@ -84,23 +89,27 @@ Supporting details:
 - Feasibility indicator: green (comfortable), amber (tight), red (not feasible at current income/expenses)
 - Cost breakdown for smart goals (e.g., "Down payment: $125K, BSD: $24.6K, Legal: $5K, Reno: $40K = Total: $194.6K")
 - If not feasible: "You'd need to save $X more per month, or push the timeline to age Z"
-- Subtle retirement callout at the bottom: "This goal would shift your estimated retirement age by ~N years" (small text, not a headline)
+- Subtle retirement callout at the bottom: "This goal would shift your estimated retirement age by ~N years" (small text, not a headline). If annual savings with goals is <= 0, show "Your savings are fully committed to goals" instead of a year count.
+
+**Error states:** If calculation produces degenerate results (e.g., time horizon <= 0, division by zero), show an inline error message rather than NaN. Calculation functions must guard against these and return an error result object.
 
 ### Step 5: Add Another Goal (Optional)
 
-"Want to plan for something else too?" button. Returns to the goal picker (Step 1). Basics are remembered. Up to 3 goals total.
+"Want to plan for something else too?" button. Returns to the goal picker (Step 1). Basics are remembered but cannot be edited after initial entry. A "Start over" button resets all state. Up to 3 goals total.
 
 When multiple goals exist, the results view shows:
 - Each goal's individual savings requirement
 - Combined monthly savings needed
 - Whether the combination is feasible together
-- Priority suggestion if not all are feasible: "You could afford Goals 1 and 2, but adding Goal 3 would require $X more/month"
+- Priority suggestion if not all are feasible: goals are sorted by target age (earliest first); cumulative monthly savings are added sequentially; the first goal whose addition makes the total exceed available savings is flagged as the infeasible one. E.g., "You could afford Goals 1 and 2, but adding Goal 3 would require $X more/month"
+
+Note: Steps 5 and 6 are in-results CTAs, not separate route states. The state machine has 4 states (`pick | config | basics | results`). Step 5 resets `step` to `'pick'` while preserving `basics` and existing `goals[]`.
 
 ### Step 6: Continue to Full Planner (Optional)
 
 CTA: "Want the full picture? Continue to the planner."
 
-Transfers all data into the planner stores and redirects to the setup wizard with a confirmation toast.
+Transfers all data into the planner stores and redirects to `/inputs` (the full inputs page) with a confirmation toast. Do not redirect to `/setup` since the setup wizard may not have skip-already-filled-fields logic.
 
 ## Data Model
 
@@ -163,9 +172,9 @@ All in real (today's dollar) terms. Consistent with the main planner's steady-st
 
 1. **Available monthly savings** = monthlyIncome - monthlyExpenses
 2. **Time horizon** = (targetAge - age) in months
-3. **Future value of existing savings** = existingSavings * (1 + r)^years, where r = 0.04 (conservative 4% real return)
+3. **Future value of existing savings** = existingSavings * (1 + r)^years, where r = 0.036 (conservative 3.6% real return)
 4. **Gap** = totalCostToday - futureValueOfSavings (floored at 0)
-5. **Monthly savings needed** = PMT formula to accumulate the gap over the time horizon at 4% real return
+5. **Monthly savings needed** = PMT formula to accumulate the gap over the time horizon at 3.6% real return
 6. **Feasible** = monthlySavingsNeeded <= availableMonthlySavings
 7. **Shortfall** = max(0, monthlySavingsNeeded - availableMonthlySavings)
 
@@ -177,7 +186,7 @@ When multiple goals exist, savings capacity is allocated sequentially by target 
 
 Simplified FIRE calculation:
 - Annual expenses = monthlyExpenses * 12
-- Required nest egg = annualExpenses * 25 (4% rule)
+- Required nest egg = annualExpenses * 28 (3.6% SWR rule)
 - Annual savings without goals = (monthlyIncome - monthlyExpenses) * 12
 - Annual savings with goals = annual savings - (sum of all goals' monthlySavingsNeeded * 12)
 - Years to FIRE without goals = required nest egg / annual savings without goals (ignoring growth for simplicity)
@@ -208,16 +217,18 @@ Uses midpoint of range for calculations.
 **Landed brackets:** $3M, $5M, $8M as selector options.
 
 **Car estimates:**
-- COE Cat A: ~$90K estimate (volatile, noted as approximate)
+- COE Cat A: ~$90K estimate (volatile, noted as approximate with vintage date)
 - COE Cat B: ~$110K estimate
-- New car base prices by segment
-- 10-year depreciation model
+- New car base prices by segment (OMV ranges)
+- ARF calculation (100% of first $20K OMV, 140% of next $30K, 180% above $50K). Note: ARF OMV bracket thresholds are statutory nominal figures; do not inflation-adjust them.
 
-**BSD rates:** Reuse existing `lib/data/bsd.ts`.
+**BSD rates:** Reuse existing `lib/data/stampDutyRates.ts` (exports `BSD_BRACKETS`; calculation via `lib/calculations/property.ts`).
 
-**Renovation estimates:** Hardcoded reasonable ranges by property type.
+**Renovation estimates:** Structured constants by property type in `goal-defaults.ts`, tagged with `GOAL_DATA_VINTAGE` like all other data. Source: HDB renovation guides, industry averages.
 
-All data tagged with `GOAL_DATA_VINTAGE` date for maintenance tracking.
+**COE estimates:** Static estimates tagged with `GOAL_DATA_VINTAGE`. Must be noted in the UI as "estimate as of [date]" since COE premiums fluctuate monthly.
+
+All data in `goal-defaults.ts` tagged with `GOAL_DATA_VINTAGE` date for maintenance tracking.
 
 ## Transfer to Full Planner
 
@@ -242,8 +253,8 @@ If any goal is HDB/condo/landed, also pre-populate:
 
 1. User clicks "Continue to full planner"
 2. Confirmation: "This will set up your planner profile with the details you entered. You can always change them later."
-3. Write to stores
-4. Redirect to `/setup` (guided wizard, which will skip already-filled fields) or `/inputs`
+3. Write to stores (only the 4 mapped fields + goals; all other store fields remain at their Zustand defaults, no zeroing or resetting of existing planner data). Note: `useIncomeStore` is NOT seeded; the user will see income details at defaults on the Income tab and is expected to fill them in. This is an acceptable limitation for V1.
+4. Redirect to `/inputs`
 5. Toast: "Profile pre-filled from goal calculator"
 
 ## Technical Architecture
@@ -276,6 +287,13 @@ If any goal is HDB/condo/landed, also pre-populate:
 - **Reuses existing UI components.** CurrencyInput, NumberInput from `components/shared/`. Card/CardContent for layout.
 - **SEO-friendly.** Own `<title>`, meta description. Designed as a standalone entry point that can be linked/shared.
 
+## Testing
+
+- `lib/calculations/goal-calculator.test.ts` must maintain >= 95% coverage (per CLAUDE.md `lib/calculations/` rule)
+- `lib/data/goal-defaults.test.ts` must maintain >= 90% coverage (per CLAUDE.md `lib/data/` convention)
+- Test cases must cover: smart goal cost computation (HDB, condo, car), PMT savings calculation, multi-goal stacking allocation, retirement impact estimate, edge cases (zero savings, targetAge == currentAge + 1, expenses == income)
+- Property-based tests via `fast-check` for the PMT formula (savings + growth should reach goal amount)
+
 ## Out of Scope
 
 - CPF integration in the calculator (full planner handles this)
@@ -283,3 +301,5 @@ If any goal is HDB/condo/landed, also pre-populate:
 - Multiple adults / couple mode (full planner household feature)
 - Saving calculator state to localStorage (it's ephemeral until transferred)
 - ABSD for second property / non-citizen buyers (assume first-time SC buyer)
+- Car 10-year total cost of ownership / running costs (V1 shows purchase cost only)
+- Editing basics after initial entry (use "Start over" to reset)
