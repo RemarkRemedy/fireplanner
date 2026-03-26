@@ -818,6 +818,14 @@ export const ilpChargeRuleSchema = z.object({
   }).optional(),
   requiresManualInput: z.boolean().optional(),
   allocation: z.enum(['pro-rata-by-value', 'pro-rata-by-contribution-share', 'equal-split']),
+  /** Source references from the policy document (page, section, excerpt). Display-only metadata. */
+  sourceRefs: z.array(z.object({
+    page: z.number().int().min(1),
+    section: z.string(),
+    excerpt: z.string(),
+  })).optional(),
+  /** Parser notes describing the charge rule. Display-only metadata. */
+  notes: z.array(z.string()).optional(),
 }).superRefine((rule, ctx) => {
   if (rule.startPolicyYear != null && rule.endPolicyYear != null && rule.endPolicyYear < rule.startPolicyYear) {
     ctx.addIssue({
