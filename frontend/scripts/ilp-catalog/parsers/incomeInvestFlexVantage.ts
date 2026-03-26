@@ -401,6 +401,7 @@ export function parseIncomeInvestFlexVantage(context: ParseContext): IlpCatalogP
       'kernel:bonus-preserved-value-cohorts',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'income-vs2-secondary-insured-option',
       'income-vs2-life-events-withdrawal-eligibility-and-count-limits',

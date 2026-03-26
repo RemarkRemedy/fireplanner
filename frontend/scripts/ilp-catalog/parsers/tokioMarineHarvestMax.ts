@@ -590,6 +590,7 @@ export function parseTokioMarineHarvestMax(context: ParseContext): IlpCatalogPro
       'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'tokio-harvest-max-credit-card-charge',
       'tokio-harvest-max-advanced-death-payout-handling',

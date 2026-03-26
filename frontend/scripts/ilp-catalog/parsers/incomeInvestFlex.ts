@@ -408,6 +408,7 @@ export function parseIncomeInvestFlex(context: ParseContext): IlpCatalogProduct 
       'kernel:bonus-preserved-value-cohorts',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'income-vs1-secondary-insured-option',
       'income-vs1-life-events-withdrawal-eligibility-and-count-limits',

@@ -131,6 +131,7 @@ export function parseGreatEasternInvestAdvantage2Sp(context: ParseContext): IlpC
       'kernel:current-death-benefit-estimate',
       'kernel:current-ti-benefit-estimate',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'great-eastern-gia2-sp-srs-surrender-destination',
     ],

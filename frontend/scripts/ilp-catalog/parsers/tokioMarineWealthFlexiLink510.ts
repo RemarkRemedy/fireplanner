@@ -507,6 +507,7 @@ export function parseTokioMarineWealthFlexiLink510(context: ParseContext): IlpCa
       'kernel:bonus-lookback-qualification-window',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'tokio-wealth-flexi-link-5-10-involuntary-unemployment-benefit-administration',
       'tokio-wealth-flexi-link-5-10-advanced-death-benefit-selection',

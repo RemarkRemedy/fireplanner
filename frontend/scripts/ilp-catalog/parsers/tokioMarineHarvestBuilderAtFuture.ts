@@ -521,6 +521,7 @@ export function parseTokioMarineHarvestBuilderAtFuture(context: ParseContext): I
       'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'tokio-harvest-builder-atfuture-advanced-death-benefit-payout-handling',
       'tokio-harvest-builder-atfuture-credit-card-charge',

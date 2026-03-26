@@ -63,6 +63,12 @@ export const ilpTemplateBonusSchema = z.object({
     endPolicyYear: z.number().int().min(1).max(100).nullable(),
     rate: z.number().min(0).max(5),
   })).max(25).optional(),
+  vitalityStatusRateSchedule: z.array(z.object({
+    status: z.enum(['bronze', 'silver', 'gold', 'platinum']),
+    startPolicyYear: z.number().int().min(1).max(100),
+    endPolicyYear: z.number().int().min(1).max(100).nullable(),
+    rate: z.number().min(0).max(5),
+  })).max(25).optional(),
   stepUpPayoutConfig: z.object({
     premiumShortfallChargeYears: z.number().int().min(1).max(100),
     partialWithdrawalAccountIds: z.array(z.string().min(1)).min(1).max(10),
@@ -121,7 +127,7 @@ export const ilpTemplateBonusSchema = z.object({
     z.object({
       formula: z.literal('cumulative-effective-account-value-ratio'),
       maximumRatio: z.number().min(0).max(100),
-      includeReinvestedDividendWithdrawals: z.literal(true).optional(),
+      includeReinvestedDividendWithdrawals: z.boolean().optional(),
     }),
     z.object({
       formula: z.literal('no-new-premium-arrears-in-lookback-months'),
@@ -152,6 +158,35 @@ export const ilpTemplateBonusSchema = z.object({
   })).max(5).optional(),
   notes: z.array(z.string()),
   sourceRefs: z.array(ilpCatalogSourceRefSchema),
+}).superRefine((bonus, ctx) => {
+  if (bonus.oneTimePayoutBasis === 'step-up-booster-delta') {
+    if (bonus.stepUpPayoutConfig == null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'step-up-booster-delta bonuses require stepUpPayoutConfig',
+        path: ['stepUpPayoutConfig'],
+      })
+    }
+
+    if ((bonus.policyYearRateSchedule?.length ?? 0) === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'step-up-booster-delta bonuses require a non-empty policyYearRateSchedule',
+        path: ['policyYearRateSchedule'],
+      })
+    }
+
+    if (
+      bonus.stepUpPayoutConfig != null
+      && bonus.stepUpPayoutConfig.countPartialWithdrawalsFromPolicyYear !== (bonus.startPolicyYear + 1)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'step-up-booster-delta bonuses must start counting partial withdrawals from the first policy year after MIP',
+        path: ['stepUpPayoutConfig', 'countPartialWithdrawalsFromPolicyYear'],
+      })
+    }
+  }
 })
 
 export const ilpTemplateFeeRuleSchema = z.object({
@@ -433,35 +468,6 @@ export const ilpTemplateScheduledPayoutSupportSchema = z.object({
   }).optional(),
   notes: z.array(z.string()).min(1),
   sourceRefs: z.array(ilpCatalogSourceRefSchema),
-}).superRefine((bonus, ctx) => {
-  if (bonus.oneTimePayoutBasis === 'step-up-booster-delta') {
-    if (bonus.stepUpPayoutConfig == null) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'step-up-booster-delta bonuses require stepUpPayoutConfig',
-        path: ['stepUpPayoutConfig'],
-      })
-    }
-
-    if ((bonus.policyYearRateSchedule?.length ?? 0) === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'step-up-booster-delta bonuses require a non-empty policyYearRateSchedule',
-        path: ['policyYearRateSchedule'],
-      })
-    }
-
-    if (
-      bonus.stepUpPayoutConfig != null
-      && bonus.stepUpPayoutConfig.countPartialWithdrawalsFromPolicyYear !== (bonus.startPolicyYear + 1)
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'step-up-booster-delta bonuses must start counting partial withdrawals from the first policy year after MIP',
-        path: ['stepUpPayoutConfig', 'countPartialWithdrawalsFromPolicyYear'],
-      })
-    }
-  }
 })
 
 export const ilpTemplateDistributionSupportSchema = z.object({
@@ -864,6 +870,7 @@ export const ilpCatalogProductSchema = z.object({
   structureStatus: z.enum(['structured', 'brochure-partial']),
   economicsStatus: z.enum(['supported', 'partial-modeled-subset', 'metadata-only']),
   modeledEconomics: z.array(z.string().min(1)).max(40),
+  coveredElsewhereBehaviors: z.array(z.string().min(1)).max(60).default([]),
   metadataOnlyBehaviors: z.array(z.string().min(1)).max(40),
   warnings: z.array(z.string()),
   archived: z.boolean(),

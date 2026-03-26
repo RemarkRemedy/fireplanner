@@ -517,6 +517,7 @@ export function parseTokioMarineGoLuxe(context: ParseContext): IlpCatalogProduct
       'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'tokio-goluxe-advanced-death-payout-handling',
       'tokio-goluxe-change-of-life-assured-administration',

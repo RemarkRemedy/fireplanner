@@ -379,6 +379,7 @@ export function parseManulifeSmartRetireIncome({ document, sourceChecksumSha256 
       'kernel:scheduled-payout-target-retirement-age-gate',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: ['manulife-smartretire-v-income-fund-management-charge'],
     metadataOnlyBehaviors: [
       'manulife-smartretire-v-income-claim-handling',
       'manulife-smartretire-v-income-waiver-of-premium-benefit',
@@ -386,7 +387,6 @@ export function parseManulifeSmartRetireIncome({ document, sourceChecksumSha256 
       'manulife-smartretire-v-income-flexi-start-premium-variation',
       'manulife-smartretire-v-income-reinstatement-underwriting-and-exclusion-resets',
       'manulife-smartretire-v-income-reinvested-dividend-withdrawal',
-      'manulife-smartretire-v-income-fund-management-charge',
       'manulife-smartretire-v-income-fund-switching-and-redirection',
     ],
     warnings: [

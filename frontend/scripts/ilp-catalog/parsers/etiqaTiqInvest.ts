@@ -203,6 +203,7 @@ export function parseEtiqaTiqInvest(context: ParseContext): IlpCatalogProduct {
       'kernel:current-ti-benefit-estimate',
       'tokio-recurring-single-premium-routing',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'etiqa-tiq-invest-fund-switching',
       'etiqa-tiq-invest-grace-period-funding',

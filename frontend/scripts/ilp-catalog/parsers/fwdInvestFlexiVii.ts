@@ -406,15 +406,17 @@ export function parseFwdInvestFlexiVii(context: ParseContext): IlpCatalogProduct
       'kernel:partial-withdrawal-start-policy-month-block',
       'kernel:partial-withdrawal-minimum-remaining-value-block',
     ],
+    coveredElsewhereBehaviors: [
+      'fwd-invest-flexi-vii-policy-closure-charge',
+      'fwd-invest-flexi-vii-fund-level-charges',
+    ],
     metadataOnlyBehaviors: [
       'fwd-invest-flexi-vii-premium-pause-waiver',
       'fwd-invest-flexi-vii-support-benefit-waiver-and-refund',
       'fwd-invest-flexi-vii-regular-premium-reduction-and-restoration',
       'fwd-invest-flexi-vii-minimum-withdrawal-and-regular-withdrawal-administration',
-      'fwd-invest-flexi-vii-policy-closure-charge',
       'fwd-invest-flexi-vii-change-of-person-insured',
       'fwd-invest-flexi-vii-fund-switching',
-      'fwd-invest-flexi-vii-fund-level-charges',
     ],
     warnings: [
       'FWD Invest Flexi VII is cataloged as a supported V1 product. The current parser covers the published current-state ordinary death benefit as the higher of 105% of policy value or the 101% protected premium-and-repayment base, the current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap subject to the published S$2 million per-life limit, Booster Bonus, Loyalty Bonus, the fixed-premium-base initial-account charge, Appendix B insurance charge with manual repayment-base input, the premium shortfall charge corridor with admitted-state charge-waiver and retrospective charge-refund support on premium-holiday events, the 5% top-up premium charge with blocking below the published S$3,000 minimum, before policy month 13, and aggregate repayment-clearance gating for missed premiums, prior initial-account withdrawals, and regular-premium-reduction differences, the initial-units-account redemption-fee schedule, the initial-units-account policy-month-25 one-off partial-withdrawal gate with the published S$3,000 minimum-account-value floor, and the initial-units-account surrender-charge schedule through the existing two-account and surrender kernels.',

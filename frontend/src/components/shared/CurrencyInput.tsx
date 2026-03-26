@@ -8,6 +8,7 @@ interface CurrencyInputProps {
   label: string
   value: number
   onChange: (value: number) => void
+  currency?: 'SGD' | 'USD'
   error?: string
   tooltip?: string
   className?: string
@@ -18,6 +19,7 @@ export function CurrencyInput({
   label,
   value,
   onChange,
+  currency = 'SGD',
   error,
   tooltip,
   className,
@@ -34,7 +36,7 @@ export function CurrencyInput({
       </Label>
       <div className="relative" onBlur={() => setTouched(true)}>
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-          $
+          {currency === 'USD' ? 'US$' : 'S$'}
         </span>
         <NumberInput
           id={inputId}

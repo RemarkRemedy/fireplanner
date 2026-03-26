@@ -35,7 +35,8 @@ describe('parseHsbcWealthInvestCpf', () => {
       'kernel:current-ti-benefit-estimate',
       'tokio-recurring-single-premium-routing',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('hsbc-life-wealth-invest-cpf-fund-management-charge')
+    expect(product.coveredElsewhereBehaviors).toContain('hsbc-life-wealth-invest-cpf-fund-management-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('hsbc-life-wealth-invest-cpf-fund-management-charge')
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-life-wealth-invest-cpf-death-benefit')
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-life-wealth-invest-cpf-terminal-illness-benefit')
     expect(product.metadataOnlyBehaviors).not.toContain('hsbc-life-wealth-invest-cpf-single-premium-principal-tracking')

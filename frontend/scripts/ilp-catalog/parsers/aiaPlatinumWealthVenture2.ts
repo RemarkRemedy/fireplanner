@@ -416,9 +416,9 @@ export function parseAiaPlatinumWealthVenture2({ document, sourceChecksumSha256 
       'kernel:current-accidental-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: ['aia-platinum-wealth-venture-2-fund-management-charge'],
     metadataOnlyBehaviors: [
       'aia-platinum-wealth-venture-2-secondary-insured-option',
-      'aia-platinum-wealth-venture-2-fund-management-charge',
       'aia-platinum-wealth-venture-2-fund-switching',
     ],
     warnings: [

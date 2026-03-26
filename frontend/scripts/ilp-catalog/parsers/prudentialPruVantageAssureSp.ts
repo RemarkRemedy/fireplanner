@@ -30,11 +30,6 @@ function roundRate(value: number): number {
   return Number(value.toFixed(6))
 }
 
-function formatPercent(value: number): string {
-  const percentage = value * 100
-  return Number.isInteger(percentage) ? `${percentage}%` : `${percentage.toFixed(1)}%`
-}
-
 function sourceRef(page: number, section: string, excerpt: string): IlpCatalogSourceRef {
   const normalizedExcerpt = normalizeWhitespace(excerpt)
   return {
@@ -289,6 +284,7 @@ export function parsePrudentialPruVantageAssureSp(context: ParseContext): IlpCat
       'branch:assure-sp-iia-surrender-charge',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'pruvantage-assure-sp-change-of-life-assured',
       'pruvantage-assure-sp-sum-assured-wealth-assure-reduction-resumption',

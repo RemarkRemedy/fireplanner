@@ -529,6 +529,7 @@ export function parseEtiqaInvestSmartFlexIi(context: ParseContext): IlpCatalogPr
       'kernel:partial-withdrawal-minimum-remaining-value-block',
       'kernel:monthly-rate-bonus-crediting',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'etiqa-smart-flex-ii-free-partial-withdrawal-benefit-administration',
       'etiqa-smart-flex-ii-change-of-life-insured',

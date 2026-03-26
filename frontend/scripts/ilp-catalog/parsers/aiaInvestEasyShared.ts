@@ -22,6 +22,7 @@ interface AiaInvestEasyConfig {
   topUpChargeRate: number
   recurringTopUpChargeRate: number
   modeledEconomics: string[]
+  coveredElsewhereBehaviors?: string[]
   metadataOnlyBehaviors: string[]
   warnings: string[]
   unsupportedItems: string[]
@@ -147,7 +148,7 @@ function buildVariant(document: ExtractedPdfDocument, config: AiaInvestEasyConfi
   }
 
   const policyStateSupport = (() => {
-    const support: NonNullable<IlpTemplateVariant['policyStateSupport']> = {}
+    const support: Partial<NonNullable<IlpTemplateVariant['policyStateSupport']>> = {}
 
     if (config.minimumTopUpAmount != null) {
       support.automaticLapseOnAccountValueDepletion = false
@@ -171,7 +172,9 @@ function buildVariant(document: ExtractedPdfDocument, config: AiaInvestEasyConfi
       support.minimumPartialWithdrawalAmount = config.minimumPartialWithdrawalAmount
     }
 
-    return Object.keys(support).length === 0 ? undefined : support
+    return Object.keys(support).length === 0
+      ? undefined
+      : (support as NonNullable<IlpTemplateVariant['policyStateSupport']>)
   })()
 
   return {
@@ -224,6 +227,7 @@ export function buildAiaInvestEasyProduct(
     structureStatus: 'structured',
     economicsStatus: 'supported',
     modeledEconomics: config.modeledEconomics,
+    coveredElsewhereBehaviors: config.coveredElsewhereBehaviors ?? [],
     metadataOnlyBehaviors: config.metadataOnlyBehaviors,
     warnings: [
       `${config.productName} is cataloged as a supported V1 product. ${config.warnings[0]}`,

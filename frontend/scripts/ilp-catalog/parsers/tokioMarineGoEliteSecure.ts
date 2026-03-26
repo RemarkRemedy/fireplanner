@@ -317,11 +317,11 @@ export function parseTokioMarineGoEliteSecure(context: ParseContext): IlpCatalog
       'branch:tokio-marine-goelite-secure-surrender-charge',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: ['tokio-marine-goelite-secure-fund-level-and-third-party-charges'],
     metadataOnlyBehaviors: [
       'tokio-marine-goelite-secure-death-benefit-payout-handling',
       'tokio-marine-goelite-secure-aggregation-limit',
       'tokio-marine-goelite-secure-fund-switching',
-      'tokio-marine-goelite-secure-fund-level-and-third-party-charges',
     ],
     warnings: [
       '#goElite Secure is cataloged as a supported V1 product. The parser captures the published zero single-premium charge, the 1.4% p.a. establishment charge on the original initial single premium for the first five policy years, the first-five-policy-years surrender charge on that same original base, the 1.00% administrative charge on the Single Premium Units Account, the published current death-benefit estimate plus Monthly Protection Charge through the locked-in-policy-value plus adjusted-single-premium protection-state kernel, the 5% recurring-single-premium and top-up charge path, nil partial-withdrawal charge, the published S$500 minimum one-off partial withdrawal amount plus the 10%-of-initial-single-premium minimum remaining Single Premium Units Account floor, and the cash-vs-SRS distribution-mode support surface, with the SRS corridor remaining reinvest-only.',

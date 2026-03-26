@@ -571,6 +571,7 @@ function buildProduct(context: ParseContext, kind: ProductKind): IlpCatalogProdu
       'kernel:monthly-rate-bonus-crediting',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       `${branchPrefix}-free-partial-withdrawal-benefit-administration`,
       `${branchPrefix}-distribution-paying-fund-threshold-and-withdrawal-consequences`,

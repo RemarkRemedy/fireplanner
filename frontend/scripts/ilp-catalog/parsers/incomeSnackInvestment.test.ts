@@ -36,7 +36,8 @@ describe('parseIncomeSnackInvestment', () => {
     expect(product.metadataOnlyBehaviors).not.toContain('income-snack-investment-single-premium-net-premium-tracking')
     expect(product.metadataOnlyBehaviors).toContain('income-snack-investment-accidental-death-claim-exclusions')
     expect(product.metadataOnlyBehaviors).toContain('income-snack-investment-trigger-driven-top-ups')
-    expect(product.metadataOnlyBehaviors).toContain('income-snack-investment-fund-management-fee')
+    expect(product.coveredElsewhereBehaviors).toContain('income-snack-investment-fund-management-fee')
+    expect(product.metadataOnlyBehaviors).not.toContain('income-snack-investment-fund-management-fee')
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended'])
 
     const variant = product.variants[0]

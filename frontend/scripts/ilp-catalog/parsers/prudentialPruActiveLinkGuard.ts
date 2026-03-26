@@ -217,6 +217,7 @@ export function parsePrudentialPruActiveLinkGuard({ document, sourceChecksumSha2
       'branch:pruactive-linkguard-top-up-premium-charge',
       'branch:pruactive-linkguard-zero-partial-withdrawal-charge',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'pruactive-linkguard-no-lapse-period',
       'pruactive-linkguard-withdrawal-eligibility',

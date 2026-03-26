@@ -400,6 +400,7 @@ export function parsePrudentialPruVantageProsper(context: ParseContext): IlpCata
       'branch:pru-charged-withdrawal',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'pruvantage-prosper-accidental-death-and-claim-exclusions',
       'premium-pass-wealth-share-secondary-life-options',

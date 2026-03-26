@@ -362,13 +362,14 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-frequency-eligibility-gate')
     expect(seed.catalogSource?.modeledEconomics).toContain('hsbc-voyage-premium-base-amf')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:wealth-voyage-premium-holiday-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:premium-holiday-top-up-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-start-policy-month-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:monthly-rate-bonus-crediting')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current residual death-benefit estimate after a TI claim today'))).toBe(true)
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-voyage-premium-holiday-charge-after-free-duration')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-voyage-premium-holiday-charge-after-free-duration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-voyage-premium-holiday-backpay-amf-reconciliation')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('hsbc-voyage-dividend-payout-threshold')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-voyage-dividend-cash-payout-routing-fallback-and-execution')
@@ -430,6 +431,25 @@ describe('templateVariantToPolicySeed', () => {
           trigger: 'top-up',
           basis: 'event-amount',
           rate: 0.03,
+        }),
+        expect.objectContaining({
+          id: 'premium-holiday-charge',
+          trigger: 'premium-holiday',
+          basis: 'annual-premium-with-overlap-months',
+          freeLifetimeMonths: 24,
+          freeLifetimeMonthsStartPolicyYear: 3,
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 1, rate: 0 },
+            { startPolicyYear: 2, endPolicyYear: 2, rate: 0 },
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.85 },
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.68 },
+            { startPolicyYear: 5, endPolicyYear: 5, rate: 0.56 },
+            { startPolicyYear: 6, endPolicyYear: 6, rate: 0.5 },
+            { startPolicyYear: 7, endPolicyYear: 7, rate: 0.5 },
+            { startPolicyYear: 8, endPolicyYear: 8, rate: 0.5 },
+            { startPolicyYear: 9, endPolicyYear: 9, rate: 0.5 },
+            { startPolicyYear: 10, endPolicyYear: 10, rate: 0.5 },
+          ],
         }),
         expect.objectContaining({
           id: 'missed-amf-on-premium-holiday-repayment',
@@ -904,7 +924,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:income-snack-investment-zero-top-up-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('income-snack-investment-single-premium-net-premium-tracking')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('income-snack-investment-fund-management-fee')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('income-snack-investment-fund-management-fee')
+    expect(seed.catalogSource?.coveredElsewhereBehaviors).toContain('income-snack-investment-fund-management-fee')
     expect(seed.chargeRules).toEqual([
       expect.objectContaining({
         id: 'single-premium-charge',
@@ -4401,6 +4422,7 @@ describe('templateVariantToPolicySeed', () => {
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-invest-plus-sp-policy-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-invest-plus-sp-representative-management-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-invest-plus-sp-top-up-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-invest-plus-sp-current-power-up-bonus-credit')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:etiqa-invest-plus-sp-initial-power-up-bonus')
@@ -4451,6 +4473,13 @@ describe('templateVariantToPolicySeed', () => {
             { startPolicyYear: 1, endPolicyYear: 5, rate: 0.023 },
             { startPolicyYear: 6, endPolicyYear: null, rate: 0.01 },
           ],
+        }),
+        expect.objectContaining({
+          id: 'representative-management-charge',
+          basis: 'account-value',
+          rate: 0.0075,
+          appliesTo: ['policy', 'topup'],
+          requiresManualInput: true,
         }),
       ]),
     )
@@ -10883,14 +10912,17 @@ describe('templateVariantToPolicySeed', () => {
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-platinum-wealth-elite-2-vitality-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-paid-up-to-date-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-ti-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-residual-death-benefit-after-ti-estimate')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-wealth-elite-2-no-lapse-privilege')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-elite-2-vitality-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-elite-2-protection-benefits')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(5)
+    expect(seed.vitalityStatus).toBe('silver')
     expect(seed.policyStateSupport).toEqual({
       automaticLapseOnAccountValueDepletion: false,
       blockTopUpsWhenPremiumsNotPaidUpToDate: true,
@@ -10919,7 +10951,25 @@ describe('templateVariantToPolicySeed', () => {
       }),
     ])
     expect(seed.eecTable).toEqual([0.5, 0.4, 0.3, 0.2, 0.1, 0])
+    expect(seed.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'vitality-fund-boost',
+        label: 'Vitality Fund Boost',
+        mode: 'premium-allocation',
+        rate: 0,
+        policyYearRateSchedule: [
+          { startPolicyYear: 1, endPolicyYear: 1, rate: 0.01 },
+          { startPolicyYear: 2, endPolicyYear: 5, rate: 0 },
+        ],
+        vitalityStatusRateSchedule: expect.arrayContaining([
+          expect.objectContaining({ status: 'bronze', startPolicyYear: 1, endPolicyYear: 1, rate: 0 }),
+          expect.objectContaining({ status: 'gold', startPolicyYear: 2, endPolicyYear: 5, rate: 0.01 }),
+          expect.objectContaining({ status: 'platinum', startPolicyYear: 2, endPolicyYear: 5, rate: 0.02 }),
+        ]),
+      }),
+    ])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('3% top-up premium charge with blocking in months where regular premiums are not paid when due'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('static-assumption Vitality Fund Boost schedule'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current-state death benefit as the higher of current insured amount or policy value via a manual current insured amount input'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current residual death-benefit estimate after a TI claim today'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('premium-term extension'))).toBe(true)
@@ -11558,6 +11608,7 @@ describe('templateVariantToPolicySeed', () => {
       structureStatus: 'structured',
       economicsStatus: 'partial-modeled-subset',
       modeledEconomics: [],
+      coveredElsewhereBehaviors: [],
       metadataOnlyBehaviors: [],
       warnings: [],
       archived: false,
@@ -11680,6 +11731,7 @@ describe('templateVariantToPolicySeed', () => {
       structureStatus: 'structured',
       economicsStatus: 'partial-modeled-subset',
       modeledEconomics: [],
+      coveredElsewhereBehaviors: [],
       metadataOnlyBehaviors: [],
       warnings: [],
       archived: false,

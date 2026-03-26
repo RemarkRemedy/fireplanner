@@ -317,6 +317,7 @@ export function parseHsbcLifeFlexiProtector({ document, sourceChecksumSha256 }: 
       'kernel:scheduled-payout-minimum-annual-withdrawal-amount',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'hsbc-life-flexi-protector-tpd-cross-policy-benefit-caps',
       'hsbc-life-flexi-protector-tpd-adl-qualification-and-later-release',

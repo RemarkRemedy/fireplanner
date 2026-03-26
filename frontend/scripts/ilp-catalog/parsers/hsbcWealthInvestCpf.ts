@@ -180,9 +180,11 @@ export function parseHsbcWealthInvestCpf(context: ParseContext): IlpCatalogProdu
       'kernel:current-ti-benefit-estimate',
       'tokio-recurring-single-premium-routing',
     ],
-    metadataOnlyBehaviors: [
+    coveredElsewhereBehaviors: [
       'hsbc-life-wealth-invest-cpf-fund-management-charge',
       'hsbc-life-wealth-invest-cpf-additional-ilp-sub-fund-charges',
+    ],
+    metadataOnlyBehaviors: [
       'hsbc-life-wealth-invest-cpf-switching-eligibility-constraints',
       'hsbc-life-wealth-invest-cpf-free-look-refund',
       'hsbc-life-wealth-invest-cpf-termination',

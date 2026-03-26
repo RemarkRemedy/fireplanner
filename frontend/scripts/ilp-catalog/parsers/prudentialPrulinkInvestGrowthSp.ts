@@ -24,6 +24,7 @@ export function parsePrudentialPrulinkInvestGrowthSp(context: ParseContext): Ilp
       'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'prulink-investgrowth-sp-e-top-up-charge',
       'prulink-investgrowth-sp-withdrawals',

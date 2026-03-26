@@ -172,12 +172,20 @@ const TRIGGER_LABELS: Record<string, string> = {
   'recurring-single-premium': 'Recurring single premium',
 }
 
+function hasTriggerRule(
+  rule: NonNullable<IlpBonusRule['qualificationRules']>[number],
+): rule is Extract<NonNullable<IlpBonusRule['qualificationRules']>[number], { trigger: string }> {
+  return 'trigger' in rule
+}
+
 function BonusRuleContent({ bonuses, currency }: { bonuses: IlpBonusRule[]; currency: IlpCurrency }) {
   return (
     <div className="space-y-3">
       {bonuses.map((bonus) => {
         const suspensionTriggers = [...new Set((bonus.suspensionRules ?? []).map((r) => r.trigger))]
-        const qualificationTriggers = [...new Set((bonus.qualificationRules ?? []).map((r) => r.trigger))]
+        const qualificationTriggers = [
+          ...new Set((bonus.qualificationRules ?? []).filter(hasTriggerRule).map((rule) => rule.trigger)),
+        ]
         const allRiskTriggers = [...new Set([...suspensionTriggers, ...qualificationTriggers])]
 
         return (

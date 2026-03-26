@@ -23,6 +23,7 @@ export function parsePrudentialPrulinkInvestGrowth(context: ParseContext): IlpCa
       'kernel:partial-withdrawal-minimum-remaining-value-block',
       'kernel:current-death-benefit-estimate',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'prulink-investgrowth-e-top-up-charge',
       'prulink-investgrowth-withdrawals',

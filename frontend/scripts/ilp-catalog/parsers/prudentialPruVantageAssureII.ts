@@ -424,6 +424,7 @@ export function parsePrudentialPruVantageAssureII(context: ParseContext): IlpCat
       'branch:pru-charged-withdrawal',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'pruvantage-assure-ii-death-claim-exclusions',
       'premium-pass-wealth-share-change-of-life-assured-options',

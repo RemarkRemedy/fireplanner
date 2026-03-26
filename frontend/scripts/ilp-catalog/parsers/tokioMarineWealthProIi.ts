@@ -593,6 +593,7 @@ export function parseTokioMarineWealthProIi(context: ParseContext): IlpCatalogPr
       'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'tokio-wealth-pro-ii-advanced-death-payout-handling',
       'tokio-wealth-pro-ii-change-of-life-assured-and-life-replacement-administration',

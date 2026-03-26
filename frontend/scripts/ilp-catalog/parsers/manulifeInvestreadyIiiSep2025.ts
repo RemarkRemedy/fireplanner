@@ -335,24 +335,26 @@ function buildVariant(
   const page12 = sourceRef(12, 'Distribution of dividends', snippetNear(document, 12, 'Distribution of Dividends', 22))
   const page20 = sourceRef(20, 'Appendix A annual COI table', snippetNear(document, 20, 'Annual Cost of Insurance for Death Benefit', 20))
 
+  const policyFeeRules: IlpTemplateFeeRule[] = variantDefinition.hasPolicyFee
+    ? [{
+        id: 'policy-fee',
+        label: 'Policy Fee',
+        basis: 'fixed-annual',
+        rate: 0,
+        amount: 0,
+        requiresManualInput: true,
+        appliesTo: ['policy'],
+        activeWindow: 'policy-term',
+        notes: [
+          'Enter the actual annual policy-fee amount before trusting the projection.',
+          `The published policy fee is S$5 deducted on each policy monthiversary only when the first-year annualised basic premium for the ${variantDefinition.label} corridor is in the ${variantDefinition.policyFeeAnnualisedPremiumBand} band.`,
+        ],
+        sourceRefs: [page7],
+      }]
+    : []
+
   const feeRules: IlpTemplateFeeRule[] = [
-    ...(variantDefinition.hasPolicyFee
-      ? [{
-          id: 'policy-fee',
-          label: 'Policy Fee',
-          basis: 'fixed-annual',
-          rate: 0,
-          amount: 0,
-          requiresManualInput: true,
-          appliesTo: ['policy'],
-          activeWindow: 'policy-term',
-          notes: [
-            'Enter the actual annual policy-fee amount before trusting the projection.',
-            `The published policy fee is S$5 deducted on each policy monthiversary only when the first-year annualised basic premium for the ${variantDefinition.label} corridor is in the ${variantDefinition.policyFeeAnnualisedPremiumBand} band.`,
-          ],
-          sourceRefs: [page7],
-        }]
-      : []),
+    ...policyFeeRules,
     {
       id: 'cost-of-insurance',
       label: 'Cost of Insurance (Death / TI)',
@@ -538,6 +540,7 @@ export function parseManulifeInvestreadyIiiSep2025(context: ParseContext): IlpCa
       'branch:manulife-investready-iii-full-surrender-charge',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'manulife-investready-iii-life-stage-partial-withdrawal',
       'manulife-investready-iii-ti-claim-admission-settlement-and-notification-timing',

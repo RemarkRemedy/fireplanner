@@ -20,6 +20,7 @@ interface NumberInputProps {
   label?: string
   tooltip?: string
   error?: string
+  suffix?: string
 }
 
 /**
@@ -42,6 +43,7 @@ export function NumberInput({
   label,
   tooltip,
   error,
+  suffix,
 }: NumberInputProps) {
   const autoId = useId()
   const inputId = id ?? autoId
@@ -119,7 +121,7 @@ export function NumberInput({
     []
   )
 
-  const input = (
+  const inputControl = (
     <Input
       id={inputId}
       type={formatWithCommas ? 'text' : 'number'}
@@ -132,11 +134,25 @@ export function NumberInput({
       min={formatWithCommas ? undefined : min}
       max={formatWithCommas ? undefined : max}
       step={formatWithCommas ? undefined : step}
-      className={cn('border-blue-300', touched && error && 'border-destructive', className)}
+      className={cn(
+        'border-blue-300',
+        suffix && 'pr-12',
+        touched && error && 'border-destructive',
+        className,
+      )}
       disabled={disabled}
       aria-describedby={touched && error ? errorId : undefined}
     />
   )
+
+  const input = suffix ? (
+    <div className="relative">
+      {inputControl}
+      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+        {suffix}
+      </span>
+    </div>
+  ) : inputControl
 
   if (!label) return input
 

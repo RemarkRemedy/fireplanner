@@ -22,6 +22,7 @@ export function parseEtiqaInvestSmartVista(context: ParseContext): IlpCatalogPro
     id: 'etiqa-invest-smart-vista',
     productName: 'Invest Smart Vista',
     modeledEconomics: baseProduct.modeledEconomics.map(replaceSmartVistaId),
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       ...baseProduct.metadataOnlyBehaviors.map(replaceSmartVistaId),
       'etiqa-smart-vista-shariah-fund-availability',

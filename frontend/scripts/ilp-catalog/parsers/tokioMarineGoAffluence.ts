@@ -519,6 +519,7 @@ export function parseTokioMarineGoAffluence(context: ParseContext): IlpCatalogPr
       'kernel:current-accidental-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'tokio-goaffluence-advanced-death-payout-life-benefit-rider-and-life-assured-administration',
       'tokio-goaffluence-accidental-death-claim-gates-and-premium-change-history',

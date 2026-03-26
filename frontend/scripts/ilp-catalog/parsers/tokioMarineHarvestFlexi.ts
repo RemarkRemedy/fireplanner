@@ -559,6 +559,7 @@ export function parseTokioMarineHarvestFlexi(context: ParseContext): IlpCatalogP
       'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'tokio-harvest-flexi-advanced-death-payout-handling',
       'tokio-harvest-flexi-change-of-life-assured-and-life-replacement-administration',

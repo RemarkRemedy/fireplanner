@@ -100,6 +100,7 @@ describe('parseAiaPlatinumWealthElite2', () => {
       'branch:aia-platinum-wealth-elite-2-premium-holiday-charge',
       'branch:aia-platinum-wealth-elite-2-partial-withdrawal-charge',
       'branch:aia-platinum-wealth-elite-2-full-surrender-charge',
+      'branch:aia-platinum-wealth-elite-2-vitality-bonus',
       'kernel:top-up-paid-up-to-date-block',
       'kernel:current-death-benefit-estimate',
       'kernel:current-ti-benefit-estimate',
@@ -107,8 +108,9 @@ describe('parseAiaPlatinumWealthElite2', () => {
     ])
     expect(product.metadataOnlyBehaviors).toContain('aia-platinum-wealth-elite-2-no-lapse-privilege')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-elite-2-protection-benefits')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-elite-2-vitality-bonus')
     expect(product.warnings).toContain(
-      'AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the regular-premium withdrawal / surrender charge schedules, the current-state death benefit as the higher of current insured amount or policy value via a manual current insured amount input, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, premium-term extension, administration charge, insurance risk charge, no-lapse mechanics, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.',
+      'AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the regular-premium withdrawal / surrender charge schedules, a static-assumption Vitality Fund Boost schedule for the regular-pay corridor, the current-state death benefit as the higher of current insured amount or policy value via a manual current insured amount input, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, premium-term extension, administration charge, insurance risk charge, no-lapse mechanics, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.',
     )
 
     const variant = product.variants[0]
@@ -124,6 +126,35 @@ describe('parseAiaPlatinumWealthElite2', () => {
       expect.objectContaining({
         id: 'regular-premium-charge',
         yearBasis: 'premium-year',
+      }),
+    ])
+    expect(variant.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'vitality-fund-boost',
+        label: 'Vitality Fund Boost',
+        mode: 'premium-allocation',
+        startPolicyYear: 1,
+        endPolicyYear: 5,
+        vitalityStatusRateSchedule: expect.arrayContaining([
+          expect.objectContaining({
+            status: 'silver',
+            startPolicyYear: 1,
+            endPolicyYear: 1,
+            rate: 0.01,
+          }),
+          expect.objectContaining({
+            status: 'silver',
+            startPolicyYear: 2,
+            endPolicyYear: 5,
+            rate: 0,
+          }),
+          expect.objectContaining({
+            status: 'platinum',
+            startPolicyYear: 2,
+            endPolicyYear: 5,
+            rate: 0.02,
+          }),
+        ]),
       }),
     ])
     expect(variant.eventChargeRules).toEqual([
@@ -142,6 +173,7 @@ describe('parseAiaPlatinumWealthElite2', () => {
       }),
     ])
     expect(variant.eecTable).toEqual([0.5, 0.4, 0.3, 0.2, 0.1, 0])
+    expect(variant.unsupportedItems).toContain('Income Withdrawal Privilege and change-of-insured effects remain informational only, while Vitality Fund Boost is modeled under a static assumed status for the regular-pay corridor only.')
     expect(variant.unsupportedItems).toContain('The current death benefit needs a manual current insured amount input because withdrawals, Income Withdrawal Privilege usage, and claim-side reductions are not reconstructed from history in V1.')
     expect(variant.unsupportedItems).toContain('Death Benefit Bequest Option and other protection-side payout handling remain informational only.')
     expect(variant.unsupportedItems).toContain('The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both need manual current insured amount and remaining aggregate TI cap inputs because claim-side reductions and TI usage are not reconstructed from history in V1.')

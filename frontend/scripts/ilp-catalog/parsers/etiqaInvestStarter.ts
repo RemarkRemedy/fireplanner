@@ -201,6 +201,7 @@ export function parseEtiqaInvestStarter(context: ParseContext): IlpCatalogProduc
       'branch:invest-starter-surrender-charge',
       'branch:invest-starter-ad-hoc-top-up-routing',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'invest-starter-policy-charge-refund-every-3-years',
       'invest-starter-one-time-reward',

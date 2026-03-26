@@ -414,6 +414,7 @@ export function parseHsbcWealthAccelerate(context: ParseContext): IlpCatalogProd
       'kernel:current-ti-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'premium-holiday-delayed-or-partial-repayment',
       'hsbc-accelerate-dividend-bank-routing',

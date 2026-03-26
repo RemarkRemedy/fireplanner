@@ -316,6 +316,7 @@ export function parseHsbcWealthHarvest(context: ParseContext): IlpCatalogProduct
       'kernel:scheduled-payout-minimum-annual-withdrawal-amount',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'hsbc-harvest-terminal-illness-cap-overflow-and-post-claim-state',
       'hsbc-harvest-dividend-bank-routing',

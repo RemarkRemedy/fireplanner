@@ -339,6 +339,7 @@ export function parseSinglifeLegacyInvest({ document, sourceChecksumSha256 }: Pa
       'kernel:scheduled-payout-per-occurrence-minimum',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'singlife-legacy-invest-extension-benefit',
       'singlife-legacy-invest-free-partial-withdrawal-benefit-eligibility-and-limits',

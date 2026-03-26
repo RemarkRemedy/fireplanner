@@ -170,6 +170,7 @@ export function parseIncomeWealthLinkGl3(context: ParseContext): IlpCatalogProdu
       'kernel:current-accidental-death-benefit-estimate',
       'tokio-recurring-single-premium-routing',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'income-wealthlink-gl3-accidental-death-claim-exclusions',
       'income-wealthlink-gl3-fund-level-annual-management-fee',

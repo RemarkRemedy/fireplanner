@@ -110,6 +110,7 @@ describe('parseEtiqaInvestPlusSp', () => {
     expect(product.modeledEconomics).toEqual([
       'branch:etiqa-invest-plus-sp-zero-single-premium-charge',
       'branch:etiqa-invest-plus-sp-policy-charge',
+      'branch:etiqa-invest-plus-sp-representative-management-charge',
       'branch:etiqa-invest-plus-sp-top-up-premium-charge',
       'branch:etiqa-invest-plus-sp-initial-partial-withdrawal-charge',
       'branch:etiqa-invest-plus-sp-initial-surrender-charge',
@@ -122,7 +123,7 @@ describe('parseEtiqaInvestPlusSp', () => {
       'kernel:distribution-mode-assumption',
     ])
     expect(product.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-historical-top-up-power-up-bonus-vintage-accounting')
-    expect(product.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-representative-management-charge')
+    expect(product.metadataOnlyBehaviors).not.toContain('etiqa-invest-plus-sp-representative-management-charge')
     expect(product.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-dividend-threshold-and-withdrawal-consequences')
     expect(product.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-grace-period-top-up-funding')
     expect(product.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-reinstatement')
@@ -147,6 +148,13 @@ describe('parseEtiqaInvestPlusSp', () => {
           { startPolicyYear: 1, endPolicyYear: 5, rate: 0.023 },
           { startPolicyYear: 6, endPolicyYear: null, rate: 0.01 },
         ],
+      }),
+      expect.objectContaining({
+        id: 'representative-management-charge',
+        basis: 'account-value',
+        rate: 0.0075,
+        appliesTo: ['policy', 'topup'],
+        requiresManualInput: true,
       }),
     ])
     expect(variant.eventChargeRules).toEqual([
@@ -209,6 +217,7 @@ describe('parseEtiqaInvestPlusSp', () => {
     expect(variant.warnings[0]).toContain('S$500 minimum withdrawal amount in multiples of S$100')
     expect(variant.warnings[0]).toContain('S$1,000 post-withdrawal minimum remaining-account-value floor')
     expect(variant.warnings[0]).toContain('current ordinary death-benefit estimate as the higher of account value or 101% of net premium')
+    expect(variant.warnings[0]).toContain('representative management charge at the published maximum manual-input rate')
     expect(variant.warnings[1]).toContain('future recurring Top-up Account Power-up Bonus is modeled for new projection-start top-ups')
   })
 

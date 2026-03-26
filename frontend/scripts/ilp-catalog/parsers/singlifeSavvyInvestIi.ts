@@ -3,7 +3,6 @@ import type {
   IlpCatalogProduct,
   IlpCatalogSourceRef,
   IlpTemplateBonus,
-  IlpTemplateBonusTier,
   IlpTemplateEventChargeRule,
   IlpTemplateFeeRule,
   IlpTemplateVariant,
@@ -451,6 +450,7 @@ export function parseSinglifeSavvyInvestIi({ document, sourceChecksumSha256 }: P
       'kernel:current-ti-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'singlife-savvy-invest-ii-life-stage-benefit-eligibility-and-limit-overrides',
       'singlife-savvy-invest-ii-change-of-life-assured',

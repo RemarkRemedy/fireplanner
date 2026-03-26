@@ -422,6 +422,7 @@ export function parseHsbcWealthFocus({ document, sourceChecksumSha256 }: ParseCo
     structureStatus: 'structured',
     economicsStatus: 'supported',
     modeledEconomics,
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'wealth-focus-life-replacement-eligibility-and-underwriting',
       'wealth-focus-life-replacement-cover-reset-and-rider-termination',

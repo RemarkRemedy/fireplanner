@@ -509,12 +509,12 @@ export function parseTokioMarineGoAssure(context: ParseContext): IlpCatalogProdu
       'kernel:current-tpd-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: ['tokio-marine-goassure-third-party-charges'],
     metadataOnlyBehaviors: [
       'tokio-marine-goassure-waiver-approval-gating-and-limits',
       'tokio-marine-goassure-monthly-protection-charge',
       'tokio-marine-goassure-guaranteed-extra-protection',
       'tokio-marine-goassure-dividend-payout-threshold',
-      'tokio-marine-goassure-third-party-charges',
     ],
     warnings: [
       '#goAssure is cataloged as a supported V1 product. The parser captures the SGD 10-year cash corridor charge surfaces, the policy-year-1-to-4 Initial Bonus corridor via manual initial basic sum assured at issue bands, a simplified year-15 Wellness Bonus credit on the Accumulation Units Account for the published 3.50% core bonus amount, the current-state death-benefit estimate before and after Protection Age via manual current Protection Age / amount-owing / basic-sum-assured inputs, the current terminal-illness snapshot as the lower of that current death corridor and a manual remaining aggregate TI cap, the current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today through the published partial-TI continuation corridor after manual claim-amount and residual-death input, the current TPD benefit estimate before Protection Age via the same current death corridor plus a manual current TPD acceleration ratio and remaining aggregate TPD cap, and distribution-mode assumption support, including phase-specific dividend cash-payout account eligibility and the 30-day record-date instruction lead time, while the published $50 per-dividend minimum payout threshold, Wellness Bonus qualification and exact delayed-payout basis, waiver mechanics, Monthly Protection Charge, terminal-illness exclusions / settlement, post-TPD continuation state, and broader protection-side claim behavior remain informational only.',

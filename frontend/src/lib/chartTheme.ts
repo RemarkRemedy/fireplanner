@@ -12,6 +12,7 @@ export interface ChartColors {
   success: string
   warning: string
   danger: string
+  info: string
   muted: string
   fan: [string, string, string, string]
   strategy: [string, string, string, string, string, string]
@@ -23,6 +24,7 @@ export function useChartColors(): ChartColors {
     success: getCSSColor('--chart-success'),
     warning: getCSSColor('--chart-warning'),
     danger: getCSSColor('--chart-danger'),
+    info: getCSSColor('--chart-info') || getCSSColor('--chart-primary'),
     muted: getCSSColor('--chart-muted'),
     fan: [
       getCSSColor('--chart-fan-1'),

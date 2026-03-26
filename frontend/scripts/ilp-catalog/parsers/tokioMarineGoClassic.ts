@@ -406,6 +406,7 @@ export function parseTokioMarineGoClassic(context: ParseContext): IlpCatalogProd
       'kernel:partial-withdrawal-minimum-remaining-value-block',
       'branch:tokio-goclassic-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'tokio-goclassic-advanced-death-payout-handling',
       'tokio-goclassic-change-of-life-assured-administration',

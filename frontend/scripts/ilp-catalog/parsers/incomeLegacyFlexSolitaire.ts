@@ -322,6 +322,7 @@ export function parseIncomeLegacyFlexSolitaire({ document, sourceChecksumSha256 
       'branch:income-legacy-flex-solitaire-appendix-2-withdrawal-and-surrender-charge',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'income-legacy-flex-solitaire-single-premium-corridor',
       'income-legacy-flex-solitaire-no-lapse-guarantee',

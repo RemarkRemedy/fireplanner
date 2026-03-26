@@ -532,6 +532,7 @@ describe('IlpReviewPage', () => {
         },
         scheduledPayoutAssumption: {
           mode: 'scheduled-redemption',
+          source: 'manual-assumption',
           accountId: 'topup',
           annualPayoutAmount: 6_000,
           startPolicyYear: 4,
@@ -3342,7 +3343,7 @@ describe('IlpReviewPage', () => {
 
       state.updatePolicy(policy.id, {
         currentPolicyYear: 9,
-        monthsElapsed: 108,
+        monthsAlreadyPaid: 108,
         assuranceProfile: {
           currentAgeNextBirthday: 55,
           sex: 'male',
@@ -3398,7 +3399,7 @@ describe('IlpReviewPage', () => {
 
       state.updatePolicy(policy.id, {
         currentPolicyYear: 9,
-        monthsElapsed: 108,
+        monthsAlreadyPaid: 108,
         assuranceProfile: {
           currentAgeNextBirthday: 55,
           sex: 'male',
@@ -3452,7 +3453,7 @@ describe('IlpReviewPage', () => {
 
       state.updatePolicy(policy.id, {
         currentPolicyYear: 3,
-        monthsElapsed: 36,
+        monthsAlreadyPaid: 36,
         assuranceProfile: {
           currentAgeNextBirthday: 45,
           sex: 'male',
@@ -3504,7 +3505,7 @@ describe('IlpReviewPage', () => {
 
       state.updatePolicy(policy.id, {
         currentPolicyYear: 9,
-        monthsElapsed: 108,
+        monthsAlreadyPaid: 108,
         assuranceProfile: {
           currentAgeNextBirthday: 65,
           sex: 'male',
@@ -4208,6 +4209,8 @@ describe('IlpReviewPage', () => {
       state.updatePolicy(policy.id, {
         assuranceProfile: {
           currentAgeNextBirthday: 45,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
           currentAmountOwing: 360,
         },
         claimProfile: {
@@ -7172,6 +7175,7 @@ describe('IlpReviewPage', () => {
         },
         scheduledPayoutAssumption: {
           mode: 'scheduled-redemption',
+          source: 'manual-assumption',
           accountId: 'policy',
           annualPayoutAmount: 2_400,
           startPolicyYear: 4,
@@ -7243,6 +7247,7 @@ describe('IlpReviewPage', () => {
         },
         scheduledPayoutAssumption: {
           mode: 'scheduled-redemption',
+          source: 'manual-assumption',
           accountId: 'policy',
           annualPayoutAmount: 2_400,
           startPolicyYear: 4,

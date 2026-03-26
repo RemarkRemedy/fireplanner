@@ -375,14 +375,16 @@ export function parseFwdInvestFirstSummit(context: ParseContext): IlpCatalogProd
       'kernel:partial-withdrawal-minimum-remaining-value-block',
       'kernel:current-death-benefit-estimate',
     ],
+    coveredElsewhereBehaviors: [
+      'fwd-invest-first-summit-policy-closure-charge',
+      'fwd-invest-first-summit-fund-management-charge',
+    ],
     metadataOnlyBehaviors: [
       'fwd-invest-first-summit-support-benefit-waiver-and-refund',
       'fwd-invest-first-summit-multi-life-last-survivor',
       'fwd-invest-first-summit-change-of-person-insured',
       'fwd-invest-first-summit-minimum-withdrawal-rules',
-      'fwd-invest-first-summit-policy-closure-charge',
       'fwd-invest-first-summit-change-of-policy-currency',
-      'fwd-invest-first-summit-fund-management-charge',
     ],
     warnings: [
       'FWD Invest First Summit is cataloged as a supported V1 corridor. The current parser covers the SGD 10-year premium-payment corridor: initial-account charge, capped accumulation-account charge, top-up premium charge with blocking below the published S$3,000 minimum, before policy month 13, and in policy months where regular premiums are not paid up to date, premium shortfall charge with admitted-state Support Benefit charge-waiver and retrospective charge-refund support on premium-holiday events, premium reduction charge with admitted-state Support Benefit charge-waiver and retrospective charge-refund support on reduction events, zero redemption fee on the executable withdrawal path, the published Booster Bonus rates for policy years 1 to 3, the published 0.6% p.a. during-premium-term Loyalty Bonus for policy years 4 to 10, the published 1.0% p.a. Perpetual Bonus on accumulation-units-account value from policy year 11 onward, the 10-year surrender-charge schedule, and the current-state death-benefit estimate as 105% of policy value.',

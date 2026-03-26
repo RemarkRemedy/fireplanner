@@ -216,10 +216,10 @@ export type IlpBonusQualificationRule = {
     rounding: 'floor-whole-percent'
   }
   | {
-    formula: 'cumulative-effective-account-value-ratio'
-    maximumRatio: number
-    includeReinvestedDividendWithdrawals?: true
-  }
+      formula: 'cumulative-effective-account-value-ratio'
+      maximumRatio: number
+      includeReinvestedDividendWithdrawals?: boolean
+    }
   | {
     formula: 'no-new-premium-arrears-in-lookback-months'
     lookbackMonths: number
@@ -272,6 +272,12 @@ export interface IlpBonusRule {
   requiredRegularPremiumPaymentFrequency?: IlpRegularPremiumPaymentFrequency
   tieredRates?: IlpBonusTier[]
   policyYearRateSchedule?: Array<{
+    startPolicyYear: number
+    endPolicyYear: number | null
+    rate: number
+  }>
+  vitalityStatusRateSchedule?: Array<{
+    status: 'bronze' | 'silver' | 'gold' | 'platinum'
     startPolicyYear: number
     endPolicyYear: number | null
     rate: number
@@ -592,6 +598,7 @@ export interface IlpPolicyInput {
   monthsAlreadyPaid: number
   currentAcceptedRegularPremiumMonths?: number
   currentPolicyYear: number
+  vitalityStatus?: 'bronze' | 'silver' | 'gold' | 'platinum'
   icpMonths?: number
   mipBasis?: 'finite' | 'open-ended'
   assuranceProfile?: IlpAssuranceProfile
@@ -2110,8 +2117,8 @@ function buildNormalizedPolicyInput(input: IlpPolicyInput): IlpNormalizedPolicyI
       lapses: sortPolicyEvents(policyEvents.filter((event) => event.type === 'lapse')),
       partialWithdrawals: sortPolicyEvents(policyEvents.filter((event) => event.type === 'partial-withdrawal')),
       reinvestedDividendWithdrawals: sortPolicyEvents(policyEvents.filter((event) => event.type === 'reinvested-dividend-withdrawal')),
-      regularPremiumReductions: [],
-      regularPremiumIncreases: [],
+      regularPremiumReductions: [] as typeof rawRegularPremiumReductions,
+      regularPremiumIncreases: [] as typeof rawRegularPremiumIncreases,
       policyRepayments: sortPolicyEvents(policyEvents.filter((event) => event.type === 'policy-repayment')),
       topUps: rawTopUps,
       recurringSinglePremiums: sortPolicyEvents(policyEvents.filter((event) => event.type === 'recurring-single-premium')),
@@ -2164,11 +2171,13 @@ function buildNormalizedPolicyInput(input: IlpPolicyInput): IlpNormalizedPolicyI
     )
     || (
       input.policyStateSupport?.minimumTopUpAmount != null
+      && event.amount != null
       && event.amount + CONTRIBUTION_TOLERANCE < input.policyStateSupport.minimumTopUpAmount
     )
     || (
       input.policyStateSupport?.topUpAmountIncrement != null
       && input.policyStateSupport.topUpAmountIncrement > CONTRIBUTION_TOLERANCE
+      && event.amount != null
       && Math.abs(
         (event.amount / input.policyStateSupport.topUpAmountIncrement)
         - Math.round(event.amount / input.policyStateSupport.topUpAmountIncrement),
@@ -2293,6 +2302,7 @@ function getTopUpRepaymentOutstandingAtMonth(
     switch (rule.trigger) {
       case 'partial-withdrawal':
         return sum + normalized.events.partialWithdrawals.reduce((eventSum, event) => {
+          const accountIds = rule.accountIds ?? []
           if (
             event.amount == null
             || event.amount <= 0
@@ -2300,7 +2310,7 @@ function getTopUpRepaymentOutstandingAtMonth(
           ) {
             return eventSum
           }
-          if ((rule.accountIds?.length ?? 0) > 0 && (!event.accountId || !rule.accountIds.includes(event.accountId))) {
+          if (accountIds.length > 0 && (!event.accountId || !accountIds.includes(event.accountId))) {
             return eventSum
           }
 
@@ -2566,17 +2576,22 @@ function getEligiblePartialWithdrawalsByAccount(
       && (rule.endPolicyYear == null || eventPolicyYear <= rule.endPolicyYear)
     ))
     if (applicableMaximumAmountRules.length > 0) {
+      const eventAccountId = event.accountId
+      const eventAmount = event.amount
+      if (eventAccountId == null || eventAmount == null) {
+        continue
+      }
       const cumulativePaidRegularPremium = normalized.regularPremiums.cumulativePaidByPolicyMonth.get(event.startPolicyMonth) ?? 0
       const violatesMaximumAmountRule = applicableMaximumAmountRules.some((rule) => {
-        const accountValueBeforeWithdrawal = runningBalances.get(event.accountId) ?? 0
+        const accountValueBeforeWithdrawal = runningBalances.get(eventAccountId) ?? 0
         const priorWithdrawals = rule.basis === 'account-value-less-prior-withdrawals'
-          ? getPriorPartialWithdrawalAmountsByAccount(normalized, event.accountId, event.startPolicyMonth)
-          : getPriorGrossPartialWithdrawalsByAccount(normalized, event.accountId, event.startPolicyMonth)
+          ? getPriorPartialWithdrawalAmountsByAccount(normalized, eventAccountId, event.startPolicyMonth)
+          : getPriorGrossPartialWithdrawalsByAccount(normalized, eventAccountId, event.startPolicyMonth)
         const ruleBasisValue = rule.basis === 'account-value-less-prior-withdrawals'
           ? accountValueBeforeWithdrawal
           : cumulativePaidRegularPremium
         const maximumAmount = Math.max(0, (ruleBasisValue * rule.maximumValueRate) - priorWithdrawals)
-        return event.amount > maximumAmount + CONTRIBUTION_TOLERANCE
+        return eventAmount > maximumAmount + CONTRIBUTION_TOLERANCE
       })
 
       if (violatesMaximumAmountRule) {
@@ -3964,7 +3979,7 @@ function computeSmartRetireDeathSumAtRisk(
     return 0
   }
 
-  if (policyYear <= normalized.input.mipLength) {
+  if (policyYear <= (normalized.input.mipLength ?? 0)) {
     const midpointProtectedBase = Math.max(
       0,
       regularPremiumBaseAtStartOfYear
@@ -4576,8 +4591,7 @@ function resolveTieredBonusRate(
 
     const matchesSumAssuredMultiple = (() => {
       if (
-        tierBasis === 'flat'
-        || tierBasis === 'annual-premium'
+        tierBasis === 'annual-premium'
         || tierBasis === 'sum-assured'
         || tierBasis === 'account-value'
         || tierBasis === 'annual-premium-and-account-value'
@@ -5106,7 +5120,7 @@ function isBonusDueForReferenceYear(
 }
 
 function computeRestoredBonusCredit(
-  normalized: Pick<IlpNormalizedPolicyInput, 'regularPremiums'>,
+  normalized: Pick<IlpNormalizedPolicyInput, 'input' | 'regularPremiums'>,
   normalizedBonus: IlpNormalizedBonusRule,
   accountId: string,
   accountOpenBalance: number,
@@ -5132,12 +5146,12 @@ function computeRestoredBonusCredit(
       const primaryTierInput = getBonusPrimaryTierInput(
         normalized,
         normalizedBonus.bonus,
-        annualRegularContribution + event.amount,
+        annualRegularContribution + (event.amount ?? 0),
       )
       const annualPremiumTierInput = getBonusAnnualPremiumTierInput(
         normalized,
         normalizedBonus.bonus,
-        annualRegularContribution + event.amount,
+        annualRegularContribution + (event.amount ?? 0),
       )
       const effectiveRate = resolveNormalizedBonusRate(
         normalizedBonus,
@@ -6131,7 +6145,7 @@ function resolveCurrentInvestStarterPastDuePolicyChargeRefundCredit(
     return null
   }
 
-  const accountId = input.chargeRules.find((rule) => rule.id === 'policy-charge')?.appliesTo[0] ?? 'portfolio'
+  const accountId = input.chargeRules?.find((rule) => rule.id === 'policy-charge')?.appliesTo[0] ?? 'portfolio'
   return { accountId, amount }
 }
 
@@ -6261,7 +6275,7 @@ function buildInvestPlusSpProjectedInitialPowerUpBonusCreditByYear(
   }
 
   const monthlyNetReturn = Math.pow(1 + blendedNetReturn, 1 / 12) - 1
-  const policyChargeRule = input.chargeRules.find((rule) => rule.id === 'policy-charge')
+  const policyChargeRule = input.chargeRules?.find((rule) => rule.id === 'policy-charge')
   const partialWithdrawalChargeRule = input.eventChargeRules?.find((rule) => (
     rule.id === 'partial-withdrawal-charge'
     && rule.trigger === 'partial-withdrawal'
@@ -6429,7 +6443,7 @@ function buildInvestPlusSpProjectedTopUpPowerUpBonusCreditByYear(
   const projectionStartPolicyMonth = input.monthsAlreadyPaid + 1
   const projectionEndPolicyMonth = input.monthsAlreadyPaid + (totalProjectionYears * 12)
   const monthlyNetReturn = Math.pow(1 + blendedNetReturn, 1 / 12) - 1
-  const policyChargeRule = input.chargeRules.find((rule) => rule.id === 'policy-charge')
+  const policyChargeRule = input.chargeRules?.find((rule) => rule.id === 'policy-charge')
   const partialWithdrawalChargeRule = input.eventChargeRules?.find((rule) => (
     rule.id === 'partial-withdrawal-charge'
     && rule.trigger === 'partial-withdrawal'
@@ -8755,9 +8769,6 @@ export function computeCurrentTpdBenefitEstimate(
     return undefined
   }
 
-  const _currentPolicyMonth = Number.isFinite(input.monthsAlreadyPaid)
-    ? Math.max(0, input.monthsAlreadyPaid)
-    : 0
   if (hasActiveCurrentLapse(input)) {
     return undefined
   }
@@ -9137,7 +9148,7 @@ export function computeCurrentResidualDeathBenefitAfterTpdEstimate(
 
 export function computeCurrentTiBenefitAfterTpdEstimate(
   input: IlpPolicyInput,
-  currentValueByAccount: Map<string, number>,
+  _currentValueByAccount: Map<string, number>,
   totalCurrentValue: number,
 ): number | undefined {
   if (hasActiveCurrentLapse(input)) {
@@ -9176,9 +9187,6 @@ export function computeCurrentAccidentalDisabilityBenefitEstimate(
     return undefined
   }
 
-  const _currentPolicyMonth = Number.isFinite(input.monthsAlreadyPaid)
-    ? Math.max(0, input.monthsAlreadyPaid)
-    : 0
   if (hasActiveCurrentLapse(input)) {
     return undefined
   }
@@ -9561,7 +9569,11 @@ export function computeCurrentAccidentalDeathBenefitEstimate(
   }
 
   if (input.catalogSource?.productId === 'income-wealthlink-gl3') {
-    if (profile.currentAgeNextBirthday < 66 || profile.currentAgeNextBirthday >= 75) {
+    if (
+      profile?.currentAgeNextBirthday == null
+      || profile.currentAgeNextBirthday < 66
+      || profile.currentAgeNextBirthday >= 75
+    ) {
       return undefined
     }
 
@@ -9621,7 +9633,7 @@ export function computeCurrentAccidentalDeathBenefitEstimate(
 
   if (input.catalogSource?.productId === 'tokio-marine-gowealth-enrich') {
     if (
-      profile.currentAgeNextBirthday == null
+      profile?.currentAgeNextBirthday == null
       || profile.currentAgeNextBirthday >= 75
       || profile.currentAmountOwing == null
     ) {
@@ -9638,7 +9650,7 @@ export function computeCurrentAccidentalDeathBenefitEstimate(
 
   if (input.catalogSource?.productId === 'tokio-marine-goelite') {
     if (
-      profile.currentAgeNextBirthday == null
+      profile?.currentAgeNextBirthday == null
       || profile.currentAgeNextBirthday >= 75
       || profile.currentAmountOwing == null
     ) {
@@ -10095,14 +10107,11 @@ function getRecurringChargeSuspensionMultiplier(
   let multiplier = 1
 
   for (const suspensionRule of rule.suspensionRules ?? []) {
-    switch (suspensionRule.trigger) {
-      case 'premium-holiday':
-        if (suspensionRule.basis === 'prorate-by-overlap-months') {
-          multiplier = Math.min(multiplier, Math.max(0, (12 - context.premiumHolidayMonths) / 12))
-        }
-        break
-      default:
-        assertNever(suspensionRule)
+    if (
+      suspensionRule.trigger === 'premium-holiday'
+      && suspensionRule.basis === 'prorate-by-overlap-months'
+    ) {
+      multiplier = Math.min(multiplier, Math.max(0, (12 - context.premiumHolidayMonths) / 12))
     }
   }
 
@@ -10435,7 +10444,7 @@ function getPriorManualWaiverGrantKeys(
     return new Set()
   }
 
-  const allowedTriggers = new Set(groupRules.map((candidate) => candidate.trigger))
+  const allowedTriggers = new Set<string>(groupRules.map((candidate) => candidate.trigger))
   const priorEvents = [
     ...normalized.events.partialWithdrawals,
     ...normalized.events.premiumHolidays,
@@ -10919,11 +10928,12 @@ function computeEventChargeByAccount(
     let ruleTotalCharge = 0
 
     for (const event of events) {
-      if (event.type !== 'premium-holiday-repayment' && event.chargeWaived === true && (
+      const isManualWaiverPolicyEvent = (
         event.type === 'partial-withdrawal'
         || event.type === 'premium-holiday'
         || event.type === 'regular-premium-reduction'
-      )) {
+      )
+      if (isManualWaiverPolicyEvent && event.chargeWaived === true) {
         const manualWaiverHonored = isManualWaiverHonored(normalized, eventChargeRules, rule, event)
         const usesCappedManualWaiver = event.type === 'partial-withdrawal'
           && rule.manualWaiverMode === 'capped-free-event'
@@ -11090,10 +11100,13 @@ export function projectIlpPolicy(
     && smartRetireRefundTargetAge != null
     && input.claimProfile?.currentRefundEligibleDeathCoiCollected != null
     && hasSmartRetireRefundGateInput(input)
+  const smartRetireCurrentAge = input.assuranceProfile?.currentAgeNextBirthday
   const smartRetireCanProjectCoiRefund = smartRetireHasRefundInputs
-    && input.assuranceProfile.currentAgeNextBirthday < smartRetireRefundTargetAge
+    && smartRetireCurrentAge != null
+    && smartRetireCurrentAge < smartRetireRefundTargetAge
   const smartRetireCanModelPastDueCoiRefund = smartRetireHasRefundInputs
-    && input.assuranceProfile.currentAgeNextBirthday >= smartRetireRefundTargetAge
+    && smartRetireCurrentAge != null
+    && smartRetireCurrentAge >= smartRetireRefundTargetAge
     && input.claimProfile?.currentDeathCoiRefundStatus != null
   const smartRetireRefundAccountId = (smartRetireCanProjectCoiRefund || smartRetireCanModelPastDueCoiRefund)
     ? normalized.assurance.rules.find(({ rule }) => rule.id === 'cost-of-insurance-death')?.rule.appliesTo[0] ?? 'policy'
@@ -11113,7 +11126,7 @@ export function projectIlpPolicy(
     && input.monthsAlreadyPaid >= 36
     && input.claimProfile?.currentInvestStarterPolicyChargeRefundStatus != null
   const investStarterPolicyChargeRefundAccountId = investStarterCanModelPastDuePolicyChargeRefund
-    ? input.chargeRules.find((rule) => rule.id === 'policy-charge')?.appliesTo[0] ?? 'portfolio'
+    ? input.chargeRules?.find((rule) => rule.id === 'policy-charge')?.appliesTo[0] ?? 'portfolio'
     : undefined
   let investStarterPendingImmediatePolicyChargeRefund = (
     investStarterCanModelPastDuePolicyChargeRefund
@@ -11945,7 +11958,6 @@ export function computeSummaryMetrics(
   projection: IlpProjectionResult,
   initialSinglePremiumState?: IlpInitialSinglePremiumState,
 ): IlpSummaryMetrics {
-  const mipEndRow = projection.rows[getMipEndProjectionIndex(input)]
   const horizonEndRow = projection.rows[projection.rows.length - 1]
 
   // Compute inception charges (e.g., single premium charge deducted before units purchased)

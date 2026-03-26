@@ -258,8 +258,41 @@ function normalizeAnalysisSurface(policy: IlpPolicyInput): GoldenAnalysisSurface
       totalFeesCharged: roundCurrency(analysis.summary.totalFeesCharged),
       totalBonusesReceived: roundCurrency(analysis.summary.totalBonusesReceived),
       netFeeDrag: roundCurrency(analysis.summary.netFeeDrag),
+      realGrossFees: roundCurrency(analysis.summary.realGrossFees),
+      realBonuses: roundCurrency(analysis.summary.realBonuses),
+      realNetFeeDrag: roundCurrency(analysis.summary.realNetFeeDrag),
+      inceptionCharges: roundCurrency(analysis.summary.inceptionCharges),
+      realFundCharges: roundCurrency(analysis.summary.realFundCharges),
+      realWrapperFees: roundCurrency(analysis.summary.realWrapperFees),
       currentSurrenderValue: roundCurrency(analysis.summary.currentSurrenderValue),
       cancelNowPenalty: roundCurrency(analysis.summary.cancelNowPenalty),
+      currentDeathBenefitEstimate: analysis.summary.currentDeathBenefitEstimate == null
+        ? undefined
+        : roundCurrency(analysis.summary.currentDeathBenefitEstimate),
+      currentAccidentalDeathBenefitEstimate: analysis.summary.currentAccidentalDeathBenefitEstimate == null
+        ? undefined
+        : roundCurrency(analysis.summary.currentAccidentalDeathBenefitEstimate),
+      currentTiBenefitEstimate: analysis.summary.currentTiBenefitEstimate == null
+        ? undefined
+        : roundCurrency(analysis.summary.currentTiBenefitEstimate),
+      currentTiBenefitAfterTpdEstimate: analysis.summary.currentTiBenefitAfterTpdEstimate == null
+        ? undefined
+        : roundCurrency(analysis.summary.currentTiBenefitAfterTpdEstimate),
+      currentResidualDeathBenefitAfterTiEstimate: analysis.summary.currentResidualDeathBenefitAfterTiEstimate == null
+        ? undefined
+        : roundCurrency(analysis.summary.currentResidualDeathBenefitAfterTiEstimate),
+      currentTpdBenefitEstimate: analysis.summary.currentTpdBenefitEstimate == null
+        ? undefined
+        : roundCurrency(analysis.summary.currentTpdBenefitEstimate),
+      currentAccidentalTpdBenefitEstimate: analysis.summary.currentAccidentalTpdBenefitEstimate == null
+        ? undefined
+        : roundCurrency(analysis.summary.currentAccidentalTpdBenefitEstimate),
+      currentResidualDeathBenefitAfterTpdEstimate: analysis.summary.currentResidualDeathBenefitAfterTpdEstimate == null
+        ? undefined
+        : roundCurrency(analysis.summary.currentResidualDeathBenefitAfterTpdEstimate),
+      currentAccidentalDisabilityBenefitEstimate: analysis.summary.currentAccidentalDisabilityBenefitEstimate == null
+        ? undefined
+        : roundCurrency(analysis.summary.currentAccidentalDisabilityBenefitEstimate),
     },
     npvAnalysis: {
       surrenderNow: {

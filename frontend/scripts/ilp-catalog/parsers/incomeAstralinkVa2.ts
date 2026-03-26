@@ -369,6 +369,7 @@ export function parseIncomeAstralinkVa2({ document, sourceChecksumSha256 }: Pars
       'kernel:premium-holiday-top-up-block',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'astralink-va2-no-lapse-guarantee',
       'astralink-va2-pre-2nd-anniversary-nonpayment-termination',

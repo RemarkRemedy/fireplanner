@@ -1,14 +1,51 @@
-import type { IlpCatalogSnapshot } from '../../../scripts/ilp-catalog/catalogSnapshot'
 import { createDefaultPolicy } from '../../stores/useIlpStore'
 import { templateVariantToPolicySeed } from '../ilp-catalog/templateToPolicy'
-import type { IlpCatalogProduct, IlpTemplateVariant } from '../ilp-catalog/types'
+import type { IlpCatalogManifest, IlpCatalogProduct, IlpTemplateVariant } from '../ilp-catalog/types'
 import { ilpPolicySchema } from '../validation/ilpSchema'
 import { analyzeIlpPolicy, type IlpFund, type IlpPolicyInput } from './ilp'
-import type { GoldenFixtureArtifact } from './ilpGoldenHarness'
+
+type IlpCatalogSnapshot = {
+  manifest: IlpCatalogManifest
+  products: IlpCatalogProduct[]
+}
+
+interface GoldenFixtureArtifact {
+  policyInput: {
+    monthlyContribution: number
+    assuranceProfile?: {
+      currentSumAssured?: number
+    }
+    accounts: Array<{
+      id: string
+      currentValue: number
+    }>
+  }
+  expected: {
+    projections: {
+      mid: {
+        rows: Array<{
+          policyYear: number
+          annualContribution: number
+          annualWithdrawals: number
+          cumulativeGrossFees: number
+          eecRate: number
+          accounts: Array<{
+            accountId: string
+            contributionAmount: number
+            grossFee: number
+            bonusCredit: number
+            withdrawalAmount: number
+          }>
+        }>
+      }
+    }
+  }
+}
 
 export type GoldenIlpFixtureClass = 'supported' | 'partial-modeled-subset'
 
 export type GoldenCoverageTag =
+  | string
   | 'baseline'
   | 'event-heavy'
   | 'ocf-stress'
@@ -16,6 +53,9 @@ export type GoldenCoverageTag =
   | 'kernel:cumulative-free-partial-withdrawal-pool'
   | 'kernel:lapse-reinstatement-payout-state'
   | 'kernel:scheduled-payout-manual-assumption'
+  | 'kernel:current-ti-benefit-estimate'
+  | 'kernel:current-tpd-benefit-estimate'
+  | 'kernel:current-accidental-death-benefit-estimate'
   | 'branch:aia-invest-easy-cash-srs-three-percent-single-premium-charge'
   | 'branch:aia-invest-easy-cash-srs-three-percent-top-up-charge'
   | 'branch:aia-invest-easy-cash-srs-three-percent-recurring-single-premium-charge'
@@ -866,7 +906,14 @@ function cloneFunds(funds: IlpFund[]): IlpFund[] {
   return funds.map((fund) => ({ ...fund }))
 }
 
-type ProjectionRow = ReturnType<typeof analyzeIlpPolicy>['projections']['mid']['rows'][number]
+type ProjectionRow = {
+  annualWithdrawals: number
+  accounts: Array<{
+    accountId: string
+    grossFee: number
+    bonusCredit: number
+  }>
+}
 
 function getAccountGrossFee(row: ProjectionRow | undefined, accountId: string): number {
   return row?.accounts.find((account) => account.accountId === accountId)?.grossFee ?? 0

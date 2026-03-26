@@ -287,7 +287,8 @@ function makeSeededManulifeInvestReadyGrowthPolicy(
 
   const seed = templateVariantToPolicySeed(product, variant, manifest)
 
-  return ilpPolicySeedSchema.parse({
+  return ilpPolicySchema.parse({
+    id: 'manulife-investready-growth-sgd-mip-15-flexi-10-seeded',
     ...seed,
     currentPolicyYear: 14,
     monthsAlreadyPaid: 168,
@@ -318,7 +319,8 @@ function makeSeededManulifeInvestReadyIiiSep2025Policy(
 
   const seed = templateVariantToPolicySeed(product, variant, manifest)
 
-  return ilpPolicySeedSchema.parse({
+  return ilpPolicySchema.parse({
+    id: `manulife-investready-iii-sep-2025-${variantId}-seeded`,
     ...seed,
     currentPolicyYear: 4,
     monthsAlreadyPaid: 48,
@@ -348,7 +350,8 @@ function makeSeededManulifeInvestReadyIiiPolicy(
 
   const seed = templateVariantToPolicySeed(product, variant, manifest)
 
-  return ilpPolicySeedSchema.parse({
+  return ilpPolicySchema.parse({
+    id: 'manulife-investready-iii-sgd-mip-7-flexi-5-seeded',
     ...seed,
     currentPolicyYear: 6,
     monthsAlreadyPaid: 72,
@@ -448,7 +451,8 @@ function makeSeededTokioHarvestBuilderAtFuturePolicy(
 
   const seed = templateVariantToPolicySeed(product, variant, manifest)
 
-  return ilpPolicySeedSchema.parse({
+  return ilpPolicySchema.parse({
+    id: 'tokio-marine-harvest-builder-atfuture-sgd-mip-10-seeded',
     ...seed,
     currentPolicyYear: 5,
     monthsAlreadyPaid: 60,
@@ -478,7 +482,8 @@ function makeSeededTokioWealthFlexiLink312Policy(
 
   const seed = templateVariantToPolicySeed(product, variant, manifest)
 
-  return ilpPolicySeedSchema.parse({
+  return ilpPolicySchema.parse({
+    id: 'tokio-marine-wealth-flexi-link-3-12-sgd-mip-12-seeded',
     ...seed,
     currentPolicyYear: 3,
     monthsAlreadyPaid: 36,
@@ -508,7 +513,8 @@ function makeSeededTokioWealthFlexiLink510Policy(
 
   const seed = templateVariantToPolicySeed(product, variant, manifest)
 
-  return ilpPolicySeedSchema.parse({
+  return ilpPolicySchema.parse({
+    id: 'tokio-marine-wealth-flexi-link-5-10-sgd-mip-10-seeded',
     ...seed,
     currentPolicyYear: 5,
     monthsAlreadyPaid: 60,
@@ -781,7 +787,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 4,
       monthsAlreadyPaid: 48,
@@ -824,7 +831,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 4,
       monthsAlreadyPaid: 48,
@@ -1253,7 +1261,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 2,
       monthsAlreadyPaid: 12,
@@ -1300,7 +1309,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const buildPolicy = (currentValue: number) => ilpPolicySeedSchema.parse({
+    const buildPolicy = (currentValue: number) => ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 2,
       monthsAlreadyPaid: 12,
@@ -1349,7 +1359,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const buildPolicy = (currentValue: number) => ilpPolicySeedSchema.parse({
+    const buildPolicy = (currentValue: number) => ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 2,
       monthsAlreadyPaid: 12,
@@ -1399,7 +1410,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 12,
@@ -1450,7 +1462,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 2,
       monthsAlreadyPaid: 12,
@@ -1489,7 +1502,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 0,
@@ -1532,7 +1546,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 0,
@@ -1571,7 +1586,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 0,
@@ -1611,7 +1627,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 0,
@@ -1651,7 +1668,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 0,
@@ -1691,7 +1709,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 0,
@@ -1731,7 +1750,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 0,
@@ -1771,7 +1791,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 0,
@@ -1808,7 +1829,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 0,
@@ -1855,7 +1877,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 0,
@@ -1901,7 +1924,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       regularPremiumPaymentFrequency: 'monthly',
       currentPolicyYear: 1,
@@ -1954,7 +1978,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       regularPremiumPaymentFrequency: 'annual',
       currentPolicyYear: 1,
@@ -2007,7 +2032,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 0,
       currentPolicyYear: 2,
@@ -2054,7 +2080,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 0,
       currentPolicyYear: 2,
@@ -2101,7 +2128,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 0,
       currentPolicyYear: 2,
@@ -2148,7 +2176,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 0,
       currentPolicyYear: 1,
@@ -2195,7 +2224,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 0,
       currentPolicyYear: 1,
@@ -2238,7 +2268,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 12,
@@ -2284,7 +2315,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 12,
@@ -2313,6 +2345,63 @@ describe('projectIlpPolicy', () => {
     expect(accountRow(result.rows[0], 'policy').contributionAmount).toBe((policy.monthlyContribution * 12) + 2_000)
   })
 
+  it('applies AIA Platinum Wealth Elite 2.0 Vitality Fund Boost using the seeded static Vitality assumption schedule', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'aia-platinum-wealth-elite-2')
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-5')
+
+    expect(product).toBeDefined()
+    expect(variant).toBeDefined()
+
+    const baseSeed = templateVariantToPolicySeed(product!, variant!, manifest)
+
+    const buildPolicy = (vitalityStatus: NonNullable<typeof baseSeed.vitalityStatus>) => ilpPolicySchema.parse({
+      id: 'seeded-policy',
+      ...baseSeed,
+      vitalityStatus,
+      funds: [ZERO_RETURN_FUND],
+      bonuses: baseSeed.bonuses.map((bonus) => ({
+        ...bonus,
+        rate: 0,
+        policyYearRateSchedule: bonus.vitalityStatusRateSchedule
+          ?.filter((tier) => tier.status === vitalityStatus)
+          .map(({ startPolicyYear, endPolicyYear, rate }) => ({
+            startPolicyYear,
+            endPolicyYear,
+            rate,
+          })),
+      })),
+      accounts: baseSeed.accounts.map((account) => ({
+        ...account,
+        currentValue: 0,
+      })),
+      currentPolicyYear: 1,
+      monthsAlreadyPaid: 0,
+    })
+
+    const bronze = projectIlpPolicy(buildPolicy('bronze'), 'mid')
+    const silver = projectIlpPolicy(buildPolicy('silver'), 'mid')
+    const gold = projectIlpPolicy(buildPolicy('gold'), 'mid')
+    const platinum = projectIlpPolicy(buildPolicy('platinum'), 'mid')
+
+    expect(baseSeed.vitalityStatus).toBe('silver')
+    expect(baseSeed.catalogSource?.modeledEconomics).toContain('branch:aia-platinum-wealth-elite-2-vitality-bonus')
+
+    expect(accountRow(bronze.rows[0], 'policy').bonusCredit).toBeCloseTo(0, 6)
+    expect(accountRow(bronze.rows.at(-1)!, 'policy').bonusCredit).toBeCloseTo(0, 6)
+
+    expect(accountRow(silver.rows[0], 'policy').bonusCredit).toBeCloseTo(42, 6)
+    expect(accountRow(silver.rows[1], 'policy').bonusCredit).toBeCloseTo(0, 6)
+    expect(accountRow(silver.rows.at(-1)!, 'policy').bonusCredit).toBeCloseTo(0, 6)
+
+    expect(accountRow(gold.rows[0], 'policy').bonusCredit).toBeCloseTo(42, 6)
+    expect(accountRow(gold.rows.at(-1)!, 'policy').bonusCredit).toBeCloseTo(42, 6)
+
+    expect(accountRow(platinum.rows[0], 'policy').bonusCredit).toBeCloseTo(42, 6)
+    expect(accountRow(platinum.rows[1], 'policy').bonusCredit).toBeCloseTo(84, 6)
+    expect(accountRow(platinum.rows.at(-1)!, 'policy').bonusCredit).toBeCloseTo(84, 6)
+  })
+
   it('blocks AIA Platinum Wealth Legacy top-ups in months where regular premiums are not paid up to date through the seeded product support seam', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'aia-platinum-wealth-legacy')
@@ -2322,7 +2411,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 12,
@@ -2368,7 +2458,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 11,
@@ -2410,7 +2501,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 12,
@@ -2455,7 +2547,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 12,
@@ -2496,7 +2589,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 12,
@@ -2537,7 +2631,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 2,
       monthsAlreadyPaid: 24,
@@ -2578,7 +2673,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const duringMipPolicy = ilpPolicySeedSchema.parse({
+    const duringMipPolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 2,
       monthsAlreadyPaid: 24,
@@ -2604,7 +2700,8 @@ describe('projectIlpPolicy', () => {
     expect(duringMipPolicy.catalogSource?.productName).toBe(productName)
     expect(accountRow(duringMipResult.rows[0], 'accumulation').withdrawalAmount).toBe(400)
 
-    const afterMipPolicy = ilpPolicySeedSchema.parse({
+    const afterMipPolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 9,
       monthsAlreadyPaid: 108,
@@ -2690,7 +2787,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 12,
@@ -2736,7 +2834,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 11,
@@ -2791,7 +2890,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 6,
       monthsAlreadyPaid: 72,
@@ -2833,7 +2933,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 8,
       monthsAlreadyPaid: 96,
@@ -2874,7 +2975,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 8,
       monthsAlreadyPaid: 96,
@@ -2937,7 +3039,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 11,
@@ -2972,7 +3075,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 3,
       monthsAlreadyPaid: 36,
@@ -3008,7 +3112,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 9,
       monthsAlreadyPaid: 108,
@@ -3043,7 +3148,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 6,
       monthsAlreadyPaid: 72,
@@ -3099,7 +3205,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 8,
       monthsAlreadyPaid: 96,
@@ -3162,7 +3269,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 12,
@@ -3199,7 +3307,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 2,
       monthsAlreadyPaid: 24,
@@ -3236,7 +3345,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       initialSinglePremium: 10_000,
       currentPolicyYear: 1,
@@ -3274,7 +3384,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       initialSinglePremium: 10_000,
       currentPolicyYear: 1,
@@ -3314,7 +3425,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       initialSinglePremium: 10_000,
       currentPolicyYear: 1,
@@ -3351,7 +3463,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 0,
       currentPolicyYear: 2,
@@ -3387,7 +3500,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 0,
       currentPolicyYear: 3,
@@ -3423,7 +3537,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 0,
       currentPolicyYear: 3,
@@ -3459,7 +3574,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       initialSinglePremium: 10_000,
       currentPolicyYear: 1,
@@ -3497,7 +3613,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       initialSinglePremium: 10_000,
       currentPolicyYear: 1,
@@ -3535,7 +3652,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       initialSinglePremium: 10_000,
       currentPolicyYear: 1,
@@ -3573,7 +3691,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       initialSinglePremium: 10_000,
       currentPolicyYear: 1,
@@ -3610,7 +3729,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 0,
       currentPolicyYear: 2,
@@ -3650,7 +3770,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 0,
       currentPolicyYear: 3,
@@ -3687,7 +3808,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 0,
       currentPolicyYear: 24,
@@ -3727,7 +3849,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 0,
       currentPolicyYear: 2,
@@ -3768,7 +3891,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 0,
       currentPolicyYear: 24,
@@ -3808,7 +3932,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 1_000,
       regularPremiumPaymentFrequency: 'monthly',
@@ -3856,7 +3981,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 1_000,
       regularPremiumPaymentFrequency: 'monthly',
@@ -3901,7 +4027,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 1_000,
       regularPremiumPaymentFrequency: 'monthly',
@@ -3957,7 +4084,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 1_000,
       regularPremiumPaymentFrequency: 'monthly',
@@ -4013,7 +4141,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 1_000,
       regularPremiumPaymentFrequency: 'monthly',
@@ -4069,7 +4198,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 1_000,
       regularPremiumPaymentFrequency: 'monthly',
@@ -4125,7 +4255,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 0,
       currentPolicyYear: 2,
@@ -4167,7 +4298,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 0,
       currentPolicyYear: 14,
@@ -4211,7 +4343,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 0,
       currentPolicyYear: 3,
@@ -4253,7 +4386,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 0,
       currentPolicyYear: 3,
@@ -4290,7 +4424,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 0,
       currentPolicyYear: 3,
@@ -4327,7 +4462,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 0,
       currentPolicyYear: 3,
@@ -4438,7 +4574,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 0,
       currentPolicyYear: 2,
@@ -4477,7 +4614,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 2,
       monthsAlreadyPaid: 12,
@@ -4533,7 +4671,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 2,
       monthsAlreadyPaid: 12,
@@ -4569,7 +4708,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 2,
       monthsAlreadyPaid: 12,
@@ -4674,7 +4814,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 2,
       monthsAlreadyPaid: 24,
@@ -4722,7 +4863,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 5,
       monthsAlreadyPaid: 60,
@@ -4763,7 +4905,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       initialSinglePremium: 20_000,
       currentPolicyYear: 1,
@@ -4801,7 +4944,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 0,
       currentPolicyYear: 3,
@@ -4838,7 +4982,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       initialSinglePremium: 20_000,
       currentPolicyYear: 1,
@@ -4875,7 +5020,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       initialSinglePremium: 20_000,
       currentPolicyYear: 1,
@@ -4913,7 +5059,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       initialSinglePremium: 20_000,
       currentPolicyYear: 1,
@@ -4951,7 +5098,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       initialSinglePremium: 20_000,
       currentPolicyYear: 1,
@@ -4989,7 +5137,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       initialSinglePremium: 20_000,
       currentPolicyYear: 1,
@@ -5027,7 +5176,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       initialSinglePremium: 20_000,
       currentPolicyYear: 1,
@@ -5065,7 +5215,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const buildPolicy = (currentValue: number) => ilpPolicySeedSchema.parse({
+    const buildPolicy = (currentValue: number) => ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 2,
       monthsAlreadyPaid: 12,
@@ -5114,7 +5265,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const buildPolicy = (currentValue: number) => ilpPolicySeedSchema.parse({
+    const buildPolicy = (currentValue: number) => ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 2,
       monthsAlreadyPaid: 12,
@@ -5168,7 +5320,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const buildPolicy = () => ilpPolicySeedSchema.parse({
+    const buildPolicy = () => ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 4,
       monthsAlreadyPaid: 48,
@@ -7973,7 +8126,8 @@ describe('projectIlpPolicy', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 800,
       currentPolicyYear: 1,
@@ -7993,7 +8147,8 @@ describe('projectIlpPolicy', () => {
 
   it('blocks Manulife InvestReady Growth Booster Bonus when partial-withdrawal addbacks push the effective account value above cumulative paid premiums', () => {
     const basePolicy = makeSeededManulifeInvestReadyGrowthPolicy()
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...basePolicy,
       accounts: basePolicy.accounts.map((account) => ({
         ...account,
@@ -8019,7 +8174,8 @@ describe('projectIlpPolicy', () => {
 
   it('blocks Manulife InvestReady Growth Booster Bonus when reinvested-dividend-withdrawal addbacks push the effective account value above cumulative paid premiums', () => {
     const basePolicy = makeSeededManulifeInvestReadyGrowthPolicy()
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...basePolicy,
       accounts: basePolicy.accounts.map((account) => ({
         ...account,
@@ -8045,7 +8201,8 @@ describe('projectIlpPolicy', () => {
 
   it('blocks Manulife InvestReady Growth Booster Bonus after any pre-Flexi premium holiday through the seeded product support seam', () => {
     const basePolicy = makeSeededManulifeInvestReadyGrowthPolicy()
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...basePolicy,
       policyEvents: [
         {
@@ -8083,7 +8240,8 @@ describe('projectIlpPolicy', () => {
 
   it('uses the reduced cumulative-regular-premium branch for Manulife InvestReady (III) Sep-2025 Step-up Booster deltas after post-MIP withdrawals', () => {
     const basePolicy = makeSeededManulifeInvestReadyIiiSep2025Policy()
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...basePolicy,
       policyEvents: [
         {
@@ -8106,7 +8264,8 @@ describe('projectIlpPolicy', () => {
 
   it('blocks Manulife InvestReady (III) Sep-2025 Step-up Booster Bonus after a pre-Flexi premium holiday', () => {
     const basePolicy = makeSeededManulifeInvestReadyIiiSep2025Policy()
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...basePolicy,
       policyEvents: [
         {
@@ -8129,7 +8288,8 @@ describe('projectIlpPolicy', () => {
       postMipYears: 2,
     })
     const baselineResult = projectIlpPolicy(basePolicy, 'mid')
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...basePolicy,
       policyEvents: [
         {
@@ -8157,7 +8317,8 @@ describe('projectIlpPolicy', () => {
 
   it('suppresses Manulife InvestReady (III) Sep-2025 Loyalty Bonus after a reinvested-dividend withdrawal in the preceding 12 months', () => {
     const basePolicy = makeSeededManulifeInvestReadyIiiSep2025Policy({}, 'sgd-mip-7-flexi-5-sep-2025')
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...basePolicy,
       currentPolicyYear: 6,
       monthsAlreadyPaid: 72,
@@ -8184,7 +8345,8 @@ describe('projectIlpPolicy', () => {
 
   it('suppresses Manulife InvestReady (III) Sep-2025 Loyalty Bonus after a partial withdrawal in the preceding 12 months', () => {
     const basePolicy = makeSeededManulifeInvestReadyIiiSep2025Policy({}, 'sgd-mip-7-flexi-5-sep-2025')
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...basePolicy,
       currentPolicyYear: 6,
       monthsAlreadyPaid: 72,
@@ -8224,7 +8386,8 @@ describe('projectIlpPolicy', () => {
 
   it('suppresses Manulife InvestReady (III) Loyalty Bonus after a reinvested-dividend withdrawal in the preceding 12 months', () => {
     const basePolicy = makeSeededManulifeInvestReadyIiiPolicy()
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...basePolicy,
       policyEvents: [
         {
@@ -13907,6 +14070,51 @@ describe('projectIlpPolicy', () => {
       accountRow(withRepaymentSpecificRules.rows[0], 'regular').bonusCredit
       - accountRow(withoutRepaymentSpecificRules.rows[0], 'regular').bonusCredit,
     ).toBeCloseTo(6, 6)
+  })
+
+  it('applies HSBC Wealth Voyage premium-holiday charges after the 24-month free duration through the seeded product support seam', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'hsbc-life-wealth-voyage')
+    if (!product) {
+      throw new Error('Missing catalog product hsbc-life-wealth-voyage')
+    }
+
+    const variant = product.variants.find((entry) => entry.id === 'sgd-mip-20')
+    if (!variant) {
+      throw new Error('Missing catalog variant hsbc-life-wealth-voyage/sgd-mip-20')
+    }
+
+    const seed = templateVariantToPolicySeed(product, variant, manifest)
+    const holidayPolicy = ilpPolicySchema.parse({
+      id: 'hsbc-wealth-voyage-sgd-mip-20-holiday-charge',
+      ...seed,
+      currentPolicyYear: 6,
+      monthsAlreadyPaid: 72,
+      postMipYears: 0,
+      funds: [ZERO_RETURN_FUND],
+      accounts: seed.accounts.map((account) => ({
+        ...account,
+        currentValue: account.id === 'regular' ? 20_000 : 0,
+      })),
+      policyEvents: [
+        {
+          id: 'holiday-1',
+          type: 'premium-holiday',
+          startPolicyMonth: 49,
+          durationMonths: 36,
+        },
+      ],
+    })
+
+    const withoutPhc = projectIlpPolicy({
+      ...holidayPolicy,
+      eventChargeRules: holidayPolicy.eventChargeRules.filter((rule) => rule.id !== 'premium-holiday-charge'),
+    }, 'mid')
+    const withPhc = projectIlpPolicy(holidayPolicy, 'mid')
+
+    expect(
+      accountRow(withPhc.rows[0], 'regular').grossFee - accountRow(withoutPhc.rows[0], 'regular').grossFee,
+    ).toBeCloseTo(2_100, 6)
   })
 
   it('skips premium-holiday charges until the free lifetime holiday duration is exhausted', () => {
@@ -24663,7 +24871,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const basePolicy = ilpPolicySeedSchema.parse({
+    const basePolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 9,
       monthsAlreadyPaid: 108,
@@ -26776,7 +26985,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 12,
@@ -28482,7 +28692,8 @@ describe('computeSummaryMetrics', () => {
         frequency: 'annual',
       },
     })
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...baseline,
       accounts: baseline.accounts.map((account) => ({
         ...account,
@@ -28551,7 +28762,8 @@ describe('computeSummaryMetrics', () => {
         },
       ],
     })
-    const waivedPolicy = ilpPolicySeedSchema.parse({
+    const waivedPolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...chargedPolicy,
       id: 'wfl312-approved-holiday-waived',
       policyEvents: [
@@ -28584,7 +28796,8 @@ describe('computeSummaryMetrics', () => {
         },
       ],
     })
-    const waivedPolicy = ilpPolicySeedSchema.parse({
+    const waivedPolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...chargedPolicy,
       id: 'wfl510-approved-holiday-waived',
       policyEvents: [
@@ -28637,7 +28850,8 @@ describe('computeSummaryMetrics', () => {
         },
       ],
     })
-    const restoredPolicy = ilpPolicySeedSchema.parse({
+    const restoredPolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...blockedPolicy,
       id: 'wfl510-rsp-restored',
       policyEvents: [
@@ -28745,7 +28959,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const buildPolicy = (policyEvents: IlpPolicyInput['policyEvents']) => ilpPolicySeedSchema.parse({
+    const buildPolicy = (policyEvents: IlpPolicyInput['policyEvents']) => ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 11,
@@ -28809,7 +29024,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const buildPolicy = (policyEvents: IlpPolicyInput['policyEvents']) => ilpPolicySeedSchema.parse({
+    const buildPolicy = (policyEvents: IlpPolicyInput['policyEvents']) => ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 11,
@@ -28873,7 +29089,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const buildPolicy = (policyEvents: IlpPolicyInput['policyEvents']) => ilpPolicySeedSchema.parse({
+    const buildPolicy = (policyEvents: IlpPolicyInput['policyEvents']) => ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 11,
@@ -28934,7 +29151,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const buildPolicy = (policyEvents: IlpPolicyInput['policyEvents']) => ilpPolicySeedSchema.parse({
+    const buildPolicy = (policyEvents: IlpPolicyInput['policyEvents']) => ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 11,
@@ -28997,7 +29215,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       initialSinglePremium: 100_000,
       currentPolicyYear: 1,
@@ -29044,7 +29263,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       initialSinglePremium: 100_000,
       currentPolicyYear: 1,
@@ -29092,7 +29312,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const buildPolicy = (policyEvents: IlpPolicyInput['policyEvents']) => ilpPolicySeedSchema.parse({
+    const buildPolicy = (policyEvents: IlpPolicyInput['policyEvents']) => ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 11,
@@ -29156,7 +29377,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 9,
       monthsAlreadyPaid: 108,
@@ -29196,7 +29418,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 9,
       monthsAlreadyPaid: 108,
@@ -29228,7 +29451,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const baselinePolicy = ilpPolicySeedSchema.parse({
+    const baselinePolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 4,
       monthsAlreadyPaid: 48,
@@ -29237,7 +29461,8 @@ describe('computeSummaryMetrics', () => {
         currentValue: 10_000,
       })),
     })
-    const holidayPolicy = ilpPolicySeedSchema.parse({
+    const holidayPolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...baselinePolicy,
       id: 'income-vs1-premium-holiday-year-5',
       policyEvents: [
@@ -29270,7 +29495,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const baselinePolicy = ilpPolicySeedSchema.parse({
+    const baselinePolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 4,
       monthsAlreadyPaid: 48,
@@ -29279,7 +29505,8 @@ describe('computeSummaryMetrics', () => {
         currentValue: 10_000,
       })),
     })
-    const holidayPolicy = ilpPolicySeedSchema.parse({
+    const holidayPolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...baselinePolicy,
       id: 'income-vs2-premium-holiday-year-5',
       policyEvents: [
@@ -29313,7 +29540,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 1_000,
       regularPremiumPaymentFrequency: 'monthly',
@@ -29370,7 +29598,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 1_000,
       regularPremiumPaymentFrequency: 'monthly',
@@ -29415,7 +29644,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       monthlyContribution: 5_000,
       regularPremiumPaymentFrequency: 'monthly',
@@ -29478,7 +29708,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const basePolicy = ilpPolicySeedSchema.parse({
+    const basePolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 7,
       monthsAlreadyPaid: 84,
@@ -29487,7 +29718,8 @@ describe('computeSummaryMetrics', () => {
         currentValue: 10_000,
       })),
     })
-    const qualifyingWithdrawalPolicy = ilpPolicySeedSchema.parse({
+    const qualifyingWithdrawalPolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...basePolicy,
       id: 'income-vs1-lewb-qualified',
       policyEvents: [
@@ -29503,7 +29735,8 @@ describe('computeSummaryMetrics', () => {
         },
       ],
     })
-    const ordinaryWithdrawalPolicy = ilpPolicySeedSchema.parse({
+    const ordinaryWithdrawalPolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...basePolicy,
       id: 'income-vs1-ordinary-withdrawal',
       policyEvents: [
@@ -30620,7 +30853,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 0,
@@ -31245,7 +31479,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const chargedPolicy = ilpPolicySeedSchema.parse({
+    const chargedPolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 4,
       monthsAlreadyPaid: 48,
@@ -31267,7 +31502,8 @@ describe('computeSummaryMetrics', () => {
         },
       ],
     })
-    const waivedPolicy = ilpPolicySeedSchema.parse({
+    const waivedPolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...chargedPolicy,
       id: 'goassure-capped-withdrawal-approved',
       policyEvents: [
@@ -31297,7 +31533,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const chargedPolicy = ilpPolicySeedSchema.parse({
+    const chargedPolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 4,
       monthsAlreadyPaid: 48,
@@ -31317,7 +31554,8 @@ describe('computeSummaryMetrics', () => {
         },
       ],
     })
-    const waivedPolicy = ilpPolicySeedSchema.parse({
+    const waivedPolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...chargedPolicy,
       id: 'goassure-long-holiday-approved',
       policyEvents: [
@@ -31346,7 +31584,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 3,
       monthsAlreadyPaid: 36,
@@ -31392,7 +31631,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 4,
       monthsAlreadyPaid: 48,
@@ -31438,7 +31678,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const blockedPolicy = ilpPolicySeedSchema.parse({
+    const blockedPolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 4,
       monthsAlreadyPaid: 48,
@@ -31460,7 +31701,8 @@ describe('computeSummaryMetrics', () => {
         },
       ],
     })
-    const acceptedPolicy = ilpPolicySeedSchema.parse({
+    const acceptedPolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...blockedPolicy,
       id: 'tokio-marine-goassure-sgd-mip-10-rsp-at-minimum',
       policyEvents: [
@@ -31863,7 +32105,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       initialSinglePremium: 100_000,
       currentPolicyYear: 1,
@@ -35021,7 +35264,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 2,
       monthsAlreadyPaid: 12,
@@ -35061,7 +35305,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 2,
       monthsAlreadyPaid: 12,
@@ -35100,7 +35345,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 2,
       monthsAlreadyPaid: 12,
@@ -35137,7 +35383,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 2,
       monthsAlreadyPaid: 12,
@@ -35996,6 +36243,48 @@ describe('computeSummaryMetrics', () => {
     const expectedBonus = (projectedVintageBalanceSum / 36) * 0.003
 
     expect(accountRow(projection.rows[1], 'topup').bonusCredit).toBeCloseTo(expectedBonus, 2)
+  })
+
+  it('applies the published maximum Invest plus SP representative management charge across initial and top-up accounts through the seeded product support seam', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'etiqa-invest-plus-sp')
+    if (!product) {
+      throw new Error('Missing catalog product etiqa-invest-plus-sp')
+    }
+
+    const variant = product.variants.find((entry) => entry.id === 'sgd-open-ended-single-premium-initial-only')
+    if (!variant) {
+      throw new Error('Missing catalog variant etiqa-invest-plus-sp/sgd-open-ended-single-premium-initial-only')
+    }
+
+    const seed = templateVariantToPolicySeed(product, variant, manifest)
+    const policy = ilpPolicySchema.parse({
+      id: 'etiqa-invest-plus-sp-representative-management-charge',
+      ...seed,
+      currentPolicyYear: 2,
+      monthsAlreadyPaid: 12,
+      postMipYears: 30,
+      monthlyContribution: 0,
+      initialSinglePremium: 100_000,
+      funds: [ZERO_RETURN_FUND],
+      accounts: seed.accounts.map((account) => ({
+        ...account,
+        currentValue: account.id === 'policy' ? 100_000 : 20_000,
+      })),
+    })
+
+    const withoutRepresentativeCharge = projectIlpPolicy({
+      ...policy,
+      chargeRules: policy.chargeRules.filter((rule) => rule.id !== 'representative-management-charge'),
+    }, 'mid')
+    const withRepresentativeCharge = projectIlpPolicy(policy, 'mid')
+
+    expect(
+      accountRow(withRepresentativeCharge.rows[0], 'policy').grossFee
+      + accountRow(withRepresentativeCharge.rows[0], 'topup').grossFee
+      - accountRow(withoutRepresentativeCharge.rows[0], 'policy').grossFee
+      - accountRow(withoutRepresentativeCharge.rows[0], 'topup').grossFee,
+    ).toBeCloseTo(900, 6)
   })
 
   it('models WealthLink (GL3) death benefit today at 105% of net premiums before the first policy anniversary after age 65', () => {
@@ -39370,7 +39659,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 9,
       monthsAlreadyPaid: 108,
@@ -39409,7 +39699,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 9,
       monthsAlreadyPaid: 108,
@@ -39448,7 +39739,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 9,
       monthsAlreadyPaid: 108,
@@ -39484,7 +39776,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 9,
       monthsAlreadyPaid: 108,
@@ -39522,7 +39815,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 9,
       monthsAlreadyPaid: 108,
@@ -39560,7 +39854,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 5,
       monthsAlreadyPaid: 60,
@@ -39600,7 +39895,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 19,
       monthsAlreadyPaid: 228,
@@ -39641,7 +39937,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 9,
       monthsAlreadyPaid: 108,
@@ -39679,7 +39976,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 3,
       monthsAlreadyPaid: 36,
@@ -39719,7 +40017,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 19,
       monthsAlreadyPaid: 228,
@@ -41746,7 +42045,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 8,
       monthsAlreadyPaid: 84,
@@ -41793,7 +42093,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 2,
       monthsAlreadyPaid: 12,
@@ -41833,7 +42134,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const chargedPolicy = ilpPolicySeedSchema.parse({
+    const chargedPolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 5,
       monthsAlreadyPaid: 48,
@@ -41852,7 +42154,8 @@ describe('computeSummaryMetrics', () => {
         },
       ],
     })
-    const waivedPolicy = ilpPolicySeedSchema.parse({
+    const waivedPolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...chargedPolicy,
       id: 'singlife-savvy-invest-ii-life-stage-benefit-charge-waived',
       policyEvents: [
@@ -41881,7 +42184,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const chargedPolicy = ilpPolicySeedSchema.parse({
+    const chargedPolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 5,
       monthsAlreadyPaid: 48,
@@ -41900,7 +42204,8 @@ describe('computeSummaryMetrics', () => {
         },
       ],
     })
-    const waivedPolicy = ilpPolicySeedSchema.parse({
+    const waivedPolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...chargedPolicy,
       id: 'singlife-legacy-invest-free-withdrawal-waived',
       policyEvents: [
@@ -41929,7 +42234,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 9,
       monthsAlreadyPaid: 96,
@@ -41966,7 +42272,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 8,
       monthsAlreadyPaid: 84,
@@ -42011,7 +42318,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 8,
       monthsAlreadyPaid: 84,
@@ -42056,7 +42364,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 4,
       monthsAlreadyPaid: 36,
@@ -42098,7 +42407,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 8,
       monthsAlreadyPaid: 84,
@@ -42145,7 +42455,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 8,
       monthsAlreadyPaid: 84,
@@ -42192,7 +42503,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 4,
       monthsAlreadyPaid: 36,
@@ -42234,7 +42546,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 4,
       monthsAlreadyPaid: 36,
@@ -42276,7 +42589,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 19,
       monthsAlreadyPaid: 228,
@@ -42312,7 +42626,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const baselinePolicy = ilpPolicySeedSchema.parse({
+    const baselinePolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 19,
       monthsAlreadyPaid: 228,
@@ -42323,7 +42638,8 @@ describe('computeSummaryMetrics', () => {
         currentValue: account.id === 'regular' ? 12_000 : 0,
       })),
     })
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...baselinePolicy,
       funds: [ZERO_RETURN_FUND],
       policyEvents: [
@@ -42355,7 +42671,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 9,
       monthsAlreadyPaid: 108,
@@ -42391,7 +42708,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 12,
@@ -42436,7 +42754,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 5,
       monthsAlreadyPaid: 60,
@@ -42481,7 +42800,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 3,
       monthsAlreadyPaid: 24,
@@ -42522,7 +42842,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 0,
@@ -42565,7 +42886,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 5,
       monthsAlreadyPaid: 60,
@@ -42608,7 +42930,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 2,
       monthsAlreadyPaid: 12,
@@ -42654,7 +42977,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 0,
@@ -42697,7 +43021,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 5,
       monthsAlreadyPaid: 60,
@@ -42743,7 +43068,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 0,
@@ -42778,7 +43104,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const baseline = ilpPolicySeedSchema.parse({
+    const baseline = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 0,
@@ -42787,7 +43114,8 @@ describe('computeSummaryMetrics', () => {
         currentValue: 10_000,
       })),
     })
-    const blockedHoliday = ilpPolicySeedSchema.parse({
+    const blockedHoliday = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...baseline,
       policyEvents: [
         {
@@ -42820,7 +43148,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const baseline = ilpPolicySeedSchema.parse({
+    const baseline = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 1,
       monthsAlreadyPaid: 12,
@@ -42829,7 +43158,8 @@ describe('computeSummaryMetrics', () => {
         currentValue: 10_000,
       })),
     })
-    const holidayPolicy = ilpPolicySeedSchema.parse({
+    const holidayPolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...baseline,
       policyEvents: [
         {
@@ -42857,7 +43187,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const baseline = ilpPolicySeedSchema.parse({
+    const baseline = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 2,
       monthsAlreadyPaid: 24,
@@ -42866,7 +43197,8 @@ describe('computeSummaryMetrics', () => {
         currentValue: 10_000,
       })),
     })
-    const holidayPolicy = ilpPolicySeedSchema.parse({
+    const holidayPolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...baseline,
       policyEvents: [
         {
@@ -42905,7 +43237,8 @@ describe('computeSummaryMetrics', () => {
       expect(variant).toBeDefined()
 
       const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-      const baseline = ilpPolicySeedSchema.parse({
+      const baseline = ilpPolicySchema.parse({
+      id: 'seeded-policy',
         ...seed,
         currentPolicyYear,
         monthsAlreadyPaid,
@@ -42914,7 +43247,8 @@ describe('computeSummaryMetrics', () => {
           currentValue: 10_000,
         })),
       })
-      const blockedHoliday = ilpPolicySeedSchema.parse({
+      const blockedHoliday = ilpPolicySchema.parse({
+      id: 'seeded-policy',
         ...baseline,
         policyEvents: [
           {
@@ -42957,7 +43291,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       policyStateSupport: {
         ...seed.policyStateSupport,
@@ -43008,7 +43343,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       policyStateSupport: {
         ...seed.policyStateSupport,
@@ -43058,7 +43394,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       policyStateSupport: {
         ...seed.policyStateSupport,
@@ -43112,7 +43449,8 @@ describe('computeSummaryMetrics', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    const policy = ilpPolicySeedSchema.parse({
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
       ...seed,
       currentPolicyYear: 2,
       monthsAlreadyPaid: 12,

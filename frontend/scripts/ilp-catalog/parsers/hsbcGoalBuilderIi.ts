@@ -346,6 +346,7 @@ export function parseHsbcGoalBuilderIi({ document, sourceChecksumSha256 }: Parse
       'kernel:scheduled-payout-per-occurrence-minimum',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'goal-builder-ii-terminal-illness-post-claim-reduction-and-payout-mechanics',
       'goal-builder-ii-no-dividend-insufficient-nav-gate',

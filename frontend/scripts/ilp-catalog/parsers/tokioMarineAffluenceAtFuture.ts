@@ -541,6 +541,7 @@ export function parseTokioMarineAffluenceAtFuture(context: ParseContext): IlpCat
       'kernel:partial-withdrawal-start-policy-month-block',
       'kernel:partial-withdrawal-minimum-remaining-value-block',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'tokio-affluence-atfuture-advanced-death-payout-handling',
       'tokio-affluence-atfuture-life-benefit-rider',

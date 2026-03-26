@@ -13,6 +13,7 @@ import { PercentInput } from '@/components/shared/PercentInput'
 import {
   computeBlendedReturn,
   computeTotalProjectionYears,
+  type IlpBonusRule,
   type IlpChargeRule,
   type IlpEventChargeRule,
   type IlpPolicyEvent,
@@ -98,6 +99,24 @@ function supportsTokioCurrentLifeState(rule: IlpChargeRule): boolean {
   return rule.assuranceConfig?.formula === 'tokio-mpc-net-premium-floor'
     || rule.assuranceConfig?.formula === 'tokio-mpc-locked-in-policy-value'
     || rule.assuranceConfig?.formula === 'tokio-mpc-locked-in-policy-value-with-adjusted-single-premium'
+}
+
+function supportsVitalityStatusInput(policy: IlpPolicyInput): boolean {
+  return policy.catalogSource?.productId === 'aia-platinum-wealth-elite-2'
+    && policy.bonuses.some((bonus) => (bonus.vitalityStatusRateSchedule?.length ?? 0) > 0)
+}
+
+function resolveVitalityBonusPolicyYearRateSchedule(
+  bonus: IlpBonusRule,
+  vitalityStatus: NonNullable<IlpPolicyInput['vitalityStatus']>,
+) {
+  return bonus.vitalityStatusRateSchedule
+    ?.filter((tier) => tier.status === vitalityStatus)
+    .map(({ startPolicyYear, endPolicyYear, rate }) => ({
+      startPolicyYear,
+      endPolicyYear,
+      rate,
+    }))
 }
 
 function supportsCurrentTiClaimSnapshot(rule: IlpChargeRule): boolean {
@@ -618,8 +637,9 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
     && policy.mipBasis !== 'open-ended'
     && policy.mipLength != null
     && policy.currentPolicyYear > policy.mipLength
+  const smartRetireTargetRetirementAge = assuranceProfile?.targetRetirementAge
   const supportsSmartRetireWopClaimState = supportsSmartRetireCoiRefundInput
-    && assuranceProfile?.targetRetirementAge != null
+    && smartRetireTargetRetirementAge != null
     && assuranceProfile?.currentAgeNextBirthday != null
     && policy.mipBasis !== 'open-ended'
     && policy.mipLength != null
@@ -638,16 +658,16 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
   const supportsInvestStarterPastDuePolicyChargeRefundAverageAccountValue = supportsInvestStarterPastDuePolicyChargeRefund
     && claimProfile?.currentInvestStarterPolicyChargeRefundStatus === 'due-and-uncredited'
   const supportsSmartRetireCurrentOrFutureCoiRefund = supportsSmartRetireCoiRefundInput
-    && assuranceProfile?.targetRetirementAge != null
+    && smartRetireTargetRetirementAge != null
     && assuranceProfile?.currentAgeNextBirthday != null
     && supportsSmartRetireLaterDeathBenefit
   const supportsSmartRetireRefundGate = supportsSmartRetireCurrentOrFutureCoiRefund
   const supportsSmartRetirePastDueCoiRefund = supportsSmartRetireCurrentOrFutureCoiRefund
-    && assuranceProfile.currentAgeNextBirthday >= assuranceProfile.targetRetirementAge
+    && assuranceProfile.currentAgeNextBirthday >= smartRetireTargetRetirementAge
   const smartRetireCurrentAgeNextBirthday = assuranceProfile?.currentAgeNextBirthday ?? 35
   const smartRetireNeedsBasicSumAssured = supportsSmartRetireLaterDeathBenefit
-    && assuranceProfile?.targetRetirementAge != null
-    && smartRetireCurrentAgeNextBirthday < assuranceProfile.targetRetirementAge
+    && smartRetireTargetRetirementAge != null
+    && smartRetireCurrentAgeNextBirthday < smartRetireTargetRetirementAge
   const needsAssuranceInputs = assuranceRules.length > 0
     || supportsCurrentAmountOwing
     || supportsCurrentNetProtectedPremiumBase
@@ -1041,6 +1061,17 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
   ]
   const eecChartData = policy.eecTable.map((rate, index) => ({ year: index + 1, rate: rate * 100 }))
   const updateChargeRules = (chargeRules: IlpChargeRule[]) => updatePolicy(policy.id, { chargeRules })
+  const applyVitalityStatus = (vitalityStatus: NonNullable<IlpPolicyInput['vitalityStatus']>) => updatePolicy(policy.id, {
+    vitalityStatus,
+    bonuses: policy.bonuses.map((bonus) => {
+      if ((bonus.vitalityStatusRateSchedule?.length ?? 0) === 0) return bonus
+      return {
+        ...bonus,
+        rate: 0,
+        policyYearRateSchedule: resolveVitalityBonusPolicyYearRateSchedule(bonus, vitalityStatus),
+      }
+    }),
+  })
   const upsertAssuranceProfile = (patch: Partial<NonNullable<IlpPolicyInput['assuranceProfile']>>) => updatePolicy(policy.id, {
     assuranceProfile: {
       currentAgeNextBirthday: assuranceProfile?.currentAgeNextBirthday ?? 35,
@@ -1315,6 +1346,28 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
               integer
               min={1}
             />
+            {supportsVitalityStatusInput(policy) && (
+              <div className="space-y-1">
+                <Label>Vitality Status</Label>
+                <Select
+                  value={policy.vitalityStatus ?? 'silver'}
+                  onValueChange={(value) => applyVitalityStatus(value as NonNullable<IlpPolicyInput['vitalityStatus']>)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bronze">Bronze</SelectItem>
+                    <SelectItem value="silver">Silver</SelectItem>
+                    <SelectItem value="gold">Gold</SelectItem>
+                    <SelectItem value="platinum">Platinum</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Applies a static assumed Vitality tier across the projection. Anniversary re-rating, termination, and revival rules stay informational.
+                </p>
+              </div>
+            )}
             {needsAssuranceInputs && (
               <>
                 {supportsTokioLifeState && (
@@ -1804,7 +1857,7 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                             />
                             <NumberInput
                               label="Remaining Exclusion Runway (Months)"
-                              value={cohort.remainingMonths}
+                              value={cohort.remainingMonths ?? 24}
                               onChange={(value) => {
                                 const nextCohorts = goalBuilderHistoricalExcludedSupplementaryPremiumCohorts.map((entry, entryIndex) => (
                                   entryIndex === index

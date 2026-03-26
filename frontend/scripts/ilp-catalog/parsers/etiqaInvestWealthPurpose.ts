@@ -535,6 +535,7 @@ export function parseEtiqaInvestWealthPurpose(context: ParseContext): IlpCatalog
       'kernel:partial-withdrawal-maximum-amount-block',
       'kernel:partial-withdrawal-minimum-remaining-value-block',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'etiqa-wealth-purpose-free-partial-withdrawal-benefit-administration',
       'etiqa-wealth-purpose-change-of-life-insured',

@@ -384,6 +384,7 @@ export function parseTokioMarineAtlasWealth(context: ParseContext): IlpCatalogPr
       'kernel:distribution-mode-assumption',
       'branch:tokio-atlas-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'tokio-atlas-advanced-death-payout-handling',
       'tokio-atlas-change-of-life-assured-administration',

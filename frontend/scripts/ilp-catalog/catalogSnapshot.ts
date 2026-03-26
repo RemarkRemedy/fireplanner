@@ -240,6 +240,7 @@ async function buildBrochurePartialProducts(
       structureStatus: 'brochure-partial',
       economicsStatus: 'partial-modeled-subset',
       modeledEconomics: [],
+      coveredElsewhereBehaviors: [],
       metadataOnlyBehaviors: [
         'brochure-only-structured-economics',
       ],

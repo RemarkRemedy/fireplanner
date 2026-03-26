@@ -590,6 +590,7 @@ export function parseTokioMarineWealthMaxIi(context: ParseContext): IlpCatalogPr
       'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'tokio-wealth-max-ii-advanced-death-payout-handling',
       'tokio-wealth-max-ii-change-of-life-assured-and-life-replacement-administration',

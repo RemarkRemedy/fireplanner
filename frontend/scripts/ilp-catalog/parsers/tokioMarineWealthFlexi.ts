@@ -558,6 +558,7 @@ export function parseTokioMarineWealthFlexi(context: ParseContext): IlpCatalogPr
       'kernel:current-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'tokio-wealth-flexi-advanced-death-payout-handling',
       'tokio-wealth-flexi-change-of-life-assured-and-life-replacement-administration',

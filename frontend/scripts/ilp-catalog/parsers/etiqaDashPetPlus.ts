@@ -188,11 +188,11 @@ export function parseEtiqaDashPetPlus(context: ParseContext): IlpCatalogProduct 
       'kernel:current-ti-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: ['etiqa-dash-pet-plus-fund-management-fee'],
     metadataOnlyBehaviors: [
       'etiqa-dash-pet-plus-yearly-renewability',
       'etiqa-dash-pet-plus-basic-policy-dependency',
       'etiqa-dash-pet-plus-paynow-transfer-charge',
-      'etiqa-dash-pet-plus-fund-management-fee',
       'etiqa-dash-pet-plus-dividend-crediting-to-basic-policy',
       'etiqa-dash-pet-plus-automatic-portfolio-rebalancing',
       'etiqa-dash-pet-plus-grace-period-top-up-funding',

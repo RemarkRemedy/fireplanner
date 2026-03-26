@@ -573,6 +573,7 @@ export function parseTokioMarineWealthFlexiLink312(context: ParseContext): IlpCa
       'kernel:current-accidental-death-benefit-estimate',
       'kernel:distribution-mode-assumption',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'tokio-wealth-flexi-link-3-12-involuntary-unemployment-benefit-administration',
       'tokio-wealth-flexi-link-3-12-advanced-death-benefit-selection',

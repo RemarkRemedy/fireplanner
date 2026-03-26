@@ -418,6 +418,7 @@ export function parseTokioMarineGoClassicSecure(context: ParseContext): IlpCatal
       'kernel:partial-withdrawal-minimum-remaining-value-block',
       'kernel:tokio-locked-in-protection-state',
     ],
+    coveredElsewhereBehaviors: [],
     metadataOnlyBehaviors: [
       'tokio-goclassic-secure-premium-holiday-lapse-state',
       'tokio-goclassic-secure-regular-withdrawal-facility',

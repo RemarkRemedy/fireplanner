@@ -5,6 +5,8 @@ export type IlpCatalogCurrency = 'SGD' | 'USD'
 export type IlpCatalogSourceDocumentType = 'summary' | 'brochure'
 export type IlpCatalogSourceClass = 'summary' | 'brochure-only'
 export type IlpMipBasis = 'finite' | 'open-ended'
+export type IlpVitalityStatus = 'bronze' | 'silver' | 'gold' | 'platinum'
+export type IlpRegularPremiumPaymentFrequency = 'annual' | 'semi-annual' | 'quarterly' | 'monthly'
 
 export interface IlpCatalogSourceRef {
   page: number
@@ -64,6 +66,12 @@ export interface IlpTemplateBonus {
   amount: number | null
   tieredRates: IlpTemplateBonusTier[]
   policyYearRateSchedule?: Array<{
+    startPolicyYear: number
+    endPolicyYear: number | null
+    rate: number
+  }>
+  vitalityStatusRateSchedule?: Array<{
+    status: IlpVitalityStatus
     startPolicyYear: number
     endPolicyYear: number | null
     rate: number
@@ -178,6 +186,7 @@ export interface IlpTemplateFeeRule {
       | 'prudential-linkguard-combined'
       | 'aia-plp2-plus-death'
       | 'aia-plp2-max-death'
+      | 'aia-venture-benefit-charge'
       | 'aia-pro-achiever-3-benefit-charge'
       | 'hsbc-flexi-choice-death-ti'
       | 'hsbc-flexi-max-death-ti'
@@ -426,6 +435,7 @@ export interface IlpCatalogProduct {
   structureStatus: IlpCatalogStructureStatus
   economicsStatus: IlpCatalogEconomicsStatus
   modeledEconomics: string[]
+  coveredElsewhereBehaviors: string[]
   metadataOnlyBehaviors: string[]
   warnings: string[]
   archived: boolean
