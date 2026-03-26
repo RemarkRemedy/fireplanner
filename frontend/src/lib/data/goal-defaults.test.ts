@@ -59,9 +59,9 @@ describe('getHdbPriceRange', () => {
 })
 
 describe('getCondoBrackets / getLandedBrackets', () => {
-  it('returns 3 condo brackets in ascending order', () => {
+  it('returns 6 condo brackets in ascending order', () => {
     const brackets = getCondoBrackets()
-    expect(brackets).toEqual([1_000_000, 1_500_000, 2_000_000])
+    expect(brackets).toEqual([1_000_000, 1_500_000, 2_000_000, 2_500_000, 3_000_000, 3_500_000])
   })
 
   it('returns 3 landed brackets in ascending order', () => {

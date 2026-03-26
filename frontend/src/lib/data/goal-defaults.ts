@@ -46,7 +46,7 @@ export function getHdbPriceRange(flatType: HdbFlatType, tenure: HdbTenure): Pric
 // ============================================================
 
 export function getCondoBrackets(): number[] {
-  return [1_000_000, 1_500_000, 2_000_000]
+  return [1_000_000, 1_500_000, 2_000_000, 2_500_000, 3_000_000, 3_500_000]
 }
 
 export function getLandedBrackets(): number[] {

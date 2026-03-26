@@ -43,7 +43,7 @@ export interface CostBreakdown {
 }
 
 export type SmartGoalInputs =
-  | { kind: 'hdb'; flatType: '3-room' | '4-room' | '5-room' | 'executive'; tenure: 'new' | 'resale'; loanType: 'hdb-loan' | 'bank-loan' }
+  | { kind: 'hdb'; flatType: '3-room' | '4-room' | '5-room' | 'executive'; tenure: 'new' | 'resale'; loanType: 'hdb-loan' | 'bank-loan'; priceOverride?: number }
   | { kind: 'condo'; price: number }
   | { kind: 'landed'; price: number }
   | { kind: 'car'; coeCategory: 'A' | 'B'; condition: 'new' | 'used'; priceRange: number }
@@ -101,7 +101,7 @@ export function computeSmartGoalCost(inputs: SmartGoalInputs): CostBreakdown {
 
 function computeHdbCost(inputs: Extract<SmartGoalInputs, { kind: 'hdb' }>): CostBreakdown {
   const priceRange = getHdbPriceRange(inputs.flatType, inputs.tenure)
-  const price = priceRange.midpoint
+  const price = inputs.priceOverride ?? priceRange.midpoint
   const downPayment = computeHdbDownPayment(price, inputs.loanType)
   const bsd = calculateBSD(price)
   const legal = getLegalFees('hdb')

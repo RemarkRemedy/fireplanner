@@ -11,6 +11,7 @@ import {
   SIMPLE_GOAL_DEFAULTS,
   getCondoBrackets,
   getLandedBrackets,
+  getHdbPriceRange,
   GOAL_DATA_VINTAGE,
 } from '@/lib/data/goal-defaults'
 import { computeSmartGoalCost } from '@/lib/calculations/goal-calculator'
@@ -112,9 +113,20 @@ function HdbConfig({
   const [tenure, setTenure] = useState<'new' | 'resale'>('new')
   const [loanType, setLoanType] = useState<'hdb-loan' | 'bank-loan'>('hdb-loan')
 
+  const priceRange = useMemo(() => getHdbPriceRange(flatType, tenure), [flatType, tenure])
+  const [customPrice, setCustomPrice] = useState(priceRange.midpoint)
+
+  // Reset price to midpoint when flat type or tenure changes
+  const prevKey = `${flatType}-${tenure}`
+  const [lastKey, setLastKey] = useState(prevKey)
+  if (prevKey !== lastKey) {
+    setCustomPrice(priceRange.midpoint)
+    setLastKey(prevKey)
+  }
+
   const smartInputs: SmartGoalInputs = useMemo(
-    () => ({ kind: 'hdb', flatType, tenure, loanType }),
-    [flatType, tenure, loanType],
+    () => ({ kind: 'hdb', flatType, tenure, loanType, priceOverride: customPrice }),
+    [flatType, tenure, loanType, customPrice],
   )
 
   const breakdown = useMemo(() => computeSmartGoalCost(smartInputs), [smartInputs])
@@ -161,6 +173,17 @@ function HdbConfig({
         value={loanType}
         onChange={setLoanType}
       />
+
+      <div className="space-y-1">
+        <CurrencyInput
+          label="Estimated property price"
+          value={customPrice}
+          onChange={setCustomPrice}
+        />
+        <p className="text-xs text-muted-foreground">
+          Typical range: ${priceRange.low.toLocaleString('en-SG')} to ${priceRange.high.toLocaleString('en-SG')}
+        </p>
+      </div>
 
       <BreakdownTable breakdown={breakdown} />
 
