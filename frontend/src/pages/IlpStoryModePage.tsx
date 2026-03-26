@@ -5,12 +5,14 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { IlpFeeStory } from '@/components/ilp/IlpFeeStory'
 import { FeeBreakdownSection } from '@/components/ilp/FeeBreakdownSection'
+import { FeeImpactChart } from '@/components/ilp/FeeImpactChart'
+import { useFeeImpact } from '@/hooks/useFeeImpact'
 import { DecisionPanel } from '@/components/ilp/DecisionPanel'
 import { OpportunityCostCard } from '@/components/ilp/OpportunityCostCard'
 import { PolicySetupGate } from '@/components/ilp/PolicySetupGate'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { analyzeIlpPolicy } from '@/lib/calculations/ilp'
-import type { IlpPolicyInput } from '@/lib/calculations/ilp'
+import type { IlpPolicyInput, IlpProjectedPolicyAnalysis } from '@/lib/calculations/ilp'
 import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
 import type { IlpPolicySeed } from '@/lib/ilp-catalog/policySeedSchema'
 import { templateVariantToPolicySeed } from '@/lib/ilp-catalog/templateToPolicy'
@@ -222,8 +224,27 @@ export function IlpStoryModePage() {
   }
 
   return (
+    <StoryDetailView
+      policy={activePolicy}
+      analysis={analysis}
+      catalogProduct={catalogProduct}
+      onReplay={() => setShowFeeStory(true)}
+    />
+  )
+}
+
+/** Detail view after the Wrapped story closes. Separate component so hooks can be called unconditionally. */
+function StoryDetailView({ policy, analysis, catalogProduct, onReplay }: {
+  policy: IlpPolicyInput
+  analysis: IlpProjectedPolicyAnalysis
+  catalogProduct: IlpCatalogProduct
+  onReplay: () => void
+}) {
+  const feeImpact = useFeeImpact(policy, analysis, true)
+
+  return (
     <div>
-      {/* Screen 1: Fee Breakdown (landing after story closes) */}
+      {/* Screen 1: Fee Breakdown */}
       <StoryScreen id="story-fees" wide>
         <div className="flex items-center justify-between">
           <div>
@@ -235,12 +256,22 @@ export function IlpStoryModePage() {
           <button
             type="button"
             className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-            onClick={() => setShowFeeStory(true)}
+            onClick={onReplay}
           >
             Replay fee story
           </button>
         </div>
-        <FeeBreakdownSection policy={activePolicy} analysis={analysis} />
+        <FeeBreakdownSection policy={policy} analysis={analysis} />
+        <FeeImpactChart
+          tiers={feeImpact.tiers}
+          timeSeries={feeImpact.timeSeries}
+          tierDefs={feeImpact.tierDefs}
+          horizonYears={feeImpact.horizonYears}
+          currency={policy.currency}
+          monthlyContribution={policy.monthlyContribution}
+          initialSinglePremium={policy.initialSinglePremium}
+          useReal
+        />
         <ScrollHint targetId="story-bonuses" label="What about bonuses?" />
       </StoryScreen>
 
@@ -254,7 +285,7 @@ export function IlpStoryModePage() {
                 <div className="rounded-lg border p-4">
                   <div className="text-sm text-muted-foreground">Total bonuses received</div>
                   <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
-                    {new Intl.NumberFormat('en-SG', { style: 'currency', currency: activePolicy.currency }).format(analysis.summary.totalBonusesReceived)}
+                    {new Intl.NumberFormat('en-SG', { style: 'currency', currency: policy.currency }).format(analysis.summary.totalBonusesReceived)}
                   </div>
                 </div>
                 <div className="rounded-lg border p-4">
@@ -288,8 +319,8 @@ export function IlpStoryModePage() {
       {/* Screen 4: The Exit Math */}
       <StoryScreen id="story-exit" wide>
         <h2 className="text-2xl font-bold">Your exit options</h2>
-        <DecisionPanel policy={activePolicy} analysis={analysis} />
-        <OpportunityCostCard policy={activePolicy} analysis={analysis} />
+        <DecisionPanel policy={policy} analysis={analysis} />
+        <OpportunityCostCard policy={policy} analysis={analysis} />
         <Card>
           <CardContent className="p-6">
             <p className="text-xs text-muted-foreground">

@@ -1,14 +1,13 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
-import { AnimatePresence } from 'framer-motion'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
-import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { WrappedCard } from '@/components/wrapped/WrappedCard'
 import { WrappedProgressBar } from '@/components/wrapped/WrappedProgressBar'
 import { AnimatedNumber } from '@/components/wrapped/AnimatedNumber'
 import { staggerChild } from '@/components/wrapped/wrappedAnimations'
+import { FeeImpactChart } from './FeeImpactChart'
 import type { IlpPolicyAnalysis, IlpPolicyInput } from '@/lib/calculations/ilp'
-import { useChartColors } from '@/lib/chartTheme'
+import { useFeeImpact } from '@/hooks/useFeeImpact'
 import { formatIlpCurrency, formatIlpPercent } from './formatters'
 
 /** ILP fee story gradients — cooler tones reflecting financial analysis */
@@ -53,11 +52,9 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
   const isTransitioning = useRef(false)
   const pointerStart = useRef<{ x: number; y: number; time: number } | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const colors = useChartColors()
+  const feeImpact = useFeeImpact(policy, analysis, useReal)
 
-  const horizonYears = analysis.mode === 'projected'
-    ? analysis.projections.mid.rows.length
-    : 0
+  const horizonYears = feeImpact.horizonYears
 
   // Nominal fund charges
   const nominalFundCharges = useMemo(() => {
@@ -84,62 +81,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
 
   const blendedOcf = policy.funds.reduce((sum, fund) => sum + fund.allocation * fund.ocf, 0)
 
-  // All-in annual drag (always real-basis)
-  const avgPortfolioValue = analysis.mode === 'projected'
-    ? analysis.projections.mid.rows.reduce((sum, row) => sum + row.combinedValue, 0) / analysis.projections.mid.rows.length
-    : 0
-  const realAllInCost = summary.realWrapperFees + summary.realFundCharges + summary.inceptionCharges - summary.realBonuses
-  const annualDragPct = avgPortfolioValue > 0 && horizonYears > 0
-    ? (realAllInCost / horizonYears) / avgPortfolioValue
-    : 0
-
-  // Fee impact tiers
-  const tierDefs = useMemo(() => [
-    { label: 'Low-cost ETF/robo', key: 'lowCost', drag: 0.003, color: colors.success },
-    { label: 'This product', key: 'thisProduct', drag: annualDragPct, color: colors.primary },
-    { label: 'High-cost product', key: 'highCost', drag: 0.025, color: colors.danger },
-  ], [annualDragPct, colors])
-
-  const { feeImpactTiers, feeImpactTimeSeries } = useMemo(() => {
-    if (horizonYears <= 0) return { feeImpactTiers: [], feeImpactTimeSeries: [] }
-    const grossReturn = 0.07
-    const inflationRate = policy.inflationRate
-    const monthly = policy.monthlyContribution
-    const isp = policy.initialSinglePremium ?? 0
-    const isSp = isp > 0 && monthly === 0
-    const inflationFactor = Math.pow(1 + inflationRate, horizonYears)
-
-    const timeSeries: Array<Record<string, number>> = []
-    const tiers = tierDefs.map((tier) => {
-      const netReturn = grossReturn - tier.drag
-      const monthlyRate = Math.pow(1 + netReturn, 1 / 12) - 1
-      const nominalValue = isSp
-        ? isp * Math.pow(1 + netReturn, horizonYears)
-        : monthly > 0
-          ? monthly * ((Math.pow(1 + monthlyRate, horizonYears * 12) - 1) / monthlyRate)
-          : 0
-      const finalValue = useReal ? nominalValue / inflationFactor : nominalValue
-      return { ...tier, finalValue }
-    })
-
-    for (let year = 0; year <= horizonYears; year++) {
-      const point: Record<string, number> = { year }
-      const inflationDiscount = useReal ? Math.pow(1 + inflationRate, year) : 1
-      for (const tier of tierDefs) {
-        const netReturn = grossReturn - tier.drag
-        const monthlyRate = Math.pow(1 + netReturn, 1 / 12) - 1
-        const nominalValue = isSp
-          ? isp * Math.pow(1 + netReturn, year)
-          : monthly > 0 && year > 0
-            ? monthly * ((Math.pow(1 + monthlyRate, year * 12) - 1) / monthlyRate)
-            : 0
-        point[tier.key] = nominalValue / inflationDiscount
-      }
-      timeSeries.push(point)
-    }
-
-    return { feeImpactTiers: tiers, feeImpactTimeSeries: timeSeries }
-  }, [horizonYears, policy.monthlyContribution, policy.initialSinglePremium, policy.inflationRate, useReal, tierDefs])
+  const { annualDragPct, tiers: feeImpactTiers } = feeImpact
 
   // Navigation
   const goForward = useCallback(() => {
@@ -353,58 +295,18 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                 <motion.p variants={staggerChild} className="text-lg md:text-xl text-white/90 max-w-sm">
                   Returns compound, but fees compound too.
                 </motion.p>
-                <motion.div variants={staggerChild} className="w-full max-w-md space-y-2">
-                  {feeImpactTiers.map((tier) => (
-                    <div key={tier.label} className="flex items-center justify-between text-sm">
-                      <div>
-                        <div style={{ color: tier.color }}>{tier.label}</div>
-                        <div className="text-white/50 text-xs">{formatIlpPercent(tier.drag)} p.a.</div>
-                      </div>
-                      <div className="tabular-nums font-medium" style={{ color: tier.color }}>
-                        {formatIlpCurrency(tier.finalValue, policy.currency)}
-                      </div>
-                    </div>
-                  ))}
-                </motion.div>
-                <motion.div variants={staggerChild} className="w-full max-w-md h-40">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={feeImpactTimeSeries} margin={{ top: 5, right: 10, bottom: 5, left: 10 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                      <XAxis dataKey="year" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} stroke="rgba(255,255,255,0.2)" />
-                      <YAxis
-                        tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}K`}
-                        tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }}
-                        stroke="rgba(255,255,255,0.2)"
-                        width={40}
-                      />
-                      <Tooltip
-                        contentStyle={{ background: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, color: 'white' }}
-                        formatter={(value: number, name: string) => {
-                          const tier = tierDefs.find((t) => t.key === name)
-                          return [formatIlpCurrency(value, policy.currency), tier?.label ?? name]
-                        }}
-                        labelFormatter={(label: number) => `Year ${label}`}
-                      />
-                      <Legend
-                        formatter={(value: string) => {
-                          const tier = tierDefs.find((t) => t.key === value)
-                          return tier ? tier.label : value
-                        }}
-                        wrapperStyle={{ fontSize: 9, color: 'rgba(255,255,255,0.7)' }}
-                      />
-                      {tierDefs.map((tier) => (
-                        <Line
-                          key={tier.key}
-                          type="monotone"
-                          dataKey={tier.key}
-                          stroke={tier.color}
-                          strokeWidth={tier.key === 'thisProduct' ? 2.5 : 1.5}
-                          strokeDasharray={tier.key === 'thisProduct' ? undefined : '4 3'}
-                          dot={false}
-                        />
-                      ))}
-                    </LineChart>
-                  </ResponsiveContainer>
+                <motion.div variants={staggerChild} className="w-full max-w-md">
+                  <FeeImpactChart
+                    tiers={feeImpact.tiers}
+                    timeSeries={feeImpact.timeSeries}
+                    tierDefs={feeImpact.tierDefs}
+                    horizonYears={feeImpact.horizonYears}
+                    currency={policy.currency}
+                    monthlyContribution={policy.monthlyContribution}
+                    initialSinglePremium={policy.initialSinglePremium}
+                    useReal={useReal}
+                    dark
+                  />
                 </motion.div>
               </WrappedCard>
             )}
