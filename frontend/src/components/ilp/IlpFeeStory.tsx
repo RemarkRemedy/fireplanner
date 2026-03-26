@@ -458,6 +458,15 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                     {unmodeledBonuses.length} bonus {unmodeledBonuses.length === 1 ? 'type' : 'types'} not yet modeled ({unmodeledBonuses.map(humanizeBonusTag).join(', ')}). Actual net fees may be lower.
                   </motion.p>
                 )}
+
+                <motion.button
+                  variants={staggerChild}
+                  type="button"
+                  className="mt-2 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-gray-900 shadow-md transition-colors hover:bg-white/90"
+                  onClick={(e) => { e.stopPropagation(); onClose() }}
+                >
+                  See detailed breakdown
+                </motion.button>
               </WrappedCard>
             )}
           </div>
