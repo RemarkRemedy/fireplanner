@@ -30,14 +30,13 @@ function humanizeBonusTag(tag: string): string {
 export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
   const { summary } = analysis
   const unmodeledBonuses = countMetadataOnlyBonuses(policy)
-  const [includeOcf, setIncludeOcf] = useState(true)
   const [useReal, setUseReal] = useState(true)
 
   const horizonYears = analysis.mode === 'projected'
     ? analysis.projections.mid.rows.length
     : 0
 
-  // Nominal fund charges: sum of openingValue × blendedOcf per year (not in engine summary)
+  // Nominal fund charges: sum of openingValue x blendedOcf per year (not in engine summary)
   const nominalFundCharges = useMemo(() => {
     if (analysis.mode !== 'projected') return 0
     const ocf = policy.funds.reduce((sum, fund) => sum + fund.allocation * fund.ocf, 0)
@@ -47,14 +46,15 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
     }, 0)
   }, [analysis, policy.funds])
 
-  // Real (inflation-adjusted) values
+  // Wrapper fees = ILP-specific cost (what the product uniquely charges you)
   const wrapperFees = useReal ? summary.realWrapperFees : (summary.totalFeesCharged - summary.inceptionCharges)
-  const fundCharges = useReal ? summary.realFundCharges : nominalFundCharges
   const inceptionCharges = summary.inceptionCharges
   const bonuses = useReal ? summary.realBonuses : summary.totalBonusesReceived
+  const fundCharges = useReal ? summary.realFundCharges : nominalFundCharges
 
-  const grossFees = wrapperFees + (includeOcf ? fundCharges : 0) + inceptionCharges
-  const netCost = grossFees - bonuses
+  // Headline = wrapper-only net cost (ILP-specific)
+  const grossWrapperFees = wrapperFees + inceptionCharges
+  const netWrapperCost = grossWrapperFees - bonuses
 
   // Wrapper fee ratio uses premiums as base (honest: these ARE premium-based charges)
   const wrapperPctOfPremiums = summary.totalPremiumsPaid > 0
@@ -64,13 +64,13 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
   // Blended OCF is already a per-annum % — just read it from the funds
   const blendedOcf = policy.funds.reduce((sum, fund) => sum + fund.allocation * fund.ocf, 0)
 
-  // All-in annual drag: always real-basis (a rate is basis-independent)
+  // All-in annual drag: always real-basis, always includes OCF (for fair comparison with ETFs)
   const avgPortfolioValue = analysis.mode === 'projected'
     ? analysis.projections.mid.rows.reduce((sum, row) => sum + row.combinedValue, 0) / analysis.projections.mid.rows.length
     : 0
-  const realNetCost = summary.realWrapperFees + (includeOcf ? summary.realFundCharges : 0) + summary.inceptionCharges - summary.realBonuses
+  const realAllInCost = summary.realWrapperFees + summary.realFundCharges + summary.inceptionCharges - summary.realBonuses
   const annualDragPct = avgPortfolioValue > 0 && horizonYears > 0
-    ? (realNetCost / horizonYears) / avgPortfolioValue
+    ? (realAllInCost / horizonYears) / avgPortfolioValue
     : 0
 
   const [showFeeImpact, setShowFeeImpact] = useState(false)
@@ -124,31 +124,42 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
     return { feeImpactTiers: tiers, feeImpactTimeSeries: timeSeries }
   }, [horizonYears, policy.monthlyContribution, policy.initialSinglePremium, policy.inflationRate, useReal, tierDefs])
 
-  const basisLabel = useReal ? "in today's dollars" : 'nominal'
-
   return (
     <Card className="border-primary/20 bg-primary/5">
       <CardContent className="space-y-5 pt-6">
-        <p className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
-          Returns are not guaranteed, but fees are.
-        </p>
+        {/* Header row: tagline + basis toggle */}
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
+            Returns are not guaranteed, but fees are.
+          </p>
+          <div className="inline-flex rounded-full bg-muted p-0.5 text-xs font-medium">
+            <button
+              type="button"
+              className={`rounded-full px-3 py-1 transition-colors ${useReal ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'}`}
+              onClick={() => setUseReal(true)}
+            >
+              Today's dollars
+            </button>
+            <button
+              type="button"
+              className={`rounded-full px-3 py-1 transition-colors ${!useReal ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'}`}
+              onClick={() => setUseReal(false)}
+            >
+              Nominal
+            </button>
+          </div>
+        </div>
 
-        {/* Headline number */}
+        {/* Headline metrics — wrapper cost only (ILP-specific) */}
         <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
           <div>
-            <div className="text-3xl font-bold">{formatIlpCurrency(netCost, policy.currency)}</div>
-            <div className="text-sm text-muted-foreground">total net cost {basisLabel}</div>
+            <div className="text-3xl font-bold">{formatIlpCurrency(netWrapperCost, policy.currency)}</div>
+            <div className="text-sm text-muted-foreground">net wrapper cost over {horizonYears} years</div>
           </div>
           <div>
             <div className="text-2xl font-semibold">{formatIlpPercent(wrapperPctOfPremiums)}</div>
-            <div className="text-sm text-muted-foreground">wrapper fees as % of premiums</div>
+            <div className="text-sm text-muted-foreground">of premiums paid</div>
           </div>
-          {includeOcf && blendedOcf > 0 && (
-            <div>
-              <div className="text-2xl font-semibold">{formatIlpPercent(blendedOcf)} p.a.</div>
-              <div className="text-sm text-muted-foreground">fund charge (OCF rate)</div>
-            </div>
-          )}
           {horizonYears > 0 && annualDragPct > 0 && (
             <button
               type="button"
@@ -163,6 +174,23 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
             </button>
           )}
         </div>
+
+        {/* Fund charges callout — separate from wrapper cost */}
+        {blendedOcf > 0 && (
+          <div className="rounded-md border border-muted bg-background/50 px-3 py-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-sm font-medium">Plus {formatIlpPercent(blendedOcf)} p.a. in fund charges</span>
+                <p className="text-xs text-muted-foreground">
+                  Charged by the fund manager, not the insurer. You would pay this with any investment product. Actively managed funds with higher fees may deliver outperformance that justifies the cost.
+                </p>
+              </div>
+              {fundCharges > 0 && (
+                <span className="shrink-0 tabular-nums text-sm text-muted-foreground">{formatIlpCurrency(fundCharges, policy.currency)} total</span>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Fee Impact Comparison (expandable) */}
         {showFeeImpact && feeImpactTiers.length > 0 && (
@@ -238,7 +266,7 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
           </div>
         )}
 
-        {/* Breakdown */}
+        {/* Breakdown — wrapper fees only */}
         <div className="space-y-2 rounded-md border bg-background/50 p-4 text-sm">
           <div className="flex items-center justify-between">
             <div>
@@ -249,18 +277,6 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
             </div>
             <span className="shrink-0 tabular-nums font-medium">{formatIlpCurrency(wrapperFees, policy.currency)}</span>
           </div>
-
-          {includeOcf && fundCharges > 0 && (
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="font-medium">Fund charges (OCF)</span>
-                <p className="text-xs text-muted-foreground">
-                  Your fund manager's annual fee. Deducted from investment returns, never shown on a statement.
-                </p>
-              </div>
-              <span className="shrink-0 tabular-nums font-medium">{formatIlpCurrency(fundCharges, policy.currency)}</span>
-            </div>
-          )}
 
           {inceptionCharges > 0 && (
             <div className="flex items-center justify-between">
@@ -276,8 +292,8 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
 
           <div className="border-t pt-2">
             <div className="flex items-center justify-between">
-              <span className="font-medium">Gross fees</span>
-              <span className="shrink-0 tabular-nums font-medium">{formatIlpCurrency(grossFees, policy.currency)}</span>
+              <span className="font-medium">Gross wrapper fees</span>
+              <span className="shrink-0 tabular-nums font-medium">{formatIlpCurrency(grossWrapperFees, policy.currency)}</span>
             </div>
           </div>
 
@@ -295,22 +311,10 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
 
           <div className="border-t pt-2">
             <div className="flex items-center justify-between">
-              <span className="font-semibold">Net cost</span>
-              <span className="shrink-0 tabular-nums font-semibold">{formatIlpCurrency(netCost, policy.currency)}</span>
+              <span className="font-semibold">Net wrapper cost</span>
+              <span className="shrink-0 tabular-nums font-semibold">{formatIlpCurrency(netWrapperCost, policy.currency)}</span>
             </div>
           </div>
-        </div>
-
-        {/* Toggles */}
-        <div className="flex flex-wrap gap-4 text-xs">
-          <label className="flex cursor-pointer items-center gap-1.5">
-            <input type="checkbox" checked={includeOcf} onChange={(e) => setIncludeOcf(e.target.checked)} className="rounded" />
-            Include fund charges
-          </label>
-          <label className="flex cursor-pointer items-center gap-1.5">
-            <input type="checkbox" checked={useReal} onChange={(e) => setUseReal(e.target.checked)} className="rounded" />
-            Today's dollars
-          </label>
         </div>
 
         {/* Disclaimers */}
