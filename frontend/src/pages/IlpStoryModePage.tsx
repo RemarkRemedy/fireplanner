@@ -111,6 +111,7 @@ export function IlpStoryModePage() {
   const [selectedVariant, setSelectedVariant] = useState<IlpTemplateVariant | null>(null)
   const [pendingSeed, setPendingSeed] = useState<IlpPolicySeed | null>(null)
   const [storyPolicy, setStoryPolicy] = useState<IlpPolicyInput | null>(null)
+  const [showFeeStory, setShowFeeStory] = useState(false)
 
   // Check if we already have this product in the store (persisted from prior session)
   const existingPolicy = useMemo(() => {
@@ -236,7 +237,16 @@ export function IlpStoryModePage() {
           </p>
           <h1 className="text-3xl font-bold">{catalogProduct.productName}</h1>
         </div>
-        <IlpFeeStory policy={activePolicy} analysis={analysis} />
+        <button
+          type="button"
+          className="rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
+          onClick={() => setShowFeeStory(true)}
+        >
+          See your fee story
+        </button>
+        {showFeeStory && (
+          <IlpFeeStory policy={activePolicy} analysis={analysis} onClose={() => setShowFeeStory(false)} />
+        )}
         <p className="text-center text-xs text-muted-foreground">
           Based on {activePolicy.currency} {activePolicy.accounts[0]?.monthlyContribution
             ? `${activePolicy.accounts[0].monthlyContribution}/mo`

@@ -1,13 +1,29 @@
-import { useMemo, useState } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
+import { AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
+import { X } from 'lucide-react'
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { Card, CardContent } from '@/components/ui/card'
+import { WrappedCard } from '@/components/wrapped/WrappedCard'
+import { WrappedProgressBar } from '@/components/wrapped/WrappedProgressBar'
+import { AnimatedNumber } from '@/components/wrapped/AnimatedNumber'
+import { staggerChild } from '@/components/wrapped/wrappedAnimations'
 import type { IlpPolicyAnalysis, IlpPolicyInput } from '@/lib/calculations/ilp'
 import { useChartColors } from '@/lib/chartTheme'
 import { formatIlpCurrency, formatIlpPercent } from './formatters'
 
+/** ILP fee story gradients — cooler tones reflecting financial analysis */
+const ILP_GRADIENTS = {
+  priceTag: 'linear-gradient(to bottom right, #0F1729, #1A1040)',
+  breakdown: 'linear-gradient(to bottom right, #1A1040, #2D1B69)',
+  hiddenFee: 'linear-gradient(to bottom right, #2D1B69, #4A1060)',
+  compound: 'linear-gradient(to bottom right, #4A1060, #6B1030)',
+  summary: 'linear-gradient(to bottom right, #0F1729, #0A0F1E)',
+}
+
 interface IlpFeeStoryProps {
   policy: IlpPolicyInput
   analysis: IlpPolicyAnalysis
+  onClose: () => void
 }
 
 const TOTAL_CARDS = 5
@@ -28,11 +44,15 @@ function humanizeBonusTag(tag: string): string {
   return parts.slice(-2).join(' ')
 }
 
-export function IlpFeeStory({ policy, analysis }: IlpFeeStoryProps) {
+export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
   const { summary } = analysis
   const unmodeledBonuses = countMetadataOnlyBonuses(policy)
-  const [cardIndex, setCardIndex] = useState(0)
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [direction, setDirection] = useState(1)
   const [useReal, setUseReal] = useState(true)
+  const isTransitioning = useRef(false)
+  const pointerStart = useRef<{ x: number; y: number; time: number } | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const colors = useChartColors()
 
   const horizonYears = analysis.mode === 'projected'
@@ -121,337 +141,386 @@ export function IlpFeeStory({ policy, analysis }: IlpFeeStoryProps) {
     return { feeImpactTiers: tiers, feeImpactTimeSeries: timeSeries }
   }, [horizonYears, policy.monthlyContribution, policy.initialSinglePremium, policy.inflationRate, useReal, tierDefs])
 
-  // Breakdown bar segments for card 2
-  const breakdownSegments = useMemo(() => {
-    const segments = [
-      { label: 'Wrapper fees', value: wrapperFees, color: 'bg-blue-500' },
-    ]
-    if (inceptionCharges > 0) {
-      segments.push({ label: 'Inception', value: inceptionCharges, color: 'bg-orange-500' })
-    }
-    if (bonuses > 0) {
-      segments.push({ label: 'Bonuses', value: -bonuses, color: 'bg-emerald-500' })
-    }
-    return segments
-  }, [wrapperFees, inceptionCharges, bonuses])
-
-  const totalSegmentWidth = breakdownSegments.reduce((sum, s) => sum + Math.abs(s.value), 0)
-
   // Navigation
-  const goNext = () => setCardIndex((i) => Math.min(i + 1, TOTAL_CARDS - 1))
-  const goPrev = () => setCardIndex((i) => Math.max(i - 1, 0))
-  const goToSummary = () => setCardIndex(TOTAL_CARDS - 1)
+  const goForward = useCallback(() => {
+    if (isTransitioning.current) return
+    if (currentIndex >= TOTAL_CARDS - 1) return
+    isTransitioning.current = true
+    setDirection(1)
+    setCurrentIndex((i) => i + 1)
+    setTimeout(() => { isTransitioning.current = false }, 350)
+  }, [currentIndex])
 
-  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    if (x < rect.width * 0.3) {
-      goPrev()
-    } else {
-      goNext()
+  const goBack = useCallback(() => {
+    if (currentIndex <= 0 || isTransitioning.current) return
+    isTransitioning.current = true
+    setDirection(-1)
+    setCurrentIndex((i) => i - 1)
+    setTimeout(() => { isTransitioning.current = false }, 350)
+  }, [currentIndex])
+
+  // Keyboard navigation
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault()
+        goForward()
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        goBack()
+      } else if (e.key === 'Escape') {
+        onClose()
+      }
     }
-  }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [goForward, goBack, onClose])
+
+  // Focus trap
+  useEffect(() => {
+    containerRef.current?.focus()
+  }, [])
+
+  // Swipe + tap navigation
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    pointerStart.current = { x: e.clientX, y: e.clientY, time: Date.now() }
+  }, [])
+
+  const handlePointerCancel = useCallback(() => {
+    pointerStart.current = null
+  }, [])
+
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      if (!pointerStart.current) return
+      const dx = e.clientX - pointerStart.current.x
+      const dy = e.clientY - pointerStart.current.y
+      const dt = Date.now() - pointerStart.current.time
+      pointerStart.current = null
+
+      // Swipe detection
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) && dt < 500) {
+        if (dx < 0) goForward()
+        else goBack()
+        return
+      }
+
+      // No-navigate zone: lower 40% of summary card
+      const rect = e.currentTarget.getBoundingClientRect()
+      const yRatio = (e.clientY - rect.top) / rect.height
+      if (currentIndex === TOTAL_CARDS - 1 && yRatio > 0.6) return
+
+      // Tap zones: left 30% = back, right 70% = forward
+      const x = e.clientX - rect.left
+      const ratio = x / rect.width
+      if (ratio < 0.3) goBack()
+      else goForward()
+    },
+    [goBack, goForward, currentIndex]
+  )
+
+  const gradients = [
+    ILP_GRADIENTS.priceTag,
+    ILP_GRADIENTS.breakdown,
+    ILP_GRADIENTS.hiddenFee,
+    ILP_GRADIENTS.compound,
+    ILP_GRADIENTS.summary,
+  ]
 
   const basisLabel = useReal ? "in today's dollars" : 'nominal'
 
   return (
-    <Card className="border-primary/20 bg-primary/5 overflow-hidden">
-      <CardContent className="p-0">
-        {/* Progress bar */}
-        <div className="flex gap-1 px-4 pt-4">
-          {Array.from({ length: TOTAL_CARDS }, (_, i) => (
-            <button
-              key={i}
-              type="button"
-              className={`h-1 flex-1 rounded-full transition-colors ${i <= cardIndex ? 'bg-primary' : 'bg-muted'}`}
-              onClick={() => setCardIndex(i)}
-            />
-          ))}
-        </div>
+    <div
+      ref={containerRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="ILP Fee Story"
+      tabIndex={-1}
+      className="fixed inset-0 z-50 bg-black overflow-hidden select-none"
+      style={{ height: '100dvh', outline: 'none' }}
+    >
+      <div
+        className="absolute inset-0"
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
+      >
+        <AnimatePresence mode="wait" custom={direction}>
+          <div key={currentIndex}>
+            {/* Card 1: The Price Tag */}
+            {currentIndex === 0 && (
+              <WrappedCard gradient={gradients[0]} direction={direction}>
+                <motion.p variants={staggerChild} className="text-xs uppercase tracking-widest text-white/60 font-medium">
+                  Returns are not guaranteed, but fees are.
+                </motion.p>
+                <motion.div variants={staggerChild}>
+                  <AnimatedNumber
+                    value={netWrapperCost}
+                    format={(n) => formatIlpCurrency(n, policy.currency)}
+                    className="text-5xl md:text-7xl font-bold"
+                    delay={300}
+                  />
+                </motion.div>
+                <motion.p variants={staggerChild} className="text-lg md:text-xl text-white/90 max-w-sm">
+                  in wrapper fees over {horizonYears} years ({basisLabel}).
+                </motion.p>
+                <motion.p variants={staggerChild} className="text-base text-white/70">
+                  That's {formatIlpPercent(wrapperPctOfPremiums)} of every dollar you put in.
+                </motion.p>
+              </WrappedCard>
+            )}
 
-        {/* Basis toggle — visible on all cards */}
-        <div className="flex justify-end px-4 pt-3">
-          <div className="inline-flex rounded-full bg-muted p-0.5 text-xs font-medium">
-            <button
-              type="button"
-              className={`rounded-full px-3 py-1 transition-colors ${useReal ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'}`}
-              onClick={() => setUseReal(true)}
-            >
-              Today's $
-            </button>
-            <button
-              type="button"
-              className={`rounded-full px-3 py-1 transition-colors ${!useReal ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'}`}
-              onClick={() => setUseReal(false)}
-            >
-              Nominal
-            </button>
-          </div>
-        </div>
-
-        {/* Card content area */}
-        <div
-          className={`min-h-[320px] px-6 pb-6 pt-4 ${cardIndex < TOTAL_CARDS - 1 ? 'cursor-pointer' : ''}`}
-          onClick={cardIndex < TOTAL_CARDS - 1 ? handleCardClick : undefined}
-        >
-          {/* Card 1: The Price Tag */}
-          {cardIndex === 0 && (
-            <div className="flex h-full flex-col items-center justify-center text-center">
-              <p className="mb-2 text-sm font-medium tracking-wide text-muted-foreground uppercase">
-                Returns are not guaranteed, but fees are.
-              </p>
-              <div className="my-6">
-                <div className="text-5xl font-bold tracking-tight">{formatIlpCurrency(netWrapperCost, policy.currency)}</div>
-                <div className="mt-2 text-base text-muted-foreground">
-                  in wrapper fees over {horizonYears} years ({basisLabel})
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                That's {formatIlpPercent(wrapperPctOfPremiums)} of every dollar you put in.
-              </p>
-              <p className="mt-6 text-xs text-muted-foreground/60">Tap to continue</p>
-            </div>
-          )}
-
-          {/* Card 2: Where It Goes */}
-          {cardIndex === 1 && (
-            <div className="flex h-full flex-col justify-center">
-              <p className="mb-6 text-lg font-semibold">Here's how the wrapper fees break down.</p>
-
-              <div className="space-y-3">
-                {breakdownSegments.map((seg) => (
-                  <div key={seg.label}>
-                    <div className="mb-1 flex items-center justify-between text-sm">
-                      <span className="font-medium">{seg.label}</span>
-                      <span className="tabular-nums">
-                        {seg.value < 0 ? '-' : ''}{formatIlpCurrency(Math.abs(seg.value), policy.currency)}
-                      </span>
+            {/* Card 2: Where It Goes */}
+            {currentIndex === 1 && (
+              <WrappedCard gradient={gradients[1]} direction={direction}>
+                <motion.p variants={staggerChild} className="text-xs uppercase tracking-widest text-white/60 font-medium">
+                  Where your fees go
+                </motion.p>
+                <motion.div variants={staggerChild} className="w-full max-w-sm space-y-4">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Wrapper fees</span>
+                      <span className="tabular-nums">{formatIlpCurrency(wrapperFees, policy.currency)}</span>
                     </div>
-                    <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
-                      <div
-                        className={`h-full rounded-full ${seg.color} transition-all`}
-                        style={{ width: `${(Math.abs(seg.value) / totalSegmentWidth) * 100}%` }}
-                      />
+                    <div className="h-3 rounded-full bg-white/10 overflow-hidden">
+                      <div className="h-full rounded-full bg-blue-400" style={{ width: `${(wrapperFees / grossWrapperFees) * 100}%` }} />
                     </div>
                   </div>
-                ))}
-              </div>
-
-              <div className="mt-6 flex items-center justify-between border-t pt-3">
-                <span className="text-sm font-semibold">Net wrapper cost</span>
-                <span className="tabular-nums text-lg font-bold">{formatIlpCurrency(netWrapperCost, policy.currency)}</span>
-              </div>
-            </div>
-          )}
-
-          {/* Card 3: The Hidden Fee */}
-          {cardIndex === 2 && (
-            <div className="flex h-full flex-col items-center justify-center text-center">
-              <p className="mb-6 text-lg font-semibold">There's another fee you'll never see on a statement.</p>
-              <div className="my-4">
-                <div className="text-5xl font-bold tracking-tight">{formatIlpPercent(blendedOcf)}</div>
-                <div className="mt-2 text-base text-muted-foreground">per year in fund charges (OCF)</div>
-              </div>
-              {fundCharges > 0 && (
-                <p className="text-sm text-muted-foreground">
-                  That's {formatIlpCurrency(fundCharges, policy.currency)} over {horizonYears} years, deducted from your investment returns.
-                </p>
-              )}
-              <div className="mt-6 rounded-md border border-muted bg-background/50 px-4 py-3 text-left">
-                <p className="text-xs text-muted-foreground">
-                  All investment products have fund-level fees, though rates vary: a passive ETF charges 0.03-0.5% p.a. versus 1-2% for actively managed funds. Higher fees may be justified if the fund consistently delivers outperformance after costs.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Card 4: The Compound Effect */}
-          {cardIndex === 3 && feeImpactTiers.length > 0 && (
-            <div className="flex h-full flex-col justify-center">
-              <p className="mb-1 text-lg font-semibold">Returns compound, but fees compound too.</p>
-              <p className="mb-4 text-xs text-muted-foreground">
-                What your portfolio could be worth after {horizonYears} years at 7% gross return ({basisLabel}).
-                {policy.monthlyContribution > 0
-                  ? ` Based on ${formatIlpCurrency(policy.monthlyContribution, policy.currency)}/mo.`
-                  : ` Based on ${formatIlpCurrency(policy.initialSinglePremium ?? 0, policy.currency)} single premium.`}
-              </p>
-
-              <div className="space-y-2">
-                {feeImpactTiers.map((tier) => (
-                  <div key={tier.label} className="flex items-center justify-between gap-3 text-sm">
-                    <div className="min-w-0">
-                      <div className={tier.color}>{tier.label}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {formatIlpPercent(tier.drag)} p.a.
+                  {inceptionCharges > 0 && (
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Inception charges</span>
+                        <span className="tabular-nums">{formatIlpCurrency(inceptionCharges, policy.currency)}</span>
+                      </div>
+                      <div className="h-3 rounded-full bg-white/10 overflow-hidden">
+                        <div className="h-full rounded-full bg-orange-400" style={{ width: `${(inceptionCharges / grossWrapperFees) * 100}%` }} />
                       </div>
                     </div>
-                    <div className={`shrink-0 tabular-nums font-medium ${tier.color}`}>
-                      {formatIlpCurrency(tier.finalValue, policy.currency)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-3 h-44">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={feeImpactTimeSeries} margin={{ top: 5, right: 10, bottom: 5, left: 10 }}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="year" tick={{ fontSize: 10 }} />
-                    <YAxis
-                      tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}K`}
-                      tick={{ fontSize: 10 }}
-                      width={40}
-                    />
-                    <Tooltip
-                      formatter={(value: number, name: string) => {
-                        const tier = tierDefs.find((t) => t.key === name)
-                        return [formatIlpCurrency(value, policy.currency), tier?.label ?? name]
-                      }}
-                      labelFormatter={(label: number) => `Year ${label}`}
-                    />
-                    <Legend
-                      formatter={(value: string) => {
-                        const tier = tierDefs.find((t) => t.key === value)
-                        return tier ? `${tier.label} (${formatIlpPercent(tier.drag)})` : value
-                      }}
-                      wrapperStyle={{ fontSize: 9 }}
-                    />
-                    {tierDefs.map((tier) => (
-                      <Line
-                        key={tier.key}
-                        type="monotone"
-                        dataKey={tier.key}
-                        stroke={tier.color}
-                        strokeWidth={tier.key === 'thisProduct' ? 2.5 : 1.5}
-                        strokeDasharray={tier.key === 'thisProduct' ? undefined : '4 3'}
-                        dot={false}
-                      />
-                    ))}
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          )}
-
-          {/* Card 5: Your Summary */}
-          {cardIndex === 4 && (
-            <div className="space-y-4">
-              <p className="text-lg font-semibold">Your fee summary</p>
-
-              {/* Headline metrics */}
-              <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
-                <div>
-                  <div className="text-3xl font-bold">{formatIlpCurrency(netWrapperCost, policy.currency)}</div>
-                  <div className="text-sm text-muted-foreground">net wrapper cost</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-semibold">{formatIlpPercent(wrapperPctOfPremiums)}</div>
-                  <div className="text-sm text-muted-foreground">of premiums</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-semibold">{formatIlpPercent(annualDragPct)} p.a.</div>
-                  <div className="text-sm text-muted-foreground">all-in drag</div>
-                </div>
-              </div>
-
-              {/* Fund charges callout */}
-              {blendedOcf > 0 && (
-                <div className="rounded-md border border-muted bg-background/50 px-3 py-2">
-                  <div className="flex items-center justify-between">
+                  )}
+                  {bonuses > 0 && (
                     <div>
-                      <span className="text-sm font-medium">Plus {formatIlpPercent(blendedOcf)} p.a. in fund charges</span>
-                      <p className="text-xs text-muted-foreground">
-                        Charged by the fund manager. Rates vary: 0.03-0.5% (passive) to 1-2% (active).
-                      </p>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-emerald-300">Bonuses returned</span>
+                        <span className="tabular-nums text-emerald-300">-{formatIlpCurrency(bonuses, policy.currency)}</span>
+                      </div>
+                      <div className="h-3 rounded-full bg-white/10 overflow-hidden">
+                        <div className="h-full rounded-full bg-emerald-400" style={{ width: `${(bonuses / grossWrapperFees) * 100}%` }} />
+                      </div>
                     </div>
-                    {fundCharges > 0 && (
-                      <span className="shrink-0 tabular-nums text-sm text-muted-foreground">{formatIlpCurrency(fundCharges, policy.currency)}</span>
-                    )}
-                  </div>
-                </div>
-              )}
+                  )}
+                </motion.div>
+                <motion.div variants={staggerChild} className="border-t border-white/20 pt-3 w-full max-w-sm flex justify-between">
+                  <span className="font-semibold">Net wrapper cost</span>
+                  <span className="tabular-nums font-bold text-lg">{formatIlpCurrency(netWrapperCost, policy.currency)}</span>
+                </motion.div>
+              </WrappedCard>
+            )}
 
-              {/* Breakdown */}
-              <div className="space-y-2 rounded-md border bg-background/50 p-4 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Wrapper fees</span>
-                  <span className="shrink-0 tabular-nums font-medium">{formatIlpCurrency(wrapperFees, policy.currency)}</span>
-                </div>
-                {inceptionCharges > 0 && (
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Inception charges</span>
-                    <span className="shrink-0 tabular-nums font-medium">{formatIlpCurrency(inceptionCharges, policy.currency)}</span>
-                  </div>
+            {/* Card 3: The Hidden Fee */}
+            {currentIndex === 2 && (
+              <WrappedCard gradient={gradients[2]} direction={direction}>
+                <motion.p variants={staggerChild} className="text-xs uppercase tracking-widest text-white/60 font-medium">
+                  The fee you'll never see on a statement
+                </motion.p>
+                <motion.div variants={staggerChild}>
+                  <AnimatedNumber
+                    value={blendedOcf * 100}
+                    format={(n) => `${n.toFixed(2)}%`}
+                    className="text-5xl md:text-7xl font-bold"
+                    delay={300}
+                  />
+                </motion.div>
+                <motion.p variants={staggerChild} className="text-lg md:text-xl text-white/90 max-w-sm">
+                  per year in fund charges, deducted from your investment returns.
+                </motion.p>
+                {fundCharges > 0 && (
+                  <motion.p variants={staggerChild} className="text-base text-white/70">
+                    That's {formatIlpCurrency(fundCharges, policy.currency)} over {horizonYears} years.
+                  </motion.p>
                 )}
-                <div className="border-t pt-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Gross wrapper fees</span>
-                    <span className="shrink-0 tabular-nums font-medium">{formatIlpCurrency(grossWrapperFees, policy.currency)}</span>
+                <motion.p variants={staggerChild} className="text-sm text-white/50 max-w-sm italic">
+                  All investment products have fund-level fees. Passive ETFs charge 0.03-0.5% p.a. versus 1-2% for actively managed funds.
+                </motion.p>
+              </WrappedCard>
+            )}
+
+            {/* Card 4: The Compound Effect */}
+            {currentIndex === 3 && feeImpactTiers.length > 0 && (
+              <WrappedCard gradient={gradients[3]} direction={direction}>
+                <motion.p variants={staggerChild} className="text-xs uppercase tracking-widest text-white/60 font-medium">
+                  The compound effect
+                </motion.p>
+                <motion.p variants={staggerChild} className="text-lg md:text-xl text-white/90 max-w-sm">
+                  Returns compound, but fees compound too.
+                </motion.p>
+                <motion.div variants={staggerChild} className="w-full max-w-md space-y-2">
+                  {feeImpactTiers.map((tier) => (
+                    <div key={tier.label} className="flex items-center justify-between text-sm">
+                      <div>
+                        <div style={{ color: tier.color }}>{tier.label}</div>
+                        <div className="text-white/50 text-xs">{formatIlpPercent(tier.drag)} p.a.</div>
+                      </div>
+                      <div className="tabular-nums font-medium" style={{ color: tier.color }}>
+                        {formatIlpCurrency(tier.finalValue, policy.currency)}
+                      </div>
+                    </div>
+                  ))}
+                </motion.div>
+                <motion.div variants={staggerChild} className="w-full max-w-md h-40">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={feeImpactTimeSeries} margin={{ top: 5, right: 10, bottom: 5, left: 10 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                      <XAxis dataKey="year" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} stroke="rgba(255,255,255,0.2)" />
+                      <YAxis
+                        tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}K`}
+                        tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }}
+                        stroke="rgba(255,255,255,0.2)"
+                        width={40}
+                      />
+                      <Tooltip
+                        contentStyle={{ background: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, color: 'white' }}
+                        formatter={(value: number, name: string) => {
+                          const tier = tierDefs.find((t) => t.key === name)
+                          return [formatIlpCurrency(value, policy.currency), tier?.label ?? name]
+                        }}
+                        labelFormatter={(label: number) => `Year ${label}`}
+                      />
+                      <Legend
+                        formatter={(value: string) => {
+                          const tier = tierDefs.find((t) => t.key === value)
+                          return tier ? tier.label : value
+                        }}
+                        wrapperStyle={{ fontSize: 9, color: 'rgba(255,255,255,0.7)' }}
+                      />
+                      {tierDefs.map((tier) => (
+                        <Line
+                          key={tier.key}
+                          type="monotone"
+                          dataKey={tier.key}
+                          stroke={tier.color}
+                          strokeWidth={tier.key === 'thisProduct' ? 2.5 : 1.5}
+                          strokeDasharray={tier.key === 'thisProduct' ? undefined : '4 3'}
+                          dot={false}
+                        />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </motion.div>
+              </WrappedCard>
+            )}
+
+            {/* Card 5: Summary */}
+            {currentIndex === 4 && (
+              <WrappedCard gradient={gradients[4]} direction={direction}>
+                <motion.p variants={staggerChild} className="text-xs uppercase tracking-widest text-white/60 font-medium">
+                  Your fee summary
+                </motion.p>
+                <motion.div variants={staggerChild} className="flex flex-wrap justify-center gap-6">
+                  <div>
+                    <div className="text-3xl font-bold">{formatIlpCurrency(netWrapperCost, policy.currency)}</div>
+                    <div className="text-sm text-white/60">net wrapper cost</div>
                   </div>
-                </div>
-                {bonuses > 0 && (
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-emerald-700 dark:text-emerald-400">Bonuses returned</span>
-                    <span className="shrink-0 tabular-nums font-medium text-emerald-700 dark:text-emerald-400">-{formatIlpCurrency(bonuses, policy.currency)}</span>
+                  <div>
+                    <div className="text-2xl font-semibold">{formatIlpPercent(wrapperPctOfPremiums)}</div>
+                    <div className="text-sm text-white/60">of premiums</div>
                   </div>
+                  <div>
+                    <div className="text-2xl font-semibold">{formatIlpPercent(annualDragPct)} p.a.</div>
+                    <div className="text-sm text-white/60">all-in drag</div>
+                  </div>
+                </motion.div>
+
+                {blendedOcf > 0 && (
+                  <motion.div variants={staggerChild} className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 w-full max-w-sm">
+                    <div className="flex justify-between text-sm">
+                      <span>Plus {formatIlpPercent(blendedOcf)} p.a. fund charges</span>
+                      {fundCharges > 0 && <span className="tabular-nums text-white/60">{formatIlpCurrency(fundCharges, policy.currency)}</span>}
+                    </div>
+                  </motion.div>
                 )}
-                <div className="border-t pt-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold">Net wrapper cost</span>
-                    <span className="shrink-0 tabular-nums font-semibold">{formatIlpCurrency(netWrapperCost, policy.currency)}</span>
+
+                <motion.div variants={staggerChild} className="w-full max-w-sm space-y-1 text-sm">
+                  <div className="flex justify-between"><span>Wrapper fees</span><span className="tabular-nums">{formatIlpCurrency(wrapperFees, policy.currency)}</span></div>
+                  {inceptionCharges > 0 && <div className="flex justify-between"><span>Inception</span><span className="tabular-nums">{formatIlpCurrency(inceptionCharges, policy.currency)}</span></div>}
+                  {bonuses > 0 && <div className="flex justify-between text-emerald-300"><span>Bonuses</span><span className="tabular-nums">-{formatIlpCurrency(bonuses, policy.currency)}</span></div>}
+                  <div className="flex justify-between border-t border-white/20 pt-1 font-semibold">
+                    <span>Net wrapper cost</span><span className="tabular-nums">{formatIlpCurrency(netWrapperCost, policy.currency)}</span>
                   </div>
-                </div>
-              </div>
+                </motion.div>
 
-              {/* Disclaimers */}
-              <div className="text-xs text-muted-foreground">
-                <p>
-                  This shows fees only. It does not include investment returns, which would offset some of these costs depending on market performance.
-                  {useReal && ` Adjusted for ${formatIlpPercent(policy.inflationRate)} annual inflation.`}
-                </p>
-              </div>
+                <motion.p variants={staggerChild} className="text-xs text-white/40 max-w-sm">
+                  Fees only. Does not include investment returns.
+                  {useReal && ` Adjusted for ${formatIlpPercent(policy.inflationRate)} inflation.`}
+                </motion.p>
 
-              {unmodeledBonuses.length > 0 && (
-                <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 dark:border-amber-800 dark:bg-amber-950/30">
-                  <p className="text-xs font-medium text-amber-900 dark:text-amber-200">
-                    {unmodeledBonuses.length} bonus {unmodeledBonuses.length === 1 ? 'type' : 'types'} not yet modeled. Actual net fees may be lower.
-                  </p>
-                  <p className="mt-1 text-xs text-amber-800 dark:text-amber-300">
-                    {unmodeledBonuses.map(humanizeBonusTag).join(', ')}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
+                {unmodeledBonuses.length > 0 && (
+                  <motion.p variants={staggerChild} className="text-xs text-amber-300/80 max-w-sm">
+                    {unmodeledBonuses.length} bonus {unmodeledBonuses.length === 1 ? 'type' : 'types'} not yet modeled ({unmodeledBonuses.map(humanizeBonusTag).join(', ')}). Actual net fees may be lower.
+                  </motion.p>
+                )}
+              </WrappedCard>
+            )}
+          </div>
+        </AnimatePresence>
+      </div>
+
+      {/* Progress bar overlay */}
+      <div className="absolute top-0 left-0 right-0 z-10">
+        <WrappedProgressBar total={TOTAL_CARDS} current={currentIndex} />
+      </div>
+
+      {/* Close button */}
+      <button
+        className="absolute top-6 right-4 z-20 text-white/90 hover:text-white transition-colors p-2"
+        onClick={(e) => { e.stopPropagation(); onClose() }}
+        aria-label="Close"
+      >
+        <X className="h-6 w-6" />
+      </button>
+
+      {/* Basis toggle */}
+      <div className="absolute top-14 right-4 z-20">
+        <div className="inline-flex rounded-full bg-white/10 p-0.5 text-xs font-medium">
+          <button
+            type="button"
+            className={`rounded-full px-3 py-1 transition-colors ${useReal ? 'bg-white/20 text-white' : 'text-white/50'}`}
+            onClick={(e) => { e.stopPropagation(); setUseReal(true) }}
+          >
+            Today's $
+          </button>
+          <button
+            type="button"
+            className={`rounded-full px-3 py-1 transition-colors ${!useReal ? 'bg-white/20 text-white' : 'text-white/50'}`}
+            onClick={(e) => { e.stopPropagation(); setUseReal(false) }}
+          >
+            Nominal
+          </button>
         </div>
+      </div>
 
-        {/* Navigation hint + skip */}
-        <div className="flex items-center justify-between border-t px-4 py-2">
-          <span className="text-xs text-muted-foreground">
-            {cardIndex < TOTAL_CARDS - 1
-              ? `${cardIndex + 1} of ${TOTAL_CARDS}`
-              : 'Full summary'}
-          </span>
-          {cardIndex < TOTAL_CARDS - 1 && (
-            <button
-              type="button"
-              className="text-xs text-muted-foreground underline-offset-2 hover:underline"
-              onClick={goToSummary}
-            >
-              Skip to summary
-            </button>
-          )}
-          {cardIndex === TOTAL_CARDS - 1 && (
-            <button
-              type="button"
-              className="text-xs text-muted-foreground underline-offset-2 hover:underline"
-              onClick={() => setCardIndex(0)}
-            >
-              Replay story
-            </button>
-          )}
+      {/* Skip to summary */}
+      {currentIndex < TOTAL_CARDS - 1 && currentIndex > 0 && (
+        <button
+          className="absolute bottom-8 right-4 z-10 text-white/60 hover:text-white text-xs transition-colors"
+          onClick={(e) => {
+            e.stopPropagation()
+            if (isTransitioning.current) return
+            isTransitioning.current = true
+            setDirection(1)
+            setCurrentIndex(TOTAL_CARDS - 1)
+            setTimeout(() => { isTransitioning.current = false }, 350)
+          }}
+        >
+          Skip to summary
+        </button>
+      )}
+
+      {/* Navigation hint on first card */}
+      {currentIndex === 0 && (
+        <div className="absolute bottom-8 left-0 right-0 z-10 flex justify-center">
+          <p className="text-white/80 text-sm motion-safe:animate-pulse">Tap or swipe to continue</p>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   )
 }
