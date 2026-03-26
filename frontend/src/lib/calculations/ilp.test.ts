@@ -8311,6 +8311,7 @@ describe('projectIlpPolicy', () => {
           startPolicyMonth: 60,
           durationMonths: 1,
           repayMissedPremiums: true,
+          repaymentAccountId: 'policy',
         },
       ],
     })
@@ -8374,6 +8375,7 @@ describe('projectIlpPolicy', () => {
           startPolicyMonth: 24,
           durationMonths: 1,
           repayMissedPremiums: true,
+          repaymentAccountId: 'policy',
         },
       ],
     })

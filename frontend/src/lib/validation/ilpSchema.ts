@@ -1541,16 +1541,6 @@ export const ilpPolicySchema = z.object({
 
   const contributionShareSum = policy.accounts.reduce((sum, account) => sum + account.contributionShare, 0)
   const hasContributionRules = policy.accounts.some((account) => (account.contributionRules?.length ?? 0) > 0)
-  const hasInitialSinglePremiumContributionRules = policy.accounts.some((account) => (
-    account.contributionRules?.some((rule) => rule.phase === 'during-icp' && rule.contributionShare > 0)
-  ))
-  const supportsInitialSinglePremiumRouting = (policy.initialSinglePremium ?? 0) > 0 || (
-    policy.chargeRules?.some((rule) => (
-      rule.basis === 'initial-single-premium'
-      || rule.basis === 'initial-single-premium-base'
-    )) ?? false
-  ) || policy.exitChargeBasis === 'initial-single-premium-base'
-    || hasInitialSinglePremiumContributionRules
   if (policy.monthlyContribution > 0) {
     if (!hasContributionRules && Math.abs(contributionShareSum - 1) > SUM_TOLERANCE) {
       ctx.addIssue({
@@ -1560,13 +1550,12 @@ export const ilpPolicySchema = z.object({
       })
     }
   } else if (!hasContributionRules) {
-    const expectedContributionShareSum = supportsInitialSinglePremiumRouting ? 1 : 0
-    if (Math.abs(contributionShareSum - expectedContributionShareSum) > SUM_TOLERANCE) {
+    const supportsDormantContributionRouting = Math.abs(contributionShareSum - 1) <= SUM_TOLERANCE
+    const supportsDisabledContributionRouting = Math.abs(contributionShareSum) <= SUM_TOLERANCE
+    if (!supportsDormantContributionRouting && !supportsDisabledContributionRouting) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: supportsInitialSinglePremiumRouting
-          ? 'If monthlyContribution = 0 with initial-single-premium routing, account contributionShares must sum to 1.0'
-          : 'If monthlyContribution = 0, account contributionShares must sum to 0',
+        message: 'If monthlyContribution = 0, account contributionShares must sum to 0 or 1.0',
         path: ['accounts'],
       })
     }
@@ -1591,13 +1580,12 @@ export const ilpPolicySchema = z.object({
       }
 
       if (policy.monthlyContribution === 0) {
-        const expectedPhaseShareSum = phase === 'during-icp' && supportsInitialSinglePremiumRouting ? 1 : 0
-        if (Math.abs(phaseShareSum - expectedPhaseShareSum) > SUM_TOLERANCE) {
+        const supportsDormantPhaseRouting = Math.abs(phaseShareSum - 1) <= SUM_TOLERANCE
+        const supportsDisabledPhaseRouting = Math.abs(phaseShareSum) <= SUM_TOLERANCE
+        if (!supportsDormantPhaseRouting && !supportsDisabledPhaseRouting) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: expectedPhaseShareSum === 1
-              ? 'If monthlyContribution = 0 with initial-single-premium routing, during-icp contributionRules must sum to 1.0'
-              : `If monthlyContribution = 0, ${phase} contributionRules must sum to 0`,
+            message: `If monthlyContribution = 0, ${phase} contributionRules must sum to 0 or 1.0`,
             path: ['accounts'],
           })
         }
@@ -1633,10 +1621,14 @@ export const ilpPolicySchema = z.object({
         })
       }
 
-      if (policy.monthlyContribution === 0 && Math.abs(afterMipShareSum) > SUM_TOLERANCE) {
+      if (
+        policy.monthlyContribution === 0
+        && Math.abs(afterMipShareSum) > SUM_TOLERANCE
+        && Math.abs(afterMipShareSum - 1) > SUM_TOLERANCE
+      ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'If monthlyContribution = 0, after-mip contributionRules must sum to 0 when defined',
+          message: 'If monthlyContribution = 0, after-mip contributionRules must sum to 0 or 1.0 when defined',
           path: ['accounts'],
         })
       }

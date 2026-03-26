@@ -18,6 +18,7 @@ interface GoldenFixtureArtifact {
     accounts: Array<{
       id: string
       currentValue: number
+      feeRate: number
     }>
   }
   expected: {
@@ -27,10 +28,12 @@ interface GoldenFixtureArtifact {
           policyYear: number
           annualContribution: number
           annualWithdrawals: number
+          combinedValue: number
           cumulativeGrossFees: number
           eecRate: number
           accounts: Array<{
             accountId: string
+            open: number
             contributionAmount: number
             grossFee: number
             bonusCredit: number
@@ -5962,7 +5965,7 @@ function etiqaInvestPlusSpBasePolicy(
     monthsAlreadyPaid: 0,
   })
 
-  return withFunds(
+  return withResolvedManualInputs(withFunds(
     ilpPolicySchema.parse({
       ...base,
       name: 'Golden Etiqa Invest plus SP (SGD / Open-ended Initial Only)',
@@ -5975,7 +5978,7 @@ function etiqaInvestPlusSpBasePolicy(
       ...overrides,
     }),
     funds,
-  )
+  ))
 }
 
 function etiqaInvestPlusSpBaselinePolicy(
@@ -6683,7 +6686,7 @@ function aiaPlatinumWealthElite2BasePolicy(
     monthsAlreadyPaid: 24,
   })
 
-  return withFunds(
+  return withResolvedManualInputs(withFunds(
     ilpPolicySchema.parse({
       ...base,
       name: 'Golden AIA Platinum Wealth Elite 2.0 (SGD / MIP 5)',
@@ -6695,7 +6698,7 @@ function aiaPlatinumWealthElite2BasePolicy(
       ...overrides,
     }),
     funds,
-  )
+  ))
 }
 
 function aiaPlatinumWealthElite2BaselinePolicy(
@@ -6762,7 +6765,7 @@ function aiaPlatinumWealthLegacyBasePolicy(
     monthsAlreadyPaid: 24,
   })
 
-  return withFunds(
+  return withResolvedManualInputs(withFunds(
     ilpPolicySchema.parse({
       ...base,
       name: 'Golden AIA Platinum Wealth Legacy (SGD / MIP 5)',
@@ -6774,7 +6777,7 @@ function aiaPlatinumWealthLegacyBasePolicy(
       ...overrides,
     }),
     funds,
-  )
+  ))
 }
 
 function aiaPlatinumWealthLegacyBaselinePolicy(
