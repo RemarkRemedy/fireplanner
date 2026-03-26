@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { ChevronDown } from 'lucide-react'
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { Card, CardContent } from '@/components/ui/card'
 import type { IlpPolicyAnalysis, IlpPolicyInput } from '@/lib/calculations/ilp'
@@ -73,7 +72,6 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
     ? (realAllInCost / horizonYears) / avgPortfolioValue
     : 0
 
-  const [showFeeImpact, setShowFeeImpact] = useState(false)
   const colors = useChartColors()
 
   // Compute portfolio values at different fee levels for the impact comparison
@@ -161,17 +159,10 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
             <div className="text-sm text-muted-foreground">of premiums paid</div>
           </div>
           {horizonYears > 0 && annualDragPct > 0 && (
-            <button
-              type="button"
-              className="text-left transition-colors hover:text-primary"
-              onClick={() => setShowFeeImpact(!showFeeImpact)}
-            >
-              <div className="flex items-baseline gap-1">
-                <div className="text-2xl font-semibold">{formatIlpPercent(annualDragPct)} p.a.</div>
-                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${showFeeImpact ? 'rotate-180' : ''}`} />
-              </div>
+            <div>
+              <div className="text-2xl font-semibold">{formatIlpPercent(annualDragPct)} p.a.</div>
               <div className="text-sm text-muted-foreground">all-in annual drag on portfolio</div>
-            </button>
+            </div>
           )}
         </div>
 
@@ -192,8 +183,8 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
           </div>
         )}
 
-        {/* Fee Impact Comparison (expandable) */}
-        {showFeeImpact && feeImpactTiers.length > 0 && (
+        {/* Fee Impact Comparison */}
+        {feeImpactTiers.length > 0 && (
           <div className="rounded-md border bg-background/50 p-4">
             <p className="mb-1 text-sm font-semibold">Returns compound, but fees compound too.</p>
             <p className="mb-3 text-xs text-muted-foreground">
