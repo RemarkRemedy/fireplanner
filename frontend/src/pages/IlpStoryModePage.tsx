@@ -285,7 +285,7 @@ export function IlpStoryModePage() {
           </Card>
         ) : (
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="p-6">
               <p className="text-sm text-muted-foreground">
                 This product does not have modelled bonuses. All fee figures shown are gross fees with no bonus offset. Actual net fees may be lower if the product offers bonuses that are not yet captured in the catalog.
               </p>
@@ -301,7 +301,7 @@ export function IlpStoryModePage() {
         <DecisionPanel policy={activePolicy} analysis={analysis} />
         <OpportunityCostCard policy={activePolicy} analysis={analysis} />
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="p-6">
             <p className="text-xs text-muted-foreground">
               Not financial advice. These calculations are based on your inputs and standardized assumptions. Consult a licensed financial adviser before making policy decisions.
             </p>
