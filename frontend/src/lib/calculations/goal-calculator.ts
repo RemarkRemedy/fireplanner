@@ -1,0 +1,308 @@
+/**
+ * Goal calculator calculation engine.
+ *
+ * Provides smart goal cost computation, monthly savings PMT,
+ * feasibility checks, multi-goal stacking, retirement impact,
+ * and mapping to household GoalItem.
+ */
+
+import { calculateBSD } from '@/lib/calculations/property'
+import { calculateYearsToFire } from '@/lib/calculations/fire'
+import {
+  getHdbPriceRange,
+  computeHdbDownPayment,
+  computeCondoDownPayment,
+  getCarPurchaseCost,
+  getRenovationEstimate,
+  getLegalFees,
+} from '@/lib/data/goal-defaults'
+import type { GoalCategory } from '@/lib/types'
+import type { GoalItem, TimingRule } from '@/lib/household/types'
+
+// ============================================================
+// Constants
+// ============================================================
+
+export const REAL_RETURN = 0.036
+export const FIRE_MULTIPLIER = 28
+
+// ============================================================
+// Types
+// ============================================================
+
+export interface GoalCalcBasics {
+  age: number
+  monthlyIncome: number
+  monthlyExpenses: number
+  existingSavings: number
+}
+
+export interface CostBreakdown {
+  items: { label: string; amount: number }[]
+  total: number
+}
+
+export type SmartGoalInputs =
+  | { kind: 'hdb'; flatType: '3-room' | '4-room' | '5-room' | 'executive'; tenure: 'new' | 'resale'; loanType: 'hdb-loan' | 'bank-loan' }
+  | { kind: 'condo'; price: number }
+  | { kind: 'landed'; price: number }
+  | { kind: 'car'; coeCategory: 'A' | 'B'; condition: 'new' | 'used'; priceRange: number }
+
+export interface GoalCalcGoal {
+  id: string
+  category: GoalCategory
+  label: string
+  targetAge: number
+  smartInputs?: SmartGoalInputs
+  totalCostToday: number
+  breakdown: CostBreakdown
+  monthlySavingsNeeded: number
+  feasible: boolean
+  shortfallPerMonth: number
+}
+
+export interface FeasibilityResult {
+  level: 'green' | 'amber' | 'red'
+  feasible: boolean
+  shortfall: number
+}
+
+export interface StackedGoalResult {
+  goal: GoalCalcGoal
+  label: string
+  stackedFeasibility: FeasibilityResult
+  remainingCapacity: number
+}
+
+export interface RetirementImpactResult {
+  yearsWithoutGoals: number
+  yearsWithGoals: number
+  deltaYears: number
+  fullyCommitted: boolean
+  adjustedPortfolioBase: number
+}
+
+// ============================================================
+// computeSmartGoalCost
+// ============================================================
+
+export function computeSmartGoalCost(inputs: SmartGoalInputs): CostBreakdown {
+  switch (inputs.kind) {
+    case 'hdb':
+      return computeHdbCost(inputs)
+    case 'condo':
+      return computeCondoCost(inputs.price, 'condo')
+    case 'landed':
+      return computeCondoCost(inputs.price, 'landed')
+    case 'car':
+      return computeCarCost(inputs)
+  }
+}
+
+function computeHdbCost(inputs: Extract<SmartGoalInputs, { kind: 'hdb' }>): CostBreakdown {
+  const priceRange = getHdbPriceRange(inputs.flatType, inputs.tenure)
+  const price = priceRange.midpoint
+  const downPayment = computeHdbDownPayment(price, inputs.loanType)
+  const bsd = calculateBSD(price)
+  const legal = getLegalFees('hdb')
+  const reno = getRenovationEstimate('hdb')
+
+  const items = [
+    { label: 'Down payment', amount: downPayment },
+    { label: 'BSD', amount: bsd },
+    { label: 'Legal fees', amount: legal },
+    { label: 'Renovation', amount: reno },
+  ]
+  return { items, total: items.reduce((sum, i) => sum + i.amount, 0) }
+}
+
+function computeCondoCost(price: number, propertyType: 'condo' | 'landed'): CostBreakdown {
+  const dp = computeCondoDownPayment(price)
+  const bsd = calculateBSD(price)
+  const legal = getLegalFees(propertyType)
+  const reno = getRenovationEstimate(propertyType)
+
+  const items = [
+    { label: 'Down payment (25%)', amount: dp.total },
+    { label: 'BSD', amount: bsd },
+    { label: 'ABSD (first property)', amount: 0 },
+    { label: 'Legal fees', amount: legal },
+    { label: 'Renovation', amount: reno },
+  ]
+  return { items, total: items.reduce((sum, i) => sum + i.amount, 0) }
+}
+
+function computeCarCost(inputs: Extract<SmartGoalInputs, { kind: 'car' }>): CostBreakdown {
+  const carCost = getCarPurchaseCost(inputs.coeCategory, inputs.condition, inputs.priceRange)
+
+  const items = [
+    { label: 'COE', amount: carCost.coe },
+    { label: 'OMV', amount: carCost.omv },
+    { label: 'ARF', amount: carCost.arf },
+  ]
+  return { items, total: carCost.total }
+}
+
+// ============================================================
+// computeMonthlySavingsNeeded
+// ============================================================
+
+export function computeMonthlySavingsNeeded(
+  goalAmount: number,
+  existingSavings: number,
+  years: number,
+): number {
+  if (years <= 0) return Infinity
+
+  const r = REAL_RETURN
+  const n = years
+
+  // Future value of existing savings
+  const fvSavings = existingSavings * Math.pow(1 + r, n)
+
+  // Gap after existing savings grow
+  const gap = goalAmount - fvSavings
+  if (gap <= 0) return 0
+
+  // Guard for r approximately 0
+  if (Math.abs(r) < 1e-10) {
+    return gap / (n * 12)
+  }
+
+  // PMT formula: annual payment for future value of annuity
+  // FV = PMT * ((1+r)^n - 1) / r
+  // PMT = gap * r / ((1+r)^n - 1)
+  const annualPmt = gap * r / (Math.pow(1 + r, n) - 1)
+  return annualPmt / 12
+}
+
+// ============================================================
+// computeGoalFeasibility
+// ============================================================
+
+export function computeGoalFeasibility(
+  monthlySavingsNeeded: number,
+  availableMonthlySavings: number,
+): FeasibilityResult {
+  if (availableMonthlySavings <= 0 || monthlySavingsNeeded > availableMonthlySavings) {
+    return {
+      level: 'red',
+      feasible: false,
+      shortfall: monthlySavingsNeeded - Math.max(0, availableMonthlySavings),
+    }
+  }
+
+  const ratio = monthlySavingsNeeded / availableMonthlySavings
+  if (ratio > 0.8) {
+    return { level: 'amber', feasible: true, shortfall: 0 }
+  }
+
+  return { level: 'green', feasible: true, shortfall: 0 }
+}
+
+// ============================================================
+// computeMultiGoalStacking
+// ============================================================
+
+export function computeMultiGoalStacking(
+  goals: GoalCalcGoal[],
+  basics: GoalCalcBasics,
+): StackedGoalResult[] {
+  // Sort by targetAge ascending
+  const sorted = [...goals].sort((a, b) => a.targetAge - b.targetAge)
+
+  let remainingCapacity = basics.monthlyIncome - basics.monthlyExpenses
+
+  return sorted.map((goal) => {
+    const feasibility = computeGoalFeasibility(
+      goal.monthlySavingsNeeded,
+      remainingCapacity,
+    )
+
+    const capacityAfter = feasibility.feasible
+      ? remainingCapacity - goal.monthlySavingsNeeded
+      : remainingCapacity
+
+    const result: StackedGoalResult = {
+      goal,
+      label: goal.label,
+      stackedFeasibility: feasibility,
+      remainingCapacity: Math.max(0, capacityAfter),
+    }
+
+    if (feasibility.feasible) {
+      remainingCapacity -= goal.monthlySavingsNeeded
+    }
+
+    return result
+  })
+}
+
+// ============================================================
+// computeRetirementImpact
+// ============================================================
+
+export function computeRetirementImpact(
+  basics: GoalCalcBasics,
+  totalGoalMonthlySavings: number,
+  savingsAllocatedToGoals: number,
+): RetirementImpactResult {
+  const requiredNestEgg = basics.monthlyExpenses * 12 * FIRE_MULTIPLIER
+  const adjustedPortfolioBase = Math.max(0, basics.existingSavings - savingsAllocatedToGoals)
+
+  const monthlySavingsWithout = basics.monthlyIncome - basics.monthlyExpenses
+  const annualSavingsWithout = monthlySavingsWithout * 12
+
+  const monthlySavingsWith = monthlySavingsWithout - totalGoalMonthlySavings
+  const annualSavingsWith = monthlySavingsWith * 12
+
+  const yearsWithoutGoals = calculateYearsToFire(
+    REAL_RETURN,
+    annualSavingsWithout,
+    basics.existingSavings,
+    requiredNestEgg,
+  )
+
+  const yearsWithGoals = calculateYearsToFire(
+    REAL_RETURN,
+    annualSavingsWith,
+    adjustedPortfolioBase,
+    requiredNestEgg,
+  )
+
+  const fullyCommitted = annualSavingsWith <= 0
+
+  return {
+    yearsWithoutGoals,
+    yearsWithGoals,
+    deltaYears: yearsWithGoals - yearsWithoutGoals,
+    fullyCommitted,
+    adjustedPortfolioBase,
+  }
+}
+
+// ============================================================
+// mapGoalToHouseholdGoalItem
+// ============================================================
+
+export function mapGoalToHouseholdGoalItem(goal: GoalCalcGoal): GoalItem {
+  const timing: TimingRule = {
+    kind: 'single-age',
+    owner: 'self',
+    age: goal.targetAge,
+  }
+
+  return {
+    id: goal.id,
+    owner: 'self',
+    label: goal.label,
+    kind: 'financial-goal',
+    timing,
+    amount: goal.totalCostToday,
+    amountSaved: 0,
+    durationYears: 1,
+    priority: 'important',
+    inflationAdjusted: true,
+    category: goal.category,
+  }
+}
