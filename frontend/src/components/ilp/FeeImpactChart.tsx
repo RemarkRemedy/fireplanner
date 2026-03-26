@@ -106,7 +106,7 @@ export function FeeImpactChart({
                 const tier = tierDefs.find((t) => t.key === value)
                 return tier ? `${tier.label} (${formatIlpPercent(tier.drag)})` : value
               }}
-              wrapperStyle={{ fontSize: 10, color: legendColor }}
+              wrapperStyle={{ fontSize: 11, color: legendColor }}
             />
             {tierDefs.map((tier) => (
               <Line
