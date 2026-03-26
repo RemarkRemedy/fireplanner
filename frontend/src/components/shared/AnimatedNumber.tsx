@@ -17,7 +17,12 @@ export function AnimatedNumber({ value, format, delay = 0, className }: Animated
     const to = value
     prevValue.current = value
 
-    if (from === to) return
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    if (from === to || prefersReducedMotion) {
+      setDisplay(to)
+      return
+    }
 
     const duration = 600
     let start: number | null = null
