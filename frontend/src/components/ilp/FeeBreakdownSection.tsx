@@ -41,10 +41,11 @@ function deriveFeeColumnInfo(policy: IlpPolicyInput) {
   const allBonuses = policy.bonuses ?? []
 
   const accountMgtRules = allRules.filter((r) => r.basis === 'account-value')
-  const additionalRules = allRules.filter((r) =>
-    r.basis === 'annual-contribution' || r.basis === 'fixed-annual' || r.basis === 'cumulative-paid-regular-premium',
-  )
   const assuranceRules = allRules.filter((r) => r.basis === 'assurance-sum-at-risk')
+  // Everything that's not account-value or assurance feeds into "additional charges"
+  const additionalRules = allRules.filter((r) =>
+    r.basis !== 'account-value' && r.basis !== 'assurance-sum-at-risk',
+  )
   const eventRules = (policy.eventChargeRules ?? [])
 
   const additionalLabel = additionalRules.length === 1
@@ -261,18 +262,28 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                   <tr>
                     <th className="sticky left-0 z-30 border-r bg-background px-3 py-2 text-left font-medium text-muted-foreground">PY</th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">Contribution</th>
-                    <th className="px-2 py-2 text-right font-medium text-muted-foreground" title="Annual percentage of account value">Account Mgt</th>
+                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">
+                      <span className="inline-flex items-center gap-0.5">
+                        Account Mgt
+                        <FeeRuleTooltip rules={feeColumnInfo.accountMgt} />
+                      </span>
+                    </th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">
                       <span className="inline-flex items-center gap-0.5">
                         {feeColumnInfo.additional.label}
                         <FeeRuleTooltip rules={feeColumnInfo.additional.rules} />
                       </span>
                     </th>
-                    <th className="px-2 py-2 text-right font-medium text-muted-foreground" title="Cost-of-insurance for death/TI/TPD coverage">Assurance</th>
-                    <th className="px-2 py-2 text-right font-medium text-muted-foreground" title="Charges triggered by withdrawals, premium holidays, etc.">Event</th>
-                    <th className="px-2 py-2 text-right font-medium text-muted-foreground" title="Ongoing fund charges deducted inside fund NAV">Fund Mgt</th>
+                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">
+                      <span className="inline-flex items-center gap-0.5">
+                        Assurance
+                        <FeeRuleTooltip rules={feeColumnInfo.assurance} />
+                      </span>
+                    </th>
+                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">Event</th>
+                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">Fund Mgt</th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">Gross Fee</th>
-                    <th className="px-2 py-2 text-right font-medium text-emerald-700 dark:text-emerald-400" title="Power-up, loyalty, allocation, and other bonus credits">Bonus</th>
+                    <th className="px-2 py-2 text-right font-medium text-emerald-700 dark:text-emerald-400">Bonus</th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">Net Fee</th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">Withdrawals</th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">Closing Value</th>

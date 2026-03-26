@@ -29,13 +29,13 @@ function useCatalogProduct(productId: string | undefined) {
 
 // --- Story screen wrapper ---
 
-function StoryScreen({ children, id }: { children: React.ReactNode; id: string }) {
+function StoryScreen({ children, id, wide }: { children: React.ReactNode; id: string; wide?: boolean }) {
   return (
     <section
       id={id}
       className="flex min-h-[100dvh] flex-col items-center justify-center px-4 py-8"
     >
-      <div className="w-full max-w-2xl space-y-6">
+      <div className={`w-full space-y-6 ${wide ? 'max-w-5xl' : 'max-w-2xl'}`}>
         {children}
       </div>
     </section>
@@ -248,7 +248,7 @@ export function IlpStoryModePage() {
       </StoryScreen>
 
       {/* Screen 2: Where Your Money Goes */}
-      <StoryScreen id="story-fees">
+      <StoryScreen id="story-fees" wide>
         <h2 className="text-2xl font-bold">Where your money goes</h2>
         <FeeBreakdownSection policy={activePolicy} analysis={analysis} />
         <ScrollHint targetId="story-bonuses" label="What about bonuses?" />
