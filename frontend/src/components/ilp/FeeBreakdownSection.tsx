@@ -25,7 +25,7 @@ interface FeeBreakdownSectionProps {
   analysis: IlpProjectedPolicyAnalysis
 }
 
-const FEE_CATEGORIES = [
+const DEFAULT_FEE_CATEGORIES = [
   { key: 'accountFee', label: 'Account Mgt', description: 'Annual percentage of account value (the ILP wrapper cost). IUA and AUA rates may differ, and post-MIP rates may apply after the minimum investment period.' },
   { key: 'additionalCharges', label: 'Additional', description: 'Premium-based charges, fixed annual policy fees, cumulative-premium charges, and other recurring charge rules that are not tied to specific events.' },
   { key: 'assuranceCharges', label: 'Assurance/COI', description: 'Cost-of-insurance charges for death, terminal illness, TPD, and accidental death coverage. These increase with age and are deducted from account value.' },
@@ -33,7 +33,37 @@ const FEE_CATEGORIES = [
   { key: 'implicitFundFee', label: 'Fund Mgt (OCF)', description: 'Ongoing fund management charges deducted inside the fund NAV. Not charged as a visible line item, but reduces your investment returns every year. Based on the weighted OCF of your selected funds.' },
 ] as const
 
-type FeeCategoryKey = typeof FEE_CATEGORIES[number]['key']
+/** Derive specific labels and tooltips from the policy's charge rules instead of generic names. */
+function deriveAdditionalChargeLabel(policy: IlpPolicyInput): { label: string; tooltip: string } {
+  const rules = (policy.chargeRules ?? []).filter((r) =>
+    r.basis === 'annual-contribution' || r.basis === 'fixed-annual' || r.basis === 'cumulative-paid-regular-premium',
+  )
+  if (rules.length === 0) return { label: 'Additional', tooltip: 'Premium-based and other recurring charges.' }
+
+  const parts: string[] = []
+  for (const rule of rules) {
+    if (rule.rateSchedule && rule.rateSchedule.length > 0) {
+      const rates = rule.rateSchedule.map((t) => {
+        const pct = `${(t.rate * 100).toFixed(0)}%`
+        return t.endPolicyYear === null ? `Year ${t.startPolicyYear}+: ${pct}` : `Year ${t.startPolicyYear}: ${pct}`
+      }).join(', ')
+      parts.push(`${rule.label} (${rates})`)
+    } else if (rule.amountSchedule && rule.amountSchedule.length > 0) {
+      const amt = rule.amountSchedule[0].amount
+      parts.push(`${rule.label} (S$${amt}/yr)`)
+    } else if (rule.rate > 0) {
+      parts.push(`${rule.label} (${(rule.rate * 100).toFixed(1)}%)`)
+    } else {
+      parts.push(rule.label)
+    }
+  }
+
+  // Short label for column header
+  const label = rules.length === 1 ? rules[0].label.replace(/ Charge$/, '') : 'Premium + Policy'
+  return { label, tooltip: parts.join('. ') + '.' }
+}
+
+type FeeCategoryKey = typeof DEFAULT_FEE_CATEGORIES[number]['key']
 
 const UNMODELED_FEES = [
   'Fund switching charges (most ILPs give N free switches/year, then charge)',
@@ -45,10 +75,14 @@ const UNMODELED_FEES = [
 
 export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionProps) {
   const [scenario, setScenario] = useState<ReturnScenario>('mid')
+  const [includeOcf, setIncludeOcf] = useState(true)
+  const [useRealValues, setUseRealValues] = useState(false)
   const colors = useChartColors()
+  const additionalLabel = deriveAdditionalChargeLabel(policy)
   const projection = analysis.projections[scenario]
-  const breakdown = useMemo(() => buildFeeBreakdown(projection, policy.funds), [projection, policy.funds])
+  const breakdown = useMemo(() => buildFeeBreakdown(projection, policy.funds, policy), [projection, policy.funds, policy])
   const mipEndIndex = getMipEndProjectionIndex(policy)
+  const inflationRate = policy.inflationRate
 
   const categoryColors: Record<FeeCategoryKey, string> = {
     accountFee: colors.primary,
@@ -58,22 +92,61 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
     implicitFundFee: colors.info ?? '#8b5cf6',
   }
 
-  const stackedBarData = breakdown.rows.map((row) => ({
-    policyYear: row.policyYear,
-    accountFee: row.accountFee,
-    additionalCharges: row.additionalCharges,
-    assuranceCharges: row.assuranceCharges,
-    eventCharges: row.eventCharges,
-    implicitFundFee: row.implicitFundFee,
-    bonusCredits: -row.bonusCredits,
-  }))
+  const inceptionTotal = breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0)
+  const hasInception = inceptionTotal > 0
 
-  const cumulativeData = breakdown.rows.map((row) => ({
-    policyYear: row.policyYear,
-    grossFees: row.cumulativeGrossFees,
-    bonuses: row.cumulativeBonuses,
-    netFees: row.cumulativeNetFees,
-  }))
+  const stackedBarData = useMemo(() => {
+    const discount = (value: number, year: number) => useRealValues ? value / Math.pow(1 + inflationRate, year) : value
+    const year0 = hasInception ? [{
+      policyYear: 0,
+      accountFee: 0,
+      additionalCharges: discount(inceptionTotal, 0),
+      assuranceCharges: 0,
+      eventCharges: 0,
+      implicitFundFee: 0,
+      bonusCredits: 0,
+    }] : []
+    return [
+      ...year0,
+      ...breakdown.rows.map((row) => ({
+        policyYear: row.policyYear,
+        accountFee: discount(row.accountFee, row.year),
+        additionalCharges: discount(row.additionalCharges, row.year),
+        assuranceCharges: discount(row.assuranceCharges, row.year),
+        eventCharges: discount(row.eventCharges, row.year),
+        implicitFundFee: includeOcf ? discount(row.implicitFundFee, row.year) : 0,
+        bonusCredits: -discount(row.bonusCredits, row.year),
+      })),
+    ]
+  }, [breakdown, hasInception, inceptionTotal, includeOcf, useRealValues, inflationRate])
+
+  const cumulativeData = useMemo(() => {
+    const discount = (value: number, year: number) => useRealValues ? value / Math.pow(1 + inflationRate, year) : value
+    let cumGross = hasInception ? inceptionTotal : 0
+    let cumBonuses = 0
+    const year0 = hasInception ? [{
+      policyYear: 0,
+      grossFees: inceptionTotal,
+      bonuses: 0,
+      netFees: inceptionTotal,
+    }] : []
+    return [
+      ...year0,
+      ...breakdown.rows.map((row) => {
+        const previousRow = breakdown.rows[row.year - 2]
+        const grossThisYear = row.cumulativeGrossFees - (previousRow?.cumulativeGrossFees ?? 0)
+        const bonusThisYear = row.cumulativeBonuses - (previousRow?.cumulativeBonuses ?? 0)
+        cumGross += discount(grossThisYear + (includeOcf ? row.implicitFundFee : 0), row.year)
+        cumBonuses += discount(bonusThisYear, row.year)
+        return {
+          policyYear: row.policyYear,
+          grossFees: cumGross,
+          bonuses: cumBonuses,
+          netFees: cumGross - cumBonuses,
+        }
+      }),
+    ]
+  }, [breakdown, hasInception, inceptionTotal, includeOcf, useRealValues, inflationRate])
 
   return (
     <div className="space-y-6">
@@ -85,13 +158,25 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
               Returns are not guaranteed, but fees are. This breakdown shows the projected fees under your assumptions, year by year.
             </p>
           </div>
-          <Tabs value={scenario} onValueChange={(value) => setScenario(value as ReturnScenario)}>
-            <TabsList>
-              <TabsTrigger value="low">Low</TabsTrigger>
-              <TabsTrigger value="mid">Mid</TabsTrigger>
-              <TabsTrigger value="high">High</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="flex flex-col gap-3">
+            <Tabs value={scenario} onValueChange={(value) => setScenario(value as ReturnScenario)}>
+              <TabsList>
+                <TabsTrigger value="low">Low</TabsTrigger>
+                <TabsTrigger value="mid">Mid</TabsTrigger>
+                <TabsTrigger value="high">High</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <div className="flex flex-wrap gap-3 text-xs">
+              <label className="flex cursor-pointer items-center gap-1.5">
+                <input type="checkbox" checked={includeOcf} onChange={(e) => setIncludeOcf(e.target.checked)} className="rounded" />
+                Include fund fees (OCF)
+              </label>
+              <label className="flex cursor-pointer items-center gap-1.5">
+                <input type="checkbox" checked={useRealValues} onChange={(e) => setUseRealValues(e.target.checked)} className="rounded" />
+                Today's dollars
+              </label>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-8">
           {/* Stacked Bar Chart: Annual Fees by Category */}
@@ -109,13 +194,13 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                   <Tooltip
                     formatter={(value: number, name: string) => [
                       formatIlpCurrency(Math.abs(value), policy.currency),
-                      name === 'bonusCredits' ? 'Bonus Credits' : FEE_CATEGORIES.find((c) => c.key === name)?.label ?? name,
+                      name === 'bonusCredits' ? 'Bonus Credits' : name === 'additionalCharges' ? additionalLabel.label : DEFAULT_FEE_CATEGORIES.find((c) => c.key === name)?.label ?? name,
                     ]}
                     labelFormatter={(label: number) => `Policy Year ${label}`}
                   />
                   <Legend
                     formatter={(value: string) =>
-                      value === 'bonusCredits' ? 'Bonus Credits' : FEE_CATEGORIES.find((c) => c.key === value)?.label ?? value
+                      value === 'bonusCredits' ? 'Bonus Credits' : value === 'additionalCharges' ? additionalLabel.label : DEFAULT_FEE_CATEGORIES.find((c) => c.key === value)?.label ?? value
                     }
                   />
                   <Bar dataKey="accountFee" stackId="fees" fill={categoryColors.accountFee} />
@@ -180,7 +265,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                     <th className="sticky left-0 z-30 border-r bg-background px-3 py-2 text-left font-medium text-muted-foreground">PY</th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">Contribution</th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground" title="Annual percentage of account value">Account Mgt</th>
-                    <th className="px-2 py-2 text-right font-medium text-muted-foreground" title="Premium-based, fixed annual, and other recurring charges">Additional</th>
+                    <th className="px-2 py-2 text-right font-medium text-muted-foreground" title={additionalLabel.tooltip}>{additionalLabel.label}</th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground" title="Cost-of-insurance for death/TI/TPD coverage">Assurance</th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground" title="Charges triggered by withdrawals, premium holidays, etc.">Event</th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground" title="Ongoing fund charges deducted inside fund NAV">Fund Mgt</th>
@@ -192,6 +277,22 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                   </tr>
                 </thead>
                 <tbody>
+                  {breakdown.inceptionCharges.length > 0 && (
+                    <tr className="border-b bg-amber-50/50 dark:bg-amber-950/20">
+                      <td className="sticky left-0 z-10 border-r bg-inherit px-3 py-2 font-medium">0</td>
+                      <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(policy.initialSinglePremium ?? 0, policy.currency)}</td>
+                      <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>
+                      <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0), policy.currency)}</td>
+                      <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>
+                      <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>
+                      <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>
+                      <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0), policy.currency)}</td>
+                      <td className="px-2 py-2 text-right tabular-nums text-emerald-700 dark:text-emerald-400">{formatIlpCurrency(0, policy.currency)}</td>
+                      <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0), policy.currency)}</td>
+                      <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>
+                      <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency((policy.initialSinglePremium ?? 0) - breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0), policy.currency)}</td>
+                    </tr>
+                  )}
                   {breakdown.rows.map((row, rowIndex) => {
                     const isPostMip = policy.mipBasis !== 'open-ended'
                       && policy.mipLength != null
@@ -253,18 +354,22 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
           <div className="space-y-3">
             <h3 className="text-sm font-medium">Fee Categories Explained</h3>
             <div className="grid gap-3 sm:grid-cols-2">
-              {FEE_CATEGORIES.map((category) => (
-                <div key={category.key} className="rounded-md border p-3">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="h-3 w-3 rounded-sm"
-                      style={{ backgroundColor: categoryColors[category.key] }}
-                    />
-                    <span className="text-sm font-medium">{category.label}</span>
+              {DEFAULT_FEE_CATEGORIES.map((category) => {
+                const label = category.key === 'additionalCharges' ? additionalLabel.label : category.label
+                const description = category.key === 'additionalCharges' ? additionalLabel.tooltip : category.description
+                return (
+                  <div key={category.key} className="rounded-md border p-3">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="h-3 w-3 rounded-sm"
+                        style={{ backgroundColor: categoryColors[category.key] }}
+                      />
+                      <span className="text-sm font-medium">{label}</span>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">{description}</p>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">{category.description}</p>
-                </div>
-              ))}
+                )
+              })}
               <div className="rounded-md border border-emerald-200 p-3 dark:border-emerald-900">
                 <div className="flex items-center gap-2">
                   <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: colors.success }} />
