@@ -6,12 +6,14 @@ interface WrappedCardProps {
   gradient: string
   direction: number
   children: ReactNode
+  /** Allow vertical scrolling for content-heavy cards (e.g. summary). */
+  scrollable?: boolean
 }
 
-export function WrappedCard({ gradient, direction, children }: WrappedCardProps) {
+export function WrappedCard({ gradient, direction, children, scrollable }: WrappedCardProps) {
   return (
     <motion.div
-      className="absolute inset-0 flex flex-col items-center justify-center px-8 text-white"
+      className={`absolute inset-0 flex flex-col items-center px-8 text-white ${scrollable ? 'overflow-y-auto pt-16 pb-24' : 'justify-center'}`}
       style={{ background: gradient, boxShadow: 'inset 0 0 60px rgba(255,255,255,0.04)' }}
       custom={direction}
       variants={cardVariants}
