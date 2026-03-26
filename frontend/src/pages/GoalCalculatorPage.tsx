@@ -123,11 +123,11 @@ function reducer(state: State, action: Action): State {
       return { ...state, step: 'pick', activeTileId: null }
 
     case 'BACK_TO_CONFIG':
-      // If we're going back from basics, the last goal was added as a stub.
-      // Remove it so the user can re-configure.
+      // Going back from basics — remove the last goal (stub added in COMPLETE_CONFIG)
       return {
         ...state,
         step: 'config',
+        goals: state.goals.slice(0, -1),
       }
 
     case 'START_OVER':
@@ -155,13 +155,12 @@ export function GoalCalculatorPage() {
   const navigate = useNavigate()
   const addGoal = useHouseholdPlanStore((s) => s.addGoal)
 
-  // Tiles already added as goals should be disabled in the picker
-  const disabledTiles = state.goals
-    .map((g) => {
-      const tile = GOAL_TILES.find((t) => t.category === g.category)
-      return tile?.id
-    })
-    .filter((id): id is GoalTileId => id != null)
+  // Disable all tiles whose category matches an already-added goal
+  // (e.g., adding a condo goal disables all housing tiles: hdb, condo, landed)
+  const usedCategories = new Set(state.goals.map((g) => g.category))
+  const disabledTiles = GOAL_TILES
+    .filter((t) => usedCategories.has(t.category))
+    .map((t) => t.id)
 
   const handleSelectTile = useCallback(
     (tileId: GoalTileId) => dispatch({ type: 'SELECT_TILE', tileId }),
