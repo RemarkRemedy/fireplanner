@@ -35,14 +35,29 @@ const DEFAULT_FEE_CATEGORIES = [
 ] as const
 
 /** Derive specific labels and tooltips from the policy's charge rules instead of generic names. */
-function deriveAdditionalChargeInfo(policy: IlpPolicyInput) {
-  const rules = (policy.chargeRules ?? []).filter((r) =>
+/** Map each fee column to the relevant charge rules from the policy for tooltips. */
+function deriveFeeColumnInfo(policy: IlpPolicyInput) {
+  const allRules = policy.chargeRules ?? []
+  const allBonuses = policy.bonuses ?? []
+
+  const accountMgtRules = allRules.filter((r) => r.basis === 'account-value')
+  const additionalRules = allRules.filter((r) =>
     r.basis === 'annual-contribution' || r.basis === 'fixed-annual' || r.basis === 'cumulative-paid-regular-premium',
   )
-  if (rules.length === 0) return { label: 'Additional', rules }
+  const assuranceRules = allRules.filter((r) => r.basis === 'assurance-sum-at-risk')
+  const eventRules = (policy.eventChargeRules ?? [])
 
-  const label = rules.length === 1 ? rules[0].label.replace(/ Charge$/, '') : 'Premium + Policy'
-  return { label, rules }
+  const additionalLabel = additionalRules.length === 1
+    ? additionalRules[0].label.replace(/ Charge$/, '')
+    : additionalRules.length > 0 ? 'Premium + Policy' : 'Additional'
+
+  return {
+    accountMgt: accountMgtRules,
+    additional: { label: additionalLabel, rules: additionalRules },
+    assurance: assuranceRules,
+    event: eventRules,
+    bonuses: allBonuses,
+  }
 }
 
 type FeeCategoryKey = typeof DEFAULT_FEE_CATEGORIES[number]['key']
@@ -60,7 +75,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
   const [includeOcf, setIncludeOcf] = useState(true)
   const [useRealValues, setUseRealValues] = useState(false)
   const colors = useChartColors()
-  const additionalInfo = deriveAdditionalChargeInfo(policy)
+  const feeColumnInfo = deriveFeeColumnInfo(policy)
   const projection = analysis.projections[scenario]
   const breakdown = useMemo(() => buildFeeBreakdown(projection, policy.funds, policy), [projection, policy.funds, policy])
   const mipEndIndex = getMipEndProjectionIndex(policy)
@@ -176,13 +191,13 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                   <Tooltip
                     formatter={(value: number, name: string) => [
                       formatIlpCurrency(Math.abs(value), policy.currency),
-                      name === 'bonusCredits' ? 'Bonus Credits' : name === 'additionalCharges' ? additionalInfo.label : DEFAULT_FEE_CATEGORIES.find((c) => c.key === name)?.label ?? name,
+                      name === 'bonusCredits' ? 'Bonus Credits' : name === 'additionalCharges' ? feeColumnInfo.additional.label : DEFAULT_FEE_CATEGORIES.find((c) => c.key === name)?.label ?? name,
                     ]}
                     labelFormatter={(label: number) => `Policy Year ${label}`}
                   />
                   <Legend
                     formatter={(value: string) =>
-                      value === 'bonusCredits' ? 'Bonus Credits' : value === 'additionalCharges' ? additionalInfo.label : DEFAULT_FEE_CATEGORIES.find((c) => c.key === value)?.label ?? value
+                      value === 'bonusCredits' ? 'Bonus Credits' : value === 'additionalCharges' ? feeColumnInfo.additional.label : DEFAULT_FEE_CATEGORIES.find((c) => c.key === value)?.label ?? value
                     }
                   />
                   <Bar dataKey="accountFee" stackId="fees" fill={categoryColors.accountFee} />
@@ -249,8 +264,8 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground" title="Annual percentage of account value">Account Mgt</th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">
                       <span className="inline-flex items-center gap-0.5">
-                        {additionalInfo.label}
-                        <FeeRuleTooltip rules={additionalInfo.rules} />
+                        {feeColumnInfo.additional.label}
+                        <FeeRuleTooltip rules={feeColumnInfo.additional.rules} />
                       </span>
                     </th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground" title="Cost-of-insurance for death/TI/TPD coverage">Assurance</th>
@@ -342,9 +357,9 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
             <h3 className="text-sm font-medium">Fee Categories Explained</h3>
             <div className="grid gap-3 sm:grid-cols-2">
               {DEFAULT_FEE_CATEGORIES.map((category) => {
-                const label = category.key === 'additionalCharges' ? additionalInfo.label : category.label
-                const description = category.key === 'additionalCharges' && additionalInfo.rules.length > 0
-                  ? additionalInfo.rules.map((r) => r.label).join(', ')
+                const label = category.key === 'additionalCharges' ? feeColumnInfo.additional.label : category.label
+                const description = category.key === 'additionalCharges' && feeColumnInfo.additional.rules.length > 0
+                  ? feeColumnInfo.additional.rules.map((r) => r.label).join(', ')
                   : category.description
                 return (
                   <div key={category.key} className="rounded-md border p-3">

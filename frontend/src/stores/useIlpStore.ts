@@ -201,7 +201,8 @@ export function createDefaultPolicy(): IlpPolicyInput {
   }
 }
 
-function mergePolicySeed(seed: IlpPolicySeed): IlpPolicyInput {
+/** Build an IlpPolicyInput from a seed without persisting to the store. */
+export function mergePolicySeed(seed: IlpPolicySeed): IlpPolicyInput {
   const base = createDefaultPolicy()
   return {
     ...base,

@@ -15,7 +15,7 @@ import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
 import type { IlpPolicySeed } from '@/lib/ilp-catalog/policySeedSchema'
 import { templateVariantToPolicySeed } from '@/lib/ilp-catalog/templateToPolicy'
 import type { IlpCatalogProduct, IlpTemplateVariant } from '@/lib/ilp-catalog/types'
-import { useIlpStore } from '@/stores/useIlpStore'
+import { mergePolicySeed } from '@/stores/useIlpStore'
 
 // --- Hydration: resolve productId to catalog product ---
 
@@ -104,8 +104,6 @@ export function IlpStoryModePage() {
   })
 
   const catalogProduct = useCatalogProduct(productId)
-  const addPolicyFromSeed = useIlpStore((state) => state.addPolicyFromSeed)
-  const policies = useIlpStore((state) => state.policies)
 
   // Hydration state machine: variant selection -> setup gate -> story
   const [selectedVariant, setSelectedVariant] = useState<IlpTemplateVariant | null>(null)
@@ -113,14 +111,8 @@ export function IlpStoryModePage() {
   const [storyPolicy, setStoryPolicy] = useState<IlpPolicyInput | null>(null)
   const [showFeeStory, setShowFeeStory] = useState(true)
 
-  // Check if we already have this product in the store (persisted from prior session)
-  const existingPolicy = useMemo(() => {
-    if (!productId) return null
-    return policies.find((p) => p.catalogSource?.productId === productId) ?? null
-  }, [policies, productId])
-
-  // Compute analysis for the active policy (existing or just-created)
-  const activePolicy = storyPolicy ?? existingPolicy
+  // No persistence — always fresh from setup gate
+  const activePolicy = storyPolicy
   const analysisResult = useMemo(() => {
     if (!activePolicy) return { analysis: null, error: null }
     try {
@@ -187,16 +179,10 @@ export function IlpStoryModePage() {
             seed={effectiveSeed!}
             prospect
             onConfirm={(adjustedSeed) => {
-              // Build the policy from the seed
-              const result = addPolicyFromSeed(adjustedSeed)
-              if (result.success) {
-                // Find the just-added policy
-                const added = useIlpStore.getState().policies.find((p) => p.id === result.policyId)
-                if (added) {
-                  setStoryPolicy(added)
-                  setShowFeeStory(true)
-                }
-              }
+              // Build policy in-memory only — no store persistence for story mode
+              const policy = mergePolicySeed(adjustedSeed)
+              setStoryPolicy(policy)
+              setShowFeeStory(true)
               setPendingSeed(null)
             }}
             onCancel={() => {
