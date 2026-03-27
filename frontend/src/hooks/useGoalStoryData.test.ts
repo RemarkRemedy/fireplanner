@@ -6,7 +6,7 @@ import {
 } from './useGoalStoryData'
 import type { GoalStoryBasics } from './useGoalStoryData'
 import type { GoalCalcGoal } from '@/lib/calculations/goal-calculator'
-import { computeCondoDownPayment } from '@/lib/data/goal-defaults'
+import { computeCondoDownPayment, EC_INCOME_CEILING } from '@/lib/data/goal-defaults'
 
 // ============================================================
 // Fixtures
@@ -397,6 +397,145 @@ describe('computeGoalStoryData', () => {
       const result = computeGoalStoryData(basics, goals)
 
       expect(result.perGoal[0].grantAmount).toBe(0)
+    })
+  })
+})
+
+function makeEcGoal(overrides: Partial<GoalCalcGoal> = {}): GoalCalcGoal {
+  return {
+    id: 'ec-1',
+    category: 'housing',
+    label: 'EC 4-room ($1.5M)',
+    targetAge: 33,
+    smartInputs: { kind: 'ec', price: 1_500_000, flatType: '4-room' },
+    totalCostToday: 450_000,
+    breakdown: { items: [{ label: 'Down payment', amount: 375_000 }, { label: 'BSD', amount: 36_600 }, { label: 'Legal fees', amount: 5_000 }, { label: 'Renovation', amount: 60_000 }], total: 476_600 },
+    monthlySavingsNeeded: 5000,
+    feasible: true,
+    shortfallPerMonth: 0,
+    ...overrides,
+  }
+}
+
+// ============================================================
+// Tests: EC goal
+// ============================================================
+
+describe('ec goal', () => {
+  describe('EC grant', () => {
+    it('couple gets Family Grant (grantAmount > 0) for EC 4-room', () => {
+      // Couple within income ceiling ($16K) — should receive Family Grant ($80K for 4-room or smaller)
+      const basics = makeBasics({
+        partnerAge: 30,
+        partnerMonthlyIncome: 4000,
+      })
+      const goals = [makeEcGoal()]
+      const result = computeGoalStoryData(basics, goals)
+
+      expect(result.perGoal[0].grantAmount).toBeGreaterThan(0)
+    })
+
+    it('solo user gets $0 grant for EC (singles not eligible for Family Grant)', () => {
+      const basics = makeBasics()
+      const goals = [makeEcGoal()]
+      const result = computeGoalStoryData(basics, goals)
+
+      expect(result.perGoal[0].grantAmount).toBe(0)
+    })
+  })
+
+  describe('EC loan qualification', () => {
+    it('returns non-null loanQualification for EC (property goal)', () => {
+      const basics = makeBasics({ partnerAge: 30, partnerMonthlyIncome: 4000 })
+      const goals = [makeEcGoal()]
+      const result = computeGoalStoryData(basics, goals)
+
+      expect(result.perGoal[0].loanQualification).not.toBeNull()
+      expect(result.perGoal[0].loanQualification!.monthlyPayment).toBeGreaterThan(0)
+    })
+
+    it('uses TDSR (55%) not MSR (30%) for EC loan sizing', () => {
+      // EC uses bank loan so TDSR applies. With TDSR=55%, a high-income couple qualifies
+      // for a much larger loan than the 30% MSR cap used for HDB.
+      const basics = makeBasics({
+        grossIncome: 8_000,
+        partnerAge: 30,
+        partnerGrossIncome: 8_000,
+        partnerMonthlyIncome: 6_400,
+      })
+      const goals = [makeEcGoal()]
+      const result = computeGoalStoryData(basics, goals)
+
+      const lq = result.perGoal[0].loanQualification!
+      // maxLoan under TDSR (55% of $16K = $8,800/mo) is far larger than under MSR (30%)
+      // EC loan needed = 1,500,000 * 0.75 = 1,125,000
+      // At TDSR, monthly cap is 8,800 which at 3.5% / 25yr ≈ qualifies ~$1.56M — so they qualify
+      expect(lq.qualified).toBe(true)
+      // Sanity: maxLoan well above MSR-equivalent limit (30% of 16K = 4,800 → ~$847K)
+      expect(lq.maxLoan).toBeGreaterThan(900_000)
+    })
+  })
+
+  describe('EC cash minimum: 5% cash floor', () => {
+    it('enforces 5% cash floor for EC goal', () => {
+      const basics = makeBasics({ existingSavings: 500_000 })
+      const goals = [makeEcGoal()]
+      const result = computeGoalStoryData(basics, goals)
+
+      const cashMin = computeCondoDownPayment(1_500_000).cashMinimum // 5% of $1.5M = $75K
+      expect(result.perGoal[0].cashNeeded).toBeGreaterThanOrEqual(cashMin)
+    })
+
+    it('cash needed does not go below 5% even when CPF + grant > breakdown total', () => {
+      // Large CPF accumulation + Family Grant may exceed the breakdown total — cash should
+      // still floor at 5% of purchase price ($75K for $1.5M EC).
+      const basics = makeBasics({
+        age: 25,
+        existingSavings: 1_000_000,
+        grossIncome: 10_000,
+        partnerAge: 25,
+        partnerMonthlyIncome: 8_000,
+        partnerGrossIncome: 10_000,
+      })
+      const goals = [makeEcGoal({ targetAge: 45 })]
+      const result = computeGoalStoryData(basics, goals)
+
+      const cashMin = computeCondoDownPayment(1_500_000).cashMinimum // $75K
+      expect(result.perGoal[0].cashNeeded).toBeGreaterThanOrEqual(cashMin)
+    })
+  })
+
+  describe('EC income ceiling warning', () => {
+    it('fires warning when household gross > EC couple ceiling ($16K)', () => {
+      const basics = makeBasics({
+        monthlyIncome: 9_600,
+        grossIncome: 12_000,
+        partnerAge: 30,
+        partnerMonthlyIncome: 3_500,
+        partnerGrossIncome: 5_000,
+      })
+      // householdGross = 12,000 + 5,000 = 17,000 > 16,000 EC ceiling
+      const goals = [makeEcGoal()]
+      const result = computeGoalStoryData(basics, goals)
+
+      expect(result.shared.incomeCeilingWarning).not.toBeNull()
+      expect(result.shared.incomeCeilingWarning).toContain('exceeds')
+      expect(result.shared.incomeCeilingWarning).toContain(`${EC_INCOME_CEILING.couple.toLocaleString()}`)
+    })
+
+    it('does not warn when household gross is at or below EC couple ceiling', () => {
+      const basics = makeBasics({
+        monthlyIncome: 6_400,
+        grossIncome: 8_000,
+        partnerAge: 30,
+        partnerMonthlyIncome: 6_400,
+        partnerGrossIncome: 8_000,
+      })
+      // householdGross = 8,000 + 8,000 = 16,000 — exactly at ceiling, not over
+      const goals = [makeEcGoal()]
+      const result = computeGoalStoryData(basics, goals)
+
+      expect(result.shared.incomeCeilingWarning).toBeNull()
     })
   })
 })
