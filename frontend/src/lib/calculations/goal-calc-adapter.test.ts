@@ -225,6 +225,20 @@ describe('buildGoalCalcProjectionParams', () => {
       expect(params.retirementAge).toBeLessThanOrEqual(85)
     })
 
+    it('should clamp retirementAge to lifeExpectancy when goals consume all savings', () => {
+      const basics = makeSoloBasics({
+        monthlyIncome: 3_500,
+        monthlyExpenses: 3_000,
+        existingSavings: 5_000,
+      })
+      // Aggressive goal that consumes all savings capacity
+      const goals = [makeGoal({ totalCostToday: 500_000, targetAge: 30 })]
+      const params = buildGoalCalcProjectionParams(basics, goals)
+
+      expect(params.retirementAge).toBeLessThanOrEqual(85)
+      expect(Number.isFinite(params.retirementAge)).toBe(true)
+    })
+
     it('should compute fireNumber as annualExpenses * FIRE_MULTIPLIER minus CPF LIFE offset', () => {
       const basics = makeSoloBasics()
       const goals: GoalCalcGoal[] = []

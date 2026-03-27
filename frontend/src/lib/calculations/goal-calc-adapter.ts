@@ -224,7 +224,10 @@ export function buildGoalCalcProjectionParams(
   const cpfLifeOffset = cpfLifeMonthly * 12 * FIRE_MULTIPLIER
 
   const impact = computeRetirementImpact(basics, totalMonthlySavings, totalAllocatedSavings, cpfLifeOffset)
-  const retirementAge = Math.ceil(basics.age + impact.yearsWithGoals)
+  const retirementAge = Math.min(
+    Math.ceil(basics.age + impact.yearsWithGoals),
+    DEFAULT_LIFE_EXPECTANCY,
+  )
 
   // 3. Annual expenses
   const annualExpenses = basics.monthlyExpenses * 12
