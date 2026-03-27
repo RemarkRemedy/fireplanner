@@ -187,7 +187,7 @@ export function AppLayout() {
                 showStats && isBottom && 'pb-24 md:pb-10'
               )}
             >
-              <div className="@container container pt-14 md:pt-6 pb-6 max-w-6xl">
+              <div className={cn('@container container pb-6 max-w-6xl', hideSidebar ? 'pt-6' : 'pt-14 md:pt-6')}>
                 {!companionMode && <AppLayoutBannerArea />}
                 {!companionMode && <DataUpdateBanner />}
                 <Outlet />
