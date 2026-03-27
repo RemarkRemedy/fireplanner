@@ -138,6 +138,8 @@ function makeProjectionRow(age: number, liquidNW: number): ProjectionRow {
     debtPaymentExpense: 0,
     expenseAdjustmentAmount: 0,
     lifeEventExpenseImpact: 0,
+    cumulativeSavings: 0,
+    activeLifeEvents: [],
   } as ProjectionRow
 }
 
