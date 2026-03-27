@@ -281,7 +281,16 @@ export function computeGoalStoryData(
   // 7. Shared insights
   // Use cash-based monthly savings from enriched data (accounts for CPF OA offset on housing)
   const totalMonthlySavings = perGoal.reduce((sum, eg) => sum + eg.adjustedMonthlySavings, 0)
-  const totalAllocatedSavings = stacked.reduce((sum, sr) => sum + sr.allocatedSavings, 0)
+
+  // Cap each goal's allocated savings at its actual cash target to avoid over-deducting
+  // from the portfolio base. For property goals, the target is cashNeeded (after CPF OA);
+  // for others, it's breakdown.total.
+  const adjustedAllocatedSavings = perGoal.reduce((sum, eg) => {
+    const stackedResult = stackedById.get(eg.goal.id)
+    if (!stackedResult) return sum
+    const target = isPropertyGoal(eg.goal) ? eg.cashNeeded : eg.goal.breakdown.total
+    return sum + Math.min(stackedResult.allocatedSavings, target)
+  }, 0)
 
   // Monthly loan payments: two perspectives needed.
   // 1. WHILE WORKING (accumulation): CPF OA offsets part of housing mortgage.
@@ -313,7 +322,7 @@ export function computeGoalStoryData(
   // - FIRE number uses GROSS loan payments (no CPF OA after freedom)
   const totalDeductionFromSavings = totalMonthlySavings + netMonthlyLoanPayments
   const impact = computeRetirementImpact(
-    basics, totalDeductionFromSavings, totalAllocatedSavings, 0, grossMonthlyLoanPayments,
+    basics, totalDeductionFromSavings, adjustedAllocatedSavings, 0, grossMonthlyLoanPayments,
   )
   const freedomAge = basics.age + impact.yearsWithGoals
   const freedomAgeWithout = basics.age + impact.yearsWithoutGoals
