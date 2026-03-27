@@ -42,7 +42,7 @@ export function getHdbPriceRange(flatType: HdbFlatType, tenure: HdbTenure): Pric
 }
 
 // ============================================================
-// Condo / Landed Brackets
+// Condo / Landed / EC Brackets
 // ============================================================
 
 export function getCondoBrackets(): number[] {
@@ -51,6 +51,14 @@ export function getCondoBrackets(): number[] {
 
 export function getLandedBrackets(): number[] {
   return [3_000_000, 5_000_000, 8_000_000]
+}
+
+/**
+ * EC launch price brackets (Q1 2026 estimate).
+ * Source: HDB / CEA new EC launch data, indicative ranges.
+ */
+export function getEcBrackets(): number[] {
+  return [1_200_000, 1_500_000, 1_800_000, 2_000_000]
 }
 
 // ============================================================
@@ -153,11 +161,12 @@ export function getCarPurchaseCost(
 // Property Ancillary Costs
 // ============================================================
 
-type PropertyType = 'hdb' | 'condo' | 'landed'
+export type PropertyType = 'hdb' | 'condo' | 'landed' | 'ec'
 
 const RENOVATION_ESTIMATES: Record<PropertyType, number> = {
   hdb: 40_000,
   condo: 60_000,
+  ec: 60_000,
   landed: 100_000,
 }
 
@@ -168,6 +177,7 @@ export function getRenovationEstimate(propertyType: PropertyType): number {
 const LEGAL_FEES: Record<PropertyType, number> = {
   hdb: 3_000,
   condo: 5_000,
+  ec: 5_000,
   landed: 5_000,
 }
 
@@ -191,7 +201,7 @@ export const SIMPLE_GOAL_DEFAULTS: Record<'wedding' | 'travel' | 'education' | '
 // ============================================================
 
 export type GoalTileId =
-  | 'hdb' | 'condo' | 'landed' | 'car'
+  | 'hdb' | 'condo' | 'landed' | 'ec' | 'car'
   | 'wedding' | 'travel' | 'education' | 'business' | 'custom'
 
 export interface GoalTile {
@@ -208,6 +218,7 @@ export const GOAL_TILES: GoalTile[] = [
   { id: 'hdb', label: 'HDB Flat', icon: 'Building2', category: 'housing', type: 'smart', hint: 'BTO or resale' },
   { id: 'condo', label: 'Condo', icon: 'Building', category: 'housing', type: 'smart', hint: 'With ABSD' },
   { id: 'landed', label: 'Landed', icon: 'Home', category: 'housing', type: 'smart', hint: 'Semi-D, terrace' },
+  { id: 'ec', label: 'EC', icon: 'Landmark', category: 'housing', type: 'smart', hint: 'Executive Condo' },
   { id: 'car', label: 'Car', icon: 'Car', category: 'vehicle', type: 'smart', hint: 'COE included' },
   { id: 'wedding', label: 'Wedding', icon: 'Heart', category: 'wedding', type: 'simple', hint: 'SG average' },
   { id: 'travel', label: 'Travel', icon: 'Plane', category: 'travel', type: 'simple', hint: 'Set your budget' },
@@ -218,7 +229,7 @@ export const GOAL_TILES: GoalTile[] = [
 
 /** Section groupings for the GoalPicker grid */
 export const GOAL_TILE_SECTIONS: { label: string; tileIds: GoalTileId[] }[] = [
-  { label: 'Property', tileIds: ['hdb', 'condo', 'landed'] },
+  { label: 'Property', tileIds: ['hdb', 'condo', 'landed', 'ec'] },
   { label: 'Lifestyle', tileIds: ['car', 'wedding', 'travel'] },
   { label: 'Growth', tileIds: ['education', 'business', 'custom'] },
 ]
@@ -290,6 +301,14 @@ export const FAMILY_GRANT = {
 export const HDB_INCOME_CEILING = {
   single: 7_000,   // $7,000/mo gross
   couple: 14_000,   // $14,000/mo gross
+}
+
+// ---- EC Income Ceilings ----
+// Source: HDB.gov.sg — EC eligibility criteria (as at 2026)
+
+export const EC_INCOME_CEILING = {
+  single: 8_000,   // $8,000/mo gross (singles not eligible for new EC; used for reference)
+  couple: 16_000,  // $16,000/mo gross household ceiling
 }
 
 // ---- CPF LIFE Estimated Monthly Payouts ----

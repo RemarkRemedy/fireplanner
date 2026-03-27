@@ -4,6 +4,7 @@ import {
   getHdbPriceRange,
   getCondoBrackets,
   getLandedBrackets,
+  getEcBrackets,
   computeHdbDownPayment,
   computeCondoDownPayment,
   ARF_BRACKETS,
@@ -18,6 +19,7 @@ import {
   EHG_SINGLE_TABLE,
   FAMILY_GRANT,
   HDB_INCOME_CEILING,
+  EC_INCOME_CEILING,
   CPF_LIFE_ESTIMATES,
   PEER_BENCHMARKS,
   MORTGAGE_RATES,
@@ -65,7 +67,7 @@ describe('getHdbPriceRange', () => {
   })
 })
 
-describe('getCondoBrackets / getLandedBrackets', () => {
+describe('getCondoBrackets / getLandedBrackets / getEcBrackets', () => {
   it('returns 6 condo brackets in ascending order', () => {
     const brackets = getCondoBrackets()
     expect(brackets).toEqual([1_000_000, 1_500_000, 2_000_000, 2_500_000, 3_000_000, 3_500_000])
@@ -74,6 +76,18 @@ describe('getCondoBrackets / getLandedBrackets', () => {
   it('returns 3 landed brackets in ascending order', () => {
     const brackets = getLandedBrackets()
     expect(brackets).toEqual([3_000_000, 5_000_000, 8_000_000])
+  })
+
+  it('returns 4 EC brackets in ascending order', () => {
+    const brackets = getEcBrackets()
+    expect(brackets).toEqual([1_200_000, 1_500_000, 1_800_000, 2_000_000])
+  })
+
+  it('EC brackets are all ascending', () => {
+    const brackets = getEcBrackets()
+    for (let i = 1; i < brackets.length; i++) {
+      expect(brackets[i]).toBeGreaterThan(brackets[i - 1])
+    }
   })
 })
 
@@ -162,12 +176,17 @@ describe('getRenovationEstimate', () => {
   it('returns correct values for each property type', () => {
     expect(getRenovationEstimate('hdb')).toBe(40_000)
     expect(getRenovationEstimate('condo')).toBe(60_000)
+    expect(getRenovationEstimate('ec')).toBe(60_000)
     expect(getRenovationEstimate('landed')).toBe(100_000)
   })
 
-  it('ordering: hdb < condo < landed', () => {
+  it('ordering: hdb < condo <= ec < landed', () => {
     expect(getRenovationEstimate('hdb')).toBeLessThan(getRenovationEstimate('condo'))
-    expect(getRenovationEstimate('condo')).toBeLessThan(getRenovationEstimate('landed'))
+    expect(getRenovationEstimate('ec')).toBeLessThanOrEqual(getRenovationEstimate('landed'))
+  })
+
+  it('EC renovation matches condo (same finish tier)', () => {
+    expect(getRenovationEstimate('ec')).toBe(getRenovationEstimate('condo'))
   })
 })
 
@@ -175,7 +194,12 @@ describe('getLegalFees', () => {
   it('HDB is $3K, others are $5K', () => {
     expect(getLegalFees('hdb')).toBe(3_000)
     expect(getLegalFees('condo')).toBe(5_000)
+    expect(getLegalFees('ec')).toBe(5_000)
     expect(getLegalFees('landed')).toBe(5_000)
+  })
+
+  it('EC legal fees match condo', () => {
+    expect(getLegalFees('ec')).toBe(getLegalFees('condo'))
   })
 })
 
@@ -188,8 +212,8 @@ describe('SIMPLE_GOAL_DEFAULTS', () => {
 })
 
 describe('GOAL_TILES', () => {
-  it('has exactly 9 tiles', () => {
-    expect(GOAL_TILES).toHaveLength(9)
+  it('has exactly 10 tiles', () => {
+    expect(GOAL_TILES).toHaveLength(10)
   })
 
   it('each tile has required fields', () => {
@@ -205,7 +229,7 @@ describe('GOAL_TILES', () => {
   it('contains the expected tile IDs', () => {
     const ids = GOAL_TILES.map((t) => t.id)
     expect(ids).toEqual([
-      'hdb', 'condo', 'landed', 'car',
+      'hdb', 'condo', 'landed', 'ec', 'car',
       'wedding', 'travel', 'education', 'business', 'custom',
     ])
   })
@@ -213,8 +237,18 @@ describe('GOAL_TILES', () => {
   it('housing tiles are smart, simple goals are simple', () => {
     const smart = GOAL_TILES.filter((t) => t.type === 'smart')
     const simple = GOAL_TILES.filter((t) => t.type === 'simple')
-    expect(smart.map((t) => t.id)).toEqual(['hdb', 'condo', 'landed', 'car'])
+    expect(smart.map((t) => t.id)).toEqual(['hdb', 'condo', 'landed', 'ec', 'car'])
     expect(simple.map((t) => t.id)).toEqual(['wedding', 'travel', 'education', 'business', 'custom'])
+  })
+
+  it('EC tile has correct metadata', () => {
+    const ec = GOAL_TILES.find((t) => t.id === 'ec')
+    expect(ec).toBeDefined()
+    expect(ec?.label).toBe('EC')
+    expect(ec?.icon).toBe('Landmark')
+    expect(ec?.category).toBe('housing')
+    expect(ec?.type).toBe('smart')
+    expect(ec?.hint).toBe('Executive Condo')
   })
 })
 
@@ -289,6 +323,27 @@ describe('HDB_INCOME_CEILING', () => {
   it('both values are positive', () => {
     expect(HDB_INCOME_CEILING.single).toBeGreaterThan(0)
     expect(HDB_INCOME_CEILING.couple).toBeGreaterThan(0)
+  })
+})
+
+describe('EC_INCOME_CEILING', () => {
+  it('couple = 2 * single', () => {
+    expect(EC_INCOME_CEILING.couple).toBe(2 * EC_INCOME_CEILING.single)
+  })
+
+  it('both values are positive', () => {
+    expect(EC_INCOME_CEILING.single).toBeGreaterThan(0)
+    expect(EC_INCOME_CEILING.couple).toBeGreaterThan(0)
+  })
+
+  it('EC ceiling is higher than HDB ceiling', () => {
+    expect(EC_INCOME_CEILING.single).toBeGreaterThan(HDB_INCOME_CEILING.single)
+    expect(EC_INCOME_CEILING.couple).toBeGreaterThan(HDB_INCOME_CEILING.couple)
+  })
+
+  it('single = $8,000, couple = $16,000', () => {
+    expect(EC_INCOME_CEILING.single).toBe(8_000)
+    expect(EC_INCOME_CEILING.couple).toBe(16_000)
   })
 })
 
