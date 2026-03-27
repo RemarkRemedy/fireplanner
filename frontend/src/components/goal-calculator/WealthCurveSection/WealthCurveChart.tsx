@@ -13,8 +13,15 @@ import {
 import type { TooltipProps } from 'recharts'
 import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent'
 import { Button } from '@/components/ui/button'
-import { ChevronDown, ChevronUp, ArrowRight } from 'lucide-react'
+import {
+  Building2, Building, Home, Car, Heart, Plane, GraduationCap, Briefcase, Target, Landmark,
+  ChevronDown, ChevronUp, ArrowRight,
+} from 'lucide-react'
 import { useIsMobile } from '@/hooks/useIsMobile'
+
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  Building2, Building, Home, Car, Heart, Plane, GraduationCap, Briefcase, Target, Landmark,
+}
 import type { DeflatedRow } from '@/lib/calculations/goal-calc-adapter'
 
 export interface GoalMarker {
@@ -57,19 +64,18 @@ interface GoalLabelProps {
 function GoalLabel({ viewBox, icon, cost, label }: GoalLabelProps) {
   const x = viewBox?.x ?? 0
   const y = viewBox?.y ?? 0
+  const Icon = ICON_MAP[icon]
   return (
     <g>
-      <text
-        x={x}
-        y={y - 28}
-        textAnchor="middle"
-        fontSize={14}
-        dominantBaseline="middle"
-        role="img"
-        aria-label={label}
-      >
-        {icon}
-      </text>
+      {Icon ? (
+        <foreignObject x={x - 10} y={y - 36} width={20} height={20} aria-label={label}>
+          <Icon className="h-5 w-5 text-primary" />
+        </foreignObject>
+      ) : (
+        <text x={x} y={y - 28} textAnchor="middle" fontSize={14} dominantBaseline="middle">
+          {icon}
+        </text>
+      )}
       <text
         x={x}
         y={y - 12}

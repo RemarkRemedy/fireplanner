@@ -16,8 +16,7 @@ import type { GoalCalcGoal } from '@/lib/calculations/goal-calculator'
 import { FIRE_MULTIPLIER } from '@/lib/calculations/goal-calculator'
 import type { GoalMarker } from '@/components/goal-calculator/WealthCurveSection/WealthCurveChart'
 import type { SliderOverrides } from '@/components/goal-calculator/WealthCurveSection/WhatIfSliders'
-import type { GoalCategory } from '@/lib/types'
-import { MORTGAGE_RATES, LOAN_TENURE_YEARS, LTV_RATIOS } from '@/lib/data/goal-defaults'
+import { MORTGAGE_RATES, LOAN_TENURE_YEARS, LTV_RATIOS, GOAL_TILES } from '@/lib/data/goal-defaults'
 
 // ============================================================
 // Types
@@ -39,20 +38,17 @@ export interface WealthCurveProjectionResult {
 // Helpers
 // ============================================================
 
-const GOAL_EMOJI: Record<GoalCategory, string> = {
-  housing: '\u{1F3E0}',
-  vehicle: '\u{1F697}',
-  wedding: '\u{1F492}',
-  travel: '\u{2708}\uFE0F',
-  education: '\u{1F393}',
-  renovation: '\u{1F528}',
-  medical: '\u{1FA7A}',
-  family: '\u{1F46A}',
-  other: '\u{1F3AF}',
-}
-
-function getGoalEmoji(goal: GoalCalcGoal): string {
-  return GOAL_EMOJI[goal.category] ?? '\u{1F3AF}'
+/** Map a goal to its Lucide icon name from GOAL_TILES. Falls back to 'Target'. */
+function getGoalIconName(goal: GoalCalcGoal): string {
+  // Smart goals: match by kind → tile id
+  if (goal.smartInputs?.kind) {
+    const tile = GOAL_TILES.find((t) => t.id === goal.smartInputs?.kind)
+    if (tile) return tile.icon
+  }
+  // Simple goals: match by category
+  const tile = GOAL_TILES.find((t) => t.category === goal.category)
+  if (tile) return tile.icon
+  return 'Target'
 }
 
 /**
@@ -203,7 +199,7 @@ export function useWealthCurveProjection(
     effectiveGoals.map((goal) => ({
       age: goal.targetAge,
       label: goal.label,
-      icon: getGoalEmoji(goal),
+      icon: getGoalIconName(goal),
       cost: goal.totalCostToday,
     })),
   [effectiveGoals])
