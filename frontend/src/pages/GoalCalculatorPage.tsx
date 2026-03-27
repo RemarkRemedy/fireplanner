@@ -259,6 +259,7 @@ export function GoalCalculatorPage() {
           <Results
             goals={state.goals}
             basics={state.basics}
+            skipStory={state.goals.length > 1}
             onAddAnother={() => dispatch({ type: 'ADD_ANOTHER' })}
             onEditBasics={() => dispatch({ type: 'EDIT_BASICS' })}
             onStartOver={() => dispatch({ type: 'START_OVER' })}

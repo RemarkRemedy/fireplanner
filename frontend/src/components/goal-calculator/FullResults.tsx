@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { InsightChip } from '@/components/shared/InsightChip'
 import { DeltaBadge } from '@/components/shared/DeltaBadge'
 import { MetricCard } from '@/components/shared/MetricCard'
-import { Plus, RefreshCw, ArrowRight, Pencil, AlertTriangle, Shield, Banknote } from 'lucide-react'
+import { Plus, RefreshCw, ArrowRight, Pencil, AlertTriangle, Shield, Banknote, Play } from 'lucide-react'
 import { formatCurrency, formatPercent } from '@/lib/utils'
 import {
   computeGoalFeasibility,
@@ -32,6 +32,7 @@ interface FullResultsProps {
   onStartOver: () => void
   onAddGoal: () => void
   onEditBasics: () => void
+  onViewStory?: () => void
 }
 
 // ============================================================
@@ -455,6 +456,7 @@ export function FullResults({
   onStartOver,
   onAddGoal,
   onEditBasics,
+  onViewStory,
 }: FullResultsProps) {
   const available = basics.monthlyIncome - basics.monthlyExpenses
   const hasPropertyGoal = goals.some((g) => g.category === 'housing')
@@ -579,6 +581,16 @@ export function FullResults({
             onClick={onAddGoal}
           >
             <Plus className="h-4 w-4" /> Add Another Goal
+          </Button>
+        )}
+
+        {onViewStory && (
+          <Button
+            variant="outline"
+            className="w-full gap-2"
+            onClick={onViewStory}
+          >
+            <Play className="h-4 w-4" /> View Updated Story
           </Button>
         )}
 

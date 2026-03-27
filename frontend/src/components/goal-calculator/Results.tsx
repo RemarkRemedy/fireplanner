@@ -19,6 +19,7 @@ import { deriveCpfOaMonthly } from '@/lib/calculations/goal-calculator-sg'
 interface ResultsProps {
   goals: GoalCalcGoal[]
   basics: GoalCalcBasics
+  skipStory?: boolean
   onAddAnother: () => void
   onEditBasics: () => void
   onStartOver: () => void
@@ -33,17 +34,19 @@ interface ResultsProps {
 export function Results({
   goals,
   basics,
+  skipStory = false,
   onAddAnother,
   onEditBasics,
   onStartOver,
   onContinueToPlanner,
   transferring: _,
 }: ResultsProps) {
-  const [showFullResults, setShowFullResults] = useState(false)
+  const [showFullResults, setShowFullResults] = useState(skipStory)
   const storyData = useGoalStoryData(basics, goals)
   const isCoupleMode = !!basics.partnerAge
 
   const goToFullResults = useCallback(() => setShowFullResults(true), [])
+  const goToStory = useCallback(() => setShowFullResults(false), [])
 
   const renderCard = useCallback(
     (config: GoalCardConfig, _direction: number) => {
@@ -191,6 +194,7 @@ export function Results({
         onStartOver={onStartOver}
         onAddGoal={onAddAnother}
         onEditBasics={onEditBasics}
+        onViewStory={goToStory}
       />
     )
   }
