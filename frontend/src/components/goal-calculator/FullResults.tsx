@@ -548,6 +548,7 @@ export function FullResults({
             freedomAge={wealthCurve.freedomAge}
             fireNumber={wealthCurve.fireNumber}
             currentAge={basics.age}
+            onContinueToPlanner={onContinueToPlanner}
           />
           <WhatIfSliders
             basics={basics}
