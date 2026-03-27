@@ -523,7 +523,7 @@ describe('ec goal', () => {
       expect(result.shared.incomeCeilingWarning).toContain(`${EC_INCOME_CEILING.couple.toLocaleString()}`)
     })
 
-    it('does not warn when household gross is at or below EC couple ceiling', () => {
+    it('warns when household gross is exactly at EC couple ceiling', () => {
       const basics = makeBasics({
         monthlyIncome: 6_400,
         grossIncome: 8_000,
@@ -531,7 +531,22 @@ describe('ec goal', () => {
         partnerMonthlyIncome: 6_400,
         partnerGrossIncome: 8_000,
       })
-      // householdGross = 8,000 + 8,000 = 16,000 — exactly at ceiling, not over
+      // householdGross = 8,000 + 8,000 = 16,000 — at ceiling, ineligible
+      const goals = [makeEcGoal()]
+      const result = computeGoalStoryData(basics, goals)
+
+      expect(result.shared.incomeCeilingWarning).not.toBeNull()
+    })
+
+    it('does not warn when household gross is below EC couple ceiling', () => {
+      const basics = makeBasics({
+        monthlyIncome: 6_000,
+        grossIncome: 7_500,
+        partnerAge: 30,
+        partnerMonthlyIncome: 6_000,
+        partnerGrossIncome: 7_500,
+      })
+      // householdGross = 7,500 + 7,500 = 15,000 — below $16K ceiling
       const goals = [makeEcGoal()]
       const result = computeGoalStoryData(basics, goals)
 

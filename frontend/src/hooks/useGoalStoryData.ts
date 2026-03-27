@@ -296,7 +296,7 @@ export function computeGoalStoryData(
   // EC ceiling is higher than HDB ($16K vs $14K for couples). Only warn if no HDB warning already.
   if (hasAnyEcGoal && !incomeCeilingWarning) {
     const ecCeiling = isCoupleMode ? EC_INCOME_CEILING.couple : EC_INCOME_CEILING.single
-    if (householdGross > ecCeiling) {
+    if (householdGross >= ecCeiling) {
       incomeCeilingWarning = `Your household income of $${Math.round(householdGross).toLocaleString()}/mo exceeds the EC income ceiling of $${ecCeiling.toLocaleString()}/mo`
     }
   }
