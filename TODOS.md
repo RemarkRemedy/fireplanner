@@ -1,10 +1,19 @@
 # TODOS
 
-## BLOCKING — Must resolve before implementation
+## RESOLVED
 
-### Verify EHG grant amounts against HDB.gov.sg
-**What:** The V1.5 spec's EHG grant table (16 income brackets, families/singles amounts) is based on NDR 2024 announcements and web search results, not the primary HDB source. Verify exact bracket boundaries and amounts against HDB.gov.sg before writing `estimateHousingGrant()`.
-**Why:** Wrong grant amounts mean users see incorrect affordability estimates. A $10K-$20K error in grant amount significantly changes the "cash you actually need" number, which is the hero metric of the goal calculator.
-**Context:** The spec is at `docs/superpowers/specs/2026-03-27-goal-calculator-v1.5-design.md`, Section 4 (Housing Grant Estimation). The grant table covers household gross income from $0 to $9,000+ in $500 increments. Post-NDR 2024, max EHG increased from $80K to $120K for families.
-**Source:** https://www.hdb.gov.sg/residential/buying-a-flat/understanding-your-eligibility-and-housing-loan-options/flat-and-grant-eligibility
-**Depends on:** Nothing. Do this first.
+### ~~Verify EHG grant amounts against HDB.gov.sg~~
+**Status:** DONE (2026-03-27). Rewritten with official post-NDR Aug 2024 amounts. Split into separate family (16 brackets, $500 steps) and single (16 brackets, $250 steps) tables. Verified against HDB.gov.sg, DollarsAndSense, and Sethisfy.
+
+## V2 — Future Enhancements
+
+### Executive Condominium (EC) property type
+**What:** Add EC as a distinct property type in the goal calculator alongside HDB, Condo, and Landed. EC is a hybrid: HDB-subsidized but bank-loan-only, with unique rules.
+**Key differences from Condo:** income ceiling $16K/mo, eligible for Family Grant (not EHG), no ABSD for first-timer citizens, 5-year MOP then open market, fully privatizes after 10 years.
+**Key differences from HDB:** bank loan only (TDSR 55%, not MSR 30%), 25% down payment (not 10%), no HDB loan option.
+**Scope:** New `SmartGoalInputs` kind `'ec'`, new tile in GoalPicker, grant logic (Family Grant only), loan qualification (TDSR path), income ceiling check ($16K).
+**Workaround for now:** Users can use the Condo tile as closest approximation.
+
+### Per-goal parking recommendation
+**What:** Replace the current single blanket "where to park savings" recommendation (hidden in V1.5) with per-goal recommendations based on each goal's timeline.
+**Why:** A user with a wedding in 2 years and a property in 8 years needs different parking advice for each goal, not a single recommendation based on the shortest timeline.

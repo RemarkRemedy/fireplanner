@@ -11,6 +11,7 @@ import {
   computeMonthlySavingsNeeded,
   mapGoalToHouseholdGoalItem,
 } from '@/lib/calculations/goal-calculator'
+import type { PlanningAdult } from '@/lib/household/types'
 import type { GoalTileId } from '@/lib/data/goal-defaults'
 import type {
   GoalCalcGoal,
@@ -156,6 +157,7 @@ export function GoalCalculatorPage() {
   const [transferring, setTransferring] = useState(false)
   const navigate = useNavigate()
   const addGoal = useHouseholdPlanStore((s) => s.addGoal)
+  const addAdult = useHouseholdPlanStore((s) => s.addAdult)
 
   // Disable all tiles whose category matches an already-added goal
   // (e.g., adding a condo goal disables all housing tiles: hdb, condo, landed)
@@ -204,15 +206,51 @@ export function GoalCalculatorPage() {
   )
 
   const handleContinueToPlanner = useCallback(() => {
-    if (transferring) return
+    if (transferring || !state.basics) return
     setTransferring(true)
 
+    // Transfer goals
     for (const goal of state.goals) {
       addGoal(mapGoalToHouseholdGoalItem(goal))
     }
 
+    // Transfer partner as a new adult (couple mode)
+    if (state.basics.partnerAge && state.basics.partnerMonthlyIncome) {
+      const partnerAdult: PlanningAdult = {
+        id: crypto.randomUUID(),
+        owner: 'partner',
+        displayName: 'Partner',
+        currentAge: state.basics.partnerAge,
+        retirementAge: 55,
+        lifeExpectancy: 85,
+        lifeStage: 'pre-fire',
+        maritalStatus: 'married',
+        residencyStatus: 'citizen',
+        prMonths: 0,
+        annualIncome: state.basics.partnerMonthlyIncome * 12,
+        annualExpenses: 0,
+        liquidNetWorth: 0,
+        parentSupportEnabled: false,
+        lifeEventsEnabled: false,
+        healthcare: {} as PlanningAdult['healthcare'],
+        cpf: { balances: { oa: 0, sa: 0, ma: 0, ra: 0 } } as PlanningAdult['cpf'],
+        srs: {} as PlanningAdult['srs'],
+        taxProfile: {} as PlanningAdult['taxProfile'],
+        lifeEvents: [],
+        cashSavings: 0,
+        nonMortgageDebtTotal: 0,
+        nonMortgageDebtMonthlyPayment: 0,
+        insuranceDeathCoverage: 0,
+        insuranceCICoverage: 0,
+        insuranceDisabilityMonthly: 0,
+        funeralCosts: 0,
+        ciRecoveryYears: 0,
+      }
+      addAdult(partnerAdult)
+    }
+
     navigate('/inputs')
-  }, [transferring, state.goals, addGoal, navigate])
+  }, [transferring, state.basics, state.goals, addGoal, addAdult, navigate])
 
   return (
     <div className="min-h-screen bg-background">
