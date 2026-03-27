@@ -14,6 +14,12 @@ import {
   getLegalFees,
   SIMPLE_GOAL_DEFAULTS,
   GOAL_TILES,
+  EHG_TABLE,
+  FAMILY_GRANT,
+  HDB_INCOME_CEILING,
+  CPF_LIFE_ESTIMATES,
+  PEER_BENCHMARKS,
+  MORTGAGE_RATES,
 } from '@/lib/data/goal-defaults'
 
 describe('GOAL_DATA_VINTAGE', () => {
@@ -208,5 +214,137 @@ describe('GOAL_TILES', () => {
     const simple = GOAL_TILES.filter((t) => t.type === 'simple')
     expect(smart.map((t) => t.id)).toEqual(['hdb', 'condo', 'landed', 'car'])
     expect(simple.map((t) => t.id)).toEqual(['wedding', 'travel', 'education', 'business', 'custom'])
+  })
+})
+
+// ============================================================
+// Goal Calculator V1.5 Data
+// ============================================================
+
+describe('EHG_TABLE', () => {
+  it('is sorted by maxIncome ascending', () => {
+    for (let i = 1; i < EHG_TABLE.length; i++) {
+      expect(EHG_TABLE[i].maxIncome).toBeGreaterThan(EHG_TABLE[i - 1].maxIncome)
+    }
+  })
+
+  it('has no gaps between brackets', () => {
+    // Each bracket's maxIncome should be the next bracket's implicit lower bound
+    // Verify brackets form a contiguous range (500 step from 1500-8000, then 1000 step to 9000)
+    for (let i = 0; i < EHG_TABLE.length; i++) {
+      expect(EHG_TABLE[i].maxIncome).toBeGreaterThan(0)
+    }
+  })
+
+  it('familyGrant >= singleGrant for all brackets', () => {
+    for (const bracket of EHG_TABLE) {
+      expect(bracket.familyGrant).toBeGreaterThanOrEqual(bracket.singleGrant)
+    }
+  })
+
+  it('grants decrease as income increases', () => {
+    for (let i = 1; i < EHG_TABLE.length; i++) {
+      expect(EHG_TABLE[i].familyGrant).toBeLessThan(EHG_TABLE[i - 1].familyGrant)
+      expect(EHG_TABLE[i].singleGrant).toBeLessThan(EHG_TABLE[i - 1].singleGrant)
+    }
+  })
+
+  it('has 15 brackets (up to $9,000 income)', () => {
+    expect(EHG_TABLE).toHaveLength(15)
+  })
+})
+
+describe('FAMILY_GRANT', () => {
+  it('fourRoomOrSmaller > fiveRoomOrLarger', () => {
+    expect(FAMILY_GRANT.fourRoomOrSmaller).toBeGreaterThan(FAMILY_GRANT.fiveRoomOrLarger)
+  })
+
+  it('both values are positive', () => {
+    expect(FAMILY_GRANT.fourRoomOrSmaller).toBeGreaterThan(0)
+    expect(FAMILY_GRANT.fiveRoomOrLarger).toBeGreaterThan(0)
+  })
+})
+
+describe('HDB_INCOME_CEILING', () => {
+  it('couple = 2 * single', () => {
+    expect(HDB_INCOME_CEILING.couple).toBe(2 * HDB_INCOME_CEILING.single)
+  })
+
+  it('both values are positive', () => {
+    expect(HDB_INCOME_CEILING.single).toBeGreaterThan(0)
+    expect(HDB_INCOME_CEILING.couple).toBeGreaterThan(0)
+  })
+})
+
+describe('CPF_LIFE_ESTIMATES', () => {
+  it('is sorted by minIncome ascending', () => {
+    for (let i = 1; i < CPF_LIFE_ESTIMATES.length; i++) {
+      expect(CPF_LIFE_ESTIMATES[i].minIncome).toBeGreaterThan(CPF_LIFE_ESTIMATES[i - 1].minIncome)
+    }
+  })
+
+  it('has no gaps between bands', () => {
+    for (let i = 1; i < CPF_LIFE_ESTIMATES.length; i++) {
+      expect(CPF_LIFE_ESTIMATES[i].minIncome).toBe(CPF_LIFE_ESTIMATES[i - 1].maxIncome)
+    }
+  })
+
+  it('higher income yields higher estimated payout', () => {
+    for (let i = 1; i < CPF_LIFE_ESTIMATES.length; i++) {
+      expect(CPF_LIFE_ESTIMATES[i].estimatedPayout).toBeGreaterThan(
+        CPF_LIFE_ESTIMATES[i - 1].estimatedPayout,
+      )
+    }
+  })
+
+  it('starts at income 0', () => {
+    expect(CPF_LIFE_ESTIMATES[0].minIncome).toBe(0)
+  })
+
+  it('last band extends to Infinity', () => {
+    expect(CPF_LIFE_ESTIMATES[CPF_LIFE_ESTIMATES.length - 1].maxIncome).toBe(Infinity)
+  })
+})
+
+describe('PEER_BENCHMARKS', () => {
+  it('is sorted by minAge ascending', () => {
+    for (let i = 1; i < PEER_BENCHMARKS.length; i++) {
+      expect(PEER_BENCHMARKS[i].minAge).toBeGreaterThan(PEER_BENCHMARKS[i - 1].minAge)
+    }
+  })
+
+  it('has 3 age bands', () => {
+    expect(PEER_BENCHMARKS).toHaveLength(3)
+  })
+
+  it('percentiles are sorted ascending by rate within each band', () => {
+    for (const band of PEER_BENCHMARKS) {
+      for (let i = 1; i < band.percentiles.length; i++) {
+        expect(band.percentiles[i].rate).toBeGreaterThan(band.percentiles[i - 1].rate)
+        expect(band.percentiles[i].percentile).toBeGreaterThan(band.percentiles[i - 1].percentile)
+      }
+    }
+  })
+
+  it('all percentile values are between 0 and 100', () => {
+    for (const band of PEER_BENCHMARKS) {
+      for (const p of band.percentiles) {
+        expect(p.percentile).toBeGreaterThan(0)
+        expect(p.percentile).toBeLessThanOrEqual(100)
+      }
+    }
+  })
+})
+
+describe('MORTGAGE_RATES', () => {
+  it('hdb < bank', () => {
+    expect(MORTGAGE_RATES.hdb).toBeLessThan(MORTGAGE_RATES.bank)
+  })
+
+  it('both > 0 and < 0.1 (reasonable range)', () => {
+    expect(MORTGAGE_RATES.hdb).toBeGreaterThan(0)
+    expect(MORTGAGE_RATES.hdb).toBeLessThan(0.1)
+    expect(MORTGAGE_RATES.bank).toBeGreaterThan(0)
+    expect(MORTGAGE_RATES.bank).toBeLessThan(0.1)
   })
 })

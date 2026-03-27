@@ -214,3 +214,119 @@ export const GOAL_TILES: GoalTile[] = [
   { id: 'business', label: 'Business', icon: 'Briefcase', category: 'other', type: 'simple' },
   { id: 'custom', label: 'Custom Goal', icon: 'Target', category: 'other', type: 'simple' },
 ]
+
+// ============================================================
+// Goal Calculator V1.5 Data (SG-specific)
+// Vintage: GOAL_DATA_VINTAGE
+// Source: HDB.gov.sg (grants), IRAS (tax), CPF Board (rates), MOM (benchmarks)
+// NOTE: EHG amounts need verification against HDB.gov.sg before production
+// ============================================================
+
+// ---- Enhanced CPF Housing Grant (post-NDR 2024) ----
+
+export interface EhgBracket {
+  maxIncome: number      // upper bound of income bracket
+  familyGrant: number    // grant for families/couples
+  singleGrant: number    // grant for singles
+}
+
+export const EHG_TABLE: EhgBracket[] = [
+  { maxIncome: 1_500, familyGrant: 120_000, singleGrant: 60_000 },
+  { maxIncome: 2_000, familyGrant: 115_000, singleGrant: 57_500 },
+  { maxIncome: 2_500, familyGrant: 110_000, singleGrant: 55_000 },
+  { maxIncome: 3_000, familyGrant: 105_000, singleGrant: 52_500 },
+  { maxIncome: 3_500, familyGrant: 100_000, singleGrant: 50_000 },
+  { maxIncome: 4_000, familyGrant: 95_000, singleGrant: 47_500 },
+  { maxIncome: 4_500, familyGrant: 90_000, singleGrant: 45_000 },
+  { maxIncome: 5_000, familyGrant: 85_000, singleGrant: 42_500 },
+  { maxIncome: 5_500, familyGrant: 80_000, singleGrant: 40_000 },
+  { maxIncome: 6_000, familyGrant: 75_000, singleGrant: 37_500 },
+  { maxIncome: 6_500, familyGrant: 70_000, singleGrant: 35_000 },
+  { maxIncome: 7_000, familyGrant: 65_000, singleGrant: 32_500 },
+  { maxIncome: 7_500, familyGrant: 60_000, singleGrant: 30_000 },
+  { maxIncome: 8_000, familyGrant: 55_000, singleGrant: 27_500 },
+  { maxIncome: 9_000, familyGrant: 40_000, singleGrant: 20_000 },
+  // Income > $9,000: $0 grant (handled by lookup function, not in table)
+]
+
+// ---- Resale Flat Family Grant ----
+
+export const FAMILY_GRANT = {
+  fourRoomOrSmaller: 80_000,  // 2-room, 3-room, 4-room
+  fiveRoomOrLarger: 50_000,   // 5-room, executive
+}
+
+// ---- HDB BTO Income Ceilings ----
+
+export const HDB_INCOME_CEILING = {
+  single: 7_000,   // $7,000/mo gross
+  couple: 14_000,   // $14,000/mo gross
+}
+
+// ---- CPF LIFE Estimated Monthly Payouts ----
+
+export interface CpfLifeBand {
+  minIncome: number
+  maxIncome: number
+  estimatedPayout: number  // monthly
+}
+
+export const CPF_LIFE_ESTIMATES: CpfLifeBand[] = [
+  { minIncome: 0, maxIncome: 3_000, estimatedPayout: 500 },
+  { minIncome: 3_000, maxIncome: 4_000, estimatedPayout: 800 },
+  { minIncome: 4_000, maxIncome: 5_000, estimatedPayout: 1_000 },
+  { minIncome: 5_000, maxIncome: 6_000, estimatedPayout: 1_200 },
+  { minIncome: 6_000, maxIncome: 8_000, estimatedPayout: 1_500 },
+  { minIncome: 8_000, maxIncome: Infinity, estimatedPayout: 1_800 },
+]
+
+// ---- Peer Savings Rate Benchmarks ----
+
+export interface PeerBenchmark {
+  minAge: number
+  maxAge: number
+  percentiles: { rate: number; percentile: number }[]  // sorted ascending by rate
+}
+
+export const PEER_BENCHMARKS: PeerBenchmark[] = [
+  {
+    minAge: 18,
+    maxAge: 29,
+    percentiles: [
+      { rate: 0.10, percentile: 25 },
+      { rate: 0.20, percentile: 40 },
+      { rate: 0.30, percentile: 55 },
+      { rate: 0.40, percentile: 70 },
+      { rate: 0.50, percentile: 85 },
+    ],
+  },
+  {
+    minAge: 30,
+    maxAge: 39,
+    percentiles: [
+      { rate: 0.10, percentile: 25 },
+      { rate: 0.20, percentile: 40 },
+      { rate: 0.30, percentile: 55 },
+      { rate: 0.40, percentile: 70 },
+      { rate: 0.50, percentile: 85 },
+    ],
+  },
+  {
+    minAge: 40,
+    maxAge: 49,
+    percentiles: [
+      { rate: 0.10, percentile: 25 },
+      { rate: 0.20, percentile: 40 },
+      { rate: 0.30, percentile: 55 },
+      { rate: 0.40, percentile: 70 },
+      { rate: 0.50, percentile: 85 },
+    ],
+  },
+]
+
+// ---- Mortgage Interest Rates ----
+
+export const MORTGAGE_RATES = {
+  hdb: 0.026,    // 2.6% HDB concessionary
+  bank: 0.03,    // 3.0% conservative market rate
+}
