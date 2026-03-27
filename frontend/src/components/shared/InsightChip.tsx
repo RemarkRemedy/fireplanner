@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-type InsightChipVariant = 'info' | 'warning' | 'success'
+type InsightChipVariant = 'info' | 'warning' | 'success' | 'danger'
 
 interface InsightChipProps {
   label: string
@@ -16,12 +16,14 @@ const VARIANT_STYLES: Record<InsightChipVariant, string> = {
   info: 'bg-primary/10 text-primary dark:bg-primary/20',
   warning: 'bg-warning/10 text-warning dark:bg-warning/20',
   success: 'bg-success/10 text-success dark:bg-success/20',
+  danger: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 }
 
 const PANEL_STYLES: Record<InsightChipVariant, string> = {
   info: 'border-primary/20 bg-primary/5',
   warning: 'border-warning/20 bg-warning/5',
   success: 'border-success/20 bg-success/5',
+  danger: 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950',
 }
 
 export function InsightChip({ label, icon, variant = 'info', children }: InsightChipProps) {

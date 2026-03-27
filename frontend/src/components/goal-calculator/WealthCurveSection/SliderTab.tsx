@@ -28,7 +28,7 @@ function SliderRow({ config }: { config: SliderConfig }) {
 
   return (
     <div className="flex items-center gap-3">
-      <p className="text-xs font-medium w-24 shrink-0">{label}</p>
+      <p className="text-xs font-medium w-28 shrink-0">{label}</p>
       <input
         type="range"
         min={min}

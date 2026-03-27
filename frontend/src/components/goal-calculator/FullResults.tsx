@@ -172,7 +172,7 @@ function LoanInsight({
   return (
     <InsightChip
       label={lq.qualified ? 'Loan: Qualified' : 'Loan: Over limit'}
-      variant={lq.qualified ? 'success' : 'warning'}
+      variant={lq.qualified ? 'success' : 'danger'}
       icon={lq.qualified ? undefined : <AlertTriangle size={12} />}
     >
       <p>Monthly mortgage: {formatCurrency(Math.round(lq.monthlyPayment))}/mo</p>
@@ -548,26 +548,24 @@ export function FullResults({
         </div>
 
         {/* Compact action row — always visible at top */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            {goals.length < 5 && (
-              <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={onAddGoal}>
-                <Plus className="h-3.5 w-3.5" /> Add Goal
-              </Button>
-            )}
-            <Button variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground" onClick={onEditBasics}>
-              <Pencil className="h-3.5 w-3.5" /> Edit Basics
+        <div className="flex items-center flex-wrap gap-2">
+          {goals.length < 5 && (
+            <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={onAddGoal}>
+              <Plus className="h-3.5 w-3.5" /> Add Goal
             </Button>
-            {onViewStory && (
-              <Button variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground" onClick={onViewStory}>
-                <Play className="h-3.5 w-3.5" /> Story
-              </Button>
-            )}
-            <Button variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground" onClick={onStartOver}>
-              <RefreshCw className="h-3.5 w-3.5" /> Reset
+          )}
+          <Button variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground hidden sm:inline-flex" onClick={onEditBasics}>
+            <Pencil className="h-3.5 w-3.5" /> Edit Basics
+          </Button>
+          {onViewStory && (
+            <Button variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground hidden sm:inline-flex" onClick={onViewStory}>
+              <Play className="h-3.5 w-3.5" /> Story
             </Button>
-          </div>
-          <Button size="sm" className="gap-1 text-xs" onClick={onContinueToPlanner}>
+          )}
+          <Button variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground hidden sm:inline-flex" onClick={onStartOver}>
+            <RefreshCw className="h-3.5 w-3.5" /> Reset
+          </Button>
+          <Button size="sm" className="gap-1 text-xs ml-auto" onClick={onContinueToPlanner}>
             Full Planner <ArrowRight className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -678,7 +676,7 @@ export function FullResults({
         <Disclaimers hasPropertyGoal={hasPropertyGoal} />
 
         {/* Bottom CTA — repeated for users who scroll all the way down */}
-        <div className="space-y-3 pb-20 lg:pb-0">
+        <div className="space-y-3 pb-24 lg:pb-0">
           <Button className="w-full gap-2" onClick={onContinueToPlanner}>
             Continue to Full Planner <ArrowRight className="h-4 w-4" />
           </Button>
