@@ -16,6 +16,7 @@ import type { GoalCalcGoal } from '@/lib/calculations/goal-calculator'
 import type { GoalMarker } from '@/components/goal-calculator/WealthCurveSection/WealthCurveChart'
 import type { SliderOverrides } from '@/components/goal-calculator/WealthCurveSection/WhatIfSliders'
 import type { GoalCategory } from '@/lib/types'
+import { MORTGAGE_RATES, LOAN_TENURE_YEARS, LTV_RATIOS } from '@/lib/data/goal-defaults'
 
 // ============================================================
 // Types
@@ -50,6 +51,87 @@ const GOAL_EMOJI: Record<GoalCategory, string> = {
 
 function getGoalEmoji(goal: GoalCalcGoal): string {
   return GOAL_EMOJI[goal.category] ?? '\u{1F3AF}'
+}
+
+/**
+ * Compute property equity for each year and overlay onto deflated chart data.
+ *
+ * For each property goal, after the purchase age:
+ * - Property appreciates at 3% nominal per year
+ * - Mortgage balance amortizes (PMT formula)
+ * - Equity = appreciated value - outstanding balance
+ * - Deflated to today's dollars
+ *
+ * This runs post-hoc because the projection engine can't model future purchases.
+ */
+function overlayPropertyEquity(
+  rows: DeflatedRow[],
+  goals: GoalCalcGoal[],
+  startAge: number,
+  inflationRate: number,
+): DeflatedRow[] {
+  const propertyGoals = goals.filter(
+    (g) => g.smartInputs?.kind === 'hdb' || g.smartInputs?.kind === 'condo' ||
+           g.smartInputs?.kind === 'landed' || g.smartInputs?.kind === 'ec',
+  )
+
+  if (propertyGoals.length === 0) return rows
+
+  return rows.map((row) => {
+    let totalEquity = 0
+
+    for (const goal of propertyGoals) {
+      if (row.age < goal.targetAge) continue
+
+      const yearsOwned = row.age - goal.targetAge
+      const inputs = goal.smartInputs!
+      const propertyPrice = getPropertyPrice(inputs)
+      const appreciationRate = 0.03
+
+      // Appreciated value (nominal)
+      const appreciated = propertyPrice * Math.pow(1 + appreciationRate, yearsOwned)
+
+      // Mortgage balance
+      const isHdbLoan = inputs.kind === 'hdb' && inputs.loanType === 'hdb-loan'
+      const ltvKey = isHdbLoan ? 'hdb-loan' : 'bank-loan'
+      const ltv = LTV_RATIOS[ltvKey as keyof typeof LTV_RATIOS]
+      const loanAmount = propertyPrice * ltv
+      const rate = isHdbLoan ? MORTGAGE_RATES.hdb : MORTGAGE_RATES.bank
+      const tenure = isHdbLoan ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
+      const monthlyRate = rate / 12
+      const totalPayments = tenure * 12
+      const monthsPaid = yearsOwned * 12
+
+      let outstanding: number
+      if (monthsPaid >= totalPayments) {
+        outstanding = 0
+      } else if (monthlyRate < 1e-10) {
+        outstanding = loanAmount * (1 - monthsPaid / totalPayments)
+      } else {
+        const compN = Math.pow(1 + monthlyRate, totalPayments)
+        const compT = Math.pow(1 + monthlyRate, monthsPaid)
+        outstanding = loanAmount * (compN - compT) / (compN - 1)
+      }
+
+      const nominalEquity = Math.max(0, appreciated - outstanding)
+      // Deflate to today's dollars
+      const deflator = Math.pow(1 + inflationRate, row.age - startAge)
+      totalEquity += nominalEquity / deflator
+    }
+
+    return { ...row, propertyEquity: totalEquity }
+  })
+}
+
+/** Extract property price from smart inputs. */
+function getPropertyPrice(inputs: NonNullable<GoalCalcGoal['smartInputs']>): number {
+  switch (inputs.kind) {
+    case 'hdb': return inputs.priceOverride ?? 400_000 // fallback to 4-room midpoint
+    case 'condo': return inputs.price
+    case 'landed': return inputs.price
+    case 'ec': return inputs.price
+    default: return 0
+  }
 }
 
 // ============================================================
@@ -102,7 +184,10 @@ export function useWealthCurveProjection(
     }
 
     const result = generateProjection(params)
-    return deflateProjection(result.rows, 0.025, basics.age)
+    const deflated = deflateProjection(result.rows, 0.025, basics.age)
+
+    // Overlay property equity post-hoc (engine can't model future property purchases)
+    return overlayPropertyEquity(deflated, effectiveGoals, basics.age, 0.025)
   }, [effectiveBasics, effectiveGoals, overrides.expectedReturn, basics.age])
 
   // Recompute story data from effective inputs
