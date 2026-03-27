@@ -81,7 +81,7 @@ describe('computeSmartGoalCost', () => {
     expect(renoItem!.amount).toBe(100_000) // landed renovation estimate
   })
 
-  it('car has COE + OMV + ARF items', () => {
+  it('car shows down payment (40%) as the savings goal', () => {
     const inputs: SmartGoalInputs = {
       kind: 'car',
       coeCategory: 'A',
@@ -91,18 +91,17 @@ describe('computeSmartGoalCost', () => {
     const result = computeSmartGoalCost(inputs)
 
     const labels = result.items.map((i) => i.label)
-    expect(labels).toContain('COE')
-    expect(labels).toContain('OMV')
-    expect(labels).toContain('ARF')
+    expect(labels).toContain('Down payment (40%)')
+    expect(labels.some((l) => l.includes('Estimated total price'))).toBe(true)
 
-    expect(result.total).toBeGreaterThan(0)
-
-    // Total should equal sum of items
-    const sum = result.items.reduce((acc, i) => acc + i.amount, 0)
-    expect(result.total).toBeCloseTo(sum, 0)
+    // Total is the down payment only (40% of full price), not the full car cost
+    const dpItem = result.items.find((i) => i.label === 'Down payment (40%)')!
+    const totalItem = result.items.find((i) => i.label.includes('Estimated total price'))!
+    expect(dpItem.amount).toBeCloseTo(totalItem.amount * 0.40, 0)
+    expect(result.total).toBe(dpItem.amount)
   })
 
-  it('used car has COE = 0', () => {
+  it('used car down payment is 40% of price (COE already included)', () => {
     const inputs: SmartGoalInputs = {
       kind: 'car',
       coeCategory: 'B',
@@ -111,9 +110,9 @@ describe('computeSmartGoalCost', () => {
     }
     const result = computeSmartGoalCost(inputs)
 
-    const coeItem = result.items.find((i) => i.label === 'COE')
-    expect(coeItem).toBeDefined()
-    expect(coeItem!.amount).toBe(0)
+    const dpItem = result.items.find((i) => i.label === 'Down payment (40%)')!
+    expect(dpItem).toBeDefined()
+    expect(result.total).toBe(dpItem.amount)
   })
 
   it('EC has down payment + BSD + legal + reno, no ABSD', () => {

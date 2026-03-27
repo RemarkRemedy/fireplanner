@@ -186,6 +186,17 @@ export function getLegalFees(propertyType: PropertyType): number {
 }
 
 // ============================================================
+// Vehicle: Hire Purchase Down Payment
+// ============================================================
+
+/**
+ * MAS minimum down payment for vehicle hire purchase: 40% of purchase price.
+ * Applies to both new and used cars. The remaining 60% is financed
+ * via hire purchase (max 7-year tenure).
+ */
+export const CAR_DOWN_PAYMENT_RATE = 0.40
+
+// ============================================================
 // Simple Goal Defaults
 // ============================================================
 

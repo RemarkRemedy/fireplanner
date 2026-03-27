@@ -13,6 +13,7 @@ import {
   computeHdbDownPayment,
   computeCondoDownPayment,
   getCarPurchaseCost,
+  CAR_DOWN_PAYMENT_RATE,
   getRenovationEstimate,
   getLegalFees,
 } from '@/lib/data/goal-defaults'
@@ -168,13 +169,16 @@ function computeEcCost(price: number): CostBreakdown {
 
 function computeCarCost(inputs: Extract<SmartGoalInputs, { kind: 'car' }>): CostBreakdown {
   const carCost = getCarPurchaseCost(inputs.coeCategory, inputs.condition, inputs.priceRange)
+  const totalPrice = carCost.total
+  const downPayment = totalPrice * CAR_DOWN_PAYMENT_RATE
+  const dpPercent = Math.round(CAR_DOWN_PAYMENT_RATE * 100)
 
   const items = [
-    { label: 'COE', amount: carCost.coe },
-    { label: 'OMV', amount: carCost.omv },
-    { label: 'ARF', amount: carCost.arf },
+    { label: `Down payment (${dpPercent}%)`, amount: downPayment },
+    { label: 'Estimated total price (COE + OMV + ARF)', amount: totalPrice },
   ]
-  return { items, total: carCost.total }
+  // The savings goal is the down payment only; the rest is financed via hire purchase
+  return { items, total: downPayment }
 }
 
 // ============================================================
