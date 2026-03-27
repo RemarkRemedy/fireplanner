@@ -67,18 +67,26 @@ function GoalLabel({ viewBox, icon, cost, label }: GoalLabelProps) {
   const Icon = ICON_MAP[icon]
   return (
     <g>
-      {Icon ? (
-        <foreignObject x={x - 10} y={y - 36} width={20} height={20} aria-label={label}>
-          <Icon className="h-5 w-5 text-primary" />
+      {Icon && (
+        <foreignObject
+          x={x - 10}
+          y={y - 38}
+          width={20}
+          height={20}
+          style={{ overflow: 'visible' }}
+        >
+          <div
+            xmlns="http://www.w3.org/1999/xhtml"
+            style={{ display: 'flex', justifyContent: 'center' }}
+            aria-label={label}
+          >
+            <Icon className="h-4 w-4 text-primary" />
+          </div>
         </foreignObject>
-      ) : (
-        <text x={x} y={y - 28} textAnchor="middle" fontSize={14} dominantBaseline="middle">
-          {icon}
-        </text>
       )}
       <text
         x={x}
-        y={y - 12}
+        y={y - 14}
         textAnchor="middle"
         fontSize={9}
         fill="#ef4444"
@@ -308,64 +316,59 @@ export function WealthCurveChart({
             )}
 
             {/* === Chart areas === */}
-            {showDetailed ? (
-              <>
-                {/* Detailed: stacked areas */}
-                <Area
-                  type="monotone"
-                  dataKey="liquidNW"
-                  stackId="wealth"
-                  fill="hsl(210, 80%, 60%)"
-                  stroke="hsl(210, 80%, 50%)"
-                  fillOpacity={0.6}
-                  name="liquidNW"
-                />
-                {hasCpf && (
-                  <Area
-                    type="monotone"
-                    dataKey="cpfTotal"
-                    stackId="wealth"
-                    fill="hsl(150, 60%, 50%)"
-                    stroke="hsl(150, 60%, 40%)"
-                    fillOpacity={0.6}
-                    name="cpfTotal"
-                  />
-                )}
-                {hasProperty && (
-                  <Area
-                    type="monotone"
-                    dataKey="propertyEquity"
-                    stackId="wealth"
-                    fill="hsl(35, 80%, 55%)"
-                    stroke="hsl(35, 80%, 45%)"
-                    fillOpacity={0.6}
-                    name="propertyEquity"
-                  />
-                )}
-                <Legend
-                  formatter={(value: string) => SERIES_LABELS[value] ?? value}
-                  wrapperStyle={{ fontSize: 11 }}
-                />
-              </>
-            ) : (
-              <>
-                {/* Clean: single blue area for total */}
-                <defs>
-                  <linearGradient id="wealthGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.3} />
-                    <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.05} />
-                  </linearGradient>
-                </defs>
-                <Area
-                  type="monotone"
-                  dataKey="totalNW"
-                  fill="url(#wealthGradient)"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  name="totalNW"
-                  legendType="none"
-                />
-              </>
+            {/* Clean mode: single blue area for total NW */}
+            {!showDetailed && (
+              <Area
+                type="monotone"
+                dataKey="totalNW"
+                fill="#3b82f6"
+                fillOpacity={0.15}
+                stroke="#3b82f6"
+                strokeWidth={2}
+                name="totalNW"
+                legendType="none"
+              />
+            )}
+
+            {/* Detailed mode: stacked areas */}
+            {showDetailed && (
+              <Area
+                type="monotone"
+                dataKey="liquidNW"
+                stackId="wealth"
+                fill="hsl(210, 80%, 60%)"
+                stroke="hsl(210, 80%, 50%)"
+                fillOpacity={0.6}
+                name="liquidNW"
+              />
+            )}
+            {showDetailed && hasCpf && (
+              <Area
+                type="monotone"
+                dataKey="cpfTotal"
+                stackId="wealth"
+                fill="hsl(150, 60%, 50%)"
+                stroke="hsl(150, 60%, 40%)"
+                fillOpacity={0.6}
+                name="cpfTotal"
+              />
+            )}
+            {showDetailed && hasProperty && (
+              <Area
+                type="monotone"
+                dataKey="propertyEquity"
+                stackId="wealth"
+                fill="hsl(35, 80%, 55%)"
+                stroke="hsl(35, 80%, 45%)"
+                fillOpacity={0.6}
+                name="propertyEquity"
+              />
+            )}
+            {showDetailed && (
+              <Legend
+                formatter={(value: string) => SERIES_LABELS[value] ?? value}
+                wrapperStyle={{ fontSize: 11 }}
+              />
             )}
           </AreaChart>
         </ResponsiveContainer>
