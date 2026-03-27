@@ -5,117 +5,32 @@
  * CPF OA accumulation, housing grants, loan qualification (MSR/TDSR),
  * income tax, HDB sale proceeds, and peer benchmarks.
  *
- * All SG-specific constants are imported from lib/data/ or defined
- * as temporary inline tables (marked TODO) pending Agent B additions.
+ * All SG-specific constants are imported from lib/data/.
  */
 
 import { getCpfRatesForAge, OW_CEILING_MONTHLY, OA_INTEREST_RATE } from '@/lib/data/cpfRates'
 import { calculateProgressiveTax } from '@/lib/calculations/tax'
 import { earnedIncomeReliefForAge } from '@/lib/data/taxBrackets'
+import {
+  EHG_TABLE,
+  FAMILY_GRANT,
+  CPF_LIFE_ESTIMATES,
+  PEER_BENCHMARKS,
+  MORTGAGE_RATES,
+} from '@/lib/data/goal-defaults'
 
 // ============================================================
-// Temporary data tables — TODO: replace with imports from
-// '@/lib/data/goal-defaults' once Agent B adds them
+// Local constants (calculation assumptions, not regulatory data)
 // ============================================================
-
-/**
- * Enhanced Housing Grant (EHG) table by monthly household income bracket.
- * Source: HDB (https://www.hdb.gov.sg/residential/buying-a-flat/understanding-your-eligibility-and-housing-loan-options/flat-and-grant-eligibility/couples-and-families/enhanced-cpf-housing-grant-families)
- * Downloaded: 2026-03-27
- * Family column = couple applicants; single column = single applicants.
- */
-// TODO: import { EHG_TABLE } from '@/lib/data/goal-defaults'
-export interface EhgBracket {
-  maxIncome: number
-  familyGrant: number
-  singleGrant: number
-}
-
-export const EHG_TABLE: EhgBracket[] = [
-  { maxIncome: 1500, familyGrant: 80_000, singleGrant: 40_000 },
-  { maxIncome: 2000, familyGrant: 75_000, singleGrant: 37_500 },
-  { maxIncome: 2500, familyGrant: 70_000, singleGrant: 35_000 },
-  { maxIncome: 3000, familyGrant: 65_000, singleGrant: 32_500 },
-  { maxIncome: 3500, familyGrant: 60_000, singleGrant: 30_000 },
-  { maxIncome: 4000, familyGrant: 55_000, singleGrant: 27_500 },
-  { maxIncome: 4500, familyGrant: 50_000, singleGrant: 25_000 },
-  { maxIncome: 5000, familyGrant: 45_000, singleGrant: 22_500 },
-  { maxIncome: 5500, familyGrant: 40_000, singleGrant: 20_000 },
-  { maxIncome: 6000, familyGrant: 35_000, singleGrant: 17_500 },
-  { maxIncome: 6500, familyGrant: 30_000, singleGrant: 15_000 },
-  { maxIncome: 7000, familyGrant: 25_000, singleGrant: 12_500 },
-  { maxIncome: 7500, familyGrant: 20_000, singleGrant: 10_000 },
-  { maxIncome: 8000, familyGrant: 15_000, singleGrant: 7_500 },
-  { maxIncome: 8500, familyGrant: 10_000, singleGrant: 5_000 },
-  { maxIncome: 9000, familyGrant: 5_000, singleGrant: 2_500 },
-]
-
-/**
- * Resale Family Grant amounts by flat size.
- * Source: HDB
- * Note: Singles get $0 for resale family grant.
- */
-// TODO: import { FAMILY_GRANT } from '@/lib/data/goal-defaults'
-export const FAMILY_GRANT: Record<string, number> = {
-  '3-room': 80_000,
-  '4-room': 80_000,
-  '5-room': 50_000,
-  executive: 50_000,
-}
-
-/**
- * CPF LIFE estimated monthly payout by gross income band.
- * Rough estimates assuming standard plan, FRS pledged, payout at 65.
- * Source: CPF Board CPF LIFE estimator (indicative ranges, 2026)
- */
-// TODO: import { CPF_LIFE_ESTIMATES } from '@/lib/data/goal-defaults'
-export interface CpfLifeBand {
-  minIncome: number
-  maxIncome: number
-  monthlyPayout: number
-}
-
-export const CPF_LIFE_ESTIMATES: CpfLifeBand[] = [
-  { minIncome: 0, maxIncome: 3000, monthlyPayout: 500 },
-  { minIncome: 3000, maxIncome: 4000, monthlyPayout: 800 },
-  { minIncome: 4000, maxIncome: 5000, monthlyPayout: 1000 },
-  { minIncome: 5000, maxIncome: 6000, monthlyPayout: 1200 },
-  { minIncome: 6000, maxIncome: 8000, monthlyPayout: 1500 },
-  { minIncome: 8000, maxIncome: Infinity, monthlyPayout: 1800 },
-]
-
-/**
- * Peer savings rate benchmarks by age group.
- * Source: MAS Financial Literacy Survey 2024 + DBS/POSB data, simplified.
- */
-// TODO: import { PEER_BENCHMARKS } from '@/lib/data/goal-defaults'
-export interface PeerBenchmarkEntry {
-  maxAge: number
-  p25: number  // 25th percentile savings rate
-  p50: number  // median
-  p75: number  // 75th percentile
-}
-
-export const PEER_BENCHMARKS: PeerBenchmarkEntry[] = [
-  { maxAge: 29, p25: 0.05, p50: 0.12, p75: 0.22 },
-  { maxAge: 39, p25: 0.08, p50: 0.15, p75: 0.25 },
-  { maxAge: 49, p25: 0.10, p50: 0.18, p75: 0.28 },
-  { maxAge: 59, p25: 0.10, p50: 0.20, p75: 0.30 },
-  { maxAge: Infinity, p25: 0.05, p50: 0.15, p75: 0.25 },
-]
-
-/**
- * Default mortgage assumptions for HDB sale proceeds estimation.
- * Source: HDB concessionary loan rate (2.6%), bank average (3.0%), 2026.
- */
-// TODO: import { MORTGAGE_RATES } from '@/lib/data/goal-defaults'
-export const MORTGAGE_RATES: Record<'hdb-loan' | 'bank-loan', { rate: number; ltv: number }> = {
-  'hdb-loan': { rate: 0.026, ltv: 0.90 },
-  'bank-loan': { rate: 0.030, ltv: 0.75 },
-}
 
 /** Default tenure for HDB loans in months. */
 const DEFAULT_LOAN_TENURE_MONTHS = 300 // 25 years
+
+/** LTV ratios by loan type (not in goal-defaults since they're calc assumptions). */
+const LTV_RATIOS: Record<'hdb-loan' | 'bank-loan', number> = {
+  'hdb-loan': 0.90,
+  'bank-loan': 0.75,
+}
 
 /** HDB resale appreciation rate assumption. */
 const HDB_APPRECIATION_RATE = 0.03
@@ -224,7 +139,8 @@ export function estimateHousingGrant(
   // Resale: Family Grant + EHG
   let familyGrant = 0
   if (!isSingle) {
-    familyGrant = FAMILY_GRANT[flatType] ?? 0
+    const isSmall = flatType === '3-room' || flatType === '4-room'
+    familyGrant = isSmall ? FAMILY_GRANT.fourRoomOrSmaller : FAMILY_GRANT.fiveRoomOrLarger
   }
 
   return familyGrant + ehg
@@ -245,7 +161,7 @@ export function lookupCpfLifeEstimate(grossIncome: number): number {
   const band = CPF_LIFE_ESTIMATES.find(
     (b) => grossIncome >= b.minIncome && grossIncome < b.maxIncome,
   )
-  return band?.monthlyPayout ?? 0
+  return band?.estimatedPayout ?? 0
 }
 
 // ============================================================
@@ -407,9 +323,10 @@ export function estimateHdbSaleProceeds(
 
   const appreciated = purchasePrice * Math.pow(1 + HDB_APPRECIATION_RATE, yearsHeld)
 
-  const mortgageConfig = MORTGAGE_RATES[loanType]
-  const principal = purchasePrice * mortgageConfig.ltv
-  const monthlyRate = mortgageConfig.rate / 12
+  const rate = loanType === 'hdb-loan' ? MORTGAGE_RATES.hdb : MORTGAGE_RATES.bank
+  const ltv = LTV_RATIOS[loanType]
+  const principal = purchasePrice * ltv
+  const monthlyRate = rate / 12
   const n = DEFAULT_LOAN_TENURE_MONTHS
   const t = yearsHeld * 12
 
@@ -452,18 +369,24 @@ export function getEmergencyFundFloor(monthlyExpenses: number): number {
  * compares to Singaporeans in the same age group.
  */
 export function getPeerBenchmark(savingsRate: number, age: number): string {
-  const bracket = PEER_BENCHMARKS.find((b) => age <= b.maxAge) ?? PEER_BENCHMARKS[PEER_BENCHMARKS.length - 1]
+  const bracket = PEER_BENCHMARKS.find((b) => age >= b.minAge && age <= b.maxAge)
+    ?? PEER_BENCHMARKS[PEER_BENCHMARKS.length - 1]
 
-  if (savingsRate >= bracket.p75) {
+  // Find the highest percentile the user meets or exceeds
+  const matched = [...bracket.percentiles]
+    .reverse()
+    .find((p) => savingsRate >= p.rate)
+
+  if (!matched) {
+    return 'below average for Singaporeans your age'
+  }
+  if (matched.percentile >= 75) {
     return 'higher than about 3 in 4 Singaporeans your age'
   }
-  if (savingsRate >= bracket.p50) {
+  if (matched.percentile >= 50) {
     return 'above the median for Singaporeans your age'
   }
-  if (savingsRate >= bracket.p25) {
-    return 'in the middle range for Singaporeans your age'
-  }
-  return 'below average for Singaporeans your age'
+  return 'in the middle range for Singaporeans your age'
 }
 
 // ============================================================

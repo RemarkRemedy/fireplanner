@@ -13,10 +13,9 @@ import {
   getEmergencyFundFloor,
   getPeerBenchmark,
   getParkingRecommendation,
-  EHG_TABLE,
-  MORTGAGE_RATES,
 } from './goal-calculator-sg'
 import { OW_CEILING_MONTHLY, OA_INTEREST_RATE } from '@/lib/data/cpfRates'
+import { EHG_TABLE, MORTGAGE_RATES } from '@/lib/data/goal-defaults'
 
 // ============================================================
 // deriveCpfOaMonthly
@@ -135,12 +134,12 @@ describe('accumulateCpfOa', () => {
 describe('estimateHousingGrant', () => {
   it('BTO couple at $3000 income gets $65K EHG', () => {
     const result = estimateHousingGrant(3000, '4-room', 'new', false)
-    expect(result).toBe(65_000)
+    expect(result).toBe(105_000)
   })
 
-  it('BTO single at $3000 income gets $32.5K EHG', () => {
+  it('BTO single at $3000 income gets $52.5K EHG (post-NDR 2024)', () => {
     const result = estimateHousingGrant(3000, '4-room', 'new', true)
-    expect(result).toBe(32_500)
+    expect(result).toBe(52_500)
   })
 
   it('BTO income > $9K gets $0', () => {
@@ -151,30 +150,30 @@ describe('estimateHousingGrant', () => {
   it('BTO income exactly at bracket boundary', () => {
     // $1500 is the boundary of the first bracket (maxIncome: 1500)
     const result = estimateHousingGrant(1500, '4-room', 'new', false)
-    expect(result).toBe(80_000)
+    expect(result).toBe(120_000)
   })
 
   it('BTO income just above first bracket', () => {
     const result = estimateHousingGrant(1501, '4-room', 'new', false)
-    expect(result).toBe(75_000) // Falls into $2000 bracket
+    expect(result).toBe(115_000) // Falls into $2000 bracket
   })
 
   it('resale couple 4-room gets family grant + EHG', () => {
     const result = estimateHousingGrant(5000, '4-room', 'resale', false)
-    // Family grant for 4-room = $80K, EHG at $5000 = $45K
-    expect(result).toBe(80_000 + 45_000)
+    // Family grant for 4-room = $80K, EHG family at $5000 = $85K
+    expect(result).toBe(80_000 + 85_000)
   })
 
   it('resale couple 5-room gets smaller family grant + EHG', () => {
     const result = estimateHousingGrant(5000, '5-room', 'resale', false)
-    // Family grant for 5-room = $50K, EHG at $5000 = $45K
-    expect(result).toBe(50_000 + 45_000)
+    // Family grant for 5-room = $50K, EHG family at $5000 = $85K
+    expect(result).toBe(50_000 + 85_000)
   })
 
   it('resale single gets $0 family grant but still gets EHG', () => {
     const result = estimateHousingGrant(5000, '4-room', 'resale', true)
-    // No family grant for singles, EHG single at $5000 = $22.5K
-    expect(result).toBe(22_500)
+    // No family grant for singles, EHG single at $5000 = $42.5K
+    expect(result).toBe(42_500)
   })
 
   it('resale high income couple gets family grant only', () => {
@@ -533,12 +532,9 @@ describe('estimateHdbSaleProceeds', () => {
     expect(result).toBeCloseTo(appreciated - sellingCosts, 0)
   })
 
-  it('uses correct LTV from MORTGAGE_RATES', () => {
-    // Verify the constants are as expected
-    expect(MORTGAGE_RATES['hdb-loan'].ltv).toBe(0.90)
-    expect(MORTGAGE_RATES['bank-loan'].ltv).toBe(0.75)
-    expect(MORTGAGE_RATES['hdb-loan'].rate).toBe(0.026)
-    expect(MORTGAGE_RATES['bank-loan'].rate).toBe(0.030)
+  it('uses correct rates from MORTGAGE_RATES', () => {
+    expect(MORTGAGE_RATES.hdb).toBe(0.026)
+    expect(MORTGAGE_RATES.bank).toBe(0.030)
   })
 })
 
@@ -569,47 +565,47 @@ describe('getEmergencyFundFloor', () => {
 // ============================================================
 
 describe('getPeerBenchmark', () => {
-  it('high savings rate (above p75)', () => {
-    const result = getPeerBenchmark(0.30, 30)
+  // Agent B's PEER_BENCHMARKS: rate 0.50→p85, 0.40→p70, 0.30→p55, 0.20→p40, 0.10→p25
+  // Thresholds: p>=75 → "3 in 4", p>=50 → "above median", matched → "middle range", no match → "below average"
+
+  it('very high savings rate (p85)', () => {
+    const result = getPeerBenchmark(0.50, 30)
     expect(result).toContain('higher than about 3 in 4')
   })
 
-  it('above median', () => {
-    const result = getPeerBenchmark(0.15, 30)
+  it('above median (p55 for 30% savings)', () => {
+    const result = getPeerBenchmark(0.30, 30)
     expect(result).toContain('above the median')
   })
 
-  it('middle range (between p25 and p50)', () => {
-    const result = getPeerBenchmark(0.08, 30)
+  it('middle range (p25 for 10-19% savings)', () => {
+    const result = getPeerBenchmark(0.15, 30)
     expect(result).toContain('middle range')
   })
 
-  it('below average (below p25)', () => {
+  it('below average (below lowest bracket)', () => {
     const result = getPeerBenchmark(0.02, 30)
     expect(result).toContain('below average')
   })
 
-  it('age 45 uses 39-49 bracket', () => {
-    // p75 for 39-49 is 0.28
-    const result = getPeerBenchmark(0.30, 45)
+  it('age 45 uses 40-49 bracket', () => {
+    const result = getPeerBenchmark(0.50, 45)
     expect(result).toContain('higher than about 3 in 4')
   })
 
   it('age 65 uses last bracket', () => {
-    const result = getPeerBenchmark(0.30, 65)
+    const result = getPeerBenchmark(0.50, 65)
     expect(result).toContain('higher than about 3 in 4')
   })
 
-  it('exactly at p75 boundary counts as top quartile', () => {
-    // p75 for age 30 (<=29 bracket) is 0.22
-    const result = getPeerBenchmark(0.22, 25)
-    expect(result).toContain('higher than about 3 in 4')
-  })
-
-  it('exactly at p50 boundary counts as above median', () => {
-    // p50 for age 30 (<=29 bracket) is 0.12
-    const result = getPeerBenchmark(0.12, 25)
+  it('exactly at p70 boundary (40% savings) is above median but not top', () => {
+    const result = getPeerBenchmark(0.40, 25)
     expect(result).toContain('above the median')
+  })
+
+  it('exactly at p25 boundary (10% savings) is middle range', () => {
+    const result = getPeerBenchmark(0.10, 25)
+    expect(result).toContain('middle range')
   })
 })
 
