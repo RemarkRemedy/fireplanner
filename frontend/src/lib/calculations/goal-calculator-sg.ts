@@ -105,26 +105,39 @@ export function accumulateCpfOa(grossIncome: number, age: number, months: number
 // ============================================================
 
 /**
- * Estimate total housing grants for a BTO or resale HDB flat purchase.
+ * Estimate total housing grants for a BTO, resale HDB, or EC purchase.
  *
- * BTO (tenure = 'new'): Enhanced Housing Grant (EHG) by income bracket.
+ * BTO/HDB (tenure = 'new'): Enhanced Housing Grant (EHG) by income bracket.
  *   - 16 brackets from $0 to $9,000. Income > $9K = $0.
  *   - Family vs single columns.
  *
- * Resale (tenure = 'resale'): Family Grant by flat size.
+ * Resale HDB (tenure = 'resale'): Family Grant by flat size.
  *   - 4-room or smaller: $80K, 5-room or larger: $50K.
  *   - Singles get $0 for resale family grant.
  *   - Also adds EHG on top (resale applicants are eligible too).
+ *
+ * EC (propertyType = 'ec'): Family Grant only — NOT eligible for EHG.
+ *   - Singles: $0 (not eligible for Family Grant).
+ *   - Couples, flat ≤ 4-room: $80K, flat ≥ 5-room: $50K.
+ *   - The tenure parameter is ignored for EC (EC is always new from developer).
  */
 export function estimateHousingGrant(
   grossHouseholdIncome: number,
   flatType: string,
   tenure: 'new' | 'resale',
   isSingle: boolean,
+  propertyType: 'hdb' | 'ec' = 'hdb',
 ): number {
   if (grossHouseholdIncome <= 0) return 0
 
-  // EHG lookup (applicable to both BTO and resale)
+  // EC: Family Grant only, no EHG
+  if (propertyType === 'ec') {
+    if (isSingle) return 0
+    const isSmall = flatType === '3-room' || flatType === '4-room'
+    return isSmall ? FAMILY_GRANT.fourRoomOrSmaller : FAMILY_GRANT.fiveRoomOrLarger
+  }
+
+  // EHG lookup (applicable to both BTO and resale HDB)
   // Singles: $250 steps up to $4,500 ceiling
   // Families: $500 steps up to $9,000 ceiling
   let ehg = 0
@@ -177,7 +190,7 @@ export function lookupCpfLifeEstimate(grossIncome: number): number {
  * Check if a household qualifies for a property loan based on MSR/TDSR limits.
  *
  * HDB loans: MSR cap = 30% of gross monthly income.
- * Condo/Landed (bank loans): TDSR cap = 55% of gross monthly income.
+ * Condo/Landed/EC (bank loans): TDSR cap = 55% of gross monthly income.
  *
  * Uses standard PMT formula for monthly mortgage payment.
  */
@@ -186,7 +199,7 @@ export function checkLoanQualification(
   loanNeeded: number,
   annualRate: number,
   tenureYears: number,
-  propertyType: 'hdb' | 'condo' | 'landed',
+  propertyType: 'hdb' | 'condo' | 'landed' | 'ec',
 ): LoanQualification {
   const clampedLoan = Math.max(0, loanNeeded)
 
@@ -395,7 +408,21 @@ export function getPeerBenchmark(savingsRate: number, age: number): string {
 }
 
 // ============================================================
-// 12. getParkingRecommendation
+// 12. isEcGoal
+// ============================================================
+
+/**
+ * Returns true if the goal kind string represents an Executive Condo (EC) goal.
+ *
+ * Kept as a pure function (no UI type imports) so it can be used in calculation
+ * and data hooks without coupling to UI-layer types.
+ */
+export function isEcGoal(kind: string): boolean {
+  return kind === 'ec'
+}
+
+// ============================================================
+// 13. getParkingRecommendation
 // ============================================================
 
 /**

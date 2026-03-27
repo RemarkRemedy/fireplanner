@@ -13,6 +13,7 @@ import {
   getEmergencyFundFloor,
   getPeerBenchmark,
   getParkingRecommendation,
+  isEcGoal,
 } from './goal-calculator-sg'
 import { OW_CEILING_MONTHLY, OA_INTEREST_RATE } from '@/lib/data/cpfRates'
 import { EHG_FAMILY_TABLE, EHG_SINGLE_TABLE, MORTGAGE_RATES } from '@/lib/data/goal-defaults'
@@ -195,6 +196,47 @@ describe('estimateHousingGrant', () => {
     expect(estimateHousingGrant(-1000, '4-room', 'new', false)).toBe(0)
   })
 
+  // EC-specific tests
+  it('EC couple 4-room gets $80K Family Grant (no EHG)', () => {
+    // EC buyers get Family Grant only, not EHG — so $80K regardless of income (within ceiling)
+    const result = estimateHousingGrant(8_000, '4-room', 'new', false, 'ec')
+    expect(result).toBe(80_000)
+  })
+
+  it('EC couple 5-room gets $50K Family Grant (no EHG)', () => {
+    const result = estimateHousingGrant(8_000, '5-room', 'new', false, 'ec')
+    expect(result).toBe(50_000)
+  })
+
+  it('EC couple 3-room gets $80K Family Grant (4-room or smaller bracket)', () => {
+    const result = estimateHousingGrant(10_000, '3-room', 'new', false, 'ec')
+    expect(result).toBe(80_000)
+  })
+
+  it('EC single gets $0 (singles not eligible for Family Grant)', () => {
+    const result = estimateHousingGrant(5_000, '4-room', 'new', true, 'ec')
+    expect(result).toBe(0)
+  })
+
+  it('EC: high income couple above EHG ceiling still gets Family Grant', () => {
+    // HDB EHG ceiling is $9K — EC doesn't get EHG at all, so grant is unaffected
+    const result = estimateHousingGrant(15_000, '4-room', 'new', false, 'ec')
+    expect(result).toBe(80_000)
+  })
+
+  it('EC: does NOT return EHG amount on top of Family Grant', () => {
+    // For HDB resale at $5K income, couple gets $80K + $65K EHG = $145K
+    // For EC at $5K income, couple should get $80K Family Grant only
+    const hdbResult = estimateHousingGrant(5_000, '4-room', 'resale', false, 'hdb')
+    const ecResult = estimateHousingGrant(5_000, '4-room', 'new', false, 'ec')
+    expect(hdbResult).toBe(145_000)
+    expect(ecResult).toBe(80_000)
+  })
+
+  it('EC: zero income returns 0', () => {
+    expect(estimateHousingGrant(0, '4-room', 'new', false, 'ec')).toBe(0)
+  })
+
   // Property-based test: any income in a family bracket returns the correct grant
   it('property: income within a family bracket returns consistent EHG', () => {
     fc.assert(
@@ -307,6 +349,24 @@ describe('checkLoanQualification', () => {
     // Same result as condo for same inputs
     const condoResult = checkLoanQualification(10_000, 1_000_000, 0.03, 30, 'condo')
     expect(result.maxLoan).toBeCloseTo(condoResult.maxLoan, 0)
+  })
+
+  it('ec uses TDSR 55% same as condo', () => {
+    // EC is financed by bank loan — uses 55% TDSR cap, same as condo/landed
+    const ecResult = checkLoanQualification(10_000, 1_000_000, 0.03, 30, 'ec')
+    const condoResult = checkLoanQualification(10_000, 1_000_000, 0.03, 30, 'condo')
+    expect(ecResult.qualified).toBe(condoResult.qualified)
+    expect(ecResult.maxLoan).toBeCloseTo(condoResult.maxLoan, 0)
+    expect(ecResult.monthlyPayment).toBeCloseTo(condoResult.monthlyPayment, 0)
+  })
+
+  it('ec does NOT use HDB MSR 30% cap', () => {
+    // Income $6000: MSR 30% = $1800, TDSR 55% = $3300
+    // A $500K loan at 3.5% / 30yr ~ $2245/month: fails MSR ($1800 cap) but passes TDSR ($3300 cap)
+    const ecResult = checkLoanQualification(6_000, 500_000, 0.035, 30, 'ec')
+    const hdbResult = checkLoanQualification(6_000, 500_000, 0.035, 30, 'hdb')
+    expect(ecResult.qualified).toBe(true)   // passes TDSR 55%
+    expect(hdbResult.qualified).toBe(false) // fails MSR 30%
   })
 
   it('zero loan returns qualified with zero payment', () => {
@@ -660,6 +720,38 @@ describe('getParkingRecommendation', () => {
 
   it('negative years is high-yield savings', () => {
     expect(getParkingRecommendation(-1)).toBe('High-yield savings account')
+  })
+})
+
+// ============================================================
+// isEcGoal
+// ============================================================
+
+describe('isEcGoal', () => {
+  it('returns true for "ec"', () => {
+    expect(isEcGoal('ec')).toBe(true)
+  })
+
+  it('returns false for "hdb"', () => {
+    expect(isEcGoal('hdb')).toBe(false)
+  })
+
+  it('returns false for "condo"', () => {
+    expect(isEcGoal('condo')).toBe(false)
+  })
+
+  it('returns false for "landed"', () => {
+    expect(isEcGoal('landed')).toBe(false)
+  })
+
+  it('returns false for empty string', () => {
+    expect(isEcGoal('')).toBe(false)
+  })
+
+  it('returns false for unrelated strings', () => {
+    expect(isEcGoal('wedding')).toBe(false)
+    expect(isEcGoal('car')).toBe(false)
+    expect(isEcGoal('EC')).toBe(false) // case-sensitive
   })
 })
 
