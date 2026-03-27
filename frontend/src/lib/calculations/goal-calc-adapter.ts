@@ -20,8 +20,6 @@ import type { IncomeProjectionParams } from '@/lib/calculations/income'
 import { generateIncomeProjection } from '@/lib/calculations/income'
 import { getEffectiveReturns } from '@/lib/calculations/portfolio'
 import {
-  computeRetirementImpact,
-  computeMultiGoalStacking,
   FIRE_MULTIPLIER,
 } from '@/lib/calculations/goal-calculator'
 import type { GoalCalcGoal } from '@/lib/calculations/goal-calculator'
@@ -237,11 +235,7 @@ export function buildGoalCalcProjectionParams(
     ? (basics.partnerGrossIncome ?? grossUpFromTakeHome(basics.partnerMonthlyIncome ?? 0, basics.partnerAge ?? basics.age))
     : 0
 
-  // 2. Compute retirement impact to get seed freedom age
-  const stacked = computeMultiGoalStacking(goals, basics)
-  const totalMonthlySavings = stacked.reduce((sum, sr) => sum + sr.adjustedMonthlySavings, 0)
-  const totalAllocatedSavings = stacked.reduce((sum, sr) => sum + sr.allocatedSavings, 0)
-
+  // 2. CPF LIFE offset for FIRE number
   const cpfLifeMonthly = lookupCpfLifeEstimate(grossIncome)
   const cpfLifeOffset = cpfLifeMonthly * 12 * FIRE_MULTIPLIER
 
