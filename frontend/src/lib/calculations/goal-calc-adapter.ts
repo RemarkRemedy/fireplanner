@@ -25,7 +25,6 @@ import {
 import type { GoalCalcGoal } from '@/lib/calculations/goal-calculator'
 import type { GoalStoryBasics } from '@/hooks/useGoalStoryData'
 import { grossUpFromTakeHome } from '@/lib/calculations/grossUp'
-import { lookupCpfLifeEstimate } from '@/lib/calculations/goal-calculator-sg'
 import { CPF_LIFE_START_AGE } from '@/lib/data/cpfRates'
 import {
   computeCarHpTotal,
@@ -320,10 +319,9 @@ export function buildGoalCalcProjectionParams(
     ? (basics.partnerGrossIncome ?? grossUpFromTakeHome(basics.partnerMonthlyIncome ?? 0, basics.partnerAge ?? basics.age))
     : 0
 
-  // 2. CPF LIFE (displayed as context, NOT used to reduce FIRE number).
-  // For young users, CPF LIFE is too far away to meaningfully reduce the nest egg.
-  const _cpfLifeMonthly = lookupCpfLifeEstimate(grossIncome)
-  void _cpfLifeMonthly // keep computation for future display use
+  // CPF LIFE is NOT used to reduce the FIRE number. For young users, CPF LIFE is
+  // too far away to meaningfully reduce the nest egg. cpfLifeOffset is reserved
+  // for future use when CPF LIFE integration is added.
   const cpfLifeOffset = 0
 
   // Use a fixed income-stop age (65) for the projection, NOT the Freedom Age.
