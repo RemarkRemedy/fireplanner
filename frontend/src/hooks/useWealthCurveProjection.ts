@@ -16,7 +16,8 @@ import type { GoalCalcGoal } from '@/lib/calculations/goal-calculator'
 import { FIRE_MULTIPLIER, computeMonthlyLoanPayment } from '@/lib/calculations/goal-calculator'
 import type { GoalMarker } from '@/components/goal-calculator/WealthCurveSection/WealthCurveChart'
 import type { SliderOverrides } from '@/components/goal-calculator/WealthCurveSection/WhatIfSliders'
-import { MORTGAGE_RATES, LOAN_TENURE_YEARS, LTV_RATIOS, GOAL_TILES } from '@/lib/data/goal-defaults'
+import { MORTGAGE_RATES, LOAN_TENURE_YEARS, LTV_RATIOS, GOAL_TILES, CAR_HP_TENURE_YEARS, getHdbPriceRange } from '@/lib/data/goal-defaults'
+import { DEFAULT_INFLATION } from '@/lib/calculations/goal-calc-adapter'
 
 // ============================================================
 // Types
@@ -130,7 +131,7 @@ function overlayPropertyEquity(
 /** Extract property price from smart inputs. */
 function getPropertyPrice(inputs: NonNullable<GoalCalcGoal['smartInputs']>): number {
   switch (inputs.kind) {
-    case 'hdb': return inputs.priceOverride ?? 400_000 // fallback to 4-room midpoint
+    case 'hdb': return inputs.priceOverride ?? getHdbPriceRange(inputs.flatType, inputs.tenure).midpoint
     case 'condo': return inputs.price
     case 'landed': return inputs.price
     case 'ec': return inputs.price
@@ -223,7 +224,7 @@ export function useWealthCurveProjection(
         } else if (inputs.kind === 'condo' || inputs.kind === 'landed' || inputs.kind === 'ec') {
           tenureYears = LOAN_TENURE_YEARS.bank
         } else if (inputs.kind === 'car') {
-          tenureYears = 7
+          tenureYears = CAR_HP_TENURE_YEARS
         }
         return {
           age: g.targetAge + tenureYears,
@@ -261,7 +262,7 @@ export function useWealthCurveProjection(
         } else if (inputs.kind === 'condo' || inputs.kind === 'landed' || inputs.kind === 'ec') {
           tenureYears = LOAN_TENURE_YEARS.bank
         } else if (inputs.kind === 'car') {
-          tenureYears = 7
+          tenureYears = CAR_HP_TENURE_YEARS
         }
         const payoffAge = g.targetAge + tenureYears
         return { monthly, payoffAge }
@@ -273,11 +274,19 @@ export function useWealthCurveProjection(
     for (const row of chartData) {
       if (row.age <= effectiveBasics.age) continue
 
-      // Remaining annual loan payments at this age (only active loans)
+      // Remaining loan payments at this age, deflated to today's dollars.
+      // Each future year of payments is discounted by inflation to match
+      // row.liquidNW which is already in today's dollars.
       const remainingLoanCost = loanInfo.reduce((sum, loan) => {
         if (row.age >= loan.payoffAge) return sum // loan paid off
         const yearsLeft = loan.payoffAge - row.age
-        return sum + loan.monthly * 12 * yearsLeft
+        let deflatedTotal = 0
+        for (let y = 0; y < yearsLeft; y++) {
+          const paymentYear = row.age + y
+          const deflator = Math.pow(1 + DEFAULT_INFLATION, paymentYear - effectiveBasics.age)
+          deflatedTotal += (loan.monthly * 12) / deflator
+        }
+        return sum + deflatedTotal
       }, 0)
 
       // Need: FIRE number for perpetual expenses + lump sum for remaining loans
