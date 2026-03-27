@@ -357,6 +357,16 @@ The PayNow encryption key is stored as a **Cloudflare Pages Secret** (not a plai
 
 **Post-conversion PayNow collection flow:** When admin records a conversion with keep % > 0, the system sends a templated email with a unique, time-limited link to `/referral/payout?token={uuid}`. The user visits this page, enters their PayNow number or voucher preference, and submits via `POST /api/referral/payout-info`. The token expires after 7 days. If expired, admin can re-trigger the email.
 
+## Legal Prerequisites (must clear before launch)
+
+**MAS anti-inducement compliance:** Gemini flagged that sharing affiliate commissions with users ("keep" option) may violate MAS anti-inducement guidelines or brokerage TOS. Research needed before launching the "keep" option. The "donate to charity" and "donate to FirePlanner" paths have no regulatory concern. If legal review blocks the "keep" option, launch with donate-only and add "keep" later.
+
+## Security Mitigations
+
+**Bearer token hardening (payout page):** The payout token link is a bearer credential. To prevent hijacking, the payout page requires the user to re-enter their registered email before the form is shown. Token + email match = identity verified without user accounts.
+
+**Disposable email mitigation:** Add basic disposable email domain blocking at registration (maintain a blocklist of known throwaway domains like 10minutemail, guerrillamail, etc.). Not foolproof but raises the bar. Users who donate 100% have less incentive to use real emails, but the quarterly vote email is the incentive (they want to participate in charity selection).
+
 ## Out of Scope for V1
 
 - Automated payout processing (PayNow API, voucher API)
