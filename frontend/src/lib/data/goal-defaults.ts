@@ -196,6 +196,21 @@ export function getLegalFees(propertyType: PropertyType): number {
  */
 export const CAR_DOWN_PAYMENT_RATE = 0.40
 
+/** Typical HP interest rate (flat rate, ~2.8% p.a.) */
+export const CAR_HP_RATE = 0.028
+
+/** Standard HP max tenure in years */
+export const CAR_HP_TENURE_YEARS = 7
+
+/**
+ * Compute total hire purchase repayment (principal + interest).
+ * Uses flat rate calculation (SG convention for car loans).
+ * Flat rate total = principal + (principal * rate * years).
+ */
+export function computeCarHpTotal(financedAmount: number, rate: number = CAR_HP_RATE, years: number = CAR_HP_TENURE_YEARS): number {
+  return financedAmount + (financedAmount * rate * years)
+}
+
 // ============================================================
 // Simple Goal Defaults
 // ============================================================

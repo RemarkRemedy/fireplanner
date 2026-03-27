@@ -351,6 +351,43 @@ describe('buildGoalCalcProjectionParams', () => {
     })
   })
 
+  describe('car goal HP modeling', () => {
+    it('should emit two FinancialGoals for car: down payment + HP repayment', () => {
+      const basics = makeSoloBasics()
+      const carGoal: GoalCalcGoal = {
+        id: 'car-1',
+        category: 'vehicle',
+        label: 'Car (New, Cat A)',
+        targetAge: 32,
+        smartInputs: { kind: 'car', coeCategory: 'A', condition: 'new', priceRange: 40_000 },
+        totalCostToday: 50_000, // down payment (40%)
+        breakdown: {
+          items: [
+            { label: 'Down payment (40%)', amount: 50_000 },
+            { label: 'Estimated total price (COE + OMV + ARF)', amount: 125_000 },
+          ],
+          total: 50_000,
+        },
+        monthlySavingsNeeded: 2000,
+        feasible: true,
+        shortfallPerMonth: 0,
+      }
+      const params = buildGoalCalcProjectionParams(basics, [carGoal])
+
+      // Should produce 2 financial goals: down payment + HP
+      expect(params.financialGoals).toHaveLength(2)
+
+      const dpGoal = params.financialGoals!.find((g) => g.id === 'car-1')!
+      expect(dpGoal.amount).toBe(50_000)
+      expect(dpGoal.durationYears).toBe(1) // lump sum
+
+      const hpGoal = params.financialGoals!.find((g) => g.id === 'car-1-hp')!
+      expect(hpGoal.durationYears).toBe(7) // spread over HP tenure
+      expect(hpGoal.amount).toBeGreaterThan(75_000) // 60% financed + interest
+      expect(hpGoal.label).toContain('hire purchase')
+    })
+  })
+
   describe('gross income derivation', () => {
     it('should use grossIncome when provided', () => {
       const basics = makeSoloBasics({ grossIncome: 8000 })

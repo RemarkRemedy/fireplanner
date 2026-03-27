@@ -27,6 +27,7 @@ import type { GoalStoryBasics } from '@/hooks/useGoalStoryData'
 import { grossUpFromTakeHome } from '@/lib/calculations/grossUp'
 import { lookupCpfLifeEstimate } from '@/lib/calculations/goal-calculator-sg'
 import { CPF_LIFE_START_AGE } from '@/lib/data/cpfRates'
+import { computeCarHpTotal, CAR_HP_TENURE_YEARS } from '@/lib/data/goal-defaults'
 
 // ============================================================
 // Constants (calculation assumptions, not regulatory data)
@@ -199,18 +200,62 @@ function mergeIncomeProjections(
 
 /**
  * Map GoalCalcGoal[] to FinancialGoal[] for ProjectionParams.
+ *
+ * Car goals produce TWO financial goals:
+ * 1. Down payment (lump sum at target age)
+ * 2. HP repayment (spread over tenure, including interest)
+ * This ensures the wealth curve reflects the full cost of car ownership.
  */
 function mapGoals(goals: GoalCalcGoal[]): FinancialGoal[] {
-  return goals.map((g) => ({
-    id: g.id,
-    label: g.label,
-    amount: g.totalCostToday,
-    targetAge: g.targetAge,
-    durationYears: 1,
-    priority: 'important' as const,
-    inflationAdjusted: true,
-    category: g.category,
-  }))
+  const result: FinancialGoal[] = []
+
+  for (const g of goals) {
+    if (g.smartInputs?.kind === 'car') {
+      // Down payment (lump sum — what the user saves for)
+      result.push({
+        id: g.id,
+        label: g.label,
+        amount: g.totalCostToday,
+        targetAge: g.targetAge,
+        durationYears: 1,
+        priority: 'important',
+        inflationAdjusted: true,
+        category: g.category,
+      })
+
+      // HP repayment (financed portion + interest, spread over tenure)
+      const totalPriceItem = g.breakdown.items.find((i) => i.label.includes('Estimated total price'))
+      if (totalPriceItem) {
+        const financedAmount = totalPriceItem.amount - g.totalCostToday
+        if (financedAmount > 0) {
+          const hpTotal = computeCarHpTotal(financedAmount)
+          result.push({
+            id: `${g.id}-hp`,
+            label: `${g.label} (hire purchase)`,
+            amount: hpTotal,
+            targetAge: g.targetAge,
+            durationYears: CAR_HP_TENURE_YEARS,
+            priority: 'important',
+            inflationAdjusted: true,
+            category: g.category,
+          })
+        }
+      }
+    } else {
+      result.push({
+        id: g.id,
+        label: g.label,
+        amount: g.totalCostToday,
+        targetAge: g.targetAge,
+        durationYears: 1,
+        priority: 'important',
+        inflationAdjusted: true,
+        category: g.category,
+      })
+    }
+  }
+
+  return result
 }
 
 // ============================================================
