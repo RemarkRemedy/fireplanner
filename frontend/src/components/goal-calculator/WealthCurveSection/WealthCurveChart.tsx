@@ -25,6 +25,7 @@ interface WealthCurveChartProps {
   data: DeflatedRow[]
   goalMarkers: GoalMarker[]
   freedomAge: number | null
+  fireNumber: number | null
   currentAge: number
 }
 
@@ -152,6 +153,7 @@ export function WealthCurveChart({
   data,
   goalMarkers,
   freedomAge,
+  fireNumber,
   currentAge,
 }: WealthCurveChartProps) {
   const isMobile = useIsMobile()
@@ -230,6 +232,49 @@ export function WealthCurveChart({
               stroke="#22c55e"
               strokeDasharray="4 4"
               label={<FreedomLabel age={freedomAge} />}
+            />
+          )}
+
+          {/* FIRE number target line (horizontal, dashed purple) */}
+          {fireNumber != null && fireNumber > 0 && (
+            <ReferenceLine
+              y={fireNumber}
+              stroke="#a855f7"
+              strokeDasharray="6 3"
+              label={{
+                value: `FIRE: ${formatCompactCurrency(fireNumber)}`,
+                position: 'right',
+                fontSize: 10,
+                fill: '#a855f7',
+              }}
+            />
+          )}
+
+          {/* CPF milestones */}
+          {currentAge < 55 && (
+            <ReferenceLine
+              x={55}
+              stroke="#94a3b8"
+              strokeDasharray="2 4"
+              label={{
+                value: '55: CPF RA',
+                position: 'top',
+                fontSize: 9,
+                fill: '#94a3b8',
+              }}
+            />
+          )}
+          {currentAge < 65 && (
+            <ReferenceLine
+              x={65}
+              stroke="#94a3b8"
+              strokeDasharray="2 4"
+              label={{
+                value: '65: CPF LIFE',
+                position: 'top',
+                fontSize: 9,
+                fill: '#94a3b8',
+              }}
             />
           )}
 

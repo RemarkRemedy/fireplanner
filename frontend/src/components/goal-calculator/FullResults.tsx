@@ -546,6 +546,7 @@ export function FullResults({
             data={wealthCurve.chartData}
             goalMarkers={wealthCurve.goalMarkers}
             freedomAge={wealthCurve.freedomAge}
+            fireNumber={wealthCurve.fireNumber}
             currentAge={basics.age}
           />
           <WhatIfSliders

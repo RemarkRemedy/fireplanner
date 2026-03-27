@@ -13,6 +13,7 @@ import type { DeflatedRow } from '@/lib/calculations/goal-calc-adapter'
 import { computeGoalStoryData } from '@/hooks/useGoalStoryData'
 import type { GoalStoryBasics, GoalStoryData } from '@/hooks/useGoalStoryData'
 import type { GoalCalcGoal } from '@/lib/calculations/goal-calculator'
+import { FIRE_MULTIPLIER } from '@/lib/calculations/goal-calculator'
 import type { GoalMarker } from '@/components/goal-calculator/WealthCurveSection/WealthCurveChart'
 import type { SliderOverrides } from '@/components/goal-calculator/WealthCurveSection/WhatIfSliders'
 import type { GoalCategory } from '@/lib/types'
@@ -26,6 +27,7 @@ export interface WealthCurveProjectionResult {
   chartData: DeflatedRow[]
   goalMarkers: GoalMarker[]
   freedomAge: number | null
+  fireNumber: number | null  // FIRE target in today's dollars
   storyData: GoalStoryData
   overrides: SliderOverrides
   setOverrides: (overrides: SliderOverrides) => void
@@ -212,6 +214,13 @@ export function useWealthCurveProjection(
     return isFinite(age) ? Math.round(age) : null
   }, [storyData.shared.freedomAge])
 
+  // FIRE number in today's dollars (real terms — no inflation adjustment needed)
+  const fireNumber = useMemo((): number | null => {
+    const annualExpenses = effectiveBasics.monthlyExpenses * 12
+    const target = annualExpenses * FIRE_MULTIPLIER
+    return target > 0 ? target : null
+  }, [effectiveBasics.monthlyExpenses])
+
   // Check if any overrides are active
   const isModified = Object.keys(overrides).length > 0
 
@@ -221,6 +230,7 @@ export function useWealthCurveProjection(
     chartData,
     goalMarkers,
     freedomAge,
+    fireNumber,
     storyData,
     overrides,
     setOverrides,
