@@ -416,13 +416,7 @@ function SharedInsightsSection({
         </InsightChip>
       )}
 
-      {/* Parking recommendation */}
-      <InsightChip
-        label={`Where to park savings`}
-        variant="info"
-      >
-        <p>{shared.parkingRecommendation}</p>
-      </InsightChip>
+      {/* Parking recommendation — hidden until per-goal recommendations are implemented */}
     </div>
   )
 }
