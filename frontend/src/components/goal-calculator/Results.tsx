@@ -111,17 +111,30 @@ export function Results({
           const loanGoal = enrichedGoal ?? storyData.perGoal.find((g) => g.loanQualification)
           if (!loanGoal?.loanQualification) return null
           const lq = loanGoal.loanQualification
+          const isHdb = loanGoal.goal.smartInputs?.kind === 'hdb'
           return (
             <div className="flex flex-col items-center justify-center h-full text-white text-center px-8">
-              <p className="text-6xl font-bold mb-4">{lq.qualified ? 'Qualified' : 'Over limit'}</p>
-              <p className="text-xl opacity-80">
-                {lq.qualified
-                  ? `Monthly mortgage: $${Math.round(lq.monthlyPayment).toLocaleString()}`
-                  : `Max loan: $${Math.round(lq.maxLoan).toLocaleString()}`}
-              </p>
-              <p className="text-sm opacity-60 mt-2">
-                Based on {loanGoal.goal.smartInputs?.kind === 'hdb' ? 'MSR 30%' : 'TDSR 55%'} of gross income
-              </p>
+              {lq.qualified ? (
+                <>
+                  <p className="text-6xl font-bold mb-4">${Math.round(lq.monthlyPayment).toLocaleString()}/mo</p>
+                  <p className="text-xl opacity-80">Your estimated mortgage payment</p>
+                  <p className="text-sm opacity-60 mt-2">
+                    You qualify. Banks allow up to {isHdb ? '30%' : '55%'} of gross income for mortgage.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs uppercase tracking-widest text-white/60 font-medium mb-4">Heads up</p>
+                  <p className="text-4xl font-bold mb-4">This property may stretch your budget</p>
+                  <p className="text-lg opacity-80">
+                    Banks cap mortgage at {isHdb ? '30%' : '55%'} of gross income.
+                    You'd qualify for up to ${Math.round(lq.maxLoan).toLocaleString()}.
+                  </p>
+                  <p className="text-sm opacity-60 mt-2">
+                    Consider a longer timeline, smaller property, or higher income with a partner.
+                  </p>
+                </>
+              )}
             </div>
           )
         }
