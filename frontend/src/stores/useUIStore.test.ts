@@ -13,7 +13,7 @@ beforeEach(() => {
     mode: 'simple',
     sectionOverrides: {},
     dismissedNudges: [],
-    helpPanelOpen: true,
+    helpPanelOpen: false,
     dollarBasis: 'nominal',
     lastSeenChangelogDate: null,
     lastSeenDataVintage: null,

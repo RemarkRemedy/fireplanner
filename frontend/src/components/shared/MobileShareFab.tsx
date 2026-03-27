@@ -8,12 +8,11 @@ import { useUIStore } from '@/stores/useUIStore'
 import { trackEvent } from '@/lib/analytics'
 
 export function MobileShareFab() {
-  const dismissedNudges = useUIStore((s) => s.dismissedNudges)
   const dismissNudge = useUIStore((s) => s.dismissNudge)
 
   const nudgeId = 'share-fab-tooltip'
-  const alreadyDismissed = dismissedNudges.includes(nudgeId)
-  const [tooltipOpen, setTooltipOpen] = useState(!alreadyDismissed)
+  // Never auto-open on first visit — let users discover the share button organically.
+  const [tooltipOpen, setTooltipOpen] = useState(false)
 
   const handleDismiss = () => {
     setTooltipOpen(false)
