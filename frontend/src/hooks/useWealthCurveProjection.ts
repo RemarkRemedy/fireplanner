@@ -17,6 +17,7 @@ import { FIRE_MULTIPLIER, computeMonthlyLoanPayment } from '@/lib/calculations/g
 import type { GoalMarker } from '@/components/goal-calculator/WealthCurveSection/WealthCurveChart'
 import type { SliderOverrides } from '@/components/goal-calculator/WealthCurveSection/WhatIfSliders'
 import { MORTGAGE_RATES, LOAN_TENURE_YEARS, LTV_RATIOS, GOAL_TILES, CAR_HP_TENURE_YEARS, getHdbPriceRange } from '@/lib/data/goal-defaults'
+import type { SmartGoalInputs } from '@/lib/calculations/goal-calculator'
 import { DEFAULT_INFLATION } from '@/lib/calculations/goal-calc-adapter'
 
 // ============================================================
@@ -44,6 +45,21 @@ export interface WealthCurveProjectionResult {
 // ============================================================
 // Helpers
 // ============================================================
+
+/** Get the loan tenure in years for a financed goal, or 0 if not financed. */
+function getLoanTenureYears(inputs: SmartGoalInputs): number {
+  if (inputs.kind === 'hdb') {
+    return inputs.loanType === 'hdb-loan'
+      ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
+  }
+  if (inputs.kind === 'condo' || inputs.kind === 'landed' || inputs.kind === 'ec') {
+    return LOAN_TENURE_YEARS.bank
+  }
+  if (inputs.kind === 'car') {
+    return CAR_HP_TENURE_YEARS
+  }
+  return 0
+}
 
 /** Map a goal to its Lucide icon name from GOAL_TILES. Falls back to 'Target'. */
 function getGoalIconName(goal: GoalCalcGoal): string {
@@ -217,17 +233,8 @@ export function useWealthCurveProjection(
       .filter((g) => g.smartInputs && computeMonthlyLoanPayment(g) > 0)
       .map((g) => {
         const inputs = g.smartInputs!
-        let tenureYears = 0
-        if (inputs.kind === 'hdb') {
-          tenureYears = inputs.loanType === 'hdb-loan'
-            ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
-        } else if (inputs.kind === 'condo' || inputs.kind === 'landed' || inputs.kind === 'ec') {
-          tenureYears = LOAN_TENURE_YEARS.bank
-        } else if (inputs.kind === 'car') {
-          tenureYears = CAR_HP_TENURE_YEARS
-        }
         return {
-          age: g.targetAge + tenureYears,
+          age: g.targetAge + getLoanTenureYears(inputs),
           label: inputs.kind === 'car' ? 'Car paid off' : 'Mortgage paid off',
         }
       }),
@@ -254,17 +261,7 @@ export function useWealthCurveProjection(
       .map((g) => {
         const monthly = computeMonthlyLoanPayment(g)
         if (monthly <= 0) return null
-        const inputs = g.smartInputs!
-        let tenureYears = 0
-        if (inputs.kind === 'hdb') {
-          tenureYears = inputs.loanType === 'hdb-loan'
-            ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
-        } else if (inputs.kind === 'condo' || inputs.kind === 'landed' || inputs.kind === 'ec') {
-          tenureYears = LOAN_TENURE_YEARS.bank
-        } else if (inputs.kind === 'car') {
-          tenureYears = CAR_HP_TENURE_YEARS
-        }
-        const payoffAge = g.targetAge + tenureYears
+        const payoffAge = g.targetAge + getLoanTenureYears(g.smartInputs!)
         return { monthly, payoffAge }
       })
       .filter(Boolean) as { monthly: number; payoffAge: number }[]
