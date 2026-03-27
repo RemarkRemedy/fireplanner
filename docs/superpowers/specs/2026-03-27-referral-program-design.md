@@ -91,7 +91,7 @@ A subtle banner or callout card linking to `/referral`: "Earn referral bonuses a
 | created_at | TEXT | ISO timestamp |
 | updated_at | TEXT | ISO timestamp |
 
-The three pct columns always sum to 100. The preset is stored for analytics but the percentages are the source of truth. Users can update their allocation at any time (updates `updated_at`). When a conversion is recorded, the allocation at the time of conversion entry is used. The `amount_keep/charity/fireplanner` columns on `referral_conversions` are the frozen record of the split applied.
+The three pct columns always sum to 100. The preset is stored for analytics but the percentages are the source of truth. **Allocation is locked after registration.** To change it, users must explicitly enter edit mode on the /referral page (only allowed before any conversion is marked "paid"). When a conversion is recorded, the admin panel reads the current allocation. The `amount_keep/charity/fireplanner` columns on `referral_conversions` are the frozen record of the split applied.
 
 **`referral_clicks`**
 
@@ -101,6 +101,9 @@ The three pct columns always sum to 100. The preset is stored for analytics but 
 | registration_id | TEXT | FK to referral_registrations |
 | platform | TEXT | "ibkr", "moomoo", "poems", etc. |
 | affiliate_url | TEXT | The full tagged URL sent to the user |
+| pct_keep | INTEGER | Snapshot of allocation at click time (audit trail) |
+| pct_charity | INTEGER | Snapshot of allocation at click time (audit trail) |
+| pct_fireplanner | INTEGER | Snapshot of allocation at click time (audit trail) |
 | created_at | TEXT | ISO timestamp |
 
 **`referral_conversions`**
@@ -111,12 +114,13 @@ The three pct columns always sum to 100. The preset is stored for analytics but 
 | click_id | TEXT | FK to referral_clicks |
 | registration_id | TEXT | FK to referral_registrations |
 | platform | TEXT | Denormalized for easy querying |
+| conversion_date | TEXT | ISO date, when user actually signed up at brokerage (admin enters). Used for match cap year calculation. |
 | affiliate_fee_sgd | REAL | Amount brokerage paid FirePlanner |
 | amount_keep | REAL | fee * pct_keep / 100 |
 | amount_charity | REAL | fee * pct_charity / 100 |
 | amount_fireplanner | REAL | fee * pct_fireplanner / 100 |
 | amount_matched | REAL | TJ's 1:1 match on amount_charity (capped at annual $10K) |
-| payout_status | TEXT | Tracks the keep-portion only: "pending" / "paid" / "no_payout" (pct_keep = 0). Charity portion is always implicitly "pooled until quarterly vote." FirePlanner portion requires no action. |
+| payout_status | TEXT | Lifecycle: "pending" (awaiting holding period) / "approved" (holding period passed, ready for payout) / "paid" (PayNow/voucher sent) / "clawed_back" (brokerage reversed commission) / "no_payout" (pct_keep = 0). Tracks keep-portion only. Charity portion is always implicitly "pooled until quarterly vote." FirePlanner portion requires no action. |
 | notes | TEXT | Admin notes (brokerage reference, etc.) |
 | created_at | TEXT | ISO timestamp |
 
@@ -209,9 +213,11 @@ interface ReferralPlatform {
 ### Affiliate link flow
 
 When a registered user clicks a platform card:
-1. Frontend calls `POST /api/referral/click` with `registration_id` and `platform`
-2. Backend creates a `referral_clicks` row, returns the tagged affiliate URL
-3. Frontend opens the URL in a new tab
+1. Frontend generates a UUID click_id client-side
+2. Frontend constructs the affiliate URL directly from the static platform config: `{affiliateBaseUrl}?{trackingParam}={click_id}`
+3. Frontend opens the affiliate URL in a new tab immediately (no server hop, preserves affiliate attribution)
+4. Frontend fires a fire-and-forget `POST /api/referral/click` with `{email, platform, click_id, affiliate_url, pct_keep, pct_charity, pct_fireplanner}` to log the click asynchronously
+5. If the async POST fails, the click is untracked but the user is not blocked
 
 Each platform's tracking parameter format is stored in the config (`trackingParam` field). URL assembly: `{affiliateBaseUrl}?{trackingParam}={click_id}`. If `affiliateBaseUrl` already contains query params, append with `&` instead of `?`. Example: `https://www.interactivebrokers.com/referral?ref=fireplanner&sub_id=click_abc123`. **V1 assumption:** all platforms use query-param tracking. If a platform requires path-based sub-IDs, add an `assemblyMode` field to the config as an extension point.
 
@@ -275,7 +281,7 @@ Builds trust and creates visible impact history.
 4. Enter the conversion:
    - Platform, affiliate fee amount (SGD)
    - System auto-computes the three-way split based on user's allocation
-   - System auto-computes the match amount using: `SELECT COALESCE(SUM(amount_matched), 0) FROM referral_conversions WHERE created_at >= '{year}-01-01T00:00:00+08:00'` (Singapore timezone, calendar year). If remaining cap < charity amount, match is capped at remaining. Example: $9,800 matched YTD, $500 charity portion, match = $200 (cap reached).
+   - System auto-computes the match amount using: `SELECT COALESCE(SUM(amount_matched), 0) FROM referral_conversions WHERE conversion_date >= '{year}-01-01'` (calendar year based on conversion_date, not created_at). If remaining cap < charity amount, match is capped at remaining. Example: $9,800 matched YTD, $500 charity portion, match = $200 (cap reached).
    - The admin panel reads the user's CURRENT allocation at time of conversion entry (latest-allocation-wins model). The frozen amounts on the conversion record are the source of truth after entry.
    - Review and confirm
 5. Fulfill the payout:
