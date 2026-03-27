@@ -30,11 +30,23 @@ export const FIRE_MULTIPLIER = 28
 // Types
 // ============================================================
 
+export type SalaryBasis = 'net' | 'gross'
+
 export interface GoalCalcBasics {
   age: number
   monthlyIncome: number
   monthlyExpenses: number
   existingSavings: number
+  /** V1.5: gross monthly salary (derived from net or entered directly) */
+  grossIncome?: number
+  /** V1.5: which basis the user entered their salary in */
+  salaryBasis?: SalaryBasis
+  /** V1.5: couple mode fields */
+  coupleMode?: boolean
+  partnerAge?: number
+  partnerMonthlyIncome?: number
+  partnerGrossIncome?: number
+  partnerSalaryBasis?: SalaryBasis
 }
 
 export interface CostBreakdown {
