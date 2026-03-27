@@ -274,15 +274,31 @@ export function computeGoalStoryData(
   const minYears = getMinYearsToGoal(goals, basics.age)
   const parkingRecommendation = getParkingRecommendation(minYears)
 
-  // 8. Build story cards — map 'goal-N' placeholders to real goal IDs
+  // 8. Build story cards — map 'goal-N' placeholders to real goal IDs,
+  //    then filter out cards that have no content for this scenario.
   const rawCards = buildGoalCardSequence(goals.length, hasAnyPropertyGoal, isCoupleMode)
-  const storyCards = rawCards.map((card) => {
+  const mappedCards = rawCards.map((card) => {
     if (card.goalId && card.goalId.startsWith('goal-')) {
       const idx = parseInt(card.goalId.replace('goal-', ''), 10)
       const realGoal = goals[idx]
       return realGoal ? { ...card, goalId: realGoal.id } : card
     }
     return card
+  })
+
+  const hasGrant = perGoal.some((g) => g.grantAmount > 0)
+  const hasLoan = perGoal.some((g) => g.loanQualification != null)
+  const hasCpfOffset = perGoal.some((g) => g.cpfOaAccumulated > 0)
+
+  const storyCards = mappedCards.filter((card) => {
+    switch (card.key) {
+      case 'grant': return hasGrant
+      case 'loanCheck': return hasLoan
+      case 'cpfOffset': return hasCpfOffset
+      case 'taxHeadsUp': return taxEstimate.monthlySetAside > 0
+      case 'parkingTip': return false
+      default: return true
+    }
   })
 
   return {
