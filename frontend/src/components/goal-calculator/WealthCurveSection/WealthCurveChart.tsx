@@ -222,10 +222,10 @@ export function WealthCurveChart({
         role="img"
         aria-label="Wealth curve projection chart"
       >
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={isMobile ? 320 : 380}>
           <AreaChart
             data={chartData}
-            margin={{ top: 40, right: 16, left: 8, bottom: 20 }}
+            margin={{ top: 40, right: 16, left: 8, bottom: 8 }}
           >
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
 
@@ -234,12 +234,6 @@ export function WealthCurveChart({
               type="number"
               domain={xDomain}
               tick={{ fontSize: 12 }}
-              label={{
-                value: 'Age',
-                position: 'insideBottom',
-                offset: -5,
-                fontSize: 12,
-              }}
             />
             <YAxis
               tickFormatter={(v: number) => formatCompactCurrency(v)}
@@ -392,7 +386,8 @@ export function WealthCurveChart({
             {showDetailed && (
               <Legend
                 formatter={(value: string) => SERIES_LABELS[value] ?? value}
-                wrapperStyle={{ fontSize: 11 }}
+                wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
+                iconSize={10}
               />
             )}
           </AreaChart>
