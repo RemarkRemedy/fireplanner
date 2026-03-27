@@ -217,28 +217,22 @@ describe('buildGoalCalcProjectionParams', () => {
   })
 
   describe('retirement age and FIRE number', () => {
-    it('should derive retirementAge from computeRetirementImpact', () => {
+    it('should use fixed income-stop age of 65 (not Freedom Age)', () => {
       const basics = makeSoloBasics()
       const goals = [makeGoal()]
       const params = buildGoalCalcProjectionParams(basics, goals)
 
-      // retirementAge should be a reasonable value > currentAge
-      expect(params.retirementAge).toBeGreaterThan(basics.age)
-      expect(params.retirementAge).toBeLessThanOrEqual(85)
+      // retirementAge = fixed at 65 for the projection (income stops here)
+      // Freedom Age is a separate marker on the chart, not used for income cutoff
+      expect(params.retirementAge).toBe(65)
     })
 
-    it('should clamp retirementAge to lifeExpectancy when goals consume all savings', () => {
-      const basics = makeSoloBasics({
-        monthlyIncome: 3_500,
-        monthlyExpenses: 3_000,
-        existingSavings: 5_000,
-      })
-      // Aggressive goal that consumes all savings capacity
-      const goals = [makeGoal({ totalCostToday: 500_000, targetAge: 30 })]
+    it('should use age+1 when current age is 65 or older', () => {
+      const basics = makeSoloBasics({ age: 67 })
+      const goals: GoalCalcGoal[] = []
       const params = buildGoalCalcProjectionParams(basics, goals)
 
-      expect(params.retirementAge).toBeLessThanOrEqual(85)
-      expect(Number.isFinite(params.retirementAge)).toBe(true)
+      expect(params.retirementAge).toBe(68)
     })
 
     it('should compute fireNumber as annualExpenses * FIRE_MULTIPLIER minus CPF LIFE offset', () => {

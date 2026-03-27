@@ -245,11 +245,13 @@ export function buildGoalCalcProjectionParams(
   const cpfLifeMonthly = lookupCpfLifeEstimate(grossIncome)
   const cpfLifeOffset = cpfLifeMonthly * 12 * FIRE_MULTIPLIER
 
-  const impact = computeRetirementImpact(basics, totalMonthlySavings, totalAllocatedSavings, cpfLifeOffset)
-  const retirementAge = Math.min(
-    Math.ceil(basics.age + impact.yearsWithGoals),
-    DEFAULT_LIFE_EXPECTANCY,
-  )
+  // Use a fixed income-stop age (65) for the projection, NOT the Freedom Age.
+  // Freedom Age is a computed milestone ("you could retire here"), but using it
+  // as retirementAge creates a circular dependency: higher income → lower Freedom
+  // Age → income stops earlier → worse outcome. The chart should show the realistic
+  // trajectory of continuing to work until a conventional retirement age.
+  const DEFAULT_INCOME_STOP_AGE = 65
+  const retirementAge = Math.max(DEFAULT_INCOME_STOP_AGE, basics.age + 1)
 
   // 3. Annual expenses
   const annualExpenses = basics.monthlyExpenses * 12
