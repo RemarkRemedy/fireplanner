@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowRight, ChevronDown } from 'lucide-react'
+import { ArrowRight, ChevronDown, Receipt } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { IlpFeeStory } from '@/components/ilp/IlpFeeStory'
@@ -10,8 +10,10 @@ import { useFeeImpact } from '@/hooks/useFeeImpact'
 import { DecisionPanel } from '@/components/ilp/DecisionPanel'
 import { OpportunityCostCard } from '@/components/ilp/OpportunityCostCard'
 import { PolicySetupGate } from '@/components/ilp/PolicySetupGate'
+import { ReceiptPreviewModal } from '@/components/ilp/receipt/ReceiptPreviewModal'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { analyzeIlpPolicy } from '@/lib/calculations/ilp'
+import { buildFeeBreakdown } from '@/lib/calculations/ilpFeeBreakdown'
 import type { IlpPolicyInput, IlpProjectedPolicyAnalysis } from '@/lib/calculations/ilp'
 import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
 import type { IlpPolicySeed } from '@/lib/ilp-catalog/policySeedSchema'
@@ -247,6 +249,11 @@ function StoryDetailView({ policy, analysis, catalogProduct, onReplay }: {
   onReplay: () => void
 }) {
   const feeImpact = useFeeImpact(policy, analysis, true)
+  const [receiptOpen, setReceiptOpen] = useState(false)
+  const receiptFeeBreakdown = useMemo(
+    () => buildFeeBreakdown(analysis.projections.mid, policy.funds, policy),
+    [analysis, policy],
+  )
 
   return (
     <div>
@@ -334,6 +341,14 @@ function StoryDetailView({ policy, analysis, catalogProduct, onReplay }: {
             </p>
           </CardContent>
         </Card>
+        {analysis.summary.totalPremiumsPaid > 0 && (
+          <div className="flex justify-center">
+            <Button variant="outline" size="lg" onClick={() => setReceiptOpen(true)}>
+              <Receipt className="mr-2 h-4 w-4" />
+              Generate Your ILP Receipt
+            </Button>
+          </div>
+        )}
         <div className="flex flex-col items-center gap-3 pt-4">
           <Link to="/ilp-review">
             <Button size="lg">
@@ -346,6 +361,15 @@ function StoryDetailView({ policy, analysis, catalogProduct, onReplay }: {
           </p>
         </div>
       </StoryScreen>
+
+      <ReceiptPreviewModal
+        open={receiptOpen}
+        onOpenChange={setReceiptOpen}
+        policy={policy}
+        analysis={analysis}
+        feeBreakdown={receiptFeeBreakdown}
+        includeOcf
+      />
     </div>
   )
 }
