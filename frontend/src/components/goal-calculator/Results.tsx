@@ -114,18 +114,24 @@ export function Results({
           if (!loanGoal?.loanQualification) return null
           const lq = loanGoal.loanQualification
           const isHdb = loanGoal.goal.smartInputs?.kind === 'hdb'
+          const cpfCoversDownpayment = loanGoal.cpfOaAccumulated >= loanGoal.cashNeeded
           return (
             <div className="flex flex-col items-center justify-center h-full text-white text-center px-8">
               {lq.qualified ? (
                 <>
                   <p className="text-xs uppercase tracking-widest text-white/60 font-medium mb-4">Mortgage check</p>
                   <p className="text-6xl font-bold mb-4">${Math.round(lq.monthlyPayment).toLocaleString()}/mo</p>
-                  <p className="text-xl opacity-80">Your estimated mortgage payment</p>
+                  <p className="text-xl opacity-80">Estimated payment at max mortgage</p>
                   <p className="text-sm opacity-60 mt-2">
                     {isHdb
                       ? 'Within the 30% MSR limit for HDB loans.'
                       : 'Within the 55% TDSR limit, which covers all monthly debt obligations.'}
                   </p>
+                  {cpfCoversDownpayment && (
+                    <p className="text-sm opacity-60 mt-2">
+                      Your CPF OA can cover the downpayment. You can choose a smaller loan to reduce monthly payments.
+                    </p>
+                  )}
                 </>
               ) : (
                 <>
