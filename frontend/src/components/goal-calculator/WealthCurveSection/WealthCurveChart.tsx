@@ -76,7 +76,6 @@ function GoalLabel({ viewBox, icon, cost, label }: GoalLabelProps) {
           style={{ overflow: 'visible' }}
         >
           <div
-            xmlns="http://www.w3.org/1999/xhtml"
             style={{ display: 'flex', justifyContent: 'center' }}
             aria-label={label}
           >
