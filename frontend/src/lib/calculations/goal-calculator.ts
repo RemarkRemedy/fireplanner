@@ -308,8 +308,15 @@ export function computeRetirementImpact(
   totalGoalMonthlySavings: number,
   savingsAllocatedToGoals: number,
   cpfLifeOffset: number = 0,
+  /** Gross monthly loan payments (mortgage + HP), WITHOUT CPF OA offset.
+   *  After Freedom Age there's no income, so CPF OA no longer offsets the mortgage.
+   *  These are added to expenses in the FIRE number so the nest egg covers them. */
+  monthlyLoanPayments: number = 0,
 ): RetirementImpactResult {
-  const requiredNestEgg = Math.max(0, basics.monthlyExpenses * 12 * FIRE_MULTIPLIER - cpfLifeOffset)
+  // FIRE number must cover living expenses AND ongoing loan obligations.
+  // After stopping work, there's no income or CPF OA to offset loans.
+  const totalMonthlyBurn = basics.monthlyExpenses + monthlyLoanPayments
+  const requiredNestEgg = Math.max(0, totalMonthlyBurn * 12 * FIRE_MULTIPLIER - cpfLifeOffset)
   const adjustedPortfolioBase = Math.max(0, basics.existingSavings - savingsAllocatedToGoals)
 
   const householdIncome = basics.monthlyIncome + (basics.partnerMonthlyIncome ?? 0)
@@ -319,11 +326,13 @@ export function computeRetirementImpact(
   const monthlySavingsWith = monthlySavingsWithout - totalGoalMonthlySavings
   const annualSavingsWith = monthlySavingsWith * 12
 
+  // "Without goals" still uses base requiredNestEgg (no loans if no goals)
+  const baseNestEgg = Math.max(0, basics.monthlyExpenses * 12 * FIRE_MULTIPLIER - cpfLifeOffset)
   const yearsWithoutGoals = calculateYearsToFire(
     REAL_RETURN,
     annualSavingsWithout,
     basics.existingSavings,
-    requiredNestEgg,
+    baseNestEgg,
   )
 
   const yearsWithGoals = calculateYearsToFire(

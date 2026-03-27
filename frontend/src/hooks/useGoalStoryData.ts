@@ -283,31 +283,38 @@ export function computeGoalStoryData(
   const totalMonthlySavings = perGoal.reduce((sum, eg) => sum + eg.adjustedMonthlySavings, 0)
   const totalAllocatedSavings = stacked.reduce((sum, sr) => sum + sr.allocatedSavings, 0)
 
-  // Monthly loan payments reduce savings capacity for Freedom Age.
-  // For housing: CPF OA monthly contribution covers part of the mortgage,
-  // so only the net cash portion affects cash savings.
+  // Monthly loan payments: two perspectives needed.
+  // 1. WHILE WORKING (accumulation): CPF OA offsets part of housing mortgage.
+  //    This is the net cash impact on savings capacity.
+  // 2. AFTER FREEDOM (withdrawal): No income, no CPF OA. Full loan payment
+  //    comes from portfolio. This must be in the FIRE number.
   const cpfOaMonthly = deriveCpfOaMonthly(grossIncome, basics.age)
     + (isCoupleMode ? deriveCpfOaMonthly(partnerGross, basics.partnerAge!) : 0)
-  const totalMonthlyLoanPayments = perGoal.reduce((sum, eg) => {
+
+  // Net loan payments during accumulation (CPF OA offsets housing mortgage)
+  const netMonthlyLoanPayments = perGoal.reduce((sum, eg) => {
     if (eg.monthlyLoanPayment <= 0) return sum
     if (isPropertyGoal(eg.goal)) {
-      // CPF OA monthly contribution offsets part of the mortgage
       return sum + Math.max(0, eg.monthlyLoanPayment - cpfOaMonthly)
     }
-    // Car HP: fully cash
     return sum + eg.monthlyLoanPayment
   }, 0)
 
-  // CPF LIFE (displayed as context, but NOT used to reduce FIRE number for Freedom Age).
-  // The steady-state offset assumes perpetual income, but CPF LIFE only starts at 65.
-  // For young users this collapses the required nest egg to near-zero, giving absurd
-  // Freedom Ages. The full planner handles this properly with year-by-year simulation.
+  // Gross loan payments for FIRE number (no CPF OA after stopping work)
+  const grossMonthlyLoanPayments = perGoal.reduce(
+    (sum, eg) => sum + eg.monthlyLoanPayment, 0,
+  )
+
+  // CPF LIFE (displayed as context, but NOT used to reduce FIRE number).
   const cpfLifeMonthly = lookupCpfLifeEstimate(grossIncome)
 
-  // Freedom age — include both savings for upfront costs AND ongoing loan payments.
-  // Pass cpfLifeOffset=0 so the FIRE number uses full expenses without CPF LIFE reduction.
-  const totalDeductionFromSavings = totalMonthlySavings + totalMonthlyLoanPayments
-  const impact = computeRetirementImpact(basics, totalDeductionFromSavings, totalAllocatedSavings, 0)
+  // Freedom age:
+  // - Savings rate uses NET loan payments (CPF OA helps while working)
+  // - FIRE number uses GROSS loan payments (no CPF OA after freedom)
+  const totalDeductionFromSavings = totalMonthlySavings + netMonthlyLoanPayments
+  const impact = computeRetirementImpact(
+    basics, totalDeductionFromSavings, totalAllocatedSavings, 0, grossMonthlyLoanPayments,
+  )
   const freedomAge = basics.age + impact.yearsWithGoals
   const freedomAgeWithout = basics.age + impact.yearsWithoutGoals
 
