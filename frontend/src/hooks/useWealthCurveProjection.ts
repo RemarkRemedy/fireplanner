@@ -189,10 +189,10 @@ export function useWealthCurveProjection(
     }
 
     const result = generateProjection(params)
-    const deflated = deflateProjection(result.rows, 0.025, basics.age)
+    const deflated = deflateProjection(result.rows, DEFAULT_INFLATION, basics.age)
 
     // Overlay property equity post-hoc (engine can't model future property purchases)
-    return overlayPropertyEquity(deflated, effectiveGoals, basics.age, 0.025)
+    return overlayPropertyEquity(deflated, effectiveGoals, basics.age, DEFAULT_INFLATION)
   }, [effectiveBasics, effectiveGoals, overrides.expectedReturn, basics.age])
 
   // Recompute story data from effective inputs
