@@ -34,6 +34,7 @@ import {
   MORTGAGE_RATES,
   LOAN_TENURE_YEARS,
   LTV_RATIOS,
+  getHdbPriceRange,
 } from '@/lib/data/goal-defaults'
 
 // ============================================================
@@ -252,31 +253,27 @@ function mapGoals(goals: GoalCalcGoal[]): FinancialGoal[] {
         }
       }
     } else if (g.smartInputs?.kind === 'hdb') {
-      // HDB: mortgage based on loan type
-      const priceItem = g.breakdown.items.find((i) => i.label.startsWith('Down payment'))
-      if (priceItem) {
-        const ltvKey = g.smartInputs.loanType as keyof typeof LTV_RATIOS
-        const ltv = LTV_RATIOS[ltvKey] ?? 0.75
-        // Recover property price from down payment / down payment rate
-        const dpRate = ltv === 0.90 ? 0.10 : 0.25
-        const propertyPrice = priceItem.amount / dpRate
-        const loanAmount = propertyPrice * ltv
-        const isHdbLoan = g.smartInputs.loanType === 'hdb-loan'
-        const rate = isHdbLoan ? MORTGAGE_RATES.hdb : MORTGAGE_RATES.bank
-        const tenure = isHdbLoan ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
-        const mortgageTotal = computeMortgageTotal(loanAmount, rate, tenure)
-        if (mortgageTotal > 0) {
-          result.push({
-            id: `${g.id}-mortgage`,
-            label: `${g.label} (mortgage)`,
-            amount: mortgageTotal,
-            targetAge: g.targetAge,
-            durationYears: tenure,
-            priority: 'important',
-            inflationAdjusted: false,
-            category: g.category,
-          })
-        }
+      // HDB: mortgage based on loan type — derive price from smartInputs directly
+      const inputs = g.smartInputs
+      const propertyPrice = inputs.priceOverride ?? getHdbPriceRange(inputs.flatType, inputs.tenure).midpoint
+      const ltvKey = inputs.loanType as keyof typeof LTV_RATIOS
+      const ltv = LTV_RATIOS[ltvKey] ?? 0.75
+      const loanAmount = propertyPrice * ltv
+      const isHdbLoan = inputs.loanType === 'hdb-loan'
+      const rate = isHdbLoan ? MORTGAGE_RATES.hdb : MORTGAGE_RATES.bank
+      const tenure = isHdbLoan ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
+      const mortgageTotal = computeMortgageTotal(loanAmount, rate, tenure)
+      if (mortgageTotal > 0) {
+        result.push({
+          id: `${g.id}-mortgage`,
+          label: `${g.label} (mortgage)`,
+          amount: mortgageTotal,
+          targetAge: g.targetAge,
+          durationYears: tenure,
+          priority: 'important',
+          inflationAdjusted: false,
+          category: g.category,
+        })
       }
     } else if (g.smartInputs?.kind === 'condo' || g.smartInputs?.kind === 'landed' || g.smartInputs?.kind === 'ec') {
       // Condo/Landed/EC: bank loan mortgage
