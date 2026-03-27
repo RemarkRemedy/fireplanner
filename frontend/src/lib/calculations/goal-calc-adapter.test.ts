@@ -3,7 +3,6 @@ import { buildGoalCalcProjectionParams, deflateProjection } from './goal-calc-ad
 import type { GoalStoryBasics } from '@/hooks/useGoalStoryData'
 import type { GoalCalcGoal } from '@/lib/calculations/goal-calculator'
 import { FIRE_MULTIPLIER } from '@/lib/calculations/goal-calculator'
-import { lookupCpfLifeEstimate } from '@/lib/calculations/goal-calculator-sg'
 import { grossUpFromTakeHome } from '@/lib/calculations/grossUp'
 import type { ProjectionRow } from '@/lib/types'
 
@@ -240,10 +239,9 @@ describe('buildGoalCalcProjectionParams', () => {
       const goals: GoalCalcGoal[] = []
       const params = buildGoalCalcProjectionParams(basics, goals)
 
-      const grossIncome = grossUpFromTakeHome(basics.monthlyIncome, basics.age)
-      const cpfLifeMonthly = lookupCpfLifeEstimate(grossIncome)
-      const cpfLifeOffset = cpfLifeMonthly * 12 * FIRE_MULTIPLIER
-      const expectedFireNumber = Math.max(0, basics.monthlyExpenses * 12 * FIRE_MULTIPLIER - cpfLifeOffset)
+      // CPF LIFE offset is no longer applied (too speculative for young users).
+      // FIRE number = pure expenses * multiplier.
+      const expectedFireNumber = basics.monthlyExpenses * 12 * FIRE_MULTIPLIER
 
       expect(params.fireNumber).toBeCloseTo(expectedFireNumber, 0)
     })
