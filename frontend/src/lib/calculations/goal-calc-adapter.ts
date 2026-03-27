@@ -43,7 +43,7 @@ import {
 const DEFAULT_LIFE_EXPECTANCY = 85
 const DEFAULT_SWR = 0.035
 const DEFAULT_EXPECTED_RETURN = 0.05
-const DEFAULT_INFLATION = 0.025
+export const DEFAULT_INFLATION = 0.025
 const DEFAULT_EXPENSE_RATIO = 0.005
 const DEFAULT_SALARY_GROWTH_RATE = 0.03
 const DEFAULT_PROPERTY_APPRECIATION_RATE = 0.03
@@ -246,7 +246,7 @@ function mapGoals(goals: GoalCalcGoal[]): FinancialGoal[] {
             targetAge: g.targetAge,
             durationYears: CAR_HP_TENURE_YEARS,
             priority: 'important',
-            inflationAdjusted: true,
+            inflationAdjusted: false,
             category: g.category,
           })
         }
@@ -273,7 +273,7 @@ function mapGoals(goals: GoalCalcGoal[]): FinancialGoal[] {
             targetAge: g.targetAge,
             durationYears: tenure,
             priority: 'important',
-            inflationAdjusted: true,
+            inflationAdjusted: false,
             category: g.category,
           })
         }
@@ -291,7 +291,7 @@ function mapGoals(goals: GoalCalcGoal[]): FinancialGoal[] {
           targetAge: g.targetAge,
           durationYears: LOAN_TENURE_YEARS.bank,
           priority: 'important',
-          inflationAdjusted: true,
+          inflationAdjusted: false,
           category: g.category,
         })
       }
@@ -323,9 +323,11 @@ export function buildGoalCalcProjectionParams(
     ? (basics.partnerGrossIncome ?? grossUpFromTakeHome(basics.partnerMonthlyIncome ?? 0, basics.partnerAge ?? basics.age))
     : 0
 
-  // 2. CPF LIFE offset for FIRE number
-  const cpfLifeMonthly = lookupCpfLifeEstimate(grossIncome)
-  const cpfLifeOffset = cpfLifeMonthly * 12 * FIRE_MULTIPLIER
+  // 2. CPF LIFE (displayed as context, NOT used to reduce FIRE number).
+  // For young users, CPF LIFE is too far away to meaningfully reduce the nest egg.
+  const _cpfLifeMonthly = lookupCpfLifeEstimate(grossIncome)
+  void _cpfLifeMonthly // keep computation for future display use
+  const cpfLifeOffset = 0
 
   // Use a fixed income-stop age (65) for the projection, NOT the Freedom Age.
   // Freedom Age is a computed milestone ("you could retire here"), but using it
