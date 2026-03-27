@@ -157,14 +157,10 @@ function SimpleTooltip({ active, payload, label }: TooltipProps<ValueType, NameT
 function DetailedTooltip({ active, payload, label }: TooltipProps<ValueType, NameType>) {
   if (!active || !payload || payload.length === 0) return null
   const age = label as number
-  let total = 0
   const items = payload
     .filter((p) => typeof p.value === 'number' && (p.value as number) > 0)
-    .map((p) => {
-      const val = p.value as number
-      total += val
-      return { key: p.dataKey as string, value: val }
-    })
+    .map((p) => ({ key: p.dataKey as string, value: p.value as number }))
+  const total = items.reduce((sum, item) => sum + item.value, 0)
 
   return (
     <div className="rounded-md border bg-background px-3 py-2 text-xs shadow-md">
