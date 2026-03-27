@@ -27,44 +27,28 @@ function SliderRow({ config }: { config: SliderConfig }) {
   }
 
   return (
-    <div className="space-y-2">
-      <p className="text-sm font-medium">{label}</p>
-      <div className="flex items-center gap-3 min-h-[44px]">
-        <div className="flex-1 min-h-[44px] flex items-center">
-          <input
-            type="range"
-            min={min}
-            max={max}
-            step={step}
-            value={value}
-            onChange={handleRangeChange}
-            className="w-full accent-primary h-2"
-            aria-label={label}
-          />
-        </div>
-        <div className="w-32 shrink-0">
-          {type === 'currency' && (
-            <CurrencyInput
-              label=""
-              value={value}
-              onChange={onChange}
-            />
-          )}
-          {type === 'number' && (
-            <NumberInput
-              value={value}
-              onChange={onChange}
-              integer
-            />
-          )}
-          {type === 'percent' && (
-            <PercentInput
-              value={value}
-              onChange={onChange}
-              step={step * 100}
-            />
-          )}
-        </div>
+    <div className="flex items-center gap-3">
+      <p className="text-xs font-medium w-24 shrink-0">{label}</p>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={handleRangeChange}
+        className="flex-1 accent-primary h-1.5"
+        aria-label={label}
+      />
+      <div className="w-28 shrink-0">
+        {type === 'currency' && (
+          <CurrencyInput label="" value={value} onChange={onChange} />
+        )}
+        {type === 'number' && (
+          <NumberInput value={value} onChange={onChange} integer />
+        )}
+        {type === 'percent' && (
+          <PercentInput value={value} onChange={onChange} step={step * 100} />
+        )}
       </div>
     </div>
   )
@@ -72,7 +56,7 @@ function SliderRow({ config }: { config: SliderConfig }) {
 
 export function SliderTab({ sliders, onReset }: SliderTabProps) {
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       {sliders.map((config) => (
         <SliderRow key={config.key} config={config} />
       ))}

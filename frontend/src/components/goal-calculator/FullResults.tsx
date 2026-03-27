@@ -278,21 +278,25 @@ function EnrichedGoalCard({
           </div>
         )}
 
-        {/* Cost breakdown */}
+        {/* Cost breakdown (collapsed by default) */}
         {hasBreakdown && (
-          <div className="rounded-lg border p-3 space-y-2">
-            <p className="text-sm font-medium">Cost breakdown</p>
-            {goal.breakdown.items.map((item, i) => (
-              <div key={i} className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{item.label}</span>
-                <span>{formatCurrency(Math.round(item.amount))}</span>
+          <details className="rounded-lg border">
+            <summary className="p-3 text-sm font-medium cursor-pointer select-none hover:bg-muted/50 transition-colors">
+              Cost breakdown: {formatCurrency(Math.round(goal.breakdown.total))}
+            </summary>
+            <div className="px-3 pb-3 space-y-2">
+              {goal.breakdown.items.map((item, i) => (
+                <div key={i} className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{item.label}</span>
+                  <span>{formatCurrency(Math.round(item.amount))}</span>
+                </div>
+              ))}
+              <div className="flex justify-between text-sm font-medium border-t pt-2">
+                <span>Total</span>
+                <span>{formatCurrency(Math.round(goal.breakdown.total))}</span>
               </div>
-            ))}
-            <div className="flex justify-between text-sm font-medium border-t pt-2">
-              <span>Total</span>
-              <span>{formatCurrency(Math.round(goal.breakdown.total))}</span>
             </div>
-          </div>
+          </details>
         )}
 
         {/* Shortfall message */}
