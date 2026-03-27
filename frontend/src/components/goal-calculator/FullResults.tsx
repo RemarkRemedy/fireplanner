@@ -78,8 +78,9 @@ function FeasibilityBadge({ level }: { level: FeasibilityResult['level'] }) {
 
 function ProgressBar({ ratio }: { ratio: number }) {
   const pct = Math.min(100, Math.max(0, ratio * 100))
-  const color =
-    pct <= 60 ? 'bg-green-500' : pct <= 80 ? 'bg-amber-500' : 'bg-red-500'
+  let color = 'bg-red-500'
+  if (pct <= 60) color = 'bg-green-500'
+  else if (pct <= 80) color = 'bg-amber-500'
 
   return (
     <div className="h-2 w-full rounded-full bg-muted">
