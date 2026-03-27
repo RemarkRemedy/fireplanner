@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import type { GoalCalcGoal, GoalCalcBasics } from '@/lib/calculations/goal-calculator'
 import type { GoalCardConfig } from '@/lib/wrapped/goalGradients'
 import { useGoalStoryData } from '@/hooks/useGoalStoryData'
+import { useWealthCurveProjection } from '@/hooks/useWealthCurveProjection'
 import { GoalStoryContainer } from '@/components/goal-calculator/story/GoalStoryContainer'
 import { FullResults } from '@/components/goal-calculator/FullResults'
 import { CostRevealCard } from '@/components/goal-calculator/story/CostRevealCard'
@@ -43,6 +44,7 @@ export function Results({
 }: ResultsProps) {
   const [showFullResults, setShowFullResults] = useState(skipStory)
   const storyData = useGoalStoryData(basics, goals)
+  const wealthCurve = useWealthCurveProjection(basics, goals, storyData)
   const isCoupleMode = !!basics.partnerAge
 
   const goToFullResults = useCallback(() => setShowFullResults(true), [])
@@ -196,6 +198,7 @@ export function Results({
         data={storyData}
         basics={basics}
         goals={goals}
+        wealthCurve={wealthCurve}
         onContinueToPlanner={onContinueToPlanner}
         onStartOver={onStartOver}
         onAddGoal={onAddAnother}

@@ -651,3 +651,86 @@ test.describe('Goal Calculator V1.5', () => {
     }
   })
 })
+
+// ── V2 Tests ─────────────────────────────────────────────────────────────────
+
+test.describe('Goal Calculator V2', () => {
+  test('EC goal: full flow from picker to results', async ({ page }) => {
+    await goToGoalCalculator(page)
+    // Pick EC tile
+    await page.getByText('EC').click()
+    // EC config: should show flat type buttons and price bracket
+    await expect(page.getByRole('button', { name: '3-Room' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '4-Room' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '5-Room' })).toBeVisible()
+    // Should show bank-loan-only info
+    await expect(page.getByText('bank loan only', { exact: false })).toBeVisible()
+    // Click Continue
+    await page.getByRole('button', { name: 'Continue' }).click()
+    // Fill basics
+    await fillBasicsAndCalculate(page, {
+      age: '28',
+      monthlyIncome: '5000',
+      monthlyExpenses: '3000',
+      existingSavings: '50000',
+    })
+    await skipStoryToFullResults(page)
+    // Results should show monthly savings needed
+    await expect(page.getByText('Monthly savings needed')).toBeVisible({ timeout: 5000 })
+  })
+
+  test('5-goal scenario: all goals render, add button hidden at limit', async ({ page }) => {
+    await goToGoalCalculator(page)
+
+    // Add 5 goals quickly using simple goals (fastest path)
+    for (let i = 0; i < 5; i++) {
+      // Pick a simple goal tile (Wedding, Travel, Education, Business, Custom Goal)
+      const tiles = ['Wedding', 'Travel', 'Education', 'Business', 'Custom Goal']
+      await page.getByText(tiles[i]).click()
+
+      // For Custom Goal, fill the name field
+      if (tiles[i] === 'Custom Goal') {
+        await page.locator('#custom-goal-label').fill('Emergency fund')
+      }
+
+      await page.getByRole('button', { name: 'Continue' }).click()
+
+      // Fill basics only on first goal (basics are remembered after that)
+      if (i === 0) {
+        await fillBasicsAndCalculate(page, {
+          age: '25',
+          monthlyIncome: '5000',
+          monthlyExpenses: '2000',
+          existingSavings: '30000',
+        })
+        await skipStoryToFullResults(page)
+      } else {
+        // Results appear directly (basics remembered, story skipped for 2+ goals)
+        await expect(page.getByText('Monthly savings needed')).toBeVisible({ timeout: 5000 })
+      }
+
+      // Add another (except on last)
+      if (i < 4) {
+        await page.getByRole('button', { name: 'Add Another Goal' }).click()
+      }
+    }
+
+    // After 5 goals, "Add Another Goal" should NOT be visible
+    await expect(page.getByRole('button', { name: 'Add Another Goal' })).not.toBeVisible()
+  })
+
+  test('wealth curve chart visible after story completes', async ({ page }) => {
+    await goToGoalCalculator(page)
+    await page.getByText('HDB Flat').click()
+    await page.getByRole('button', { name: 'Continue' }).click()
+    await fillBasicsAndCalculate(page, {
+      age: '25',
+      monthlyIncome: '5000',
+      monthlyExpenses: '2500',
+      existingSavings: '40000',
+    })
+    await skipStoryToFullResults(page)
+    // Recharts renders an SVG with class "recharts-wrapper"
+    await expect(page.locator('.recharts-wrapper')).toBeVisible({ timeout: 5000 })
+  })
+})
