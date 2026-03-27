@@ -22,9 +22,15 @@ import { MORTGAGE_RATES, LOAN_TENURE_YEARS, LTV_RATIOS, GOAL_TILES } from '@/lib
 // Types
 // ============================================================
 
+export interface LoanPayoffMarker {
+  age: number
+  label: string
+}
+
 export interface WealthCurveProjectionResult {
   chartData: DeflatedRow[]
   goalMarkers: GoalMarker[]
+  loanPayoffMarkers: LoanPayoffMarker[]
   freedomAge: number | null
   fireNumber: number | null  // FIRE target in today's dollars
   storyData: GoalStoryData
@@ -204,6 +210,28 @@ export function useWealthCurveProjection(
     })),
   [effectiveGoals])
 
+  // Loan payoff markers for the chart
+  const loanPayoffMarkers = useMemo((): LoanPayoffMarker[] =>
+    effectiveGoals
+      .filter((g) => g.smartInputs && computeMonthlyLoanPayment(g) > 0)
+      .map((g) => {
+        const inputs = g.smartInputs!
+        let tenureYears = 0
+        if (inputs.kind === 'hdb') {
+          tenureYears = inputs.loanType === 'hdb-loan'
+            ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
+        } else if (inputs.kind === 'condo' || inputs.kind === 'landed' || inputs.kind === 'ec') {
+          tenureYears = LOAN_TENURE_YEARS.bank
+        } else if (inputs.kind === 'car') {
+          tenureYears = 7
+        }
+        return {
+          age: g.targetAge + tenureYears,
+          label: inputs.kind === 'car' ? 'Car paid off' : 'Mortgage paid off',
+        }
+      }),
+  [effectiveGoals])
+
   // FIRE number in today's dollars (real terms — no inflation adjustment needed)
   const fireNumber = useMemo((): number | null => {
     const annualExpenses = effectiveBasics.monthlyExpenses * 12
@@ -267,6 +295,7 @@ export function useWealthCurveProjection(
   return {
     chartData,
     goalMarkers,
+    loanPayoffMarkers,
     freedomAge,
     fireNumber,
     storyData,

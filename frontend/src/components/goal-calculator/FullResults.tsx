@@ -548,6 +548,7 @@ export function FullResults({
           <WealthCurveChart
             data={wealthCurve.chartData}
             goalMarkers={wealthCurve.goalMarkers}
+            loanPayoffMarkers={wealthCurve.loanPayoffMarkers}
             freedomAge={wealthCurve.freedomAge}
             fireNumber={wealthCurve.fireNumber}
             currentAge={basics.age}

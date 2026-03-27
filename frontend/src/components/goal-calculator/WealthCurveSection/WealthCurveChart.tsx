@@ -31,9 +31,15 @@ export interface GoalMarker {
   cost: number
 }
 
+export interface LoanPayoffMarker {
+  age: number
+  label: string
+}
+
 interface WealthCurveChartProps {
   data: DeflatedRow[]
   goalMarkers: GoalMarker[]
+  loanPayoffMarkers?: LoanPayoffMarker[]
   freedomAge: number | null
   fireNumber: number | null
   currentAge: number
@@ -182,6 +188,7 @@ function DetailedTooltip({ active, payload, label }: TooltipProps<ValueType, Nam
 export function WealthCurveChart({
   data,
   goalMarkers,
+  loanPayoffMarkers = [],
   freedomAge,
   fireNumber,
   currentAge,
@@ -190,7 +197,10 @@ export function WealthCurveChart({
   const isMobile = useIsMobile()
   const [showDetailed, setShowDetailed] = useState(false)
 
-  const maxAge = Math.max(65, (freedomAge ?? 65) + 5)
+  const maxPayoffAge = loanPayoffMarkers.length > 0
+    ? Math.max(...loanPayoffMarkers.map((m) => m.age))
+    : 0
+  const maxAge = Math.max(65, (freedomAge ?? 65) + 5, maxPayoffAge + 5)
   const xDomain: [number, number] = [currentAge, maxAge]
 
   const chartData = data.map((d) => ({
@@ -268,6 +278,22 @@ export function WealthCurveChart({
                 label={<FreedomLabel age={freedomAge} />}
               />
             )}
+
+            {/* Loan payoff markers (always shown) */}
+            {loanPayoffMarkers.map((marker) => (
+              <ReferenceLine
+                key={`payoff-${marker.age}`}
+                x={marker.age}
+                stroke="#8b5cf6"
+                strokeDasharray="2 4"
+                label={{
+                  value: `${marker.age}: ${marker.label}`,
+                  position: 'top',
+                  fontSize: 9,
+                  fill: '#8b5cf6',
+                }}
+              />
+            ))}
 
             {/* === Detailed mode extras === */}
 
