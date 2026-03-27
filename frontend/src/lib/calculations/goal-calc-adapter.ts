@@ -24,10 +24,11 @@ import {
   computeMultiGoalStacking,
   FIRE_MULTIPLIER,
 } from '@/lib/calculations/goal-calculator'
-import type { GoalCalcBasics, GoalCalcGoal } from '@/lib/calculations/goal-calculator'
+import type { GoalCalcGoal } from '@/lib/calculations/goal-calculator'
 import type { GoalStoryBasics } from '@/hooks/useGoalStoryData'
 import { grossUpFromTakeHome } from '@/lib/calculations/grossUp'
 import { lookupCpfLifeEstimate } from '@/lib/calculations/goal-calculator-sg'
+import { CPF_LIFE_START_AGE } from '@/lib/data/cpfRates'
 
 // ============================================================
 // Constants (calculation assumptions, not regulatory data)
@@ -39,7 +40,6 @@ const DEFAULT_EXPECTED_RETURN = 0.05
 const DEFAULT_INFLATION = 0.025
 const DEFAULT_EXPENSE_RATIO = 0.005
 const DEFAULT_SALARY_GROWTH_RATE = 0.03
-const DEFAULT_CPF_LIFE_START_AGE = 65
 const DEFAULT_PROPERTY_APPRECIATION_RATE = 0.03
 
 /** 8-element weights: 30% US eq, 0% SG eq, 30% intl, 20% bonds, 0% REITs, 0% gold, 0% cash, 20% CPF */
@@ -103,7 +103,7 @@ function buildIncomeParams(
     initialCpfOA: 0,
     initialCpfSA: 0,
     initialCpfMA: 0,
-    cpfLifeStartAge: DEFAULT_CPF_LIFE_START_AGE,
+    cpfLifeStartAge: CPF_LIFE_START_AGE,
     cpfLifePlan: 'standard',
   }
 }
@@ -111,13 +111,21 @@ function buildIncomeParams(
 /**
  * Merge two income projection arrays by summing income/CPF fields at each year offset.
  * The primary array defines the output length; shorter partner arrays pad with zeros.
+ *
+ * Each per-adult projection must be computed with annualExpenses=0 so that
+ * annualSavings = max(0, totalNet) - voluntaryTopUps - srsContribution.
+ * Household expenses are deducted ONCE here (inflated per year), matching
+ * the pattern in mergePerAdultProjections in income.ts.
  */
 function mergeIncomeProjections(
   primary: IncomeProjectionRow[],
   partner: IncomeProjectionRow[],
+  annualExpenses: number,
+  inflation: number,
 ): IncomeProjectionRow[] {
   const maxLen = Math.max(primary.length, partner.length)
   const merged: IncomeProjectionRow[] = []
+  let cumulativeSavings = 0
 
   for (let i = 0; i < maxLen; i++) {
     const a = primary[i]
@@ -125,13 +133,27 @@ function mergeIncomeProjections(
 
     if (!a && !b) continue
     if (!a) {
-      merged.push(b!)
+      // Only partner row exists; deduct household expenses once
+      const inflatedExpenses = annualExpenses * Math.pow(1 + inflation, i)
+      const annualSavings = b!.annualSavings - inflatedExpenses
+      cumulativeSavings += annualSavings
+      merged.push({ ...b!, annualSavings, cumulativeSavings })
       continue
     }
     if (!b) {
-      merged.push(a)
+      // Only primary row exists; deduct household expenses once
+      const inflatedExpenses = annualExpenses * Math.pow(1 + inflation, i)
+      const annualSavings = a.annualSavings - inflatedExpenses
+      cumulativeSavings += annualSavings
+      merged.push({ ...a, annualSavings, cumulativeSavings })
       continue
     }
+
+    // Both rows exist: sum per-adult savings then deduct expenses once
+    const perAdultSavingsSum = a.annualSavings + b.annualSavings
+    const inflatedExpenses = annualExpenses * Math.pow(1 + inflation, i)
+    const annualSavings = perAdultSavingsSum - inflatedExpenses
+    cumulativeSavings += annualSavings
 
     merged.push({
       year: a.year,
@@ -146,8 +168,8 @@ function mergeIncomeProjections(
       cpfEmployee: a.cpfEmployee + b.cpfEmployee,
       cpfEmployer: a.cpfEmployer + b.cpfEmployer,
       totalNet: a.totalNet + b.totalNet,
-      annualSavings: a.annualSavings + b.annualSavings,
-      cumulativeSavings: a.cumulativeSavings + b.cumulativeSavings,
+      annualSavings,
+      cumulativeSavings,
       cpfOA: a.cpfOA + b.cpfOA,
       cpfSA: a.cpfSA + b.cpfSA,
       cpfMA: a.cpfMA + b.cpfMA,
@@ -236,11 +258,14 @@ export function buildGoalCalcProjectionParams(
   const fireNumber = Math.max(0, annualExpenses * FIRE_MULTIPLIER - cpfLifeOffset)
 
   // 5. Income projection
+  // In couple mode, pass annualExpenses=0 per adult so each adult's projection
+  // contains full net income without expense deduction. Expenses are deducted
+  // once in mergeIncomeProjections. In solo mode, pass the real annualExpenses.
   const primaryIncomeParams = buildIncomeParams(
     grossIncome,
     basics.age,
     retirementAge,
-    annualExpenses,
+    isCoupleMode ? 0 : annualExpenses,
   )
   let incomeProjection = generateIncomeProjection(primaryIncomeParams)
 
@@ -250,10 +275,15 @@ export function buildGoalCalcProjectionParams(
       partnerGross,
       partnerAge,
       retirementAge,
-      annualExpenses,
+      0, // expenses deducted once in merge
     )
     const partnerProjection = generateIncomeProjection(partnerIncomeParams)
-    incomeProjection = mergeIncomeProjections(incomeProjection, partnerProjection)
+    incomeProjection = mergeIncomeProjections(
+      incomeProjection,
+      partnerProjection,
+      annualExpenses,
+      DEFAULT_INFLATION,
+    )
   }
 
   // 6. Asset returns and weights
@@ -308,7 +338,7 @@ export function buildGoalCalcProjectionParams(
     healthcareConfig: null,
 
     // CPF LIFE
-    cpfLifeStartAge: DEFAULT_CPF_LIFE_START_AGE,
+    cpfLifeStartAge: CPF_LIFE_START_AGE,
     cpfLifePlan: 'standard',
 
     // Financial goals

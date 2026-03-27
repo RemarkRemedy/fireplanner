@@ -274,6 +274,41 @@ describe('buildGoalCalcProjectionParams', () => {
       expect(firstRow.salary).toBeGreaterThan(0)
     })
 
+    it('couple mode annualSavings deducts expenses once, not twice', () => {
+      // Each adult earns $5000/mo (couple) and $4000/mo expenses
+      // With double-deduction bug, each adult would have expenses subtracted,
+      // then merged savings = (A.net - expenses) + (B.net - expenses) — too low.
+      // After fix: merged savings = (A.net + B.net) - expenses — expenses once.
+      const basics = makeCoupleBasics()
+      const params = buildGoalCalcProjectionParams(basics, [])
+      const firstRow = params.incomeProjection[0]
+
+      // Compute what solo would look like for each adult
+      const soloA = buildGoalCalcProjectionParams(
+        makeSoloBasics({ monthlyIncome: 5000, monthlyExpenses: 4000 }),
+        [],
+      )
+      const soloB = buildGoalCalcProjectionParams(
+        makeSoloBasics({ age: 28, monthlyIncome: 4000, monthlyExpenses: 4000 }),
+        [],
+      )
+
+      // If expenses were deducted twice, couple savings would be:
+      // soloA.savings + soloB.savings (each already has expenses deducted)
+      // minus another expenses deduction — clearly too low.
+      // Correct couple savings: (A.totalNet + B.totalNet) - expenses(once)
+      const doubleDeductedSavings =
+        soloA.incomeProjection[0].annualSavings + soloB.incomeProjection[0].annualSavings
+
+      // Couple savings should be HIGHER than double-deducted (one fewer expense subtraction)
+      // because double-deducted has expenses removed from each adult separately
+      expect(firstRow.annualSavings).toBeGreaterThan(doubleDeductedSavings)
+
+      // Verify savings = combined totalNet - household expenses (at year 0, no inflation)
+      const expectedSavings = firstRow.totalNet - basics.monthlyExpenses * 12
+      expect(firstRow.annualSavings).toBeCloseTo(expectedSavings, -1)
+    })
+
     it('should detect couple mode from partnerAge even without explicit coupleMode flag', () => {
       const basics = makeSoloBasics({ partnerAge: 28, partnerMonthlyIncome: 3000 })
       const params = buildGoalCalcProjectionParams(basics, [])
