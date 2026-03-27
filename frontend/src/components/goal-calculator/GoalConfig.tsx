@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -118,12 +118,9 @@ function HdbConfig({
   const [customPrice, setCustomPrice] = useState(priceRange.midpoint)
 
   // Reset price to midpoint when flat type or tenure changes
-  const prevKey = `${flatType}-${tenure}`
-  const [lastKey, setLastKey] = useState(prevKey)
-  if (prevKey !== lastKey) {
+  useEffect(() => {
     setCustomPrice(priceRange.midpoint)
-    setLastKey(prevKey)
-  }
+  }, [flatType, tenure, priceRange.midpoint])
 
   const smartInputs: SmartGoalInputs = useMemo(
     () => ({ kind: 'hdb', flatType, tenure, loanType, priceOverride: customPrice }),
