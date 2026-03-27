@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, FolderOpen, Plus } from 'lucide-react'
+import { AlertTriangle, FolderOpen, Plus, Receipt } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -15,9 +15,11 @@ import { PolicyInputForm } from '@/components/ilp/PolicyInputForm'
 import { PolicyTabs } from '@/components/ilp/PolicyTabs'
 import { ProjectionTable } from '@/components/ilp/ProjectionTable'
 import { SummaryCards } from '@/components/ilp/SummaryCards'
+import { ReceiptPreviewModal } from '@/components/ilp/receipt/ReceiptPreviewModal'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import type { IlpProjectedPolicyAnalysis } from '@/lib/calculations/ilp'
 import { analyzeAllPolicies, isProjectedAnalysisEligible } from '@/lib/calculations/ilp'
+import { buildFeeBreakdown } from '@/lib/calculations/ilpFeeBreakdown'
 import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
 import type { IlpPolicySeed } from '@/lib/ilp-catalog/policySeedSchema'
 import { templateVariantToPolicySeed } from '@/lib/ilp-catalog/templateToPolicy'
@@ -98,6 +100,7 @@ export function IlpReviewPage() {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pendingSeed, setPendingSeed] = useState<IlpPolicySeed | null>(null)
   const [catalogError, setCatalogError] = useState<string | null>(null)
+  const [receiptOpen, setReceiptOpen] = useState(false)
 
   function handleCatalogPick(product: ReturnType<typeof getIlpCatalog>['products'][number], variant: ReturnType<typeof getIlpCatalog>['products'][number]['variants'][number]) {
     const seed = templateVariantToPolicySeed(product, variant, getIlpCatalog().manifest)
@@ -163,6 +166,11 @@ export function IlpReviewPage() {
       : null)
   const excludedCount = policyEntries.filter((entry) => !entry.valid).length
   const currentOnlyCount = policyEntries.filter((entry) => entry.valid && !entry.projectedEligible).length
+
+  const receiptFeeBreakdown = useMemo(() => {
+    if (displayAnalysis?.mode !== 'projected' || !displayPolicy) return null
+    return buildFeeBreakdown(displayAnalysis.projections.mid, displayPolicy.funds, displayPolicy)
+  }, [displayAnalysis, displayPolicy])
 
   if (policies.length === 0) {
     return (
@@ -331,6 +339,14 @@ export function IlpReviewPage() {
           </a>
           {displayAnalysis.mode === 'projected' && (
             <>
+              {receiptFeeBreakdown && displayAnalysis.summary.totalPremiumsPaid > 0 && displayPolicy.monthsAlreadyPaid === 0 && (
+                <div className="flex justify-center">
+                  <Button variant="outline" onClick={() => setReceiptOpen(true)}>
+                    <Receipt className="mr-2 h-4 w-4" />
+                    Generate Your ILP Receipt
+                  </Button>
+                </div>
+              )}
               <FeeWaterfallChart policy={displayPolicy} analysis={displayAnalysis} />
               <DecisionPanel policy={displayPolicy} analysis={displayAnalysis} />
               <NpvTimelineChart analyses={analysisResult.analysis?.policies.filter((analysis): analysis is IlpProjectedPolicyAnalysis => analysis.mode === 'projected') ?? []} />
@@ -348,6 +364,17 @@ export function IlpReviewPage() {
           </AlertDescription>
         </Alert>
       ) : null}
+
+      {displayPolicy && displayAnalysis?.mode === 'projected' && receiptFeeBreakdown && (
+        <ReceiptPreviewModal
+          open={receiptOpen}
+          onOpenChange={setReceiptOpen}
+          policy={displayPolicy}
+          analysis={displayAnalysis}
+          feeBreakdown={receiptFeeBreakdown}
+          includeOcf
+        />
+      )}
 
       {/* "Still not sure?" footer CTA */}
       <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-5 text-center dark:border-amber-900 dark:bg-amber-950/20">
