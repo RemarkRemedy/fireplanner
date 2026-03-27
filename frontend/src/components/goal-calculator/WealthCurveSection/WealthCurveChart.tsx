@@ -279,7 +279,7 @@ export function WealthCurveChart({
                 strokeDasharray="6 3"
                 label={{
                   value: `FIRE: ${formatCompactCurrency(fireNumber)}`,
-                  position: 'right',
+                  position: 'left',
                   fontSize: 10,
                   fill: '#a855f7',
                 }}
