@@ -99,26 +99,8 @@ function isHdbGoal(goal: GoalCalcGoal): boolean {
   return goal.smartInputs?.kind === 'hdb'
 }
 
-function isCondoGoal(goal: GoalCalcGoal): boolean {
-  return goal.smartInputs?.kind === 'condo'
-}
-
-function isLandedGoal(goal: GoalCalcGoal): boolean {
-  return goal.smartInputs?.kind === 'landed'
-}
-
 function isEcGoal(goal: GoalCalcGoal): boolean {
   return goal.smartInputs?.kind === 'ec'
-}
-
-function getPropertyType(inputs: SmartGoalInputs): 'hdb' | 'condo' | 'landed' | 'ec' {
-  switch (inputs.kind) {
-    case 'hdb': return 'hdb'
-    case 'condo': return 'condo'
-    case 'landed': return 'landed'
-    case 'ec': return 'ec'
-    default: return 'condo'
-  }
 }
 
 function getMortgageRate(inputs: SmartGoalInputs): number {
@@ -234,21 +216,20 @@ export function computeGoalStoryData(
       const ltv = getLtvRatio(goal.smartInputs)
       const loanNeeded = price * ltv
       const rate = getMortgageRate(goal.smartInputs)
-      const propertyType = getPropertyType(goal.smartInputs)
-
       loanQualification = checkLoanQualification(
         householdGross,
         loanNeeded,
         rate,
         25,
-        propertyType,
+        goal.smartInputs.kind as 'hdb' | 'condo' | 'landed' | 'ec',
       )
     }
 
     // Cash needed (for upfront costs only — CPF OA and grants reduce what you save in cash)
     let cashNeeded = goal.breakdown.total - cpfOaAccumulated - grantAmount
     // For condos, landed, and EC enforce 5% cash floor (bank loan only, no CPF for 5%)
-    if (isCondoGoal(goal) || isLandedGoal(goal) || isEcGoal(goal)) {
+    const kind = goal.smartInputs?.kind
+    if (kind === 'condo' || kind === 'landed' || kind === 'ec') {
       const price = getPropertyPrice(goal)
       const cashMinimum = computeCondoDownPayment(price).cashMinimum
       cashNeeded = Math.max(cashMinimum, cashNeeded)
