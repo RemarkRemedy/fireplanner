@@ -318,11 +318,13 @@ function getAchievementIdForScreen(
 interface SetupState {
   screenIndex: number
   values: Record<string, unknown>
+  editingFromReview: boolean
 }
 
 type SetupAction =
   | { type: 'SET_FIELD'; field: string; value: unknown }
   | { type: 'GO_TO'; index: number }
+  | { type: 'EDIT_FROM_REVIEW'; index: number }
   | { type: 'HYDRATE'; values: Record<string, unknown> }
 
 function setupReducer(state: SetupState, action: SetupAction): SetupState {
@@ -330,7 +332,9 @@ function setupReducer(state: SetupState, action: SetupAction): SetupState {
     case 'SET_FIELD':
       return { ...state, values: { ...state.values, ...{ [action.field]: action.value } } }
     case 'GO_TO':
-      return { ...state, screenIndex: action.index }
+      return { ...state, screenIndex: action.index, editingFromReview: false }
+    case 'EDIT_FROM_REVIEW':
+      return { ...state, screenIndex: action.index, editingFromReview: true }
     case 'HYDRATE':
       return { ...state, values: { ...state.values, ...action.values } }
     default:
@@ -633,6 +637,7 @@ export function SetupPage() {
   const [state, dispatch] = useReducer(setupReducer, {
     screenIndex: 0,
     values: { ...INITIAL_VALUES },
+    editingFromReview: false,
   })
 
   // Hydrate from existing plan on redo
@@ -711,12 +716,17 @@ export function SetupPage() {
     if (screenDef) {
       trackEvent('setup_step_completed', { step: screenDef.id ?? `step-${state.screenIndex}`, position: currentPos + 1 })
     }
+    // When editing from review, jump straight back to review instead of advancing
+    if (state.editingFromReview) {
+      dispatch({ type: 'GO_TO', index: visibleScreenDefs.length })
+      return
+    }
     if (currentPos < activeScreenIndices.length - 1) {
       dispatch({ type: 'GO_TO', index: activeScreenIndices[currentPos + 1] })
     } else {
       dispatch({ type: 'GO_TO', index: visibleScreenDefs.length })
     }
-  }, [activeScreenIndices, state.screenIndex, visibleScreenDefs.length])
+  }, [activeScreenIndices, state.screenIndex, state.editingFromReview, visibleScreenDefs.length])
 
   /** Build mirror insight inputs from current setup state values. */
   const buildMirrorInputs = useCallback(() => {
@@ -846,9 +856,9 @@ export function SetupPage() {
         safeIndex--
       }
       if (safeIndex >= 0) {
-        dispatch({ type: 'GO_TO', index: safeIndex })
+        dispatch({ type: 'EDIT_FROM_REVIEW', index: safeIndex })
       } else {
-        dispatch({ type: 'GO_TO', index: activeScreenIndices[0] ?? 0 })
+        dispatch({ type: 'EDIT_FROM_REVIEW', index: activeScreenIndices[0] ?? 0 })
       }
     },
     [visibleScreenDefs, activeScreenIndices],
@@ -1212,9 +1222,11 @@ export function SetupPage() {
         totalSteps={totalSteps}
         isYoung={isYoung}
         submitLabel={
-          currentActivePosition === totalSteps - 1
-            ? 'Review your answers'
-            : (isYoung ? 'Next level' : 'Continue')
+          state.editingFromReview
+            ? 'Save & return to review'
+            : currentActivePosition === totalSteps - 1
+              ? 'Review your answers'
+              : (isYoung ? 'Next level' : 'Continue')
         }
       >
         {customChildren}
