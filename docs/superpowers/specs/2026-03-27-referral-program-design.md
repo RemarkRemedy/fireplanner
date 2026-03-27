@@ -28,44 +28,85 @@ FirePlanner signs up as an affiliate/referral partner with Singapore brokerages 
 
 ### New route: `/referral`
 
-The page has three zones.
+The page has four sections, ordered by information hierarchy (value-first, commitment-last):
 
-**Zone 1: Hero & Story**
+**Section A: Hero & Value Proposition** (first viewport)
 
-Program explanation with a live community tracker showing:
-- Total donated to charity this year + TJ's match amount (progress bar toward $10K)
-- Total donated to FirePlanner support
-- Number of participants
+One composition. Brand-first hierarchy: FirePlanner brand > one-line value prop > match promise > primary CTA.
 
-**Zone 2: Registration & Allocation**
+- Headline: "Sign up for a brokerage through us. Choose where the money goes."
+- Match promise callout: "Donate your share. I'll match every dollar, up to $10,000 this year."
+- Primary CTA: "Browse platforms" (scrolls to Section B)
+- **No tracker in the hero.** Tracker moves below the fold (Section D) and is hidden until first conversion.
 
-1. User enters email
-2. User chooses allocation via preset buttons:
-   - "Keep all"
-   - "Donate all to charity"
-   - "50/50 charity & FirePlanner"
-   - "Give all to FirePlanner"
-   - "Custom..." (opens three sliders summing to 100%)
-3. The three destinations:
-   - **Back to me:** user receives FirePlanner's affiliate fee via PayNow or gift voucher
-   - **Community charity pool:** goes toward quarterly giving.sg vote, matched 1:1 by TJ (up to $10K/year)
-   - **FirePlanner support:** helps cover server/infrastructure costs, keeps the tool free
-4. Confirmation state: "You're registered. Click any platform below to get started."
-6. Platform cards in Zone 3 unlock
+Affiliate disclosure footnote: "FirePlanner earns an affiliate commission when you sign up through our links. We share this with you. We are not a licensed financial adviser."
+
+**Section B: Platform Cards** (visible to all, CTAs locked until registered)
+
+Cards are **always visible** with full information (name, logo, type, referee bonus, market badges, CPF/SRS eligibility). Only the "Sign up" CTA button is locked for unregistered users. Clicking a locked CTA scrolls to Section C and highlights the email input.
+
+Card hierarchy within the grid:
+- **Featured platforms** (1-2): larger card treatment, hero position at top
+- **Active platforms**: standard card grid (3 columns desktop, 2 tablet, 1 mobile)
+- **Coming soon platforms**: dimmed/muted treatment, "Partnership pending" badge, no CTA button
+
+Card internal hierarchy: Logo (top) > Referee bonus amount (largest text, the hook) > Platform name + type > Market badges + CPF/SRS badge > "Sign up" CTA button
+
+Post-click state: after clicking through, card shows a subtle checkmark + "Clicked [date]" state (stored in localStorage). Provides progress feedback when user returns to tab.
+
+**Section C: Registration & Allocation**
+
+**First-time user flow:**
+1. Explainer copy above form: "When you sign up through our link, the brokerage pays us a referral fee. You choose what happens to it:" (This is load-bearing copy for trust and legal compliance.)
+2. User enters email (disposable email domains blocked with clear error: "Please use a permanent email address so we can contact you about your referral.")
+3. User chooses allocation via preset buttons (shadcn ToggleGroup):
+   - "Keep all" / "Donate all to charity" / "50/50 charity and FirePlanner" / "Give all to FirePlanner"
+   - "Custom..." expands to two sliders (shadcn Slider) + one computed field. User sets "Keep %" and "Charity %", "FirePlanner %" auto-computes the remainder. Each slider has aria-label.
+4. **Mirror moment:** When any donate preset is selected (or custom has charity > 0), a dynamic callout appears: "Your $88 becomes $176 for charity." (Using the average affiliate fee estimate.) This is the emotional peak of the page.
+5. Submit button: "Register" → in-flight state: "Registering..." (disabled, spinner) → Success: "You're in! Scroll up to browse platforms."
+6. Platform card CTAs unlock.
+
+**Returning user flow:**
+- Email is recognized from localStorage. Section C shows a **status card** (not the form) displaying current allocation as read-only values.
+- "Change allocation" button opens edit mode (if no paid conversions exist).
+- If paid conversions exist: allocation is locked, "Change" button is disabled with tooltip: "Allocation locked after payout."
+
+**Error states:**
+- Rate limit: "Too many attempts. Please try again in an hour."
+- Disposable email: "Please use a permanent email address so we can contact you about your referral."
+- Server error: "Something went wrong. Please try again."
+- Already registered (upsert): API returns `{alreadyRegistered: true}`. UI shows the returning user status card.
+
+Note: PayNow number and payout method are NOT collected at registration. They are collected post-conversion via the token-gated payout page.
 
 Note: The user always receives the referee bonus directly from the brokerage (free shares, fee waivers, etc.) regardless of their allocation choice. The allocation only controls what happens to FirePlanner's affiliate fee.
 
-Note: PayNow number and payout method are NOT collected at registration. They are collected post-conversion when a user has keep % > 0 and a conversion is confirmed. This reduces registration friction and avoids storing sensitive PII until it's actually needed.
+**Section D: Community Tracker & Past Donations** (below the fold)
 
-**Zone 3: Platform Cards**
+**Hidden at launch** (suppressed until first conversion is recorded). When visible:
+- Community tracker card: total donated to charity, TJ's match + progress bar (shadcn Progress, role="progressbar"), total FirePlanner support, participant count
+- Progress bar states: empty (0%), partial (green fill), near-cap (amber, ">$9,000 matched"), cap-reached (full, "Match pool fully claimed this year!")
+- Past donations timeline (initially placeholder: "No donations yet. The first quarterly vote will happen once the community pool has its first contributions.")
 
-Grid of brokerage/platform cards. Each card shows:
-- Platform name + logo
-- Type (brokerage, robo-advisor, etc.)
-- Referee bonus value (what the user gets directly from the platform)
-- "Sign up" button (affiliate link tagged with click ID)
+**Component mapping (shadcn primitives):**
+- Allocation presets: `ToggleGroup` with `ToggleGroupItem`
+- Custom sliders: `Slider` (2 active + 1 computed readonly)
+- Progress bar: `Progress` with aria attributes
+- Platform cards: `Card` + `CardHeader` + `CardContent` with custom layout
+- Registration form: `Input` + `Button` + `Label`
+- Status card (returning user): `Card` with read-only values + "Change" `Button`
+- Locked CTA: `Button variant="outline" disabled` with lock icon
 
-Cards are locked until registration (Zone 2) is complete. Before registration, cards show a soft lock state: "Register above to unlock referral links." Clicking a locked card scrolls to Zone 2 and highlights the email input field.
+**Responsive breakpoints:**
+- Desktop (>=1024px): 3-column card grid, registration form beside hero
+- Tablet (768-1023px): 2-column card grid, stacked layout
+- Mobile (<768px): 1-column cards, full-width form, sliders replaced with number inputs (touch-friendly)
+
+**Accessibility:**
+- Preset buttons: `role="radiogroup"` with arrow key navigation
+- Locked cards: screen reader announces "Platform name, referee bonus, sign up button locked, register to unlock"
+- Progress bar: `aria-valuenow`, `aria-valuemin="0"`, `aria-valuemax="10000"`, `aria-label="Donation match progress"`
+- Sliders: `aria-label` per slider ("Keep percentage", "Charity percentage")
 
 ### Changes to `/compare`
 
@@ -359,7 +400,17 @@ The PayNow encryption key is stored as a **Cloudflare Pages Secret** (not a plai
 
 ## Legal Prerequisites (must clear before launch)
 
-**MAS anti-inducement compliance:** Gemini flagged that sharing affiliate commissions with users ("keep" option) may violate MAS anti-inducement guidelines or brokerage TOS. Research needed before launching the "keep" option. The "donate to charity" and "donate to FirePlanner" paths have no regulatory concern. If legal review blocks the "keep" option, launch with donate-only and add "keep" later.
+**MAS anti-inducement compliance: RESEARCHED (2026-03-27)**
+
+Full research at `docs/research/referral-regulatory-research.md`. Summary:
+
+- **GREEN to proceed with "keep" option.** MAS anti-inducement rules (FAA Sections 25-29, 36, 45) apply to licensed/exempt financial advisers only, not unlicensed tools.
+- **Commission rebating is legal in Singapore** since 2002 (MAS lifted Notice 304 prohibition).
+- **SingSaver precedent validates the model at scale.** NASDAQ-listed parent, zero MAS enforcement actions, openly offers cashback for brokerage signups through unlicensed entity.
+- **No brokerage TOS explicitly prohibits** affiliates from sharing commissions in publicly available terms. Must verify in each full affiliate agreement after applying.
+- **FSG-G03 (effective 25 March 2026)** treats affiliate tie-ups as advertising. Obligations fall on the brokerage, not the affiliate. Expect compliance clauses in affiliate agreements.
+- **The "keep" option requires:** (1) clear disclaimers (not financial advice, not MAS-licensed), (2) architectural separation between calculator and referral page, (3) no platform ranking/recommendations, (4) affiliate disclosure.
+- **Remaining action:** Apply to Tier 1 affiliate programs and review full agreements for commission-sharing restrictions before activating "keep" per platform. If a specific platform prohibits it, disable "keep" for that platform only.
 
 ## Security Mitigations
 
