@@ -64,7 +64,7 @@ export function SliderTab({ sliders, onReset }: SliderTabProps) {
         <button
           type="button"
           onClick={onReset}
-          className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+          className="text-xs text-muted-foreground/80 underline underline-offset-2 hover:text-foreground transition-colors"
         >
           Reset to original
         </button>

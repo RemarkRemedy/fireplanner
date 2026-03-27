@@ -225,7 +225,7 @@ export function WealthCurveChart({
         <ResponsiveContainer width="100%" height={isMobile ? 320 : 380}>
           <AreaChart
             data={chartData}
-            margin={{ top: 40, right: 16, left: 8, bottom: 8 }}
+            margin={{ top: 40, right: 16, left: isMobile ? 0 : 8, bottom: 8 }}
           >
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
 
@@ -238,7 +238,7 @@ export function WealthCurveChart({
             <YAxis
               tickFormatter={(v: number) => formatCompactCurrency(v)}
               tick={{ fontSize: 11 }}
-              width={isMobile ? 52 : 64}
+              width={isMobile ? 56 : 64}
             />
 
             <Tooltip
