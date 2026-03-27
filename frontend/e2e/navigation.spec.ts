@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { goToStart, selectPathway, expectRoute, navigateVia } from './helpers'
+import { goToStart, expectRoute, navigateVia } from './helpers'
 
 /**
  * Helper to clear and fill an input field.
@@ -11,40 +11,78 @@ async function clearAndFill(page: import('@playwright/test').Page, locator: impo
 }
 
 /**
- * Perform quick onboarding via goal-first pathway.
+ * Perform quick onboarding via the setup wizard.
+ * Fills the quick estimate, enters setup, clicks through all 9 steps,
+ * completes the review, and lands on projection or dashboard.
  */
 async function quickOnboarding(page: import('@playwright/test').Page) {
   await goToStart(page)
-  await selectPathway(page, 'goal-first')
-  await expect(page.getByText('Set your targets')).toBeVisible()
 
-  const formInputs = page.locator('main input[inputmode="numeric"]')
-  await expect(formInputs).toHaveCount(5, { timeout: 5000 })
+  // Fill quick estimate form — use click+selectText+fill to trigger React onChange
+  const payInput = page.getByRole('textbox', { name: /monthly take-home pay/i })
+  await clearAndFill(page, payInput, '6000')
+  await clearAndFill(page, page.getByRole('textbox', { name: /monthly expenses/i }), '3000')
+  const savingsInput = page.getByRole('textbox', { name: /current savings/i })
+  await clearAndFill(page, savingsInput, '150000')
+  await savingsInput.blur()
 
-  await clearAndFill(page, formInputs.nth(0), '30')
-  await clearAndFill(page, formInputs.nth(1), '50')
-  await clearAndFill(page, formInputs.nth(2), '72000')
-  await clearAndFill(page, formInputs.nth(3), '48000')
-  await clearAndFill(page, formInputs.nth(4), '100000')
-  await formInputs.nth(4).blur()
+  // Wait for results to compute
+  await expect(page.getByText(/your retirement range/i).first()).toBeVisible({ timeout: 5000 })
 
-  // Wait for results to appear before continuing
-  await expect(page.getByText('FIRE Number:').first()).toBeVisible({ timeout: 5000 })
+  // Scroll down and click "Get your real FIRE age"
+  const cta = page.getByRole('link', { name: /get your real fire age/i })
+  await cta.scrollIntoViewIfNeeded()
+  await expect(cta).toBeVisible({ timeout: 5000 })
+  await cta.click()
+  await page.waitForURL(/\/setup/, { timeout: 10000 })
+  await expect(page.getByText(/Step 1/i)).toBeVisible({ timeout: 5000 })
 
-  await page.getByRole('button', { name: /build my full plan/i }).click()
-  await expectRoute(page, '/inputs')
+  // Click through all setup steps (up to 20 attempts to handle animations/transitions)
+  for (let attempt = 0; attempt < 20; attempt++) {
+    // Check if we've reached the review page
+    const looksGood = page.getByRole('button', { name: /looks good/i })
+    if (await looksGood.isVisible({ timeout: 500 }).catch(() => false)) {
+      await looksGood.click()
+      break
+    }
+
+    const pageText = await page.locator('body').textContent() ?? ''
+
+    // MirrorMoment interstitial
+    if (pageText.includes('everything you') && !pageText.includes('Review your inputs')) {
+      await page.getByRole('button', { name: 'Continue' }).click()
+      await page.waitForTimeout(500)
+      continue
+    }
+
+    // Handle selection screens
+    for (const label of ['Singapore Citizen', 'No property', 'Basic (Class B1 ward)']) {
+      const btn = page.getByRole('button', { name: label })
+      if (await btn.isVisible({ timeout: 200 }).catch(() => false)) {
+        await btn.click()
+        await page.waitForTimeout(300)
+      }
+    }
+
+    // Click Continue or "Review your answers"
+    const nextBtn = page.getByRole('button', { name: /^continue$|review your answers/i })
+    if (await nextBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await nextBtn.click()
+      await page.waitForTimeout(500)
+    }
+  }
+
+  // Should land on projection or dashboard
+  await page.waitForURL(/\/(projection|dashboard)/, { timeout: 15000 })
   await page.waitForLoadState('networkidle')
 }
 
 test.describe('US-4: Navigate Full Pipeline', () => {
   test('navigate through all main pages without errors', async ({ page }) => {
-    // Complete a quick onboarding
+    // Complete a quick onboarding (lands on /projection or /dashboard)
     await quickOnboarding(page)
 
-    // 1. Verify Inputs page loaded
-    await expect(page.getByText('Personal', { exact: false }).first()).toBeVisible({ timeout: 5000 })
-
-    // 2. Navigate to Projection via sidebar link
+    // 1. Verify Projection page loaded (setup wizard navigates here after completion)
     await navigateVia(page, 'Projection')
     await expectRoute(page, '/projection')
     await expect(page.getByText('Year-by-Year Projection')).toBeVisible({ timeout: 5000 })
@@ -82,8 +120,8 @@ test.describe('US-4: Navigate Full Pipeline', () => {
       await page.goto(url)
       await page.waitForLoadState('networkidle')
 
-      // No error boundary (404 or crash)
-      await expect(page.getByText('404')).not.toBeVisible({ timeout: 3000 })
+      // No error boundary (404 or crash) — use heading role to avoid matching chart tick labels
+      await expect(page.getByRole('heading', { name: '404' })).not.toBeVisible({ timeout: 3000 })
 
       // Key content is visible
       await expect(page.getByText(check, { exact: false }).first()).toBeVisible({ timeout: 5000 })
