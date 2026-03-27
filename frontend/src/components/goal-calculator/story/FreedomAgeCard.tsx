@@ -20,13 +20,13 @@ export function FreedomAgeCard({ freedomAge, freedomAgeWithout, cpfLifeMonthly, 
         className="text-5xl md:text-7xl font-bold tracking-tight"
         style={{ fontFamily: 'Syne, sans-serif' }}
       >
-        {freedomAge}
+        {Math.round(freedomAge)}
       </motion.h1>
       <motion.p variants={staggerChild} className="text-lg md:text-xl text-white/80">
         {isCoupleMode ? 'Our Freedom Age' : 'Your Freedom Age'}
       </motion.p>
       <motion.p variants={staggerChild} className="text-sm text-white/50">
-        Without these goals: {freedomAgeWithout}. CPF LIFE adds ~{formatCurrency(cpfLifeMonthly)}/mo from 65.
+        Without these goals: {Math.round(freedomAgeWithout)}. CPF LIFE adds ~{formatCurrency(cpfLifeMonthly)}/mo from 65.
       </motion.p>
       <motion.p variants={staggerChild} className="text-xs text-white/30 mt-auto pt-8">
         sgfireplanner.com/goal-calculator

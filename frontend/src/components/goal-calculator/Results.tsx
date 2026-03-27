@@ -107,6 +107,54 @@ export function Results({
             />
           )
 
+        case 'loanCheck': {
+          const loanGoal = enrichedGoal ?? storyData.perGoal.find((g) => g.loanQualification)
+          if (!loanGoal?.loanQualification) return null
+          const lq = loanGoal.loanQualification
+          return (
+            <div className="flex flex-col items-center justify-center h-full text-white text-center px-8">
+              <p className="text-6xl font-bold mb-4">{lq.qualified ? 'Qualified' : 'Over limit'}</p>
+              <p className="text-xl opacity-80">
+                {lq.qualified
+                  ? `Monthly mortgage: $${Math.round(lq.monthlyPayment).toLocaleString()}`
+                  : `Max loan: $${Math.round(lq.maxLoan).toLocaleString()}`}
+              </p>
+              <p className="text-sm opacity-60 mt-2">
+                Based on {loanGoal.goal.smartInputs?.kind === 'hdb' ? 'MSR 30%' : 'TDSR 55%'} of gross income
+              </p>
+            </div>
+          )
+        }
+
+        case 'peerBenchmark':
+          return (
+            <div className="flex flex-col items-center justify-center h-full text-white text-center px-8">
+              <p className="text-6xl font-bold mb-4">
+                {Math.round(((basics.monthlyIncome - basics.monthlyExpenses) / basics.monthlyIncome) * 100)}%
+              </p>
+              <p className="text-xl opacity-80">Your savings rate</p>
+              <p className="text-sm opacity-60 mt-2">{storyData.shared.peerBenchmark}</p>
+            </div>
+          )
+
+        case 'taxHeadsUp':
+          return storyData.shared.incomeTaxMonthly > 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-white text-center px-8">
+              <p className="text-6xl font-bold mb-4">${Math.round(storyData.shared.incomeTaxMonthly).toLocaleString()}/mo</p>
+              <p className="text-xl opacity-80">Set aside for income tax</p>
+              <p className="text-sm opacity-60 mt-2">Billed in arrears from Year 2</p>
+            </div>
+          ) : null
+
+        case 'parkingTip':
+          return (
+            <div className="flex flex-col items-center justify-center h-full text-white text-center px-8">
+              <p className="text-3xl font-bold mb-4">{storyData.shared.parkingRecommendation}</p>
+              <p className="text-xl opacity-80">Where to park your savings</p>
+              <p className="text-sm opacity-60 mt-2">Based on your goal timeline</p>
+            </div>
+          )
+
         case 'cta':
           return <CtaCard onContinue={goToFullResults} />
 

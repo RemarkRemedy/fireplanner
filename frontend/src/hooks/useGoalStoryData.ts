@@ -274,8 +274,16 @@ export function computeGoalStoryData(
   const minYears = getMinYearsToGoal(goals, basics.age)
   const parkingRecommendation = getParkingRecommendation(minYears)
 
-  // 8. Build story cards
-  const storyCards = buildGoalCardSequence(goals.length, hasAnyPropertyGoal, isCoupleMode)
+  // 8. Build story cards — map 'goal-N' placeholders to real goal IDs
+  const rawCards = buildGoalCardSequence(goals.length, hasAnyPropertyGoal, isCoupleMode)
+  const storyCards = rawCards.map((card) => {
+    if (card.goalId && card.goalId.startsWith('goal-')) {
+      const idx = parseInt(card.goalId.replace('goal-', ''), 10)
+      const realGoal = goals[idx]
+      return realGoal ? { ...card, goalId: realGoal.id } : card
+    }
+    return card
+  })
 
   return {
     perGoal,
