@@ -18,6 +18,7 @@ import {
   CPF_LIFE_ESTIMATES,
   PEER_BENCHMARKS,
   MORTGAGE_RATES,
+  LTV_RATIOS,
 } from '@/lib/data/goal-defaults'
 
 // ============================================================
@@ -27,11 +28,7 @@ import {
 /** Default tenure for HDB loans in months. */
 const DEFAULT_LOAN_TENURE_MONTHS = 300 // 25 years
 
-/** LTV ratios by loan type (not in goal-defaults since they're calc assumptions). */
-const LTV_RATIOS: Record<'hdb-loan' | 'bank-loan', number> = {
-  'hdb-loan': 0.90,
-  'bank-loan': 0.75,
-}
+// LTV_RATIOS imported from '@/lib/data/goal-defaults'
 
 /** HDB resale appreciation rate assumption. */
 const HDB_APPRECIATION_RATE = 0.03
