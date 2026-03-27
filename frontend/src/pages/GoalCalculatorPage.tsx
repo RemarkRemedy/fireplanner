@@ -303,8 +303,8 @@ export function GoalCalculatorPage() {
         </div>
       </header>
 
-      {/* Main content — wider on desktop for results two-column layout */}
-      <main className={`mx-auto px-4 py-8 ${state.step === 'results' ? 'max-w-6xl' : 'max-w-3xl'}`}>
+      {/* Main content */}
+      <main className="mx-auto max-w-3xl px-4 py-8">
         {state.step === 'pick' && (
           <GoalPicker
             onSelect={handleSelectTile}

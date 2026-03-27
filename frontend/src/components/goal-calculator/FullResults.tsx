@@ -516,7 +516,6 @@ export function FullResults({
   const [showMobileBar, setShowMobileBar] = useState(true)
 
   useEffect(() => {
-    // Show bar when not at the very bottom (where inline buttons are)
     const handleScroll = () => {
       const nearBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 200
       setShowMobileBar(!nearBottom)
@@ -525,183 +524,172 @@ export function FullResults({
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const actionButtons = (
-    <>
-      <Button className="w-full gap-2" onClick={onContinueToPlanner}>
-        Continue to Full Planner <ArrowRight className="h-4 w-4" />
-      </Button>
-
-      {goals.length < 5 && (
-        <Button variant="outline" className="w-full gap-2" onClick={onAddGoal}>
-          <Plus className="h-4 w-4" /> Add Another Goal
-        </Button>
-      )}
-
-      {onViewStory && (
-        <Button variant="outline" className="w-full gap-2" onClick={onViewStory}>
-          <Play className="h-4 w-4" /> View Updated Story
-        </Button>
-      )}
-
-      <Button variant="outline" className="w-full gap-2" onClick={onEditBasics}>
-        <Pencil className="h-4 w-4" /> Edit Basics
-      </Button>
-
-      <Button variant="ghost" className="w-full gap-2 text-muted-foreground" onClick={onStartOver}>
-        <RefreshCw className="h-4 w-4" /> Start Over
-      </Button>
-    </>
-  )
-
-  const mainContent = (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="text-center space-y-1">
-        <h2 className="text-2xl font-bold tracking-tight">{heading}</h2>
-        {isDeficit ? (
-          <p className="text-sm text-red-600">
-            Your expenses exceed {isCoupleMode ? 'combined' : 'your'} income by{' '}
-            {formatCurrency(Math.round(Math.abs(available)))}/mo.
-          </p>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            You can save {formatCurrency(Math.round(available))}/mo
-            from {isCoupleMode ? 'combined' : 'your'} take-home pay.
-          </p>
-        )}
-      </div>
-
-      {/* Deficit warning */}
-      {isDeficit && (
-        <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-          <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-          <span>
-            Your monthly expenses are higher than your income. The projection below
-            assumes 3% annual salary growth, which may close this gap over time,
-            but your current cash flow cannot support saving for goals.
-          </span>
-        </div>
-      )}
-
-      {/* Wealth curve chart + what-if sliders */}
-      {wealthCurve && (
-        <div className="space-y-4">
-          <WealthCurveChart
-            data={wealthCurve.chartData}
-            goalMarkers={wealthCurve.goalMarkers}
-            loanPayoffMarkers={wealthCurve.loanPayoffMarkers}
-            freedomAge={wealthCurve.freedomAge}
-            fireNumber={wealthCurve.fireNumber}
-            currentAge={basics.age}
-            onContinueToPlanner={onContinueToPlanner}
-          />
-          <WhatIfSliders
-            basics={basics}
-            goals={goals}
-            overrides={wealthCurve.overrides}
-            onChange={wealthCurve.setOverrides}
-            onReset={wealthCurve.resetOverrides}
-          />
-        </div>
-      )}
-
-      {/* Per-goal enriched cards */}
-      {effectiveData.perGoal.map((enriched, i) => {
-        const priorSavings = effectiveData.perGoal
-          .slice(0, i)
-          .reduce((sum, eg) => sum + eg.adjustedMonthlySavings, 0)
-        return (
-          <EnrichedGoalCard
-            key={enriched.goal.id}
-            enriched={enriched}
-            basics={basics}
-            feasibility={goalFeasibilities[i]}
-            remainingAvailable={available - priorSavings}
-          />
-        )
-      })}
-
-      {/* Multi-goal summary (only for 2+ goals) */}
-      {goals.length > 1 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Combined goal summary</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Total monthly savings needed</span>
-              <span className="font-medium">
-                {formatCurrency(Math.round(totalMonthlySavings))}/mo
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Available monthly savings</span>
-              <span className="font-medium">
-                {formatCurrency(Math.round(available))}/mo
-              </span>
-            </div>
-
-            {exceeds && (
-              <p className="text-sm text-red-600">
-                Combined goals exceed your available savings by{' '}
-                {formatCurrency(Math.round(totalMonthlySavings - available))}/mo.
-                Consider extending timelines or prioritizing.
-              </p>
-            )}
-
-            {/* Per-goal stacked feasibility */}
-            <div className="space-y-2 pt-2">
-              {stacked.map((s) => (
-                <div
-                  key={s.goal.id}
-                  className="flex items-center justify-between gap-2"
-                >
-                  <span className="text-sm truncate">{s.label}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      {formatCurrency(Math.round(s.adjustedMonthlySavings))}/mo
-                    </span>
-                    <FeasibilityBadge level={s.stackedFeasibility.level} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Shared insights */}
-      <SharedInsightsSection data={effectiveData} basics={basics} projectionFreedomAge={wealthCurve?.freedomAge} />
-
-      {/* Disclaimers */}
-      <Disclaimers hasPropertyGoal={hasPropertyGoal} />
-
-      {/* Inline action buttons — visible on mobile when scrolled to bottom, always on desktop below content */}
-      <div className="space-y-3 lg:hidden pb-20">
-        {actionButtons}
-      </div>
-    </div>
-  )
-
   return (
     <>
-      {/* Desktop: two-column layout */}
-      <div className="lg:grid lg:grid-cols-[1fr_260px] lg:gap-8">
-        {/* Left column: main content */}
-        <div className="max-w-2xl">{mainContent}</div>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="text-center space-y-1">
+          <h2 className="text-2xl font-bold tracking-tight">{heading}</h2>
+          {isDeficit ? (
+            <p className="text-sm text-red-600">
+              Your expenses exceed {isCoupleMode ? 'combined' : 'your'} income by{' '}
+              {formatCurrency(Math.round(Math.abs(available)))}/mo.
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              You can save {formatCurrency(Math.round(available))}/mo
+              from {isCoupleMode ? 'combined' : 'your'} take-home pay.
+            </p>
+          )}
+        </div>
 
-        {/* Right column: sticky action sidebar (desktop only) */}
-        <aside className="hidden lg:block">
-          <div className="sticky top-8 space-y-3">
-            {actionButtons}
+        {/* Compact action row — always visible at top */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            {goals.length < 5 && (
+              <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={onAddGoal}>
+                <Plus className="h-3.5 w-3.5" /> Add Goal
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground" onClick={onEditBasics}>
+              <Pencil className="h-3.5 w-3.5" /> Edit Basics
+            </Button>
+            {onViewStory && (
+              <Button variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground" onClick={onViewStory}>
+                <Play className="h-3.5 w-3.5" /> Story
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground" onClick={onStartOver}>
+              <RefreshCw className="h-3.5 w-3.5" /> Reset
+            </Button>
           </div>
-        </aside>
+          <Button size="sm" className="gap-1 text-xs" onClick={onContinueToPlanner}>
+            Full Planner <ArrowRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+
+        {/* Deficit warning */}
+        {isDeficit && (
+          <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+            <span>
+              Your monthly expenses are higher than your income. The projection below
+              assumes 3% annual salary growth, which may close this gap over time,
+              but your current cash flow cannot support saving for goals.
+            </span>
+          </div>
+        )}
+
+        {/* Wealth curve chart + what-if sliders */}
+        {wealthCurve && (
+          <div className="space-y-4">
+            <WealthCurveChart
+              data={wealthCurve.chartData}
+              goalMarkers={wealthCurve.goalMarkers}
+              loanPayoffMarkers={wealthCurve.loanPayoffMarkers}
+              freedomAge={wealthCurve.freedomAge}
+              fireNumber={wealthCurve.fireNumber}
+              currentAge={basics.age}
+              onContinueToPlanner={onContinueToPlanner}
+            />
+            <WhatIfSliders
+              basics={basics}
+              goals={goals}
+              overrides={wealthCurve.overrides}
+              onChange={wealthCurve.setOverrides}
+              onReset={wealthCurve.resetOverrides}
+            />
+          </div>
+        )}
+
+        {/* Per-goal enriched cards */}
+        {effectiveData.perGoal.map((enriched, i) => {
+          const priorSavings = effectiveData.perGoal
+            .slice(0, i)
+            .reduce((sum, eg) => sum + eg.adjustedMonthlySavings, 0)
+          return (
+            <EnrichedGoalCard
+              key={enriched.goal.id}
+              enriched={enriched}
+              basics={basics}
+              feasibility={goalFeasibilities[i]}
+              remainingAvailable={available - priorSavings}
+            />
+          )
+        })}
+
+        {/* Multi-goal summary (only for 2+ goals) */}
+        {goals.length > 1 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Combined goal summary</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Total monthly savings needed</span>
+                <span className="font-medium">
+                  {formatCurrency(Math.round(totalMonthlySavings))}/mo
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Available monthly savings</span>
+                <span className="font-medium">
+                  {formatCurrency(Math.round(available))}/mo
+                </span>
+              </div>
+
+              {exceeds && (
+                <p className="text-sm text-red-600">
+                  Combined goals exceed your available savings by{' '}
+                  {formatCurrency(Math.round(totalMonthlySavings - available))}/mo.
+                  Consider extending timelines or prioritizing.
+                </p>
+              )}
+
+              {/* Per-goal stacked feasibility */}
+              <div className="space-y-2 pt-2">
+                {stacked.map((s) => (
+                  <div
+                    key={s.goal.id}
+                    className="flex items-center justify-between gap-2"
+                  >
+                    <span className="text-sm truncate">{s.label}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {formatCurrency(Math.round(s.adjustedMonthlySavings))}/mo
+                      </span>
+                      <FeasibilityBadge level={s.stackedFeasibility.level} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Shared insights */}
+        <SharedInsightsSection data={effectiveData} basics={basics} projectionFreedomAge={wealthCurve?.freedomAge} />
+
+        {/* Disclaimers */}
+        <Disclaimers hasPropertyGoal={hasPropertyGoal} />
+
+        {/* Bottom CTA — repeated for users who scroll all the way down */}
+        <div className="space-y-3 pb-20 lg:pb-0">
+          <Button className="w-full gap-2" onClick={onContinueToPlanner}>
+            Continue to Full Planner <ArrowRight className="h-4 w-4" />
+          </Button>
+          {goals.length < 5 && (
+            <Button variant="outline" className="w-full gap-2" onClick={onAddGoal}>
+              <Plus className="h-4 w-4" /> Add Another Goal
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Mobile: sticky bottom bar with primary actions */}
       {showMobileBar && (
         <div className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 p-3 lg:hidden z-50">
-          <div className="flex gap-2 max-w-2xl mx-auto">
+          <div className="flex gap-2 max-w-3xl mx-auto">
             {goals.length < 5 && (
               <Button variant="outline" className="flex-1 gap-1 text-sm" onClick={onAddGoal}>
                 <Plus className="h-3.5 w-3.5" /> Add Goal
