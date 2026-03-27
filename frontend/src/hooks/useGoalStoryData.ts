@@ -165,12 +165,14 @@ export function computeGoalStoryData(
   // 3. Household values
   const householdGross = grossIncome + partnerGross
 
-  // 4. Emergency fund
+  // 4. Emergency fund — reserve before goal allocation
   const emergencyFund = getEmergencyFundFloor(basics.monthlyExpenses)
   const emergencyFundGap = Math.max(0, emergencyFund - basics.existingSavings)
+  const savingsAfterEmergency = Math.max(0, basics.existingSavings - emergencyFund)
 
-  // 5. Run stacked computation
-  const stacked = computeMultiGoalStacking(sortedGoals, basics)
+  // 5. Run stacked computation with emergency fund reserved
+  const stackingBasics = { ...basics, existingSavings: savingsAfterEmergency }
+  const stacked = computeMultiGoalStacking(sortedGoals, stackingBasics)
 
   // Build a lookup from goal id -> stacked result
   const stackedById = new Map<string, StackedGoalResult>()
@@ -255,9 +257,10 @@ export function computeGoalStoryData(
   const freedomAge = basics.age + impact.yearsWithGoals
   const freedomAgeWithout = basics.age + impact.yearsWithoutGoals
 
-  // Peer benchmark
-  const savingsRate = basics.monthlyIncome > 0
-    ? (basics.monthlyIncome - basics.monthlyExpenses) / basics.monthlyIncome
+  // Peer benchmark — use household income in couple mode
+  const householdIncome = basics.monthlyIncome + (basics.partnerMonthlyIncome ?? 0)
+  const savingsRate = householdIncome > 0
+    ? (householdIncome - basics.monthlyExpenses) / householdIncome
     : 0
   const peerBenchmark = getPeerBenchmark(savingsRate, basics.age)
 

@@ -227,7 +227,8 @@ export function computeMultiGoalStacking(
   // Sort by targetAge ascending — earliest goals get savings first
   const sorted = [...goals].sort((a, b) => a.targetAge - b.targetAge)
 
-  let remainingCapacity = basics.monthlyIncome - basics.monthlyExpenses
+  const householdIncome = basics.monthlyIncome + (basics.partnerMonthlyIncome ?? 0)
+  let remainingCapacity = householdIncome - basics.monthlyExpenses
   let remainingSavings = basics.existingSavings
 
   return sorted.map((goal) => {
@@ -282,7 +283,8 @@ export function computeRetirementImpact(
   const requiredNestEgg = Math.max(0, basics.monthlyExpenses * 12 * FIRE_MULTIPLIER - cpfLifeOffset)
   const adjustedPortfolioBase = Math.max(0, basics.existingSavings - savingsAllocatedToGoals)
 
-  const monthlySavingsWithout = basics.monthlyIncome - basics.monthlyExpenses
+  const householdIncome = basics.monthlyIncome + (basics.partnerMonthlyIncome ?? 0)
+  const monthlySavingsWithout = householdIncome - basics.monthlyExpenses
   const annualSavingsWithout = monthlySavingsWithout * 12
 
   const monthlySavingsWith = monthlySavingsWithout - totalGoalMonthlySavings

@@ -64,7 +64,8 @@ function reducer(state: State, action: Action): State {
           state.basics.existingSavings,
           years,
         )
-        const available = state.basics.monthlyIncome - state.basics.monthlyExpenses
+        const householdIncome = state.basics.monthlyIncome + (state.basics.partnerMonthlyIncome ?? 0)
+        const available = householdIncome - state.basics.monthlyExpenses
         const feasible = monthlySavingsNeeded <= available
         const shortfallPerMonth = feasible ? 0 : monthlySavingsNeeded - available
 
@@ -91,7 +92,8 @@ function reducer(state: State, action: Action): State {
     case 'COMPLETE_BASICS': {
       // Recompute monthlySavingsNeeded for all goals with the new basics
       const basics = action.basics
-      const available = basics.monthlyIncome - basics.monthlyExpenses
+      const householdIncome = basics.monthlyIncome + (basics.partnerMonthlyIncome ?? 0)
+      const available = householdIncome - basics.monthlyExpenses
 
       const updatedGoals = state.goals.map((goal) => {
         const years = goal.targetAge - basics.age

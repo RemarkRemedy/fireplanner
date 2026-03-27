@@ -459,7 +459,8 @@ export function FullResults({
   onEditBasics,
   onViewStory,
 }: FullResultsProps) {
-  const available = basics.monthlyIncome - basics.monthlyExpenses
+  const householdIncome = basics.monthlyIncome + (basics.partnerMonthlyIncome ?? 0)
+  const available = householdIncome - basics.monthlyExpenses
   const hasPropertyGoal = goals.some((g) => g.category === 'housing')
 
   // Compute feasibility for each goal individually
