@@ -478,10 +478,14 @@ export function FullResults({
   const effectiveData = wealthCurve?.isModified ? wealthCurve.storyData : data
 
   // Compute feasibility for each goal individually
+  // When expenses > income (deficit), force all goals to red since cash flow
+  // cannot support saving regardless of existing savings coverage
   const goalFeasibilities = useMemo(
     () =>
       goals.map((goal) => {
-        // Use enriched adjusted savings for feasibility
+        if (available <= 0) {
+          return { level: 'red' as const, feasible: false, shortfall: Math.abs(available) }
+        }
         const enriched = effectiveData.perGoal.find((eg) => eg.goal.id === goal.id)
         const monthlySavings = enriched?.adjustedMonthlySavings ?? goal.monthlySavingsNeeded
         return computeGoalFeasibility(monthlySavings, available)
@@ -503,17 +507,37 @@ export function FullResults({
 
   const isCoupleMode = data.shared.isCoupleMode
   const heading = isCoupleMode ? 'Our Goal Plan' : 'Your Goal Plan'
+  const isDeficit = available < 0
 
   return (
     <div className="space-y-6 max-w-xl mx-auto">
       {/* Header */}
       <div className="text-center space-y-1">
         <h2 className="text-2xl font-bold tracking-tight">{heading}</h2>
-        <p className="text-sm text-muted-foreground">
-          {isCoupleMode ? 'You' : 'You'} can save {formatCurrency(Math.round(available))}/mo
-          from {isCoupleMode ? 'combined' : 'your'} take-home pay.
-        </p>
+        {isDeficit ? (
+          <p className="text-sm text-red-600">
+            Your expenses exceed {isCoupleMode ? 'combined' : 'your'} income by{' '}
+            {formatCurrency(Math.round(Math.abs(available)))}/mo.
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            You can save {formatCurrency(Math.round(available))}/mo
+            from {isCoupleMode ? 'combined' : 'your'} take-home pay.
+          </p>
+        )}
       </div>
+
+      {/* Deficit warning */}
+      {isDeficit && (
+        <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+          <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+          <span>
+            Your monthly expenses are higher than your income. The projection below
+            assumes 3% annual salary growth, which may close this gap over time,
+            but your current cash flow cannot support saving for goals.
+          </span>
+        </div>
+      )}
 
       {/* Wealth curve chart + what-if sliders */}
       {wealthCurve && (
