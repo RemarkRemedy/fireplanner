@@ -273,20 +273,41 @@ describe('computeMultiGoalStacking', () => {
   })
 
   it('flags later goals infeasible when capacity exhausted', () => {
+    // basics: age 30, income 8000, expenses 3000 → capacity = 5000/mo
+    const expensiveBasics: GoalCalcBasics = {
+      age: 30,
+      monthlyIncome: 8000,
+      monthlyExpenses: 3000,
+      existingSavings: 10_000,
+    }
+
     const goals = [
-      makeGoal({ id: 'g1', targetAge: 35, monthlySavingsNeeded: 4000 }),
-      makeGoal({ id: 'g2', targetAge: 40, monthlySavingsNeeded: 2000 }),
+      makeGoal({
+        id: 'g1',
+        targetAge: 33, // 3 years — gets $10K savings, ~$3722/mo
+        totalCostToday: 150_000,
+        breakdown: { items: [{ label: 'A', amount: 150_000 }], total: 150_000 },
+        monthlySavingsNeeded: 999,
+      }),
+      makeGoal({
+        id: 'g2',
+        targetAge: 34, // 4 years — gets $0 savings, ~$3948/mo
+        totalCostToday: 200_000,
+        breakdown: { items: [{ label: 'B', amount: 200_000 }], total: 200_000 },
+        monthlySavingsNeeded: 999,
+      }),
     ]
 
-    const result = computeMultiGoalStacking(goals, basics)
+    const result = computeMultiGoalStacking(goals, expensiveBasics)
 
-    // First goal takes 4000 of 5000 available
+    // First goal takes ~$3722 of $5000 capacity — feasible
     expect(result[0].stackedFeasibility.level).not.toBe('red')
-    expect(result[0].remainingCapacity).toBe(1000)
+    expect(result[0].allocatedSavings).toBe(10_000)
 
-    // Second goal needs 2000 but only 1000 remains
+    // Second goal needs ~$3948 but only ~$1278 remains — infeasible
     expect(result[1].stackedFeasibility.level).toBe('red')
     expect(result[1].stackedFeasibility.feasible).toBe(false)
+    expect(result[1].allocatedSavings).toBe(0)
   })
 
   it('all goals feasible when total fits in budget', () => {
@@ -299,6 +320,108 @@ describe('computeMultiGoalStacking', () => {
     for (const r of result) {
       expect(r.stackedFeasibility.feasible).toBe(true)
     }
+  })
+
+  it('multi-goal stacking depletes lump-sum savings across goals', () => {
+    // basics.existingSavings = 50_000, basics.age = 30
+    // Wedding at age 28 is past — but let's use age 33 and 35 to be valid
+    const wedding = makeGoal({
+      id: 'wedding',
+      label: 'Wedding',
+      category: 'wedding',
+      targetAge: 33, // 3 years away — gets savings first (earlier targetAge)
+      totalCostToday: 50_000,
+      breakdown: { items: [{ label: 'Wedding', amount: 50_000 }], total: 50_000 },
+      monthlySavingsNeeded: 999, // pre-stacking value (will be recomputed)
+    })
+    const hdb = makeGoal({
+      id: 'hdb',
+      label: 'HDB',
+      category: 'housing',
+      targetAge: 35, // 5 years away — gets remaining savings
+      totalCostToday: 90_000,
+      breakdown: { items: [{ label: 'HDB costs', amount: 90_000 }], total: 90_000 },
+      monthlySavingsNeeded: 999, // pre-stacking value (will be recomputed)
+    })
+
+    const result = computeMultiGoalStacking([hdb, wedding], basics)
+
+    // Wedding (earlier targetAge) should get the full $50K
+    expect(result[0].goal.id).toBe('wedding')
+    expect(result[0].allocatedSavings).toBe(50_000)
+    // Wedding's $50K fully covered by savings → monthly should be 0
+    expect(result[0].adjustedMonthlySavings).toBe(0)
+
+    // HDB (later targetAge) should get $0 savings
+    expect(result[1].goal.id).toBe('hdb')
+    expect(result[1].allocatedSavings).toBe(0)
+    // HDB needs full $90K from monthly savings — higher than if it had $50K
+    const hdbMonthlyWithNoSavings = computeMonthlySavingsNeeded(90_000, 0, 5)
+    expect(result[1].adjustedMonthlySavings).toBeCloseTo(hdbMonthlyWithNoSavings, 2)
+    expect(result[1].adjustedMonthlySavings).toBeGreaterThan(0)
+  })
+
+  it('single goal uses full savings (no regression)', () => {
+    const goal = makeGoal({
+      id: 'g1',
+      targetAge: 35,
+      totalCostToday: 100_000,
+      breakdown: { items: [{ label: 'Cost', amount: 100_000 }], total: 100_000 },
+      monthlySavingsNeeded: 999, // will be recomputed
+    })
+
+    const result = computeMultiGoalStacking([goal], basics)
+
+    // Single goal should get the full $50K savings
+    expect(result[0].allocatedSavings).toBe(50_000)
+    // Recomputed monthly should match direct computation
+    const expected = computeMonthlySavingsNeeded(100_000, 50_000, 5)
+    expect(result[0].adjustedMonthlySavings).toBeCloseTo(expected, 2)
+  })
+
+  it('savings depleted across 3 goals', () => {
+    const basicsSmall: GoalCalcBasics = {
+      age: 30,
+      monthlyIncome: 8000,
+      monthlyExpenses: 3000,
+      existingSavings: 30_000,
+    }
+
+    const g1 = makeGoal({
+      id: 'g1',
+      targetAge: 32, // earliest — gets savings first
+      totalCostToday: 20_000,
+      breakdown: { items: [{ label: 'A', amount: 20_000 }], total: 20_000 },
+      monthlySavingsNeeded: 999,
+    })
+    const g2 = makeGoal({
+      id: 'g2',
+      targetAge: 34,
+      totalCostToday: 40_000,
+      breakdown: { items: [{ label: 'B', amount: 40_000 }], total: 40_000 },
+      monthlySavingsNeeded: 999,
+    })
+    const g3 = makeGoal({
+      id: 'g3',
+      targetAge: 36,
+      totalCostToday: 60_000,
+      breakdown: { items: [{ label: 'C', amount: 60_000 }], total: 60_000 },
+      monthlySavingsNeeded: 999,
+    })
+
+    const result = computeMultiGoalStacking([g3, g1, g2], basicsSmall)
+
+    // g1 (age 32) gets up to $20K (capped by goal cost)
+    expect(result[0].goal.id).toBe('g1')
+    expect(result[0].allocatedSavings).toBe(20_000)
+
+    // g2 (age 34) gets remaining $10K
+    expect(result[1].goal.id).toBe('g2')
+    expect(result[1].allocatedSavings).toBe(10_000)
+
+    // g3 (age 36) gets $0
+    expect(result[2].goal.id).toBe('g3')
+    expect(result[2].allocatedSavings).toBe(0)
   })
 })
 

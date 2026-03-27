@@ -72,6 +72,10 @@ export interface StackedGoalResult {
   label: string
   stackedFeasibility: FeasibilityResult
   remainingCapacity: number
+  /** How much of existingSavings was allocated to this goal's lump-sum start */
+  allocatedSavings: number
+  /** Monthly savings recomputed using only allocatedSavings (not full existingSavings) */
+  adjustedMonthlySavings: number
 }
 
 export interface RetirementImpactResult {
@@ -208,19 +212,32 @@ export function computeMultiGoalStacking(
   goals: GoalCalcGoal[],
   basics: GoalCalcBasics,
 ): StackedGoalResult[] {
-  // Sort by targetAge ascending
+  // Sort by targetAge ascending — earliest goals get savings first
   const sorted = [...goals].sort((a, b) => a.targetAge - b.targetAge)
 
   let remainingCapacity = basics.monthlyIncome - basics.monthlyExpenses
+  let remainingSavings = basics.existingSavings
 
   return sorted.map((goal) => {
+    // Allocate lump-sum savings to this goal (up to the goal's total cost)
+    const allocated = Math.min(remainingSavings, goal.breakdown.total)
+    remainingSavings -= allocated
+
+    // Recompute monthly savings using only the allocated lump sum
+    const years = goal.targetAge - basics.age
+    const adjustedMonthly = computeMonthlySavingsNeeded(
+      goal.breakdown.total,
+      allocated,
+      years,
+    )
+
     const feasibility = computeGoalFeasibility(
-      goal.monthlySavingsNeeded,
+      adjustedMonthly,
       remainingCapacity,
     )
 
     const capacityAfter = feasibility.feasible
-      ? remainingCapacity - goal.monthlySavingsNeeded
+      ? remainingCapacity - adjustedMonthly
       : remainingCapacity
 
     const result: StackedGoalResult = {
@@ -228,10 +245,12 @@ export function computeMultiGoalStacking(
       label: goal.label,
       stackedFeasibility: feasibility,
       remainingCapacity: Math.max(0, capacityAfter),
+      allocatedSavings: allocated,
+      adjustedMonthlySavings: adjustedMonthly,
     }
 
     if (feasibility.feasible) {
-      remainingCapacity -= goal.monthlySavingsNeeded
+      remainingCapacity -= adjustedMonthly
     }
 
     return result
@@ -246,8 +265,9 @@ export function computeRetirementImpact(
   basics: GoalCalcBasics,
   totalGoalMonthlySavings: number,
   savingsAllocatedToGoals: number,
+  cpfLifeOffset: number = 0,
 ): RetirementImpactResult {
-  const requiredNestEgg = basics.monthlyExpenses * 12 * FIRE_MULTIPLIER
+  const requiredNestEgg = Math.max(0, basics.monthlyExpenses * 12 * FIRE_MULTIPLIER - cpfLifeOffset)
   const adjustedPortfolioBase = Math.max(0, basics.existingSavings - savingsAllocatedToGoals)
 
   const monthlySavingsWithout = basics.monthlyIncome - basics.monthlyExpenses

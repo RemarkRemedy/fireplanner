@@ -171,19 +171,15 @@ function GoalResultCard({
 // ============================================================
 
 function MultiGoalSummary({
-  goals,
   basics,
+  stacked,
 }: {
-  goals: GoalCalcGoal[]
   basics: GoalCalcBasics
+  stacked: ReturnType<typeof computeMultiGoalStacking>
 }) {
-  const stacked = useMemo(
-    () => computeMultiGoalStacking(goals, basics),
-    [goals, basics],
-  )
-
-  const totalMonthlySavings = goals.reduce(
-    (sum, g) => sum + g.monthlySavingsNeeded,
+  // Use recomputed monthly savings from stacking (accounts for savings depletion)
+  const totalMonthlySavings = stacked.reduce(
+    (sum, s) => sum + s.adjustedMonthlySavings,
     0,
   )
   const available = basics.monthlyIncome - basics.monthlyExpenses
@@ -226,7 +222,7 @@ function MultiGoalSummary({
               <span className="text-sm truncate">{s.label}</span>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground whitespace-nowrap">
-                  {formatCurrency(Math.round(s.goal.monthlySavingsNeeded))}/mo
+                  {formatCurrency(Math.round(s.adjustedMonthlySavings))}/mo
                 </span>
                 <FeasibilityBadge level={s.stackedFeasibility.level} />
               </div>
@@ -243,20 +239,21 @@ function MultiGoalSummary({
 // ============================================================
 
 function RetirementImpact({
-  goals,
   basics,
+  stacked,
 }: {
-  goals: GoalCalcGoal[]
   basics: GoalCalcBasics
+  stacked: ReturnType<typeof computeMultiGoalStacking>
 }) {
   const impact = useMemo(() => {
-    const totalMonthlySavings = goals.reduce(
-      (sum, g) => sum + g.monthlySavingsNeeded,
+    // Use recomputed values from the engine (accounts for savings depletion)
+    const totalMonthlySavings = stacked.reduce(
+      (sum, s) => sum + s.adjustedMonthlySavings,
       0,
     )
-    const savingsAllocatedToGoals = Math.min(
-      basics.existingSavings,
-      goals.reduce((sum, g) => sum + g.totalCostToday, 0),
+    const savingsAllocatedToGoals = stacked.reduce(
+      (sum, s) => sum + s.allocatedSavings,
+      0,
     )
 
     return computeRetirementImpact(
@@ -264,7 +261,7 @@ function RetirementImpact({
       totalMonthlySavings,
       savingsAllocatedToGoals,
     )
-  }, [goals, basics])
+  }, [basics, stacked])
 
   // Don't show if retirement impact can't be computed meaningfully
   if (!isFinite(impact.yearsWithGoals) || !isFinite(impact.yearsWithoutGoals)) {
@@ -320,6 +317,12 @@ export function Results({
     [goals, available],
   )
 
+  // Compute stacked results once — used by both MultiGoalSummary and RetirementImpact
+  const stacked = useMemo(
+    () => computeMultiGoalStacking(goals, basics),
+    [goals, basics],
+  )
+
   return (
     <div className="space-y-6 max-w-xl mx-auto">
       {/* Heading */}
@@ -342,11 +345,11 @@ export function Results({
 
       {/* Multi-goal summary (only for 2+ goals) */}
       {goals.length > 1 && (
-        <MultiGoalSummary goals={goals} basics={basics} />
+        <MultiGoalSummary basics={basics} stacked={stacked} />
       )}
 
       {/* Retirement impact callout */}
-      <RetirementImpact goals={goals} basics={basics} />
+      <RetirementImpact basics={basics} stacked={stacked} />
 
       {/* Action buttons */}
       <div className="space-y-3">
