@@ -68,7 +68,7 @@ export function WhatIfSliders({ basics, goals, overrides, onChange, onReset }: W
     return [
       {
         key: `${goal.id}-targetAge`,
-        label: `${goal.label} — target age`,
+        label: `${goal.label}: target age`,
         value: targetAge,
         originalValue: goal.targetAge,
         min: basics.age + 1,
@@ -86,7 +86,7 @@ export function WhatIfSliders({ basics, goals, overrides, onChange, onReset }: W
       },
       {
         key: `${goal.id}-totalCost`,
-        label: `${goal.label} — budget`,
+        label: `${goal.label}: budget`,
         value: totalCost,
         originalValue: goal.totalCostToday,
         min: 10000,
