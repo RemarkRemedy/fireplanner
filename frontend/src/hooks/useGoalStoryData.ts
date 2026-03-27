@@ -21,7 +21,6 @@ import {
   computeRetirementImpact,
   computeMonthlySavingsNeeded,
   computeMonthlyLoanPayment,
-  FIRE_MULTIPLIER,
 } from '@/lib/calculations/goal-calculator'
 import {
   accumulateCpfOa,
@@ -299,14 +298,16 @@ export function computeGoalStoryData(
     return sum + eg.monthlyLoanPayment
   }, 0)
 
-  // CPF LIFE
+  // CPF LIFE (displayed as context, but NOT used to reduce FIRE number for Freedom Age).
+  // The steady-state offset assumes perpetual income, but CPF LIFE only starts at 65.
+  // For young users this collapses the required nest egg to near-zero, giving absurd
+  // Freedom Ages. The full planner handles this properly with year-by-year simulation.
   const cpfLifeMonthly = lookupCpfLifeEstimate(grossIncome)
-  const cpfLifeAnnual = cpfLifeMonthly * 12
-  const cpfLifeOffset = cpfLifeAnnual * FIRE_MULTIPLIER
 
-  // Freedom age — include both savings for upfront costs AND ongoing loan payments
+  // Freedom age — include both savings for upfront costs AND ongoing loan payments.
+  // Pass cpfLifeOffset=0 so the FIRE number uses full expenses without CPF LIFE reduction.
   const totalDeductionFromSavings = totalMonthlySavings + totalMonthlyLoanPayments
-  const impact = computeRetirementImpact(basics, totalDeductionFromSavings, totalAllocatedSavings, cpfLifeOffset)
+  const impact = computeRetirementImpact(basics, totalDeductionFromSavings, totalAllocatedSavings, 0)
   const freedomAge = basics.age + impact.yearsWithGoals
   const freedomAgeWithout = basics.age + impact.yearsWithoutGoals
 

@@ -306,16 +306,15 @@ describe('computeGoalStoryData', () => {
     })
   })
 
-  describe('freedom age includes CPF LIFE offset', () => {
-    it('freedom age with CPF LIFE is lower than without', () => {
+  describe('CPF LIFE estimate', () => {
+    it('computes CPF LIFE monthly estimate without using it for Freedom Age', () => {
       const basics = makeBasics({ grossIncome: 7000 })
       const goals = [makeWeddingGoal()]
 
       const result = computeGoalStoryData(basics, goals)
 
-      // CPF LIFE offset reduces nest egg needed, so freedom age should be
-      // calculated with the offset. The freedom age itself is always > age,
-      // and CPF LIFE monthly should be positive.
+      // CPF LIFE monthly is computed for display, but NOT used to reduce
+      // the FIRE number (it only starts at 65, too far for young users).
       expect(result.shared.cpfLifeMonthly).toBeGreaterThan(0)
       expect(result.shared.freedomAge).toBeGreaterThan(basics.age)
     })
