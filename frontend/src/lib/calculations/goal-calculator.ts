@@ -14,6 +14,13 @@ import {
   computeCondoDownPayment,
   getCarPurchaseCost,
   CAR_DOWN_PAYMENT_RATE,
+  CAR_HP_RATE,
+  CAR_HP_TENURE_YEARS,
+  computeCarHpTotal,
+  computeMonthlyMortgagePayment,
+  MORTGAGE_RATES,
+  LOAN_TENURE_YEARS,
+  LTV_RATIOS,
   getRenovationEstimate,
   getLegalFees,
 } from '@/lib/data/goal-defaults'
@@ -334,6 +341,50 @@ export function computeRetirementImpact(
     deltaYears: yearsWithGoals - yearsWithoutGoals,
     fullyCommitted,
     adjustedPortfolioBase,
+  }
+}
+
+// ============================================================
+// computeMonthlyLoanPayment
+// ============================================================
+
+/**
+ * Compute the monthly loan payment (mortgage or car HP) for a financed goal.
+ * Returns 0 for goals with no financing (wedding, education, custom, etc.).
+ */
+export function computeMonthlyLoanPayment(goal: GoalCalcGoal): number {
+  if (!goal.smartInputs) return 0
+
+  const inputs = goal.smartInputs
+  switch (inputs.kind) {
+    case 'hdb': {
+      const price = inputs.priceOverride ?? getHdbPriceRange(inputs.flatType, inputs.tenure).mid
+      const isHdbLoan = inputs.loanType === 'hdb-loan'
+      const ltvKey = isHdbLoan ? 'hdb-loan' : 'bank-loan'
+      const ltv = LTV_RATIOS[ltvKey as keyof typeof LTV_RATIOS]
+      const loanAmount = price * ltv
+      const rate = isHdbLoan ? MORTGAGE_RATES.hdb : MORTGAGE_RATES.bank
+      const tenure = isHdbLoan ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
+      return computeMonthlyMortgagePayment(loanAmount, rate, tenure)
+    }
+    case 'condo':
+    case 'landed':
+    case 'ec': {
+      const price = inputs.price
+      const ltv = LTV_RATIOS['bank-loan']
+      const loanAmount = price * ltv
+      const rate = MORTGAGE_RATES.bank
+      const tenure = LOAN_TENURE_YEARS.bank
+      return computeMonthlyMortgagePayment(loanAmount, rate, tenure)
+    }
+    case 'car': {
+      const carCost = getCarPurchaseCost(inputs.coeCategory, inputs.condition, inputs.priceRange)
+      const financedAmount = carCost.total * (1 - CAR_DOWN_PAYMENT_RATE)
+      const totalHP = computeCarHpTotal(financedAmount, CAR_HP_RATE, CAR_HP_TENURE_YEARS)
+      return totalHP / (CAR_HP_TENURE_YEARS * 12)
+    }
+    default:
+      return 0
   }
 }
 

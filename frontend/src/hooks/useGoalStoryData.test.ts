@@ -141,7 +141,8 @@ describe('computeGoalStoryData', () => {
       const goals = [makeHdbGoal()]
       const result = computeGoalStoryData(basics, goals)
 
-      expect(result.shared.monthlySavings).toBeGreaterThan(0)
+      // Monthly cash savings can be 0 when CPF OA + existing savings cover the upfront costs
+      expect(result.shared.monthlySavings).toBeGreaterThanOrEqual(0)
       expect(result.shared.freedomAge).toBeGreaterThan(basics.age)
       expect(result.shared.freedomAgeWithout).toBeGreaterThan(basics.age)
       expect(result.shared.cpfLifeMonthly).toBeGreaterThan(0)

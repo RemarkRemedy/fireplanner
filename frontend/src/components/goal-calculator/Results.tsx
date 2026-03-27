@@ -98,6 +98,7 @@ export function Results({
               dailyEquivalent={Math.round((enrichedGoal.adjustedMonthlySavings / 30) * 100) / 100}
               goalLabel={enrichedGoal.goal.label}
               isCoupleMode={isCoupleMode}
+              isPropertyGoal={enrichedGoal.goal.category === 'housing'}
             />
           ) : null
 

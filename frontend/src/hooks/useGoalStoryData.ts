@@ -19,10 +19,13 @@ import type {
 import {
   computeMultiGoalStacking,
   computeRetirementImpact,
+  computeMonthlySavingsNeeded,
+  computeMonthlyLoanPayment,
   FIRE_MULTIPLIER,
 } from '@/lib/calculations/goal-calculator'
 import {
   accumulateCpfOa,
+  deriveCpfOaMonthly,
   estimateHousingGrant,
   checkLoanQualification,
   lookupCpfLifeEstimate,
@@ -61,6 +64,8 @@ export interface EnrichedGoal {
   loanQualification: LoanQualification | null
   cashNeeded: number
   adjustedMonthlySavings: number
+  /** Monthly mortgage or HP payment (0 for non-financed goals). */
+  monthlyLoanPayment: number
 }
 
 export interface SharedInsights {
@@ -241,7 +246,7 @@ export function computeGoalStoryData(
       )
     }
 
-    // Cash needed
+    // Cash needed (for upfront costs only — CPF OA and grants reduce what you save in cash)
     let cashNeeded = goal.breakdown.total - cpfOaAccumulated - grantAmount
     // For condos, landed, and EC enforce 5% cash floor (bank loan only, no CPF for 5%)
     if (isCondoGoal(goal) || isLandedGoal(goal) || isEcGoal(goal)) {
@@ -251,27 +256,57 @@ export function computeGoalStoryData(
     }
     cashNeeded = Math.max(0, cashNeeded)
 
+    // Monthly loan payment (mortgage or car HP)
+    const monthlyLoanPayment = computeMonthlyLoanPayment(goal)
+
+    // For property goals, recompute monthly savings based on cash needed (not full upfront cost).
+    // CPF OA covers part of the down payment, so cash savings target is lower.
+    let adjustedMonthlySavings = stackedResult?.adjustedMonthlySavings ?? goal.monthlySavingsNeeded
+    if (isPropertyGoal(goal) && stackedResult) {
+      const years = goal.targetAge - basics.age
+      const effectiveAllocated = Math.min(stackedResult.allocatedSavings, cashNeeded)
+      adjustedMonthlySavings = computeMonthlySavingsNeeded(cashNeeded, effectiveAllocated, years)
+    }
+
     return {
       goal,
       cpfOaAccumulated,
       grantAmount,
       loanQualification,
       cashNeeded,
-      adjustedMonthlySavings: stackedResult?.adjustedMonthlySavings ?? goal.monthlySavingsNeeded,
+      adjustedMonthlySavings,
+      monthlyLoanPayment,
     }
   })
 
   // 7. Shared insights
-  const totalMonthlySavings = stacked.reduce((sum, sr) => sum + sr.adjustedMonthlySavings, 0)
+  // Use cash-based monthly savings from enriched data (accounts for CPF OA offset on housing)
+  const totalMonthlySavings = perGoal.reduce((sum, eg) => sum + eg.adjustedMonthlySavings, 0)
   const totalAllocatedSavings = stacked.reduce((sum, sr) => sum + sr.allocatedSavings, 0)
+
+  // Monthly loan payments reduce savings capacity for Freedom Age.
+  // For housing: CPF OA monthly contribution covers part of the mortgage,
+  // so only the net cash portion affects cash savings.
+  const cpfOaMonthly = deriveCpfOaMonthly(grossIncome, basics.age)
+    + (isCoupleMode ? deriveCpfOaMonthly(partnerGross, basics.partnerAge!) : 0)
+  const totalMonthlyLoanPayments = perGoal.reduce((sum, eg) => {
+    if (eg.monthlyLoanPayment <= 0) return sum
+    if (isPropertyGoal(eg.goal)) {
+      // CPF OA monthly contribution offsets part of the mortgage
+      return sum + Math.max(0, eg.monthlyLoanPayment - cpfOaMonthly)
+    }
+    // Car HP: fully cash
+    return sum + eg.monthlyLoanPayment
+  }, 0)
 
   // CPF LIFE
   const cpfLifeMonthly = lookupCpfLifeEstimate(grossIncome)
   const cpfLifeAnnual = cpfLifeMonthly * 12
   const cpfLifeOffset = cpfLifeAnnual * FIRE_MULTIPLIER
 
-  // Freedom age
-  const impact = computeRetirementImpact(basics, totalMonthlySavings, totalAllocatedSavings, cpfLifeOffset)
+  // Freedom age — include both savings for upfront costs AND ongoing loan payments
+  const totalDeductionFromSavings = totalMonthlySavings + totalMonthlyLoanPayments
+  const impact = computeRetirementImpact(basics, totalDeductionFromSavings, totalAllocatedSavings, cpfLifeOffset)
   const freedomAge = basics.age + impact.yearsWithGoals
   const freedomAgeWithout = basics.age + impact.yearsWithoutGoals
 

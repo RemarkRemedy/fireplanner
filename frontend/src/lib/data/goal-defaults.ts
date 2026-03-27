@@ -435,3 +435,21 @@ export function computeMortgageTotal(
   const monthlyPayment = loanAmount * (monthlyRate * factor) / (factor - 1)
   return monthlyPayment * totalPayments
 }
+
+/**
+ * Compute monthly mortgage payment using PMT formula.
+ * Returns the monthly payment amount.
+ */
+export function computeMonthlyMortgagePayment(
+  loanAmount: number,
+  annualRate: number,
+  tenureYears: number,
+): number {
+  if (loanAmount <= 0) return 0
+  const monthlyRate = annualRate / 12
+  const totalPayments = tenureYears * 12
+  if (monthlyRate < 1e-10) return loanAmount / totalPayments
+
+  const factor = Math.pow(1 + monthlyRate, totalPayments)
+  return loanAmount * (monthlyRate * factor) / (factor - 1)
+}
