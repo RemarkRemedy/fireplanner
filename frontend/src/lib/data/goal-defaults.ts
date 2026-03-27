@@ -404,3 +404,34 @@ export const MORTGAGE_RATES = {
   hdb: 0.026,    // 2.6% HDB concessionary
   bank: 0.03,    // 3.0% conservative market rate
 }
+
+/** Standard loan tenures in years */
+export const LOAN_TENURE_YEARS = {
+  hdb: 25,
+  bank: 30,
+}
+
+/** LTV ratios by loan type */
+export const LTV_RATIOS = {
+  'hdb-loan': 0.90,
+  'bank-loan': 0.75,
+}
+
+/**
+ * Compute total mortgage repayment (principal + interest) using PMT formula.
+ * Returns the total amount paid over the full tenure.
+ */
+export function computeMortgageTotal(
+  loanAmount: number,
+  annualRate: number,
+  tenureYears: number,
+): number {
+  if (loanAmount <= 0) return 0
+  const monthlyRate = annualRate / 12
+  const totalPayments = tenureYears * 12
+  if (monthlyRate < 1e-10) return loanAmount
+
+  const factor = Math.pow(1 + monthlyRate, totalPayments)
+  const monthlyPayment = loanAmount * (monthlyRate * factor) / (factor - 1)
+  return monthlyPayment * totalPayments
+}

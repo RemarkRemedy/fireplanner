@@ -335,19 +335,25 @@ describe('buildGoalCalcProjectionParams', () => {
   })
 
   describe('EC goal', () => {
-    it('should map EC goal to FinancialGoal correctly', () => {
+    it('should emit upfront + mortgage FinancialGoals for EC', () => {
       const basics = makeSoloBasics()
       const ecGoal = makeEcGoal()
       const params = buildGoalCalcProjectionParams(basics, [ecGoal])
 
-      expect(params.financialGoals).toHaveLength(1)
-      const fg = params.financialGoals![0]
-      expect(fg.id).toBe('goal-ec')
-      expect(fg.label).toBe('EC Purchase')
-      expect(fg.amount).toBe(200000)
-      expect(fg.targetAge).toBe(35)
-      expect(fg.category).toBe('housing')
-      expect(fg.inflationAdjusted).toBe(true)
+      // EC produces 2 goals: upfront costs + bank mortgage
+      expect(params.financialGoals!.length).toBeGreaterThanOrEqual(2)
+
+      const upfront = params.financialGoals![0]
+      expect(upfront.id).toBe('goal-ec')
+      expect(upfront.label).toBe('EC Purchase')
+      expect(upfront.amount).toBe(200000)
+      expect(upfront.durationYears).toBe(1) // lump sum
+
+      const mortgage = params.financialGoals!.find((g) => g.id === 'goal-ec-mortgage')!
+      expect(mortgage).toBeDefined()
+      expect(mortgage.durationYears).toBe(30) // bank loan tenure
+      expect(mortgage.amount).toBeGreaterThan(0) // total P+I
+      expect(mortgage.label).toContain('mortgage')
     })
   })
 

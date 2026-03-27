@@ -27,7 +27,14 @@ import type { GoalStoryBasics } from '@/hooks/useGoalStoryData'
 import { grossUpFromTakeHome } from '@/lib/calculations/grossUp'
 import { lookupCpfLifeEstimate } from '@/lib/calculations/goal-calculator-sg'
 import { CPF_LIFE_START_AGE } from '@/lib/data/cpfRates'
-import { computeCarHpTotal, CAR_HP_TENURE_YEARS } from '@/lib/data/goal-defaults'
+import {
+  computeCarHpTotal,
+  CAR_HP_TENURE_YEARS,
+  computeMortgageTotal,
+  MORTGAGE_RATES,
+  LOAN_TENURE_YEARS,
+  LTV_RATIOS,
+} from '@/lib/data/goal-defaults'
 
 // ============================================================
 // Constants (calculation assumptions, not regulatory data)
@@ -201,29 +208,32 @@ function mergeIncomeProjections(
 /**
  * Map GoalCalcGoal[] to FinancialGoal[] for ProjectionParams.
  *
- * Car goals produce TWO financial goals:
- * 1. Down payment (lump sum at target age)
- * 2. HP repayment (spread over tenure, including interest)
- * This ensures the wealth curve reflects the full cost of car ownership.
+ * Property and car goals produce TWO financial goals each:
+ * 1. Upfront costs (lump sum at target age: down payment + fees)
+ * 2. Loan repayment (spread over tenure: mortgage P+I or HP P+I)
+ *
+ * This ensures the wealth curve reflects the full cost of ownership,
+ * not just the upfront payment.
  */
 function mapGoals(goals: GoalCalcGoal[]): FinancialGoal[] {
   const result: FinancialGoal[] = []
 
   for (const g of goals) {
-    if (g.smartInputs?.kind === 'car') {
-      // Down payment (lump sum — what the user saves for)
-      result.push({
-        id: g.id,
-        label: g.label,
-        amount: g.totalCostToday,
-        targetAge: g.targetAge,
-        durationYears: 1,
-        priority: 'important',
-        inflationAdjusted: true,
-        category: g.category,
-      })
+    // Always add the upfront cost as a lump-sum goal
+    result.push({
+      id: g.id,
+      label: g.label,
+      amount: g.totalCostToday,
+      targetAge: g.targetAge,
+      durationYears: 1,
+      priority: 'important',
+      inflationAdjusted: true,
+      category: g.category,
+    })
 
-      // HP repayment (financed portion + interest, spread over tenure)
+    // Add loan repayment goals for financed purchases
+    if (g.smartInputs?.kind === 'car') {
+      // Car: HP repayment (flat rate interest, spread over tenure)
       const totalPriceItem = g.breakdown.items.find((i) => i.label.includes('Estimated total price'))
       if (totalPriceItem) {
         const financedAmount = totalPriceItem.amount - g.totalCostToday
@@ -241,17 +251,50 @@ function mapGoals(goals: GoalCalcGoal[]): FinancialGoal[] {
           })
         }
       }
-    } else {
-      result.push({
-        id: g.id,
-        label: g.label,
-        amount: g.totalCostToday,
-        targetAge: g.targetAge,
-        durationYears: 1,
-        priority: 'important',
-        inflationAdjusted: true,
-        category: g.category,
-      })
+    } else if (g.smartInputs?.kind === 'hdb') {
+      // HDB: mortgage based on loan type
+      const priceItem = g.breakdown.items.find((i) => i.label.startsWith('Down payment'))
+      if (priceItem) {
+        const ltvKey = g.smartInputs.loanType as keyof typeof LTV_RATIOS
+        const ltv = LTV_RATIOS[ltvKey] ?? 0.75
+        // Recover property price from down payment / down payment rate
+        const dpRate = ltv === 0.90 ? 0.10 : 0.25
+        const propertyPrice = priceItem.amount / dpRate
+        const loanAmount = propertyPrice * ltv
+        const isHdbLoan = g.smartInputs.loanType === 'hdb-loan'
+        const rate = isHdbLoan ? MORTGAGE_RATES.hdb : MORTGAGE_RATES.bank
+        const tenure = isHdbLoan ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
+        const mortgageTotal = computeMortgageTotal(loanAmount, rate, tenure)
+        if (mortgageTotal > 0) {
+          result.push({
+            id: `${g.id}-mortgage`,
+            label: `${g.label} (mortgage)`,
+            amount: mortgageTotal,
+            targetAge: g.targetAge,
+            durationYears: tenure,
+            priority: 'important',
+            inflationAdjusted: true,
+            category: g.category,
+          })
+        }
+      }
+    } else if (g.smartInputs?.kind === 'condo' || g.smartInputs?.kind === 'landed' || g.smartInputs?.kind === 'ec') {
+      // Condo/Landed/EC: bank loan mortgage
+      const propertyPrice = g.smartInputs.price
+      const loanAmount = propertyPrice * LTV_RATIOS['bank-loan']
+      const mortgageTotal = computeMortgageTotal(loanAmount, MORTGAGE_RATES.bank, LOAN_TENURE_YEARS.bank)
+      if (mortgageTotal > 0) {
+        result.push({
+          id: `${g.id}-mortgage`,
+          label: `${g.label} (mortgage)`,
+          amount: mortgageTotal,
+          targetAge: g.targetAge,
+          durationYears: LOAN_TENURE_YEARS.bank,
+          priority: 'important',
+          inflationAdjusted: true,
+          category: g.category,
+        })
+      }
     }
   }
 
