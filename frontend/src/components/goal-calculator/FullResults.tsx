@@ -19,6 +19,9 @@ import type {
   FeasibilityResult,
 } from '@/lib/calculations/goal-calculator'
 import type { GoalStoryData, EnrichedGoal } from '@/hooks/useGoalStoryData'
+import type { WealthCurveProjectionResult } from '@/hooks/useWealthCurveProjection'
+import { WealthCurveChart } from './WealthCurveSection/WealthCurveChart'
+import { WhatIfSliders } from './WealthCurveSection/WhatIfSliders'
 
 // ============================================================
 // Props
@@ -33,6 +36,7 @@ interface FullResultsProps {
   onAddGoal: () => void
   onEditBasics: () => void
   onViewStory?: () => void
+  wealthCurve?: WealthCurveProjectionResult
 }
 
 // ============================================================
@@ -458,21 +462,25 @@ export function FullResults({
   onAddGoal,
   onEditBasics,
   onViewStory,
+  wealthCurve,
 }: FullResultsProps) {
   const householdIncome = basics.monthlyIncome + (basics.partnerMonthlyIncome ?? 0)
   const available = householdIncome - basics.monthlyExpenses
   const hasPropertyGoal = goals.some((g) => g.category === 'housing')
+
+  // When what-if sliders are modified, use the recomputed story data
+  const effectiveData = wealthCurve?.isModified ? wealthCurve.storyData : data
 
   // Compute feasibility for each goal individually
   const goalFeasibilities = useMemo(
     () =>
       goals.map((goal) => {
         // Use enriched adjusted savings for feasibility
-        const enriched = data.perGoal.find((eg) => eg.goal.id === goal.id)
+        const enriched = effectiveData.perGoal.find((eg) => eg.goal.id === goal.id)
         const monthlySavings = enriched?.adjustedMonthlySavings ?? goal.monthlySavingsNeeded
         return computeGoalFeasibility(monthlySavings, available)
       }),
-    [goals, available, data.perGoal],
+    [goals, available, effectiveData.perGoal],
   )
 
   // Compute stacked results for multi-goal summary
@@ -501,9 +509,28 @@ export function FullResults({
         </p>
       </div>
 
+      {/* Wealth curve chart + what-if sliders */}
+      {wealthCurve && (
+        <div className="space-y-4">
+          <WealthCurveChart
+            data={wealthCurve.chartData}
+            goalMarkers={wealthCurve.goalMarkers}
+            freedomAge={wealthCurve.freedomAge}
+            currentAge={basics.age}
+          />
+          <WhatIfSliders
+            basics={basics}
+            goals={goals}
+            overrides={wealthCurve.overrides}
+            onChange={wealthCurve.setOverrides}
+            onReset={wealthCurve.resetOverrides}
+          />
+        </div>
+      )}
+
       {/* Per-goal enriched cards */}
-      {data.perGoal.map((enriched, i) => {
-        const priorSavings = data.perGoal
+      {effectiveData.perGoal.map((enriched, i) => {
+        const priorSavings = effectiveData.perGoal
           .slice(0, i)
           .reduce((sum, eg) => sum + eg.adjustedMonthlySavings, 0)
         return (
@@ -567,7 +594,7 @@ export function FullResults({
       )}
 
       {/* Shared insights */}
-      <SharedInsightsSection data={data} basics={basics} />
+      <SharedInsightsSection data={effectiveData} basics={basics} />
 
       {/* Disclaimers */}
       <Disclaimers hasPropertyGoal={hasPropertyGoal} />
