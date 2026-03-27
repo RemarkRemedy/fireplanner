@@ -35,6 +35,7 @@ import type { LoanQualification } from '@/lib/calculations/goal-calculator-sg'
 import { grossUpFromTakeHome } from '@/lib/calculations/grossUp'
 import {
   HDB_INCOME_CEILING,
+  EC_INCOME_CEILING,
   MORTGAGE_RATES,
   computeCondoDownPayment,
 } from '@/lib/data/goal-defaults'
@@ -102,11 +103,16 @@ function isLandedGoal(goal: GoalCalcGoal): boolean {
   return goal.smartInputs?.kind === 'landed'
 }
 
-function getPropertyType(inputs: SmartGoalInputs): 'hdb' | 'condo' | 'landed' {
+function isEcGoal(goal: GoalCalcGoal): boolean {
+  return goal.smartInputs?.kind === 'ec'
+}
+
+function getPropertyType(inputs: SmartGoalInputs): 'hdb' | 'condo' | 'landed' | 'ec' {
   switch (inputs.kind) {
     case 'hdb': return 'hdb'
     case 'condo': return 'condo'
     case 'landed': return 'landed'
+    case 'ec': return 'ec'
     default: return 'condo'
   }
 }
@@ -122,7 +128,7 @@ function getLtvRatio(inputs: SmartGoalInputs): number {
   if (inputs.kind === 'hdb') {
     return inputs.loanType === 'hdb-loan' ? 0.90 : 0.75
   }
-  // Condo/landed: bank loan only
+  // Condo/landed/EC: bank loan only, 75% LTV
   return 0.75
 }
 
@@ -132,6 +138,7 @@ function getPropertyPrice(goal: GoalCalcGoal): number {
     case 'hdb': return goal.smartInputs.priceOverride ?? goal.totalCostToday
     case 'condo': return goal.smartInputs.price
     case 'landed': return goal.smartInputs.price
+    case 'ec': return goal.smartInputs.price
     default: return goal.totalCostToday
   }
 }
@@ -183,6 +190,7 @@ export function computeGoalStoryData(
   // 6. Enrich each goal
   const hasAnyPropertyGoal = sortedGoals.some(isPropertyGoal)
   const hasAnyHdbGoal = sortedGoals.some(isHdbGoal)
+  const hasAnyEcGoal = sortedGoals.some(isEcGoal)
 
   const perGoal: EnrichedGoal[] = sortedGoals.map((goal) => {
     const monthsToGoal = Math.max(0, (goal.targetAge - basics.age) * 12)
@@ -194,7 +202,7 @@ export function computeGoalStoryData(
       cpfOaAccumulated += accumulateCpfOa(partnerGross, basics.partnerAge!, monthsToGoal)
     }
 
-    // Grant (only for HDB goals)
+    // Grant (HDB and EC goals)
     let grantAmount = 0
     if (isHdbGoal(goal) && goal.smartInputs?.kind === 'hdb') {
       grantAmount = estimateHousingGrant(
@@ -202,6 +210,16 @@ export function computeGoalStoryData(
         goal.smartInputs.flatType,
         goal.smartInputs.tenure,
         !isCoupleMode,
+      )
+    }
+    // EC goals: Family Grant only (no EHG)
+    if (isEcGoal(goal) && goal.smartInputs?.kind === 'ec') {
+      grantAmount = estimateHousingGrant(
+        householdGross,
+        goal.smartInputs.flatType,
+        'new',  // tenure is ignored for EC path
+        !isCoupleMode,
+        'ec',   // triggers EC path: Family Grant only, no EHG
       )
     }
 
@@ -225,8 +243,8 @@ export function computeGoalStoryData(
 
     // Cash needed
     let cashNeeded = goal.breakdown.total - cpfOaAccumulated - grantAmount
-    // For condos, enforce 5% cash floor
-    if (isCondoGoal(goal) || isLandedGoal(goal)) {
+    // For condos, landed, and EC enforce 5% cash floor (bank loan only, no CPF for 5%)
+    if (isCondoGoal(goal) || isLandedGoal(goal) || isEcGoal(goal)) {
       const price = getPropertyPrice(goal)
       const cashMinimum = computeCondoDownPayment(price).cashMinimum
       cashNeeded = Math.max(cashMinimum, cashNeeded)
@@ -267,12 +285,19 @@ export function computeGoalStoryData(
   // Income tax
   const taxEstimate = estimateIncomeTax(grossIncome * 12, basics.age)
 
-  // Income ceiling warning (only if any HDB BTO goal)
+  // Income ceiling warning (HDB ceiling is more restrictive, check it first)
   let incomeCeilingWarning: string | null = null
   if (hasAnyHdbGoal) {
     const ceiling = isCoupleMode ? HDB_INCOME_CEILING.couple : HDB_INCOME_CEILING.single
     if (householdGross >= ceiling) {
       incomeCeilingWarning = `Your household income of $${Math.round(householdGross).toLocaleString()}/mo already exceeds the HDB income ceiling of $${ceiling.toLocaleString()}/mo`
+    }
+  }
+  // EC ceiling is higher than HDB ($16K vs $14K for couples). Only warn if no HDB warning already.
+  if (hasAnyEcGoal && !incomeCeilingWarning) {
+    const ecCeiling = isCoupleMode ? EC_INCOME_CEILING.couple : EC_INCOME_CEILING.single
+    if (householdGross > ecCeiling) {
+      incomeCeilingWarning = `Your household income of $${Math.round(householdGross).toLocaleString()}/mo exceeds the EC income ceiling of $${ecCeiling.toLocaleString()}/mo`
     }
   }
 

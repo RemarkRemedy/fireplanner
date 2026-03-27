@@ -109,11 +109,13 @@ describe('computeGoalStoryData', () => {
     })
 
     it('assigns a housing grant for an HDB BTO', () => {
-      const basics = makeBasics()
+      // Use lower income so solo user qualifies for EHG (single ceiling is $4,500/mo gross).
+      // $2,800 take-home grosses up to ~$3,500 at 20% CPF rate, which is below the ceiling.
+      const basics = makeBasics({ monthlyIncome: 2800 })
       const goals = [makeHdbGoal()]
       const result = computeGoalStoryData(basics, goals)
 
-      // At ~$6K gross, EHG should be > 0 for a family (but this is solo, so single grant)
+      // At ~$3.5K gross, EHG for a single BTO applicant should be > 0 (bracket: $15K grant)
       expect(result.perGoal[0].grantAmount).toBeGreaterThan(0)
     })
 
@@ -320,7 +322,8 @@ describe('computeGoalStoryData', () => {
 
   describe('story cards', () => {
     it('includes property-specific cards for HDB goal', () => {
-      const basics = makeBasics()
+      // Use lower income so user qualifies for EHG grant (required for 'grant' card to appear)
+      const basics = makeBasics({ monthlyIncome: 2800 })
       const goals = [makeHdbGoal()]
       const result = computeGoalStoryData(basics, goals)
 
