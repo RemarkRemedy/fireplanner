@@ -201,18 +201,26 @@ export interface GoalTile {
   icon: string
   category: GoalCategory
   type: 'smart' | 'simple'
+  hint?: string
 }
 
 export const GOAL_TILES: GoalTile[] = [
-  { id: 'hdb', label: 'HDB Flat', icon: 'Building2', category: 'housing', type: 'smart' },
-  { id: 'condo', label: 'Condo', icon: 'Building', category: 'housing', type: 'smart' },
-  { id: 'landed', label: 'Landed', icon: 'Home', category: 'housing', type: 'smart' },
-  { id: 'car', label: 'Car', icon: 'Car', category: 'vehicle', type: 'smart' },
-  { id: 'wedding', label: 'Wedding', icon: 'Heart', category: 'wedding', type: 'simple' },
-  { id: 'travel', label: 'Travel', icon: 'Plane', category: 'travel', type: 'simple' },
-  { id: 'education', label: 'Education', icon: 'GraduationCap', category: 'education', type: 'simple' },
-  { id: 'business', label: 'Business', icon: 'Briefcase', category: 'other', type: 'simple' },
-  { id: 'custom', label: 'Custom Goal', icon: 'Target', category: 'other', type: 'simple' },
+  { id: 'hdb', label: 'HDB Flat', icon: 'Building2', category: 'housing', type: 'smart', hint: 'BTO or resale' },
+  { id: 'condo', label: 'Condo', icon: 'Building', category: 'housing', type: 'smart', hint: 'With ABSD' },
+  { id: 'landed', label: 'Landed', icon: 'Home', category: 'housing', type: 'smart', hint: 'Semi-D, terrace' },
+  { id: 'car', label: 'Car', icon: 'Car', category: 'vehicle', type: 'smart', hint: 'COE included' },
+  { id: 'wedding', label: 'Wedding', icon: 'Heart', category: 'wedding', type: 'simple', hint: 'SG average' },
+  { id: 'travel', label: 'Travel', icon: 'Plane', category: 'travel', type: 'simple', hint: 'Set your budget' },
+  { id: 'education', label: 'Education', icon: 'GraduationCap', category: 'education', type: 'simple', hint: 'Degree, masters' },
+  { id: 'business', label: 'Business', icon: 'Briefcase', category: 'other', type: 'simple', hint: 'Seed capital' },
+  { id: 'custom', label: 'Custom Goal', icon: 'Target', category: 'other', type: 'simple', hint: 'Your own goal' },
+]
+
+/** Section groupings for the GoalPicker grid */
+export const GOAL_TILE_SECTIONS: { label: string; tileIds: GoalTileId[] }[] = [
+  { label: 'Property', tileIds: ['hdb', 'condo', 'landed'] },
+  { label: 'Lifestyle', tileIds: ['car', 'wedding', 'travel'] },
+  { label: 'Growth', tileIds: ['education', 'business', 'custom'] },
 ]
 
 // ============================================================
