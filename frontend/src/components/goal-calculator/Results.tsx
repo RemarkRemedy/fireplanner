@@ -161,7 +161,12 @@ export function Results({
             <div className="flex flex-col items-center justify-center h-full text-white text-center px-8">
               <p className="text-xs uppercase tracking-widest text-white/60 font-medium mb-4">Savings rate</p>
               <p className="text-6xl font-bold mb-4">
-                {Math.round(((basics.monthlyIncome - basics.monthlyExpenses) / basics.monthlyIncome) * 100)}%
+                {(() => {
+                  const totalIncome = basics.monthlyIncome + (basics.partnerMonthlyIncome ?? 0)
+                  return totalIncome > 0
+                    ? Math.round(((totalIncome - basics.monthlyExpenses) / totalIncome) * 100)
+                    : 0
+                })()}%
               </p>
               <p className="text-xl opacity-80">{isCoupleMode ? 'of your income saved each month' : 'of your income saved each month'}</p>
               <p className="text-sm opacity-60 mt-2">{storyData.shared.peerBenchmark}</p>
