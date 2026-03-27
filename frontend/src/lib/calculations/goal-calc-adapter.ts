@@ -430,19 +430,31 @@ export function buildGoalCalcProjectionParams(
   }
 }
 
+export interface DeflatedRow {
+  age: number
+  liquidNW: number
+  cpfTotal: number
+  propertyEquity: number
+}
+
 /**
  * Deflate nominal projection output to today's dollars.
  *
- * Takes the nominal liquidNW from each ProjectionRow and divides by
- * (1 + inflationRate)^(age - startAge) to express in real terms.
+ * Returns liquidNW, cpfTotal, and propertyEquity for each year,
+ * all expressed in real (today's dollar) terms.
  */
 export function deflateProjection(
   rows: ProjectionRow[],
   inflationRate: number,
   startAge: number,
-): { age: number; netWorth: number }[] {
-  return rows.map((row) => ({
-    age: row.age,
-    netWorth: row.liquidNW / Math.pow(1 + inflationRate, row.age - startAge),
-  }))
+): DeflatedRow[] {
+  return rows.map((row) => {
+    const deflator = Math.pow(1 + inflationRate, row.age - startAge)
+    return {
+      age: row.age,
+      liquidNW: row.liquidNW / deflator,
+      cpfTotal: row.cpfTotal / deflator,
+      propertyEquity: row.propertyEquity / deflator,
+    }
+  })
 }

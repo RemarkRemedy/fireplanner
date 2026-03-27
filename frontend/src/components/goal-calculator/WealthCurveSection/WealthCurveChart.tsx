@@ -7,10 +7,12 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
+  Legend,
 } from 'recharts'
 import type { TooltipProps } from 'recharts'
 import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import type { DeflatedRow } from '@/lib/calculations/goal-calc-adapter'
 
 export interface GoalMarker {
   age: number
@@ -20,24 +22,25 @@ export interface GoalMarker {
 }
 
 interface WealthCurveChartProps {
-  data: { age: number; netWorth: number }[]
+  data: DeflatedRow[]
   goalMarkers: GoalMarker[]
   freedomAge: number | null
   currentAge: number
 }
 
-interface ChartDataPoint {
-  age: number
-  netWorth: number
-  positiveNW: number
-  negativeNW: number
-}
+// ============================================================
+// Helpers
+// ============================================================
 
 function formatCompactCurrency(value: number): string {
   if (Math.abs(value) >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`
   if (Math.abs(value) >= 1_000) return `$${(value / 1_000).toFixed(0)}K`
   return `$${value.toFixed(0)}`
 }
+
+// ============================================================
+// Custom SVG labels for goal drop lines and Freedom Age
+// ============================================================
 
 interface GoalLabelProps {
   viewBox?: { x?: number; y?: number; width?: number; height?: number }
@@ -97,26 +100,53 @@ function FreedomLabel({ viewBox, age }: FreedomLabelProps) {
   )
 }
 
+// ============================================================
+// Stacked area tooltip
+// ============================================================
+
+const SERIES_LABELS: Record<string, string> = {
+  liquidNW: 'Cash & Investments',
+  cpfTotal: 'CPF',
+  propertyEquity: 'Property Equity',
+}
+
+const SERIES_COLORS: Record<string, string> = {
+  liquidNW: '#3b82f6',
+  cpfTotal: '#22c55e',
+  propertyEquity: '#f59e0b',
+}
+
 function WealthTooltip({ active, payload, label }: TooltipProps<ValueType, NameType>) {
   if (!active || !payload || payload.length === 0) return null
 
   const age = label as number
-  const positiveEntry = payload.find((p) => p.dataKey === 'positiveNW')
-  const negativeEntry = payload.find((p) => p.dataKey === 'negativeNW')
-  const netWorth =
-    (positiveEntry?.value as number | undefined) ??
-    (negativeEntry?.value as number | undefined) ??
-    0
+  let total = 0
+  const items = payload
+    .filter((p) => typeof p.value === 'number' && (p.value as number) > 0)
+    .map((p) => {
+      const val = p.value as number
+      total += val
+      return { key: p.dataKey as string, value: val }
+    })
 
   return (
     <div className="rounded-md border bg-background px-3 py-2 text-xs shadow-md">
       <p className="font-semibold mb-1">Age {age}</p>
-      <p className={netWorth >= 0 ? 'text-blue-600' : 'text-red-500'}>
-        Net worth: {formatCompactCurrency(netWorth)}
+      {items.map((item) => (
+        <p key={item.key} style={{ color: SERIES_COLORS[item.key] }}>
+          {SERIES_LABELS[item.key] ?? item.key}: {formatCompactCurrency(item.value)}
+        </p>
+      ))}
+      <p className="font-medium border-t pt-1 mt-1">
+        Total: {formatCompactCurrency(total)}
       </p>
     </div>
   )
 }
+
+// ============================================================
+// Main chart component
+// ============================================================
 
 export function WealthCurveChart({
   data,
@@ -129,14 +159,16 @@ export function WealthCurveChart({
   const maxAge = Math.max(65, (freedomAge ?? 65) + 5)
   const xDomain: [number, number] = [currentAge, maxAge]
 
-  const chartData: ChartDataPoint[] = data.map((d) => ({
+  // Floor negative values to 0 for each series (stacked areas can't go negative cleanly)
+  const chartData = data.map((d) => ({
     age: d.age,
-    netWorth: d.netWorth,
-    positiveNW: d.netWorth >= 0 ? d.netWorth : 0,
-    negativeNW: d.netWorth < 0 ? d.netWorth : 0,
+    liquidNW: Math.max(0, d.liquidNW),
+    cpfTotal: Math.max(0, d.cpfTotal),
+    propertyEquity: Math.max(0, d.propertyEquity),
   }))
 
-  const hasNegative = chartData.some((d) => d.negativeNW < 0)
+  const hasCpf = chartData.some((d) => d.cpfTotal > 0)
+  const hasProperty = chartData.some((d) => d.propertyEquity > 0)
 
   return (
     <div
@@ -149,17 +181,6 @@ export function WealthCurveChart({
           data={chartData}
           margin={{ top: 40, right: 16, left: 8, bottom: 20 }}
         >
-          <defs>
-            <linearGradient id="wealthGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.3} />
-              <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.05} />
-            </linearGradient>
-            <linearGradient id="negativeGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#ef4444" stopOpacity={0.05} />
-              <stop offset="100%" stopColor="#ef4444" stopOpacity={0.3} />
-            </linearGradient>
-          </defs>
-
           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
 
           <XAxis
@@ -212,29 +233,43 @@ export function WealthCurveChart({
             />
           )}
 
-          {/* Positive net worth area (blue) */}
+          {/* Stacked areas: liquid NW (blue) + CPF (green) + property (orange) */}
           <Area
             type="monotone"
-            dataKey="positiveNW"
-            fill="url(#wealthGradient)"
-            stroke="#3b82f6"
-            strokeWidth={2}
-            name="Net worth"
-            legendType="none"
+            dataKey="liquidNW"
+            stackId="wealth"
+            fill="hsl(210, 80%, 60%)"
+            stroke="hsl(210, 80%, 50%)"
+            fillOpacity={0.6}
+            name="liquidNW"
           />
-
-          {/* Negative net worth area (red, below zero) */}
-          {hasNegative && (
+          {hasCpf && (
             <Area
               type="monotone"
-              dataKey="negativeNW"
-              fill="url(#negativeGradient)"
-              stroke="#ef4444"
-              strokeWidth={2}
-              name="Net worth (negative)"
-              legendType="none"
+              dataKey="cpfTotal"
+              stackId="wealth"
+              fill="hsl(150, 60%, 50%)"
+              stroke="hsl(150, 60%, 40%)"
+              fillOpacity={0.6}
+              name="cpfTotal"
             />
           )}
+          {hasProperty && (
+            <Area
+              type="monotone"
+              dataKey="propertyEquity"
+              stackId="wealth"
+              fill="hsl(35, 80%, 55%)"
+              stroke="hsl(35, 80%, 45%)"
+              fillOpacity={0.6}
+              name="propertyEquity"
+            />
+          )}
+
+          <Legend
+            formatter={(value: string) => SERIES_LABELS[value] ?? value}
+            wrapperStyle={{ fontSize: 11 }}
+          />
         </AreaChart>
       </ResponsiveContainer>
     </div>

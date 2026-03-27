@@ -421,7 +421,7 @@ describe('deflateProjection', () => {
     const result = deflateProjection(rows, 0.025, 30)
     expect(result).toHaveLength(1)
     expect(result[0].age).toBe(30)
-    expect(result[0].netWorth).toBeCloseTo(100000, 2)
+    expect(result[0].liquidNW).toBeCloseTo(100000, 2)
   })
 
   it('should deflate correctly at year 10 with 2.5% inflation', () => {
@@ -431,7 +431,7 @@ describe('deflateProjection', () => {
 
     const expectedReal = nominalValue / Math.pow(1.025, 10)
     expect(result[0].age).toBe(40)
-    expect(result[0].netWorth).toBeCloseTo(expectedReal, 2)
+    expect(result[0].liquidNW).toBeCloseTo(expectedReal, 2)
   })
 
   it('should handle multiple rows correctly', () => {
@@ -443,9 +443,9 @@ describe('deflateProjection', () => {
     const result = deflateProjection(rows, 0.025, 30)
 
     expect(result).toHaveLength(3)
-    expect(result[0].netWorth).toBeCloseTo(100000, 2) // year 0 deflator = 1
-    expect(result[1].netWorth).toBeCloseTo(110000 / 1.025, 2) // year 1
-    expect(result[2].netWorth).toBeCloseTo(121000 / Math.pow(1.025, 2), 2) // year 2
+    expect(result[0].liquidNW).toBeCloseTo(100000, 2) // year 0 deflator = 1
+    expect(result[1].liquidNW).toBeCloseTo(110000 / 1.025, 2) // year 1
+    expect(result[2].liquidNW).toBeCloseTo(121000 / Math.pow(1.025, 2), 2) // year 2
   })
 
   it('should handle 0% inflation as no-op', () => {
@@ -455,8 +455,8 @@ describe('deflateProjection', () => {
     ]
     const result = deflateProjection(rows, 0, 30)
 
-    expect(result[0].netWorth).toBeCloseTo(100000, 2)
-    expect(result[1].netWorth).toBeCloseTo(500000, 2)
+    expect(result[0].liquidNW).toBeCloseTo(100000, 2)
+    expect(result[1].liquidNW).toBeCloseTo(500000, 2)
   })
 
   it('should handle empty rows', () => {

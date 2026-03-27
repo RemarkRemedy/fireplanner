@@ -9,6 +9,7 @@
 import { useState, useMemo } from 'react'
 import { generateProjection } from '@/lib/calculations/projection'
 import { buildGoalCalcProjectionParams, deflateProjection } from '@/lib/calculations/goal-calc-adapter'
+import type { DeflatedRow } from '@/lib/calculations/goal-calc-adapter'
 import { computeGoalStoryData } from '@/hooks/useGoalStoryData'
 import type { GoalStoryBasics, GoalStoryData } from '@/hooks/useGoalStoryData'
 import type { GoalCalcGoal } from '@/lib/calculations/goal-calculator'
@@ -21,7 +22,7 @@ import type { GoalCategory } from '@/lib/types'
 // ============================================================
 
 export interface WealthCurveProjectionResult {
-  chartData: { age: number; netWorth: number }[]
+  chartData: DeflatedRow[]
   goalMarkers: GoalMarker[]
   freedomAge: number | null
   storyData: GoalStoryData
