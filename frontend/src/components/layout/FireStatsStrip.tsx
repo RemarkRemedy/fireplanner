@@ -14,6 +14,7 @@ type StatsPosition = 'bottom' | 'top'
 interface StatChip {
   label: string
   value: string
+  title?: string
 }
 
 function formatRate(rate: number | null): string {
@@ -51,7 +52,7 @@ function useStatsData(): StatChip[] {
   // FIRE is unreachable when the calculated age exceeds life expectancy
   const unreachable = fireAge === null || fireAge > profile.lifeExpectancy
 
-  return [
+  const chips: StatChip[] = [
     {
       label: 'FIRE Age',
       value: unreachable
@@ -68,23 +69,26 @@ function useStatsData(): StatChip[] {
     },
     {
       label: 'FIRE Number',
-      value: adjusted.showProjectionNumber && adjusted.projectionFireNumber !== null
-        ? `${formatCurrency(metrics.fireNumber)} (proj: ${formatCurrency(adjusted.projectionFireNumber)})`
-        : formatCurrency(metrics.fireNumber),
+      value: formatCurrency(metrics.fireNumber),
+      title: adjusted.showProjectionNumber && adjusted.projectionFireNumber !== null
+        ? `Projection: ${formatCurrency(adjusted.projectionFireNumber)}`
+        : undefined,
     },
     {
       label: 'Progress',
       value: `${Math.min(100, Math.round(metrics.progress * 100))}%`,
     },
-    {
-      label: 'MC Success',
-      value: formatRate(lastMCSuccessRate),
-    },
-    {
-      label: 'Backtest',
-      value: formatRate(lastBacktestSuccessRate),
-    },
   ]
+
+  // Only show simulation chips when data exists (avoids "—" placeholders)
+  if (lastMCSuccessRate !== null) {
+    chips.push({ label: 'MC Success', value: formatRate(lastMCSuccessRate) })
+  }
+  if (lastBacktestSuccessRate !== null) {
+    chips.push({ label: 'Backtest', value: formatRate(lastBacktestSuccessRate) })
+  }
+
+  return chips
 }
 
 function PositionPicker() {
@@ -161,7 +165,7 @@ export function FireStatsStrip({ position }: { position: StatsPosition }) {
     >
       <div className="flex items-center gap-4 overflow-x-auto flex-1 min-w-0">
         {stats.map((stat) => (
-          <div key={stat.label} className="flex items-center gap-1.5 shrink-0">
+          <div key={stat.label} className="flex items-center gap-1.5 shrink-0" title={stat.title}>
             <span className="text-xs text-muted-foreground whitespace-nowrap">{stat.label}:</span>
             <span className="text-sm font-semibold whitespace-nowrap">{stat.value}</span>
           </div>
