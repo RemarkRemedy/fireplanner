@@ -20,9 +20,9 @@ FirePlanner signs up as an affiliate/referral partner with Singapore brokerages 
 | Page structure | New `/referral` page + banner on `/compare` |
 | Charity vote | Quarterly, email-gated, external form (Google Form/Tally) for V1 |
 | Tracker | Live aggregates from D1, no individual data shown |
-| PII handling | PayNow number collected upfront, encrypted at rest (AES-256-GCM) |
+| PII handling | PayNow number collected post-conversion only, encrypted at rest (AES-256-GCM) |
 | Admin | New `/admin/referral` for conversion entry and fulfillment |
-| Platform tiers | Tier 1 (formal programs) live at launch, Tier 2 (outreach pending) shown as coming soon |
+| Platform tiers | Tier 1 (formal programs, pending approval) go active as agreements confirm, Tier 2 (outreach pending) shown as coming soon |
 
 ## Section 1: Page Structure & User Flow
 
@@ -50,12 +50,12 @@ Program explanation with a live community tracker showing:
    - **Back to me:** user receives FirePlanner's affiliate fee via PayNow or gift voucher
    - **Community charity pool:** goes toward quarterly giving.sg vote, matched 1:1 by TJ (up to $10K/year)
    - **FirePlanner support:** helps cover server/infrastructure costs, keeps the tool free
-4. If any % allocated to "back to me": user chooses PayNow or gift voucher
-   - If PayNow: provide PayNow-linked phone number (stored encrypted)
-5. Confirmation state: "You're registered. Click any platform below to get started."
+4. Confirmation state: "You're registered. Click any platform below to get started."
 6. Platform cards in Zone 3 unlock
 
 Note: The user always receives the referee bonus directly from the brokerage (free shares, fee waivers, etc.) regardless of their allocation choice. The allocation only controls what happens to FirePlanner's affiliate fee.
+
+Note: PayNow number and payout method are NOT collected at registration. They are collected post-conversion when a user has keep % > 0 and a conversion is confirmed. This reduces registration friction and avoids storing sensitive PII until it's actually needed.
 
 **Zone 3: Platform Cards**
 
@@ -65,7 +65,7 @@ Grid of brokerage/platform cards. Each card shows:
 - Referee bonus value (what the user gets directly from the platform)
 - "Sign up" button (affiliate link tagged with click ID)
 
-Cards are locked until registration (Zone 2) is complete. Before registration, cards show a soft lock state: "Register above to unlock referral links."
+Cards are locked until registration (Zone 2) is complete. Before registration, cards show a soft lock state: "Register above to unlock referral links." Clicking a locked card scrolls to Zone 2 and highlights the email input field.
 
 ### Changes to `/compare`
 
@@ -85,8 +85,8 @@ A subtle banner or callout card linking to `/referral`: "Earn referral bonuses a
 | pct_keep | INTEGER | 0-100 |
 | pct_charity | INTEGER | 0-100 |
 | pct_fireplanner | INTEGER | 0-100 |
-| payout_method | TEXT | "paynow" / "voucher" / null (if pct_keep = 0) |
-| paynow_number | TEXT | Encrypted (AES-256-GCM), nullable, only if payout_method = "paynow" |
+| payout_method | TEXT | NULL at registration. Set to "paynow" / "voucher" post-conversion. |
+| paynow_number | TEXT | NULL at registration. Encrypted (AES-256-GCM), collected post-conversion only. |
 | ip_hash | TEXT | Rate limiting, same pattern as existing tables |
 | created_at | TEXT | ISO timestamp |
 | updated_at | TEXT | ISO timestamp |
@@ -116,23 +116,41 @@ The three pct columns always sum to 100. The preset is stored for analytics but 
 | amount_charity | REAL | fee * pct_charity / 100 |
 | amount_fireplanner | REAL | fee * pct_fireplanner / 100 |
 | amount_matched | REAL | TJ's 1:1 match on amount_charity (capped at annual $10K) |
-| payout_status | TEXT | "pending" / "paid" / "donated" |
+| payout_status | TEXT | Tracks the keep-portion only: "pending" / "paid" / "no_payout" (pct_keep = 0). Charity portion is always implicitly "pooled until quarterly vote." FirePlanner portion requires no action. |
 | notes | TEXT | Admin notes (brokerage reference, etc.) |
 | created_at | TEXT | ISO timestamp |
 
 Tracker numbers are derived from `referral_conversions` via aggregate queries. No separate totals table needed.
 
+**`referral_payout_tokens`** (for post-conversion PayNow/voucher collection)
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | TEXT (UUID) | Primary key, used as token in payout URL |
+| conversion_id | TEXT | FK to referral_conversions |
+| registration_id | TEXT | FK to referral_registrations |
+| expires_at | TEXT | ISO timestamp, 7 days from creation |
+| used_at | TEXT | NULL until submitted, ISO timestamp when used |
+| created_at | TEXT | ISO timestamp |
+
+Token is generated when admin records a conversion with pct_keep > 0. Only one active (unused, unexpired) token per conversion at a time. Re-triggering the email invalidates the old token and creates a new one.
+
 ### New Pages Functions
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
-| `/api/referral/register` | POST | Save registration + allocation |
+| `/api/referral/register` | POST | Create or update registration + allocation (upsert by email) |
 | `/api/referral/click` | POST | Log a click, return tagged affiliate URL |
 | `/api/referral/tracker` | GET | Public aggregate: total charity, total matched, total fireplanner, participant count |
 | `/api/admin/referral/conversions` | POST | Admin: record a conversion |
 | `/api/admin/referral/conversions` | GET | Admin: list all conversions |
+| `/api/referral/payout-info` | POST | Collect PayNow number or voucher preference post-conversion (email-gated link) |
 
 All endpoints follow existing patterns: rate-limited, ip_hash for public endpoints, `x-admin-key` for admin endpoints.
+
+**Rate limits:** `/api/referral/register`: 5 requests per IP per hour. `/api/referral/click`: 20 requests per IP per hour. `/api/referral/tracker`: no rate limit (public, cached). `/api/referral/payout-info`: 5 requests per IP per hour.
+
+**Tracker caching:** `GET /api/referral/tracker` returns `Cache-Control: public, max-age=300` (5 minutes). Data only changes on manual admin entry.
 
 ## Section 3: Platform Catalog & Affiliate Link Management
 
@@ -153,14 +171,15 @@ interface ReferralPlatform {
   trackingParam: string;       // Platform-specific sub-tracking param name (e.g., "sub_id", "referrer")
   status: PlatformStatus;      // "active" | "coming_soon" | "paused"
   featured: boolean;           // Controls sort order
-  markets: string[];           // ["US", "SG", "HK"]
-  cpfSrsEligible: boolean;
-  tags: string[];              // ["beginner_friendly", "low_fees"]
+  markets: string[];           // ["US", "SG", "HK"] — displayed on card as market badges
+  cpfSrsEligible: boolean;     // displayed as "CPF/SRS eligible" badge on card
+  tags: PlatformTag[];         // V2: used for filtering. Union type locks valid values now.
+  // type PlatformTag = "beginner_friendly" | "low_fees" | "cpf_srs" | "us_stocks" | "sg_stocks" | "crypto" | "robo_managed"
   lastUpdated: string;         // ISO date, for maintenance
 }
 ```
 
-### Tier 1: Active affiliate partnerships (live at launch)
+### Tier 1: Planned partnerships (pending affiliate approval)
 
 | Platform | Program Type | Estimated Payout |
 |----------|-------------|-----------------|
@@ -194,7 +213,9 @@ When a registered user clicks a platform card:
 2. Backend creates a `referral_clicks` row, returns the tagged affiliate URL
 3. Frontend opens the URL in a new tab
 
-Each platform's tracking parameter format is stored in the config (`trackingParam` field).
+Each platform's tracking parameter format is stored in the config (`trackingParam` field). URL assembly: `{affiliateBaseUrl}?{trackingParam}={click_id}`. If `affiliateBaseUrl` already contains query params, append with `&` instead of `?`. Example: `https://www.interactivebrokers.com/referral?ref=fireplanner&sub_id=click_abc123`. **V1 assumption:** all platforms use query-param tracking. If a platform requires path-based sub-IDs, add an `assemblyMode` field to the config as an extension point.
+
+**Error handling:** If `POST /api/referral/click` fails (network error, D1 down), the frontend falls back to opening the `affiliateBaseUrl` directly (untracked). The click is lost but the user is not blocked. A toast notification says "Click tracking unavailable, link opened directly."
 
 ### Logo assets
 
@@ -216,9 +237,9 @@ Data displayed (all from `GET /api/referral/tracker`):
 - Total donated to charity this year
 - TJ's match amount + progress bar toward $10K
 - Total donated to FirePlanner support
-- Number of participants
+- Number of participants (= `COUNT(DISTINCT registration_id) FROM referral_clicks`, i.e., users who clicked at least one platform link, not just registered)
 
-No individual names or amounts shown. Privacy-first. Simple fetch on page load, no WebSocket (data changes only on manual conversion entry).
+No individual names or amounts shown. Privacy-first. Simple fetch on page load, no WebSocket (data changes only on manual conversion entry). Response cached for 5 minutes (see rate limits above).
 
 ### Quarterly Charity Vote
 
@@ -237,9 +258,10 @@ No individual names or amounts shown. Privacy-first. Simple fetch on page load, 
 - No custom voting UI needed
 
 **Past Donations section:**
-A timeline at the bottom of `/referral` showing historical donations:
-- Q1 2026: $X,XXX donated to [Charity Name] (matched $X,XXX by TJ) - [giving.sg receipt link]
-- Q2 2026: ...
+A timeline at the bottom of `/referral` showing historical donations. Empty at launch with placeholder: "No donations yet. The first quarterly vote will happen once the community pool has its first contributions." Example format after first vote:
+- Q2 2026: $X,XXX donated to [Charity Name] (matched $X,XXX by TJ) - [giving.sg receipt link]
+
+**Vote integrity (V1 known limitation):** Google Forms does not tie votes to FirePlanner registrations. A user could theoretically vote multiple times with different emails. Accepted for V1 given low volume. V2 option: generate one-time vote tokens per eligible registration, emailed individually.
 
 Builds trust and creates visible impact history.
 
@@ -253,7 +275,8 @@ Builds trust and creates visible impact history.
 4. Enter the conversion:
    - Platform, affiliate fee amount (SGD)
    - System auto-computes the three-way split based on user's allocation
-   - System auto-computes the match amount (capped against annual running total)
+   - System auto-computes the match amount using: `SELECT COALESCE(SUM(amount_matched), 0) FROM referral_conversions WHERE created_at >= '{year}-01-01T00:00:00+08:00'` (Singapore timezone, calendar year). If remaining cap < charity amount, match is capped at remaining. Example: $9,800 matched YTD, $500 charity portion, match = $200 (cap reached).
+   - The admin panel reads the user's CURRENT allocation at time of conversion entry (latest-allocation-wins model). The frozen amounts on the conversion record are the source of truth after entry.
    - Review and confirm
 5. Fulfill the payout:
    - **Keep portion:** Send PayNow or purchase voucher, mark as "paid"
@@ -322,6 +345,12 @@ Templated but manually triggered:
 - **Week 4+:** Priority 2 and 3 as capacity allows
 - **Ongoing:** Update platform cards from "coming_soon" to "active" as partnerships confirm
 
+## Encryption Key Management
+
+The PayNow encryption key is stored as a **Cloudflare Pages Secret** (not a plain environment variable). Accessed via `env.PAYNOW_ENCRYPTION_KEY` in Pages Functions. No key rotation in V1 (intentional, noted as future work). If the key is lost, all stored PayNow numbers become unrecoverable (acceptable for V1 since manual PayNow transfers are the fallback, admin can re-request the number). The admin panel decrypts server-side. The decrypted PayNow number IS returned to the authenticated admin browser over HTTPS (admin is verified via `x-admin-key`), but it is never logged, cached, or stored in plaintext in D1. The admin uses the displayed number to initiate a manual PayNow transfer, then marks the conversion as "paid."
+
+**Post-conversion PayNow collection flow:** When admin records a conversion with keep % > 0, the system sends a templated email with a unique, time-limited link to `/referral/payout?token={uuid}`. The user visits this page, enters their PayNow number or voucher preference, and submits via `POST /api/referral/payout-info`. The token expires after 7 days. If expired, admin can re-trigger the email.
+
 ## Out of Scope for V1
 
 - Automated payout processing (PayNow API, voucher API)
@@ -330,3 +359,4 @@ Templated but manually triggered:
 - User accounts/authentication (email-based identification only)
 - Automated conversion tracking via brokerage APIs
 - Mobile app integration
+- Encryption key rotation
