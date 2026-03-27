@@ -115,6 +115,35 @@ describe('computeSmartGoalCost', () => {
     expect(coeItem).toBeDefined()
     expect(coeItem!.amount).toBe(0)
   })
+
+  it('EC has down payment + BSD + legal + reno, no ABSD', () => {
+    const inputs: SmartGoalInputs = {
+      kind: 'ec',
+      price: 1_500_000,
+      flatType: '4-room',
+    }
+    const result = computeSmartGoalCost(inputs)
+
+    const labels = result.items.map((i) => i.label)
+    expect(labels).toContain('Down payment (25%)')
+    expect(labels).toContain('BSD')
+    expect(labels).toContain('Legal fees')
+    expect(labels).toContain('Renovation')
+
+    // EC should NOT have ABSD line item (unlike condo)
+    const absdItem = result.items.find((i) => i.label === 'ABSD (first property)')
+    expect(absdItem).toBeUndefined()
+
+    // All items should have positive amounts
+    for (const item of result.items) {
+      expect(item.amount).toBeGreaterThan(0)
+    }
+
+    // Total should equal sum of items
+    const sum = result.items.reduce((acc, i) => acc + i.amount, 0)
+    expect(result.total).toBeCloseTo(sum, 0)
+    expect(result.total).toBeGreaterThan(0)
+  })
 })
 
 // ============================================================
