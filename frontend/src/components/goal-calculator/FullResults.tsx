@@ -223,14 +223,15 @@ function EnrichedGoalCard({
   enriched,
   basics,
   feasibility,
+  remainingAvailable,
 }: {
   enriched: EnrichedGoal
   basics: GoalCalcBasics
   feasibility: FeasibilityResult
+  remainingAvailable: number
 }) {
   const goal = enriched.goal
-  const available = basics.monthlyIncome - basics.monthlyExpenses
-  const ratio = available > 0 ? enriched.adjustedMonthlySavings / available : 1
+  const ratio = remainingAvailable > 0 ? enriched.adjustedMonthlySavings / remainingAvailable : 1
   const years = goal.targetAge - basics.age
   const hasBreakdown = goal.breakdown.items.length > 0
   const isProperty = goal.category === 'housing'
@@ -265,7 +266,7 @@ function EnrichedGoalCard({
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>
                 {formatCurrency(Math.round(enriched.adjustedMonthlySavings))} of{' '}
-                {formatCurrency(Math.round(available))}/mo available
+                {formatCurrency(Math.round(remainingAvailable))}/mo available
               </span>
               <span>{Math.min(100, Math.round(ratio * 100))}%</span>
             </div>
@@ -500,14 +501,20 @@ export function FullResults({
       </div>
 
       {/* Per-goal enriched cards */}
-      {data.perGoal.map((enriched, i) => (
-        <EnrichedGoalCard
-          key={enriched.goal.id}
-          enriched={enriched}
-          basics={basics}
-          feasibility={goalFeasibilities[i]}
-        />
-      ))}
+      {data.perGoal.map((enriched, i) => {
+        const priorSavings = data.perGoal
+          .slice(0, i)
+          .reduce((sum, eg) => sum + eg.adjustedMonthlySavings, 0)
+        return (
+          <EnrichedGoalCard
+            key={enriched.goal.id}
+            enriched={enriched}
+            basics={basics}
+            feasibility={goalFeasibilities[i]}
+            remainingAvailable={available - priorSavings}
+          />
+        )
+      })}
 
       {/* Multi-goal summary (only for 2+ goals) */}
       {goals.length > 1 && (
