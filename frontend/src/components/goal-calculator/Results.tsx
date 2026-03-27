@@ -81,7 +81,6 @@ export function Results({
           return (
             <GrantCard
               grantAmount={grantGoal.grantAmount}
-              grantType="EHG"
               isCoupleMode={isCoupleMode}
             />
           )
@@ -116,10 +115,13 @@ export function Results({
             <div className="flex flex-col items-center justify-center h-full text-white text-center px-8">
               {lq.qualified ? (
                 <>
+                  <p className="text-xs uppercase tracking-widest text-white/60 font-medium mb-4">Mortgage check</p>
                   <p className="text-6xl font-bold mb-4">${Math.round(lq.monthlyPayment).toLocaleString()}/mo</p>
                   <p className="text-xl opacity-80">Your estimated mortgage payment</p>
                   <p className="text-sm opacity-60 mt-2">
-                    You qualify. Banks allow up to {isHdb ? '30%' : '55%'} of gross income for mortgage.
+                    {isHdb
+                      ? 'Within the 30% MSR limit for HDB loans.'
+                      : 'Within the 55% TDSR limit, which covers all monthly debt obligations.'}
                   </p>
                 </>
               ) : (
@@ -127,11 +129,14 @@ export function Results({
                   <p className="text-xs uppercase tracking-widest text-white/60 font-medium mb-4">Heads up</p>
                   <p className="text-4xl font-bold mb-4">This property may stretch your budget</p>
                   <p className="text-lg opacity-80">
-                    Banks cap mortgage at {isHdb ? '30%' : '55%'} of gross income.
-                    You'd qualify for up to ${Math.round(lq.maxLoan).toLocaleString()}.
+                    {isHdb
+                      ? `The 30% MSR limit on gross income means you'd qualify for up to $${Math.round(lq.maxLoan).toLocaleString()}.`
+                      : `The 55% TDSR limit on total debt means you'd qualify for up to $${Math.round(lq.maxLoan).toLocaleString()}.`}
                   </p>
                   <p className="text-sm opacity-60 mt-2">
-                    Consider a longer timeline, smaller property, or higher income with a partner.
+                    {isCoupleMode
+                      ? 'Consider a longer timeline or a smaller property.'
+                      : 'Consider a longer timeline, smaller property, or higher income with a partner.'}
                   </p>
                 </>
               )}
@@ -142,10 +147,11 @@ export function Results({
         case 'peerBenchmark':
           return (
             <div className="flex flex-col items-center justify-center h-full text-white text-center px-8">
+              <p className="text-xs uppercase tracking-widest text-white/60 font-medium mb-4">Savings rate</p>
               <p className="text-6xl font-bold mb-4">
                 {Math.round(((basics.monthlyIncome - basics.monthlyExpenses) / basics.monthlyIncome) * 100)}%
               </p>
-              <p className="text-xl opacity-80">Your savings rate</p>
+              <p className="text-xl opacity-80">{isCoupleMode ? 'of your income saved each month' : 'of your income saved each month'}</p>
               <p className="text-sm opacity-60 mt-2">{storyData.shared.peerBenchmark}</p>
             </div>
           )
@@ -153,20 +159,16 @@ export function Results({
         case 'taxHeadsUp':
           return storyData.shared.incomeTaxMonthly > 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-white text-center px-8">
+              <p className="text-xs uppercase tracking-widest text-white/60 font-medium mb-4">Income tax</p>
               <p className="text-6xl font-bold mb-4">${Math.round(storyData.shared.incomeTaxMonthly).toLocaleString()}/mo</p>
               <p className="text-xl opacity-80">Set aside for income tax</p>
-              <p className="text-sm opacity-60 mt-2">Billed in arrears from Year 2</p>
+              <p className="text-sm opacity-60 mt-2">In Singapore, income tax is paid the year after you earn it</p>
             </div>
           ) : null
 
         case 'parkingTip':
-          return (
-            <div className="flex flex-col items-center justify-center h-full text-white text-center px-8">
-              <p className="text-3xl font-bold mb-4">{storyData.shared.parkingRecommendation}</p>
-              <p className="text-xl opacity-80">Where to park your savings</p>
-              <p className="text-sm opacity-60 mt-2">Based on your goal timeline</p>
-            </div>
-          )
+          // Parking tip is generic advice, not personalized — shown in FullResults only
+          return null
 
         case 'cta':
           return <CtaCard onContinue={goToFullResults} />

@@ -26,7 +26,7 @@ export function CtaCard({ onContinue }: CtaCardProps) {
         </Button>
       </motion.div>
       <motion.p variants={staggerChild} className="text-sm text-white/50 max-w-sm">
-        Or continue to the full planner for Monte Carlo simulation, detailed CPF projections, and more.
+        Or continue to the full planner for stress-tested projections, detailed CPF analysis, and more.
       </motion.p>
       <motion.p variants={staggerChild} className="text-xs text-white/30 mt-auto pt-8">
         sgfireplanner.com/goal-calculator

@@ -23,7 +23,7 @@ export function FreedomAgeCard({ freedomAge, freedomAgeWithout, cpfLifeMonthly, 
         {Math.round(freedomAge)}
       </motion.h1>
       <motion.p variants={staggerChild} className="text-lg md:text-xl text-white/80">
-        {isCoupleMode ? 'Our Freedom Age' : 'Your Freedom Age'}
+        {isCoupleMode ? 'when work becomes optional for us' : 'when work becomes optional'}
       </motion.p>
       <motion.p variants={staggerChild} className="text-sm text-white/50">
         Without these goals: {Math.round(freedomAgeWithout)}. CPF LIFE adds ~{formatCurrency(cpfLifeMonthly)}/mo from 65.

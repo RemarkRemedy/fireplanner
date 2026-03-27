@@ -26,7 +26,9 @@ export function CpfOffsetCard({ cpfOaAccumulated, monthlyOa, yearsToGoal, isCoup
         {isCoupleMode ? 'Your combined CPF OA will have this much by then' : 'Your CPF OA will have this much by then'}
       </motion.p>
       <motion.p variants={staggerChild} className="text-sm text-white/50">
-        That's {formatCurrency(monthlyOa)}/mo contributed over {yearsToGoal} year{yearsToGoal !== 1 ? 's' : ''} at 2.5% interest
+        {isCoupleMode
+          ? `Combined contributions over ${yearsToGoal} year${yearsToGoal !== 1 ? 's' : ''} at 2.5% interest`
+          : `${formatCurrency(monthlyOa)}/mo contributed over ${yearsToGoal} year${yearsToGoal !== 1 ? 's' : ''} at 2.5% interest`}
       </motion.p>
       <motion.p variants={staggerChild} className="text-xs text-white/30 mt-auto pt-8">
         sgfireplanner.com/goal-calculator

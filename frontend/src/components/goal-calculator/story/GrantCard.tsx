@@ -4,11 +4,10 @@ import { formatCurrency } from '@/lib/utils'
 
 interface GrantCardProps {
   grantAmount: number
-  grantType: string
   isCoupleMode: boolean
 }
 
-export function GrantCard({ grantAmount, grantType, isCoupleMode }: GrantCardProps) {
+export function GrantCard({ grantAmount, isCoupleMode }: GrantCardProps) {
   return (
     <>
       <motion.p variants={staggerChild} className="text-xs uppercase tracking-widest text-white/60 font-medium">
@@ -22,10 +21,10 @@ export function GrantCard({ grantAmount, grantType, isCoupleMode }: GrantCardPro
         {formatCurrency(grantAmount)}
       </motion.h1>
       <motion.p variants={staggerChild} className="text-lg md:text-xl text-white/80">
-        in {grantType} grants {isCoupleMode ? 'you both' : 'you'} qualify for
+        in housing grants {isCoupleMode ? 'you both' : 'you'} may qualify for
       </motion.p>
       <motion.p variants={staggerChild} className="text-sm text-white/50">
-        As first-time buyer, Singapore citizen
+        {isCoupleMode ? 'As first-time buyers, Singapore citizens' : 'As first-time buyer, Singapore citizen'}
       </motion.p>
       <motion.p variants={staggerChild} className="text-xs text-white/30 mt-auto pt-8">
         sgfireplanner.com/goal-calculator
