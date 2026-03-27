@@ -1,5 +1,5 @@
 // frontend/src/components/ilp/receipt/ReceiptPreviewModal.tsx
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { toBlob } from 'html-to-image'
 import { Download, Share2, Copy, Check } from 'lucide-react'
 import {
@@ -59,7 +59,10 @@ export function ReceiptPreviewModal({
   const [copied, setCopied] = useState(false)
   const canvasRef = useRef<HTMLDivElement>(null)
 
-  const receiptData = computeReceiptData(policy, analysis, feeBreakdown, includeOcf)
+  const receiptData = useMemo(
+    () => computeReceiptData(policy, analysis, feeBreakdown, includeOcf),
+    [policy, analysis, feeBreakdown, includeOcf],
+  )
   const dims = RECEIPT_DIMENSIONS[format]
   const previewScale = Math.min(360 / dims.width, 640 / dims.height)
 
@@ -84,16 +87,19 @@ export function ReceiptPreviewModal({
     setIsGenerating(true)
     try {
       const blob = await generateBlob(canvasRef.current)
-      const file = new File([blob], `ilp-receipt-${format}.png`, { type: 'image/png' })
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file] })
-      } else {
-        downloadBlob(blob, `ilp-receipt-${format}.png`)
-      }
-    } catch (err) {
-      // AbortError means user dismissed the share sheet — not an error
-      if (err instanceof Error && err.name !== 'AbortError') {
-        downloadBlob(await generateBlob(canvasRef.current!), `ilp-receipt-${format}.png`)
+      const filename = `ilp-receipt-${format}.png`
+      const file = new File([blob], filename, { type: 'image/png' })
+      try {
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ files: [file] })
+        } else {
+          downloadBlob(blob, filename)
+        }
+      } catch (err) {
+        // AbortError means user dismissed the share sheet
+        if (err instanceof Error && err.name !== 'AbortError') {
+          downloadBlob(blob, filename)
+        }
       }
     } finally {
       setIsGenerating(false)

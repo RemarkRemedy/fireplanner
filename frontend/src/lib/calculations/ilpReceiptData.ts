@@ -19,7 +19,7 @@ export interface ReceiptData {
 }
 
 function formatDataVintage(vintage: string): string {
-  const date = new Date(vintage + 'T00:00:00')
+  const date = new Date(vintage + 'T12:00:00')
   return date.toLocaleDateString('en-SG', { month: 'short', year: 'numeric' })
 }
 
