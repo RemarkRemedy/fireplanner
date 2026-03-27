@@ -25,6 +25,7 @@ NEW FILES:
   frontend/functions/api/referral/payout-info.ts   — POST PayNow/voucher collection
   frontend/functions/api/admin/referral/conversions.ts — GET+POST admin conversion CRUD
   frontend/functions/lib/crypto.ts                 — AES-256-GCM encrypt/decrypt helpers
+  frontend/functions/lib/referralConfig.ts          — Lean constants for worker-side (IDs, match cap)
   frontend/src/lib/data/referralPlatforms.ts       — Platform catalog + types
   frontend/src/lib/data/disposableEmails.ts        — Disposable email domain blocklist
   frontend/src/lib/validation/referralConstants.ts — Referral-specific validation constants
@@ -107,10 +108,10 @@ CREATE TABLE IF NOT EXISTS referral_clicks (
 );
 
 CREATE INDEX IF NOT EXISTS idx_referral_clicks_reg ON referral_clicks(registration_id);
-CREATE INDEX IF NOT EXISTS idx_referral_clicks_ip_rate ON referral_clicks(ip_hash, created_at);
--- Note: referral_clicks has no ip_hash column — rate limiting uses registration_id lookup.
--- Remove the idx_referral_clicks_ip_rate index above and add ip_hash column if rate limiting
--- by IP is needed on the click endpoint.
+-- Note: referral_clicks intentionally has no ip_hash column. Rate limiting for
+-- clicks is not needed (registration is already rate-limited, and clicks are
+-- fire-and-forget). IDs are TEXT (UUID) not INTEGER AUTOINCREMENT — intentional
+-- divergence from schema.sql to prevent enumeration of referral/token IDs.
 
 -- Admin-entered conversions with frozen allocation splits
 CREATE TABLE IF NOT EXISTS referral_conversions (
@@ -180,10 +181,18 @@ In `frontend/src/lib/validation/emailConstants.ts`, add `'referral_page'` to the
 export const VALID_SOURCES = ['post_simulation', 'landing_page', 'exit_intent', 'contextual_nudge', 'expense_tracker', 'cpf_planner', 'compare_page', 'feedback', 'referral_page'] as const
 ```
 
+Then verify the existing email validation test still passes (it iterates VALID_SOURCES dynamically, so the new value is automatically covered):
+Run: `cd frontend && npm run test -- src/lib/validation/emailValidation.test.ts`
+Expected: All tests pass (including the "accepts all valid sources" test which loops VALID_SOURCES)
+
 - [ ] **Step 2: Create referral validation constants**
 
 ```typescript
 // frontend/src/lib/validation/referralConstants.ts
+// Co-locates validation types, presets, and display constants for the referral feature.
+// Normally data would go in lib/data/, but these constants are small (~30 lines) and
+// exclusively consumed by referral validation + UI — splitting would add indirection
+// for no benefit. Worker-side constants live in functions/lib/referralConfig.ts.
 
 export const VALID_ALLOCATION_PRESETS = ['keep_all', 'donate_charity', 'fifty_fifty', 'donate_fireplanner', 'custom'] as const
 export type AllocationPreset = (typeof VALID_ALLOCATION_PRESETS)[number]
@@ -523,8 +532,8 @@ export function buildAffiliateUrl(platform: ReferralPlatform, clickId: string): 
   return `${platform.affiliateBaseUrl}${separator}${platform.trackingParam}=${clickId}`
 }
 
-/** Platform IDs for server-side validation (duplicated from types, minimal) */
-export const VALID_PLATFORM_IDS = REFERRAL_PLATFORMS.map((p) => p.id)
+// Note: VALID_PLATFORM_IDS for server-side validation lives in
+// functions/lib/referralConfig.ts (lean duplicate, avoids importing full catalog in workers).
 ```
 
 - [ ] **Step 2: Write platform catalog tests**
@@ -670,6 +679,39 @@ git commit -m "feat(referral): add AES-256-GCM encrypt/decrypt for PayNow number
 
 ---
 
+### Task 4b: Worker-Side Referral Config
+
+**Files:**
+- Create: `frontend/functions/lib/referralConfig.ts`
+
+- [ ] **Step 1: Create lean constants for worker-side use**
+
+```typescript
+// frontend/functions/lib/referralConfig.ts
+// Lean constants for Pages Functions (workers). Do NOT import from src/lib/data/
+// here — that pulls the full platform catalog into the worker bundle.
+// Source of truth for platform IDs: src/lib/data/referralPlatforms.ts
+// Source of truth for match cap: src/lib/validation/referralConstants.ts
+
+export const ANNUAL_MATCH_CAP_SGD = 10_000
+
+// Keep in sync with REFERRAL_PLATFORMS in src/lib/data/referralPlatforms.ts.
+// This is a deliberately lean duplicate to avoid importing the full catalog.
+export const VALID_PLATFORM_IDS = [
+  'ibkr', 'moomoo', 'poems', 'ig', 'saxo',
+  'endowus', 'stashaway', 'syfe', 'tiger', 'webull',
+] as const
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add frontend/functions/lib/referralConfig.ts
+git commit -m "feat(referral): add lean worker-side referral config constants"
+```
+
+---
+
 ### Task 5: Pages Function — `/api/referral/register`
 
 **Files:**
@@ -755,10 +797,42 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     ).bind(email).all()
 
     if (existing.length > 0) {
-      // Return existing registration without modifying (allocation is locked)
+      const regId = existing[0].id as string
+
+      // Check if this is an edit request (body.edit_mode === true)
+      if (body.edit_mode === true) {
+        // Check if any paid conversions exist (locks allocation permanently)
+        const { results: paidCheck } = await context.env.DB.prepare(
+          "SELECT COUNT(*) as count FROM referral_conversions WHERE registration_id = ? AND payout_status = 'paid'"
+        ).bind(regId).all()
+
+        if ((paidCheck[0]?.count as number) > 0) {
+          return jsonResponse({ error: 'Allocation is locked after payout.' }, 409)
+        }
+
+        // Update allocation
+        await context.env.DB.prepare(
+          `UPDATE referral_registrations
+           SET allocation_preset = ?, pct_keep = ?, pct_charity = ?, pct_fireplanner = ?, updated_at = CURRENT_TIMESTAMP
+           WHERE id = ?`
+        ).bind(preset, pctKeep, pctCharity, pctFireplanner, regId).run()
+
+        return jsonResponse({
+          alreadyRegistered: true,
+          updated: true,
+          id: regId,
+          allocation_preset: preset,
+          pct_keep: pctKeep,
+          pct_charity: pctCharity,
+          pct_fireplanner: pctFireplanner,
+        })
+      }
+
+      // Not edit mode — return existing registration without modifying
       return jsonResponse({
         alreadyRegistered: true,
-        id: existing[0].id,
+        updated: false,
+        id: regId,
         allocation_preset: existing[0].allocation_preset,
         pct_keep: existing[0].pct_keep,
         pct_charity: existing[0].pct_charity,
@@ -808,7 +882,7 @@ git commit -m "feat(referral): add /api/referral/register Pages Function"
 // frontend/functions/api/referral/click.ts
 import { jsonResponse } from '../../lib/serverUtils'
 import { EMAIL_RE } from '../../../src/lib/validation/emailConstants'
-import { VALID_PLATFORM_IDS } from '../../../src/lib/data/referralPlatforms'
+import { VALID_PLATFORM_IDS } from '../../lib/referralConfig'
 
 interface Env {
   DB: D1Database
@@ -849,10 +923,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     const registration = reg[0]
 
-    // Use body allocation values for audit snapshot (client sends current values)
-    const pctKeep = Number(body.pct_keep ?? registration.pct_keep)
-    const pctCharity = Number(body.pct_charity ?? registration.pct_charity)
-    const pctFireplanner = Number(body.pct_fireplanner ?? registration.pct_fireplanner)
+    // Always snapshot allocation from DB (server is source of truth, not client)
+    const pctKeep = registration.pct_keep as number
+    const pctCharity = registration.pct_charity as number
+    const pctFireplanner = registration.pct_fireplanner as number
 
     await context.env.DB.prepare(
       `INSERT INTO referral_clicks (id, registration_id, platform, affiliate_url, pct_keep, pct_charity, pct_fireplanner)
@@ -886,6 +960,7 @@ git commit -m "feat(referral): add /api/referral/click Pages Function"
 ```typescript
 // frontend/functions/api/referral/tracker.ts
 import { jsonResponse } from '../../lib/serverUtils'
+import { ANNUAL_MATCH_CAP_SGD } from '../../lib/referralConfig'
 
 interface Env {
   DB: D1Database
@@ -913,18 +988,21 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const data = results[0] ?? { total_charity: 0, total_matched: 0, total_fireplanner: 0, conversion_count: 0 }
     const participantCount = (participants[0]?.count as number) ?? 0
 
-    const response = jsonResponse({
+    // Cannot use jsonResponse() here because we need Cache-Control header.
+    // Response.headers is immutable after construction in Workers, so pass all headers at once.
+    return new Response(JSON.stringify({
       total_charity: data.total_charity,
       total_matched: data.total_matched,
       total_fireplanner: data.total_fireplanner,
       participant_count: participantCount,
-      match_cap: 10000,
+      match_cap: ANNUAL_MATCH_CAP_SGD,
       year,
+    }), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=300',
+      },
     })
-
-    // Cache for 5 minutes — data only changes on manual admin entry
-    response.headers.set('Cache-Control', 'public, max-age=300')
-    return response
   } catch (err) {
     console.error('Tracker error:', err)
     return jsonResponse({ error: 'Internal server error' }, 500)
@@ -951,12 +1029,11 @@ git commit -m "feat(referral): add /api/referral/tracker Pages Function with 5mi
 ```typescript
 // frontend/functions/api/admin/referral/conversions.ts
 import { jsonResponse } from '../../../lib/serverUtils'
-import { encryptPaynow } from '../../../lib/crypto'
+import { ANNUAL_MATCH_CAP_SGD } from '../../../lib/referralConfig'
 
 interface Env {
   DB: D1Database
   ADMIN_KEY: string
-  PAYNOW_ENCRYPTION_KEY: string
 }
 
 function checkAuth(context: { request: Request; env: Env }): Response | null {
@@ -1040,7 +1117,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     ).bind(yearStart).all()
 
     const matchedYtd = (capCheck[0]?.matched_ytd as number) ?? 0
-    const remaining = Math.max(0, 10000 - matchedYtd)
+    const remaining = Math.max(0, ANNUAL_MATCH_CAP_SGD - matchedYtd)
     const amountMatched = Math.min(amountCharity, remaining)
 
     // Determine payout status
@@ -1144,14 +1221,23 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       return jsonResponse({ error: 'PayNow number is required' }, 400)
     }
 
-    // Rate limit
+    // Rate limit by IP (prevents brute-forcing token UUIDs)
     const clientIP = context.request.headers.get('CF-Connecting-IP') ?? 'unknown'
-    const ipHash = await hashIP(clientIP, context.env.IP_HASH_SALT)
+    const salt = context.env.IP_HASH_SALT
+    if (!salt) {
+      console.error('IP_HASH_SALT not configured')
+      return jsonResponse({ error: 'Internal server error' }, 500)
+    }
+    const ipHash = await hashIP(clientIP, salt)
+    // Count failed token lookups from this IP in the last hour
+    // (uses referral_registrations table as a proxy for IP tracking since
+    // payout_tokens has no ip_hash column — check registration attempts)
     const { results: rateCheck } = await context.env.DB.prepare(
-      "SELECT COUNT(*) as count FROM referral_payout_tokens WHERE id = ? AND created_at > datetime('now', '-1 hour')"
-    ).bind(token).all()
-    // Simple rate limit: just check IP isn't spamming random tokens
-    // (token-based access is already rate-limited by token existence)
+      "SELECT COUNT(*) as count FROM referral_registrations WHERE ip_hash = ? AND created_at > datetime('now', '-1 hour')"
+    ).bind(ipHash).all()
+    if ((rateCheck[0]?.count as number) >= RATE_LIMIT_MAX) {
+      return jsonResponse({ error: 'Too many attempts. Please try again later.' }, 429)
+    }
 
     // Look up token
     const { results: tokens } = await context.env.DB.prepare(
@@ -1231,6 +1317,14 @@ git commit -m "feat(referral): add /api/referral/payout-info with token validati
 This task creates all 10 components. Each is a self-contained React component using shadcn/ui primitives. The components are composed together in Task 11 (ReferralPage).
 
 **Due to plan size constraints, component implementations should follow the spec's component mapping section (Section 1) exactly. Key implementation notes:**
+
+- [ ] **Step 0: Install shadcn ToggleGroup component (not yet in the project)**
+
+Run: `cd frontend && npx shadcn@latest add toggle-group`
+Expected: Creates `src/components/ui/toggle-group.tsx`
+
+Verify the existing ToggleGroup usage in `GoalConfig.tsx` still works:
+Run: `cd frontend && npm run type-check`
 
 - [ ] **Step 1: Create HeroSection.tsx**
 
@@ -1336,14 +1430,13 @@ const PayoutPage = lazy(() => import('@/pages/PayoutPage').then(m => ({ default:
 const AdminReferralPage = lazy(() => import('@/pages/AdminReferralPage').then(m => ({ default: m.AdminReferralPage })))
 ```
 
-Add inside PlannerRouteShell children:
+Add as standalone routes (alongside `/admin/emails`, `/goal-calculator`). These pages
+have NO store dependencies and must NOT be inside PlannerRouteShell:
 ```typescript
+// Referral (standalone, no planner store dependencies)
 { path: '/referral', element: page(ReferralPage) },
 { path: '/referral/payout', element: page(PayoutPage) },
-```
-
-Add as standalone route (alongside `/admin/emails`):
-```typescript
+// Admin
 { path: '/admin/referral', element: page(AdminReferralPage) },
 ```
 
