@@ -1,82 +1,89 @@
-# Goal Calculator V1.5: Smarter Results + Couple Mode + Share
+# Goal Calculator V1.5: Wrapped Results + SG Intelligence + Couple Mode
 
 **Route:** `/goal-calculator` (same as V1)
-**Branch:** `feat/goal-calculator`
-**Date:** 2026-03-27 (revised)
+**Branch:** new branch from main after V1 merge (e.g., `feat/goal-calculator-v1.5`)
+**Date:** 2026-03-27 (post-CEO-review revision)
+**CEO Review:** CLEARED (selective expansion, 4 accepted, 1 deferred, 1 cut)
 
 ## Goal
 
-Make the goal calculator dramatically more accurate by deriving CPF, grants, income growth, and other SG-specific factors from the same inputs users already provide. Add couple mode (one extra field). Make results shareable. Reduce friction with a preview-first flow.
+Make the goal calculator dramatically more accurate by deriving CPF, grants, income growth, and other SG-specific factors from the same inputs. Add couple mode. Present results as a Spotify Wrapped-style story. Make every story card individually shareable.
 
-**Key principle:** Add calculation complexity, not input complexity. The user enters the same 4 fields (plus optional partner income). The engine gets much smarter behind the scenes.
+**Key principle:** Add calculation complexity, not input complexity. The user enters the same 4 fields (with a net/gross toggle) plus optional couple fields. The engine gets much smarter behind the scenes.
+
+## User Flow
+
+```
+Pick goal → Configure → Basics (4-6 fields) → Wrapped Story (swipeable cards)
+                                                     │
+                                                [Skip to full results]
+                                                     │
+                                               Full Results Page
+                                               (insight chips, detail panels)
+                                                     │
+                                               [Continue to planner]
+```
+
+**State machine:** Same as V1: `pick | config | basics | results`. No preview step. Results triggers the Wrapped story. Skip button goes to full results page.
 
 ## Changes from V1
 
-### 1. Result-First Flow (Preview Before Basics)
+### 1. Salary Input: Net/Gross Pill Toggle
 
-**V1.5 flow:**
-```
-Pick goal → Configure → Preview result (SG median defaults) →
-  "Quick estimate for a typical fresh grad. Personalize for your real numbers."
-  [Personalize] → Basics form (5 fields) → Personalized results
-```
+**CEO review fix:** The original "take-home only" input breaks above the OW ceiling ($6,800/mo gross). CPF is capped, so `gross = take-home / 0.80` overestimates for higher earners. This error propagates to grants, loan checks, tax, and income ceiling calculations.
 
-After goal configuration, show a preview result using hardcoded SG median defaults:
-
-```typescript
-const PREVIEW_DEFAULTS: GoalCalcBasics = {
-  age: 25,
-  monthlyIncome: 3_500,
-  monthlyExpenses: 2_000,
-  existingSavings: 0,
-  partnerIncome: null,        // solo by default
-}
-```
-
-The preview uses the same Results component with:
-- Banner: "Quick estimate for a typical fresh grad earning $3,500/mo"
-- "Personalize your plan" CTA instead of "Edit basics"
-- "Continue to planner" hidden until personalized
-
-**State machine:** Add `'preview'` step. `COMPLETE_CONFIG` goes to `'preview'` when basics are null, `'results'` when basics exist (adding second goal).
-
-### 2. Couple Mode
-
-Add a toggle to BasicsForm: "Planning with a partner?"
-
-When enabled, show one additional field: partner's monthly take-home pay. The engine then:
-- Doubles CPF OA contributions (both partners)
-- Uses combined household income for grant eligibility
-- Uses combined available savings for goal feasibility
-- Uses combined income for MSR/TDSR loan qualification
+**Fix:** Reuse the existing pill-toggle input pattern from the full planner. The salary field has an inline toggle: "Net" or "Gross". User picks whichever they know (fresh grads usually know gross from their offer letter).
 
 ```typescript
 interface GoalCalcBasics {
   age: number
-  monthlyIncome: number
+  monthlySalary: number
+  salaryBasis: 'net' | 'gross'    // pill toggle
   monthlyExpenses: number
   existingSavings: number
-  partnerIncome: number | null  // null = solo, number = couple
+  partnerAge: number | null        // null = solo
+  partnerSalary: number | null     // null = solo
+  partnerSalaryBasis: 'net' | 'gross' | null
 }
 ```
 
-**Why couple mode matters for sharing:** The realistic share target is a partner, not social media. "Look what we can afford together" is the natural share moment. Couple mode makes sharing meaningful.
-
-**Gross income derivation for both partners:**
+**Derivation when net is selected:**
 ```typescript
-function deriveGrossFromTakeHome(takeHome: number, age: number): number {
+function deriveGrossFromNet(netSalary: number, age: number): number {
   const employeeCpfRate = age <= 55 ? 0.20 : age <= 60 ? 0.13 : 0.075
-  return takeHome / (1 - employeeCpfRate)
+  const owCeiling = 6_800
+  const grossUncapped = netSalary / (1 - employeeCpfRate)
+  // Clamp: if derived gross exceeds OW ceiling, the formula is wrong
+  // In that case, the CPF deduction is fixed at OW ceiling * rate
+  if (grossUncapped > owCeiling) {
+    const fixedCpf = owCeiling * employeeCpfRate
+    return netSalary + fixedCpf
+  }
+  return grossUncapped
 }
 ```
 
-### 3. CPF OA Awareness (Zero New Inputs)
+When gross is selected, use it directly. No derivation needed.
 
-Derive CPF OA contributions from take-home pay. Show how much CPF covers for property goals.
+### 2. Couple Mode
 
-**Derivation:**
+**CEO review fix:** Original spec had 1 extra field. Outside voice identified that partner age matters (different CPF OA allocation rates) and co-borrower status matters for loan qualification.
+
+**Decision:** 2 extra fields when toggled: partner salary (with own net/gross pill) + partner age. Assume co-borrower for all property goals (true for most fresh grad couples).
+
+Toggle in BasicsForm: "Planning with a partner?" When enabled:
+- Show partner age input + partner salary input (with pill toggle)
+- Engine uses partner's age for their CPF OA allocation rates
+- Combined household gross income for grant eligibility and loan qualification
+- Both partners' CPF OA contributions summed for property savings
+
+### 3. CPF OA Awareness
+
+Derive CPF OA contributions from gross income. Show how much CPF covers for property goals.
+
+**Calculation:**
 ```
-Take-home $3,500 → Gross ≈ $4,375 (÷ 0.80 for age ≤ 55)
+Gross $4,375 (age 25)
 Total CPF = Gross × 0.37 (employee 20% + employer 17%)
 CPF OA allocation = Total CPF × 0.6217 (age ≤ 35 OA ratio)
 Monthly OA ≈ $1,007
@@ -84,78 +91,70 @@ Monthly OA ≈ $1,007
 Over 5 years before HDB: ~$60K+ in CPF OA (before interest)
 ```
 
-**How it changes results for property goals:**
-- Compute CPF OA accumulated between now and target age
-- Subtract from cash savings needed for down payment
-- Show in cost breakdown: "Down payment: $40,000 (CPF OA covers $40,000, cash needed: $0)"
-- For monthly mortgage: show CPF OA monthly contribution vs mortgage payment
-
 **CPF OA age-based allocation rates** (add to `goal-defaults.ts`):
 
-| Age band | OA ratio (of total CPF) |
-|----------|------------------------|
-| ≤ 35 | 0.6217 |
-| 36-45 | 0.5677 |
-| 46-50 | 0.5136 |
-| 51-55 | 0.4054 |
+| Age band | Employee rate | Employer rate | Total rate | OA ratio |
+|----------|-------------|---------------|------------|----------|
+| ≤ 35 | 0.20 | 0.17 | 0.37 | 0.6217 |
+| 36-45 | 0.20 | 0.17 | 0.37 | 0.5677 |
+| 46-50 | 0.20 | 0.17 | 0.37 | 0.5136 |
+| 51-55 | 0.20 | 0.17 | 0.37 | 0.4054 |
 
-**For couples:** Both partners' CPF OA contributions are summed.
+**OW Ceiling:** $6,800/mo. CPF contributions capped at this amount. Gross income above OW ceiling still earns more take-home, but CPF stays flat.
 
-### 4. Housing Grant Estimation (Zero New Inputs)
+**How it changes results for property goals:**
+- Compute CPF OA accumulated between now and target age (monthly OA × months, no interest for simplicity)
+- Subtract from cash savings needed for down payment
+- Show in cost breakdown: "Down payment: $40,000 (CPF OA covers $40,000, cash needed: $0)"
 
-First-time HDB buyers get grants based on household income. We have income and BTO/resale selection.
+**For couples:** Sum both partners' CPF OA contributions (using each partner's own age for OA ratio).
 
-**Assumptions:** First-time buyer (safe for fresh grads), Singapore citizen (SG-focused tool).
+### 4. Housing Grant Estimation
 
-**Enhanced CPF Housing Grant (EHG) for BTO:**
+First-time HDB buyers get grants based on household income.
 
-| Monthly household income | EHG amount |
-|-------------------------|------------|
-| ≤ $1,500 | $80,000 |
-| $1,501 - $2,000 | $75,000 |
-| $2,001 - $2,500 | $70,000 |
-| $2,501 - $3,000 | $65,000 |
-| $3,001 - $3,500 | $60,000 |
-| $3,501 - $4,000 | $55,000 |
-| $4,001 - $4,500 | $50,000 |
-| $4,501 - $5,000 | $45,000 |
-| $5,001 - $5,500 | $40,000 |
-| $5,501 - $6,000 | $35,000 |
-| $6,001 - $6,500 | $30,000 |
-| $6,501 - $7,000 | $25,000 |
-| $7,001 - $7,500 | $20,000 |
-| $7,501 - $8,000 | $15,000 |
-| $8,001 - $9,000 | $5,000 |
-| > $9,000 | $0 |
+**Assumptions:** First-time buyer, Singapore citizen. Stated via disclaimer.
 
-**Note:** EHG income uses gross income, not take-home. Derive gross from take-home using CPF rate.
+**Enhanced CPF Housing Grant (EHG) for BTO (2026 rates, post-NDR 2024):**
 
-**For resale:** Family Grant ($50,000 for 4-room+, $40,000 for 3-room) + Proximity Housing Grant ($30,000 if near parents). Use Family Grant only (PHG requires too many assumptions).
+| Monthly household gross income | EHG amount (families) | EHG amount (singles) |
+|-------------------------------|----------------------|---------------------|
+| ≤ $1,500 | $120,000 | $60,000 |
+| $1,501 - $2,000 | $115,000 | $57,500 |
+| $2,001 - $2,500 | $110,000 | $55,000 |
+| $2,501 - $3,000 | $105,000 | $52,500 |
+| $3,001 - $3,500 | $100,000 | $50,000 |
+| $3,501 - $4,000 | $95,000 | $47,500 |
+| $4,001 - $4,500 | $90,000 | $45,000 |
+| $4,501 - $5,000 | $85,000 | $42,500 |
+| $5,001 - $5,500 | $80,000 | $40,000 |
+| $5,501 - $6,000 | $75,000 | $37,500 |
+| $6,001 - $6,500 | $70,000 | $35,000 |
+| $6,501 - $7,000 | $65,000 | $32,500 |
+| $7,001 - $7,500 | $60,000 | $30,000 |
+| $7,501 - $8,000 | $55,000 | $27,500 |
+| $8,001 - $9,000 | $40,000 | $20,000 |
+| > $9,000 | $0 | $0 |
 
-**Display:** Add "Housing grant (est.)" line to cost breakdown with the grant amount subtracted. Show as negative number reducing total.
+**Note:** These amounts must be verified against HDB.gov.sg before implementation. The NDR 2024 announcement increased EHG significantly but exact bracket amounts may differ from this table. Use HDB's official grant calculator as source of truth.
+
+**For resale:** Family Grant ($80,000 for 4-room or smaller, $50,000 for 5-room or larger for families). Use Family Grant only (Proximity Housing Grant requires location assumptions).
+
+**Display:** "Housing grant (est.)" line in cost breakdown, subtracted from total. Solo users get singles rate; couple users get family rate.
 
 **Disclaimer:** "Grant estimate assumes first-time buyer, Singapore citizen. Actual eligibility depends on additional criteria. Check HDB.gov.sg for details."
 
-### 5. Income Growth Projection (Zero New Inputs)
+### 5. Income Growth Projection
 
-Assume 3% annual real income growth (conservative, based on MOM graduate employment surveys showing 4-5% nominal growth minus ~2% inflation).
+Assume 3% annual real income growth (conservative, based on MOM data).
 
-**Impact on feasibility:** For a 10-year goal, income at target age is ~34% higher than today. Monthly savings capacity grows over time. This means goals that look "amber" with static income are actually "green" with growth.
+**Implementation:** Compute average income over the saving period, use that for feasibility instead of current income. Simpler than changing the PMT formula.
 
-**Implementation:** Adjust the PMT calculation to account for growing contributions. Instead of flat monthly payment:
-```
-adjustedMonthlySavings = baseMonthlySavings × growingAnnuityFactor
-```
+**Display:** "Accounts for ~3% annual income growth."
 
-Or simpler: compute the average income over the saving period, use that for feasibility assessment instead of current income. The simpler approach avoids changing the PMT formula.
-
-**Display:** Show feasibility based on average income over the period. Add note: "Accounts for ~3% annual income growth."
-
-### 6. CPF LIFE Offset (Zero New Inputs)
+### 6. CPF LIFE Offset
 
 Reduce the FIRE number by estimated CPF LIFE payouts starting at age 65.
-
-**Estimation:** Based on accumulated CPF contributions (derived from gross income × years of work), estimate monthly CPF LIFE payout. For simplicity, use a lookup:
 
 | Monthly gross income | Estimated CPF LIFE payout (Basic Plan, from 65) |
 |---------------------|------------------------------------------------|
@@ -165,141 +164,104 @@ Reduce the FIRE number by estimated CPF LIFE payouts starting at age 65.
 | $6,001 - $8,000 | ~$1,500/mo |
 | > $8,000 | ~$1,800/mo |
 
-**Impact on Freedom Age:** If annual expenses are $24,000 and CPF LIFE covers $12,000/yr, the FIRE number drops from 28 × $24K = $672K to 28 × $12K = $336K. Freedom Age could drop by 5-10 years.
+**Impact on Freedom Age:** Reduces FIRE number by `cpfLifePayout × 12 × FIRE_MULTIPLIER`. Freedom Age card: "Your Freedom Age: 47 (includes estimated CPF LIFE from 65)."
 
-**Display:** Freedom Age card shows: "Your Freedom Age: 47 (includes estimated CPF LIFE from 65)."
+### 7. Emergency Fund Floor
 
-**Note:** CPF LIFE only kicks in at 65. For users whose Freedom Age is already < 65, show the gap period: "Freedom Age 52. CPF LIFE starts at 65, covering the gap with your portfolio."
-
-### 7. Emergency Fund Floor (Zero New Inputs)
-
-Before allocating all available savings to goals, reserve 3 months of expenses as an emergency buffer.
+Reserve 3 months of expenses before allocating savings to goals.
 
 ```
 emergencyFund = monthlyExpenses × 3
 availableForGoals = max(0, existingSavings - emergencyFund)
-monthlyAvailable = monthlyIncome - monthlyExpenses
 ```
 
-If existingSavings < emergencyFund, show: "We recommend building a $6,000 emergency fund (3 months of expenses) first. Your goal savings start after that."
+Show note if savings below threshold.
 
-**Implementation:** Adjust `computeMonthlySavingsNeeded` to account for reduced available savings. Show the emergency fund line in results if savings are below the threshold.
+### 8. Property Loan Qualification Check
 
-### 8. Property Loan Qualification Check (Zero New Inputs)
-
-For property goals, check if the user would qualify for the loan quantum needed.
-
-**MSR (Mortgage Servicing Ratio):** Monthly mortgage payment must be ≤ 30% of gross monthly income.
-**TDSR (Total Debt Servicing Ratio):** All debt payments must be ≤ 55% of gross monthly income.
+**MSR:** Monthly mortgage ≤ 30% of gross household income.
+**Mortgage rates:** HDB loan 2.6%, bank loan 3.0%.
 
 ```
-grossIncome = deriveGrossFromTakeHome(takeHome, age)
-maxMonthlyMortgage = grossIncome × 0.30  // MSR
-propertyPrice = goal.totalCostToday (full price, not just down payment)
 loanNeeded = propertyPrice - downPayment - cpfOaAccumulated - grantAmount
-monthlyMortgage = PMT(loanNeeded, interestRate, loanTenure)
-qualified = monthlyMortgage <= maxMonthlyMortgage
+monthlyMortgage = PMT(loanNeeded, rate, tenure)
+qualified = monthlyMortgage <= grossHouseholdIncome × 0.30
 ```
 
-**Display:** If qualified: "You'd likely qualify for this loan." If not: "Based on the 30% MSR rule, this property may stretch your loan eligibility. Consider a lower price bracket or longer timeline."
+### 9. HDB Income Ceiling Warning
 
-**For couples:** Use combined gross income for MSR/TDSR.
+Ceilings: $7,000/mo gross (singles), $14,000/mo gross (couples).
 
-### 9. HDB Income Ceiling Warning (Zero New Inputs)
+With 3% growth, project when user exceeds ceiling. Show warning if before target age.
 
-With income growth assumption, project when the user will exceed the BTO income ceiling.
+### 10. Goal Dependencies: HDB to Condo Upgrade
 
-**Ceilings:** $7,000/mo gross for singles, $14,000/mo gross for couples (household).
+Detect HDB + condo/landed in same goal set. Estimate HDB sale proceeds (purchase price × 1.03^years - outstanding loan). Offset condo cost.
 
-```
-yearsToExceed = log(ceiling / currentGross) / log(1 + growthRate)
-ageAtExceed = currentAge + yearsToExceed
-```
+### 11. BTO Timeline Reality
 
-**Display:** If they'll exceed the ceiling before their target age: "At 3% growth, your household income may exceed the $14,000 BTO ceiling by age 29. Consider applying sooner."
+Display note: "To collect keys by age 32, start applying around age 27. BTO construction typically takes 3-5 years."
 
-Only show for HDB BTO goals where the projection hits the ceiling.
+### 12. Income Tax Heads-Up
 
-### 10. Goal Dependencies: HDB to Condo Upgrade (Zero New Inputs)
+Derive gross annual income, apply IRAS brackets. Show: "Set aside ~$X/mo for your income tax bill (billed in arrears from Year 2)."
 
-When both an HDB goal and a condo/landed goal exist, detect the upgrade path.
-
-**Logic:** If goals include `category: 'housing'` with both an HDB and a condo/landed:
-- Estimate HDB value at condo target age (purchase price + ~3% annual appreciation)
-- Subtract outstanding loan at that point
-- Net proceeds offset the condo down payment
-
-**Display:** On the condo goal card: "After selling your HDB (est. proceeds: $X), your condo cash outlay drops to $Y."
-
-### 11. BTO Timeline Reality (Zero New Inputs)
-
-For HDB BTO goals, adjust the displayed timeline to account for the application-to-keys journey.
-
-**Timeline:** Application → Ballot (may take 1-3 attempts) → Queue position → Construction (3-5 years) → Keys
-
-**Display:** Below the target age on HDB BTO goal cards: "To collect keys by age 32, start applying around age 27. BTO construction typically takes 3-5 years."
-
-Simple copy change, no calculation change.
-
-### 12. Income Tax Heads-Up (Zero New Inputs)
-
-Fresh grads in their first year of work often forget about Year 2 tax.
-
-**Calculation:** Derive gross annual income, apply IRAS tax brackets, compute approximate annual tax.
-
-**Display:** Small note on results: "Heads up: set aside ~$X/mo for your income tax bill (billed in arrears from Year 2)."
-
-Only show when estimated annual tax > $0 (threshold: chargeable income > $20,000).
-
-### 13. Goal-Fund Parking Recommendations (Zero New Inputs)
-
-Based on goal timeline, suggest where to park savings.
+### 13. Goal-Fund Parking Recommendations
 
 | Timeline | Recommendation |
 |----------|---------------|
-| < 2 years | High-yield savings account (e.g., 2.5-3.5%) |
-| 2-5 years | Singapore Savings Bonds or T-bills (~3%) |
-| 5-10 years | Low-cost index fund (e.g., STI ETF or global ETF) |
-| > 10 years | Diversified portfolio (the full planner models this) |
+| < 2 years | High-yield savings account |
+| 2-5 years | Singapore Savings Bonds or T-bills |
+| 5-10 years | Low-cost index fund |
+| > 10 years | Diversified portfolio (full planner models this) |
 
-**Display:** Below each goal card: "With a X-year horizon, consider parking this in [recommendation]."
+### 14. Peer Benchmarking
 
-### 14. Peer Benchmarking (Zero New Inputs)
+**Source:** MOM Key Household Income Trends (annual, not the 5-yearly HES). Verify data vintage at implementation time.
 
-Compare the user's savings rate against Singapore averages by age band.
-
-**Source:** DOS Household Expenditure Survey, MOM graduate employment data.
-
-**Savings rate:** `(monthlyIncome - monthlyExpenses) / monthlyIncome × 100`
-
-**Rough benchmarks (to be verified against DOS data):**
-
-| Age band | Median savings rate |
-|----------|-------------------|
-| 22-25 | ~20% |
-| 26-30 | ~25% |
-| 31-35 | ~28% |
-
-**Display:** On results page: "Your savings rate: 43%. That's higher than about 3 in 4 Singaporeans your age."
-
-Use approximate language ("about 3 in 4") not false-precision percentiles.
+Use approximate language: "Your savings rate: 43%. That's higher than about 3 in 4 Singaporeans your age."
 
 ### 15. Lifestyle Translation + Freedom Age
 
-Same as original V1.5 spec:
-- **Lifestyle translation:** "$354/mo. That's about $12/day" below monthly savings amount
-- **Freedom Age:** Replace retirement impact callout with prominent "Your Freedom Age: 47" with "Without these goals: 42" comparison
+- "$354/mo. That's about $12/day" below monthly savings amount.
+- "Your Freedom Age: 47" with "Without these goals: 42" comparison.
 
-### 16. Shareability
+### 16. Wrapped Story Format (Primary Results Experience)
 
-Same as original V1.5 spec:
-- Share-as-image card with goal summary, Freedom Age, and URL
-- Web Share API on mobile, clipboard copy on desktop
-- For couples: card shows "Our plan" instead of "Your plan"
+**CEO review addition.** Results are presented as a Spotify Wrapped-style swipeable story. Each card shows one insight with a big number and minimal text. The story builds a narrative arc:
 
-### 17. Smart Disclaimers (Revised)
+**Example story for HDB goal (solo, age 25, $4,500 gross):**
+```
+Card 1: "You can save $2,500/mo" (That's $83/day)
+Card 2: "An HDB 4-Room BTO costs $89,600 upfront"
+Card 3: "But your CPF OA will have ~$60K by age 30"
+Card 4: "Plus you qualify for ~$100K in grants"
+Card 5: "Cash you actually need: $354/mo"
+Card 6: "Your Freedom Age: 47"
+Card 7: [CTA] "See your full breakdown" → full results page
+```
 
-Since the calculator now includes CPF, grants, and income growth, disclaimers shift to what the full planner STILL does better:
+**Multi-goal:** Shared insights (CPF, Freedom Age, peer benchmark) appear once. Per-goal insights (monthly savings, feasibility) appear per goal. **Max 10 cards** regardless of goal count.
+
+**Navigation:** Swipe (touch), click/arrow keys (desktop), CSS transforms for transitions (no framer-motion dependency).
+
+**Skip button:** Small "Skip" link in corner for returning users who've already seen the story.
+
+**Reuse:** Existing story components from ILP onboarding and setup flow can be adapted.
+
+### 17. Per-Card Sharing
+
+Each story card is individually shareable. Tap share icon on any card to trigger Web Share API (mobile) or copy-to-clipboard (desktop). Falls back to download as PNG.
+
+This replaces the separate ShareCard.tsx component from the original spec. Each card is its own shareable image.
+
+For couples: cards show "Our plan" instead of "Your plan."
+
+Card footer includes `sgfireplanner.com/goal-calculator` for organic traffic.
+
+### 18. Smart Disclaimers
+
+Disclaimers surface active assumptions and drive users to the full planner.
 
 **All results:**
 ```
@@ -310,59 +272,85 @@ and tax optimization for a comprehensive picture."
 
 **Property goals:**
 ```
-"Grant and CPF estimates assume first-time buyer, Singapore citizen. Your actual
-eligibility may differ. The full planner models your specific CPF balances and
-property financing in detail."
+"Estimates assume first-time buyer, Singapore citizen, co-borrowers for couples.
+Your actual eligibility may differ. The full planner models your specific CPF
+balances and property financing in detail."
 ```
 
-## Calculation Engine Changes
+## Calculation Engine Architecture
 
-All new calculations go in `lib/calculations/goal-calculator.ts` (pure functions). New SG data goes in `lib/data/goal-defaults.ts`.
+**File splitting (CEO review decision):** Keep focused modules under 300 lines.
 
-**New pure functions:**
+| File | Purpose | Contents |
+|------|---------|----------|
+| `goal-calculator.ts` | Core engine (unchanged from V1) | PMT, feasibility, stacking, retirement impact, goal mapping |
+| `goal-calculator-sg.ts` (new) | SG-specific derivations | CPF, grants, tax, loan check, income ceiling, benchmarks |
+| `goal-defaults.ts` | SG data constants | HDB prices, CPF rates, grant tables, tax brackets, ceilings |
+
+**New pure functions in `goal-calculator-sg.ts`:**
 
 | Function | Input | Output |
 |----------|-------|--------|
-| `deriveGrossFromTakeHome(takeHome, age)` | Take-home pay, age | Gross monthly income |
-| `deriveCpfOaMonthly(grossIncome, age)` | Gross income, age | Monthly CPF OA contribution |
-| `estimateHousingGrant(grossHouseholdIncome, flatType, tenure)` | Household gross, flat config | Grant amount |
-| `estimateCpfLifePayout(grossIncome)` | Gross income | Estimated monthly CPF LIFE |
+| `deriveGrossFromNet(netSalary, age)` | Net salary, age | Gross (clamped to OW ceiling) |
+| `deriveCpfOaMonthly(grossIncome, age)` | Gross, age | Monthly CPF OA contribution |
+| `estimateHousingGrant(grossHouseholdIncome, flatType, tenure, isSingle)` | Household gross, config, solo/couple | Grant amount |
+| `estimateCpfLifePayout(grossIncome)` | Gross | Estimated monthly CPF LIFE |
 | `checkLoanQualification(grossHouseholdIncome, loanNeeded, rate, tenure)` | Income, loan params | { qualified, maxLoan, monthlyPayment } |
-| `projectIncomeGrowth(currentIncome, years, rate)` | Income, years, growth rate | Average income over period |
+| `projectIncomeGrowth(currentIncome, years, rate)` | Income, years, growth | Average income over period |
 | `estimateIncomeTax(grossAnnualIncome)` | Annual gross | Annual tax, monthly set-aside |
 | `checkIncomeCeiling(grossHouseholdIncome, growthRate, ceiling)` | Income, growth, ceiling | Years to exceed |
 | `estimateHdbSaleProceeds(purchasePrice, yearsHeld, loanType)` | Purchase params | Net sale proceeds |
-| `getEmergencyFundFloor(monthlyExpenses)` | Monthly expenses | Emergency fund amount |
-| `getPeerBenchmark(savingsRate, age)` | Savings rate, age | Percentile description |
+| `getEmergencyFundFloor(monthlyExpenses)` | Expenses | Emergency fund amount |
+| `getPeerBenchmark(savingsRate, age)` | Rate, age | Percentile description string |
 | `getParkingRecommendation(yearsToGoal)` | Timeline | Recommendation string |
 
-**New data constants** (in `goal-defaults.ts`):
-
-- CPF contribution rates by age band
-- CPF OA allocation ratios by age band
-- EHG grant table (income brackets → amounts)
-- Family Grant amounts by flat type
-- IRAS tax brackets
-- HDB income ceilings (single/couple)
+**New data constants in `goal-defaults.ts`:**
+- CPF contribution rates by age band (employee, employer, total, OA ratio)
+- OW ceiling ($6,800)
+- EHG grant table 2026 (income brackets x family/single amounts)
+- Family Grant amounts (by flat size)
+- IRAS tax brackets (YA2026)
+- HDB income ceilings (single $7K, couple $14K)
 - CPF LIFE payout estimates by income band
 - Peer savings rate benchmarks by age band
-- Parking recommendations by timeline
+- Mortgage rates (HDB 2.6%, bank 3.0%)
 
-## Files Changed
+## UI Component Architecture
+
+**File splitting (CEO review decision):**
+
+| File | Purpose |
+|------|---------|
+| `WrappedStory.tsx` (new) | Swipeable story card container, navigation, skip |
+| `StoryCard.tsx` (new) | Individual story card with share button |
+| `FullResults.tsx` (new) | Detail view with goal cards + insight chips |
+| `InsightChip.tsx` (new) | Expandable insight badge component |
+| `Results.tsx` | Orchestrator: renders WrappedStory or FullResults based on state |
+| `BasicsForm.tsx` | Updated: net/gross pill toggle, couple mode fields |
+| `GoalCalculatorPage.tsx` | Updated: GoalCalcBasics type change |
+
+**Shared components:** `WrappedStory`, `StoryCard`, and `InsightChip` go in `components/shared/` for future reuse in the full planner.
+
+## Files Changed (Complete List)
 
 | File | Change |
 |------|--------|
-| `goal-calculator.ts` | Add 12 new pure functions, update `computeSmartGoalCost` to include CPF/grant offsets, update retirement impact to include CPF LIFE |
-| `goal-defaults.ts` | Add CPF rates, grant tables, tax brackets, income ceilings, payout estimates, benchmarks |
-| `goal-defaults.test.ts` | Tests for all new data constants |
-| `goal-calculator.test.ts` | Tests for all new pure functions |
-| `GoalCalculatorPage.tsx` | Add `'preview'` step, update `GoalCalcBasics` to include `partnerIncome` |
-| `BasicsForm.tsx` | Add "Planning with a partner?" toggle + partner income field |
-| `Results.tsx` | CPF breakdown in goal cards, grant line, Freedom Age, lifestyle translation, peer benchmark, parking tip, loan qualification, BTO timeline note, income ceiling warning, tax heads-up, emergency fund note, disclaimers, share button, preview mode |
-| `ShareCard.tsx` (new) | Shareable image card component |
+| `lib/calculations/goal-calculator-sg.ts` (new) | 12 SG-specific pure functions |
+| `lib/calculations/goal-calculator-sg.test.ts` (new) | Tests for all 12 functions, >= 95% coverage |
+| `lib/calculations/goal-calculator.ts` | Update retirement impact to accept CPF LIFE offset |
+| `lib/data/goal-defaults.ts` | Add CPF rates, grant tables, tax brackets, income ceilings, benchmarks |
+| `lib/data/goal-defaults.test.ts` | Tests for new data constants |
+| `components/shared/WrappedStory.tsx` (new) | Story container with swipe/navigation |
+| `components/shared/StoryCard.tsx` (new) | Individual card with share |
+| `components/shared/InsightChip.tsx` (new) | Expandable insight badge |
+| `components/goal-calculator/FullResults.tsx` (new) | Detail results with insight chips |
+| `components/goal-calculator/Results.tsx` | Orchestrator for story vs full results |
+| `components/goal-calculator/BasicsForm.tsx` | Net/gross toggle, couple mode |
+| `pages/GoalCalculatorPage.tsx` | Updated GoalCalcBasics type |
 
 ## What This Does NOT Include
 
+- Preview step with median defaults (CUT by CEO review: story format makes it unnecessary)
 - Wealth curve visualization (V2)
 - What-if sliders (V2)
 - Shareable URLs (V2)
@@ -371,45 +359,57 @@ All new calculations go in `lib/calculations/goal-calculator.ts` (pure functions
 - Student loan tracking (needs new input fields)
 - NS disruption (needs gender input)
 - Parental allowance (needs new input field)
+- Partner reveal narrative (DEFERRED: skipped in CEO cherry-pick)
 
 ## Testing
 
-**Unit tests (all new pure functions):**
-- `deriveGrossFromTakeHome`: verify against CPF rate tables for each age band
-- `deriveCpfOaMonthly`: verify OA ratios for each age band
-- `estimateHousingGrant`: test each income bracket boundary for BTO and resale
-- `estimateCpfLifePayout`: test each income band
-- `checkLoanQualification`: test pass/fail scenarios against MSR
-- `projectIncomeGrowth`: test 0 years, 5 years, 10 years
-- `estimateIncomeTax`: test brackets including below threshold ($0 tax)
-- `checkIncomeCeiling`: test already-exceeded, 5 years away, never-exceeded
-- `estimateHdbSaleProceeds`: test with appreciation assumptions
+**Unit tests (>= 95% coverage, same standard as main codebase):**
+- `deriveGrossFromNet`: below OW ceiling, at ceiling, above ceiling, edge ages
+- `deriveCpfOaMonthly`: each age band, at OW ceiling boundary
+- `estimateHousingGrant`: each income bracket boundary, BTO vs resale, solo vs couple
+- `estimateCpfLifePayout`: each income band
+- `checkLoanQualification`: pass/fail scenarios, HDB 2.6% vs bank 3.0%
+- `projectIncomeGrowth`: 0 years, 5 years, 10 years
+- `estimateIncomeTax`: brackets including below threshold ($0 tax)
+- `checkIncomeCeiling`: already exceeded, 5 years away, never exceeded
+- `estimateHdbSaleProceeds`: with appreciation, negative equity guard
 - Property-based tests with fast-check for CPF derivation consistency
 
 **E2E tests:**
-- Preview flow (goal config → preview → personalize → results)
-- Skip personalization (goal config → preview → skip → results with defaults)
-- Couple mode (toggle partner, enter income, verify combined results)
+- Full flow with gross salary input
+- Full flow with net salary input (verify derivation)
+- Couple mode (toggle, enter partner details, verify combined results)
 - HDB goal shows CPF OA offset and grant in breakdown
-- Share button generates image (or at least doesn't crash)
+- Wrapped story swipes through all cards
+- Skip button goes to full results
+- Per-card share button (at least doesn't crash)
 
-## Dependencies
+## Implementation Decisions (Locked by CEO Review)
 
-- `html2canvas` or canvas API for share card (~40KB gzipped, evaluate alternatives)
+| Decision | Value | Reasoning |
+|----------|-------|-----------|
+| Mortgage rate (HDB) | 2.6% | Standard HDB concessionary rate |
+| Mortgage rate (bank) | 3.0% | Conservative current market rate |
+| Max story cards | 10 | Prevents story fatigue with 3 goals |
+| Animation | CSS transforms only | Zero dependency, GPU-accelerated |
+| Income growth | 3% real | Conservative, MOM graduate survey data |
+| HDB appreciation | 3% annual | Conservative long-term average |
+| Co-borrower | Assumed for couples | True for most fresh grad couples |
 
 ## Data Accuracy Notes
 
-- CPF rates change periodically. Pin to `GOAL_DATA_VINTAGE` and add to maintenance checklist.
-- EHG amounts are current as of 2026. HDB revises periodically.
+- **EHG amounts MUST be verified** against HDB.gov.sg before implementation. Table above is based on NDR 2024 announcements and web search results, not primary source.
+- CPF rates change periodically. Pin to `GOAL_DATA_VINTAGE`.
 - Tax brackets from IRAS YA2026. Updated annually.
+- Peer benchmarks from MOM Key Household Income Trends (annual publication).
 - All estimates use conservative assumptions. Better to under-promise.
 - Add `goal-defaults.ts` to `docs/maintenance-checklist.md` for annual review.
 
 ## Success Metrics
 
-- **Time to first result:** < 30 seconds (2 clicks in preview mode)
+- **Time to first result:** < 60 seconds (pick + config + basics + story starts)
 - **Accuracy improvement:** HDB affordability should look 40-60% more achievable with CPF + grants
-- **Personalization rate:** % who click "Personalize" vs skip defaults
+- **Story completion rate:** % who swipe through all cards vs skip
 - **Couple adoption:** % who enable partner toggle
-- **Share rate:** % who click "Share your plan"
+- **Per-card share rate:** % who share at least one story card
 - **Transfer rate:** % who continue to full planner
