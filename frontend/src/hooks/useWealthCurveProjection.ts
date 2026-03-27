@@ -78,11 +78,16 @@ export function useWealthCurveProjection(
       const goalOverride = overrides.goalOverrides?.[goal.id]
       if (!goalOverride) return goal
 
-      return {
-        ...goal,
-        ...(goalOverride.targetAge != null && { targetAge: goalOverride.targetAge }),
-        ...(goalOverride.totalCostToday != null && { totalCostToday: goalOverride.totalCostToday }),
+      const updated = { ...goal }
+      if (goalOverride.targetAge != null) {
+        updated.targetAge = goalOverride.targetAge
       }
+      if (goalOverride.totalCostToday != null) {
+        updated.totalCostToday = goalOverride.totalCostToday
+        // Stacking reads breakdown.total, so keep it in sync
+        updated.breakdown = { ...goal.breakdown, total: goalOverride.totalCostToday }
+      }
+      return updated
     })
   }, [goals, overrides.goalOverrides])
 

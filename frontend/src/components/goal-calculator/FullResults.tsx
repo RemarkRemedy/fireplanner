@@ -464,8 +464,14 @@ export function FullResults({
   onViewStory,
   wealthCurve,
 }: FullResultsProps) {
-  const householdIncome = basics.monthlyIncome + (basics.partnerMonthlyIncome ?? 0)
-  const available = householdIncome - basics.monthlyExpenses
+  const effectiveIncome = wealthCurve?.isModified
+    ? (wealthCurve.overrides.monthlyIncome ?? basics.monthlyIncome)
+    : basics.monthlyIncome
+  const effectiveExpenses = wealthCurve?.isModified
+    ? (wealthCurve.overrides.monthlyExpenses ?? basics.monthlyExpenses)
+    : basics.monthlyExpenses
+  const householdIncome = effectiveIncome + (basics.partnerMonthlyIncome ?? 0)
+  const available = householdIncome - effectiveExpenses
   const hasPropertyGoal = goals.some((g) => g.category === 'housing')
 
   // When what-if sliders are modified, use the recomputed story data
