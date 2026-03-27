@@ -10,6 +10,7 @@ Every January, review and update these data files with the previous year's publi
 | `lib/data/healthcarePremiums.ts` | MediShield Life, ISP, CareShield premiums, `MEDISAVE_BHS` | [CPF Board](https://www.cpf.gov.sg), [MOH](https://www.moh.gov.sg) | April |
 | `lib/data/stampDutyRates.ts` | BSD brackets, ABSD rates | [IRAS](https://www.iras.gov.sg/taxes/stamp-duty) | When revised (check Budget) |
 | `lib/data/historicalReturnsFull.ts` | Add new year's data row, update `DATA_YEAR_RANGE` | [Damodaran](https://pages.stern.nyu.edu/~adamodar/), [FRED](https://fred.stlouisfed.org) | January |
+| `lib/data/goal-defaults.ts` | EHG grant table, CPF LIFE estimates, HDB income ceilings, peer benchmarks, mortgage rates, HDB price ranges, COE premiums, condo/landed brackets | [HDB](https://www.hdb.gov.sg), [CPF Board](https://www.cpf.gov.sg), [IRAS](https://www.iras.gov.sg), [MOM](https://www.mom.gov.sg) | Annual (check after Budget and NDR). Note: EHG amounts need primary source verification |
 | `lib/data/sources.ts` | Sync `period` labels with updated files above | N/A | After any data file update |
 
 After updating any data file:
