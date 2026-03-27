@@ -12,7 +12,8 @@ import { getCpfRatesForAge, OW_CEILING_MONTHLY, OA_INTEREST_RATE } from '@/lib/d
 import { calculateProgressiveTax } from '@/lib/calculations/tax'
 import { earnedIncomeReliefForAge } from '@/lib/data/taxBrackets'
 import {
-  EHG_TABLE,
+  EHG_FAMILY_TABLE,
+  EHG_SINGLE_TABLE,
   FAMILY_GRANT,
   CPF_LIFE_ESTIMATES,
   PEER_BENCHMARKS,
@@ -124,11 +125,15 @@ export function estimateHousingGrant(
   if (grossHouseholdIncome <= 0) return 0
 
   // EHG lookup (applicable to both BTO and resale)
+  // Singles: $250 steps up to $4,500 ceiling
+  // Families: $500 steps up to $9,000 ceiling
   let ehg = 0
-  if (grossHouseholdIncome <= 9000) {
-    const bracket = EHG_TABLE.find((b) => grossHouseholdIncome <= b.maxIncome)
+  const ehgTable = isSingle ? EHG_SINGLE_TABLE : EHG_FAMILY_TABLE
+  const ehgCeiling = isSingle ? 4_500 : 9_000
+  if (grossHouseholdIncome <= ehgCeiling) {
+    const bracket = ehgTable.find((b) => grossHouseholdIncome <= b.maxIncome)
     if (bracket) {
-      ehg = isSingle ? bracket.singleGrant : bracket.familyGrant
+      ehg = bracket.grant
     }
   }
 

@@ -15,7 +15,7 @@ import {
   getParkingRecommendation,
 } from './goal-calculator-sg'
 import { OW_CEILING_MONTHLY, OA_INTEREST_RATE } from '@/lib/data/cpfRates'
-import { EHG_TABLE, MORTGAGE_RATES } from '@/lib/data/goal-defaults'
+import { EHG_FAMILY_TABLE, EHG_SINGLE_TABLE, MORTGAGE_RATES } from '@/lib/data/goal-defaults'
 
 // ============================================================
 // deriveCpfOaMonthly
@@ -132,14 +132,14 @@ describe('accumulateCpfOa', () => {
 // ============================================================
 
 describe('estimateHousingGrant', () => {
-  it('BTO couple at $3000 income gets $65K EHG', () => {
+  it('BTO couple at $3000 income gets $95K EHG', () => {
     const result = estimateHousingGrant(3000, '4-room', 'new', false)
-    expect(result).toBe(105_000)
+    expect(result).toBe(95_000)
   })
 
-  it('BTO single at $3000 income gets $52.5K EHG (post-NDR 2024)', () => {
+  it('BTO single at $3000 income gets $25K EHG', () => {
     const result = estimateHousingGrant(3000, '4-room', 'new', true)
-    expect(result).toBe(52_500)
+    expect(result).toBe(25_000)
   })
 
   it('BTO income > $9K gets $0', () => {
@@ -155,25 +155,25 @@ describe('estimateHousingGrant', () => {
 
   it('BTO income just above first bracket', () => {
     const result = estimateHousingGrant(1501, '4-room', 'new', false)
-    expect(result).toBe(115_000) // Falls into $2000 bracket
+    expect(result).toBe(110_000) // Falls into $2000 bracket
   })
 
   it('resale couple 4-room gets family grant + EHG', () => {
     const result = estimateHousingGrant(5000, '4-room', 'resale', false)
-    // Family grant for 4-room = $80K, EHG family at $5000 = $85K
-    expect(result).toBe(80_000 + 85_000)
+    // Family grant for 4-room = $80K, EHG family at $5000 = $65K
+    expect(result).toBe(80_000 + 65_000)
   })
 
   it('resale couple 5-room gets smaller family grant + EHG', () => {
     const result = estimateHousingGrant(5000, '5-room', 'resale', false)
-    // Family grant for 5-room = $50K, EHG family at $5000 = $85K
-    expect(result).toBe(50_000 + 85_000)
+    // Family grant for 5-room = $50K, EHG family at $5000 = $65K
+    expect(result).toBe(50_000 + 65_000)
   })
 
   it('resale single gets $0 family grant but still gets EHG', () => {
+    // Singles: $5000 is above the $4,500 ceiling → $0 EHG
     const result = estimateHousingGrant(5000, '4-room', 'resale', true)
-    // No family grant for singles, EHG single at $5000 = $42.5K
-    expect(result).toBe(42_500)
+    expect(result).toBe(0)
   })
 
   it('resale high income couple gets family grant only', () => {
@@ -195,20 +195,34 @@ describe('estimateHousingGrant', () => {
     expect(estimateHousingGrant(-1000, '4-room', 'new', false)).toBe(0)
   })
 
-  // Property-based test: any income in a bracket returns the correct grant
-  it('property: income within a bracket returns consistent EHG', () => {
+  // Property-based test: any income in a family bracket returns the correct grant
+  it('property: income within a family bracket returns consistent EHG', () => {
     fc.assert(
       fc.property(
-        fc.integer({ min: 0, max: EHG_TABLE.length - 1 }),
-        fc.boolean(),
-        (bracketIndex, isSingle) => {
-          const bracket = EHG_TABLE[bracketIndex]
-          const prevMax = bracketIndex > 0 ? EHG_TABLE[bracketIndex - 1].maxIncome : 0
-          // Generate income in (prevMax, bracket.maxIncome]
+        fc.integer({ min: 0, max: EHG_FAMILY_TABLE.length - 1 }),
+        (bracketIndex) => {
+          const bracket = EHG_FAMILY_TABLE[bracketIndex]
+          const prevMax = bracketIndex > 0 ? EHG_FAMILY_TABLE[bracketIndex - 1].maxIncome : 0
           const income = prevMax + 1
-          const result = estimateHousingGrant(income, '4-room', 'new', isSingle)
-          const expected = isSingle ? bracket.singleGrant : bracket.familyGrant
-          expect(result).toBe(expected)
+          const result = estimateHousingGrant(income, '4-room', 'new', false)
+          expect(result).toBe(bracket.grant)
+        },
+      ),
+      { numRuns: 100 },
+    )
+  })
+
+  // Property-based test: any income in a single bracket returns the correct grant
+  it('property: income within a single bracket returns consistent EHG', () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 0, max: EHG_SINGLE_TABLE.length - 1 }),
+        (bracketIndex) => {
+          const bracket = EHG_SINGLE_TABLE[bracketIndex]
+          const prevMax = bracketIndex > 0 ? EHG_SINGLE_TABLE[bracketIndex - 1].maxIncome : 0
+          const income = prevMax + 1
+          const result = estimateHousingGrant(income, '4-room', 'new', true)
+          expect(result).toBe(bracket.grant)
         },
       ),
       { numRuns: 100 },

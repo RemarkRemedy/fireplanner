@@ -14,7 +14,8 @@ import {
   getLegalFees,
   SIMPLE_GOAL_DEFAULTS,
   GOAL_TILES,
-  EHG_TABLE,
+  EHG_FAMILY_TABLE,
+  EHG_SINGLE_TABLE,
   FAMILY_GRANT,
   HDB_INCOME_CEILING,
   CPF_LIFE_ESTIMATES,
@@ -221,36 +222,51 @@ describe('GOAL_TILES', () => {
 // Goal Calculator V1.5 Data
 // ============================================================
 
-describe('EHG_TABLE', () => {
+describe('EHG_FAMILY_TABLE', () => {
   it('is sorted by maxIncome ascending', () => {
-    for (let i = 1; i < EHG_TABLE.length; i++) {
-      expect(EHG_TABLE[i].maxIncome).toBeGreaterThan(EHG_TABLE[i - 1].maxIncome)
-    }
-  })
-
-  it('has no gaps between brackets', () => {
-    // Each bracket's maxIncome should be the next bracket's implicit lower bound
-    // Verify brackets form a contiguous range (500 step from 1500-8000, then 1000 step to 9000)
-    for (let i = 0; i < EHG_TABLE.length; i++) {
-      expect(EHG_TABLE[i].maxIncome).toBeGreaterThan(0)
-    }
-  })
-
-  it('familyGrant >= singleGrant for all brackets', () => {
-    for (const bracket of EHG_TABLE) {
-      expect(bracket.familyGrant).toBeGreaterThanOrEqual(bracket.singleGrant)
+    for (let i = 1; i < EHG_FAMILY_TABLE.length; i++) {
+      expect(EHG_FAMILY_TABLE[i].maxIncome).toBeGreaterThan(EHG_FAMILY_TABLE[i - 1].maxIncome)
     }
   })
 
   it('grants decrease as income increases', () => {
-    for (let i = 1; i < EHG_TABLE.length; i++) {
-      expect(EHG_TABLE[i].familyGrant).toBeLessThan(EHG_TABLE[i - 1].familyGrant)
-      expect(EHG_TABLE[i].singleGrant).toBeLessThan(EHG_TABLE[i - 1].singleGrant)
+    for (let i = 1; i < EHG_FAMILY_TABLE.length; i++) {
+      expect(EHG_FAMILY_TABLE[i].grant).toBeLessThan(EHG_FAMILY_TABLE[i - 1].grant)
     }
   })
 
-  it('has 15 brackets (up to $9,000 income)', () => {
-    expect(EHG_TABLE).toHaveLength(15)
+  it('has 16 brackets ($500 steps, ceiling $9,000)', () => {
+    expect(EHG_FAMILY_TABLE).toHaveLength(16)
+    expect(EHG_FAMILY_TABLE[0].maxIncome).toBe(1_500)
+    expect(EHG_FAMILY_TABLE[15].maxIncome).toBe(9_000)
+  })
+
+  it('max grant is $120,000 at lowest bracket', () => {
+    expect(EHG_FAMILY_TABLE[0].grant).toBe(120_000)
+  })
+})
+
+describe('EHG_SINGLE_TABLE', () => {
+  it('is sorted by maxIncome ascending', () => {
+    for (let i = 1; i < EHG_SINGLE_TABLE.length; i++) {
+      expect(EHG_SINGLE_TABLE[i].maxIncome).toBeGreaterThan(EHG_SINGLE_TABLE[i - 1].maxIncome)
+    }
+  })
+
+  it('grants decrease as income increases', () => {
+    for (let i = 1; i < EHG_SINGLE_TABLE.length; i++) {
+      expect(EHG_SINGLE_TABLE[i].grant).toBeLessThan(EHG_SINGLE_TABLE[i - 1].grant)
+    }
+  })
+
+  it('has 16 brackets ($250 steps, ceiling $4,500)', () => {
+    expect(EHG_SINGLE_TABLE).toHaveLength(16)
+    expect(EHG_SINGLE_TABLE[0].maxIncome).toBe(750)
+    expect(EHG_SINGLE_TABLE[15].maxIncome).toBe(4_500)
+  })
+
+  it('max grant is $60,000 at lowest bracket', () => {
+    expect(EHG_SINGLE_TABLE[0].grant).toBe(60_000)
   })
 })
 

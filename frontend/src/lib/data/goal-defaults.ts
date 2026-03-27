@@ -230,31 +230,52 @@ export const GOAL_TILE_SECTIONS: { label: string; tileIds: GoalTileId[] }[] = [
 // NOTE: EHG amounts need verification against HDB.gov.sg before production
 // ============================================================
 
-// ---- Enhanced CPF Housing Grant (post-NDR 2024) ----
+// ---- Enhanced CPF Housing Grant (post-NDR Aug 2024) ----
+// Source: HDB.gov.sg + DollarsAndSense/Sethisfy verified tables
+// Family: 16 brackets at $500 steps, ceiling $9,000
+// Single: 16 brackets at $250 steps, ceiling $4,500
 
 export interface EhgBracket {
-  maxIncome: number      // upper bound of income bracket
-  familyGrant: number    // grant for families/couples
-  singleGrant: number    // grant for singles
+  maxIncome: number
+  grant: number
 }
 
-export const EHG_TABLE: EhgBracket[] = [
-  { maxIncome: 1_500, familyGrant: 120_000, singleGrant: 60_000 },
-  { maxIncome: 2_000, familyGrant: 115_000, singleGrant: 57_500 },
-  { maxIncome: 2_500, familyGrant: 110_000, singleGrant: 55_000 },
-  { maxIncome: 3_000, familyGrant: 105_000, singleGrant: 52_500 },
-  { maxIncome: 3_500, familyGrant: 100_000, singleGrant: 50_000 },
-  { maxIncome: 4_000, familyGrant: 95_000, singleGrant: 47_500 },
-  { maxIncome: 4_500, familyGrant: 90_000, singleGrant: 45_000 },
-  { maxIncome: 5_000, familyGrant: 85_000, singleGrant: 42_500 },
-  { maxIncome: 5_500, familyGrant: 80_000, singleGrant: 40_000 },
-  { maxIncome: 6_000, familyGrant: 75_000, singleGrant: 37_500 },
-  { maxIncome: 6_500, familyGrant: 70_000, singleGrant: 35_000 },
-  { maxIncome: 7_000, familyGrant: 65_000, singleGrant: 32_500 },
-  { maxIncome: 7_500, familyGrant: 60_000, singleGrant: 30_000 },
-  { maxIncome: 8_000, familyGrant: 55_000, singleGrant: 27_500 },
-  { maxIncome: 9_000, familyGrant: 40_000, singleGrant: 20_000 },
-  // Income > $9,000: $0 grant (handled by lookup function, not in table)
+export const EHG_FAMILY_TABLE: EhgBracket[] = [
+  { maxIncome: 1_500, grant: 120_000 },
+  { maxIncome: 2_000, grant: 110_000 },
+  { maxIncome: 2_500, grant: 105_000 },
+  { maxIncome: 3_000, grant: 95_000 },
+  { maxIncome: 3_500, grant: 90_000 },
+  { maxIncome: 4_000, grant: 80_000 },
+  { maxIncome: 4_500, grant: 70_000 },
+  { maxIncome: 5_000, grant: 65_000 },
+  { maxIncome: 5_500, grant: 55_000 },
+  { maxIncome: 6_000, grant: 50_000 },
+  { maxIncome: 6_500, grant: 40_000 },
+  { maxIncome: 7_000, grant: 30_000 },
+  { maxIncome: 7_500, grant: 25_000 },
+  { maxIncome: 8_000, grant: 20_000 },
+  { maxIncome: 8_500, grant: 10_000 },
+  { maxIncome: 9_000, grant: 5_000 },
+]
+
+export const EHG_SINGLE_TABLE: EhgBracket[] = [
+  { maxIncome: 750, grant: 60_000 },
+  { maxIncome: 1_000, grant: 55_000 },
+  { maxIncome: 1_250, grant: 52_500 },
+  { maxIncome: 1_500, grant: 47_500 },
+  { maxIncome: 1_750, grant: 45_000 },
+  { maxIncome: 2_000, grant: 40_000 },
+  { maxIncome: 2_250, grant: 35_000 },
+  { maxIncome: 2_500, grant: 32_500 },
+  { maxIncome: 2_750, grant: 27_500 },
+  { maxIncome: 3_000, grant: 25_000 },
+  { maxIncome: 3_250, grant: 20_000 },
+  { maxIncome: 3_500, grant: 15_000 },
+  { maxIncome: 3_750, grant: 12_500 },
+  { maxIncome: 4_000, grant: 10_000 },
+  { maxIncome: 4_250, grant: 5_000 },
+  { maxIncome: 4_500, grant: 2_500 },
 ]
 
 // ---- Resale Flat Family Grant ----
