@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { InsightChip } from '@/components/shared/InsightChip'
@@ -512,8 +512,49 @@ export function FullResults({
   const heading = isCoupleMode ? 'Our Goal Plan' : 'Your Goal Plan'
   const isDeficit = available < 0
 
-  return (
-    <div className="space-y-6 max-w-xl mx-auto">
+  // Track scroll position to show/hide mobile bottom bar
+  const [showMobileBar, setShowMobileBar] = useState(true)
+
+  useEffect(() => {
+    // Show bar when not at the very bottom (where inline buttons are)
+    const handleScroll = () => {
+      const nearBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 200
+      setShowMobileBar(!nearBottom)
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const actionButtons = (
+    <>
+      <Button className="w-full gap-2" onClick={onContinueToPlanner}>
+        Continue to Full Planner <ArrowRight className="h-4 w-4" />
+      </Button>
+
+      {goals.length < 5 && (
+        <Button variant="outline" className="w-full gap-2" onClick={onAddGoal}>
+          <Plus className="h-4 w-4" /> Add Another Goal
+        </Button>
+      )}
+
+      {onViewStory && (
+        <Button variant="outline" className="w-full gap-2" onClick={onViewStory}>
+          <Play className="h-4 w-4" /> View Updated Story
+        </Button>
+      )}
+
+      <Button variant="outline" className="w-full gap-2" onClick={onEditBasics}>
+        <Pencil className="h-4 w-4" /> Edit Basics
+      </Button>
+
+      <Button variant="ghost" className="w-full gap-2 text-muted-foreground" onClick={onStartOver}>
+        <RefreshCw className="h-4 w-4" /> Start Over
+      </Button>
+    </>
+  )
+
+  const mainContent = (
+    <div className="space-y-6">
       {/* Header */}
       <div className="text-center space-y-1">
         <h2 className="text-2xl font-bold tracking-tight">{heading}</h2>
@@ -635,52 +676,43 @@ export function FullResults({
       {/* Disclaimers */}
       <Disclaimers hasPropertyGoal={hasPropertyGoal} />
 
-      {/* Action buttons */}
-      <div className="space-y-3">
-        <Button
-          className="w-full gap-2"
-          onClick={onContinueToPlanner}
-        >
-          Continue to Full Planner
-          <ArrowRight className="h-4 w-4" />
-        </Button>
-
-        {goals.length < 5 && (
-          <Button
-            variant="outline"
-            className="w-full gap-2"
-            onClick={onAddGoal}
-          >
-            <Plus className="h-4 w-4" /> Add Another Goal
-          </Button>
-        )}
-
-        {onViewStory && (
-          <Button
-            variant="outline"
-            className="w-full gap-2"
-            onClick={onViewStory}
-          >
-            <Play className="h-4 w-4" /> View Updated Story
-          </Button>
-        )}
-
-        <Button
-          variant="outline"
-          className="w-full gap-2"
-          onClick={onEditBasics}
-        >
-          <Pencil className="h-4 w-4" /> Edit Basics
-        </Button>
-
-        <Button
-          variant="ghost"
-          className="w-full gap-2 text-muted-foreground"
-          onClick={onStartOver}
-        >
-          <RefreshCw className="h-4 w-4" /> Start Over
-        </Button>
+      {/* Inline action buttons — visible on mobile when scrolled to bottom, always on desktop below content */}
+      <div className="space-y-3 lg:hidden pb-20">
+        {actionButtons}
       </div>
     </div>
+  )
+
+  return (
+    <>
+      {/* Desktop: two-column layout */}
+      <div className="lg:grid lg:grid-cols-[1fr_260px] lg:gap-8">
+        {/* Left column: main content */}
+        <div className="max-w-2xl">{mainContent}</div>
+
+        {/* Right column: sticky action sidebar (desktop only) */}
+        <aside className="hidden lg:block">
+          <div className="sticky top-8 space-y-3">
+            {actionButtons}
+          </div>
+        </aside>
+      </div>
+
+      {/* Mobile: sticky bottom bar with primary actions */}
+      {showMobileBar && (
+        <div className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 p-3 lg:hidden z-50">
+          <div className="flex gap-2 max-w-2xl mx-auto">
+            {goals.length < 5 && (
+              <Button variant="outline" className="flex-1 gap-1 text-sm" onClick={onAddGoal}>
+                <Plus className="h-3.5 w-3.5" /> Add Goal
+              </Button>
+            )}
+            <Button className="flex-1 gap-1 text-sm" onClick={onContinueToPlanner}>
+              Full Planner <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
