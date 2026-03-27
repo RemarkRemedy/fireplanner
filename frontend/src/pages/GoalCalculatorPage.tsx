@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useState } from 'react'
+import { useReducer, useCallback, useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
@@ -142,6 +142,27 @@ function reducer(state: State, action: Action): State {
 }
 
 // ============================================================
+// Session persistence
+// ============================================================
+
+const STORAGE_KEY = 'goal-calc-state'
+
+function getInitialState(): State {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      const parsed = JSON.parse(saved) as State
+      if (parsed.step && Array.isArray(parsed.goals)) {
+        return parsed
+      }
+    }
+  } catch {
+    // Ignore parse errors or SSR environments
+  }
+  return initialState
+}
+
+// ============================================================
 // Page component
 // ============================================================
 
@@ -153,7 +174,20 @@ export function GoalCalculatorPage() {
     path: '/goal-calculator',
   })
 
-  const [state, dispatch] = useReducer(reducer, initialState)
+  const [state, dispatch] = useReducer(reducer, undefined, getInitialState)
+
+  // Persist state to localStorage on every change
+  useEffect(() => {
+    try {
+      if (state.step === 'pick' && state.goals.length === 0 && !state.basics) {
+        localStorage.removeItem(STORAGE_KEY)
+      } else {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+      }
+    } catch {
+      // Ignore quota errors
+    }
+  }, [state])
   const [transferring, setTransferring] = useState(false)
   const navigate = useNavigate()
   const addGoal = useHouseholdPlanStore((s) => s.addGoal)

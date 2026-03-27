@@ -396,12 +396,7 @@ export function WealthCurveChart({
             variant="link"
             size="sm"
             className="text-xs gap-1 p-0 h-auto"
-            onClick={() => {
-              // eslint-disable-next-line no-restricted-globals
-              if (confirm('This will transfer your goals to the full planner. Your goal calculator progress here will be lost. Continue?')) {
-                onContinueToPlanner()
-              }
-            }}
+            onClick={onContinueToPlanner}
           >
             Get Monte Carlo, tax planning, and more
             <ArrowRight className="h-3 w-3" />

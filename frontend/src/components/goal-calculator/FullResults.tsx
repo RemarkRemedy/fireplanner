@@ -635,12 +635,7 @@ export function FullResults({
       <div className="space-y-3">
         <Button
           className="w-full gap-2"
-          onClick={() => {
-            // eslint-disable-next-line no-restricted-globals
-            if (confirm('This will transfer your goals to the full planner. Your goal calculator progress here will be lost. Continue?')) {
-              onContinueToPlanner()
-            }
-          }}
+          onClick={onContinueToPlanner}
         >
           Continue to Full Planner
           <ArrowRight className="h-4 w-4" />
