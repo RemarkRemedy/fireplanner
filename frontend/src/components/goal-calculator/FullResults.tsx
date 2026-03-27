@@ -324,12 +324,15 @@ function EnrichedGoalCard({
 function SharedInsightsSection({
   data,
   basics,
+  projectionFreedomAge,
 }: {
   data: GoalStoryData
   basics: GoalCalcBasics
+  projectionFreedomAge?: number | null
 }) {
   const { shared } = data
-  const deltaYears = shared.freedomAge - shared.freedomAgeWithout
+  const freedomAge = projectionFreedomAge ?? shared.freedomAge
+  const deltaYears = freedomAge - shared.freedomAgeWithout
   const savingsRate =
     basics.monthlyIncome > 0
       ? (basics.monthlyIncome - basics.monthlyExpenses) / basics.monthlyIncome
@@ -342,7 +345,7 @@ function SharedInsightsSection({
       {/* Freedom Age */}
       <MetricCard
         label="Estimated Freedom Age"
-        value={isFinite(shared.freedomAge) ? Math.round(shared.freedomAge) : 'N/A'}
+        value={isFinite(freedomAge) ? Math.round(freedomAge) : 'N/A'}
         subtitle={
           isFinite(shared.freedomAgeWithout) && isFinite(deltaYears) && Math.abs(deltaYears) >= 0.5
             ? `Without goals: age ${Math.round(shared.freedomAgeWithout)}`
@@ -626,7 +629,7 @@ export function FullResults({
       )}
 
       {/* Shared insights */}
-      <SharedInsightsSection data={effectiveData} basics={basics} />
+      <SharedInsightsSection data={effectiveData} basics={basics} projectionFreedomAge={wealthCurve?.freedomAge} />
 
       {/* Disclaimers */}
       <Disclaimers hasPropertyGoal={hasPropertyGoal} />

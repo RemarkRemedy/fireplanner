@@ -13,7 +13,7 @@ import type { DeflatedRow } from '@/lib/calculations/goal-calc-adapter'
 import { computeGoalStoryData } from '@/hooks/useGoalStoryData'
 import type { GoalStoryBasics, GoalStoryData } from '@/hooks/useGoalStoryData'
 import type { GoalCalcGoal } from '@/lib/calculations/goal-calculator'
-import { FIRE_MULTIPLIER } from '@/lib/calculations/goal-calculator'
+import { FIRE_MULTIPLIER, computeMonthlyLoanPayment } from '@/lib/calculations/goal-calculator'
 import type { GoalMarker } from '@/components/goal-calculator/WealthCurveSection/WealthCurveChart'
 import type { SliderOverrides } from '@/components/goal-calculator/WealthCurveSection/WhatIfSliders'
 import { MORTGAGE_RATES, LOAN_TENURE_YEARS, LTV_RATIOS, GOAL_TILES } from '@/lib/data/goal-defaults'
@@ -204,18 +204,60 @@ export function useWealthCurveProjection(
     })),
   [effectiveGoals])
 
-  // Freedom age from recomputed story data
-  const freedomAge = useMemo((): number | null => {
-    const age = storyData.shared.freedomAge
-    return isFinite(age) ? Math.round(age) : null
-  }, [storyData.shared.freedomAge])
-
   // FIRE number in today's dollars (real terms — no inflation adjustment needed)
   const fireNumber = useMemo((): number | null => {
     const annualExpenses = effectiveBasics.monthlyExpenses * 12
     const target = annualExpenses * FIRE_MULTIPLIER
     return target > 0 ? target : null
   }, [effectiveBasics.monthlyExpenses])
+
+  // Freedom age from projection data — the first age where liquidNW can sustain
+  // expenses + remaining loan obligations without any income.
+  // Uses the actual projection engine output instead of a simplified formula.
+  const freedomAge = useMemo((): number | null => {
+    if (!fireNumber || chartData.length === 0) return null
+
+    const annualExpenses = effectiveBasics.monthlyExpenses * 12
+
+    // Compute total monthly loan payment and max payoff age for each financed goal
+    const loanInfo = effectiveGoals
+      .filter((g) => g.smartInputs)
+      .map((g) => {
+        const monthly = computeMonthlyLoanPayment(g)
+        if (monthly <= 0) return null
+        const inputs = g.smartInputs!
+        let tenureYears = 0
+        if (inputs.kind === 'hdb') {
+          tenureYears = inputs.loanType === 'hdb-loan'
+            ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
+        } else if (inputs.kind === 'condo' || inputs.kind === 'landed' || inputs.kind === 'ec') {
+          tenureYears = LOAN_TENURE_YEARS.bank
+        } else if (inputs.kind === 'car') {
+          tenureYears = 7
+        }
+        const payoffAge = g.targetAge + tenureYears
+        return { monthly, payoffAge }
+      })
+      .filter(Boolean) as { monthly: number; payoffAge: number }[]
+
+    // For each age in the projection, check if liquidNW can sustain
+    // expenses + remaining loan payments (in today's dollars)
+    for (const row of chartData) {
+      if (row.age <= effectiveBasics.age) continue
+
+      // Remaining annual loan payments at this age (only active loans)
+      const remainingLoanCost = loanInfo.reduce((sum, loan) => {
+        if (row.age >= loan.payoffAge) return sum // loan paid off
+        const yearsLeft = loan.payoffAge - row.age
+        return sum + loan.monthly * 12 * yearsLeft
+      }, 0)
+
+      // Need: FIRE number for perpetual expenses + lump sum for remaining loans
+      const threshold = annualExpenses * FIRE_MULTIPLIER + remainingLoanCost
+      if (row.liquidNW >= threshold) return row.age
+    }
+    return null
+  }, [chartData, fireNumber, effectiveBasics.monthlyExpenses, effectiveBasics.age, effectiveGoals])
 
   // Check if any overrides are active
   const isModified = Object.keys(overrides).length > 0

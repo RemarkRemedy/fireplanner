@@ -105,7 +105,7 @@ export function Results({
         case 'freedomAge':
           return (
             <FreedomAgeCard
-              freedomAge={storyData.shared.freedomAge}
+              freedomAge={wealthCurve.freedomAge ?? storyData.shared.freedomAge}
               freedomAgeWithout={storyData.shared.freedomAgeWithout}
               cpfLifeMonthly={storyData.shared.cpfLifeMonthly}
               isCoupleMode={isCoupleMode}
