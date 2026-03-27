@@ -114,26 +114,26 @@ export function MirrorMoment({ insight, isYoung, onContinue }: MirrorMomentProps
     <div
       className={
         isFullSnapshot
-          ? 'flex flex-col items-center justify-center gap-6 min-h-[60vh] px-6 animate-in fade-in slide-in-from-bottom-4 duration-500 rounded-2xl mx-auto max-w-lg bg-gradient-to-br from-slate-900 to-slate-800 text-white py-12 my-8 shadow-xl'
+          ? 'flex flex-col items-center justify-center gap-6 min-h-[60vh] px-6 animate-in fade-in slide-in-from-bottom-4 duration-500 rounded-2xl mx-auto max-w-lg border bg-blue-50/50 py-12 my-8'
           : 'flex flex-col items-center justify-center gap-6 py-8 px-4 animate-in fade-in slide-in-from-bottom-2 duration-300'
       }
     >
       {isFullSnapshot && (
-        <Sparkles className="h-10 w-10 text-amber-400 animate-in zoom-in duration-500" />
+        <Sparkles className="h-10 w-10 text-blue-600 animate-in zoom-in duration-500" />
       )}
 
       <div className="max-w-md text-center space-y-3">
         <p
           className={
             isFullSnapshot
-              ? 'text-2xl md:text-3xl font-bold leading-snug'
+              ? 'text-2xl md:text-3xl font-bold leading-snug text-foreground'
               : 'text-xl font-semibold leading-relaxed'
           }
         >
           {headline}
         </p>
         {detail && (
-          <p className={isFullSnapshot ? 'text-sm text-white/70' : 'text-sm text-muted-foreground'}>
+          <p className="text-sm text-muted-foreground">
             {detail}
           </p>
         )}
@@ -142,14 +142,7 @@ export function MirrorMoment({ insight, isYoung, onContinue }: MirrorMomentProps
         {insight.id === 'net-worth' && <NetWorthBar data={insight.data} />}
       </div>
 
-      <Button
-        onClick={onContinue}
-        className={
-          isFullSnapshot
-            ? 'w-full max-w-xs bg-white text-slate-900 hover:bg-white/90 font-semibold'
-            : 'w-full max-w-xs'
-        }
-      >
+      <Button onClick={onContinue} className="w-full max-w-xs">
         {isYoung ? 'Keep going' : 'Continue'}
       </Button>
     </div>
