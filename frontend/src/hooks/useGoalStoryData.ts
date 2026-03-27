@@ -150,6 +150,9 @@ export function computeGoalStoryData(
   basics: GoalStoryBasics,
   goals: GoalCalcGoal[],
 ): GoalStoryData {
+  // 0. Sort goals by target age (earliest first) for correct stacking priority
+  const sortedGoals = [...goals].sort((a, b) => a.targetAge - b.targetAge)
+
   // 1. Derive gross income
   const grossIncome = basics.grossIncome ?? grossUpFromTakeHome(basics.monthlyIncome, basics.age)
 
@@ -167,7 +170,7 @@ export function computeGoalStoryData(
   const emergencyFundGap = Math.max(0, emergencyFund - basics.existingSavings)
 
   // 5. Run stacked computation
-  const stacked = computeMultiGoalStacking(goals, basics)
+  const stacked = computeMultiGoalStacking(sortedGoals, basics)
 
   // Build a lookup from goal id -> stacked result
   const stackedById = new Map<string, StackedGoalResult>()
@@ -176,10 +179,10 @@ export function computeGoalStoryData(
   }
 
   // 6. Enrich each goal
-  const hasAnyPropertyGoal = goals.some(isPropertyGoal)
-  const hasAnyHdbGoal = goals.some(isHdbGoal)
+  const hasAnyPropertyGoal = sortedGoals.some(isPropertyGoal)
+  const hasAnyHdbGoal = sortedGoals.some(isHdbGoal)
 
-  const perGoal: EnrichedGoal[] = goals.map((goal) => {
+  const perGoal: EnrichedGoal[] = sortedGoals.map((goal) => {
     const monthsToGoal = Math.max(0, (goal.targetAge - basics.age) * 12)
     const stackedResult = stackedById.get(goal.id)
 
@@ -271,16 +274,16 @@ export function computeGoalStoryData(
   }
 
   // Parking recommendation (based on shortest time horizon)
-  const minYears = getMinYearsToGoal(goals, basics.age)
+  const minYears = getMinYearsToGoal(sortedGoals, basics.age)
   const parkingRecommendation = getParkingRecommendation(minYears)
 
   // 8. Build story cards — map 'goal-N' placeholders to real goal IDs,
   //    then filter out cards that have no content for this scenario.
-  const rawCards = buildGoalCardSequence(goals.length, hasAnyPropertyGoal, isCoupleMode)
+  const rawCards = buildGoalCardSequence(sortedGoals.length, hasAnyPropertyGoal, isCoupleMode)
   const mappedCards = rawCards.map((card) => {
     if (card.goalId && card.goalId.startsWith('goal-')) {
       const idx = parseInt(card.goalId.replace('goal-', ''), 10)
-      const realGoal = goals[idx]
+      const realGoal = sortedGoals[idx]
       return realGoal ? { ...card, goalId: realGoal.id } : card
     }
     return card
