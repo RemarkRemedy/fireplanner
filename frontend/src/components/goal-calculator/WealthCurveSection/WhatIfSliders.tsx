@@ -128,6 +128,9 @@ export function WhatIfSliders({ basics, goals, overrides, onChange, onReset }: W
       </TabsList>
 
       <TabsContent value="income" className="mt-4">
+        <p className="text-xs text-muted-foreground mb-3">
+          These are your current values. The chart assumes 3% annual salary growth and 2.5% inflation.
+        </p>
         <SliderTab sliders={incomeSliders} onReset={onReset} />
       </TabsContent>
 

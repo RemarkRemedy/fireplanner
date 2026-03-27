@@ -358,7 +358,7 @@ export function computeMonthlyLoanPayment(goal: GoalCalcGoal): number {
   const inputs = goal.smartInputs
   switch (inputs.kind) {
     case 'hdb': {
-      const price = inputs.priceOverride ?? getHdbPriceRange(inputs.flatType, inputs.tenure).mid
+      const price = inputs.priceOverride ?? getHdbPriceRange(inputs.flatType, inputs.tenure).midpoint
       const isHdbLoan = inputs.loanType === 'hdb-loan'
       const ltvKey = isHdbLoan ? 'hdb-loan' : 'bank-loan'
       const ltv = LTV_RATIOS[ltvKey as keyof typeof LTV_RATIOS]
