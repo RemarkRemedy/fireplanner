@@ -58,6 +58,7 @@ export type SmartGoalInputs =
   | { kind: 'hdb'; flatType: '3-room' | '4-room' | '5-room' | 'executive'; tenure: 'new' | 'resale'; loanType: 'hdb-loan' | 'bank-loan'; priceOverride?: number }
   | { kind: 'condo'; price: number }
   | { kind: 'landed'; price: number }
+  | { kind: 'ec'; price: number; flatType: '3-room' | '4-room' | '5-room' }
   | { kind: 'car'; coeCategory: 'A' | 'B'; condition: 'new' | 'used'; priceRange: number }
 
 export interface GoalCalcGoal {
@@ -110,6 +111,8 @@ export function computeSmartGoalCost(inputs: SmartGoalInputs): CostBreakdown {
       return computeCondoCost(inputs.price, 'condo')
     case 'landed':
       return computeCondoCost(inputs.price, 'landed')
+    case 'ec':
+      return computeEcCost(inputs.price)
     case 'car':
       return computeCarCost(inputs)
   }
@@ -142,6 +145,21 @@ function computeCondoCost(price: number, propertyType: 'condo' | 'landed'): Cost
     { label: 'Down payment (25%)', amount: dp.total },
     { label: 'BSD', amount: bsd },
     { label: 'ABSD (first property)', amount: 0 },
+    { label: 'Legal fees', amount: legal },
+    { label: 'Renovation', amount: reno },
+  ]
+  return { items, total: items.reduce((sum, i) => sum + i.amount, 0) }
+}
+
+function computeEcCost(price: number): CostBreakdown {
+  const dp = computeCondoDownPayment(price)
+  const bsd = calculateBSD(price)
+  const legal = getLegalFees('ec')
+  const reno = getRenovationEstimate('ec')
+
+  const items = [
+    { label: 'Down payment (25%)', amount: dp.total },
+    { label: 'BSD', amount: bsd },
     { label: 'Legal fees', amount: legal },
     { label: 'Renovation', amount: reno },
   ]

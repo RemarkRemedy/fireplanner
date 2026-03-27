@@ -11,6 +11,7 @@ import {
   SIMPLE_GOAL_DEFAULTS,
   getCondoBrackets,
   getLandedBrackets,
+  getEcBrackets,
   getHdbPriceRange,
   GOAL_DATA_VINTAGE,
 } from '@/lib/data/goal-defaults'
@@ -364,6 +365,100 @@ function LandedConfig({
 }
 
 // ============================================================
+// EC Config
+// ============================================================
+
+type EcFlatType = '3-room' | '4-room' | '5-room'
+
+function EcConfig({
+  targetAge,
+  onTargetAgeChange,
+  currentAge,
+  onComplete,
+  onBack,
+}: {
+  targetAge: number
+  onTargetAgeChange: (v: number) => void
+  currentAge: number | null
+  onComplete: GoalConfigProps['onComplete']
+  onBack: () => void
+}) {
+  const brackets = getEcBrackets()
+  const [flatType, setFlatType] = useState<EcFlatType>('4-room')
+  const [price, setPrice] = useState(brackets[0])
+
+  const smartInputs: SmartGoalInputs = useMemo(
+    () => ({ kind: 'ec', price, flatType }),
+    [price, flatType],
+  )
+
+  const breakdown = useMemo(() => computeSmartGoalCost(smartInputs), [smartInputs])
+
+  const valid = currentAge === null ? targetAge >= 18 : targetAge > currentAge
+
+  return (
+    <ConfigShell title="Executive Condo (EC)" onBack={onBack}>
+      <ToggleGroup
+        label="Flat type"
+        options={[
+          { value: '3-room' as EcFlatType, label: '3-Room' },
+          { value: '4-room' as EcFlatType, label: '4-Room' },
+          { value: '5-room' as EcFlatType, label: '5-Room' },
+        ]}
+        value={flatType}
+        onChange={setFlatType}
+      />
+
+      <ToggleGroup
+        label="Price bracket"
+        options={brackets.map((b) => ({
+          value: String(b),
+          label: `$${(b / 1_000_000).toFixed(1)}M`,
+        }))}
+        value={String(price)}
+        onChange={(v) => setPrice(Number(v))}
+      />
+
+      <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+        <Info className="h-4 w-4 mt-0.5 shrink-0" />
+        <span>ECs are purchased from developers (bank loan only, 25% down). Income ceiling is $16,000/mo for couples.</span>
+      </div>
+
+      <BreakdownTable breakdown={breakdown} />
+
+      <NumberInput
+        label="Target age"
+        value={targetAge}
+        onChange={onTargetAgeChange}
+        min={currentAge !== null ? currentAge + 1 : 18}
+        max={100}
+        error={
+          currentAge !== null && targetAge <= currentAge
+            ? 'Target age must be greater than your current age'
+            : undefined
+        }
+      />
+
+      <Button
+        className="w-full"
+        disabled={!valid}
+        onClick={() =>
+          onComplete({
+            label: `EC ${flatType.charAt(0).toUpperCase() + flatType.slice(1)} ($${(price / 1_000_000).toFixed(1)}M)`,
+            targetAge,
+            totalCost: breakdown.total,
+            breakdown,
+            smartInputs,
+          })
+        }
+      >
+        Continue
+      </Button>
+    </ConfigShell>
+  )
+}
+
+// ============================================================
 // Car Config
 // ============================================================
 
@@ -682,6 +777,16 @@ export function GoalConfig({ tileId, currentAge, onComplete, onBack }: GoalConfi
     case 'landed':
       return (
         <LandedConfig
+          targetAge={targetAge}
+          onTargetAgeChange={setTargetAge}
+          currentAge={currentAge}
+          onComplete={onComplete}
+          onBack={onBack}
+        />
+      )
+    case 'ec':
+      return (
+        <EcConfig
           targetAge={targetAge}
           onTargetAgeChange={setTargetAge}
           currentAge={currentAge}

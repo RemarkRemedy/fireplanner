@@ -582,7 +582,7 @@ export function FullResults({
           <ArrowRight className="h-4 w-4" />
         </Button>
 
-        {goals.length < 3 && (
+        {goals.length < 5 && (
           <Button
             variant="outline"
             className="w-full gap-2"
