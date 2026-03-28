@@ -225,7 +225,7 @@ export function GoalStoryContainer({ cards, onComplete, onClose, renderCard }: G
       {/* Navigation hint (first card only) */}
       {currentIndex === 0 && (
         <div className="absolute bottom-8 left-0 right-0 z-10 flex justify-center pointer-events-none">
-          <p className="text-white/80 text-sm motion-safe:animate-pulse">Tap or swipe to continue</p>
+          <p className="text-white/80 text-sm motion-safe:animate-pulse">Click or swipe to continue</p>
         </div>
       )}
 

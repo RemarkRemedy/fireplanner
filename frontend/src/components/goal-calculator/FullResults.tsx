@@ -398,8 +398,8 @@ function SharedInsightsSection({
               (basics.monthlyIncome + (basics.partnerMonthlyIncome ?? 0)) > 0
                 ? (basics.monthlyIncome + (basics.partnerMonthlyIncome ?? 0) - basics.monthlyExpenses) / (basics.monthlyIncome + (basics.partnerMonthlyIncome ?? 0))
                 : 0
-            , 0)}.</span>{' '}
-            {shared.peerBenchmark}
+            , 0)},</span>{' '}
+            {shared.peerBenchmark}.
           </p>
         </CardContent>
       </Card>
