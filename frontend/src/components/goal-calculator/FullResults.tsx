@@ -62,13 +62,21 @@ const FEASIBILITY_CONFIG: Record<
   },
 }
 
-function FeasibilityBadge({ level }: { level: FeasibilityResult['level'] }) {
+function FeasibilityBadge({ level, shortfall, monthlySavings }: {
+  level: FeasibilityResult['level']
+  shortfall?: number
+  monthlySavings?: number
+}) {
   const config = FEASIBILITY_CONFIG[level]
+  // For red: distinguish "slightly over" from "way over"
+  const isWayOver = level === 'red' && monthlySavings != null && shortfall != null
+    && shortfall > monthlySavings * 0.5
+  const label = isWayOver ? 'Not affordable' : config.label
   return (
     <span
       className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${config.className}`}
     >
-      {config.label}
+      {label}
     </span>
   )
 }
@@ -264,7 +272,11 @@ function EnrichedGoalCard({
               Target age {goal.targetAge} ({years} {years === 1 ? 'year' : 'years'} away)
             </p>
           </div>
-          <FeasibilityBadge level={feasibility.level} />
+          <FeasibilityBadge
+            level={feasibility.level}
+            shortfall={feasibility.shortfall}
+            monthlySavings={enriched.adjustedMonthlySavings}
+          />
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -517,22 +529,22 @@ export function FullResults({
 
   // Compute feasibility for each goal using REMAINING capacity after prior goals
   // (not total capacity — earlier goals consume savings capacity first)
-  const goalFeasibilities = useMemo(
-    () => {
-      let usedCapacity = 0
-      return effectiveData.perGoal.map((enriched) => {
-        const remaining = available - usedCapacity
-        if (remaining <= 0) {
-          usedCapacity += enriched.adjustedMonthlySavings
-          return { level: 'red' as const, feasible: false, shortfall: enriched.adjustedMonthlySavings }
-        }
-        const result = computeGoalFeasibility(enriched.adjustedMonthlySavings, remaining)
-        usedCapacity += enriched.adjustedMonthlySavings
-        return result
-      })
-    },
-    [available, effectiveData.perGoal],
-  )
+  const goalFeasibilities = useMemo(() => {
+    const { results } = effectiveData.perGoal.reduce<{
+      used: number
+      results: FeasibilityResult[]
+    }>((acc, enriched) => {
+      const remaining = available - acc.used
+      const result = remaining <= 0
+        ? { level: 'red' as const, feasible: false, shortfall: enriched.adjustedMonthlySavings }
+        : computeGoalFeasibility(enriched.adjustedMonthlySavings, remaining)
+      return {
+        used: acc.used + enriched.adjustedMonthlySavings,
+        results: [...acc.results, result],
+      }
+    }, { used: 0, results: [] })
+    return results
+  }, [available, effectiveData.perGoal])
 
   // Compute stacked results for multi-goal summary
   const stacked = useMemo(
