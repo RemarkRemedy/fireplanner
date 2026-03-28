@@ -307,7 +307,9 @@ export function computeGoalStoryData(
   const cpfOaMonthly = deriveCpfOaMonthly(grossIncome, basics.age)
     + (isCoupleMode ? deriveCpfOaMonthly(partnerGross, basics.partnerAge!) : 0)
 
-  // Net loan payments during accumulation (CPF OA offsets housing mortgage)
+  // Net loan payments during accumulation (CPF OA offsets housing mortgage).
+  // Not used in freedom-age formula (projection engine handles loan timing),
+  // but retained for future story cards (e.g., loan burden breakdown).
   const netMonthlyLoanPayments = perGoal.reduce((sum, eg) => {
     if (eg.monthlyLoanPayment <= 0) return sum
     if (isPropertyGoal(eg.goal)) {
@@ -316,20 +318,27 @@ export function computeGoalStoryData(
     return sum + eg.monthlyLoanPayment
   }, 0)
 
-  // Gross loan payments for FIRE number (no CPF OA after stopping work)
+  // Gross loan payments for FIRE number (no CPF OA after stopping work).
+  // Same rationale as above -- retained for future use.
   const grossMonthlyLoanPayments = perGoal.reduce(
     (sum, eg) => sum + eg.monthlyLoanPayment, 0,
   )
 
+  // Mark as used for TypeScript (retained for future story cards)
+  void netMonthlyLoanPayments
+  void grossMonthlyLoanPayments
+
   // CPF LIFE (displayed as context, but NOT used to reduce FIRE number).
   const cpfLifeMonthly = lookupCpfLifeEstimate(grossIncome)
 
-  // Freedom age:
-  // - Savings rate uses NET loan payments (CPF OA helps while working)
-  // - FIRE number uses GROSS loan payments (no CPF OA after freedom)
-  const totalDeductionFromSavings = totalMonthlySavings + netMonthlyLoanPayments
+  // Freedom age (simplified formula):
+  // Loan payments excluded -- they are time-bounded costs that the projection
+  // engine models with proper start/end timing. Including them here would
+  // charge untimed phantom payments (e.g., a mortgage that starts at age 45
+  // would incorrectly reduce savings capacity from today).
+  const totalDeductionFromSavings = totalMonthlySavings
   const impact = computeRetirementImpact(
-    basics, totalDeductionFromSavings, adjustedAllocatedSavings, 0, grossMonthlyLoanPayments,
+    basics, totalDeductionFromSavings, adjustedAllocatedSavings, 0, 0,
   )
   const freedomAge = basics.age + impact.yearsWithGoals
   const freedomAgeWithout = basics.age + impact.yearsWithoutGoals
