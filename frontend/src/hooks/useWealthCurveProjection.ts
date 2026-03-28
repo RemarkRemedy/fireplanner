@@ -241,8 +241,16 @@ export function useWealthCurveProjection(
       }
       if (goalOverride.totalCostToday != null) {
         updated.totalCostToday = goalOverride.totalCostToday
-        // Stacking reads breakdown.total, so keep it in sync
-        updated.breakdown = { ...goal.breakdown, total: goalOverride.totalCostToday }
+        // Scale breakdown items proportionally so they remain consistent with the new total
+        const originalTotal = goal.breakdown.total
+        const scale = originalTotal > 0 ? goalOverride.totalCostToday / originalTotal : 1
+        updated.breakdown = {
+          items: goal.breakdown.items.map(item => ({
+            label: item.label,
+            amount: Math.round(item.amount * scale),
+          })),
+          total: goalOverride.totalCostToday,
+        }
       }
       return updated
     })
