@@ -254,6 +254,12 @@ export function computeGoalStoryData(
     }
     cashNeeded = Math.max(0, cashNeeded)
 
+    // If loan qualification fails, the shortfall (loanNeeded - maxLoan) must be
+    // funded with additional cash beyond the down payment. Add it to cashNeeded.
+    if (loanQualification && !loanQualification.qualified && loanNeeded > loanQualification.maxLoan) {
+      cashNeeded += (loanNeeded - loanQualification.maxLoan)
+    }
+
     // Monthly loan payment: if loan exceeds MSR/TDSR, cap at maxLoan
     let monthlyLoanPayment = computeMonthlyLoanPayment(goal)
     if (loanQualification && !loanQualification.qualified && goal.smartInputs) {

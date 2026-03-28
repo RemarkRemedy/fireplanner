@@ -345,7 +345,7 @@ export function checkIncomeCeiling(
     return { yearsToExceed: 0, alreadyExceeds: true }
   }
 
-  if (annualGrowthRate <= 0) {
+  if (grossHouseholdIncome <= 0 || annualGrowthRate <= 0) {
     return { yearsToExceed: null, alreadyExceeds: false }
   }
 
