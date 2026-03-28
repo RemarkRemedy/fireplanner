@@ -81,20 +81,56 @@ export function deriveCpfOaMonthly(grossIncome: number, age: number): number {
 // ============================================================
 
 /**
- * Accumulate CPF OA balance over a number of months using FV annuity formula.
+ * Accumulate CPF OA balance over a number of months, respecting age-band rate changes.
  *
- * Assumes constant monthly contributions at the current gross income level.
- * FV = monthlyOA * [((1 + r/12)^months - 1) / (r/12)]
- * where r = OA_INTEREST_RATE (annual).
+ * Iterates year-by-year, calling deriveCpfOaMonthly with the correct age for each year
+ * so that OA contribution rates decrease when the user crosses CPF age boundaries
+ * (35, 45, 50, 55, 60, 65). OA interest (2.5% p.a.) compounds annually.
+ *
+ * Partial years (remaining months after full years) are accumulated at the final
+ * year's monthly rate, then added to the running balance.
  */
 export function accumulateCpfOa(grossIncome: number, age: number, months: number): number {
   if (months <= 0 || grossIncome <= 0) return 0
-  const monthlyOA = deriveCpfOaMonthly(grossIncome, age)
-  const monthlyRate = OA_INTEREST_RATE / 12
-  if (monthlyRate < 1e-10) {
-    return monthlyOA * months
+
+  const annualRate = OA_INTEREST_RATE
+  const monthlyRate = annualRate / 12
+  const fullYears = Math.floor(months / 12)
+  const remainingMonths = months % 12
+
+  let balance = 0
+
+  // Accumulate full years, one year at a time
+  for (let year = 0; year < fullYears; year++) {
+    const ageInYear = age + year
+    const monthlyOA = deriveCpfOaMonthly(grossIncome, ageInYear)
+
+    // Grow existing balance by 12 monthly periods, then add FV of 12 monthly contributions
+    if (monthlyRate < 1e-10) {
+      balance = balance + monthlyOA * 12
+    } else {
+      // Grow existing balance for 12 months at monthly compounding
+      balance = balance * Math.pow(1 + monthlyRate, 12)
+      // Add FV of 12 level end-of-period payments at monthlyRate
+      balance += monthlyOA * ((Math.pow(1 + monthlyRate, 12) - 1) / monthlyRate)
+    }
   }
-  return monthlyOA * ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate)
+
+  // Accumulate remaining partial year at the final age
+  if (remainingMonths > 0) {
+    const ageInFinalYear = age + fullYears
+    const monthlyOA = deriveCpfOaMonthly(grossIncome, ageInFinalYear)
+    if (monthlyRate < 1e-10) {
+      balance = balance + monthlyOA * remainingMonths
+    } else {
+      // Grow existing balance for the partial year
+      balance = balance * Math.pow(1 + monthlyRate, remainingMonths)
+      // Add FV of remainingMonths level payments
+      balance += monthlyOA * ((Math.pow(1 + monthlyRate, remainingMonths) - 1) / monthlyRate)
+    }
+  }
+
+  return balance
 }
 
 // ============================================================
