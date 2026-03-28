@@ -39,7 +39,9 @@ import {
   HDB_INCOME_CEILING,
   EC_INCOME_CEILING,
   MORTGAGE_RATES,
+  LOAN_TENURE_YEARS,
   computeCondoDownPayment,
+  computeMonthlyMortgagePayment,
 } from '@/lib/data/goal-defaults'
 import type { GoalCardConfig } from '@/lib/wrapped/goalGradients'
 import { buildGoalCardSequence } from '@/lib/wrapped/goalGradients'
@@ -225,19 +227,31 @@ export function computeGoalStoryData(
       )
     }
 
-    // Cash needed (for upfront costs only — CPF OA and grants reduce what you save in cash)
-    let cashNeeded = goal.breakdown.total - cpfOaAccumulated - grantAmount
+    // Cash needed: CPF OA can cover DP, BSD, legal fees but NOT renovation.
+    // Separate renovation from OA-eligible costs.
+    const renoItem = goal.breakdown.items.find((i) => i.label === 'Renovation')
+    const renovationCost = renoItem?.amount ?? 0
+    const oaEligibleCosts = goal.breakdown.total - renovationCost
+    const oaCoverage = Math.min(cpfOaAccumulated, Math.max(0, oaEligibleCosts - grantAmount))
+    let cashNeeded = goal.breakdown.total - oaCoverage - grantAmount
     // For condos, landed, and EC enforce 5% cash floor (bank loan only, no CPF for 5%)
     const kind = goal.smartInputs?.kind
     if (kind === 'condo' || kind === 'landed' || kind === 'ec') {
       const price = getPropertyPrice(goal)
       const cashMinimum = computeCondoDownPayment(price).cashMinimum
-      cashNeeded = Math.max(cashMinimum, cashNeeded)
+      cashNeeded = Math.max(cashMinimum + renovationCost, cashNeeded)
     }
     cashNeeded = Math.max(0, cashNeeded)
 
-    // Monthly loan payment (mortgage or car HP)
-    const monthlyLoanPayment = computeMonthlyLoanPayment(goal)
+    // Monthly loan payment: if loan exceeds MSR/TDSR, cap at maxLoan
+    let monthlyLoanPayment = computeMonthlyLoanPayment(goal)
+    if (loanQualification && !loanQualification.qualified && goal.smartInputs) {
+      // Use the max qualified loan amount instead of the full LTV loan
+      const rate = getMortgageRate(goal.smartInputs)
+      const tenure = kind === 'hdb' && goal.smartInputs.kind === 'hdb' && goal.smartInputs.loanType === 'hdb-loan'
+        ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
+      monthlyLoanPayment = computeMonthlyMortgagePayment(loanQualification.maxLoan, rate, tenure)
+    }
 
     // For property goals, recompute monthly savings based on cash needed (not full upfront cost).
     // CPF OA covers part of the down payment, so cash savings target is lower.
