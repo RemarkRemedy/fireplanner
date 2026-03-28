@@ -364,6 +364,34 @@ function SharedInsightsSection({
         )}
       </MetricCard>
 
+      {/* Savings rate */}
+      <Card>
+        <CardContent className="pt-6">
+          <p className="text-sm">
+            <span className="font-medium">Your savings rate: {formatPercent(
+              (basics.monthlyIncome + (basics.partnerMonthlyIncome ?? 0)) > 0
+                ? (basics.monthlyIncome + (basics.partnerMonthlyIncome ?? 0) - basics.monthlyExpenses) / (basics.monthlyIncome + (basics.partnerMonthlyIncome ?? 0))
+                : 0
+            , 0)}.</span>{' '}
+            {shared.peerBenchmark}
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Income tax heads-up */}
+      {shared.incomeTaxMonthly > 0 && (
+        <InsightChip
+          label={`Income tax: ~${formatCurrency(Math.round(shared.incomeTaxMonthly))}/mo`}
+          variant="info"
+        >
+          <p>
+            Set aside approximately {formatCurrency(Math.round(shared.incomeTaxMonthly))}/mo for
+            income tax. Tax is billed in arrears from your second year of employment,
+            so budget for it early.
+          </p>
+        </InsightChip>
+      )}
+
       {/* Income ceiling warning */}
       {shared.incomeCeilingWarning && (
         <InsightChip
