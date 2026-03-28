@@ -7,6 +7,7 @@ import { DashboardPage } from '../DashboardPage'
 
 vi.mock('@/lib/household/featureFlag', () => ({
   isHouseholdPlannerV1Enabled: vi.fn(() => true),
+  isAdvisoryGapEnabled: vi.fn(() => false),
 }))
 
 // Mock useDashboardMetrics - return non-empty metrics so isEmpty=false

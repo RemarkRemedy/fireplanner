@@ -93,7 +93,7 @@ describe('StartPage', () => {
     useUIStore.setState({ setupCompleted: true })
     renderStartPage()
 
-    expect(screen.getByText('Continue to Dashboard')).toBeInTheDocument()
+    expect(screen.getByText('Check your financial health')).toBeInTheDocument()
     expect(screen.getByText('Redo setup')).toBeInTheDocument()
     localStorage.removeItem('fireplanner-profile')
   })

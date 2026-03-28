@@ -17,6 +17,7 @@ import { useSectionCompletion } from '@/hooks/useSectionCompletion'
 vi.mock('@/lib/household/featureFlag', () => ({
   HOUSEHOLD_PLANNER_V1_FLAG_KEY: 'fireplanner-feature-householdPlannerV1',
   isHouseholdPlannerV1Enabled: vi.fn(),
+  isAdvisoryGapEnabled: vi.fn(() => false),
 }))
 
 vi.mock('@/lib/analytics', () => ({
