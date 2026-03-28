@@ -63,6 +63,8 @@ export interface EnrichedGoal {
   cpfOaAccumulated: number
   grantAmount: number
   loanQualification: LoanQualification | null
+  /** Full loan amount needed before MSR/TDSR qualification check. */
+  loanNeeded: number
   cashNeeded: number
   adjustedMonthlySavings: number
   /** Monthly mortgage or HP payment (0 for non-financed goals). */
@@ -213,10 +215,11 @@ export function computeGoalStoryData(
 
     // Loan qualification (only for property goals)
     let loanQualification: LoanQualification | null = null
+    let loanNeeded = 0
     if (goal.smartInputs && isPropertyGoal(goal)) {
       const price = getPropertyPrice(goal)
       const ltv = getLtvRatio(goal.smartInputs)
-      const loanNeeded = price * ltv
+      loanNeeded = price * ltv
       const rate = getMortgageRate(goal.smartInputs)
       loanQualification = checkLoanQualification(
         householdGross,
@@ -267,6 +270,7 @@ export function computeGoalStoryData(
       cpfOaAccumulated,
       grantAmount,
       loanQualification,
+      loanNeeded,
       cashNeeded,
       adjustedMonthlySavings,
       monthlyLoanPayment,

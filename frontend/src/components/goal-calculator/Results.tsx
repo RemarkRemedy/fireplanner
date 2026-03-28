@@ -145,6 +145,11 @@ export function Results({
                       ? `The 30% MSR limit on gross income means you'd qualify for up to $${Math.round(lq.maxLoan).toLocaleString()}.`
                       : `The 55% TDSR limit on total debt means you'd qualify for up to $${Math.round(lq.maxLoan).toLocaleString()}.`}
                   </p>
+                  {loanGoal.loanNeeded > lq.maxLoan && (
+                    <p className="text-lg font-semibold mt-4 text-amber-300">
+                      ${Math.round(loanGoal.loanNeeded - lq.maxLoan).toLocaleString()} shortfall to cover with cash
+                    </p>
+                  )}
                   <p className="text-sm opacity-60 mt-2">
                     {isCoupleMode
                       ? 'Consider a longer timeline or a smaller property.'
