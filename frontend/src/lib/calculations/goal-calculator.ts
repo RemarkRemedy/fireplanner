@@ -256,6 +256,7 @@ export function computeGoalFeasibility(
 export function computeMultiGoalStacking(
   goals: GoalCalcGoal[],
   basics: GoalCalcBasics,
+  cashNeededByGoalId?: Map<string, number>,
 ): StackedGoalResult[] {
   // Sort by targetAge ascending — earliest goals get savings first
   const sorted = [...goals].sort((a, b) => a.targetAge - b.targetAge)
@@ -265,14 +266,19 @@ export function computeMultiGoalStacking(
   let remainingSavings = basics.existingSavings
 
   return sorted.map((goal) => {
-    // Allocate lump-sum savings to this goal (up to the goal's total cost)
-    const allocated = Math.min(remainingSavings, goal.breakdown.total)
+    // For property goals with a cashNeeded override, use that instead of
+    // breakdown.total. This avoids over-depleting the savings pool by the
+    // full upfront cost (DP+BSD+legal+reno) when CPF OA and grants cover part of it.
+    const goalCashTarget = cashNeededByGoalId?.get(goal.id) ?? goal.breakdown.total
+
+    // Allocate lump-sum savings to this goal (up to the goal's cash target)
+    const allocated = Math.min(remainingSavings, goalCashTarget)
     remainingSavings -= allocated
 
     // Recompute monthly savings using only the allocated lump sum
     const years = goal.targetAge - basics.age
     const adjustedMonthly = computeMonthlySavingsNeeded(
-      goal.breakdown.total,
+      goalCashTarget,
       allocated,
       years,
     )

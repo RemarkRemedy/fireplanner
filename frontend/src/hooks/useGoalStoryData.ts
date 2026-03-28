@@ -181,20 +181,13 @@ export function computeGoalStoryData(
   const stackingBasics = { ...basics, existingSavings: savingsAfterEmergency }
   const stacked = computeMultiGoalStacking(sortedGoals, stackingBasics)
 
-  // Build a lookup from goal id -> stacked result
-  const stackedById = new Map<string, StackedGoalResult>()
-  for (const sr of stacked) {
-    stackedById.set(sr.goal.id, sr)
-  }
-
   // 6. Enrich each goal
   const hasAnyPropertyGoal = sortedGoals.some(isPropertyGoal)
   const hasAnyHdbGoal = sortedGoals.some(isHdbGoal)
   const hasAnyEcGoal = sortedGoals.some(isEcGoal)
 
-  const perGoal: EnrichedGoal[] = sortedGoals.map((goal) => {
+  const enrichedGoals = sortedGoals.map((goal) => {
     const monthsToGoal = Math.max(0, (goal.targetAge - basics.age) * 12)
-    const stackedResult = stackedById.get(goal.id)
 
     // CPF OA accumulation
     let cpfOaAccumulated = accumulateCpfOa(grossIncome, basics.age, monthsToGoal)
@@ -274,15 +267,6 @@ export function computeGoalStoryData(
       monthlyLoanPayment = computeMonthlyMortgagePayment(loanQualification.maxLoan, rate, tenure)
     }
 
-    // For property goals, recompute monthly savings based on cash needed (not full upfront cost).
-    // CPF OA covers part of the down payment, so cash savings target is lower.
-    let adjustedMonthlySavings = stackedResult?.adjustedMonthlySavings ?? goal.monthlySavingsNeeded
-    if (isPropertyGoal(goal) && stackedResult) {
-      const years = goal.targetAge - basics.age
-      const effectiveAllocated = Math.min(stackedResult.allocatedSavings, cashNeeded)
-      adjustedMonthlySavings = computeMonthlySavingsNeeded(cashNeeded, effectiveAllocated, years)
-    }
-
     return {
       goal,
       cpfOaAccumulated,
@@ -290,9 +274,42 @@ export function computeGoalStoryData(
       loanQualification,
       loanNeeded,
       cashNeeded,
-      adjustedMonthlySavings,
       monthlyLoanPayment,
     }
+  })
+
+  // 6b. Second pass: re-run stacking with accurate cashNeeded for property goals.
+  //     The first pass (step 5) used breakdown.total for all goals, which over-depletes
+  //     the savings pool for property goals where CPF OA and grants cover part of the cost.
+  const cashNeededMap = new Map<string, number>()
+  for (const eg of enrichedGoals) {
+    if (isPropertyGoal(eg.goal)) {
+      cashNeededMap.set(eg.goal.id, eg.cashNeeded)
+    }
+  }
+
+  const refinedStacked = cashNeededMap.size > 0
+    ? computeMultiGoalStacking(sortedGoals, stackingBasics, cashNeededMap)
+    : stacked
+  const refinedStackedById = new Map<string, StackedGoalResult>()
+  for (const sr of refinedStacked) {
+    refinedStackedById.set(sr.goal.id, sr)
+  }
+
+  // Build final perGoal with adjusted monthly savings from refined stacking
+  const perGoal: EnrichedGoal[] = enrichedGoals.map((eg) => {
+    const refinedResult = refinedStackedById.get(eg.goal.id)
+
+    // For property goals, recompute monthly savings based on cash needed (not full upfront cost).
+    // CPF OA covers part of the down payment, so cash savings target is lower.
+    let adjustedMonthlySavings = refinedResult?.adjustedMonthlySavings ?? eg.goal.monthlySavingsNeeded
+    if (isPropertyGoal(eg.goal) && refinedResult) {
+      const years = eg.goal.targetAge - basics.age
+      const effectiveAllocated = Math.min(refinedResult.allocatedSavings, eg.cashNeeded)
+      adjustedMonthlySavings = computeMonthlySavingsNeeded(eg.cashNeeded, effectiveAllocated, years)
+    }
+
+    return { ...eg, adjustedMonthlySavings }
   })
 
   // 7. Shared insights
@@ -303,10 +320,10 @@ export function computeGoalStoryData(
   // from the portfolio base. For property goals, the target is cashNeeded (after CPF OA);
   // for others, it's breakdown.total.
   const adjustedAllocatedSavings = perGoal.reduce((sum, eg) => {
-    const stackedResult = stackedById.get(eg.goal.id)
-    if (!stackedResult) return sum
+    const refinedResult = refinedStackedById.get(eg.goal.id)
+    if (!refinedResult) return sum
     const target = isPropertyGoal(eg.goal) ? eg.cashNeeded : eg.goal.breakdown.total
-    return sum + Math.min(stackedResult.allocatedSavings, target)
+    return sum + Math.min(refinedResult.allocatedSavings, target)
   }, 0)
 
   // Monthly loan payments: two perspectives needed.
@@ -347,8 +364,10 @@ export function computeGoalStoryData(
   // charge untimed phantom payments (e.g., a mortgage that starts at age 45
   // would incorrectly reduce savings capacity from today).
   const totalDeductionFromSavings = totalMonthlySavings
+  // Use stackingBasics (existingSavings after emergency fund) so the freedom age
+  // formula starts from savings AFTER the emergency reserve, not the full balance.
   const impact = computeRetirementImpact(
-    basics, totalDeductionFromSavings, adjustedAllocatedSavings, 0, 0,
+    stackingBasics, totalDeductionFromSavings, adjustedAllocatedSavings, 0, 0,
   )
   const freedomAge = basics.age + impact.yearsWithGoals
   const freedomAgeWithout = basics.age + impact.yearsWithoutGoals
