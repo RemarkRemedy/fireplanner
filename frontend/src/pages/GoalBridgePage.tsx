@@ -10,9 +10,12 @@ import { applySetupDraft } from '@/lib/household/setupDraft'
 import type { SetupDraft } from '@/lib/household/setupDraft'
 import { mapGoalToHouseholdGoalItem } from '@/lib/calculations/goal-calculator'
 import type { GoalCalcBasics, GoalCalcGoal } from '@/lib/calculations/goal-calculator'
-import { computeGoalStoryData } from '@/hooks/useGoalStoryData'
-import type { GoalStoryBasics } from '@/hooks/useGoalStoryData'
 import { grossUpFromTakeHome } from '@/lib/calculations/grossUp'
+import {
+  MORTGAGE_RATES,
+  LOAN_TENURE_YEARS,
+  getHdbPriceRange,
+} from '@/lib/data/goal-defaults'
 
 // ============================================================
 // Read goal calculator state from localStorage
@@ -85,7 +88,62 @@ export function GoalBridgePage() {
       ? (basics.partnerGrossIncome ?? grossUpFromTakeHome(basics.partnerMonthlyIncome ?? 0, basics.partnerAge!))
       : 0
 
-    // Build a SetupDraft from calculator basics + bridge fields
+    // Separate property goals from non-property goals.
+    // The FIRST property goal becomes a native PropertyPlan (full CPF OA housing
+    // deductions, mortgage, equity modeled by the projection engine).
+    // Additional property goals and non-property goals become GoalItems.
+    const propertyGoals = goals.filter((g) => g.category === 'housing' && g.smartInputs)
+    const nonPropertyGoals = goals.filter((g) => g.category !== 'housing' || !g.smartInputs)
+    const primaryPropertyGoal = propertyGoals[0] ?? null
+    const extraPropertyGoals = propertyGoals.slice(1)
+
+    // Derive property details for the draft
+    let ownsProperty: 'planning' | 'no' = 'no'
+    let purchasePrice: number | undefined
+    let purchaseYearsFromNow: number | undefined
+    let propertyType: 'hdb' | 'condo' | 'landed' | undefined
+    let mortgageRate: number | undefined
+    let mortgageTerm: number | undefined
+    let ltv: number | undefined
+
+    if (primaryPropertyGoal?.smartInputs) {
+      ownsProperty = 'planning'
+      const si = primaryPropertyGoal.smartInputs
+      purchaseYearsFromNow = Math.max(0, primaryPropertyGoal.targetAge - basics.age)
+
+      switch (si.kind) {
+        case 'hdb':
+          propertyType = 'hdb'
+          purchasePrice = si.priceOverride ?? getHdbPriceRange(si.flatType, si.tenure).midpoint
+          mortgageRate = si.loanType === 'hdb-loan' ? MORTGAGE_RATES.hdb : MORTGAGE_RATES.bank
+          mortgageTerm = si.loanType === 'hdb-loan' ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
+          ltv = si.loanType === 'hdb-loan' ? 0.90 : 0.75
+          break
+        case 'condo':
+          propertyType = 'condo'
+          purchasePrice = si.price
+          mortgageRate = MORTGAGE_RATES.bank
+          mortgageTerm = LOAN_TENURE_YEARS.bank
+          ltv = 0.75
+          break
+        case 'landed':
+          propertyType = 'landed'
+          purchasePrice = si.price
+          mortgageRate = MORTGAGE_RATES.bank
+          mortgageTerm = LOAN_TENURE_YEARS.bank
+          ltv = 0.75
+          break
+        case 'ec':
+          propertyType = 'condo' // EC treated as condo in planner
+          purchasePrice = si.price
+          mortgageRate = MORTGAGE_RATES.bank
+          mortgageTerm = LOAN_TENURE_YEARS.bank
+          ltv = 0.75
+          break
+      }
+    }
+
+    // Build a SetupDraft from calculator basics + bridge fields + property
     const draft: SetupDraft = {
       currentAge: basics.age,
       retirementAge,
@@ -96,7 +154,12 @@ export function GoalBridgePage() {
       cashSavings: 0,
       residency,
       cpfKnown: false,
-      ownsProperty: 'no',
+      ownsProperty,
+      ...(ownsProperty === 'planning' ? {
+        purchasePrice,
+        purchaseYearsFromNow,
+        propertyType,
+      } : {}),
       healthcareEnabled: false,
       isRedo: false,
       ...(isCoupleMode && basics.partnerAge != null ? {
@@ -114,32 +177,48 @@ export function GoalBridgePage() {
       } : {}),
     }
 
-    // Apply the draft — this initializes the plan, creates adults,
-    // sets income/expense/asset entries, exactly like the setup wizard
+    // Apply the draft — initializes plan, creates adults, income/expense/asset
+    // entries, AND creates PropertyPlan + auto down payment goal for the primary
+    // property. This uses the planner's native property engine which handles
+    // CPF OA housing deductions, mortgage, and equity natively.
     const planType = isCoupleMode ? 'couple' : 'individual'
     applySetupDraft(draft, planType)
 
-    // Compute enriched story data to get cashNeeded for property goals.
-    // The planner's projection deducts GoalItem.amount as a lump sum — using
-    // totalCostToday (full DP+BSD+legal+reno) would ignore CPF OA offsets and
-    // grants, making the projection show a much bigger dip than the calculator did.
-    const storyBasics: GoalStoryBasics = {
-      ...basics,
-      grossIncome: grossIncome,
-      partnerGrossIncome: isCoupleMode ? partnerGross : undefined,
-    }
-    const storyData = computeGoalStoryData(storyBasics, goals)
+    // Override mortgage rate/term/LTV if we have specific values from the calculator
+    // (applySetupDraft uses defaults which may differ from what the user configured)
+    if (ownsProperty === 'planning' && (mortgageRate != null || ltv != null)) {
+      const plan = useHouseholdPlanStore.getState().plan
+      const prop = plan.properties.find((p) => p.owner === 'self')
+      if (prop) {
+        useHouseholdPlanStore.getState().updateProperty(prop.id, {
+          ...(mortgageRate != null ? { mortgageRate } : {}),
+          ...(mortgageTerm != null ? { mortgageTerm } : {}),
+          ...(ltv != null ? { ltv } : {}),
+        })
 
-    // Transfer goals — use cashNeeded for property goals so the projection
-    // matches the calculator's wealth curve (CPF OA and grants accounted for)
-    for (const goal of goals) {
-      const enriched = storyData.perGoal.find((eg) => eg.goal.id === goal.id)
-      const isProperty = goal.category === 'housing'
-      const mappedGoal = mapGoalToHouseholdGoalItem(goal)
-      if (isProperty && enriched) {
-        mappedGoal.amount = enriched.cashNeeded
+        // Update auto-created down payment goal to match the actual LTV
+        if (ltv != null && purchasePrice != null) {
+          const dpGoal = useHouseholdPlanStore.getState().plan.goals.find(
+            (g) => g.label === 'Property Down Payment' && g.owner === 'self'
+          )
+          if (dpGoal) {
+            useHouseholdPlanStore.getState().updateGoal(dpGoal.id, {
+              amount: Math.round(purchasePrice * (1 - ltv)),
+            })
+          }
+        }
       }
-      addGoal(mappedGoal)
+    }
+
+    // Transfer non-property goals as regular GoalItems
+    for (const goal of nonPropertyGoals) {
+      addGoal(mapGoalToHouseholdGoalItem(goal))
+    }
+
+    // Extra property goals (2nd+ properties) as GoalItems since the planner
+    // currently supports only one PropertyPlan. TODO: multi-property support.
+    for (const goal of extraPropertyGoals) {
+      addGoal(mapGoalToHouseholdGoalItem(goal))
     }
 
     // Mark setup as complete so the planner doesn't redirect to setup
