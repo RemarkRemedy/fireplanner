@@ -13,6 +13,7 @@ import {
 import { deriveCpfOaMonthly } from '@/lib/calculations/goal-calculator-sg'
 import { grossUpFromTakeHome } from '@/lib/calculations/grossUp'
 import { OA_INTEREST_RATE } from '@/lib/data/cpfRates'
+import { getHdbPriceRange } from '@/lib/data/goal-defaults'
 import type {
   GoalCalcGoal,
   GoalCalcBasics,
@@ -247,6 +248,18 @@ function EnrichedGoalCard({
         <div className="flex items-start justify-between gap-2">
           <div>
             <CardTitle className="text-lg">{goal.label}</CardTitle>
+            {isProperty && goal.smartInputs && (() => {
+              const si = goal.smartInputs
+              let price: number | null = null
+              if (si.kind === 'hdb') {
+                price = si.priceOverride ?? getHdbPriceRange(si.flatType, si.tenure).midpoint
+              } else if ('price' in si) {
+                price = (si as { price: number }).price
+              }
+              return price ? (
+                <p className="text-sm font-medium">Property price: {formatCurrency(Math.round(price))}</p>
+              ) : null
+            })()}
             <p className="text-sm text-muted-foreground">
               Target age {goal.targetAge} ({years} {years === 1 ? 'year' : 'years'} away)
             </p>
