@@ -85,11 +85,19 @@ function getGoalIconName(goal: GoalCalcGoal): string {
  *
  * This runs post-hoc because the projection engine can't model future purchases.
  */
+/**
+ * Map of goal ID → CPF OA amount used for that property purchase.
+ * Used to reduce cpfTotal at purchase age so CPF isn't double-counted
+ * in both cpfTotal and propertyEquity.
+ */
+type CpfUsedMap = Map<string, number>
+
 function overlayPropertyEquity(
   rows: DeflatedRow[],
   goals: GoalCalcGoal[],
   startAge: number,
   inflationRate: number,
+  cpfUsedByGoalId?: CpfUsedMap,
 ): DeflatedRow[] {
   const propertyGoals = goals.filter(
     (g) => g.smartInputs?.kind === 'hdb' || g.smartInputs?.kind === 'condo' ||
@@ -100,6 +108,7 @@ function overlayPropertyEquity(
 
   return rows.map((row) => {
     let totalEquity = 0
+    let cpfReduction = 0
 
     for (const goal of propertyGoals) {
       if (row.age < goal.targetAge) continue
@@ -135,12 +144,23 @@ function overlayPropertyEquity(
       }
 
       const nominalEquity = Math.max(0, appreciated - outstanding)
-      // Deflate to today's dollars
       const deflator = Math.pow(1 + inflationRate, row.age - startAge)
       totalEquity += nominalEquity / deflator
+
+      // Reduce CPF total by the amount used for this property purchase.
+      // Without this, CPF OA is counted in both cpfTotal (never withdrawn)
+      // and propertyEquity (full property value), inflating total net worth.
+      const cpfUsed = cpfUsedByGoalId?.get(goal.id) ?? 0
+      if (cpfUsed > 0) {
+        cpfReduction += cpfUsed / deflator
+      }
     }
 
-    return { ...row, propertyEquity: totalEquity }
+    return {
+      ...row,
+      propertyEquity: totalEquity,
+      cpfTotal: Math.max(0, row.cpfTotal - cpfReduction),
+    }
   })
 }
 
@@ -253,8 +273,21 @@ export function useWealthCurveProjection(
     const result = generateProjection(params)
     const deflated = deflateProjection(result.rows, DEFAULT_INFLATION, basics.age)
 
+    // Build CPF-used map so the equity overlay can reduce cpfTotal accordingly
+    const cpfUsedMap = new Map<string, number>()
+    for (const eg of storyData.perGoal) {
+      if (eg.goal.category === 'housing' && eg.cpfOaAccumulated > 0) {
+        // The actual CPF OA used is capped at OA-eligible costs minus grants
+        const renoItem = eg.goal.breakdown.items.find((i) => i.label === 'Renovation')
+        const renovationCost = renoItem?.amount ?? 0
+        const oaEligibleCosts = eg.goal.breakdown.total - renovationCost
+        const oaCoverage = Math.min(eg.cpfOaAccumulated, Math.max(0, oaEligibleCosts - eg.grantAmount))
+        if (oaCoverage > 0) cpfUsedMap.set(eg.goal.id, oaCoverage)
+      }
+    }
+
     // Overlay property equity post-hoc (engine can't model future property purchases)
-    return overlayPropertyEquity(deflated, effectiveGoals, basics.age, DEFAULT_INFLATION)
+    return overlayPropertyEquity(deflated, effectiveGoals, basics.age, DEFAULT_INFLATION, cpfUsedMap)
   }, [effectiveBasics, effectiveGoals, overrides.expectedReturn, basics.age, storyData])
 
   // Goal markers for the chart
