@@ -108,7 +108,8 @@ function GoalLabel({ viewBox, icon, cost, label, yOffset = 0 }: GoalLabelProps) 
 
 /**
  * Compute vertical offsets for goal markers that are too close together.
- * Markers within MIN_AGE_GAP years of each other get staggered vertically.
+ * Groups markers into clusters where adjacent markers are within MIN_AGE_GAP.
+ * Each marker in a cluster gets a unique vertical offset so nothing overlaps.
  */
 function computeMarkerOffsets(markers: GoalMarker[]): number[] {
   const MIN_AGE_GAP = 3
@@ -117,10 +118,18 @@ function computeMarkerOffsets(markers: GoalMarker[]): number[] {
     .sort((a, b) => a.age - b.age)
   const offsets = new Array(markers.length).fill(0) as number[]
 
-  for (let i = 1; i < sorted.length; i++) {
-    if (sorted[i].age - sorted[i - 1].age < MIN_AGE_GAP) {
-      // Alternate: even indices stay, odd indices push down
-      offsets[sorted[i].originalIndex] = STAGGER_PX * (i % 2 === 1 ? 1 : 0)
+  let clusterStart = 0
+  for (let i = 1; i <= sorted.length; i++) {
+    const isClusterEnd = i === sorted.length || sorted[i].age - sorted[i - 1].age >= MIN_AGE_GAP
+    if (isClusterEnd) {
+      const clusterSize = i - clusterStart
+      if (clusterSize > 1) {
+        // Assign increasing offsets within the cluster
+        for (let j = clusterStart; j < i; j++) {
+          offsets[sorted[j].originalIndex] = (j - clusterStart) * STAGGER_PX
+        }
+      }
+      clusterStart = i
     }
   }
   return offsets
