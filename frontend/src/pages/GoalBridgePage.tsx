@@ -10,6 +10,7 @@ import { applySetupDraft } from '@/lib/household/setupDraft'
 import type { SetupDraft } from '@/lib/household/setupDraft'
 import { mapGoalToHouseholdGoalItem } from '@/lib/calculations/goal-calculator'
 import type { GoalCalcBasics, GoalCalcGoal } from '@/lib/calculations/goal-calculator'
+import type { GoalItem, TimingRule } from '@/lib/household/types'
 import { grossUpFromTakeHome } from '@/lib/calculations/grossUp'
 import {
   MORTGAGE_RATES,
@@ -207,6 +208,35 @@ export function GoalBridgePage() {
             })
           }
         }
+      }
+    }
+
+    // Add BSD, legal fees, and renovation as a separate goal.
+    // The auto-created "Property Down Payment" only covers purchasePrice * (1 - LTV).
+    // The calculator's breakdown also includes BSD, legal, and renovation which are
+    // real cash outflows the user needs to save for.
+    if (primaryPropertyGoal && purchasePrice != null) {
+      const breakdown = primaryPropertyGoal.breakdown
+      const downPaymentItem = breakdown.items.find((i) => i.label.startsWith('Down payment'))
+      const downPaymentAmount = downPaymentItem?.amount ?? 0
+      const feesAndReno = breakdown.total - downPaymentAmount
+      if (feesAndReno > 0) {
+        const targetAge = primaryPropertyGoal.targetAge
+        const timing: TimingRule = { kind: 'single-age', owner: 'self', age: targetAge }
+        const feesGoal: GoalItem = {
+          id: crypto.randomUUID(),
+          owner: 'self',
+          label: `${primaryPropertyGoal.label} (BSD, legal, renovation)`,
+          kind: 'financial-goal',
+          timing,
+          amount: feesAndReno,
+          amountSaved: 0,
+          durationYears: 1,
+          priority: 'important',
+          inflationAdjusted: true,
+          category: 'housing',
+        }
+        addGoal(feesGoal)
       }
     }
 
