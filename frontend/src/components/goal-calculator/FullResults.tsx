@@ -515,20 +515,23 @@ export function FullResults({
   // When what-if sliders are modified, use the recomputed story data
   const effectiveData = wealthCurve?.isModified ? wealthCurve.storyData : data
 
-  // Compute feasibility for each goal individually
-  // When expenses > income (deficit), force all goals to red since cash flow
-  // cannot support saving regardless of existing savings coverage
+  // Compute feasibility for each goal using REMAINING capacity after prior goals
+  // (not total capacity — earlier goals consume savings capacity first)
   const goalFeasibilities = useMemo(
-    () =>
-      goals.map((goal) => {
-        if (available <= 0) {
-          return { level: 'red' as const, feasible: false, shortfall: Math.abs(available) }
+    () => {
+      let usedCapacity = 0
+      return effectiveData.perGoal.map((enriched) => {
+        const remaining = available - usedCapacity
+        if (remaining <= 0) {
+          usedCapacity += enriched.adjustedMonthlySavings
+          return { level: 'red' as const, feasible: false, shortfall: enriched.adjustedMonthlySavings }
         }
-        const enriched = effectiveData.perGoal.find((eg) => eg.goal.id === goal.id)
-        const monthlySavings = enriched?.adjustedMonthlySavings ?? goal.monthlySavingsNeeded
-        return computeGoalFeasibility(monthlySavings, available)
-      }),
-    [goals, available, effectiveData.perGoal],
+        const result = computeGoalFeasibility(enriched.adjustedMonthlySavings, remaining)
+        usedCapacity += enriched.adjustedMonthlySavings
+        return result
+      })
+    },
+    [available, effectiveData.perGoal],
   )
 
   // Compute stacked results for multi-goal summary
