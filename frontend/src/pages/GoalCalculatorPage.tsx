@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useState } from 'react'
+import { useReducer, useCallback, useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
@@ -11,6 +11,7 @@ import {
   computeMonthlySavingsNeeded,
   mapGoalToHouseholdGoalItem,
 } from '@/lib/calculations/goal-calculator'
+import type { PlanningAdult } from '@/lib/household/types'
 import type { GoalTileId } from '@/lib/data/goal-defaults'
 import type {
   GoalCalcGoal,
@@ -64,7 +65,8 @@ function reducer(state: State, action: Action): State {
           state.basics.existingSavings,
           years,
         )
-        const available = state.basics.monthlyIncome - state.basics.monthlyExpenses
+        const householdIncome = state.basics.monthlyIncome + (state.basics.partnerMonthlyIncome ?? 0)
+        const available = householdIncome - state.basics.monthlyExpenses
         const feasible = monthlySavingsNeeded <= available
         const shortfallPerMonth = feasible ? 0 : monthlySavingsNeeded - available
 
@@ -91,7 +93,8 @@ function reducer(state: State, action: Action): State {
     case 'COMPLETE_BASICS': {
       // Recompute monthlySavingsNeeded for all goals with the new basics
       const basics = action.basics
-      const available = basics.monthlyIncome - basics.monthlyExpenses
+      const householdIncome = basics.monthlyIncome + (basics.partnerMonthlyIncome ?? 0)
+      const available = householdIncome - basics.monthlyExpenses
 
       const updatedGoals = state.goals.map((goal) => {
         const years = goal.targetAge - basics.age
@@ -139,6 +142,27 @@ function reducer(state: State, action: Action): State {
 }
 
 // ============================================================
+// Session persistence
+// ============================================================
+
+const STORAGE_KEY = 'goal-calc-state'
+
+function getInitialState(): State {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      const parsed = JSON.parse(saved) as State
+      if (parsed.step && Array.isArray(parsed.goals)) {
+        return parsed
+      }
+    }
+  } catch {
+    // Ignore parse errors or SSR environments
+  }
+  return initialState
+}
+
+// ============================================================
 // Page component
 // ============================================================
 
@@ -150,10 +174,24 @@ export function GoalCalculatorPage() {
     path: '/goal-calculator',
   })
 
-  const [state, dispatch] = useReducer(reducer, initialState)
+  const [state, dispatch] = useReducer(reducer, undefined, getInitialState)
+
+  // Persist state to localStorage on every change
+  useEffect(() => {
+    try {
+      if (state.step === 'pick' && state.goals.length === 0 && !state.basics) {
+        localStorage.removeItem(STORAGE_KEY)
+      } else {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+      }
+    } catch {
+      // Ignore quota errors
+    }
+  }, [state])
   const [transferring, setTransferring] = useState(false)
   const navigate = useNavigate()
   const addGoal = useHouseholdPlanStore((s) => s.addGoal)
+  const addAdult = useHouseholdPlanStore((s) => s.addAdult)
 
   // Disable all tiles whose category matches an already-added goal
   // (e.g., adding a condo goal disables all housing tiles: hdb, condo, landed)
@@ -202,15 +240,51 @@ export function GoalCalculatorPage() {
   )
 
   const handleContinueToPlanner = useCallback(() => {
-    if (transferring) return
+    if (transferring || !state.basics) return
     setTransferring(true)
 
+    // Transfer goals
     for (const goal of state.goals) {
       addGoal(mapGoalToHouseholdGoalItem(goal))
     }
 
+    // Transfer partner as a new adult (couple mode)
+    if (state.basics.partnerAge && state.basics.partnerMonthlyIncome) {
+      const partnerAdult: PlanningAdult = {
+        id: crypto.randomUUID(),
+        owner: 'partner',
+        displayName: 'Partner',
+        currentAge: state.basics.partnerAge,
+        retirementAge: 55,
+        lifeExpectancy: 85,
+        lifeStage: 'pre-fire',
+        maritalStatus: 'married',
+        residencyStatus: 'citizen',
+        prMonths: 0,
+        annualIncome: state.basics.partnerMonthlyIncome * 12,
+        annualExpenses: 0,
+        liquidNetWorth: 0,
+        parentSupportEnabled: false,
+        lifeEventsEnabled: false,
+        healthcare: {} as PlanningAdult['healthcare'],
+        cpf: { balances: { oa: 0, sa: 0, ma: 0, ra: 0 } } as PlanningAdult['cpf'],
+        srs: {} as PlanningAdult['srs'],
+        taxProfile: {} as PlanningAdult['taxProfile'],
+        lifeEvents: [],
+        cashSavings: 0,
+        nonMortgageDebtTotal: 0,
+        nonMortgageDebtMonthlyPayment: 0,
+        insuranceDeathCoverage: 0,
+        insuranceCICoverage: 0,
+        insuranceDisabilityMonthly: 0,
+        funeralCosts: 0,
+        ciRecoveryYears: 0,
+      }
+      addAdult(partnerAdult)
+    }
+
     navigate('/inputs')
-  }, [transferring, state.goals, addGoal, navigate])
+  }, [transferring, state.basics, state.goals, addGoal, addAdult, navigate])
 
   return (
     <div className="min-h-screen bg-background">
@@ -259,6 +333,7 @@ export function GoalCalculatorPage() {
           <Results
             goals={state.goals}
             basics={state.basics}
+            skipStory={state.goals.length > 1}
             onAddAnother={() => dispatch({ type: 'ADD_ANOTHER' })}
             onEditBasics={() => dispatch({ type: 'EDIT_BASICS' })}
             onStartOver={() => dispatch({ type: 'START_OVER' })}

@@ -1,19 +1,17 @@
-import { useMemo } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Plus, RefreshCw, ArrowRight, Pencil } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
-import {
-  REAL_RETURN,
-  computeGoalFeasibility,
-  computeMultiGoalStacking,
-  computeRetirementImpact,
-} from '@/lib/calculations/goal-calculator'
-import type {
-  GoalCalcGoal,
-  GoalCalcBasics,
-  FeasibilityResult,
-} from '@/lib/calculations/goal-calculator'
+import { useState, useCallback } from 'react'
+import type { GoalCalcGoal, GoalCalcBasics } from '@/lib/calculations/goal-calculator'
+import type { GoalCardConfig } from '@/lib/wrapped/goalGradients'
+import { useGoalStoryData } from '@/hooks/useGoalStoryData'
+import { useWealthCurveProjection } from '@/hooks/useWealthCurveProjection'
+import { GoalStoryContainer } from '@/components/goal-calculator/story/GoalStoryContainer'
+import { FullResults } from '@/components/goal-calculator/FullResults'
+import { CostRevealCard } from '@/components/goal-calculator/story/CostRevealCard'
+import { CpfOffsetCard } from '@/components/goal-calculator/story/CpfOffsetCard'
+import { GrantCard } from '@/components/goal-calculator/story/GrantCard'
+import { MonthlySavingsCard } from '@/components/goal-calculator/story/MonthlySavingsCard'
+import { FreedomAgeCard } from '@/components/goal-calculator/story/FreedomAgeCard'
+import { CtaCard } from '@/components/goal-calculator/story/CtaCard'
+import { deriveCpfOaMonthly } from '@/lib/calculations/goal-calculator-sg'
 
 // ============================================================
 // Props
@@ -22,6 +20,7 @@ import type {
 interface ResultsProps {
   goals: GoalCalcGoal[]
   basics: GoalCalcBasics
+  skipStory?: boolean
   onAddAnother: () => void
   onEditBasics: () => void
   onStartOver: () => void
@@ -30,367 +29,198 @@ interface ResultsProps {
 }
 
 // ============================================================
-// Feasibility badge
-// ============================================================
-
-const FEASIBILITY_CONFIG: Record<
-  FeasibilityResult['level'],
-  { label: string; className: string }
-> = {
-  green: {
-    label: 'Comfortable',
-    className: 'bg-green-100 text-green-800',
-  },
-  amber: {
-    label: 'Tight but doable',
-    className: 'bg-amber-100 text-amber-800',
-  },
-  red: {
-    label: 'Not feasible at current income',
-    className: 'bg-red-100 text-red-800',
-  },
-}
-
-function FeasibilityBadge({ level }: { level: FeasibilityResult['level'] }) {
-  const config = FEASIBILITY_CONFIG[level]
-  return (
-    <span
-      className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${config.className}`}
-    >
-      {config.label}
-    </span>
-  )
-}
-
-// ============================================================
-// Progress bar
-// ============================================================
-
-function ProgressBar({ ratio }: { ratio: number }) {
-  const pct = Math.min(100, Math.max(0, ratio * 100))
-  const color =
-    pct <= 60 ? 'bg-green-500' : pct <= 80 ? 'bg-amber-500' : 'bg-red-500'
-
-  return (
-    <div className="h-2 w-full rounded-full bg-muted">
-      <div
-        className={`h-2 rounded-full transition-all ${color}`}
-        style={{ width: `${pct}%` }}
-      />
-    </div>
-  )
-}
-
-// ============================================================
-// Single goal card
-// ============================================================
-
-function GoalResultCard({
-  goal,
-  basics,
-  feasibility,
-}: {
-  goal: GoalCalcGoal
-  basics: GoalCalcBasics
-  feasibility: FeasibilityResult
-}) {
-  const available = basics.monthlyIncome - basics.monthlyExpenses
-  const ratio = available > 0 ? goal.monthlySavingsNeeded / available : 1
-  const years = goal.targetAge - basics.age
-  const hasBreakdown = goal.breakdown.items.length > 0
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <CardTitle className="text-lg">{goal.label}</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Target age {goal.targetAge} ({years} {years === 1 ? 'year' : 'years'} away)
-            </p>
-          </div>
-          <FeasibilityBadge level={feasibility.level} />
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Monthly savings headline */}
-        <div>
-          <p className="text-sm text-muted-foreground">Monthly savings needed</p>
-          <p className="text-2xl font-bold">
-            {goal.monthlySavingsNeeded === 0
-              ? 'Already covered by existing savings'
-              : `${formatCurrency(Math.round(goal.monthlySavingsNeeded))}/mo`}
-          </p>
-        </div>
-
-        {/* Progress bar */}
-        {goal.monthlySavingsNeeded > 0 && (
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>
-                {formatCurrency(Math.round(goal.monthlySavingsNeeded))} of{' '}
-                {formatCurrency(Math.round(available))}/mo available
-              </span>
-              <span>{Math.min(100, Math.round(ratio * 100))}%</span>
-            </div>
-            <ProgressBar ratio={ratio} />
-          </div>
-        )}
-
-        {/* Cost breakdown for smart goals */}
-        {hasBreakdown && (
-          <div className="rounded-lg border p-3 space-y-2">
-            <p className="text-sm font-medium">Cost breakdown</p>
-            {goal.breakdown.items.map((item, i) => (
-              <div key={i} className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{item.label}</span>
-                <span>{formatCurrency(Math.round(item.amount))}</span>
-              </div>
-            ))}
-            <div className="flex justify-between text-sm font-medium border-t pt-2">
-              <span>Total</span>
-              <span>{formatCurrency(Math.round(goal.breakdown.total))}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Shortfall message */}
-        {!feasibility.feasible && feasibility.shortfall > 0 && (
-          <p className="text-sm text-red-600">
-            You'd need {formatCurrency(Math.round(feasibility.shortfall))} more
-            per month, or push the timeline further out.
-          </p>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
-// ============================================================
-// Multi-goal summary
-// ============================================================
-
-function MultiGoalSummary({
-  goals,
-  basics,
-}: {
-  goals: GoalCalcGoal[]
-  basics: GoalCalcBasics
-}) {
-  const stacked = useMemo(
-    () => computeMultiGoalStacking(goals, basics),
-    [goals, basics],
-  )
-
-  const totalMonthlySavings = goals.reduce(
-    (sum, g) => sum + g.monthlySavingsNeeded,
-    0,
-  )
-  const available = basics.monthlyIncome - basics.monthlyExpenses
-  const exceeds = totalMonthlySavings > available
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Combined goal summary</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Total monthly savings needed</span>
-          <span className="font-medium">
-            {formatCurrency(Math.round(totalMonthlySavings))}/mo
-          </span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Available monthly savings</span>
-          <span className="font-medium">
-            {formatCurrency(Math.round(available))}/mo
-          </span>
-        </div>
-
-        {exceeds && (
-          <p className="text-sm text-red-600">
-            Combined goals exceed your available savings by{' '}
-            {formatCurrency(Math.round(totalMonthlySavings - available))}/mo.
-            Consider extending timelines or prioritizing.
-          </p>
-        )}
-
-        {/* Per-goal stacked feasibility */}
-        <div className="space-y-2 pt-2">
-          {stacked.map((s) => (
-            <div
-              key={s.goal.id}
-              className="flex items-center justify-between gap-2"
-            >
-              <span className="text-sm truncate">{s.label}</span>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground whitespace-nowrap">
-                  {formatCurrency(Math.round(s.goal.monthlySavingsNeeded))}/mo
-                </span>
-                <FeasibilityBadge level={s.stackedFeasibility.level} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-// ============================================================
-// Retirement impact callout
-// ============================================================
-
-function RetirementImpact({
-  goals,
-  basics,
-}: {
-  goals: GoalCalcGoal[]
-  basics: GoalCalcBasics
-}) {
-  const impact = useMemo(() => {
-    const totalMonthlySavings = goals.reduce(
-      (sum, g) => sum + g.monthlySavingsNeeded,
-      0,
-    )
-    const savingsAllocatedToGoals = Math.min(
-      basics.existingSavings,
-      goals.reduce((sum, g) => sum + g.totalCostToday, 0),
-    )
-
-    return computeRetirementImpact(
-      basics,
-      totalMonthlySavings,
-      savingsAllocatedToGoals,
-    )
-  }, [goals, basics])
-
-  // Don't show if retirement impact can't be computed meaningfully
-  if (!isFinite(impact.yearsWithGoals) || !isFinite(impact.yearsWithoutGoals)) {
-    return null
-  }
-
-  const deltaRounded = Math.round(impact.deltaYears)
-
-  return (
-    <Card className="border-dashed">
-      <CardContent className="pt-6">
-        <p className="text-sm text-muted-foreground">
-          {impact.fullyCommitted ? (
-            'Your savings are fully committed to goals. The full planner can help optimize.'
-          ) : deltaRounded > 0 ? (
-            <>
-              These goals would shift your estimated retirement age by ~
-              {deltaRounded} {deltaRounded === 1 ? 'year' : 'years'} (estimate
-              based on {REAL_RETURN * 1000 / 10}% real return and 28x annual
-              expenses). The full planner uses your actual settings for a more
-              precise picture.
-            </>
-          ) : (
-            'Your goals fit comfortably within your plan. The full planner can give you a detailed breakdown.'
-          )}
-        </p>
-      </CardContent>
-    </Card>
-  )
-}
-
-// ============================================================
-// Main Results component
+// Main Results orchestrator
 // ============================================================
 
 export function Results({
   goals,
   basics,
+  skipStory = false,
   onAddAnother,
   onEditBasics,
   onStartOver,
   onContinueToPlanner,
-  transferring,
+  transferring: _,
 }: ResultsProps) {
-  // Compute feasibility for each goal individually
-  const available = basics.monthlyIncome - basics.monthlyExpenses
+  const [showFullResults, setShowFullResults] = useState(skipStory)
+  const storyData = useGoalStoryData(basics, goals)
+  const wealthCurve = useWealthCurveProjection(basics, goals, storyData)
+  const isCoupleMode = !!basics.partnerAge
 
-  const goalFeasibilities = useMemo(
-    () =>
-      goals.map((goal) =>
-        computeGoalFeasibility(goal.monthlySavingsNeeded, available),
-      ),
-    [goals, available],
+  const goToFullResults = useCallback(() => setShowFullResults(true), [])
+  const goToStory = useCallback(() => setShowFullResults(false), [])
+
+  const renderCard = useCallback(
+    (config: GoalCardConfig, _direction: number) => {
+      const enrichedGoal = config.goalId
+        ? storyData.perGoal.find((g) => g.goal.id === config.goalId)
+        : null
+
+      switch (config.key) {
+        case 'costReveal':
+          return enrichedGoal ? (
+            <CostRevealCard
+              goalLabel={enrichedGoal.goal.label}
+              totalCost={enrichedGoal.goal.breakdown.total}
+              isCoupleMode={isCoupleMode}
+            />
+          ) : null
+
+        case 'cpfOffset': {
+          const propertyGoal = enrichedGoal ?? storyData.perGoal.find((g) => g.cpfOaAccumulated > 0)
+          if (!propertyGoal) return null
+          const yearsToGoal = propertyGoal.goal.targetAge - basics.age
+          return (
+            <CpfOffsetCard
+              cpfOaAccumulated={propertyGoal.cpfOaAccumulated}
+              monthlyOa={deriveCpfOaMonthly(basics.grossIncome ?? basics.monthlyIncome, basics.age)}
+              yearsToGoal={yearsToGoal}
+              isCoupleMode={isCoupleMode}
+            />
+          )
+        }
+
+        case 'grant': {
+          const grantGoal = enrichedGoal ?? storyData.perGoal.find((g) => g.grantAmount > 0)
+          if (!grantGoal || grantGoal.grantAmount === 0) return null
+          return (
+            <GrantCard
+              grantAmount={grantGoal.grantAmount}
+              isCoupleMode={isCoupleMode}
+            />
+          )
+        }
+
+        case 'monthlySavings':
+          return enrichedGoal ? (
+            <MonthlySavingsCard
+              monthlySavings={enrichedGoal.adjustedMonthlySavings}
+              dailyEquivalent={Math.round((enrichedGoal.adjustedMonthlySavings / 30) * 100) / 100}
+              goalLabel={enrichedGoal.goal.label}
+              isCoupleMode={isCoupleMode}
+              isPropertyGoal={enrichedGoal.goal.category === 'housing'}
+            />
+          ) : null
+
+        case 'freedomAge':
+          return (
+            <FreedomAgeCard
+              freedomAge={wealthCurve.freedomAge ?? storyData.shared.freedomAge}
+              freedomAgeWithout={storyData.shared.freedomAgeWithout}
+              cpfLifeMonthly={storyData.shared.cpfLifeMonthly}
+              isCoupleMode={isCoupleMode}
+            />
+          )
+
+        case 'loanCheck': {
+          const loanGoal = enrichedGoal ?? storyData.perGoal.find((g) => g.loanQualification)
+          if (!loanGoal?.loanQualification) return null
+          const lq = loanGoal.loanQualification
+          const isHdb = loanGoal.goal.smartInputs?.kind === 'hdb'
+          const cpfCoversDownpayment = loanGoal.cpfOaAccumulated >= loanGoal.cashNeeded
+          return (
+            <div className="flex flex-col items-center justify-center h-full text-white text-center px-8">
+              {lq.qualified ? (
+                <>
+                  <p className="text-xs uppercase tracking-widest text-white/60 font-medium mb-4">Mortgage check</p>
+                  <p className="text-6xl font-bold mb-4">${Math.round(lq.monthlyPayment).toLocaleString()}/mo</p>
+                  <p className="text-xl opacity-80">Estimated payment at max mortgage</p>
+                  <p className="text-sm opacity-60 mt-2">
+                    {isHdb
+                      ? 'Within the 30% MSR limit for HDB loans.'
+                      : 'Within the 55% TDSR limit, which covers all monthly debt obligations.'}
+                  </p>
+                  {cpfCoversDownpayment && (
+                    <p className="text-sm opacity-60 mt-2">
+                      Your CPF OA can cover the downpayment. You can choose a smaller loan to reduce monthly payments.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className="text-xs uppercase tracking-widest text-white/60 font-medium mb-4">Heads up</p>
+                  <p className="text-4xl font-bold mb-4">This property may stretch your budget</p>
+                  <p className="text-lg opacity-80">
+                    {isHdb
+                      ? `The 30% MSR limit on gross income means you'd qualify for up to $${Math.round(lq.maxLoan).toLocaleString()}.`
+                      : `The 55% TDSR limit on total debt means you'd qualify for up to $${Math.round(lq.maxLoan).toLocaleString()}.`}
+                  </p>
+                  <p className="text-sm opacity-60 mt-2">
+                    {isCoupleMode
+                      ? 'Consider a longer timeline or a smaller property.'
+                      : 'Consider a longer timeline, smaller property, or higher income with a partner.'}
+                  </p>
+                </>
+              )}
+            </div>
+          )
+        }
+
+        case 'peerBenchmark':
+          return (
+            <div className="flex flex-col items-center justify-center h-full text-white text-center px-8">
+              <p className="text-xs uppercase tracking-widest text-white/60 font-medium mb-4">Savings rate</p>
+              <p className="text-6xl font-bold mb-4">
+                {(() => {
+                  const totalIncome = basics.monthlyIncome + (basics.partnerMonthlyIncome ?? 0)
+                  return totalIncome > 0
+                    ? Math.round(((totalIncome - basics.monthlyExpenses) / totalIncome) * 100)
+                    : 0
+                })()}%
+              </p>
+              <p className="text-xl opacity-80">{isCoupleMode ? 'of your income saved each month' : 'of your income saved each month'}</p>
+              <p className="text-sm opacity-60 mt-2">{storyData.shared.peerBenchmark}</p>
+            </div>
+          )
+
+        case 'taxHeadsUp':
+          return storyData.shared.incomeTaxMonthly > 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-white text-center px-8">
+              <p className="text-xs uppercase tracking-widest text-white/60 font-medium mb-4">Income tax</p>
+              <p className="text-6xl font-bold mb-4">${Math.round(storyData.shared.incomeTaxMonthly).toLocaleString()}/mo</p>
+              <p className="text-xl opacity-80">Set aside for income tax</p>
+              <p className="text-sm opacity-60 mt-2">In Singapore, income tax is paid the year after you earn it</p>
+            </div>
+          ) : null
+
+        case 'parkingTip':
+          // Parking tip is generic advice, not personalized — shown in FullResults only
+          return null
+
+        case 'cta':
+          return <CtaCard onContinue={goToFullResults} />
+
+        default:
+          return null
+      }
+    },
+    [storyData, basics, isCoupleMode, goToFullResults],
   )
 
+  // Full results view
+  if (showFullResults) {
+    return (
+      <FullResults
+        data={storyData}
+        basics={basics}
+        goals={goals}
+        wealthCurve={wealthCurve}
+        onContinueToPlanner={onContinueToPlanner}
+        onStartOver={onStartOver}
+        onAddGoal={onAddAnother}
+        onEditBasics={onEditBasics}
+        onViewStory={goToStory}
+      />
+    )
+  }
+
+  // Story view (default)
   return (
-    <div className="space-y-6 max-w-xl mx-auto">
-      {/* Heading */}
-      <div className="text-center space-y-1">
-        <h2 className="text-2xl font-bold tracking-tight">Your savings plan</h2>
-        <p className="text-sm text-muted-foreground">
-          You can save {formatCurrency(available)}/mo from your take-home pay.
-        </p>
-      </div>
-
-      {/* Per-goal result cards */}
-      {goals.map((goal, i) => (
-        <GoalResultCard
-          key={goal.id}
-          goal={goal}
-          basics={basics}
-          feasibility={goalFeasibilities[i]}
-        />
-      ))}
-
-      {/* Multi-goal summary (only for 2+ goals) */}
-      {goals.length > 1 && (
-        <MultiGoalSummary goals={goals} basics={basics} />
-      )}
-
-      {/* Retirement impact callout */}
-      <RetirementImpact goals={goals} basics={basics} />
-
-      {/* Action buttons */}
-      <div className="space-y-3">
-        {goals.length < 3 && (
-          <Button
-            variant="outline"
-            className="w-full gap-2"
-            onClick={onAddAnother}
-          >
-            <Plus className="h-4 w-4" /> Plan for another goal
-          </Button>
-        )}
-
-        <Button
-          variant="outline"
-          className="w-full gap-2"
-          onClick={onEditBasics}
-        >
-          <Pencil className="h-4 w-4" /> Edit basics
-        </Button>
-
-        <Button
-          className="w-full gap-2"
-          onClick={onContinueToPlanner}
-          disabled={transferring}
-        >
-          {transferring ? (
-            'Transferring...'
-          ) : (
-            <>
-              Want the full picture? Continue to the planner
-              <ArrowRight className="h-4 w-4" />
-            </>
-          )}
-        </Button>
-
-        <Button
-          variant="ghost"
-          className="w-full gap-2 text-muted-foreground"
-          onClick={onStartOver}
-        >
-          <RefreshCw className="h-4 w-4" /> Start over
-        </Button>
-      </div>
-    </div>
+    <GoalStoryContainer
+      cards={storyData.storyCards}
+      onComplete={goToFullResults}
+      onClose={goToFullResults}
+      renderCard={renderCard}
+    />
   )
 }

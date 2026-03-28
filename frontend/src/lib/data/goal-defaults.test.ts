@@ -4,6 +4,7 @@ import {
   getHdbPriceRange,
   getCondoBrackets,
   getLandedBrackets,
+  getEcBrackets,
   computeHdbDownPayment,
   computeCondoDownPayment,
   ARF_BRACKETS,
@@ -14,6 +15,14 @@ import {
   getLegalFees,
   SIMPLE_GOAL_DEFAULTS,
   GOAL_TILES,
+  EHG_FAMILY_TABLE,
+  EHG_SINGLE_TABLE,
+  FAMILY_GRANT,
+  HDB_INCOME_CEILING,
+  EC_INCOME_CEILING,
+  CPF_LIFE_ESTIMATES,
+  PEER_BENCHMARKS,
+  MORTGAGE_RATES,
 } from '@/lib/data/goal-defaults'
 
 describe('GOAL_DATA_VINTAGE', () => {
@@ -58,7 +67,7 @@ describe('getHdbPriceRange', () => {
   })
 })
 
-describe('getCondoBrackets / getLandedBrackets', () => {
+describe('getCondoBrackets / getLandedBrackets / getEcBrackets', () => {
   it('returns 6 condo brackets in ascending order', () => {
     const brackets = getCondoBrackets()
     expect(brackets).toEqual([1_000_000, 1_500_000, 2_000_000, 2_500_000, 3_000_000, 3_500_000])
@@ -67,6 +76,18 @@ describe('getCondoBrackets / getLandedBrackets', () => {
   it('returns 3 landed brackets in ascending order', () => {
     const brackets = getLandedBrackets()
     expect(brackets).toEqual([3_000_000, 5_000_000, 8_000_000])
+  })
+
+  it('returns 4 EC brackets in ascending order', () => {
+    const brackets = getEcBrackets()
+    expect(brackets).toEqual([1_200_000, 1_500_000, 1_800_000, 2_000_000])
+  })
+
+  it('EC brackets are all ascending', () => {
+    const brackets = getEcBrackets()
+    for (let i = 1; i < brackets.length; i++) {
+      expect(brackets[i]).toBeGreaterThan(brackets[i - 1])
+    }
   })
 })
 
@@ -155,12 +176,17 @@ describe('getRenovationEstimate', () => {
   it('returns correct values for each property type', () => {
     expect(getRenovationEstimate('hdb')).toBe(40_000)
     expect(getRenovationEstimate('condo')).toBe(60_000)
+    expect(getRenovationEstimate('ec')).toBe(60_000)
     expect(getRenovationEstimate('landed')).toBe(100_000)
   })
 
-  it('ordering: hdb < condo < landed', () => {
+  it('ordering: hdb < condo <= ec < landed', () => {
     expect(getRenovationEstimate('hdb')).toBeLessThan(getRenovationEstimate('condo'))
-    expect(getRenovationEstimate('condo')).toBeLessThan(getRenovationEstimate('landed'))
+    expect(getRenovationEstimate('ec')).toBeLessThanOrEqual(getRenovationEstimate('landed'))
+  })
+
+  it('EC renovation matches condo (same finish tier)', () => {
+    expect(getRenovationEstimate('ec')).toBe(getRenovationEstimate('condo'))
   })
 })
 
@@ -168,7 +194,12 @@ describe('getLegalFees', () => {
   it('HDB is $3K, others are $5K', () => {
     expect(getLegalFees('hdb')).toBe(3_000)
     expect(getLegalFees('condo')).toBe(5_000)
+    expect(getLegalFees('ec')).toBe(5_000)
     expect(getLegalFees('landed')).toBe(5_000)
+  })
+
+  it('EC legal fees match condo', () => {
+    expect(getLegalFees('ec')).toBe(getLegalFees('condo'))
   })
 })
 
@@ -181,8 +212,8 @@ describe('SIMPLE_GOAL_DEFAULTS', () => {
 })
 
 describe('GOAL_TILES', () => {
-  it('has exactly 9 tiles', () => {
-    expect(GOAL_TILES).toHaveLength(9)
+  it('has exactly 10 tiles', () => {
+    expect(GOAL_TILES).toHaveLength(10)
   })
 
   it('each tile has required fields', () => {
@@ -198,7 +229,7 @@ describe('GOAL_TILES', () => {
   it('contains the expected tile IDs', () => {
     const ids = GOAL_TILES.map((t) => t.id)
     expect(ids).toEqual([
-      'hdb', 'condo', 'landed', 'car',
+      'hdb', 'condo', 'landed', 'ec', 'car',
       'wedding', 'travel', 'education', 'business', 'custom',
     ])
   })
@@ -206,7 +237,185 @@ describe('GOAL_TILES', () => {
   it('housing tiles are smart, simple goals are simple', () => {
     const smart = GOAL_TILES.filter((t) => t.type === 'smart')
     const simple = GOAL_TILES.filter((t) => t.type === 'simple')
-    expect(smart.map((t) => t.id)).toEqual(['hdb', 'condo', 'landed', 'car'])
+    expect(smart.map((t) => t.id)).toEqual(['hdb', 'condo', 'landed', 'ec', 'car'])
     expect(simple.map((t) => t.id)).toEqual(['wedding', 'travel', 'education', 'business', 'custom'])
+  })
+
+  it('EC tile has correct metadata', () => {
+    const ec = GOAL_TILES.find((t) => t.id === 'ec')
+    expect(ec).toBeDefined()
+    expect(ec?.label).toBe('EC')
+    expect(ec?.icon).toBe('Landmark')
+    expect(ec?.category).toBe('housing')
+    expect(ec?.type).toBe('smart')
+    expect(ec?.hint).toBe('Executive Condo')
+  })
+})
+
+// ============================================================
+// Goal Calculator V1.5 Data
+// ============================================================
+
+describe('EHG_FAMILY_TABLE', () => {
+  it('is sorted by maxIncome ascending', () => {
+    for (let i = 1; i < EHG_FAMILY_TABLE.length; i++) {
+      expect(EHG_FAMILY_TABLE[i].maxIncome).toBeGreaterThan(EHG_FAMILY_TABLE[i - 1].maxIncome)
+    }
+  })
+
+  it('grants decrease as income increases', () => {
+    for (let i = 1; i < EHG_FAMILY_TABLE.length; i++) {
+      expect(EHG_FAMILY_TABLE[i].grant).toBeLessThan(EHG_FAMILY_TABLE[i - 1].grant)
+    }
+  })
+
+  it('has 16 brackets ($500 steps, ceiling $9,000)', () => {
+    expect(EHG_FAMILY_TABLE).toHaveLength(16)
+    expect(EHG_FAMILY_TABLE[0].maxIncome).toBe(1_500)
+    expect(EHG_FAMILY_TABLE[15].maxIncome).toBe(9_000)
+  })
+
+  it('max grant is $120,000 at lowest bracket', () => {
+    expect(EHG_FAMILY_TABLE[0].grant).toBe(120_000)
+  })
+})
+
+describe('EHG_SINGLE_TABLE', () => {
+  it('is sorted by maxIncome ascending', () => {
+    for (let i = 1; i < EHG_SINGLE_TABLE.length; i++) {
+      expect(EHG_SINGLE_TABLE[i].maxIncome).toBeGreaterThan(EHG_SINGLE_TABLE[i - 1].maxIncome)
+    }
+  })
+
+  it('grants decrease as income increases', () => {
+    for (let i = 1; i < EHG_SINGLE_TABLE.length; i++) {
+      expect(EHG_SINGLE_TABLE[i].grant).toBeLessThan(EHG_SINGLE_TABLE[i - 1].grant)
+    }
+  })
+
+  it('has 16 brackets ($250 steps, ceiling $4,500)', () => {
+    expect(EHG_SINGLE_TABLE).toHaveLength(16)
+    expect(EHG_SINGLE_TABLE[0].maxIncome).toBe(750)
+    expect(EHG_SINGLE_TABLE[15].maxIncome).toBe(4_500)
+  })
+
+  it('max grant is $60,000 at lowest bracket', () => {
+    expect(EHG_SINGLE_TABLE[0].grant).toBe(60_000)
+  })
+})
+
+describe('FAMILY_GRANT', () => {
+  it('fourRoomOrSmaller > fiveRoomOrLarger', () => {
+    expect(FAMILY_GRANT.fourRoomOrSmaller).toBeGreaterThan(FAMILY_GRANT.fiveRoomOrLarger)
+  })
+
+  it('both values are positive', () => {
+    expect(FAMILY_GRANT.fourRoomOrSmaller).toBeGreaterThan(0)
+    expect(FAMILY_GRANT.fiveRoomOrLarger).toBeGreaterThan(0)
+  })
+})
+
+describe('HDB_INCOME_CEILING', () => {
+  it('couple = 2 * single', () => {
+    expect(HDB_INCOME_CEILING.couple).toBe(2 * HDB_INCOME_CEILING.single)
+  })
+
+  it('both values are positive', () => {
+    expect(HDB_INCOME_CEILING.single).toBeGreaterThan(0)
+    expect(HDB_INCOME_CEILING.couple).toBeGreaterThan(0)
+  })
+})
+
+describe('EC_INCOME_CEILING', () => {
+  it('couple = 2 * single', () => {
+    expect(EC_INCOME_CEILING.couple).toBe(2 * EC_INCOME_CEILING.single)
+  })
+
+  it('both values are positive', () => {
+    expect(EC_INCOME_CEILING.single).toBeGreaterThan(0)
+    expect(EC_INCOME_CEILING.couple).toBeGreaterThan(0)
+  })
+
+  it('EC ceiling is higher than HDB ceiling', () => {
+    expect(EC_INCOME_CEILING.single).toBeGreaterThan(HDB_INCOME_CEILING.single)
+    expect(EC_INCOME_CEILING.couple).toBeGreaterThan(HDB_INCOME_CEILING.couple)
+  })
+
+  it('single = $8,000, couple = $16,000', () => {
+    expect(EC_INCOME_CEILING.single).toBe(8_000)
+    expect(EC_INCOME_CEILING.couple).toBe(16_000)
+  })
+})
+
+describe('CPF_LIFE_ESTIMATES', () => {
+  it('is sorted by minIncome ascending', () => {
+    for (let i = 1; i < CPF_LIFE_ESTIMATES.length; i++) {
+      expect(CPF_LIFE_ESTIMATES[i].minIncome).toBeGreaterThan(CPF_LIFE_ESTIMATES[i - 1].minIncome)
+    }
+  })
+
+  it('has no gaps between bands', () => {
+    for (let i = 1; i < CPF_LIFE_ESTIMATES.length; i++) {
+      expect(CPF_LIFE_ESTIMATES[i].minIncome).toBe(CPF_LIFE_ESTIMATES[i - 1].maxIncome)
+    }
+  })
+
+  it('higher income yields higher estimated payout', () => {
+    for (let i = 1; i < CPF_LIFE_ESTIMATES.length; i++) {
+      expect(CPF_LIFE_ESTIMATES[i].estimatedPayout).toBeGreaterThan(
+        CPF_LIFE_ESTIMATES[i - 1].estimatedPayout,
+      )
+    }
+  })
+
+  it('starts at income 0', () => {
+    expect(CPF_LIFE_ESTIMATES[0].minIncome).toBe(0)
+  })
+
+  it('last band extends to Infinity', () => {
+    expect(CPF_LIFE_ESTIMATES[CPF_LIFE_ESTIMATES.length - 1].maxIncome).toBe(Infinity)
+  })
+})
+
+describe('PEER_BENCHMARKS', () => {
+  it('is sorted by minAge ascending', () => {
+    for (let i = 1; i < PEER_BENCHMARKS.length; i++) {
+      expect(PEER_BENCHMARKS[i].minAge).toBeGreaterThan(PEER_BENCHMARKS[i - 1].minAge)
+    }
+  })
+
+  it('has 3 age bands', () => {
+    expect(PEER_BENCHMARKS).toHaveLength(3)
+  })
+
+  it('percentiles are sorted ascending by rate within each band', () => {
+    for (const band of PEER_BENCHMARKS) {
+      for (let i = 1; i < band.percentiles.length; i++) {
+        expect(band.percentiles[i].rate).toBeGreaterThan(band.percentiles[i - 1].rate)
+        expect(band.percentiles[i].percentile).toBeGreaterThan(band.percentiles[i - 1].percentile)
+      }
+    }
+  })
+
+  it('all percentile values are between 0 and 100', () => {
+    for (const band of PEER_BENCHMARKS) {
+      for (const p of band.percentiles) {
+        expect(p.percentile).toBeGreaterThan(0)
+        expect(p.percentile).toBeLessThanOrEqual(100)
+      }
+    }
+  })
+})
+
+describe('MORTGAGE_RATES', () => {
+  it('hdb < bank', () => {
+    expect(MORTGAGE_RATES.hdb).toBeLessThan(MORTGAGE_RATES.bank)
+  })
+
+  it('both > 0 and < 0.1 (reasonable range)', () => {
+    expect(MORTGAGE_RATES.hdb).toBeGreaterThan(0)
+    expect(MORTGAGE_RATES.hdb).toBeLessThan(0.1)
+    expect(MORTGAGE_RATES.bank).toBeGreaterThan(0)
+    expect(MORTGAGE_RATES.bank).toBeLessThan(0.1)
   })
 })
