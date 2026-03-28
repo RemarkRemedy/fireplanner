@@ -19,15 +19,17 @@ test.describe('Quick Estimate Calculator', () => {
     await page.getByRole('textbox', { name: /monthly expenses/i }).fill('4000')
     await page.getByRole('textbox', { name: /current savings/i }).fill('100000')
 
-    // Should show "You can retire in X years" result
-    await expect(page.getByText(/you can retire in/i)).toBeVisible()
-    await expect(page.getByText(/FIRE Number/i)).toBeVisible()
-    await expect(page.getByText(/Savings Rate/i)).toBeVisible()
-    await expect(page.getByText(/Annual Savings/i)).toBeVisible()
+    // Should show retirement range (optimistic/conservative) or "Could retire as early as"
+    await expect(
+      page.getByText(/your retirement range|could retire as early as/i)
+    ).toBeVisible()
+    await expect(page.getByText(/FIRE Number/i).first()).toBeVisible()
+    await expect(page.getByText(/Savings Rate/i).first()).toBeVisible()
+    await expect(page.getByText(/Annual Savings/i).first()).toBeVisible()
 
     // Chart should render (SVG with Growing/Spending legend)
-    await expect(page.getByText('Growing')).toBeVisible()
-    await expect(page.getByText('Spending')).toBeVisible()
+    await expect(page.getByText('Growing', { exact: true })).toBeVisible()
+    await expect(page.getByText('Spending', { exact: true })).toBeVisible()
   })
 
   test('pathway cards hide when calculator has results', async ({ page }) => {
@@ -78,8 +80,10 @@ test.describe('Demo Mode', () => {
     // Orange toast should show "You are viewing demo data"
     await expect(page.getByText('You are viewing demo data')).toBeVisible()
 
-    // DEMO badge should be visible
-    await expect(page.getByRole('button', { name: 'DEMO' })).toBeVisible()
+    // DEMO badge appears after page reload (localStorage flag set in same tab)
+    await page.reload()
+    await page.waitForLoadState('networkidle')
+    await expect(page.locator('button').filter({ hasText: /^DEMO$/ })).toBeVisible()
   })
 
   test('demo badge expands and "Start your own plan" clears data', async ({ page }) => {
@@ -87,12 +91,16 @@ test.describe('Demo Mode', () => {
     await page.getByRole('button', { name: /explore a demo/i }).click()
     await expect(page).toHaveURL(/\/projection/)
 
+    // Reload to pick up the demo flag in the DemoBadge component
+    await page.reload()
+    await page.waitForLoadState('networkidle')
+
     // Click DEMO badge to expand
-    await page.getByRole('button', { name: 'DEMO' }).click()
+    await page.locator('button').filter({ hasText: /^DEMO$/ }).click()
 
     // Should show expanded panel with "Start your own plan"
     await expect(page.getByText('Viewing demo data')).toBeVisible()
-    const startPlanButton = page.getByRole('button', { name: /start your own plan/i })
+    const startPlanButton = page.getByRole('button', { name: /start your own plan/i }).first()
     await expect(startPlanButton).toBeVisible()
 
     // Click "Start your own plan" — should clear data and go to /setup

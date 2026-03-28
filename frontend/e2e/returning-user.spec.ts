@@ -4,7 +4,7 @@ import { goToStart } from './helpers'
 /**
  * Returning User Detection — adaptive StartPage
  *
- * Tests the returning user view: sidebar visible, adaptive CTA,
+ * Tests the returning user view: centered layout with adaptive CTA,
  * progress bar, two-tier actions, and "Start fresh" reset.
  */
 
@@ -17,21 +17,15 @@ async function loadDemoAsReturningUser(page: import('@playwright/test').Page) {
 }
 
 test.describe('Returning User Detection', () => {
-  test('shows welcome back with sidebar after demo load', async ({ page }) => {
+  test('shows returning user view after demo load', async ({ page }) => {
     await loadDemoAsReturningUser(page)
 
     // Navigate back to start page
     await page.goto('/')
     await page.waitForLoadState('networkidle')
 
-    // Should see "Welcome back" text
-    await expect(page.getByText(/welcome back/i)).toBeVisible()
-
-    // Sidebar should be visible (complementary landmark)
-    await expect(page.getByRole('complementary')).toBeVisible()
-
-    // Sidebar should have Plan Setup highlighted
-    await expect(page.getByRole('link', { name: /plan setup/i })).toBeVisible()
+    // Demo user sees "You are exploring the demo plan." text
+    await expect(page.getByText(/exploring the demo plan/i)).toBeVisible()
   })
 
   test('shows adaptive CTA based on completeness stage', async ({ page }) => {
@@ -63,9 +57,11 @@ test.describe('Returning User Detection', () => {
     await page.goto('/')
     await page.waitForLoadState('networkidle')
 
-    await expect(page.getByRole('link', { name: 'Health Check' })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'View projection' })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Dashboard' })).toBeVisible()
+    // Scope to main content to avoid matching sidebar nav links
+    const main = page.locator('main')
+    await expect(main.getByRole('link', { name: 'Health Check' })).toBeVisible()
+    await expect(main.getByRole('link', { name: 'View projection' })).toBeVisible()
+    await expect(main.getByRole('link', { name: 'Dashboard' })).toBeVisible()
   })
 
   test('shows tier 2 reset actions (Redo setup, Start fresh)', async ({ page }) => {
