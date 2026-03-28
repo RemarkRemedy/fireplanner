@@ -137,25 +137,32 @@ export function Results({
                   )}
                 </>
               ) : (
-                <>
-                  <p className="text-xs uppercase tracking-widest text-white/60 font-medium mb-4">Heads up</p>
-                  <p className="text-4xl font-bold mb-4">This property may stretch your budget</p>
-                  <p className="text-lg opacity-80">
-                    {isHdb
-                      ? `The 30% MSR limit on gross income means you'd qualify for up to $${Math.round(lq.maxLoan).toLocaleString()}.`
-                      : `The 55% TDSR limit on total debt means you'd qualify for up to $${Math.round(lq.maxLoan).toLocaleString()}.`}
-                  </p>
-                  {loanGoal.loanNeeded > lq.maxLoan && (
-                    <p className="text-lg font-semibold mt-4 text-amber-300">
-                      ${Math.round(loanGoal.loanNeeded - lq.maxLoan).toLocaleString()} shortfall to cover with cash
-                    </p>
-                  )}
-                  <p className="text-sm opacity-60 mt-2">
-                    {isCoupleMode
-                      ? 'Consider a longer timeline or a smaller property.'
-                      : 'Consider a longer timeline, smaller property, or higher income with a partner.'}
-                  </p>
-                </>
+                (() => {
+                  const ltv = isHdb
+                    ? (loanGoal.goal.smartInputs?.kind === 'hdb' && loanGoal.goal.smartInputs?.loanType === 'hdb-loan' ? 0.90 : 0.75)
+                    : 0.75
+                  const maxAffordablePrice = Math.round(lq.maxLoan / ltv)
+                  const shortfall = loanGoal.loanNeeded - lq.maxLoan
+                  return (
+                    <>
+                      <p className="text-xs uppercase tracking-widest text-white/60 font-medium mb-4">Heads up</p>
+                      <p className="text-4xl font-bold mb-4">This property may stretch your budget</p>
+                      <p className="text-lg opacity-80">
+                        {isHdb
+                          ? `The 30% MSR limit means you'd qualify for a loan of up to $${Math.round(lq.maxLoan).toLocaleString()}.`
+                          : `The 55% TDSR limit means you'd qualify for a loan of up to $${Math.round(lq.maxLoan).toLocaleString()}.`}
+                      </p>
+                      {shortfall > 0 && (
+                        <p className="text-lg font-semibold mt-4 text-amber-300">
+                          ${Math.round(shortfall).toLocaleString()} loan shortfall to cover with cash
+                        </p>
+                      )}
+                      <div className="mt-4 space-y-1 text-sm opacity-70">
+                        <p>A property up to ~${maxAffordablePrice.toLocaleString()} would fit your current income.</p>
+                      </div>
+                    </>
+                  )
+                })()
               )}
             </div>
           )
