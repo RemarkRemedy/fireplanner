@@ -5,6 +5,7 @@ import type { GoalCalcBasics, GoalCalcGoal } from '@/lib/calculations/goal-calcu
 
 export interface SliderOverrides {
   monthlyIncome?: number
+  partnerMonthlyIncome?: number
   monthlyExpenses?: number
   existingSavings?: number
   expectedReturn?: number
@@ -24,10 +25,13 @@ export function WhatIfSliders({ basics, goals, overrides, onChange, onReset }: W
   const expenses = overrides.monthlyExpenses ?? basics.monthlyExpenses
   const savings = overrides.existingSavings ?? basics.existingSavings
 
+  const isCoupleMode = (basics.partnerMonthlyIncome ?? 0) > 0
+  const partnerIncome = overrides.partnerMonthlyIncome ?? (basics.partnerMonthlyIncome ?? 0)
+
   const incomeSliders: SliderConfig[] = [
     {
       key: 'monthlyIncome',
-      label: 'Monthly income',
+      label: isCoupleMode ? 'Your income' : 'Monthly income',
       value: income,
       originalValue: basics.monthlyIncome,
       min: 0,
@@ -36,6 +40,17 @@ export function WhatIfSliders({ basics, goals, overrides, onChange, onReset }: W
       type: 'currency',
       onChange: (value) => onChange({ ...overrides, monthlyIncome: value }),
     },
+    ...(isCoupleMode ? [{
+      key: 'partnerMonthlyIncome',
+      label: 'Partner income',
+      value: partnerIncome,
+      originalValue: basics.partnerMonthlyIncome ?? 0,
+      min: 0,
+      max: (basics.partnerMonthlyIncome ?? 0) * 3 || 30000,
+      step: 100,
+      type: 'currency' as const,
+      onChange: (value: number) => onChange({ ...overrides, partnerMonthlyIncome: value }),
+    }] : []),
     {
       key: 'monthlyExpenses',
       label: 'Monthly expenses',

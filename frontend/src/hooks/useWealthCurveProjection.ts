@@ -6,7 +6,7 @@
  * (adapter + projection + storyData).
  */
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { generateProjection } from '@/lib/calculations/projection'
 import { buildGoalCalcProjectionParams, deflateProjection } from '@/lib/calculations/goal-calc-adapter'
 import type { DeflatedRow } from '@/lib/calculations/goal-calc-adapter'
@@ -164,21 +164,39 @@ export function useWealthCurveProjection(
   goals: GoalCalcGoal[],
   _originalStoryData: GoalStoryData,
 ): WealthCurveProjectionResult {
-  const [overrides, setOverrides] = useState<SliderOverrides>({})
+  const [overrides, setOverrides] = useState<SliderOverrides>(() => {
+    try {
+      const saved = localStorage.getItem('goal-calc-slider-overrides')
+      return saved ? JSON.parse(saved) : {}
+    } catch { return {} }
+  })
+
+  // Persist slider overrides so they survive navigation between goal additions
+  useEffect(() => {
+    try {
+      if (Object.keys(overrides).length > 0) {
+        localStorage.setItem('goal-calc-slider-overrides', JSON.stringify(overrides))
+      } else {
+        localStorage.removeItem('goal-calc-slider-overrides')
+      }
+    } catch { /* ignore */ }
+  }, [overrides])
 
   // Merge overrides into effective basics
-  // When monthlyIncome changes, clear grossIncome so it gets recalculated
-  // from the new take-home (otherwise the cached grossIncome takes precedence via ??)
+  // When income changes, clear cached gross so grossUpFromTakeHome recalculates
   const effectiveBasics = useMemo((): GoalStoryBasics => ({
     ...basics,
     ...(overrides.monthlyIncome != null && {
       monthlyIncome: overrides.monthlyIncome,
       grossIncome: undefined,
+    }),
+    ...(overrides.partnerMonthlyIncome != null && {
+      partnerMonthlyIncome: overrides.partnerMonthlyIncome,
       partnerGrossIncome: undefined,
     }),
     ...(overrides.monthlyExpenses != null && { monthlyExpenses: overrides.monthlyExpenses }),
     ...(overrides.existingSavings != null && { existingSavings: overrides.existingSavings }),
-  }), [basics, overrides.monthlyIncome, overrides.monthlyExpenses, overrides.existingSavings])
+  }), [basics, overrides.monthlyIncome, overrides.partnerMonthlyIncome, overrides.monthlyExpenses, overrides.existingSavings])
 
   // Apply goal overrides (targetAge, totalCostToday)
   const effectiveGoals = useMemo((): GoalCalcGoal[] => {

@@ -373,7 +373,8 @@ export function computeGoalStoryData(
       case 'grant': return hasGrant
       case 'loanCheck': return hasLoan
       case 'cpfOffset': return hasCpfOffset
-      case 'taxHeadsUp': return taxEstimate.monthlySetAside > 0
+      case 'peerBenchmark': return false  // Removed: savings rate card
+      case 'taxHeadsUp': return false     // Removed: income tax card
       case 'parkingTip': return false
       default: return true
     }

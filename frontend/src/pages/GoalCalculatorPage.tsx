@@ -181,6 +181,7 @@ export function GoalCalculatorPage() {
     try {
       if (state.step === 'pick' && state.goals.length === 0 && !state.basics) {
         localStorage.removeItem(STORAGE_KEY)
+        localStorage.removeItem('goal-calc-slider-overrides')
       } else {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
       }
