@@ -35,22 +35,25 @@ frontend/src/
 │   └── PersonalityBadge.tsx            # CREATE — dashboard pill badge (E8)
 ├── lib/
 │   ├── data/quiz.ts                    # CREATE — questions, weights, types, tips, palettes
-│   ├── data/quiz-setup-mapping.ts      # CREATE — answer→setup qualitative defaults (E1)
+│   ├── calculations/quiz-setup-mapping.ts  # CREATE — answer→setup qualitative defaults (E1) [MOVED from lib/data/ — it's a function, not data]
 │   ├── calculations/quiz-scoring.ts    # CREATE — pure scoring function
-│   └── calculations/quiz-url-codec.ts  # CREATE — base64url encode/decode for E3
+│   ├── calculations/quiz-url-codec.ts  # CREATE — base64url encode/decode for E3
+│   └── calculations/fire-age-delta.ts  # CREATE — pure FIRE age delta computation (E5) [EXTRACTED from hook for testability]
 ├── hooks/
-│   └── useFireAgeSnapshot.ts           # CREATE — dashboard FIRE age snapshot (E5)
-├── router.tsx                          # MODIFY — add /quiz and /quiz/:type routes
-├── scripts/prerender.mjs               # MODIFY — add 7 route entries (/quiz + 6 types)
-└── components/layout/
-    └── PlanUrlHandler.tsx              # MODIFY — include quiz state in export/import
+│   ├── useFireAgeSnapshot.ts           # CREATE — thin hook wrapper calling fire-age-delta.ts (E5)
+│   └── useQuizPersonality.ts           # CREATE — shared localStorage reader for quiz state (E8)
+├── lib/analytics.ts                    # MODIFY — add quiz event names to AnalyticsEvent union
+├── lib/storeRegistry.ts                # MODIFY — include quiz localStorage keys in export/import envelope
+├── router.tsx                          # MODIFY — add /quiz and /quiz/:type routes (with lazy() wrapping)
+└── scripts/prerender.mjs               # MODIFY — add 7 route entries + per-route og:image replacement logic
 
 Tests:
-├── lib/calculations/quiz-scoring.test.ts    # CREATE — 1,024 combo snapshot + priority rules
-├── lib/calculations/quiz-url-codec.test.ts  # CREATE — roundtrip + malformed input
-├── lib/data/quiz-setup-mapping.test.ts      # CREATE — mapping validation
-├── hooks/useFireAgeSnapshot.test.ts         # CREATE — snapshot + delta + quota
-└── e2e/quiz.spec.ts                         # CREATE — 5 E2E flows
+├── lib/calculations/quiz-scoring.test.ts       # CREATE — 1,024 combo snapshot + priority rules
+├── lib/calculations/quiz-url-codec.test.ts     # CREATE — roundtrip + malformed input
+├── lib/calculations/quiz-setup-mapping.test.ts # CREATE — mapping validation [MOVED from lib/data/]
+├── lib/calculations/fire-age-delta.test.ts     # CREATE — pure delta computation tests
+├── components/quiz/QuizRetake.test.tsx         # CREATE — retake logic tests (30-day threshold, before/after)
+└── e2e/quiz.spec.ts                            # CREATE — 5 E2E flows (mkdir e2e/ first if not exists)
 ```
 
 ---
@@ -234,7 +237,7 @@ describe('quiz URL codec', () => {
 - [ ] **Step 2: Implement codec**
 
 Create `quiz-url-codec.ts`:
-- `encodeQuizResult(result)`: JSON.stringify → base64url encode (use `-` and `_` instead of `+` and `/`, strip `=` padding). Do NOT use `btoa` directly (breaks with `+` in URL params per shareUrl.ts precedent). Use a proper base64url implementation.
+- `encodeQuizResult(result)`: JSON.stringify → base64url encode. Use `btoa()` then replace `+` with `-`, `/` with `_`, and strip `=` padding. This is the standard base64url approach and is safe for URL params.
 - `decodeQuizResult(encoded)`: try/catch → base64url decode → JSON.parse → validate schema (typeId must be one of 6 valid IDs, all scores must be numbers 0-15) → return result or null.
 
 - [ ] **Step 3: Run tests, verify pass, commit**
@@ -250,8 +253,8 @@ git commit -m "feat(quiz): base64url codec for friend comparison with validation
 ## Task 4: Quiz Setup Mapping + Tests (E1)
 
 **Files:**
-- Create: `frontend/src/lib/data/quiz-setup-mapping.ts`
-- Create: `frontend/src/lib/data/quiz-setup-mapping.test.ts`
+- Create: `frontend/src/lib/calculations/quiz-setup-mapping.ts`
+- Create: `frontend/src/lib/calculations/quiz-setup-mapping.test.ts`
 
 - [ ] **Step 1: Write failing tests**
 
@@ -283,7 +286,7 @@ Test that quiz answers map to qualitative setup defaults (NOT dollar amounts):
 
 `QuizPage.tsx`:
 - `useReducer` for quiz state: `{ screen: 'splash' | 'question' | 'result' | 'compare', questionIndex: number, answers: number[], result: PersonalityType | null }`
-- Hash-based navigation: each question updates `location.hash` (#q1, #q2...). `useEffect` listens for `hashchange` to handle browser back.
+- Hash-based navigation: use `useNavigate()` to update hash (e.g., `navigate({ hash: '#q2' }, { replace: false })`), NOT raw `window.location.hash`. Use `useLocation().hash` as the source of truth for current question. This routes back-button presses through React Router's history stack rather than raw DOM events. On quiz exit/completion, strip the hash before navigating away to prevent Sidebar's section anchor handler from misreading quiz hashes like `#q3`.
 - Background: `bg-[#FAFAF5]` (warm cream from design review)
 - Full viewport height, centered container `max-w-[520px]`
 - `AnimatePresence` wrapping the active screen component for slide transitions
@@ -300,11 +303,19 @@ Test that quiz answers map to qualitative setup defaults (NOT dollar amounts):
 
 - [ ] **Step 3: Add routes to router.tsx**
 
-Add as top-level standalone routes (NOT inside `PlannerRouteShell`):
+First add lazy imports at the top of router.tsx (matching existing named-export pattern):
+```typescript
+const QuizPage = lazy(() => import('@/pages/QuizPage').then(m => ({ default: m.QuizPage })))
+const QuizTypePage = lazy(() => import('@/pages/QuizTypePage').then(m => ({ default: m.QuizTypePage })))
+```
+
+Then add as top-level standalone routes (NOT inside `PlannerRouteShell`), same pattern as `/goal-calculator`:
 ```typescript
 { path: '/quiz', element: page(QuizPage) },
 { path: '/quiz/:type', element: page(QuizTypePage) },
 ```
+
+**Important:** QuizPage.tsx and QuizTypePage.tsx must use named exports (`export function QuizPage`), not default exports. All 31 existing pages use named exports.
 
 - [ ] **Step 4: Verify routes load in dev server**
 
@@ -411,9 +422,13 @@ git commit -m "feat(quiz): splash, question, result, tips, and gallery component
 - Use inline styles for html2canvas reliability (no Tailwind classes on the capture target, use inline `style` props with hex colors)
 - Load Syne via inline `@font-face` in the render target's style
 
-- [ ] **Step 2: Implement share flow**
+- [ ] **Step 1.5: Ensure Syne font loads on standalone quiz route**
 
-3-tier fallback:
+Since `/quiz` is outside AppLayout, the Syne font may not be auto-loaded. Add an explicit `<link>` or `@font-face` declaration in the QuizPage component (or verify Syne is loaded globally in index.html). Without this, the share card may render in system font.
+
+- [ ] **Step 2: Implement share flow (with font.ready guard)**
+
+Wrap the html2canvas call in `await document.fonts.ready` to ensure Syne is loaded before capture. 3-tier fallback:
 1. Web Share API with PNG blob (from html2canvas capture)
 2. Copy quiz URL to clipboard + toast "Link copied!"
 3. html2canvas PNG download
@@ -474,9 +489,21 @@ git commit -m "feat(quiz): friend comparison via base64url-encoded URL params"
 - Modify: `frontend/scripts/prerender.mjs`
 - Create: `frontend/public/images/quiz-og.png` (placeholder)
 
-- [ ] **Step 1: Add /quiz route to prerender.mjs**
+- [ ] **Step 1: Add per-route og:image support to prerender.mjs**
 
-Add entry to the `routes` array:
+The current prerender.mjs replaces title, description, and canonical per route, but does NOT replace `og:image`. It uses regex replacements on the HTML template. Add a new replacement step:
+
+```javascript
+// After the existing og:description replacement
+if (route.ogImage) {
+  html = html.replace(
+    /(<meta property="og:image" content=")[^"]*(")/,
+    `$1${route.ogImage}$2`
+  )
+}
+```
+
+Then add the quiz route entry with the new field:
 ```javascript
 {
   path: '/quiz',
@@ -485,8 +512,6 @@ Add entry to the `routes` array:
   ogImage: '/images/quiz-og.png'
 }
 ```
-
-Note: prerender.mjs may need to be extended to support per-route `ogImage` overrides. Check the existing implementation. If it only supports a global OG image, add the per-route capability.
 
 - [ ] **Step 2: Add 6 type deep link routes**
 
@@ -540,8 +565,9 @@ const storedPersonality = localStorage.getItem('quiz-personality')
 const quizType = personalityParam
   ? PERSONALITY_TYPES.find(t => t.id === personalityParam)
   : storedPersonality
-    ? JSON.parse(storedPersonality)?.type
+    ? PERSONALITY_TYPES.find(t => t.id === JSON.parse(storedPersonality)?.typeId)
     : null
+// Note: Task 12 stores { typeId, scores, timestamp }, so read .typeId not .type
 ```
 
 - [ ] **Step 2: Show personalized greeting on screen 1 (age screen)**
@@ -553,12 +579,22 @@ If `quizType` exists, render a greeting banner above the age input:
 
 Styled as a subtle info banner (shadcn/ui Alert or custom div with type's accent color border).
 
-- [ ] **Step 3: Apply qualitative defaults from quiz**
+- [ ] **Step 3: Apply qualitative defaults from quiz via Hydrate dispatch**
 
-Import `mapQuizTypeToSetupDefaults` from `quiz-setup-mapping.ts`. On initial setup load (no existing data), apply the qualitative defaults:
+Import `mapQuizTypeToSetupDefaults` from `@/lib/calculations/quiz-setup-mapping`. On initial setup load (no existing data), apply the qualitative defaults **through the existing Hydrate dispatch pattern** inside SetupPage's existing `useEffect` block (around line 657), NOT as a raw localStorage read outside the reducer:
+
+```typescript
+// Inside the existing useEffect that handles initial hydration:
+if (quizType && !hasExistingData) {
+  const defaults = mapQuizTypeToSetupDefaults(quizType.id)
+  dispatch({ type: 'HYDRATE', values: defaults })
+}
+```
+
 - Toggle property section on/off based on type
 - Set risk profile preset
 - These are toggles and enums only. NEVER pre-fill dollar amounts.
+- **Guard condition:** Only apply defaults when the relevant field has never been set (fresh setup). If the user has an existing plan and retakes the quiz, do NOT overwrite their existing settings.
 
 - [ ] **Step 4: Verify graceful fallback**
 
@@ -621,14 +657,16 @@ After retake, show previous type alongside new type:
 If type changed: highlight the change with a visual transition.
 If same type: "Still a {Type}! Your money personality is consistent."
 
-- [ ] **Step 4: Write unit tests for retake logic**
+- [ ] **Step 4: Write unit tests for retake logic in a dedicated test file**
+
+Create `frontend/src/components/quiz/QuizRetake.test.tsx` (NOT quiz-scoring.test.ts, which tests the scoring engine only):
 
 Test 30-day threshold, before/after type comparison, same-type handling, no-history first-time behavior.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add frontend/src/pages/QuizPage.tsx frontend/src/lib/calculations/quiz-scoring.test.ts
+git add frontend/src/pages/QuizPage.tsx frontend/src/components/quiz/QuizRetake.test.tsx
 git commit -m "feat(quiz): evolving personality with retake prompt + before/after comparison"
 ```
 
@@ -637,21 +675,46 @@ git commit -m "feat(quiz): evolving personality with retake prompt + before/afte
 ## Task 13: Monthly FIRE Digest (E5)
 
 **Files:**
-- Create: `frontend/src/hooks/useFireAgeSnapshot.ts`
-- Create: `frontend/src/hooks/useFireAgeSnapshot.test.ts`
+- Create: `frontend/src/lib/calculations/fire-age-delta.ts` — pure delta computation (testable without React)
+- Create: `frontend/src/lib/calculations/fire-age-delta.test.ts`
+- Create: `frontend/src/hooks/useFireAgeSnapshot.ts` — thin hook wrapper
 - Modify: `frontend/src/pages/DashboardPage.tsx`
 
-- [ ] **Step 1: Write failing tests**
+- [ ] **Step 1: Write failing tests for pure delta function**
 
+Create `fire-age-delta.test.ts`:
 ```typescript
-it('writes snapshot on first visit, returns no delta', () => { ... })
-it('returns correct delta on return visit after 30+ days', () => { ... })
-it('handles localStorage quota exceeded gracefully', () => { ... })
+import { computeFireAgeDelta } from './fire-age-delta'
+
+it('returns no delta when no previous snapshot exists', () => {
+  const result = computeFireAgeDelta(52, null)
+  expect(result).toEqual({ hasHistory: false, deltaMonths: 0 })
+})
+
+it('returns correct delta when previous snapshot exists', () => {
+  const result = computeFireAgeDelta(51, { fireAge: 53, timestamp: '2026-02-01' })
+  expect(result).toEqual({ hasHistory: true, deltaMonths: -24, previousFireAge: 53, currentFireAge: 51 })
+})
+
+it('handles same age gracefully', () => {
+  const result = computeFireAgeDelta(52, { fireAge: 52, timestamp: '2026-02-01' })
+  expect(result).toEqual({ hasHistory: true, deltaMonths: 0, previousFireAge: 52, currentFireAge: 52 })
+})
 ```
 
-- [ ] **Step 2: Implement useFireAgeSnapshot hook**
+- [ ] **Step 2: Implement pure `computeFireAgeDelta` in lib/calculations/**
 
-Reads current FIRE age from existing derived hooks. Writes `{ fireAge, timestamp }` to `fire-age-snapshot` localStorage. Returns `{ previousFireAge, currentFireAge, deltaMonths, hasHistory }`.
+```typescript
+export function computeFireAgeDelta(currentFireAge: number, previousSnapshot: { fireAge: number; timestamp: string } | null) {
+  if (!previousSnapshot) return { hasHistory: false, deltaMonths: 0 }
+  const deltaMonths = (currentFireAge - previousSnapshot.fireAge) * 12
+  return { hasHistory: true, deltaMonths, previousFireAge: previousSnapshot.fireAge, currentFireAge }
+}
+```
+
+- [ ] **Step 3: Implement thin `useFireAgeSnapshot` hook**
+
+The hook calls `useDashboardMetrics` (explicitly, not a vague "derived hook") for the current FIRE age, reads localStorage for the previous snapshot, calls `computeFireAgeDelta`, and writes the new snapshot to localStorage. Wraps the localStorage write in try/catch for QuotaExceededError.
 
 - [ ] **Step 3: Show digest cards on dashboard**
 
@@ -676,25 +739,53 @@ git commit -m "feat(quiz): monthly FIRE digest with story cards + fire age snaps
 ## Task 14: Quiz State in Export/Import
 
 **Files:**
-- Modify: `frontend/src/components/layout/PlanUrlHandler.tsx` (or wherever export/import lives)
+- Modify: `frontend/src/lib/storeRegistry.ts` (contains `buildPortabilityEnvelope` and `resolvePortabilityData`)
 
-- [ ] **Step 1: Include quiz state in JSON export**
+**Important:** `PlanUrlHandler.tsx` is the URL-import dialog only. The actual JSON export/import system is in `storeRegistry.ts`. The portability envelope (`PortabilityEnvelopeV2`) serializes registered Zustand stores via `ALL_RUNTIME_STORE_KEYS`. Quiz state lives in raw localStorage keys, not Zustand stores.
 
-When exporting plan JSON, read `quiz-personality` and `quiz-history` from localStorage. Add them to the export envelope under a `quiz` key.
+- [ ] **Step 1: Extend `buildPortabilityEnvelope` to include quiz state**
 
-- [ ] **Step 2: Restore quiz state on import**
+In `storeRegistry.ts`, after the existing store serialization loop, read quiz localStorage keys and add them to the envelope:
 
-When importing plan JSON, if `quiz` key exists, write `quiz-personality` and `quiz-history` to localStorage.
+```typescript
+// Inside buildPortabilityEnvelope(), after stores are serialized:
+const quizPersonality = localStorage.getItem('quiz-personality')
+const quizHistory = localStorage.getItem('quiz-history')
+if (quizPersonality || quizHistory) {
+  envelope.quiz = {
+    personality: quizPersonality ? JSON.parse(quizPersonality) : null,
+    history: quizHistory ? JSON.parse(quizHistory) : null,
+  }
+}
+```
 
-- [ ] **Step 3: Test export → import roundtrip**
+- [ ] **Step 2: Extend `resolvePortabilityData` to restore quiz state on import**
+
+In the import path (after resolving stores), check for the `quiz` key:
+
+```typescript
+// Inside resolvePortabilityData() or applyResolvedPortabilityData():
+if (input.quiz) {
+  if (input.quiz.personality) {
+    localStorage.setItem('quiz-personality', JSON.stringify(input.quiz.personality))
+  }
+  if (input.quiz.history) {
+    localStorage.setItem('quiz-history', JSON.stringify(input.quiz.history))
+  }
+}
+```
+
+- [ ] **Step 3: Update the PortabilityEnvelopeV2 type** to include the optional `quiz` field.
+
+- [ ] **Step 4: Test export → import roundtrip**
 
 Manual test: take quiz, export plan, clear localStorage, import plan, verify dashboard badge shows correct personality type.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
-git add frontend/src/components/layout/PlanUrlHandler.tsx
-git commit -m "feat(quiz): include quiz personality in plan JSON export/import"
+git add frontend/src/lib/storeRegistry.ts
+git commit -m "feat(quiz): include quiz personality in plan JSON export/import envelope"
 ```
 
 ---
@@ -705,6 +796,17 @@ git commit -m "feat(quiz): include quiz personality in plan JSON export/import"
 - Modify: `frontend/src/pages/QuizPage.tsx`
 - Modify: `frontend/src/components/quiz/QuizResult.tsx`
 - Modify: `frontend/src/pages/DashboardPage.tsx`
+
+- [ ] **Step 0: Update AnalyticsEvent union in lib/analytics.ts**
+
+The `trackEvent` function uses a closed `AnalyticsEvent` union type. Add all 10 quiz event names to the union before using them. Without this, TypeScript will reject the `trackEvent` calls and Task 17's type-check will fail.
+
+```typescript
+// Add to the AnalyticsEvent union in lib/analytics.ts:
+| 'quiz_start' | 'quiz_question' | 'quiz_complete'
+| 'share_click' | 'share_export' | 'cta_to_setup'
+| 'compare_start' | 'retake_start' | 'type_page_view' | 'digest_shown'
+```
 
 - [ ] **Step 1: Add quiz-specific Umami events**
 
