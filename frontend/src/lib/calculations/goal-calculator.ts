@@ -209,16 +209,18 @@ export function computeMonthlySavingsNeeded(
   const gap = goalAmount - fvSavings
   if (gap <= 0) return 0
 
-  // Guard for r approximately 0
-  if (Math.abs(r) < 1e-10) {
-    return gap / (n * 12)
+  // Monthly rate from annual rate (exact conversion, not r/12)
+  const monthlyRate = Math.pow(1 + r, 1 / 12) - 1
+  const totalMonths = n * 12
+
+  // Guard for rate approximately 0
+  if (Math.abs(monthlyRate) < 1e-10) {
+    return gap / totalMonths
   }
 
-  // PMT formula: annual payment for future value of annuity
-  // FV = PMT * ((1+r)^n - 1) / r
-  // PMT = gap * r / ((1+r)^n - 1)
-  const annualPmt = gap * r / (Math.pow(1 + r, n) - 1)
-  return annualPmt / 12
+  // Monthly PMT formula: FV = PMT * ((1+r_m)^m - 1) / r_m
+  // PMT = gap * r_m / ((1+r_m)^m - 1)
+  return gap * monthlyRate / (Math.pow(1 + monthlyRate, totalMonths) - 1)
 }
 
 // ============================================================

@@ -27,6 +27,7 @@ import {
   deriveCpfOaMonthly,
   estimateHousingGrant,
   checkLoanQualification,
+  STRESS_TEST_RATES,
   lookupCpfLifeEstimate,
   getEmergencyFundFloor,
   getPeerBenchmark,
@@ -40,6 +41,7 @@ import {
   EC_INCOME_CEILING,
   MORTGAGE_RATES,
   LOAN_TENURE_YEARS,
+  getEffectiveLoanTenure,
   computeCondoDownPayment,
   computeMonthlyMortgagePayment,
   getHdbPriceRange,
@@ -225,13 +227,22 @@ export function computeGoalStoryData(
       loanNeeded = price * ltv
       const rate = getMortgageRate(goal.smartInputs)
       const isHdbLoan = goal.smartInputs.kind === 'hdb' && goal.smartInputs.loanType === 'hdb-loan'
-      const qualTenure = isHdbLoan ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
+      const stressRate = isHdbLoan ? STRESS_TEST_RATES.hdb : STRESS_TEST_RATES.bank
+      // Borrower age: younger partner in couple mode (joint applicants)
+      const borrowerAge = isCoupleMode
+        ? Math.min(basics.age, basics.partnerAge!)
+        : basics.age
+      const loanType = isHdbLoan ? 'hdb-loan' as const : 'bank-loan' as const
+      const propType = goal.smartInputs.kind as 'hdb' | 'condo' | 'landed' | 'ec'
+      const baseTenure = isHdbLoan ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
+      const qualTenure = getEffectiveLoanTenure(baseTenure, borrowerAge, loanType, propType)
       loanQualification = checkLoanQualification(
         householdGross,
         loanNeeded,
         rate,
+        stressRate,
         qualTenure,
-        goal.smartInputs.kind as 'hdb' | 'condo' | 'landed' | 'ec',
+        propType,
       )
     }
 
@@ -262,8 +273,12 @@ export function computeGoalStoryData(
     if (loanQualification && !loanQualification.qualified && goal.smartInputs) {
       // Use the max qualified loan amount instead of the full LTV loan
       const rate = getMortgageRate(goal.smartInputs)
-      const tenure = kind === 'hdb' && goal.smartInputs.kind === 'hdb' && goal.smartInputs.loanType === 'hdb-loan'
-        ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
+      const isHdbLoanFb = kind === 'hdb' && goal.smartInputs.kind === 'hdb' && goal.smartInputs.loanType === 'hdb-loan'
+      const borrowerAgeFb = isCoupleMode ? Math.min(basics.age, basics.partnerAge!) : basics.age
+      const loanTypeFb = isHdbLoanFb ? 'hdb-loan' as const : 'bank-loan' as const
+      const propTypeFb = (goal.smartInputs.kind ?? 'hdb') as 'hdb' | 'condo' | 'landed' | 'ec'
+      const baseTenureFb = isHdbLoanFb ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
+      const tenure = getEffectiveLoanTenure(baseTenureFb, borrowerAgeFb, loanTypeFb, propTypeFb)
       monthlyLoanPayment = computeMonthlyMortgagePayment(loanQualification.maxLoan, rate, tenure)
     }
 
@@ -356,7 +371,9 @@ export function computeGoalStoryData(
   void grossMonthlyLoanPayments
 
   // CPF LIFE (displayed as context, but NOT used to reduce FIRE number).
+  // In couple mode, both adults receive CPF LIFE payouts.
   const cpfLifeMonthly = lookupCpfLifeEstimate(grossIncome)
+    + (isCoupleMode && partnerGross > 0 ? lookupCpfLifeEstimate(partnerGross) : 0)
 
   // Freedom age (simplified formula):
   // Loan payments excluded -- they are time-bounded costs that the projection

@@ -191,16 +191,17 @@ describe('computeMonthlySavingsNeeded', () => {
             return
           }
 
-          // Simulate annual PMT accumulation
-          const annualPmt = monthly * 12
+          // Simulate monthly PMT accumulation
           const r = REAL_RETURN
+          const monthlyRate = Math.pow(1 + r, 1 / 12) - 1
+          const totalMonths = years * 12
           let accumulated: number
-          if (Math.abs(r) < 1e-10) {
-            accumulated = savings + annualPmt * years
+          if (Math.abs(monthlyRate) < 1e-10) {
+            accumulated = savings + monthly * totalMonths
           } else {
-            // FV of existing savings + FV of annuity
+            // FV of existing savings + FV of monthly annuity
             const fvSavings = savings * Math.pow(1 + r, years)
-            const fvAnnuity = annualPmt * ((Math.pow(1 + r, years) - 1) / r)
+            const fvAnnuity = monthly * ((Math.pow(1 + monthlyRate, totalMonths) - 1) / monthlyRate)
             accumulated = fvSavings + fvAnnuity
           }
 
