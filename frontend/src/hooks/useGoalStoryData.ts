@@ -227,11 +227,13 @@ export function computeGoalStoryData(
       const ltv = getLtvRatio(goal.smartInputs)
       loanNeeded = price * ltv
       const rate = getMortgageRate(goal.smartInputs)
+      const isHdbLoan = goal.smartInputs.kind === 'hdb' && goal.smartInputs.loanType === 'hdb-loan'
+      const qualTenure = isHdbLoan ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
       loanQualification = checkLoanQualification(
         householdGross,
         loanNeeded,
         rate,
-        25,
+        qualTenure,
         goal.smartInputs.kind as 'hdb' | 'condo' | 'landed' | 'ec',
       )
     }
@@ -339,21 +341,28 @@ export function computeGoalStoryData(
     : 0
   const peerBenchmark = getPeerBenchmark(savingsRate, basics.age)
 
-  // Income tax
-  const taxEstimate = estimateIncomeTax(grossIncome * 12, basics.age)
+  // Income tax — compute for both adults in couple mode
+  const primaryTax = estimateIncomeTax(grossIncome * 12, basics.age)
+  const partnerTax = isCoupleMode && partnerGross > 0
+    ? estimateIncomeTax(partnerGross * 12, basics.partnerAge ?? basics.age)
+    : { annualTax: 0, monthlySetAside: 0 }
+  const taxEstimate = {
+    annualTax: primaryTax.annualTax + partnerTax.annualTax,
+    monthlySetAside: primaryTax.monthlySetAside + partnerTax.monthlySetAside,
+  }
 
   // Income ceiling warning (HDB ceiling is more restrictive, check it first)
   let incomeCeilingWarning: string | null = null
   if (hasAnyHdbGoal) {
     const ceiling = isCoupleMode ? HDB_INCOME_CEILING.couple : HDB_INCOME_CEILING.single
-    if (householdGross >= ceiling) {
-      incomeCeilingWarning = `Your household income of $${Math.round(householdGross).toLocaleString()}/mo already exceeds the HDB income ceiling of $${ceiling.toLocaleString()}/mo`
+    if (householdGross > ceiling) {
+      incomeCeilingWarning = `Your household income of $${Math.round(householdGross).toLocaleString()}/mo exceeds the HDB income ceiling of $${ceiling.toLocaleString()}/mo`
     }
   }
   // EC ceiling is higher than HDB ($16K vs $14K for couples). Only warn if no HDB warning already.
   if (hasAnyEcGoal && !incomeCeilingWarning) {
     const ecCeiling = isCoupleMode ? EC_INCOME_CEILING.couple : EC_INCOME_CEILING.single
-    if (householdGross >= ecCeiling) {
+    if (householdGross > ecCeiling) {
       incomeCeilingWarning = `Your household income of $${Math.round(householdGross).toLocaleString()}/mo exceeds the EC income ceiling of $${ecCeiling.toLocaleString()}/mo`
     }
   }
@@ -389,7 +398,7 @@ export function computeGoalStoryData(
       const cashTarget = isPropertyGoal(eg.goal) ? eg.cashNeeded : eg.goal.breakdown.total
       const remainingAfterPayment = projectedCash - cashTarget
 
-      if (remainingAfterPayment < emergencyFund && remainingAfterPayment >= 0) {
+      if (remainingAfterPayment < emergencyFund) {
         postPaymentEmergencyShortfall = {
           goalLabel: eg.goal.label,
           remainingAfterPayment: Math.round(remainingAfterPayment),

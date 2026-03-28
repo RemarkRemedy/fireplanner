@@ -197,7 +197,7 @@ export function computeMonthlySavingsNeeded(
   existingSavings: number,
   years: number,
 ): number {
-  if (years <= 0) return Infinity
+  if (years <= 0) return goalAmount - existingSavings > 0 ? Infinity : 0
 
   const r = REAL_RETURN
   const n = years
@@ -229,6 +229,10 @@ export function computeGoalFeasibility(
   monthlySavingsNeeded: number,
   availableMonthlySavings: number,
 ): FeasibilityResult {
+  // Goal already funded by existing savings — no monthly savings needed
+  if (monthlySavingsNeeded <= 0) {
+    return { level: 'green', feasible: true, shortfall: 0 }
+  }
   if (availableMonthlySavings <= 0 || monthlySavingsNeeded > availableMonthlySavings) {
     return {
       level: 'red',

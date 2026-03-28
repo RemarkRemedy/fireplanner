@@ -531,11 +531,11 @@ describe('ec goal', () => {
         partnerMonthlyIncome: 6_400,
         partnerGrossIncome: 8_000,
       })
-      // householdGross = 8,000 + 8,000 = 16,000 — at ceiling, ineligible
+      // householdGross = 8,000 + 8,000 = 16,000 — at ceiling, still eligible (> not >=)
       const goals = [makeEcGoal()]
       const result = computeGoalStoryData(basics, goals)
 
-      expect(result.shared.incomeCeilingWarning).not.toBeNull()
+      expect(result.shared.incomeCeilingWarning).toBeNull()
     })
 
     it('does not warn when household gross is below EC couple ceiling', () => {

@@ -250,7 +250,8 @@ export function GoalCalculatorPage() {
     }
 
     // Transfer partner as a new adult (couple mode)
-    if (state.basics.partnerAge && state.basics.partnerMonthlyIncome) {
+    // Partner with $0 income is valid — only require partnerAge to be set
+    if (state.basics.partnerAge) {
       const partnerAdult: PlanningAdult = {
         id: crypto.randomUUID(),
         owner: 'partner',
@@ -262,7 +263,7 @@ export function GoalCalculatorPage() {
         maritalStatus: 'married',
         residencyStatus: 'citizen',
         prMonths: 0,
-        annualIncome: state.basics.partnerMonthlyIncome * 12,
+        annualIncome: (state.basics.partnerMonthlyIncome ?? 0) * 12,
         annualExpenses: 0,
         liquidNetWorth: 0,
         parentSupportEnabled: false,
@@ -321,6 +322,10 @@ export function GoalCalculatorPage() {
       }
       addAdult(partnerAdult)
     }
+
+    // Clear goal calculator state to prevent duplicate transfer on browser Back
+    localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem('goal-calc-slider-overrides')
 
     navigate('/inputs')
   }, [transferring, state.basics, state.goals, addGoal, addAdult, navigate])

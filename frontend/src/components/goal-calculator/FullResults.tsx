@@ -286,7 +286,9 @@ function EnrichedGoalCard({
           <p className="text-2xl font-bold">
             {enriched.adjustedMonthlySavings === 0
               ? 'Already covered by existing savings'
-              : `${formatCurrency(Math.round(enriched.adjustedMonthlySavings))}/mo`}
+              : !isFinite(enriched.adjustedMonthlySavings)
+                ? 'N/A (timeline too short)'
+                : `${formatCurrency(Math.round(enriched.adjustedMonthlySavings))}/mo`}
           </p>
         </div>
 
