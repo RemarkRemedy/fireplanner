@@ -215,7 +215,11 @@ function mergeIncomeProjections(
  * This ensures the wealth curve reflects the full cost of ownership,
  * not just the upfront payment.
  */
-function mapGoals(goals: GoalCalcGoal[], cashNeededByGoalId?: Map<string, number>): FinancialGoal[] {
+function mapGoals(
+  goals: GoalCalcGoal[],
+  cashNeededByGoalId?: Map<string, number>,
+  maxLoanByGoalId?: Map<string, number>,
+): FinancialGoal[] {
   const result: FinancialGoal[] = []
 
   for (const g of goals) {
@@ -262,7 +266,12 @@ function mapGoals(goals: GoalCalcGoal[], cashNeededByGoalId?: Map<string, number
       const propertyPrice = inputs.priceOverride ?? getHdbPriceRange(inputs.flatType, inputs.tenure).midpoint
       const ltvKey = inputs.loanType as keyof typeof LTV_RATIOS
       const ltv = LTV_RATIOS[ltvKey] ?? 0.75
-      const loanAmount = propertyPrice * ltv
+      const fullLoanAmount = propertyPrice * ltv
+      // Cap loan at maxLoan if MSR/TDSR qualification failed — the shortfall
+      // is already added to cashNeeded, so using the full LTV loan here would
+      // double-charge the user (cash for shortfall + mortgage on full amount).
+      const maxLoan = maxLoanByGoalId?.get(g.id)
+      const loanAmount = maxLoan != null ? Math.min(fullLoanAmount, maxLoan) : fullLoanAmount
       const isHdbLoan = inputs.loanType === 'hdb-loan'
       const rate = isHdbLoan ? MORTGAGE_RATES.hdb : MORTGAGE_RATES.bank
       const tenure = isHdbLoan ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
@@ -282,7 +291,10 @@ function mapGoals(goals: GoalCalcGoal[], cashNeededByGoalId?: Map<string, number
     } else if (g.smartInputs?.kind === 'condo' || g.smartInputs?.kind === 'landed' || g.smartInputs?.kind === 'ec') {
       // Condo/Landed/EC: bank loan mortgage
       const propertyPrice = g.smartInputs.price
-      const loanAmount = propertyPrice * LTV_RATIOS['bank-loan']
+      const fullLoanAmount = propertyPrice * LTV_RATIOS['bank-loan']
+      // Cap loan at maxLoan if MSR/TDSR qualification failed (see HDB comment above)
+      const maxLoan = maxLoanByGoalId?.get(g.id)
+      const loanAmount = maxLoan != null ? Math.min(fullLoanAmount, maxLoan) : fullLoanAmount
       const mortgageTotal = computeMortgageTotal(loanAmount, MORTGAGE_RATES.bank, LOAN_TENURE_YEARS.bank)
       if (mortgageTotal > 0) {
         result.push({
@@ -317,6 +329,7 @@ export function buildGoalCalcProjectionParams(
   basics: GoalStoryBasics,
   goals: GoalCalcGoal[],
   cashNeededByGoalId?: Map<string, number>,
+  maxLoanByGoalId?: Map<string, number>,
 ): ProjectionParams {
   // 1. Derive gross income
   const grossIncome = basics.grossIncome ?? grossUpFromTakeHome(basics.monthlyIncome, basics.age)
@@ -381,7 +394,7 @@ export function buildGoalCalcProjectionParams(
   const assetReturns = getEffectiveReturns(Array(8).fill(null) as (number | null)[])
 
   // 7. Map goals
-  const financialGoals = mapGoals(goals, cashNeededByGoalId)
+  const financialGoals = mapGoals(goals, cashNeededByGoalId, maxLoanByGoalId)
 
   // 8. Assemble ProjectionParams
   return {
