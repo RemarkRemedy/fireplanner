@@ -560,12 +560,15 @@ export function FullResults({
       used: number
       results: FeasibilityResult[]
     }>((acc, enriched) => {
+      const monthly = isFinite(enriched.adjustedMonthlySavings) ? enriched.adjustedMonthlySavings : 0
       const remaining = available - acc.used
-      const result = remaining <= 0
-        ? { level: 'red' as const, feasible: false, shortfall: enriched.adjustedMonthlySavings }
-        : computeGoalFeasibility(enriched.adjustedMonthlySavings, remaining)
+      const result = !isFinite(enriched.adjustedMonthlySavings)
+        ? { level: 'red' as const, feasible: false, shortfall: 0 }
+        : remaining <= 0
+          ? { level: 'red' as const, feasible: false, shortfall: enriched.adjustedMonthlySavings }
+          : computeGoalFeasibility(enriched.adjustedMonthlySavings, remaining)
       return {
-        used: acc.used + enriched.adjustedMonthlySavings,
+        used: acc.used + monthly,
         results: [...acc.results, result],
       }
     }, { used: 0, results: [] })
@@ -576,7 +579,7 @@ export function FullResults({
   // with per-goal cards. Don't re-run stacking independently — it uses breakdown.total
   // which over-allocates for property goals.
   const totalMonthlySavings = effectiveData.perGoal.reduce(
-    (sum, eg) => sum + eg.adjustedMonthlySavings,
+    (sum, eg) => sum + (isFinite(eg.adjustedMonthlySavings) ? eg.adjustedMonthlySavings : 0),
     0,
   )
   const exceeds = totalMonthlySavings > available

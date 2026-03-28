@@ -42,6 +42,7 @@ import {
   LOAN_TENURE_YEARS,
   computeCondoDownPayment,
   computeMonthlyMortgagePayment,
+  getHdbPriceRange,
 } from '@/lib/data/goal-defaults'
 import type { GoalCardConfig } from '@/lib/wrapped/goalGradients'
 import { buildGoalCardSequence } from '@/lib/wrapped/goalGradients'
@@ -131,7 +132,10 @@ function getLtvRatio(inputs: SmartGoalInputs): number {
 function getPropertyPrice(goal: GoalCalcGoal): number {
   if (!goal.smartInputs) return goal.totalCostToday
   switch (goal.smartInputs.kind) {
-    case 'hdb': return goal.smartInputs.priceOverride ?? goal.totalCostToday
+    case 'hdb':
+      // Use actual property price, NOT totalCostToday (which is breakdown total: DP+BSD+legal+reno).
+      // This is critical for correct LTV loan amount and MSR/TDSR qualification.
+      return goal.smartInputs.priceOverride ?? getHdbPriceRange(goal.smartInputs.flatType, goal.smartInputs.tenure).midpoint
     case 'condo': return goal.smartInputs.price
     case 'landed': return goal.smartInputs.price
     case 'ec': return goal.smartInputs.price

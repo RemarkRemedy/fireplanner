@@ -356,7 +356,11 @@ export function buildGoalCalcProjectionParams(
   )
   let incomeProjection = generateIncomeProjection(primaryIncomeParams)
 
-  if (isCoupleMode && partnerGross > 0) {
+  if (isCoupleMode) {
+    // Always merge in couple mode, even when partner earns $0.
+    // Expenses are deducted once in mergeIncomeProjections.
+    // Without this, $0-partner couple mode skips the merge and
+    // expenses are never deducted (primary was passed annualExpenses=0).
     const partnerAge = basics.partnerAge ?? basics.age
     const partnerIncomeParams = buildIncomeParams(
       partnerGross,
