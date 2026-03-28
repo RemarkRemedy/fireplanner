@@ -376,7 +376,7 @@ git commit -m "feat(quiz): add quiz page shell + type deep link pages + routes"
 - Selected state: border changes to type's accent color, brief scale (1.02x, 150ms)
 - `isTransitioning` debounce guard (prevents double-tap advance)
 - On select: 400ms delay (highlight), then advance to next question
-- Hash update: `window.location.hash = '#q' + (questionIndex + 1)`
+- Hash update: call `onAdvance(questionIndex + 1)` callback prop from parent QuizPage. QuizPage uses `useNavigate()` to update hash. Do NOT use raw `window.location.hash` in QuizQuestion — that bypasses React Router's history stack.
 
 - [ ] **Step 3: Build QuizResult**
 
@@ -731,7 +731,7 @@ export function computeFireAgeDelta(currentFireAge: number, previousSnapshot: { 
 
 - [ ] **Step 3: Implement thin `useFireAgeSnapshot` hook**
 
-The hook calls `useDashboardMetrics` (explicitly, not a vague "derived hook") for the current FIRE age, reads localStorage for the previous snapshot, calls `computeFireAgeDelta`, and writes the new snapshot to localStorage. Wraps the localStorage write in try/catch for QuotaExceededError.
+The hook calls `useMetricsSnapshot()` (already exists at `hooks/useMetricsSnapshot.ts`, already exposes `fireAge`). Do NOT re-call `useDashboardMetrics` directly — `useMetricsSnapshot` already does that. Read localStorage for the previous snapshot, call `computeFireAgeDelta`, and write the new snapshot to localStorage. Wraps the localStorage write in try/catch for QuotaExceededError.
 
 - [ ] **Step 3: Show digest cards on dashboard**
 
