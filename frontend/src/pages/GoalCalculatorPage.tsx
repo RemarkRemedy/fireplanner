@@ -1,7 +1,6 @@
-import { useReducer, useCallback, useState, useEffect } from 'react'
+import { useReducer, useCallback, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { usePageMeta } from '@/hooks/usePageMeta'
-import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { GoalPicker } from '@/components/goal-calculator/GoalPicker'
 import { GoalConfig } from '@/components/goal-calculator/GoalConfig'
 import { BasicsForm } from '@/components/goal-calculator/BasicsForm'
@@ -9,9 +8,7 @@ import { Results } from '@/components/goal-calculator/Results'
 import { GOAL_TILES } from '@/lib/data/goal-defaults'
 import {
   computeMonthlySavingsNeeded,
-  mapGoalToHouseholdGoalItem,
 } from '@/lib/calculations/goal-calculator'
-import type { PlanningAdult } from '@/lib/household/types'
 import type { GoalTileId } from '@/lib/data/goal-defaults'
 import type {
   GoalCalcGoal,
@@ -189,10 +186,7 @@ export function GoalCalculatorPage() {
       // Ignore quota errors
     }
   }, [state])
-  const [transferring, setTransferring] = useState(false)
   const navigate = useNavigate()
-  const addGoal = useHouseholdPlanStore((s) => s.addGoal)
-  const addAdult = useHouseholdPlanStore((s) => s.addAdult)
 
   // Disable all tiles whose category matches an already-added goal
   // (e.g., adding a condo goal disables all housing tiles: hdb, condo, landed)
@@ -240,95 +234,11 @@ export function GoalCalculatorPage() {
     [],
   )
 
+  // Navigate to bridge page which collects retirement age + residency,
+  // then transfers all data to the household plan and opens the projection.
   const handleContinueToPlanner = useCallback(() => {
-    if (transferring || !state.basics) return
-    setTransferring(true)
-
-    // Transfer goals
-    for (const goal of state.goals) {
-      addGoal(mapGoalToHouseholdGoalItem(goal))
-    }
-
-    // Transfer partner as a new adult (couple mode)
-    // Partner with $0 income is valid — only require partnerAge to be set
-    if (state.basics.partnerAge) {
-      const partnerAdult: PlanningAdult = {
-        id: crypto.randomUUID(),
-        owner: 'partner',
-        displayName: 'Partner',
-        currentAge: state.basics.partnerAge,
-        retirementAge: 55,
-        lifeExpectancy: 85,
-        lifeStage: 'pre-fire',
-        maritalStatus: 'married',
-        residencyStatus: 'citizen',
-        prMonths: 0,
-        annualIncome: (state.basics.partnerMonthlyIncome ?? 0) * 12,
-        annualExpenses: 0,
-        liquidNetWorth: 0,
-        parentSupportEnabled: false,
-        lifeEventsEnabled: false,
-        healthcare: {
-          enabled: false,
-          mediShieldLifeEnabled: true,
-          ispTier: 'none',
-          careShieldLifeEnabled: true,
-          oopBaseAmount: 0,
-          oopModel: 'fixed',
-          oopInflationRate: 0.03,
-          oopReferenceAge: state.basics.partnerAge,
-          mediSaveTopUpAnnual: 0,
-        },
-        cpf: {
-          balances: { oa: 0, sa: 0, ma: 0, ra: 0 },
-          annualTopUps: { oa: 0, sa: 0, ma: 0 },
-          retirementPhase: null,
-          lifeActualMonthlyPayout: 0,
-          lifeStartAge: 65,
-          lifePlan: 'standard',
-          retirementSum: 'frs',
-          oaWithdrawals: [],
-          cpfisEnabled: false,
-          cpfisOaReturn: 0,
-          cpfisSaReturn: 0,
-          autoFallback: false,
-          autoFallbackIncludeSA: false,
-          virtualRebalancing: false,
-          virtualRebalancingMode: 'from55',
-        },
-        srs: {
-          balance: 0,
-          annualContribution: 0,
-          investmentReturn: 0.04,
-          drawdownStartAge: 62,
-          postFireEnabled: false,
-        },
-        taxProfile: {
-          momEducation: 'belowSecondary',
-          momAdjustment: 0,
-          personalReliefs: 0,
-          reliefBreakdown: null,
-          reliefBasisAge: state.basics.partnerAge,
-        },
-        lifeEvents: [],
-        cashSavings: 0,
-        nonMortgageDebtTotal: 0,
-        nonMortgageDebtMonthlyPayment: 0,
-        insuranceDeathCoverage: 0,
-        insuranceCICoverage: 0,
-        insuranceDisabilityMonthly: 0,
-        funeralCosts: 0,
-        ciRecoveryYears: 0,
-      }
-      addAdult(partnerAdult)
-    }
-
-    // Clear goal calculator state to prevent duplicate transfer on browser Back
-    localStorage.removeItem(STORAGE_KEY)
-    localStorage.removeItem('goal-calc-slider-overrides')
-
-    navigate('/inputs')
-  }, [transferring, state.basics, state.goals, addGoal, addAdult, navigate])
+    navigate('/goal-calculator/bridge')
+  }, [navigate])
 
   return (
     <div className="min-h-screen bg-background">
@@ -382,7 +292,7 @@ export function GoalCalculatorPage() {
             onEditBasics={() => dispatch({ type: 'EDIT_BASICS' })}
             onStartOver={() => dispatch({ type: 'START_OVER' })}
             onContinueToPlanner={handleContinueToPlanner}
-            transferring={transferring}
+            transferring={false}
           />
         )}
       </main>
