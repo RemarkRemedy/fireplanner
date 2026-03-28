@@ -160,7 +160,7 @@ export function IlpExitCalculatorPage() {
   usePageMeta({
     title: 'ILP Exit Calculator: SG FIRE Planner',
     description: 'Calculate exit scenarios for your existing ILP policy.',
-    path: '/ilp/exit',
+    path: '/ilp-fees/exit',
   })
 
   const addPolicyFromSeed = useIlpStore((state) => state.addPolicyFromSeed)

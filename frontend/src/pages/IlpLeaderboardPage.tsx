@@ -67,7 +67,7 @@ export function IlpLeaderboardPage() {
   usePageMeta({
     title: 'ILP Product Comparison: SG FIRE Planner',
     description: 'Compare fee drag across 92 Singapore ILP products.',
-    path: '/ilp/compare',
+    path: '/ilp-fees/compare',
   })
 
   const [search, setSearch] = useState('')
@@ -238,7 +238,7 @@ export function IlpLeaderboardPage() {
                       </Badge>
                     </td>
                     <td className="px-3 py-3 text-center">
-                      <Link to={`/ilp/story/${row.productId}`}>
+                      <Link to={`/ilp-fees/story/${row.productId}`}>
                         <Button variant="ghost" size="sm" className="gap-1">
                           View
                           <ExternalLink className="h-3 w-3" />

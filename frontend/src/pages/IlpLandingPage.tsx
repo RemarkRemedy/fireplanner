@@ -9,7 +9,7 @@ export function IlpLandingPage() {
   usePageMeta({
     title: 'ILP Fee Transparency: SG FIRE Planner',
     description: 'Independent ILP fee analysis for Singapore. Year-by-year fee decomposition, exit math, and product comparison for 92 products.',
-    path: '/ilp',
+    path: '/ilp-fees',
   })
 
   const navigate = useNavigate()
@@ -53,7 +53,7 @@ export function IlpLandingPage() {
         </button>
 
         {/* Mode 2: Existing holders */}
-        <Link to="/ilp/exit" className="group">
+        <Link to="/ilp-fees/exit" className="group">
           <Card className="h-full transition-colors group-hover:border-primary group-hover:shadow-sm">
             <CardContent className="flex h-full flex-col gap-4 p-6">
               <Calculator className="h-8 w-8 text-primary" />
@@ -74,7 +74,7 @@ export function IlpLandingPage() {
         </Link>
 
         {/* Mode 3: Researchers */}
-        <Link to="/ilp/compare" className="group">
+        <Link to="/ilp-fees/compare" className="group">
           <Card className="h-full transition-colors group-hover:border-primary group-hover:shadow-sm">
             <CardContent className="flex h-full flex-col gap-4 p-6">
               <Search className="h-8 w-8 text-primary" />
@@ -110,7 +110,7 @@ export function IlpLandingPage() {
         onOpenChange={setPickerOpen}
         onSelect={(product, _variant) => {
           setPickerOpen(false)
-          navigate(`/ilp/story/${product.id}`)
+          navigate(`/ilp-fees/story/${product.id}`)
         }}
       />
     </div>

@@ -108,7 +108,7 @@ export function IlpStoryModePage() {
   usePageMeta({
     title: 'ILP Fee Story: SG FIRE Planner',
     description: 'See the real cost of your ILP in 4 screens.',
-    path: `/ilp/story/${productId ?? ''}`,
+    path: `/ilp-fees/story/${productId ?? ''}`,
   })
 
   const catalogProduct = useCatalogProduct(productId)
