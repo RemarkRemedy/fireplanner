@@ -10,6 +10,8 @@ import { applySetupDraft } from '@/lib/household/setupDraft'
 import type { SetupDraft } from '@/lib/household/setupDraft'
 import { mapGoalToHouseholdGoalItem } from '@/lib/calculations/goal-calculator'
 import type { GoalCalcBasics, GoalCalcGoal } from '@/lib/calculations/goal-calculator'
+import { computeGoalStoryData } from '@/hooks/useGoalStoryData'
+import type { GoalStoryBasics } from '@/hooks/useGoalStoryData'
 import { grossUpFromTakeHome } from '@/lib/calculations/grossUp'
 
 // ============================================================
@@ -117,9 +119,27 @@ export function GoalBridgePage() {
     const planType = isCoupleMode ? 'couple' : 'individual'
     applySetupDraft(draft, planType)
 
-    // Transfer goals from the calculator
+    // Compute enriched story data to get cashNeeded for property goals.
+    // The planner's projection deducts GoalItem.amount as a lump sum — using
+    // totalCostToday (full DP+BSD+legal+reno) would ignore CPF OA offsets and
+    // grants, making the projection show a much bigger dip than the calculator did.
+    const storyBasics: GoalStoryBasics = {
+      ...basics,
+      grossIncome: grossIncome,
+      partnerGrossIncome: isCoupleMode ? partnerGross : undefined,
+    }
+    const storyData = computeGoalStoryData(storyBasics, goals)
+
+    // Transfer goals — use cashNeeded for property goals so the projection
+    // matches the calculator's wealth curve (CPF OA and grants accounted for)
     for (const goal of goals) {
-      addGoal(mapGoalToHouseholdGoalItem(goal))
+      const enriched = storyData.perGoal.find((eg) => eg.goal.id === goal.id)
+      const isProperty = goal.category === 'housing'
+      const mappedGoal = mapGoalToHouseholdGoalItem(goal)
+      if (isProperty && enriched) {
+        mappedGoal.amount = enriched.cashNeeded
+      }
+      addGoal(mappedGoal)
     }
 
     // Mark setup as complete so the planner doesn't redirect to setup
@@ -139,8 +159,16 @@ export function GoalBridgePage() {
     navigate(isMobile ? '/wrapped' : '/projection')
   }, [transferring, basics, goals, isCoupleMode, retirementAge, residency, partnerRetirementAge, addGoal, setUIField, navigate])
 
-  // No calculator state — redirect back
+  const setupCompleted = useUIStore((s) => s.setupCompleted)
+
+  // No calculator state — either transfer already happened (Back button)
+  // or user navigated here directly without using the calculator
   if (!basics) {
+    // If setup was already completed, the transfer happened — go to projection
+    if (setupCompleted) {
+      navigate('/projection', { replace: true })
+      return null
+    }
     return (
       <div className="min-h-screen bg-background">
         <header className="border-b">
