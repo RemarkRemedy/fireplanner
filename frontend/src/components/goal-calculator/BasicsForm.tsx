@@ -170,7 +170,7 @@ export function BasicsForm({ initial, onComplete, onBack }: BasicsFormProps) {
   const partnerActiveIncome =
     partnerSalaryBasis === 'net' ? partnerMonthlyIncome : partnerGrossIncome
   const partnerIncomeError =
-    coupleMode && partnerActiveIncome <= 0 ? 'Must be greater than 0' : undefined
+    coupleMode && partnerActiveIncome < 0 ? 'Must be 0 or more' : undefined
 
   const canSubmit =
     !ageError &&
