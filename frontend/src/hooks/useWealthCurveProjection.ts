@@ -219,9 +219,31 @@ export function useWealthCurveProjection(
     })
   }, [goals, overrides.goalOverrides])
 
+  // Recompute story data from effective inputs (must come before chartData
+  // because chartData reads cashNeeded from storyData for property goals)
+  const storyData = useMemo(
+    () => computeGoalStoryData(effectiveBasics, effectiveGoals),
+    [effectiveBasics, effectiveGoals],
+  )
+
   // Run projection and deflate to real dollars
   const chartData = useMemo(() => {
-    const params = buildGoalCalcProjectionParams(effectiveBasics, effectiveGoals)
+    // Build cash-needed map from story data for property goals.
+    // For property goals, CPF OA covers part of DP/BSD/legal and housing grants
+    // reduce the cost further. Using cashNeeded instead of totalCostToday avoids
+    // overstating the dip in the wealth curve at purchase age.
+    const cashNeededMap = new Map<string, number>()
+    for (const eg of storyData.perGoal) {
+      if (eg.goal.category === 'housing') {
+        cashNeededMap.set(eg.goal.id, eg.cashNeeded)
+      }
+    }
+
+    const params = buildGoalCalcProjectionParams(
+      effectiveBasics,
+      effectiveGoals,
+      cashNeededMap.size > 0 ? cashNeededMap : undefined,
+    )
 
     // Apply expectedReturn override if set
     if (overrides.expectedReturn != null) {
@@ -233,13 +255,7 @@ export function useWealthCurveProjection(
 
     // Overlay property equity post-hoc (engine can't model future property purchases)
     return overlayPropertyEquity(deflated, effectiveGoals, basics.age, DEFAULT_INFLATION)
-  }, [effectiveBasics, effectiveGoals, overrides.expectedReturn, basics.age])
-
-  // Recompute story data from effective inputs
-  const storyData = useMemo(
-    () => computeGoalStoryData(effectiveBasics, effectiveGoals),
-    [effectiveBasics, effectiveGoals],
-  )
+  }, [effectiveBasics, effectiveGoals, overrides.expectedReturn, basics.age, storyData])
 
   // Goal markers for the chart
   const goalMarkers = useMemo((): GoalMarker[] =>

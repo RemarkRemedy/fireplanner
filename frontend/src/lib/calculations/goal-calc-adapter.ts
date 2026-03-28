@@ -215,15 +215,20 @@ function mergeIncomeProjections(
  * This ensures the wealth curve reflects the full cost of ownership,
  * not just the upfront payment.
  */
-function mapGoals(goals: GoalCalcGoal[]): FinancialGoal[] {
+function mapGoals(goals: GoalCalcGoal[], cashNeededByGoalId?: Map<string, number>): FinancialGoal[] {
   const result: FinancialGoal[] = []
 
   for (const g of goals) {
+    // For property goals with CPF OA/grant offsets, use cash-only amount
+    const isProperty = g.category === 'housing'
+    const cashNeeded = cashNeededByGoalId?.get(g.id)
+    const upfrontAmount = (isProperty && cashNeeded != null) ? cashNeeded : g.totalCostToday
+
     // Always add the upfront cost as a lump-sum goal
     result.push({
       id: g.id,
       label: g.label,
-      amount: g.totalCostToday,
+      amount: upfrontAmount,
       targetAge: g.targetAge,
       durationYears: 1,
       priority: 'important',
@@ -311,6 +316,7 @@ function mapGoals(goals: GoalCalcGoal[]): FinancialGoal[] {
 export function buildGoalCalcProjectionParams(
   basics: GoalStoryBasics,
   goals: GoalCalcGoal[],
+  cashNeededByGoalId?: Map<string, number>,
 ): ProjectionParams {
   // 1. Derive gross income
   const grossIncome = basics.grossIncome ?? grossUpFromTakeHome(basics.monthlyIncome, basics.age)
@@ -371,7 +377,7 @@ export function buildGoalCalcProjectionParams(
   const assetReturns = getEffectiveReturns(Array(8).fill(null) as (number | null)[])
 
   // 7. Map goals
-  const financialGoals = mapGoals(goals)
+  const financialGoals = mapGoals(goals, cashNeededByGoalId)
 
   // 8. Assemble ProjectionParams
   return {
