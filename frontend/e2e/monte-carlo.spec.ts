@@ -144,8 +144,9 @@ test.describe('Monte Carlo Simulation', () => {
     expect(firstPayload).toHaveProperty('p_success')
     expect(firstPayload).toHaveProperty('horizon_years')
     expect(firstPayload).toHaveProperty('allocation_summary')
-    expect(firstPayload).toHaveProperty('projected_fire_age_p50')
-    expect(firstPayload).toHaveProperty('portfolio_at_fire_p50')
+    // projected_fire_age_p50 and portfolio_at_fire_p50 are optional —
+    // only present when FIRE is achievable (p_success > 0)
+    expect(firstPayload).toHaveProperty('target_fire_age')
     expect(firstPayload).toHaveProperty('required_portfolio_basis', 'wr_safe_90')
     expect(firstPayload).toHaveProperty('required_savings_rate')
     expect(firstPayload).toHaveProperty('wr_safe_95')
