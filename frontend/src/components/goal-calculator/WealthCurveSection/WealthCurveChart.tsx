@@ -178,10 +178,15 @@ function SimpleTooltip({ active, payload, label }: TooltipProps<ValueType, NameT
   if (!active || !payload || payload.length === 0) return null
   const age = label as number
   const total = (payload[0]?.value as number) ?? 0
+  // Extract liquid savings from the hidden stacked areas
+  const liquidNW = payload.find((p) => p.dataKey === 'liquidNW')?.value as number | undefined
   return (
     <div className="rounded-md border bg-background px-3 py-2 text-xs shadow-md">
       <p className="font-semibold">Age {age}</p>
       <p className="text-blue-600">Net worth: {formatCompactCurrency(total)}</p>
+      {liquidNW != null && liquidNW !== total && (
+        <p className="text-muted-foreground">Liquid savings: {formatCompactCurrency(liquidNW)}</p>
+      )}
     </div>
   )
 }
