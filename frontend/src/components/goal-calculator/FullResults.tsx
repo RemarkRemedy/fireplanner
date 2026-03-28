@@ -529,6 +529,21 @@ export function FullResults({
   // When what-if sliders are modified, use the recomputed story data
   const effectiveData = wealthCurve?.isModified ? wealthCurve.storyData : data
 
+  // Effective basics: merge slider overrides so all downstream consumers
+  // (stacking, insights, emergency fund copy) reflect the what-if state.
+  // Memoized so useMemo dependencies that reference it get a stable object.
+  const wealthCurveOverrides = wealthCurve?.overrides
+  const wealthCurveIsModified = wealthCurve?.isModified
+  const effectiveBasics = useMemo<GoalCalcBasics>(() => {
+    if (!wealthCurveIsModified || !wealthCurveOverrides) return basics
+    return {
+      ...basics,
+      ...(wealthCurveOverrides.monthlyIncome != null && { monthlyIncome: wealthCurveOverrides.monthlyIncome }),
+      ...(wealthCurveOverrides.monthlyExpenses != null && { monthlyExpenses: wealthCurveOverrides.monthlyExpenses }),
+      ...(wealthCurveOverrides.existingSavings != null && { existingSavings: wealthCurveOverrides.existingSavings }),
+    }
+  }, [basics, wealthCurveIsModified, wealthCurveOverrides])
+
   // Compute feasibility for each goal using REMAINING capacity after prior goals
   // (not total capacity — earlier goals consume savings capacity first)
   const goalFeasibilities = useMemo(() => {
@@ -550,8 +565,8 @@ export function FullResults({
 
   // Compute stacked results for multi-goal summary
   const stacked = useMemo(
-    () => computeMultiGoalStacking(goals, basics),
-    [goals, basics],
+    () => computeMultiGoalStacking(goals, effectiveBasics),
+    [goals, effectiveBasics],
   )
 
   const totalMonthlySavings = stacked.reduce(
@@ -718,7 +733,7 @@ export function FullResults({
         )}
 
         {/* Shared insights */}
-        <SharedInsightsSection data={effectiveData} basics={basics} projectionFreedomAge={wealthCurve?.freedomAge} />
+        <SharedInsightsSection data={effectiveData} basics={effectiveBasics} projectionFreedomAge={wealthCurve?.freedomAge} />
 
         {/* Disclaimers */}
         <Disclaimers hasPropertyGoal={hasPropertyGoal} />
