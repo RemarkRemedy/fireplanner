@@ -65,18 +65,21 @@ interface GoalLabelProps {
   icon: string
   cost: number
   label: string
+  /** Vertical offset to avoid overlapping labels at close ages */
+  yOffset?: number
 }
 
-function GoalLabel({ viewBox, icon, cost, label }: GoalLabelProps) {
+function GoalLabel({ viewBox, icon, cost, label, yOffset = 0 }: GoalLabelProps) {
   const x = viewBox?.x ?? 0
   const y = viewBox?.y ?? 0
+  const oY = y + yOffset
   const Icon = ICON_MAP[icon]
   return (
     <g>
       {Icon && (
         <foreignObject
           x={x - 10}
-          y={y - 38}
+          y={oY - 38}
           width={20}
           height={20}
           style={{ overflow: 'visible' }}
@@ -91,7 +94,7 @@ function GoalLabel({ viewBox, icon, cost, label }: GoalLabelProps) {
       )}
       <text
         x={x}
-        y={y - 14}
+        y={oY - 14}
         textAnchor="middle"
         fontSize={9}
         fill="#ef4444"
@@ -101,6 +104,26 @@ function GoalLabel({ viewBox, icon, cost, label }: GoalLabelProps) {
       </text>
     </g>
   )
+}
+
+/**
+ * Compute vertical offsets for goal markers that are too close together.
+ * Markers within MIN_AGE_GAP years of each other get staggered vertically.
+ */
+function computeMarkerOffsets(markers: GoalMarker[]): number[] {
+  const MIN_AGE_GAP = 3
+  const STAGGER_PX = 22
+  const sorted = markers.map((m, i) => ({ ...m, originalIndex: i }))
+    .sort((a, b) => a.age - b.age)
+  const offsets = new Array(markers.length).fill(0) as number[]
+
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i].age - sorted[i - 1].age < MIN_AGE_GAP) {
+      // Alternate: even indices stay, odd indices push down
+      offsets[sorted[i].originalIndex] = STAGGER_PX * (i % 2 === 1 ? 1 : 0)
+    }
+  }
+  return offsets
 }
 
 interface FreedomLabelProps {
@@ -209,6 +232,10 @@ export function WealthCurveChart({
 
   const hasCpf = chartData.some((d) => d.cpfTotal > 0)
   const hasProperty = chartData.some((d) => d.propertyEquity > 0)
+  const markerOffsets = computeMarkerOffsets(goalMarkers)
+
+  // Reserve fixed height for legend area to prevent layout shift on toggle
+  const legendHeight = 28
 
   return (
     <div className="space-y-3">
@@ -218,7 +245,7 @@ export function WealthCurveChart({
         role="img"
         aria-label="Wealth curve projection chart"
       >
-        <ResponsiveContainer width="100%" height={isMobile ? 320 : 380}>
+        <ResponsiveContainer width="100%" height={(isMobile ? 320 : 380) + legendHeight}>
           <AreaChart
             data={chartData}
             margin={{ top: 40, right: 16, left: isMobile ? 0 : 8, bottom: 8 }}
@@ -242,8 +269,8 @@ export function WealthCurveChart({
               content={showDetailed ? <DetailedTooltip /> : <SimpleTooltip />}
             />
 
-            {/* Goal drop lines (always shown) */}
-            {goalMarkers.map((marker) => (
+            {/* Goal drop lines (always shown) — staggered when close together */}
+            {goalMarkers.map((marker, i) => (
               <ReferenceLine
                 key={`goal-${marker.age}-${marker.label}`}
                 x={marker.age}
@@ -254,6 +281,7 @@ export function WealthCurveChart({
                     icon={marker.icon}
                     cost={marker.cost}
                     label={marker.label}
+                    yOffset={markerOffsets[i]}
                   />
                 }
               />
@@ -331,61 +359,66 @@ export function WealthCurveChart({
             )}
 
             {/* === Chart areas === */}
-            {/* Clean mode: single blue area for total NW */}
-            {!showDetailed && (
-              <Area
-                type="monotone"
-                dataKey="totalNW"
-                fill="#3b82f6"
-                fillOpacity={0.15}
-                stroke="#3b82f6"
-                strokeWidth={2}
-                name="totalNW"
-                legendType="none"
-              />
-            )}
-
-            {/* Detailed mode: stacked areas */}
-            {showDetailed && (
-              <Area
-                type="monotone"
-                dataKey="liquidNW"
-                stackId="wealth"
-                fill="hsl(210, 80%, 60%)"
-                stroke="hsl(210, 80%, 50%)"
-                fillOpacity={0.6}
-                name="liquidNW"
-              />
-            )}
-            {showDetailed && hasCpf && (
+            {/* Simple mode: single blue area for total NW */}
+            {/* Detailed mode: stacked areas for liquid, CPF, property */}
+            {/* Both are always rendered; opacity controls visibility to avoid re-mount */}
+            <Area
+              type="monotone"
+              dataKey="totalNW"
+              fill="#3b82f6"
+              fillOpacity={showDetailed ? 0 : 0.15}
+              stroke="#3b82f6"
+              strokeWidth={showDetailed ? 0 : 2}
+              name="totalNW"
+              legendType="none"
+              animationDuration={300}
+            />
+            <Area
+              type="monotone"
+              dataKey="liquidNW"
+              stackId="wealth"
+              fill="hsl(210, 80%, 60%)"
+              stroke={showDetailed ? 'hsl(210, 80%, 50%)' : 'transparent'}
+              fillOpacity={showDetailed ? 0.6 : 0}
+              name="liquidNW"
+              animationDuration={300}
+            />
+            {hasCpf && (
               <Area
                 type="monotone"
                 dataKey="cpfTotal"
                 stackId="wealth"
                 fill="hsl(150, 60%, 50%)"
-                stroke="hsl(150, 60%, 40%)"
-                fillOpacity={0.6}
+                stroke={showDetailed ? 'hsl(150, 60%, 40%)' : 'transparent'}
+                fillOpacity={showDetailed ? 0.6 : 0}
                 name="cpfTotal"
+                animationDuration={300}
               />
             )}
-            {showDetailed && hasProperty && (
+            {hasProperty && (
               <Area
                 type="monotone"
                 dataKey="propertyEquity"
                 stackId="wealth"
                 fill="hsl(35, 80%, 55%)"
-                stroke="hsl(35, 80%, 45%)"
-                fillOpacity={0.6}
+                stroke={showDetailed ? 'hsl(35, 80%, 45%)' : 'transparent'}
+                fillOpacity={showDetailed ? 0.6 : 0}
                 name="propertyEquity"
+                animationDuration={300}
               />
             )}
-            {showDetailed && (
-              <Legend
-                formatter={(value: string) => SERIES_LABELS[value] ?? value}
-                wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
-                iconSize={10}
-              />
-            )}
+            {/* Always render Legend with fixed height to prevent layout shift */}
+            <Legend
+              formatter={(value: string) => SERIES_LABELS[value] ?? value}
+              wrapperStyle={{
+                fontSize: 11,
+                paddingTop: 8,
+                opacity: showDetailed ? 1 : 0,
+                height: legendHeight,
+                transition: 'opacity 0.2s ease',
+              }}
+              iconSize={10}
+            />
           </AreaChart>
         </ResponsiveContainer>
       </div>
