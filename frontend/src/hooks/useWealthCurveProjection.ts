@@ -167,9 +167,15 @@ export function useWealthCurveProjection(
   const [overrides, setOverrides] = useState<SliderOverrides>({})
 
   // Merge overrides into effective basics
+  // When monthlyIncome changes, clear grossIncome so it gets recalculated
+  // from the new take-home (otherwise the cached grossIncome takes precedence via ??)
   const effectiveBasics = useMemo((): GoalStoryBasics => ({
     ...basics,
-    ...(overrides.monthlyIncome != null && { monthlyIncome: overrides.monthlyIncome }),
+    ...(overrides.monthlyIncome != null && {
+      monthlyIncome: overrides.monthlyIncome,
+      grossIncome: undefined,
+      partnerGrossIncome: undefined,
+    }),
     ...(overrides.monthlyExpenses != null && { monthlyExpenses: overrides.monthlyExpenses }),
     ...(overrides.existingSavings != null && { existingSavings: overrides.existingSavings }),
   }), [basics, overrides.monthlyIncome, overrides.monthlyExpenses, overrides.existingSavings])

@@ -338,10 +338,6 @@ function SharedInsightsSection({
   const { shared } = data
   const freedomAge = projectionFreedomAge ?? shared.freedomAge
   const deltaYears = freedomAge - shared.freedomAgeWithout
-  const savingsRate =
-    basics.monthlyIncome > 0
-      ? (basics.monthlyIncome - basics.monthlyExpenses) / basics.monthlyIncome
-      : 0
 
   return (
     <div className="space-y-4">
@@ -367,30 +363,6 @@ function SharedInsightsSection({
           />
         )}
       </MetricCard>
-
-      {/* Peer benchmark */}
-      <Card>
-        <CardContent className="pt-6">
-          <p className="text-sm">
-            <span className="font-medium">Your savings rate: {formatPercent(savingsRate, 0)}.</span>{' '}
-            {shared.peerBenchmark}
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Income tax heads-up */}
-      {shared.incomeTaxMonthly > 0 && (
-        <InsightChip
-          label={`Income tax: ~${formatCurrency(Math.round(shared.incomeTaxMonthly))}/mo`}
-          variant="info"
-        >
-          <p>
-            Set aside approximately {formatCurrency(Math.round(shared.incomeTaxMonthly))}/mo for
-            income tax. Tax is billed in arrears from your second year of employment,
-            so budget for it early.
-          </p>
-        </InsightChip>
-      )}
 
       {/* Income ceiling warning */}
       {shared.incomeCeilingWarning && (
@@ -559,7 +531,7 @@ export function FullResults({
             <Pencil className="h-3.5 w-3.5" /> Edit Basics
           </Button>
           {onViewStory && (
-            <Button variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground hidden sm:inline-flex" onClick={onViewStory}>
+            <Button variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground" onClick={onViewStory}>
               <Play className="h-3.5 w-3.5" /> Story
             </Button>
           )}
