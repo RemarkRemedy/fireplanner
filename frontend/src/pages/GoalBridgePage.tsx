@@ -211,22 +211,34 @@ export function GoalBridgePage() {
       }
     }
 
-    // Add BSD, legal fees, and renovation as a separate goal.
-    // The auto-created "Property Down Payment" only covers purchasePrice * (1 - LTV).
-    // The calculator's breakdown also includes BSD, legal, and renovation which are
-    // real cash outflows the user needs to save for.
+    // Replace the auto-created "Property Down Payment" goal with one that covers
+    // BSD, legal fees, and renovation. The down payment itself is handled by the
+    // PropertyPlan (mortgage + CPF OA housing deductions). The user only needs to
+    // see ONE goal for the non-financed costs.
     if (primaryPropertyGoal && purchasePrice != null) {
       const breakdown = primaryPropertyGoal.breakdown
       const downPaymentItem = breakdown.items.find((i) => i.label.startsWith('Down payment'))
       const downPaymentAmount = downPaymentItem?.amount ?? 0
       const feesAndReno = breakdown.total - downPaymentAmount
+
+      // Remove the auto-created DP goal — the PropertyPlan handles financing
+      const store = useHouseholdPlanStore.getState()
+      const dpGoal = store.plan.goals.find(
+        (g) => g.label === 'Property Down Payment' && g.owner === 'self'
+      )
+      if (dpGoal) {
+        store.removeGoal(dpGoal.id)
+      }
+
+      // Add a single goal for BSD + legal + renovation (the actual cash outflows
+      // beyond what the mortgage and CPF OA cover)
       if (feesAndReno > 0) {
         const targetAge = primaryPropertyGoal.targetAge
         const timing: TimingRule = { kind: 'single-age', owner: 'self', age: targetAge }
         const feesGoal: GoalItem = {
           id: crypto.randomUUID(),
           owner: 'self',
-          label: `${primaryPropertyGoal.label} (BSD, legal, renovation)`,
+          label: `${primaryPropertyGoal.label} (stamp duty, legal, renovation)`,
           kind: 'financial-goal',
           timing,
           amount: feesAndReno,
