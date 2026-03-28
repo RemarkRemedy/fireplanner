@@ -75,27 +75,6 @@ test.describe('Monte Carlo Simulation', () => {
     }
   })
 
-  test.skip('scenario selector runs selected stress cases and shows comparison rows', async ({ page }) => {
-    await completeOnboarding(page)
-
-    await page.getByRole('link', { name: /stress test/i }).first().click()
-    await expect(page).toHaveURL(/\/stress-test/)
-    await page.waitForLoadState('networkidle')
-
-    await expect(page.getByText('Stress Scenarios')).toBeVisible()
-
-    const crashCheckbox = page.getByRole('checkbox', { name: /market crash/i })
-    await crashCheckbox.check()
-
-    const runButton = page.getByRole('button', { name: /run simulation/i }).first()
-    await runButton.click()
-
-    await expect(page.getByText('Simulation Results')).toBeVisible({ timeout: 45000 })
-    await expect(page.getByText('Scenario Comparison')).toBeVisible({ timeout: 45000 })
-    await expect(page.getByRole('cell', { name: /base case/i })).toBeVisible({ timeout: 45000 })
-    await expect(page.getByRole('cell', { name: /market crash/i })).toBeVisible({ timeout: 45000 })
-  })
-
   test('companion mode runs in planner route and renders companion charts', async ({ page }) => {
     const postedPayloads: unknown[] = []
 
