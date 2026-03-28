@@ -411,6 +411,40 @@ export const LOAN_TENURE_YEARS = {
   bank: 30,
 }
 
+/** Maximum age at which the loan must be fully repaid. */
+export const MAX_LOAN_END_AGE = {
+  hdb: 65,         // HDB loan: must be repaid by age 65
+  bank_hdb: 65,    // Bank loan for HDB: same cap
+  bank_private: 75, // Bank loan for condo/landed/EC: repaid by age 75
+}
+
+/**
+ * Cap loan tenure based on borrower age and Singapore regulatory limits.
+ *
+ * HDB loan: max end age 65.
+ * Bank loan for HDB: max end age 65.
+ * Bank loan for private property (condo/landed/EC): max end age 75.
+ *
+ * In couple mode, pass the younger partner's age (joint applicants).
+ */
+export function getEffectiveLoanTenure(
+  baseTenure: number,
+  borrowerAge: number,
+  loanType: 'hdb-loan' | 'bank-loan',
+  propertyType: 'hdb' | 'condo' | 'landed' | 'ec',
+): number {
+  let maxEndAge: number
+  if (loanType === 'hdb-loan') {
+    maxEndAge = MAX_LOAN_END_AGE.hdb
+  } else if (propertyType === 'hdb') {
+    maxEndAge = MAX_LOAN_END_AGE.bank_hdb
+  } else {
+    maxEndAge = MAX_LOAN_END_AGE.bank_private
+  }
+  const maxTenure = Math.max(1, maxEndAge - borrowerAge)
+  return Math.min(baseTenure, maxTenure)
+}
+
 /** LTV ratios by loan type */
 export const LTV_RATIOS = {
   'hdb-loan': 0.90,

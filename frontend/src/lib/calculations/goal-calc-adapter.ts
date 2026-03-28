@@ -32,6 +32,7 @@ import {
   computeMortgageTotal,
   MORTGAGE_RATES,
   LOAN_TENURE_YEARS,
+  getEffectiveLoanTenure,
   LTV_RATIOS,
   getHdbPriceRange,
 } from '@/lib/data/goal-defaults'
@@ -217,6 +218,7 @@ function mergeIncomeProjections(
  */
 function mapGoals(
   goals: GoalCalcGoal[],
+  borrowerAge: number,
   cashNeededByGoalId?: Map<string, number>,
   maxLoanByGoalId?: Map<string, number>,
 ): FinancialGoal[] {
@@ -274,7 +276,9 @@ function mapGoals(
       const loanAmount = maxLoan != null ? Math.min(fullLoanAmount, maxLoan) : fullLoanAmount
       const isHdbLoan = inputs.loanType === 'hdb-loan'
       const rate = isHdbLoan ? MORTGAGE_RATES.hdb : MORTGAGE_RATES.bank
-      const tenure = isHdbLoan ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
+      const loanType = isHdbLoan ? 'hdb-loan' as const : 'bank-loan' as const
+      const baseTenure = isHdbLoan ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
+      const tenure = getEffectiveLoanTenure(baseTenure, borrowerAge, loanType, 'hdb')
       const mortgageTotal = computeMortgageTotal(loanAmount, rate, tenure)
       if (mortgageTotal > 0) {
         result.push({
@@ -295,14 +299,17 @@ function mapGoals(
       // Cap loan at maxLoan if MSR/TDSR qualification failed (see HDB comment above)
       const maxLoan = maxLoanByGoalId?.get(g.id)
       const loanAmount = maxLoan != null ? Math.min(fullLoanAmount, maxLoan) : fullLoanAmount
-      const mortgageTotal = computeMortgageTotal(loanAmount, MORTGAGE_RATES.bank, LOAN_TENURE_YEARS.bank)
+      const propType = g.smartInputs.kind as 'condo' | 'landed' | 'ec'
+      const baseTenure = LOAN_TENURE_YEARS.bank
+      const tenure = getEffectiveLoanTenure(baseTenure, borrowerAge, 'bank-loan', propType)
+      const mortgageTotal = computeMortgageTotal(loanAmount, MORTGAGE_RATES.bank, tenure)
       if (mortgageTotal > 0) {
         result.push({
           id: `${g.id}-mortgage`,
           label: `${g.label} (mortgage)`,
           amount: mortgageTotal,
           targetAge: g.targetAge,
-          durationYears: LOAN_TENURE_YEARS.bank,
+          durationYears: tenure,
           priority: 'important',
           inflationAdjusted: false,
           category: g.category,
@@ -393,8 +400,11 @@ export function buildGoalCalcProjectionParams(
   // 6. Asset returns and weights
   const assetReturns = getEffectiveReturns(Array(8).fill(null) as (number | null)[])
 
-  // 7. Map goals
-  const financialGoals = mapGoals(goals, cashNeededByGoalId, maxLoanByGoalId)
+  // 7. Map goals — use younger partner's age for loan tenure cap (joint applicants)
+  const borrowerAge = isCoupleMode
+    ? Math.min(basics.age, basics.partnerAge ?? basics.age)
+    : basics.age
+  const financialGoals = mapGoals(goals, borrowerAge, cashNeededByGoalId, maxLoanByGoalId)
 
   // 8. Assemble ProjectionParams
   return {

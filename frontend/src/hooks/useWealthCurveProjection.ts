@@ -16,7 +16,7 @@ import type { GoalCalcGoal } from '@/lib/calculations/goal-calculator'
 import { FIRE_MULTIPLIER, computeMonthlyLoanPayment } from '@/lib/calculations/goal-calculator'
 import type { GoalMarker } from '@/components/goal-calculator/WealthCurveSection/WealthCurveChart'
 import type { SliderOverrides } from '@/components/goal-calculator/WealthCurveSection/WhatIfSliders'
-import { MORTGAGE_RATES, LOAN_TENURE_YEARS, LTV_RATIOS, GOAL_TILES, CAR_HP_TENURE_YEARS, getHdbPriceRange } from '@/lib/data/goal-defaults'
+import { MORTGAGE_RATES, LOAN_TENURE_YEARS, getEffectiveLoanTenure, LTV_RATIOS, GOAL_TILES, CAR_HP_TENURE_YEARS, getHdbPriceRange } from '@/lib/data/goal-defaults'
 import type { SmartGoalInputs } from '@/lib/calculations/goal-calculator'
 import { DEFAULT_INFLATION } from '@/lib/calculations/goal-calc-adapter'
 
@@ -47,13 +47,15 @@ export interface WealthCurveProjectionResult {
 // ============================================================
 
 /** Get the loan tenure in years for a financed goal, or 0 if not financed. */
-function getLoanTenureYears(inputs: SmartGoalInputs): number {
+function getLoanTenureYears(inputs: SmartGoalInputs, borrowerAge: number): number {
   if (inputs.kind === 'hdb') {
-    return inputs.loanType === 'hdb-loan'
-      ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
+    const isHdbLoan = inputs.loanType === 'hdb-loan'
+    const loanType = isHdbLoan ? 'hdb-loan' as const : 'bank-loan' as const
+    const baseTenure = isHdbLoan ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
+    return getEffectiveLoanTenure(baseTenure, borrowerAge, loanType, 'hdb')
   }
   if (inputs.kind === 'condo' || inputs.kind === 'landed' || inputs.kind === 'ec') {
-    return LOAN_TENURE_YEARS.bank
+    return getEffectiveLoanTenure(LOAN_TENURE_YEARS.bank, borrowerAge, 'bank-loan', inputs.kind)
   }
   if (inputs.kind === 'car') {
     return CAR_HP_TENURE_YEARS
@@ -97,6 +99,7 @@ function overlayPropertyEquity(
   goals: GoalCalcGoal[],
   startAge: number,
   inflationRate: number,
+  borrAge: number,
   cpfUsedByGoalId?: CpfUsedMap,
 ): DeflatedRow[] {
   const propertyGoals = goals.filter(
@@ -127,7 +130,10 @@ function overlayPropertyEquity(
       const ltv = LTV_RATIOS[ltvKey as keyof typeof LTV_RATIOS]
       const loanAmount = propertyPrice * ltv
       const rate = isHdbLoan ? MORTGAGE_RATES.hdb : MORTGAGE_RATES.bank
-      const tenure = isHdbLoan ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
+      const loanType = isHdbLoan ? 'hdb-loan' as const : 'bank-loan' as const
+      const propType = inputs.kind as 'hdb' | 'condo' | 'landed' | 'ec'
+      const baseTenure = isHdbLoan ? LOAN_TENURE_YEARS.hdb : LOAN_TENURE_YEARS.bank
+      const tenure = getEffectiveLoanTenure(baseTenure, borrAge, loanType, propType)
       const monthlyRate = rate / 12
       const totalPayments = tenure * 12
       const monthsPaid = yearsOwned * 12
@@ -227,6 +233,12 @@ export function useWealthCurveProjection(
     ...(overrides.existingSavings != null && { existingSavings: overrides.existingSavings }),
   }), [basics, overrides.monthlyIncome, overrides.partnerMonthlyIncome, overrides.monthlyExpenses, overrides.existingSavings])
 
+  // Borrower age: younger partner in couple mode (joint applicants)
+  const isCoupleMode = effectiveBasics.coupleMode === true || effectiveBasics.partnerAge != null
+  const borrowerAge = isCoupleMode
+    ? Math.min(effectiveBasics.age, effectiveBasics.partnerAge ?? effectiveBasics.age)
+    : effectiveBasics.age
+
   // Apply goal overrides (targetAge, totalCostToday)
   const effectiveGoals = useMemo((): GoalCalcGoal[] => {
     if (!overrides.goalOverrides) return goals
@@ -312,7 +324,7 @@ export function useWealthCurveProjection(
     }
 
     // Overlay property equity post-hoc (engine can't model future property purchases)
-    return overlayPropertyEquity(deflated, effectiveGoals, basics.age, DEFAULT_INFLATION, cpfUsedMap)
+    return overlayPropertyEquity(deflated, effectiveGoals, basics.age, DEFAULT_INFLATION, borrowerAge, cpfUsedMap)
   }, [effectiveBasics, effectiveGoals, overrides.expectedReturn, basics.age, storyData])
 
   // Goal markers for the chart
@@ -332,11 +344,11 @@ export function useWealthCurveProjection(
       .map((g) => {
         const inputs = g.smartInputs!
         return {
-          age: g.targetAge + getLoanTenureYears(inputs),
+          age: g.targetAge + getLoanTenureYears(inputs, borrowerAge),
           label: inputs.kind === 'car' ? 'Car paid off' : 'Mortgage paid off',
         }
       }),
-  [effectiveGoals])
+  [effectiveGoals, borrowerAge])
 
   // FIRE number in today's dollars (real terms — no inflation adjustment needed).
   // Note: this is the BASE FIRE target (expenses only). The freedomAge scan below
@@ -365,7 +377,7 @@ export function useWealthCurveProjection(
       .map((g) => {
         const monthly = computeMonthlyLoanPayment(g)
         if (monthly <= 0) return null
-        const payoffAge = g.targetAge + getLoanTenureYears(g.smartInputs!)
+        const payoffAge = g.targetAge + getLoanTenureYears(g.smartInputs!, borrowerAge)
         return { monthly, payoffAge }
       })
       .filter(Boolean) as { monthly: number; payoffAge: number }[]
@@ -395,7 +407,7 @@ export function useWealthCurveProjection(
       if (row.liquidNW >= threshold) return row.age
     }
     return null
-  }, [chartData, fireNumber, effectiveBasics.monthlyExpenses, effectiveBasics.age, effectiveGoals])
+  }, [chartData, fireNumber, effectiveBasics.monthlyExpenses, effectiveBasics.age, effectiveGoals, borrowerAge])
 
   // Check if any overrides are active
   const isModified = Object.keys(overrides).length > 0

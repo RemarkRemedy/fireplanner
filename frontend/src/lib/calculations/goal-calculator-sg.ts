@@ -30,6 +30,13 @@ const DEFAULT_LOAN_TENURE_MONTHS = 300 // 25 years
 
 // LTV_RATIOS imported from '@/lib/data/goal-defaults'
 
+// MAS stress-test rates for loan qualification (higher than actual rates).
+// Banks must qualify borrowers at these rates, not the promotional/actual rate.
+export const STRESS_TEST_RATES = {
+  hdb: 0.03,    // 3.0% for HDB concessionary loan
+  bank: 0.04,   // 4.0% MAS medium-term rate for bank loans
+}
+
 /** HDB resale appreciation rate assumption. */
 const HDB_APPRECIATION_RATE = 0.03
 
@@ -226,11 +233,17 @@ export function lookupCpfLifeEstimate(grossIncome: number): number {
  * Condo/Landed/EC (bank loans): TDSR cap = 55% of gross monthly income.
  *
  * Uses standard PMT formula for monthly mortgage payment.
+ *
+ * `annualRate` is the actual mortgage rate (for monthly payment display).
+ * `stressTestRate` is the MAS stress-test rate (for max loan qualification).
+ * Banks qualify borrowers at the stress-test rate, which is higher than the
+ * actual promotional/market rate.
  */
 export function checkLoanQualification(
   grossHouseholdIncome: number,
   loanNeeded: number,
   annualRate: number,
+  stressTestRate: number,
   tenureYears: number,
   propertyType: 'hdb' | 'condo' | 'landed' | 'ec',
 ): LoanQualification {
@@ -244,7 +257,7 @@ export function checkLoanQualification(
   const servicingRatio = propertyType === 'hdb' ? 0.30 : 0.55
   const maxMonthlyPayment = grossHouseholdIncome * servicingRatio
 
-  // Monthly mortgage payment via PMT formula
+  // Monthly mortgage payment via PMT formula (actual rate for display)
   const monthlyRate = annualRate / 12
   const totalPayments = tenureYears * 12
 
@@ -257,17 +270,28 @@ export function checkLoanQualification(
     monthlyPayment = clampedLoan * (monthlyRate * factor) / (factor - 1)
   }
 
-  // Max loan the household can qualify for
+  // Max loan the household can qualify for (stress-test rate for qualification)
+  const stressMonthlyRate = stressTestRate / 12
   let maxLoan: number
-  if (monthlyRate < 1e-10) {
+  if (stressMonthlyRate < 1e-10) {
     maxLoan = maxMonthlyPayment * totalPayments
   } else {
-    const factor = Math.pow(1 + monthlyRate, totalPayments)
-    maxLoan = maxMonthlyPayment * (factor - 1) / (monthlyRate * factor)
+    const factor = Math.pow(1 + stressMonthlyRate, totalPayments)
+    maxLoan = maxMonthlyPayment * (factor - 1) / (stressMonthlyRate * factor)
+  }
+
+  // Qualification check: would the borrower's payment at the stress-test rate
+  // exceed the servicing ratio cap?
+  let stressPayment: number
+  if (stressMonthlyRate < 1e-10) {
+    stressPayment = clampedLoan / totalPayments
+  } else {
+    const factor = Math.pow(1 + stressMonthlyRate, totalPayments)
+    stressPayment = clampedLoan * (stressMonthlyRate * factor) / (factor - 1)
   }
 
   return {
-    qualified: monthlyPayment <= maxMonthlyPayment,
+    qualified: stressPayment <= maxMonthlyPayment,
     maxLoan,
     monthlyPayment,
   }

@@ -6,6 +6,7 @@ import {
   estimateHousingGrant,
   lookupCpfLifeEstimate,
   checkLoanQualification,
+  STRESS_TEST_RATES,
   projectIncomeGrowth,
   estimateIncomeTax,
   checkIncomeCeiling,
@@ -16,7 +17,7 @@ import {
   isEcGoal,
 } from './goal-calculator-sg'
 import { OW_CEILING_MONTHLY, OA_INTEREST_RATE } from '@/lib/data/cpfRates'
-import { EHG_FAMILY_TABLE, EHG_SINGLE_TABLE, MORTGAGE_RATES } from '@/lib/data/goal-defaults'
+import { EHG_FAMILY_TABLE, EHG_SINGLE_TABLE, MORTGAGE_RATES, getEffectiveLoanTenure, MAX_LOAN_END_AGE } from '@/lib/data/goal-defaults'
 
 // ============================================================
 // deriveCpfOaMonthly
@@ -321,40 +322,40 @@ describe('lookupCpfLifeEstimate', () => {
 describe('checkLoanQualification', () => {
   it('HDB loan passes MSR check', () => {
     // Income $8000, MSR 30% = $2400/month max
-    // $400K loan at 2.6% over 25 years
-    const result = checkLoanQualification(8000, 400_000, 0.026, 25, 'hdb')
+    // $400K loan at 2.6% actual, 3.0% stress over 25 years
+    const result = checkLoanQualification(8000, 400_000, 0.026, STRESS_TEST_RATES.hdb, 25, 'hdb')
     expect(result.monthlyPayment).toBeGreaterThan(0)
     expect(result.maxLoan).toBeGreaterThan(0)
-    // Monthly payment for $400K at 2.6% / 25yr ~ $1810
+    // Monthly payment for $400K at 2.6% / 25yr ~ $1810 (actual rate for display)
     expect(result.qualified).toBe(true)
   })
 
   it('HDB loan fails when loan too large', () => {
     // Income $5000, MSR 30% = $1500/month max
-    // $600K loan at 2.6% over 25 years ~ $2715/month — should fail
-    const result = checkLoanQualification(5000, 600_000, 0.026, 25, 'hdb')
+    // $600K loan at 3.0% stress over 25 years ~ $2847/month — should fail
+    const result = checkLoanQualification(5000, 600_000, 0.026, STRESS_TEST_RATES.hdb, 25, 'hdb')
     expect(result.qualified).toBe(false)
   })
 
   it('condo uses TDSR 55%', () => {
     // Income $10000, TDSR 55% = $5500/month max
-    // $1M loan at 3% over 30 years ~ $4216/month — should pass
-    const result = checkLoanQualification(10_000, 1_000_000, 0.03, 30, 'condo')
+    // $1M loan at 4.0% stress over 30 years ~ $4774/month — should pass
+    const result = checkLoanQualification(10_000, 1_000_000, 0.03, STRESS_TEST_RATES.bank, 30, 'condo')
     expect(result.qualified).toBe(true)
   })
 
   it('landed uses TDSR 55% same as condo', () => {
-    const result = checkLoanQualification(10_000, 1_000_000, 0.03, 30, 'landed')
+    const result = checkLoanQualification(10_000, 1_000_000, 0.03, STRESS_TEST_RATES.bank, 30, 'landed')
     expect(result.qualified).toBe(true)
     // Same result as condo for same inputs
-    const condoResult = checkLoanQualification(10_000, 1_000_000, 0.03, 30, 'condo')
+    const condoResult = checkLoanQualification(10_000, 1_000_000, 0.03, STRESS_TEST_RATES.bank, 30, 'condo')
     expect(result.maxLoan).toBeCloseTo(condoResult.maxLoan, 0)
   })
 
   it('ec uses TDSR 55% same as condo', () => {
     // EC is financed by bank loan — uses 55% TDSR cap, same as condo/landed
-    const ecResult = checkLoanQualification(10_000, 1_000_000, 0.03, 30, 'ec')
-    const condoResult = checkLoanQualification(10_000, 1_000_000, 0.03, 30, 'condo')
+    const ecResult = checkLoanQualification(10_000, 1_000_000, 0.03, STRESS_TEST_RATES.bank, 30, 'ec')
+    const condoResult = checkLoanQualification(10_000, 1_000_000, 0.03, STRESS_TEST_RATES.bank, 30, 'condo')
     expect(ecResult.qualified).toBe(condoResult.qualified)
     expect(ecResult.maxLoan).toBeCloseTo(condoResult.maxLoan, 0)
     expect(ecResult.monthlyPayment).toBeCloseTo(condoResult.monthlyPayment, 0)
@@ -362,43 +363,67 @@ describe('checkLoanQualification', () => {
 
   it('ec does NOT use HDB MSR 30% cap', () => {
     // Income $6000: MSR 30% = $1800, TDSR 55% = $3300
-    // A $500K loan at 3.5% / 30yr ~ $2245/month: fails MSR ($1800 cap) but passes TDSR ($3300 cap)
-    const ecResult = checkLoanQualification(6_000, 500_000, 0.035, 30, 'ec')
-    const hdbResult = checkLoanQualification(6_000, 500_000, 0.035, 30, 'hdb')
+    // A $500K loan at 3.5% stress / 30yr ~ $2245/month: fails MSR ($1800 cap) but passes TDSR ($3300 cap)
+    const ecResult = checkLoanQualification(6_000, 500_000, 0.035, 0.035, 30, 'ec')
+    const hdbResult = checkLoanQualification(6_000, 500_000, 0.035, 0.035, 30, 'hdb')
     expect(ecResult.qualified).toBe(true)   // passes TDSR 55%
     expect(hdbResult.qualified).toBe(false) // fails MSR 30%
   })
 
   it('zero loan returns qualified with zero payment', () => {
-    const result = checkLoanQualification(8000, 0, 0.026, 25, 'hdb')
+    const result = checkLoanQualification(8000, 0, 0.026, STRESS_TEST_RATES.hdb, 25, 'hdb')
     expect(result.qualified).toBe(true)
     expect(result.maxLoan).toBe(0)
     expect(result.monthlyPayment).toBe(0)
   })
 
   it('negative loan is clamped to 0', () => {
-    const result = checkLoanQualification(8000, -50_000, 0.026, 25, 'hdb')
+    const result = checkLoanQualification(8000, -50_000, 0.026, STRESS_TEST_RATES.hdb, 25, 'hdb')
     expect(result.qualified).toBe(true)
     expect(result.maxLoan).toBe(0)
     expect(result.monthlyPayment).toBe(0)
   })
 
-  it('maxLoan is consistent with servicing ratio', () => {
-    // Verify that maxLoan produces a monthly payment equal to the servicing cap
+  it('maxLoan is consistent with servicing ratio at stress-test rate', () => {
+    // Verify that maxLoan produces a monthly payment (at stress rate) equal to the servicing cap
     const income = 8000
-    const result = checkLoanQualification(income, 500_000, 0.026, 25, 'hdb')
+    const stressRate = STRESS_TEST_RATES.hdb
+    const result = checkLoanQualification(income, 500_000, 0.026, stressRate, 25, 'hdb')
     const maxMonthly = income * 0.30
 
-    // Compute payment for maxLoan
-    const monthlyRate = 0.026 / 12
+    // Compute payment for maxLoan at the stress-test rate (used for qualification)
+    const monthlyRate = stressRate / 12
     const n = 25 * 12
     const factor = Math.pow(1 + monthlyRate, n)
     const paymentAtMax = result.maxLoan * (monthlyRate * factor) / (factor - 1)
     expect(paymentAtMax).toBeCloseTo(maxMonthly, 0)
   })
 
+  it('monthlyPayment uses actual rate, not stress rate', () => {
+    // Verify that monthlyPayment is computed with the actual rate, not the stress rate
+    const result = checkLoanQualification(8000, 400_000, 0.026, 0.04, 25, 'hdb')
+    // PMT at 2.6% for $400K over 25yr ~ $1810
+    const monthlyRate = 0.026 / 12
+    const n = 25 * 12
+    const factor = Math.pow(1 + monthlyRate, n)
+    const expectedPayment = 400_000 * (monthlyRate * factor) / (factor - 1)
+    expect(result.monthlyPayment).toBeCloseTo(expectedPayment, 0)
+  })
+
+  it('stress rate makes qualification stricter than actual rate', () => {
+    // Same loan at actual rate qualifies, but at stress rate it might not
+    // $550K HDB loan: at 2.6% stress → ~$2490/mo (MSR $2400 fails)
+    //                  at 3.0% stress → ~$2605/mo (MSR $2400 still fails, but maxLoan is lower)
+    const resultLow = checkLoanQualification(8000, 550_000, 0.026, 0.026, 25, 'hdb')
+    const resultHigh = checkLoanQualification(8000, 550_000, 0.026, 0.04, 25, 'hdb')
+    // Higher stress rate → lower maxLoan
+    expect(resultHigh.maxLoan).toBeLessThan(resultLow.maxLoan)
+    // Monthly payment stays the same (uses actual rate)
+    expect(resultHigh.monthlyPayment).toBeCloseTo(resultLow.monthlyPayment, 0)
+  })
+
   it('zero interest rate works', () => {
-    const result = checkLoanQualification(8000, 400_000, 0, 25, 'hdb')
+    const result = checkLoanQualification(8000, 400_000, 0, 0, 25, 'hdb')
     // PMT = 400K / 300 months = $1333.33
     expect(result.monthlyPayment).toBeCloseTo(400_000 / 300, 0)
     expect(result.qualified).toBe(true)
@@ -756,6 +781,68 @@ describe('isEcGoal', () => {
 })
 
 // ============================================================
+// getEffectiveLoanTenure
+// ============================================================
+
+describe('getEffectiveLoanTenure', () => {
+  it('young borrower gets full tenure for HDB loan', () => {
+    // Age 30, HDB loan: max end age 65, so max tenure 35 years
+    // But base tenure is 25 years, so effective = 25
+    expect(getEffectiveLoanTenure(25, 30, 'hdb-loan', 'hdb')).toBe(25)
+  })
+
+  it('age 55 borrower gets 10-year HDB loan (capped at 65)', () => {
+    expect(getEffectiveLoanTenure(25, 55, 'hdb-loan', 'hdb')).toBe(10)
+  })
+
+  it('age 60 borrower gets 5-year HDB loan (capped at 65)', () => {
+    expect(getEffectiveLoanTenure(25, 60, 'hdb-loan', 'hdb')).toBe(5)
+  })
+
+  it('age 64 borrower gets 1-year minimum for HDB loan', () => {
+    expect(getEffectiveLoanTenure(25, 64, 'hdb-loan', 'hdb')).toBe(1)
+  })
+
+  it('age 65+ borrower gets 1-year minimum', () => {
+    expect(getEffectiveLoanTenure(25, 65, 'hdb-loan', 'hdb')).toBe(1)
+    expect(getEffectiveLoanTenure(25, 70, 'hdb-loan', 'hdb')).toBe(1)
+  })
+
+  it('bank loan for HDB also capped at age 65', () => {
+    expect(getEffectiveLoanTenure(30, 55, 'bank-loan', 'hdb')).toBe(10)
+  })
+
+  it('bank loan for condo capped at age 75', () => {
+    // Age 50, bank loan for condo: max end age 75, so max tenure 25 years
+    // Base tenure 30, so effective = 25
+    expect(getEffectiveLoanTenure(30, 50, 'bank-loan', 'condo')).toBe(25)
+  })
+
+  it('young borrower gets full 30-year bank loan for condo', () => {
+    // Age 30, condo: max end age 75, max tenure 45. Base 30. Effective = 30.
+    expect(getEffectiveLoanTenure(30, 30, 'bank-loan', 'condo')).toBe(30)
+  })
+
+  it('age 60 borrower gets 15-year bank loan for condo (capped at 75)', () => {
+    expect(getEffectiveLoanTenure(30, 60, 'bank-loan', 'condo')).toBe(15)
+  })
+
+  it('EC uses private property cap (age 75)', () => {
+    expect(getEffectiveLoanTenure(30, 50, 'bank-loan', 'ec')).toBe(25)
+  })
+
+  it('landed uses private property cap (age 75)', () => {
+    expect(getEffectiveLoanTenure(30, 50, 'bank-loan', 'landed')).toBe(25)
+  })
+
+  it('uses correct MAX_LOAN_END_AGE constants', () => {
+    expect(MAX_LOAN_END_AGE.hdb).toBe(65)
+    expect(MAX_LOAN_END_AGE.bank_hdb).toBe(65)
+    expect(MAX_LOAN_END_AGE.bank_private).toBe(75)
+  })
+})
+
+// ============================================================
 // Property-based tests
 // ============================================================
 
@@ -812,8 +899,9 @@ describe('property-based tests', () => {
         fc.double({ min: 3000, max: 30_000, noNaN: true }),
         fc.constantFrom('hdb' as const, 'condo' as const),
         (income, propertyType) => {
-          const result1 = checkLoanQualification(income, 500_000, 0.03, 25, propertyType)
-          const result2 = checkLoanQualification(income + 1000, 500_000, 0.03, 25, propertyType)
+          const stress = propertyType === 'hdb' ? STRESS_TEST_RATES.hdb : STRESS_TEST_RATES.bank
+          const result1 = checkLoanQualification(income, 500_000, 0.03, stress, 25, propertyType)
+          const result2 = checkLoanQualification(income + 1000, 500_000, 0.03, stress, 25, propertyType)
           expect(result2.maxLoan).toBeGreaterThanOrEqual(result1.maxLoan)
         },
       ),
