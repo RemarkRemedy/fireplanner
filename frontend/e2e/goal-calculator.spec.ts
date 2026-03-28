@@ -124,7 +124,9 @@ test.describe('Goal Calculator', () => {
     // The result card should contain a "/mo" savings amount
     await expect(page.getByText('/mo', { exact: false }).first()).toBeVisible()
 
-    // The cost breakdown section in the result card should include "Down payment"
+    // Cost breakdown is collapsed by default (inside a <details> element).
+    // Open it to verify "Down payment" is present.
+    await page.locator('details summary').click()
     await expect(
       page.getByText('Down payment', { exact: false }),
     ).toBeVisible()
@@ -407,8 +409,8 @@ test.describe('Goal Calculator V1.5', () => {
   test('Condo goal shows cash floor in results', async ({ page }) => {
     await goToGoalCalculator(page)
 
-    // Pick Condo
-    await page.getByText('Condo').click()
+    // Pick Condo (exact match to avoid hitting "Executive Condo" hint text)
+    await page.getByText('Condo', { exact: true }).click()
 
     // Select $1.5M price bracket
     await page.getByRole('button', { name: '$1.5M' }).click()
@@ -657,8 +659,8 @@ test.describe('Goal Calculator V1.5', () => {
 test.describe('Goal Calculator V2', () => {
   test('EC goal: full flow from picker to results', async ({ page }) => {
     await goToGoalCalculator(page)
-    // Pick EC tile
-    await page.getByText('EC').click()
+    // Pick EC tile (exact match to avoid hitting "Executive Condo" hint and "COE" text)
+    await page.getByText('EC', { exact: true }).click()
     // EC config: should show flat type buttons and price bracket
     await expect(page.getByRole('button', { name: '3-Room' })).toBeVisible()
     await expect(page.getByRole('button', { name: '4-Room' })).toBeVisible()
@@ -682,16 +684,11 @@ test.describe('Goal Calculator V2', () => {
   test('5-goal scenario: all goals render, add button hidden at limit', async ({ page }) => {
     await goToGoalCalculator(page)
 
-    // Add 5 goals quickly using simple goals (fastest path)
+    // Add 5 goals quickly using tiles from distinct categories to avoid
+    // category-based tile disabling (e.g., Business and Custom Goal share 'other').
     for (let i = 0; i < 5; i++) {
-      // Pick a simple goal tile (Wedding, Travel, Education, Business, Custom Goal)
-      const tiles = ['Wedding', 'Travel', 'Education', 'Business', 'Custom Goal']
+      const tiles = ['Wedding', 'Travel', 'Education', 'Business', 'Car']
       await page.getByText(tiles[i]).click()
-
-      // For Custom Goal, fill the name field
-      if (tiles[i] === 'Custom Goal') {
-        await page.locator('#custom-goal-label').fill('Emergency fund')
-      }
 
       await page.getByRole('button', { name: 'Continue' }).click()
 
@@ -705,8 +702,9 @@ test.describe('Goal Calculator V2', () => {
         })
         await skipStoryToFullResults(page)
       } else {
-        // Results appear directly (basics remembered, story skipped for 2+ goals)
-        await expect(page.getByText('Monthly savings needed')).toBeVisible({ timeout: 5000 })
+        // Results appear directly (basics remembered, story skipped for 2+ goals).
+        // Use .first() because multiple goal cards each show "Monthly savings needed".
+        await expect(page.getByText('Monthly savings needed').first()).toBeVisible({ timeout: 5000 })
       }
 
       // Add another (except on last)
