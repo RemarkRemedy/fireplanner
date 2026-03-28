@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { goToStart, selectPathway, fillGoalFirstForm } from './helpers'
+import { quickOnboarding } from './helpers'
 
 /**
  * US-9: Export Data (JSON + Excel)
@@ -9,18 +9,7 @@ import { goToStart, selectPathway, fillGoalFirstForm } from './helpers'
  */
 
 async function completeOnboarding(page: import('@playwright/test').Page) {
-  await goToStart(page)
-  await selectPathway(page, 'goal-first')
-  await fillGoalFirstForm(page, {
-    age: '30',
-    retirementAge: '55',
-    income: '100000',
-    expenses: '50000',
-    savings: '200000',
-  })
-  await page.getByRole('button', { name: /build my full plan/i }).click()
-  await expect(page).toHaveURL(/\/inputs/)
-  await page.waitForLoadState('networkidle')
+  await quickOnboarding(page)
 }
 
 test.describe('Export Data', () => {

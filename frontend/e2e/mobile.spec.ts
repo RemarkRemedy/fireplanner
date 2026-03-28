@@ -1,14 +1,10 @@
 import { test, expect } from '@playwright/test'
-import { goToStart, selectPathway } from './helpers'
+import { quickOnboarding } from './helpers'
 
 test.describe('US-14: Mobile Navigation', () => {
   test('mobile hamburger menu and bottom nav work correctly', async ({ page }) => {
     // 1. Complete onboarding on mobile viewport
-    await goToStart(page)
-    await selectPathway(page, 'goal-first')
-    await page.getByRole('button', { name: /build my full plan/i }).click()
-    await expect(page).toHaveURL(/\/inputs/)
-    await page.waitForLoadState('networkidle')
+    await quickOnboarding(page)
 
     // 2. Verify hamburger menu button is visible (desktop sidebar should be hidden)
     const hamburgerButton = page.getByLabel('Open navigation menu')
@@ -43,12 +39,11 @@ test.describe('US-14: Mobile Navigation', () => {
     const bottomNav = page.locator('nav.fixed.bottom-0')
     await expect(bottomNav).toBeVisible()
 
-    // Bottom nav should have 5 items: Inputs, Plan, Test, Dash, Guide
-    await expect(bottomNav.getByText('Inputs')).toBeVisible()
+    // Bottom nav should have 4 items: Plan, Health, Test, Dash
     await expect(bottomNav.getByText('Plan')).toBeVisible()
+    await expect(bottomNav.getByText('Health')).toBeVisible()
     await expect(bottomNav.getByText('Test')).toBeVisible()
     await expect(bottomNav.getByText('Dash')).toBeVisible()
-    await expect(bottomNav.getByText('Guide')).toBeVisible()
 
     // 6. Click a bottom nav link and verify navigation works
     await bottomNav.getByText('Dash').click()
@@ -63,11 +58,7 @@ test.describe('US-14: Mobile Navigation', () => {
 
   test('hamburger drawer close button works', async ({ page }) => {
     // 1. Navigate to inputs
-    await goToStart(page)
-    await selectPathway(page, 'story-first')
-    await page.getByRole('button', { name: /build my full plan/i }).click()
-    await expect(page).toHaveURL(/\/inputs/)
-    await page.waitForLoadState('networkidle')
+    await quickOnboarding(page)
 
     // 2. Open the drawer
     const hamburgerButton = page.getByLabel('Open navigation menu')

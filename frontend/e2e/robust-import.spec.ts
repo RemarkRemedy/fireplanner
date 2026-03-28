@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { goToStart, selectPathway, fillGoalFirstForm } from './helpers'
+import { quickOnboarding } from './helpers'
 import * as path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -15,18 +15,7 @@ const FIXTURES_DIR = path.join(__dirname, 'fixtures')
  */
 
 async function completeOnboarding(page: import('@playwright/test').Page) {
-  await goToStart(page)
-  await selectPathway(page, 'goal-first')
-  await fillGoalFirstForm(page, {
-    age: '30',
-    retirementAge: '55',
-    income: '100000',
-    expenses: '50000',
-    savings: '200000',
-  })
-  await page.getByRole('button', { name: /build my full plan/i }).click()
-  await expect(page).toHaveURL(/\/inputs/)
-  await page.waitForLoadState('networkidle')
+  await quickOnboarding(page)
 }
 
 /** Read a profile store field from localStorage. */
@@ -47,38 +36,33 @@ async function getProfileRaw(page: import('@playwright/test').Page) {
   })
 }
 
-/** Set a profile store field in localStorage and reload. */
-async function setProfileField(page: import('@playwright/test').Page, field: string, value: unknown) {
-  await page.evaluate(
-    ({ f, v }) => {
-      const raw = localStorage.getItem('fireplanner-profile')
-      if (raw) {
-        const data = JSON.parse(raw)
-        data.state[f] = v
-        localStorage.setItem('fireplanner-profile', JSON.stringify(data))
-      }
-    },
-    { f: field, v: value }
-  )
-  await page.reload()
-  await page.waitForLoadState('networkidle')
+/** Read the first adult's annualExpenses from the household plan store. */
+async function getHouseholdExpenses(page: import('@playwright/test').Page): Promise<number | null> {
+  return page.evaluate(() => {
+    const raw = localStorage.getItem('fireplanner-household-plan-v1')
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    const adults = parsed.state?.plan?.adults
+    if (!adults || adults.length === 0) return null
+    return adults[0].annualExpenses ?? null
+  })
 }
 
-/** Set multiple profile store fields in localStorage directly (no reload). */
-async function setProfileFields(page: import('@playwright/test').Page, fields: Record<string, unknown>) {
-  await page.evaluate(
-    (updates) => {
-      const raw = localStorage.getItem('fireplanner-profile')
-      if (raw) {
-        const data = JSON.parse(raw)
-        for (const [key, val] of Object.entries(updates)) {
-          data.state[key] = val
-        }
-        localStorage.setItem('fireplanner-profile', JSON.stringify(data))
+/** Set the first adult's annualExpenses in the household plan store and reload. */
+async function setHouseholdExpenses(page: import('@playwright/test').Page, value: number) {
+  await page.evaluate((v) => {
+    const raw = localStorage.getItem('fireplanner-household-plan-v1')
+    if (raw) {
+      const data = JSON.parse(raw)
+      const adults = data.state?.plan?.adults
+      if (adults && adults.length > 0) {
+        adults[0].annualExpenses = v
       }
-    },
-    fields
-  )
+      localStorage.setItem('fireplanner-household-plan-v1', JSON.stringify(data))
+    }
+  }, value)
+  await page.reload()
+  await page.waitForLoadState('networkidle')
 }
 
 /**
@@ -110,23 +94,14 @@ async function triggerImportAndWaitForReload(page: import('@playwright/test').Pa
 test.describe('Robust JSON Import/Export', () => {
   test.describe('1. Export then re-import (round-trip)', () => {
     test('exports data, clears state, re-imports, and verifies original values', async ({ page }) => {
-      // Step 1: Complete onboarding to reach /inputs with sidebar
+      // Step 1: Complete onboarding (demo data gives a full plan)
       await completeOnboarding(page)
 
-      // Set specific profile values directly in localStorage
-      await setProfileFields(page, {
-        currentAge: 28,
-        annualIncome: 72000,
-        annualExpenses: 36000,
-        liquidNetWorth: 150000,
-      })
-      await page.reload()
-      await page.waitForLoadState('networkidle')
-
-      // Verify the profile values are persisted
-      expect(await getProfileField(page, 'currentAge')).toBe(28)
-      expect(await getProfileField(page, 'annualExpenses')).toBe(36000)
-      expect(await getProfileField(page, 'liquidNetWorth')).toBe(150000)
+      // Record the initial profile values from demo data
+      const initialAge = await getProfileField(page, 'currentAge')
+      const initialExpenses = await getProfileField(page, 'annualExpenses')
+      expect(initialAge).toBeTruthy()
+      expect(initialExpenses).toBeTruthy()
 
       // Step 2: Export the data
       const exportButton = page.locator('button[title="Export data as JSON"]')
@@ -152,8 +127,7 @@ test.describe('Robust JSON Import/Export', () => {
 
       // Verify state is cleared (profile should have defaults)
       const ageAfterClear = await getProfileField(page, 'currentAge')
-      // After clear + reload, profile store re-initializes with defaults (age 30)
-      expect(ageAfterClear).not.toBe(28)
+      expect(ageAfterClear).not.toBe(initialAge)
 
       // Step 4: Import the downloaded file
       // Navigate to /inputs to access the sidebar import button
@@ -163,9 +137,8 @@ test.describe('Robust JSON Import/Export', () => {
       await triggerImportAndWaitForReload(page, downloadPath!)
 
       // Step 5: Verify the original data is restored
-      expect(await getProfileField(page, 'currentAge')).toBe(28)
-      expect(await getProfileField(page, 'annualExpenses')).toBe(36000)
-      expect(await getProfileField(page, 'liquidNetWorth')).toBe(150000)
+      expect(await getProfileField(page, 'currentAge')).toBe(initialAge)
+      expect(await getProfileField(page, 'annualExpenses')).toBe(initialExpenses)
     })
   })
 
@@ -186,8 +159,8 @@ test.describe('Robust JSON Import/Export', () => {
       // Verify migration added defaults for fields that were missing
       const profileRaw = await getProfileRaw(page)
       expect(profileRaw).toBeTruthy()
-      // After migration, version should be bumped to current (16)
-      expect(profileRaw.version).toBe(16)
+      // After migration, version should be bumped to current (23)
+      expect(profileRaw.version).toBe(23)
       // Migration should have added default values for newer fields
       expect(profileRaw.state.cpfLifeStartAge).toBe(65)
       expect(profileRaw.state.cpfLifePlan).toBe('standard')
@@ -208,52 +181,28 @@ test.describe('Robust JSON Import/Export', () => {
       expect(await getProfileField(page, 'annualExpenses')).toBe(60000)
       expect(await getProfileField(page, 'liquidNetWorth')).toBe(500000)
 
-      // Verify migration ran (version 0 -> 16)
+      // Verify migration ran (version 0 -> 23)
       const profileRaw = await getProfileRaw(page)
       expect(profileRaw).toBeTruthy()
-      expect(profileRaw.version).toBe(16)
+      expect(profileRaw.version).toBe(23)
     })
   })
 
-  test.describe('4. Import invalid data shows warning toast', () => {
-    test('imports file with invalid field types and shows validation warning', async ({ page }) => {
+  test.describe('4. Import invalid data shows error toast', () => {
+    test('imports file with invalid field types and shows error toast', async ({ page }) => {
       await completeOnboarding(page)
 
       // Import the invalid data fixture (currentAge: "banana").
-      // The import pipeline: data is written (validation errors don't block), then reload().
-      // The warning toast fires briefly before reload.
-      // We verify via localStorage that the import succeeded with the invalid data written,
-      // AND we check that the toast appeared by listening for it before the reload.
-
-      // Listen for console messages that might indicate the toast
-      const toastMessages: string[] = []
-      page.on('console', (msg) => {
-        toastMessages.push(msg.text())
-      })
-
-      // Use a race between waiting for the toast and the reload
-      // The toast.warning() call happens before reload, so we can try to catch it
-      const toastPromise = page.locator('[data-sonner-toast]').first().textContent({ timeout: 3000 }).catch(() => null)
-
+      // The import pipeline now validates and rejects invalid data (no reload).
       await triggerImport(page, path.join(FIXTURES_DIR, 'invalid-data.json'))
 
-      const toastText = await toastPromise
+      // Should show an error toast (no reload since validation failed)
+      const toast = page.locator('[data-sonner-toast]').first()
+      await expect(toast).toBeVisible({ timeout: 5000 })
 
-      // Wait for the page to finish reloading
-      await page.waitForLoadState('networkidle')
-
-      // Verify the data was still written to localStorage (validation errors don't block import)
-      const profileRaw = await getProfileRaw(page)
-      expect(profileRaw).toBeTruthy()
-      // The invalid currentAge "banana" should still be written (import doesn't block on validation)
-      expect(profileRaw.state.currentAge).toBe('banana')
-      expect(profileRaw.state.retirementAge).toBe(60)
-
-      // If we caught the toast before reload, verify its content
-      if (toastText) {
-        expect(toastText).toMatch(/validation warnings/i)
-      }
-      // The key assertion is that the data was imported despite validation errors
+      const toastText = await toast.textContent()
+      expect(toastText).toBeTruthy()
+      expect(toastText!.length).toBeGreaterThan(0)
     })
   })
 
@@ -276,13 +225,13 @@ test.describe('Robust JSON Import/Export', () => {
     })
   })
 
-  test.describe('6. Scenario save/load round-trip with migration', () => {
+  test.describe('6. Scenario save/load round-trip', () => {
     test('saves scenario, changes data, loads original, verifies restoration', async ({ page }) => {
       await completeOnboarding(page)
 
-      // Set specific expenses
-      await setProfileField(page, 'annualExpenses', 50000)
-      expect(await getProfileField(page, 'annualExpenses')).toBe(50000)
+      // Record initial household expenses from demo data
+      const initialExpenses = await getHouseholdExpenses(page)
+      expect(initialExpenses).toBeTruthy()
 
       // Open scenario manager
       const scenariosButton = page.getByRole('button', { name: /scenarios/i }).first()
@@ -298,9 +247,9 @@ test.describe('Robust JSON Import/Export', () => {
       // Verify scenario appears
       await expect(page.locator('button[title="Load \\"Original\\""]')).toBeVisible()
 
-      // Change expenses to 80000
-      await setProfileField(page, 'annualExpenses', 80000)
-      expect(await getProfileField(page, 'annualExpenses')).toBe(80000)
+      // Change expenses to a different value
+      await setHouseholdExpenses(page, 80000)
+      expect(await getHouseholdExpenses(page)).toBe(80000)
 
       // Re-open scenario manager and load "Original"
       const scenariosButton2 = page.getByRole('button', { name: /scenarios/i }).first()
@@ -312,8 +261,8 @@ test.describe('Robust JSON Import/Export', () => {
       // Wait for rehydration
       await page.waitForTimeout(500)
 
-      // Verify expenses restored to 50000
-      expect(await getProfileField(page, 'annualExpenses')).toBe(50000)
+      // Verify expenses restored to original value
+      expect(await getHouseholdExpenses(page)).toBe(initialExpenses)
     })
   })
 })

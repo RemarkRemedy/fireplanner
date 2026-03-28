@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { goToStart, selectPathway, fillGoalFirstForm } from './helpers'
+import { quickOnboarding } from './helpers'
 
 /**
  * US-8: Save and Load Scenarios
@@ -10,52 +10,45 @@ import { goToStart, selectPathway, fillGoalFirstForm } from './helpers'
  */
 
 async function completeOnboarding(page: import('@playwright/test').Page) {
-  await goToStart(page)
-  await selectPathway(page, 'goal-first')
-  await fillGoalFirstForm(page, {
-    age: '30',
-    retirementAge: '55',
-    income: '100000',
-    expenses: '50000',
-    savings: '200000',
-  })
-  await page.getByRole('button', { name: /build my full plan/i }).click()
-  await expect(page).toHaveURL(/\/inputs/)
-  await page.waitForLoadState('networkidle')
+  await quickOnboarding(page)
 }
 
-/** Set a known expenses value directly in the profile store. */
+/** Read the first adult's annualExpenses from the household plan store. */
+async function getExpenses(page: import('@playwright/test').Page): Promise<number | null> {
+  return page.evaluate(() => {
+    const raw = localStorage.getItem('fireplanner-household-plan-v1')
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    const adults = parsed.state?.plan?.adults
+    if (!adults || adults.length === 0) return null
+    return adults[0].annualExpenses ?? null
+  })
+}
+
+/** Set the first adult's annualExpenses in the household plan store and reload. */
 async function setExpenses(page: import('@playwright/test').Page, value: number) {
   await page.evaluate((v) => {
-    const raw = localStorage.getItem('fireplanner-profile')
+    const raw = localStorage.getItem('fireplanner-household-plan-v1')
     if (raw) {
       const data = JSON.parse(raw)
-      data.state.annualExpenses = v
-      localStorage.setItem('fireplanner-profile', JSON.stringify(data))
+      const adults = data.state?.plan?.adults
+      if (adults && adults.length > 0) {
+        adults[0].annualExpenses = v
+      }
+      localStorage.setItem('fireplanner-household-plan-v1', JSON.stringify(data))
     }
   }, value)
   await page.reload()
   await page.waitForLoadState('networkidle')
 }
 
-/** Read the expenses value from the profile store in localStorage. */
-async function getExpenses(page: import('@playwright/test').Page): Promise<number | null> {
-  return page.evaluate(() => {
-    const raw = localStorage.getItem('fireplanner-profile')
-    if (!raw) return null
-    return JSON.parse(raw).state?.annualExpenses ?? null
-  })
-}
-
 test.describe('Scenarios', () => {
   test('save, modify, save again, and load original scenario', async ({ page }) => {
     await completeOnboarding(page)
 
-    // Set a known expenses value (50000) directly in the store
-    await setExpenses(page, 50000)
-
-    // Verify it's set
-    expect(await getExpenses(page)).toBe(50000)
+    // Record initial expenses from demo data
+    const initialExpenses = await getExpenses(page)
+    expect(initialExpenses).toBeTruthy()
 
     // Step 1: Open the scenario manager in the sidebar
     const scenariosButton = page.getByRole('button', { name: /scenarios/i }).first()
@@ -96,8 +89,8 @@ test.describe('Scenarios', () => {
     // Wait for stores to rehydrate
     await page.waitForTimeout(500)
 
-    // Step 6: Verify expenses restored to 50000
-    expect(await getExpenses(page)).toBe(50000)
+    // Step 6: Verify expenses restored to initial value
+    expect(await getExpenses(page)).toBe(initialExpenses)
   })
 
   test('can delete a saved scenario', async ({ page }) => {

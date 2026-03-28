@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { goToStart, selectPathway, fillGoalFirstForm } from './helpers'
+import { quickOnboarding } from './helpers'
 
 /**
  * US-7: Compare Withdrawal Strategies
@@ -10,18 +10,7 @@ import { goToStart, selectPathway, fillGoalFirstForm } from './helpers'
  */
 
 async function completeOnboarding(page: import('@playwright/test').Page) {
-  await goToStart(page)
-  await selectPathway(page, 'goal-first')
-  await fillGoalFirstForm(page, {
-    age: '30',
-    retirementAge: '55',
-    income: '100000',
-    expenses: '50000',
-    savings: '200000',
-  })
-  await page.getByRole('button', { name: /build my full plan/i }).click()
-  await expect(page).toHaveURL(/\/inputs/)
-  await page.waitForLoadState('networkidle')
+  await quickOnboarding(page)
 }
 
 test.describe('Withdrawal Strategies', () => {
@@ -69,8 +58,8 @@ test.describe('Withdrawal Strategies', () => {
 
     // The comparison table should have column headers
     await expect(page.getByText('Avg Withdrawal')).toBeVisible()
-    await expect(page.getByText('Terminal Portfolio')).toBeVisible()
-    await expect(page.getByText('Survived')).toBeVisible()
+    await expect(page.getByText('Ending Balance')).toBeVisible()
+    await expect(page.getByText('Lasted')).toBeVisible()
 
     // Withdrawal amounts should show dollar values ($ followed by digits)
     const dollarValues = page.locator('td').filter({ hasText: /^\$[\d,]+/ })

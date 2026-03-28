@@ -146,40 +146,16 @@ export async function fillAlreadyFireForm(page: Page, opts: {
 }
 
 /**
- * Complete goal-first onboarding with standard test values.
- * Age 30, retirement 55, income $100K, expenses $50K, savings $200K.
+ * Complete onboarding by loading demo data.
+ * Demo gives a fully populated plan with setupCompleted=true.
  * Ends on /inputs page.
  */
-export async function quickOnboarding(page: Page, opts?: {
-  age?: string
-  retirementAge?: string
-  income?: string
-  expenses?: string
-  savings?: string
-}) {
+export async function quickOnboarding(page: Page) {
   await goToStart(page)
-  await selectPathway(page, 'goal-first')
-
-  const formInputs = page.locator('main input[inputmode="numeric"]')
-  await expect(formInputs).toHaveCount(5, { timeout: 5000 })
-
-  const v = {
-    age: opts?.age ?? '30',
-    retirementAge: opts?.retirementAge ?? '55',
-    income: opts?.income ?? '100000',
-    expenses: opts?.expenses ?? '50000',
-    savings: opts?.savings ?? '200000',
-  }
-
-  for (const [i, val] of [v.age, v.retirementAge, v.income, v.expenses, v.savings].entries()) {
-    await formInputs.nth(i).click()
-    await formInputs.nth(i).fill(val)
-  }
-  await formInputs.nth(4).blur()
-
-  await expect(page.getByText('FIRE Number:').first()).toBeVisible({ timeout: 5000 })
-  await page.getByRole('button', { name: /build my full plan/i }).click()
-  await expect(page).toHaveURL(/\/inputs/)
+  await page.getByRole('button', { name: /explore a demo/i }).click()
+  await expect(page).toHaveURL(/\/projection/, { timeout: 10000 })
+  await page.waitForLoadState('networkidle')
+  await page.goto('/inputs')
   await page.waitForLoadState('networkidle')
 }
 
