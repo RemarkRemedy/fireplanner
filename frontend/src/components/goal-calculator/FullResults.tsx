@@ -8,7 +8,6 @@ import { Plus, RefreshCw, ArrowRight, Pencil, AlertTriangle, Shield, Banknote, P
 import { formatCurrency, formatPercent } from '@/lib/utils'
 import {
   computeGoalFeasibility,
-  computeMultiGoalStacking,
 } from '@/lib/calculations/goal-calculator'
 import { deriveCpfOaMonthly } from '@/lib/calculations/goal-calculator-sg'
 import { grossUpFromTakeHome } from '@/lib/calculations/grossUp'
@@ -293,7 +292,7 @@ function EnrichedGoalCard({
         </div>
 
         {/* Progress bar */}
-        {enriched.adjustedMonthlySavings > 0 && (
+        {enriched.adjustedMonthlySavings > 0 && isFinite(enriched.adjustedMonthlySavings) && (
           <div className="space-y-1">
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>
@@ -328,7 +327,7 @@ function EnrichedGoalCard({
         )}
 
         {/* Shortfall message */}
-        {!feasibility.feasible && feasibility.shortfall > 0 && (
+        {!feasibility.feasible && feasibility.shortfall > 0 && isFinite(feasibility.shortfall) && (
           <p className="text-sm text-red-600">
             You'd need {formatCurrency(Math.round(feasibility.shortfall))} more
             per month, or push the timeline further out.
@@ -516,13 +515,16 @@ export function FullResults({
   onViewStory,
   wealthCurve,
 }: FullResultsProps) {
+  const effectivePartnerIncome = wealthCurve?.isModified
+    ? (wealthCurve.overrides.partnerMonthlyIncome ?? basics.partnerMonthlyIncome ?? 0)
+    : (basics.partnerMonthlyIncome ?? 0)
   const effectiveIncome = wealthCurve?.isModified
     ? (wealthCurve.overrides.monthlyIncome ?? basics.monthlyIncome)
     : basics.monthlyIncome
   const effectiveExpenses = wealthCurve?.isModified
     ? (wealthCurve.overrides.monthlyExpenses ?? basics.monthlyExpenses)
     : basics.monthlyExpenses
-  const householdIncome = effectiveIncome + (basics.partnerMonthlyIncome ?? 0)
+  const householdIncome = effectiveIncome + effectivePartnerIncome
   const available = householdIncome - effectiveExpenses
   const hasPropertyGoal = goals.some((g) => g.category === 'housing')
 
@@ -538,7 +540,14 @@ export function FullResults({
     if (!wealthCurveIsModified || !wealthCurveOverrides) return basics
     return {
       ...basics,
-      ...(wealthCurveOverrides.monthlyIncome != null && { monthlyIncome: wealthCurveOverrides.monthlyIncome }),
+      ...(wealthCurveOverrides.monthlyIncome != null && {
+        monthlyIncome: wealthCurveOverrides.monthlyIncome,
+        grossIncome: undefined, // force recalculation from overridden net
+      }),
+      ...(wealthCurveOverrides.partnerMonthlyIncome != null && {
+        partnerMonthlyIncome: wealthCurveOverrides.partnerMonthlyIncome,
+        partnerGrossIncome: undefined,
+      }),
       ...(wealthCurveOverrides.monthlyExpenses != null && { monthlyExpenses: wealthCurveOverrides.monthlyExpenses }),
       ...(wealthCurveOverrides.existingSavings != null && { existingSavings: wealthCurveOverrides.existingSavings }),
     }
@@ -563,14 +572,11 @@ export function FullResults({
     return results
   }, [available, effectiveData.perGoal])
 
-  // Compute stacked results for multi-goal summary
-  const stacked = useMemo(
-    () => computeMultiGoalStacking(goals, effectiveBasics),
-    [goals, effectiveBasics],
-  )
-
-  const totalMonthlySavings = stacked.reduce(
-    (sum, s) => sum + s.adjustedMonthlySavings,
+  // Total monthly savings: use effectiveData (CPF/grant-adjusted) for consistency
+  // with per-goal cards. Don't re-run stacking independently — it uses breakdown.total
+  // which over-allocates for property goals.
+  const totalMonthlySavings = effectiveData.perGoal.reduce(
+    (sum, eg) => sum + eg.adjustedMonthlySavings,
     0,
   )
   const exceeds = totalMonthlySavings > available
@@ -676,7 +682,7 @@ export function FullResults({
             <EnrichedGoalCard
               key={enriched.goal.id}
               enriched={enriched}
-              basics={basics}
+              basics={effectiveBasics}
               feasibility={goalFeasibilities[i]}
               remainingAvailable={available - priorSavings}
             />
@@ -711,19 +717,21 @@ export function FullResults({
                 </p>
               )}
 
-              {/* Per-goal stacked feasibility */}
+              {/* Per-goal feasibility (aligned with per-goal cards above) */}
               <div className="space-y-2 pt-2">
-                {stacked.map((s) => (
+                {effectiveData.perGoal.map((eg, i) => (
                   <div
-                    key={s.goal.id}
+                    key={eg.goal.id}
                     className="flex items-center justify-between gap-2"
                   >
-                    <span className="text-sm truncate">{s.label}</span>
+                    <span className="text-sm truncate">{eg.goal.label}</span>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground whitespace-nowrap">
-                        {formatCurrency(Math.round(s.adjustedMonthlySavings))}/mo
+                        {isFinite(eg.adjustedMonthlySavings)
+                          ? `${formatCurrency(Math.round(eg.adjustedMonthlySavings))}/mo`
+                          : 'N/A'}
                       </span>
-                      <FeasibilityBadge level={s.stackedFeasibility.level} />
+                      <FeasibilityBadge level={goalFeasibilities[i]?.level ?? 'red'} />
                     </div>
                   </div>
                 ))}

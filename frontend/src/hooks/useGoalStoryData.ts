@@ -159,8 +159,8 @@ export function computeGoalStoryData(
   // 1. Derive gross income
   const grossIncome = basics.grossIncome ?? grossUpFromTakeHome(basics.monthlyIncome, basics.age)
 
-  // 2. Couple mode
-  const isCoupleMode = basics.partnerAge != null
+  // 2. Couple mode — aligned with goal-calc-adapter detection logic
+  const isCoupleMode = basics.coupleMode === true || basics.partnerAge != null
   const partnerGross = isCoupleMode
     ? (basics.partnerGrossIncome ?? grossUpFromTakeHome(basics.partnerMonthlyIncome ?? 0, basics.partnerAge!))
     : 0
