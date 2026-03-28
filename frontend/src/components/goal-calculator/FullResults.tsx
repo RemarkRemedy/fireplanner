@@ -443,6 +443,23 @@ function SharedInsightsSection({
         </InsightChip>
       )}
 
+      {/* Post-payment emergency fund warning */}
+      {shared.postPaymentEmergencyShortfall && (
+        <InsightChip
+          label={`After ${shared.postPaymentEmergencyShortfall.goalLabel}: savings below emergency fund`}
+          variant="warning"
+          icon={<Banknote size={12} />}
+        >
+          <p>
+            After paying for {shared.postPaymentEmergencyShortfall.goalLabel}, your
+            remaining savings (~{formatCurrency(shared.postPaymentEmergencyShortfall.remainingAfterPayment)}) would
+            be {formatCurrency(shared.postPaymentEmergencyShortfall.shortfall)} below your{' '}
+            {formatCurrency(Math.round(shared.emergencyFund))} emergency fund.
+            Consider saving a buffer on top of your goal target.
+          </p>
+        </InsightChip>
+      )}
+
       {/* Parking recommendation — hidden until per-goal recommendations are implemented */}
     </div>
   )

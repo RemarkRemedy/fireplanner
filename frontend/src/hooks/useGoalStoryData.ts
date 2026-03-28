@@ -78,6 +78,12 @@ export interface SharedInsights {
   cpfLifeMonthly: number
   emergencyFund: number
   emergencyFundGap: number
+  /** Post-payment emergency fund check. Null if no issue. */
+  postPaymentEmergencyShortfall: {
+    goalLabel: string
+    remainingAfterPayment: number
+    shortfall: number
+  } | null
   peerBenchmark: string
   incomeTaxMonthly: number
   incomeCeilingWarning: string | null
@@ -372,6 +378,28 @@ export function computeGoalStoryData(
   const hasLoan = perGoal.some((g) => g.loanQualification != null)
   const hasCpfOffset = perGoal.some((g) => g.cpfOaAccumulated > 0)
 
+  // Post-payment emergency fund warning
+  // Check: after paying each goal's upfront cost, will remaining savings
+  // drop below the emergency fund floor?
+  let postPaymentEmergencyShortfall: SharedInsights['postPaymentEmergencyShortfall'] = null
+  if (emergencyFund > 0) {
+    for (const eg of perGoal) {
+      const months = Math.max(0, (eg.goal.targetAge - basics.age) * 12)
+      const projectedCash = basics.existingSavings + (eg.adjustedMonthlySavings * months)
+      const cashTarget = isPropertyGoal(eg.goal) ? eg.cashNeeded : eg.goal.breakdown.total
+      const remainingAfterPayment = projectedCash - cashTarget
+
+      if (remainingAfterPayment < emergencyFund && remainingAfterPayment >= 0) {
+        postPaymentEmergencyShortfall = {
+          goalLabel: eg.goal.label,
+          remainingAfterPayment: Math.round(remainingAfterPayment),
+          shortfall: Math.round(emergencyFund - remainingAfterPayment),
+        }
+        break
+      }
+    }
+  }
+
   const storyCards = mappedCards.filter((card) => {
     switch (card.key) {
       case 'grant': return hasGrant
@@ -393,6 +421,7 @@ export function computeGoalStoryData(
       cpfLifeMonthly,
       emergencyFund,
       emergencyFundGap,
+      postPaymentEmergencyShortfall,
       peerBenchmark,
       incomeTaxMonthly: taxEstimate.monthlySetAside,
       incomeCeilingWarning,
