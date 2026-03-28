@@ -141,6 +141,55 @@ test.describe('P1-P7: Setup Wizard & Nudge Flows', () => {
     await expect(page.getByText('Annual Insurance Premiums')).toBeVisible()
   })
 
+  test('setup values carry through to inputs page and store', async ({ page }) => {
+    // Use the standard setup wizard which fills:
+    // Step 1: age fields left at defaults (30, 65)
+    // Step 2 (income): 120000 monthly take-home
+    // Step 3 (expenses): 60000 monthly
+    // Step 4 (savings): 200000
+    await completeSetupWizard(page, { ownsProperty: 'no' })
+    await page.waitForURL(/\/(projection|wrapped|inputs|dashboard)/, { timeout: 15000 })
+
+    await page.goto('/inputs')
+    await page.waitForLoadState('networkidle')
+
+    // Verify values landed in the household plan store
+    const storeData = await page.evaluate(() => {
+      const raw = localStorage.getItem('fireplanner-household-plan-v1')
+      if (!raw) return null
+      try {
+        const parsed = JSON.parse(raw)
+        const adult = parsed?.state?.plan?.adults?.[0]
+        return {
+          currentAge: adult?.currentAge,
+          retirementAge: adult?.retirementAge,
+          annualIncome: adult?.annualIncome,
+          annualExpenses: adult?.annualExpenses,
+          liquidNetWorth: adult?.liquidNetWorth,
+        }
+      } catch { return null }
+    })
+
+    expect(storeData).not.toBeNull()
+
+    // Core contract: setup wizard values land in the household plan store
+    // Age: Step 1 uses default age (30) since fillVisibleInputs doesn't target specific fields
+    expect(storeData!.currentAge).toBe(30)
+    expect(storeData!.retirementAge).toBe(55)
+    // Income: 120000 monthly take-home → gross-up'd to annual
+    expect(storeData!.annualIncome).toBeGreaterThan(1000000)
+    // Expenses: 60000 monthly → annualized = 720000
+    expect(storeData!.annualExpenses).toBe(720000)
+    // Savings: should be populated (non-zero)
+    expect(storeData!.liquidNetWorth).toBeGreaterThan(0)
+
+    // Verify the inputs page renders with the setup data
+    const personalSection = page.locator('#section-personal')
+    await expect(personalSection).toBeVisible({ timeout: 10000 })
+    // The "People & Household" section should show the age from setup
+    await expect(personalSection.getByText(/Age 30/)).toBeVisible({ timeout: 5000 })
+  })
+
   test('P7: healthcare section shows premium overrides on Inputs page', async ({ page }) => {
     await completeSetupWizard(page, { ownsProperty: 'no' })
     await page.waitForURL(/\/(dashboard|projection|inputs)/, { timeout: 15000 })

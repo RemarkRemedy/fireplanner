@@ -281,6 +281,57 @@ test.describe('Goal Calculator', () => {
     // Should navigate to /inputs
     await expect(page).toHaveURL(/\/inputs/, { timeout: 10000 })
   })
+
+  test('Transfer to planner: goal data lands in household plan store', async ({ page }) => {
+    await goToGoalCalculator(page)
+
+    // Add an HDB goal (has specific structure we can verify)
+    await page.getByText('HDB Flat').click()
+    await page.getByRole('button', { name: '4-Room' }).click()
+    await page.getByRole('button', { name: /BTO/i }).click()
+    await page.getByRole('button', { name: /HDB Loan/i }).click()
+    await page.getByRole('button', { name: 'Continue' }).click()
+
+    // BasicsForm
+    await expect(page.getByText('Your basics')).toBeVisible()
+    await fillBasicsAndCalculate(page, {
+      age: '30',
+      monthlyIncome: '6000',
+      monthlyExpenses: '3000',
+      existingSavings: '50000',
+    })
+    await skipStoryToFullResults(page)
+
+    await expect(page.getByText('Monthly savings needed').first()).toBeVisible({ timeout: 5000 })
+
+    // Transfer to planner
+    await page.getByRole('button', { name: /Continue to Full Planner/i }).click()
+    await expect(page).toHaveURL(/\/inputs/, { timeout: 10000 })
+    await page.waitForLoadState('networkidle')
+
+    // Verify goal landed in household plan store
+    const goalData = await page.evaluate(() => {
+      const raw = localStorage.getItem('fireplanner-household-plan-v1')
+      if (!raw) return null
+      try {
+        const parsed = JSON.parse(raw)
+        const goals = parsed?.state?.plan?.goals ?? []
+        return goals.map((g: { label: string; category: string; amount: number }) => ({
+          label: g.label,
+          category: g.category,
+          amount: g.amount,
+        }))
+      } catch { return null }
+    })
+
+    expect(goalData).not.toBeNull()
+    expect(goalData!.length).toBeGreaterThanOrEqual(1)
+
+    // Should have a housing goal from the HDB transfer
+    const housingGoal = goalData!.find((g: { category: string }) => g.category === 'housing')
+    expect(housingGoal).toBeTruthy()
+    expect(housingGoal.amount).toBeGreaterThan(0)
+  })
 })
 
 // ── V1.5 Tests ──────────────────────────────────────────────────────────────
