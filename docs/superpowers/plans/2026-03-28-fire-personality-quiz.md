@@ -58,6 +58,20 @@ Tests:
 
 ---
 
+## Quiz Persistence Contract (READ BEFORE TASKS 10-15)
+
+All quiz state lives in localStorage (no Zustand store). These keys and shapes are the single source of truth for every task that reads or writes quiz data:
+
+| Key | Shape | Written by | Read by |
+|-----|-------|------------|---------|
+| `quiz-personality` | `{ typeId: string, scores: { savings, risk, income, property }, timestamp: string, answers: number[] }` | Task 6 (quiz completion) | Tasks 10, 11, 12, 14 |
+| `quiz-history` | `Array<{ typeId: string, scores: {...}, timestamp: string }>` | Task 12 (appended on each completion) | Tasks 12, 14 |
+| `fire-age-snapshot` | `{ fireAge: number, timestamp: string }` | Task 13 (dashboard visit) | Task 13 |
+
+**Important:** Access `.typeId` (not `.type`). Export/import in Task 14 serializes these raw localStorage keys into the `PortabilityEnvelopeV2.quiz` field.
+
+---
+
 ## Task 1: Quiz Data Layer
 
 **Files:**
@@ -169,7 +183,7 @@ Expected: FAIL (scoreQuiz not defined)
 Create `quiz-scoring.ts`:
 - Import `QUIZ_QUESTIONS` and `PERSONALITY_TYPES` from `@/lib/data/quiz`
 - `scoreQuiz(answers: number[]): PersonalityType`
-  - Validate answers: clamp each to 0-3 range, pad with 0 if short
+  - Validate answers: clamp each to 0-3 range. If array length < 5, return Chill Coaster immediately (do NOT pad with zeros, because [0,0,0,0,0] maps to Kopi Saver via high savings scores, not the intended "no data" fallback)
   - Sum 4-axis scores from weight matrix
   - Apply priority-ordered rules (from spec):
     1. Risk >= 8 → Moonshot Maverick
@@ -380,7 +394,7 @@ Progressive disclosure layout (from CEO/design review):
 
 - [ ] **Step 4: Build QuizTips (E4)**
 
-- Collapsible section using shadcn/ui `Collapsible` or framer-motion height animation
+- Collapsible section using framer-motion height animation (`animate: { height: 'auto' }`) or existing shadcn/ui `Accordion`. Note: `@radix-ui/react-collapsible` is NOT installed. Use Accordion (already available) or framer-motion AnimatePresence with height animation. Do NOT add a new Radix dependency for this.
 - 3 tips from `PERSONALITY_TIPS[typeId]`
 - Each tip: numbered, actionable copy referencing real SG financial action
 
@@ -428,10 +442,13 @@ Since `/quiz` is outside AppLayout, the Syne font may not be auto-loaded. Add an
 
 - [ ] **Step 2: Implement share flow (with font.ready guard)**
 
-Wrap the html2canvas call in `await document.fonts.ready` to ensure Syne is loaded before capture. 3-tier fallback:
-1. Web Share API with PNG blob (from html2canvas capture)
-2. Copy quiz URL to clipboard + toast "Link copied!"
-3. html2canvas PNG download
+Share flow sequence: always capture PNG first, then use it in the share tier:
+1. `await document.fonts.ready` then `html2canvas` capture → PNG blob
+2. If Web Share API available: share PNG blob via native share sheet
+3. Else: copy quiz URL to clipboard + toast "Link copied!"
+4. Always show a "Download" button that saves the already-captured PNG
+
+The existing pattern in `GoalStoryContainer.tsx` does URL share first and capture last. The quiz inverts this because the share card IS the viral mechanic.
 
 Wrap html2canvas call in try/catch. On failure, fall back to pre-generated static PNG per type (if available) or URL-only share.
 
