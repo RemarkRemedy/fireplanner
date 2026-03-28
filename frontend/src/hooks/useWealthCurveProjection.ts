@@ -164,7 +164,16 @@ function overlayPropertyEquity(
   })
 }
 
-/** Extract property price from smart inputs. */
+/**
+ * Extract property price from smart inputs.
+ *
+ * This intentionally reads from smartInputs (the actual property price), NOT from
+ * goal.totalCostToday (the breakdown total = DP + BSD + legal + reno). The what-if
+ * budget slider adjusts totalCostToday, which changes how much cash the user needs
+ * to save. But the property price itself doesn't change: equity = appreciated value
+ * minus mortgage balance, both derived from the property price. So the equity overlay
+ * is correct even when the budget slider is active.
+ */
 function getPropertyPrice(inputs: NonNullable<GoalCalcGoal['smartInputs']>): number {
   switch (inputs.kind) {
     case 'hdb': return inputs.priceOverride ?? getHdbPriceRange(inputs.flatType, inputs.tenure).midpoint
@@ -253,9 +262,16 @@ export function useWealthCurveProjection(
     // reduce the cost further. Using cashNeeded instead of totalCostToday avoids
     // overstating the dip in the wealth curve at purchase age.
     const cashNeededMap = new Map<string, number>()
+    const maxLoanMap = new Map<string, number>()
     for (const eg of storyData.perGoal) {
       if (eg.goal.category === 'housing') {
         cashNeededMap.set(eg.goal.id, eg.cashNeeded)
+      }
+      // When MSR/TDSR qualification fails, cap the mortgage at the max
+      // qualified loan. The shortfall is already added to cashNeeded above,
+      // so the projection must use the reduced loan to avoid double-charging.
+      if (eg.loanQualification && !eg.loanQualification.qualified) {
+        maxLoanMap.set(eg.goal.id, eg.loanQualification.maxLoan)
       }
     }
 
@@ -263,6 +279,7 @@ export function useWealthCurveProjection(
       effectiveBasics,
       effectiveGoals,
       cashNeededMap.size > 0 ? cashNeededMap : undefined,
+      maxLoanMap.size > 0 ? maxLoanMap : undefined,
     )
 
     // Apply expectedReturn override if set
@@ -313,7 +330,13 @@ export function useWealthCurveProjection(
       }),
   [effectiveGoals])
 
-  // FIRE number in today's dollars (real terms — no inflation adjustment needed)
+  // FIRE number in today's dollars (real terms — no inflation adjustment needed).
+  // Note: this is the BASE FIRE target (expenses only). The freedomAge scan below
+  // uses a HIGHER threshold (FIRE + remaining loan obligations) because you need
+  // extra savings to cover time-bounded loan payments. This means the wealth curve
+  // can cross the FIRE line before freedomAge is reached when loans are active.
+  // This is intentional: the FIRE line represents the perpetual expense target,
+  // while freedomAge accounts for the full cost of stopping work (including loans).
   const fireNumber = useMemo((): number | null => {
     const annualExpenses = effectiveBasics.monthlyExpenses * 12
     const target = annualExpenses * FIRE_MULTIPLIER
