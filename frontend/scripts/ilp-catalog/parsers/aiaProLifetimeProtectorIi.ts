@@ -256,7 +256,7 @@ function buildVariant(document: ExtractedPdfDocument, deathBenefitOption: DeathB
     },
     eecTable: [...FULL_SURRENDER_CHARGE_SCHEDULE],
     warnings: [
-      `This supported template models the SGD open-ended ${coverLabel} corridor with the published premium-year regular premium charge schedule, the 2% Special Bonus from premium year 10 onward, the fixed S$5 monthly policy fee, the Appendix A Benefit Charge, the fixed S$50 monthly premium-holiday charge during the first two policy years, the 5% top-up premium charge with blocking in months where regular premiums are not paid up to date, the nil policy-level partial-withdrawal charge path with the post-second-policy-year start gate plus the published S$1,000 minimum one-off withdrawal amount and S$1,000 residual policy-value floor, the first-two-policy-years full-surrender charge schedule, and the current-state death benefit via a manual current insured amount input.`,
+      `This supported template models the SGD open-ended ${coverLabel} corridor with the published premium-year regular premium charge schedule, the 2% Special Bonus from premium year 10 onward, the fixed S$5 monthly policy fee, the Appendix A Benefit Charge, the fixed S$50 monthly premium-holiday charge during the first two policy years, the 5% top-up premium charge with blocking in months where regular premiums are not paid up to date, the nil policy-level partial-withdrawal charge path with the post-second-policy-year start gate plus the published S$1,000 minimum one-off withdrawal amount and S$1,000 residual policy-value floor, the first-two-policy-years full-surrender charge schedule, and the current-state death benefit via a manual current insured amount input that remains user-supplied by design in this app.`,
       'No Lapse Privilege debt carry, policy-variation approval rules, and claim-side payout settlement remain informational only.',
     ],
     unsupportedItems: [
@@ -265,8 +265,8 @@ function buildVariant(document: ExtractedPdfDocument, deathBenefitOption: DeathB
       'AIA Vitality PowerUp Dollar, optional riders, fund switching, automatic fund switching, automatic fund re-balancing, and fund-level management charges remain informational only.',
       'Reinstatement underwriting and extra-mortality revisions remain informational only.',
       deathBenefitOption === 'plus'
-        ? 'The Plus current death benefit needs a manual current insured amount input because insured-amount changes and claim-side reductions are not reconstructed from history in V1.'
-        : 'The Max current death benefit needs a manual current insured amount input because insured-amount changes and claim-side reductions are not reconstructed from history in V1.',
+        ? 'The Plus current death benefit keeps a manual current insured amount input because insurer-approved insured-amount changes and claim-side reductions are live policy facts this app cannot observe; that field is manual by design in V1.'
+        : 'The Max current death benefit keeps a manual current insured amount input because insurer-approved insured-amount changes and claim-side reductions are live policy facts this app cannot observe; that field is manual by design in V1.',
       `The ${coverLabel} death-benefit claim-side payout settlement itself remains metadata-only beyond the modeled current snapshot and Benefit Charge corridor.`,
     ],
     sourceRefs: [page1, page2, page3, page4, page5, page6, page13],
@@ -314,7 +314,7 @@ export function parseAiaProLifetimeProtectorIi({ document, sourceChecksumSha256 
       'aia-pro-lifetime-protector-ii-termination-limits',
     ],
     warnings: [
-      'AIA Pro Lifetime Protector (II) is cataloged as a supported V1 product. The parser captures explicit SGD open-ended Plus and Max variants with the published premium-year regular premium charge schedule, the year-10-onward Special Bonus, the fixed S$5 monthly policy fee, the Appendix A Benefit Charge corridor, the fixed S$50 monthly premium-holiday charge during the first two policy years, the 5% top-up premium charge with blocking in months where regular premiums are not paid up to date, the nil policy-level partial-withdrawal charge path with the post-second-policy-year start gate plus the published S$1,000 minimum one-off withdrawal amount and S$1,000 residual policy-value floor, the first-two-policy-years full-surrender charge schedule, and the current-state death benefit via a manual current insured amount input.',
+      'AIA Pro Lifetime Protector (II) is cataloged as a supported V1 product. The parser captures explicit SGD open-ended Plus and Max variants with the published premium-year regular premium charge schedule, the year-10-onward Special Bonus, the fixed S$5 monthly policy fee, the Appendix A Benefit Charge corridor, the fixed S$50 monthly premium-holiday charge during the first two policy years, the 5% top-up premium charge with blocking in months where regular premiums are not paid up to date, the nil policy-level partial-withdrawal charge path with the post-second-policy-year start gate plus the published S$1,000 minimum one-off withdrawal amount and S$1,000 residual policy-value floor, the first-two-policy-years full-surrender charge schedule, and the current-state death benefit via a manual current insured amount input that remains user-supplied by design in this app.',
       'No Lapse Privilege debt carry, claim-side death-benefit settlement, milestone insured-amount increases, and AIA Vitality add-on mechanics remain informational only.',
       'Structured extraction validated against the AIA Pro Lifetime Protector (II) product summary text layer.',
     ],

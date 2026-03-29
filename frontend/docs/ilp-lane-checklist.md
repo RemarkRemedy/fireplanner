@@ -26,10 +26,10 @@ Rules:
     - `AIA Platinum Wealth Elite 2.0` now surfaces `Death Benefit After TI Claim Today` from the same manual current insured-amount and remaining aggregate TI-cap corridor as `TI Benefit Today`, so the current post-claim residual snapshot is no longer silently omitted when the supported current inputs are present
     - `AIA Platinum Wealth Legacy` now surfaces `Death Benefit After TI Claim Today` from the same manual current insured-amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI-cap corridor as `TI Benefit Today`, so the current post-claim residual snapshot is no longer silently omitted when the supported current inputs are present
     - `Prestige Legacy Advantage` now surfaces `Death Benefit After TI Claim Today` from the same manual current sum-assured and remaining aggregate TI-cap corridor as `TI Benefit Today`, so the current post-claim residual snapshot is no longer silently omitted when the supported current inputs are present
+    - `AIA Pro Lifetime Protector (II)`, `AIA Platinum Wealth Elite 2.0`, and `AIA Platinum Wealth Legacy` now state more explicitly that their manual current insured-amount / amount-owing / no-lapse inputs are user-supplied present-day facts by design in this app, not pending automatic reconstruction from unseen insurer-side history
     - adjacent tempting candidates remain screened:
       - `HSBC Life Wealth Abundance`, `Wealth Voyage`, and `Wealth Focus` stay blocked because historical scheduled-redemption routing across top-up and regular accounts is not reconstructable from the current bounded input surface
       - `AIA Pro Lifetime Protector (II)` still needs manual current insured amount by design because insurer-approved insured-amount changes and claim-side reductions are not observable from this app
-      - `HSBC Life Flexi Protector` remains an adjacent proof-gap screen because the residual-after-TI kernel path already exists and only trust-proof mismatches remain to check under the manual-current-state rule
   - the HSBC monthly-rate bonus family is now landed on the existing `monthly-rate` seam
   - that HSBC bonus slice is intentionally narrow:
     - source-monthly account-value bonuses now credit monthly on the seeded/runtime path rather than being approximated through annual-rate support
