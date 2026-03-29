@@ -19,6 +19,11 @@ Rules:
   - Current-State Reconstruction override note:
     - `HSBC Life Goal Builder II` now reconstructs completed prior-year scheduled-redemption erosion into the current ordinary sum-insured corridor and current accidental-death floor corridor after the scheduled payout window has already ended, so `Death Benefit Today`, `TI Benefit Today`, and `Accidental Death Benefit Today` no longer overstate that bounded past regular-withdrawal history
     - same-year scheduled-payout timing remains a separate seam, so active-current-year manual insured / accidental-floor inputs stay in place
+    - `AIA Elite Secure Income - 5 Pay` now reconstructs the current protected-premium base from paid regular premiums before Secure Monthly Income starts when a manual scheduled-payout assumption is present but starts in a future policy year, so `Death Benefit Today` and `TI Benefit Today` no longer need a manual current protected-base input in that bounded pre-payout corridor
+    - once Secure Monthly Income can already have been paid or deemed paid, `AIA Elite Secure Income - 5 Pay` still keeps the current protected base manual because payout erosion is not reconstructed from history in V1
+    - adjacent tempting candidates remain screened:
+      - `HSBC Life Wealth Abundance`, `Wealth Voyage`, and `Wealth Focus` stay blocked because historical scheduled-redemption routing across top-up and regular accounts is not reconstructable from the current bounded input surface
+      - `AIA Elite Secure Income - Single Premium` is the next nearby seam to screen, but only if the future-payout pre-start corridor is still worthwhile without drifting into broader initial single-premium seed work
   - the HSBC monthly-rate bonus family is now landed on the existing `monthly-rate` seam
   - that HSBC bonus slice is intentionally narrow:
     - source-monthly account-value bonuses now credit monthly on the seeded/runtime path rather than being approximated through annual-rate support

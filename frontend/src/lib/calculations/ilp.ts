@@ -6541,6 +6541,14 @@ function hasActiveCurrentScheduledRedemption(
     && !isScheduledPayoutBlockedAtPolicyYear(input, input.currentPolicyYear)
 }
 
+export function canReconstructCurrentAiaEliteSecureIncome5PayProtectedBase(
+  input: IlpPolicyInput,
+): boolean {
+  return input.catalogSource?.productId === 'aia-elite-secure-income-5-pay'
+    && input.scheduledPayoutAssumption?.mode === 'scheduled-redemption'
+    && input.scheduledPayoutAssumption.startPolicyYear > input.currentPolicyYear
+}
+
 function hasActiveCurrentGoalBuilderIiScheduledPayout(
   input: IlpPolicyInput,
 ): boolean {
@@ -6713,6 +6721,30 @@ function resolveCurrentGoalBuilderIiAccidentalDeathSumInsured(
       - withdrawalAmount
       - completedScheduledPayoutErosion,
   )
+}
+
+function resolveCurrentAiaEliteSecureIncome5PayProtectedBase(
+  input: IlpPolicyInput,
+  currentPolicyMonth: number,
+): number | undefined {
+  if (input.catalogSource?.productId !== 'aia-elite-secure-income-5-pay') {
+    return undefined
+  }
+
+  if (!canReconstructCurrentAiaEliteSecureIncome5PayProtectedBase(input)) {
+    if (input.assuranceProfile?.currentNetProtectedPremiumBase == null) {
+      return undefined
+    }
+
+    return Math.max(0, input.assuranceProfile.currentNetProtectedPremiumBase)
+  }
+
+  const normalized = buildNormalizedPolicyInput(input)
+  const cumulativeRegularPremiumPaid = currentPolicyMonth > 0
+    ? getCumulativePaidRegularPremiumAtMonth(normalized, currentPolicyMonth)
+    : 0
+
+  return Math.max(0, cumulativeRegularPremiumPaid)
 }
 
 function resolveCurrentHsbcRegularProtectedFloor(
@@ -7423,7 +7455,6 @@ export function computeCurrentDeathBenefitEstimate(
 
   if (
     input.catalogSource?.productId === 'aia-elite-secure-income-single-premium'
-    || input.catalogSource?.productId === 'aia-elite-secure-income-5-pay'
   ) {
     const profile = input.assuranceProfile
     if (profile?.currentNetProtectedPremiumBase == null) {
@@ -7431,6 +7462,15 @@ export function computeCurrentDeathBenefitEstimate(
     }
 
     return Math.max(totalCurrentValue * 1.05, Math.max(0, profile.currentNetProtectedPremiumBase))
+  }
+
+  if (input.catalogSource?.productId === 'aia-elite-secure-income-5-pay') {
+    const protectedBase = resolveCurrentAiaEliteSecureIncome5PayProtectedBase(input, currentPolicyMonth)
+    if (protectedBase == null) {
+      return undefined
+    }
+
+    return Math.max(totalCurrentValue * 1.05, protectedBase)
   }
 
   if (input.catalogSource?.productId === 'aia-pro-achiever-3') {

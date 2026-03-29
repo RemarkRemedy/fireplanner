@@ -26302,6 +26302,120 @@ describe('computeSummaryMetrics', () => {
     expect(analysis.summary.currentDeathBenefitEstimate).toBeUndefined()
   })
 
+  it('reconstructs AIA Elite Secure Income - 5 Pay current death benefit today from paid regular premiums before Secure Monthly Income can start', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 4,
+      monthsAlreadyPaid: 48,
+      monthlyContribution: 350,
+      mipLength: 5,
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        startPolicyYear: 8,
+        durationYears: 15,
+        annualPayoutAmount: 6_000,
+        frequency: 'annual',
+      },
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 15_000,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAgeNextBirthday: 45,
+        sex: 'female',
+        smokerStatus: 'non-smoker',
+      },
+      catalogSource: {
+        productId: 'aia-elite-secure-income-5-pay',
+        productName: 'AIA Elite Secure Income - 5 Pay',
+        variantId: 'sgd-mip-5',
+        variantLabel: 'SGD / MIP 5',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate'],
+        metadataOnlyBehaviors: [],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentDeathBenefitEstimate).toBe(16_800)
+  })
+
+  it('reconstructs AIA Elite Secure Income - 5 Pay TI Benefit Today from paid regular premiums before Secure Monthly Income can start', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 4,
+      monthsAlreadyPaid: 48,
+      monthlyContribution: 350,
+      mipLength: 5,
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        startPolicyYear: 8,
+        durationYears: 15,
+        annualPayoutAmount: 6_000,
+        frequency: 'annual',
+      },
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 15_000,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAgeNextBirthday: 45,
+        sex: 'female',
+        smokerStatus: 'non-smoker',
+      },
+      catalogSource: {
+        productId: 'aia-elite-secure-income-5-pay',
+        productName: 'AIA Elite Secure Income - 5 Pay',
+        variantId: 'sgd-mip-5',
+        variantLabel: 'SGD / MIP 5',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate', 'kernel:current-ti-benefit-estimate'],
+        metadataOnlyBehaviors: [],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentTiBenefitEstimate).toBe(16_800)
+  })
+
   it('omits AIA Elite Secure Income TI Benefit Today without the current net protected premium base input', () => {
     const policy = makeDefaultPolicy({
       currentPolicyYear: 4,
