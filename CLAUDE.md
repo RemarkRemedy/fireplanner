@@ -27,6 +27,8 @@ All heavy computation (Monte Carlo, backtest, sequence risk, SWR optimization) r
 
 **Data persistence:** All user data stays in browser via localStorage (Zustand persist middleware), JSON export/import for portability, URL params for view state. No authentication, no server storage.
 
+**Hybrid standalone pages:** Any page that works as a standalone entry point (e.g., `/cpf-planner`, `/goal-calculator`) must have bidirectional data flow with the main planner stores. Read from existing stores to pre-fill inputs. Write back to stores when the user enters data. This ensures seamless transitions between standalone tools and the full planner. Priority order for input values: (1) URL search params from shared links, (2) existing store values, (3) defaults. No new Zustand stores for standalone pages — use existing stores via `setField()`.
+
 **Key directories:** `pages/` (route components), `components/` (UI by domain), `stores/` (7 Zustand stores), `hooks/` (derived calculations), `lib/calculations/` (pure calculation functions), `lib/simulation/` (MC/backtest/SR worker), `lib/data/` (SG-specific constants), `lib/validation/` (Zod schemas + cross-store rules). Use `Glob` or `ls` to discover specific files. The router (`router.tsx`) defines all routes.
 
 ## Computation Architecture
