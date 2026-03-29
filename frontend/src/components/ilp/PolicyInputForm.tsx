@@ -187,6 +187,37 @@ function supportsCurrentTpdContinuationEventStatus(policy: IlpPolicyInput): bool
   return policy.catalogSource?.productId === 'great-eastern-great-life-advantage-4'
 }
 
+function supportsCurrentResidualDeathBenefitAfterTpdClaim(policy: IlpPolicyInput): boolean {
+  return policy.catalogSource?.productId === 'tokio-marine-goassure'
+}
+
+function supportsCurrentAccidentalDeathClaimStatus(policy: IlpPolicyInput): boolean {
+  const productId = policy.catalogSource?.productId
+  if (productId?.startsWith('hsbc-life-wealth-focus-flexi-')) {
+    return true
+  }
+
+  if (productId === 'tokio-marine-goelite') {
+    return policy.claimProfile?.currentTokioAccidentalDeathClaimGateStatus === 'published-corridor-satisfied'
+      || policy.claimProfile?.currentAccidentalDeathClaimStatus != null
+  }
+
+  const supportsAiaAccidentalDeathClaimState = productId === 'aia-invest-easy-cash-srs'
+    || productId === 'aia-invest-easy-cpf'
+    || productId === 'aia-elite-secure-income-single-premium'
+    || productId === 'aia-elite-secure-income-5-pay'
+    || productId === 'aia-platinum-retirement-elite'
+    || productId === 'aia-wealth-venture'
+    || productId === 'aia-platinum-wealth-venture-2'
+    || productId === 'aia-pro-achiever-3'
+
+  if (!supportsAiaAccidentalDeathClaimState) {
+    return false
+  }
+
+  return policy.claimProfile?.currentAiaAccidentalDeathClaimGateStatus === 'published-corridor-satisfied'
+    || policy.claimProfile?.currentAccidentalDeathClaimStatus != null
+}
 function supportsCurrentTiClaimStatus(policy: IlpPolicyInput): boolean {
   return policy.catalogSource?.productId === 'hsbc-life-wealth-harvest'
     || policy.catalogSource?.productId === 'hsbc-life-wealth-abundance'
@@ -384,6 +415,23 @@ function requiresTokioDeathExclusionInitialBonus(policy: IlpPolicyInput): boolea
     || policy.catalogSource?.productId === 'tokio-marine-goclassic-secure'
 }
 
+function supportsPrudentialDeathExclusionSettlement(policy: IlpPolicyInput): boolean {
+  return policy.catalogSource?.productId === 'prudential-pruvantage-prosper'
+    || policy.catalogSource?.productId === 'prudential-pruvantage-wealth-ii'
+    || policy.catalogSource?.productId === 'prudential-pruvantage-assure-ii'
+    || policy.catalogSource?.productId === 'prudential-pruvantage-assure-sp'
+    || policy.catalogSource?.productId === 'prudential-prulink-investgrowth'
+    || policy.catalogSource?.productId === 'prudential-prulink-investgrowth-sp'
+    || policy.catalogSource?.productId === 'prudential-pruactive-linkguard'
+}
+
+function requiresPrudentialWelcomeBonusPaid(policy: IlpPolicyInput): boolean {
+  return policy.catalogSource?.productId === 'prudential-pruvantage-prosper'
+    || policy.catalogSource?.productId === 'prudential-pruvantage-wealth-ii'
+    || policy.catalogSource?.productId === 'prudential-pruvantage-assure-ii'
+    || policy.catalogSource?.productId === 'prudential-pruvantage-assure-sp'
+}
+
 function supportsRemainingAggregateAccidentalDeathCap(policy: IlpPolicyInput): boolean {
   return policy.catalogSource?.productId === 'tokio-marine-goelite'
     || policy.catalogSource?.productId === 'tokio-marine-gowealth-enrich'
@@ -407,6 +455,15 @@ function supportsTokioFirstYearAccumulationWithdrawalAmount(policy: IlpPolicyInp
     && event.amount != null
     && event.amount > 0
     && event.startPolicyMonth <= policy.monthsAlreadyPaid
+  ))
+}
+
+function supportsTokioBuilderConvertedRiderCharge(policy: IlpPolicyInput): boolean {
+  return (policy.eventChargeRules ?? []).some((rule) => (
+    rule.trigger === 'premium-holiday'
+    && rule.basis === 'fixed-amount-with-overlap-months'
+    && rule.requiresManualInput === true
+    && rule.id === 'premium-holiday-converted-rider-charge'
   ))
 }
 
@@ -746,6 +803,36 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
   const supportsCurrentTpdStage = supportsCurrentTpdPayoutStage(policy)
   const supportsCurrentAccidentalDisabilityStage = supportsCurrentAccidentalDisabilityPayoutStage(policy)
   const supportsCurrentAccidentalDeathModeInput = supportsCurrentAccidentalDeathMode(policy)
+  const supportsCurrentAccidentalDeathClaimStatusInput = supportsCurrentAccidentalDeathClaimStatus(policy)
+  const hasActiveCurrentAccidentalDeathClaimState = claimProfile?.currentAccidentalDeathClaimStatus === 'admitted'
+    || claimProfile?.currentAccidentalDeathClaimStatus === 'admitted-and-settled'
+  const supportsCurrentAccidentalDeathClaimBenefitAmountInput = supportsCurrentAccidentalDeathClaimStatusInput
+    && (
+      policy.catalogSource?.productId !== 'tokio-marine-goelite'
+      || claimProfile?.currentTokioAccidentalDeathClaimGateStatus === 'published-corridor-satisfied'
+    )
+    && claimProfile?.currentAccidentalDeathClaimStatus === 'admitted'
+  const supportsIncomeAccidentalDeathClaimGateInput = supportsIncomeAccidentalDeathClaimGate(policy)
+  const supportsAiaAccidentalDeathClaimGateInput = supportsAiaAccidentalDeathClaimGate(policy)
+    && !hasActiveCurrentAccidentalDeathClaimState
+  const supportsTokioAccidentalDeathClaimGateInput = supportsTokioAccidentalDeathClaimGate(policy)
+  const supportsTokioDoubleIndemnityClaimGateInput = supportsTokioDoubleIndemnityClaimGate(policy)
+  const supportsTokioDeathExclusionSettlementInput = supportsTokioDeathExclusionSettlement(policy)
+  const supportsTokioInitialBonusPaidInput = supportsTokioDeathExclusionSettlementInput
+    && requiresTokioDeathExclusionInitialBonus(policy)
+    && claimProfile?.currentTokioDeathExclusionSettlementStatus === 'suicide-or-pre-existing-exclusion'
+  const supportsPrudentialDeathExclusionSettlementInput = supportsPrudentialDeathExclusionSettlement(policy)
+  const supportsPrudentialWelcomeBonusPaidInput = supportsPrudentialDeathExclusionSettlementInput
+    && requiresPrudentialWelcomeBonusPaid(policy)
+    && claimProfile?.currentPrudentialDeathExclusionSettlementStatus === 'pre-existing-higher-of-settlement'
+  const supportsPrudentialClaimExpenseDeductionsInput = supportsPrudentialDeathExclusionSettlementInput
+    && claimProfile?.currentPrudentialDeathExclusionSettlementStatus != null
+    && claimProfile.currentPrudentialDeathExclusionSettlementStatus !== 'standard-corridor'
+    && claimProfile.currentPrudentialDeathExclusionSettlementStatus !== 'special-exclusion-higher-of-settlement'
+  const supportsRemainingAggregateAccidentalDeathCapInput = supportsRemainingAggregateAccidentalDeathCap(policy)
+  const supportsTokioAccidentalDeathAnnualisedPremiumInput = supportsTokioAccidentalDeathAnnualisedPremium(policy)
+  const supportsTokioFirstYearAccumulationWithdrawalAmountInput = supportsTokioFirstYearAccumulationWithdrawalAmount(policy)
+  const supportsTokioBuilderConvertedRiderChargeInput = supportsTokioBuilderConvertedRiderCharge(policy)
   const supportsCurrentAgeAccidentalDeathBenefitInput = supportsCurrentAgeAccidentalDeathBenefit(policy)
   const supportsCurrentExcludedClaimBonusValue = supportsCurrentExcludedClaimBonusValueDeathBenefit(policy)
   const supportsGoalBuilderHistoricalExcludedSupplementaryPremiumCohorts = policy.catalogSource?.productId === 'hsbc-life-goal-builder-ii'
@@ -924,6 +1011,10 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
     && claimProfile?.currentTpdClaimBenefitAmount == null
   const missingCurrentTpdContinuationStatus = supportsCurrentTpdContinuationStatus
     && claimProfile?.currentTpdContinuationEventStatus == null
+  const missingCurrentAccidentalDeathClaimStatus = supportsCurrentAccidentalDeathClaimStatusInput
+    && claimProfile?.currentAccidentalDeathClaimStatus == null
+  const missingCurrentAccidentalDeathClaimBenefitAmount = supportsCurrentAccidentalDeathClaimBenefitAmountInput
+    && claimProfile?.currentAccidentalDeathClaimBenefitAmount == null
   const missingCurrentTpdPayoutStage = supportsCurrentTpdStage
     && claimProfile?.currentTpdPayoutStage == null
   const missingCurrentTpdRemainingBalance = supportsCurrentTpdRemainingBalance
@@ -1114,6 +1205,12 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
     ...(missingCurrentTpdContinuationStatus
       ? ['This product also needs the current TPD Continuation Event status before the residual death-after-TPD snapshot can be trusted.']
       : []),
+    ...(missingCurrentAccidentalDeathClaimStatus
+      ? ['This product also needs the current accidental-death claim status before the admitted-state accidental-death snapshot can be trusted.']
+      : []),
+    ...(missingCurrentAccidentalDeathClaimBenefitAmount
+      ? ['This product also needs the current admitted accidental-death claim benefit amount before the admitted-state accidental-death snapshot can be trusted.']
+      : []),
     ...(missingCurrentTpdPayoutStage
       ? ['This product also needs the current TPD payout stage before the payable-now TPD snapshot can be trusted.']
       : []),
@@ -1279,7 +1376,13 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
       currentDeathCoiRefundStatus: claimProfile?.currentDeathCoiRefundStatus,
       currentSmartRetireRefundGateStatus: claimProfile?.currentSmartRetireRefundGateStatus,
       currentSmartRetireDeathClaimStatus: claimProfile?.currentSmartRetireDeathClaimStatus,
+      currentAccidentalDeathClaimStatus: claimProfile?.currentAccidentalDeathClaimStatus,
+      currentAccidentalDeathClaimBenefitAmount: claimProfile?.currentAccidentalDeathClaimBenefitAmount,
       currentAccidentalDeathMode: claimProfile?.currentAccidentalDeathMode,
+      currentIncomeAccidentalDeathClaimGateStatus: claimProfile?.currentIncomeAccidentalDeathClaimGateStatus,
+      currentAiaAccidentalDeathClaimGateStatus: claimProfile?.currentAiaAccidentalDeathClaimGateStatus,
+      currentTokioAccidentalDeathClaimGateStatus: claimProfile?.currentTokioAccidentalDeathClaimGateStatus,
+      remainingAggregateAccidentalDeathCap: claimProfile?.remainingAggregateAccidentalDeathCap,
       currentWopOnTpdClaimStatus: claimProfile?.currentWopOnTpdClaimStatus,
       currentRemainingWopPremiumWaiverMonths: claimProfile?.currentRemainingWopPremiumWaiverMonths,
       currentTpdContinuationEventStatus: claimProfile?.currentTpdContinuationEventStatus,
@@ -2436,6 +2539,33 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                     label={`Current Admitted TPD Claim Benefit Amount (${policy.currency})`}
                     value={claimProfile?.currentTpdClaimBenefitAmount ?? 0}
                     onChange={(value) => upsertClaimProfile({ currentTpdClaimBenefitAmount: value })}
+                  />
+                )}
+                {supportsCurrentAccidentalDeathClaimStatusInput && (
+                  <div className="space-y-1">
+                    <Label>Current Accidental-Death Claim Status</Label>
+                    <Select
+                      value={claimProfile?.currentAccidentalDeathClaimStatus ?? 'not-triggered'}
+                      onValueChange={(value) => upsertClaimProfile({
+                        currentAccidentalDeathClaimStatus: value as 'not-triggered' | 'admitted' | 'admitted-and-settled',
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="not-triggered">No Admitted Accidental-Death Claim</SelectItem>
+                        <SelectItem value="admitted">Admitted Accidental-Death Claim (Payable Now)</SelectItem>
+                        <SelectItem value="admitted-and-settled">Admitted Accidental-Death Claim Already Settled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {supportsCurrentAccidentalDeathClaimBenefitAmountInput && (
+                  <CurrencyInput
+                    label={`Current Admitted Accidental-Death Claim Benefit Amount (${policy.currency})`}
+                    value={claimProfile?.currentAccidentalDeathClaimBenefitAmount ?? 0}
+                    onChange={(value) => upsertClaimProfile({ currentAccidentalDeathClaimBenefitAmount: value })}
                   />
                 )}
                 {supportsTiClaimSnapshot && (

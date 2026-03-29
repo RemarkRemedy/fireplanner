@@ -373,11 +373,14 @@ export interface IlpClaimProfile {
   currentIndebtedness?: number
   remainingAggregateTiCap?: number
   remainingAggregateTiCiCap?: number
+  remainingAggregateAccidentalDeathCap?: number
   currentTiClaimStatus?: 'not-triggered' | 'triggered' | 'admitted' | 'admitted-and-settled'
   currentTiClaimBenefitAmount?: number
   currentResidualDeathBenefitAfterTiClaim?: number
   currentTpdClaimStatus?: 'not-triggered' | 'triggered' | 'admitted' | 'admitted-and-settled'
   currentTpdClaimBenefitAmount?: number
+  currentAccidentalDeathClaimStatus?: 'not-triggered' | 'admitted' | 'admitted-and-settled'
+  currentAccidentalDeathClaimBenefitAmount?: number
   remainingAggregateTpdCap?: number
   currentExcludedClaimBonusValue?: number
   currentExcludedValueCohorts?: Array<{
@@ -401,6 +404,9 @@ export interface IlpClaimProfile {
   currentDeathCoiRefundStatus?: 'due-and-uncredited' | 'already-credited-or-not-payable'
   currentSmartRetireRefundGateStatus?: 'intact' | 'broken'
   currentSmartRetireDeathClaimStatus?: 'not-triggered' | 'admitted-and-settled'
+  currentIncomeAccidentalDeathClaimGateStatus?: 'published-corridor-satisfied' | 'outside-published-corridor'
+  currentAiaAccidentalDeathClaimGateStatus?: 'published-corridor-satisfied' | 'outside-published-corridor'
+  currentTokioAccidentalDeathClaimGateStatus?: 'published-corridor-satisfied' | 'outside-published-corridor'
   currentAccidentalDeathMode?: 'standard-accident' | 'restricted-activity-accident'
   currentWopOnTpdClaimStatus?: 'not-triggered' | 'admitted' | 'admitted-and-settled'
   currentRemainingWopPremiumWaiverMonths?: number
@@ -416,6 +422,19 @@ export interface IlpTokioProtectionStateConfig {
   mode: 'locked-in-policy-value' | 'locked-in-policy-value-with-adjusted-single-premium'
   trackedValueAccountIds: string[]
   withdrawalReductionAccountIds: string[]
+}
+
+function hasSatisfiedTokioAccidentalDeathClaimGate(input: IlpPolicyInput): boolean {
+  return input.claimProfile?.currentTokioAccidentalDeathClaimGateStatus === 'published-corridor-satisfied'
+}
+
+function getTokioRemainingAggregateAccidentalDeathCap(input: IlpPolicyInput): number | undefined {
+  const remainingCap = input.claimProfile?.remainingAggregateAccidentalDeathCap
+  if (remainingCap == null) {
+    return undefined
+  }
+
+  return Math.max(0, Math.min(1_000_000, remainingCap))
 }
 
 export interface IlpAssuranceChargeConfig {
@@ -1021,6 +1040,24 @@ function supportsCurrentAdmittedTiAccidentalDeathContinuation(productId?: string
   return productId?.startsWith('hsbc-life-wealth-focus-flexi-') ?? false
 }
 
+function supportsCurrentAccidentalDeathClaimState(productId?: string): boolean {
+  return (productId?.startsWith('hsbc-life-wealth-focus-flexi-') ?? false)
+    || productId === 'aia-invest-easy-cash-srs'
+    || productId === 'aia-invest-easy-cpf'
+    || productId === 'aia-elite-secure-income-single-premium'
+    || productId === 'aia-elite-secure-income-5-pay'
+    || productId === 'aia-platinum-retirement-elite'
+    || productId === 'aia-wealth-venture'
+    || productId === 'aia-platinum-wealth-venture-2'
+    || productId === 'aia-pro-achiever-3'
+    || productId === 'tokio-marine-goelite'
+}
+
+function isCurrentAccidentalDeathClaimStatusActive(
+  status: IlpClaimProfile['currentAccidentalDeathClaimStatus'],
+): boolean {
+  return status === 'admitted' || status === 'admitted-and-settled'
+}
 function supportsCurrentAdmittedTpdClaimState(productId?: string): boolean {
   return productId === 'great-eastern-great-life-advantage-4'
     || productId === 'manulife-manuinvest-duo'
@@ -1353,6 +1390,56 @@ function applyCurrentAdmittedTpdClaimState(
   }
 }
 
+function applyCurrentAccidentalDeathClaimState(
+  input: IlpPolicyInput,
+  summary: IlpSummaryMetrics,
+): IlpSummaryMetrics {
+  const currentAccidentalDeathClaimStatus = input.claimProfile?.currentAccidentalDeathClaimStatus
+  const productId = input.catalogSource?.productId
+
+  if (
+    !isCurrentAccidentalDeathClaimStatusActive(currentAccidentalDeathClaimStatus)
+    || !supportsCurrentAccidentalDeathClaimState(productId)
+  ) {
+    return summary
+  }
+
+  if (hasActiveCurrentLapse(input)) {
+    return summary
+  }
+
+  if (currentAccidentalDeathClaimStatus === 'admitted-and-settled') {
+    return {
+      ...summary,
+      currentDeathBenefitEstimate: 0,
+      currentAccidentalDeathBenefitEstimate: undefined,
+      currentTiBenefitEstimate: undefined,
+      currentResidualDeathBenefitAfterTiEstimate: undefined,
+    }
+  }
+
+  if (productId === 'tokio-marine-goelite' && !hasSatisfiedTokioAccidentalDeathClaimGate(input)) {
+    return summary
+  }
+
+  if (input.claimProfile?.currentAccidentalDeathClaimBenefitAmount == null) {
+    return {
+      ...summary,
+      currentDeathBenefitEstimate: undefined,
+      currentAccidentalDeathBenefitEstimate: undefined,
+      currentTiBenefitEstimate: undefined,
+      currentResidualDeathBenefitAfterTiEstimate: undefined,
+    }
+  }
+
+  return {
+    ...summary,
+    currentDeathBenefitEstimate: 0,
+    currentAccidentalDeathBenefitEstimate: Math.max(0, input.claimProfile.currentAccidentalDeathClaimBenefitAmount),
+    currentTiBenefitEstimate: undefined,
+    currentResidualDeathBenefitAfterTiEstimate: undefined,
+  }
+}
 interface IlpRepaymentEvent {
   type: 'premium-holiday-repayment' | 'policy-repayment'
   startPolicyMonth: number
@@ -10149,6 +10236,29 @@ export function computeCurrentAccidentalDeathBenefitEstimate(
     return Math.max(currentDeathBenefitEstimate, netAccidentalDeathBenefit)
   }
 
+  if (input.catalogSource?.productId === 'tokio-marine-goelite') {
+    if (
+      profile?.currentAgeNextBirthday == null
+      || profile.currentAgeNextBirthday >= 75
+      || profile.currentAmountOwing == null
+      || !hasSatisfiedTokioAccidentalDeathClaimGate(input)
+    ) {
+      return undefined
+    }
+
+    const remainingAggregateAccidentalDeathCap = getTokioRemainingAggregateAccidentalDeathCap(input)
+    if (remainingAggregateAccidentalDeathCap == null) {
+      return undefined
+    }
+
+    const currentAmountOwing = Math.max(0, profile.currentAmountOwing)
+    const singlePremiumAccountValue = Math.max(0, currentValueByAccount.get('policy') ?? 0)
+    const topUpAccountValue = Math.max(0, currentValueByAccount.get('topup') ?? 0)
+    const accidentalDeathBenefit = Math.max(0, (singlePremiumAccountValue * 1.1) + topUpAccountValue - currentAmountOwing)
+
+    return Math.max(currentDeathBenefitEstimate, Math.min(remainingAggregateAccidentalDeathCap, accidentalDeathBenefit))
+  }
+
   if (input.catalogSource?.productId === 'great-eastern-prestige-portfolio') {
     if (profile?.currentAgeNextBirthday == null) {
       return undefined
@@ -12696,7 +12806,7 @@ export function computeSummaryMetrics(
     currentValueSnapshot.totalCurrentValue,
   )
 
-  return applyCurrentAdmittedTpdClaimState(input, applyCurrentAdmittedTiClaimState(input, {
+  return applyCurrentAccidentalDeathClaimState(input, applyCurrentAdmittedTpdClaimState(input, applyCurrentAdmittedTiClaimState(input, {
     totalPremiumsPaid: horizonEndRow.cumulativePremiums + inceptionCharge,
     totalFeesCharged: horizonEndRow.cumulativeGrossFees + inceptionCharge,
     totalBonusesReceived: horizonEndRow.cumulativeBonuses,
@@ -12718,7 +12828,7 @@ export function computeSummaryMetrics(
     currentAccidentalTpdBenefitEstimate,
     currentResidualDeathBenefitAfterTpdEstimate,
     currentAccidentalDisabilityBenefitEstimate,
-  }, currentValueSnapshot.currentValueByAccount))
+  }, currentValueSnapshot.currentValueByAccount)))
 }
 
 export function computeCurrentOnlySummaryMetrics(
@@ -12772,7 +12882,7 @@ export function computeCurrentOnlySummaryMetrics(
     currentValueSnapshot.totalCurrentValue,
   )
 
-  return applyCurrentAdmittedTpdClaimState(input, applyCurrentAdmittedTiClaimState(input, {
+  return applyCurrentAccidentalDeathClaimState(input, applyCurrentAdmittedTpdClaimState(input, applyCurrentAdmittedTiClaimState(input, {
     totalPremiumsPaid: 0,
     totalFeesCharged: 0,
     totalBonusesReceived: 0,
@@ -12794,7 +12904,7 @@ export function computeCurrentOnlySummaryMetrics(
     currentAccidentalTpdBenefitEstimate,
     currentResidualDeathBenefitAfterTpdEstimate,
     currentAccidentalDisabilityBenefitEstimate,
-  }, currentValueSnapshot.currentValueByAccount))
+  }, currentValueSnapshot.currentValueByAccount)))
 }
 
 export function analyzeCurrentOnlyIlpPolicy(input: IlpPolicyInput): IlpCurrentOnlyPolicyAnalysis {

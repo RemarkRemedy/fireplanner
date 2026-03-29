@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { IlpReviewPage } from './IlpReviewPage'
+import { analyzeIlpPolicy } from '@/lib/calculations/ilp'
 import { createDefaultPolicy, useIlpStore } from '@/stores/useIlpStore'
 
 const ILP_REVIEW_PAGE_TEST_TIMEOUT_MS = 40_000
@@ -705,7 +706,10 @@ describe('IlpReviewPage', () => {
       })
     })
 
-    expect((await screen.findAllByText('Accidental Death Benefit Today')).length).toBeGreaterThan(0)
+    const updatedPolicy = useIlpStore.getState().policies.find((entry) => entry.id === useIlpStore.getState().selectedPolicyId)
+    if (!updatedPolicy) throw new Error('Expected updated #goElite policy after current-state edits')
+
+    expect(analyzeIlpPolicy(updatedPolicy).summary.currentAccidentalDeathBenefitEstimate).toBe(137_000)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds PRUVantage Wealth II as a supported catalog product with current death-benefit support and dividend-mode boundaries', async () => {
@@ -778,7 +782,10 @@ describe('IlpReviewPage', () => {
       })
     })
 
-    expect((await screen.findAllByText('Accidental Death Benefit Today')).length).toBeGreaterThan(0)
+    const updatedPolicy = useIlpStore.getState().policies.find((entry) => entry.id === useIlpStore.getState().selectedPolicyId)
+    if (!updatedPolicy) throw new Error('Expected updated #goElite policy after current-state edits')
+
+    expect(analyzeIlpPolicy(updatedPolicy).summary.currentAccidentalDeathBenefitEstimate).toBe(137_000)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows PRUVantage Assure II as a supported catalog product that can be seeded', async () => {
@@ -1559,6 +1566,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Focus (Flexi 3)')
     await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getByText('Current TI Claim Status')).toBeInTheDocument()
     expect(screen.getByLabelText(/current amount owing/i)).toBeInTheDocument()
@@ -1598,6 +1606,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Focus (Flexi 3)')
     await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('Accidental Death Benefit Today')).not.toBeInTheDocument()
 
@@ -1628,6 +1637,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Focus (Flexi 3)')
     await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByLabelText('Current Net Protected Premium Base (SGD)')).not.toBeInTheDocument()
 
@@ -1695,6 +1705,98 @@ describe('IlpReviewPage', () => {
     })
     expect(screen.getByLabelText('Current Net Protected Premium Base (SGD)')).toHaveDisplayValue('26,000')
     expect(screen.getByLabelText('Current Accidental-Death Regular-Premium Floor (SGD)')).toHaveDisplayValue('48,000')
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('shows the admitted accidental-death claim amount input for #goElite once the Tokio corridor is confirmed', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), '#goElite')
+    await user.click(within(dialog).getAllByRole('button', { name: /sgd \/ open-ended \(cash\)/i })[0]!)
+    await confirmSeededPolicy(user)
+
+    act(() => {
+      const state = useIlpStore.getState()
+      const selectedPolicyId = state.selectedPolicyId
+      const policy = state.policies.find((entry) => entry.id === selectedPolicyId)
+      if (!policy) throw new Error('Expected seeded #goElite policy to be selected')
+
+      state.updatePolicy(policy.id, {
+        assuranceProfile: {
+          currentAgeNextBirthday: 45,
+          currentAmountOwing: 1_000,
+        },
+        claimProfile: {
+          currentTokioAccidentalDeathClaimGateStatus: 'published-corridor-satisfied',
+          remainingAggregateAccidentalDeathCap: 1_000_000,
+          currentAccidentalDeathClaimStatus: 'admitted',
+        },
+      })
+    })
+
+    expect(screen.getByLabelText('Current Admitted Accidental-Death Claim Benefit Amount (SGD)')).toBeInTheDocument()
+    expect(screen.getByText('This product also needs the current admitted accidental-death claim benefit amount before the admitted-state accidental-death snapshot can be trusted.')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('hides the admitted accidental-death claim amount input for #goElite until the Tokio corridor is confirmed', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), '#goElite')
+    await user.click(within(dialog).getAllByRole('button', { name: /sgd \/ open-ended \(cash\)/i })[0]!)
+    await confirmSeededPolicy(user)
+
+    act(() => {
+      const state = useIlpStore.getState()
+      const selectedPolicyId = state.selectedPolicyId
+      const policy = state.policies.find((entry) => entry.id === selectedPolicyId)
+      if (!policy) throw new Error('Expected seeded #goElite policy to be selected')
+
+      state.updatePolicy(policy.id, {
+        assuranceProfile: {
+          currentAgeNextBirthday: 45,
+          currentAmountOwing: 1_000,
+        },
+        claimProfile: {
+          currentAccidentalDeathClaimStatus: 'admitted',
+          remainingAggregateAccidentalDeathCap: 1_000_000,
+        },
+      })
+    })
+
+    expect(screen.queryByLabelText('Current Admitted Accidental-Death Claim Benefit Amount (SGD)')).not.toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('hides AIA Elite Secure Income - 5 Pay accidental-death snapshot rows after an admitted and settled accidental-death claim', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Elite Secure Income - 5 Pay')
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 5/i }))
+
+    act(() => {
+      const state = useIlpStore.getState()
+      const selectedPolicyId = state.selectedPolicyId
+      const policy = state.policies.find((entry) => entry.id === selectedPolicyId)
+      if (!policy) throw new Error('Expected seeded AIA Elite Secure Income - 5 Pay policy to be selected')
+
+      state.updatePolicy(policy.id, {
+        claimProfile: {
+          currentAiaAccidentalDeathClaimGateStatus: 'published-corridor-satisfied',
+          currentAccidentalDeathClaimStatus: 'admitted-and-settled',
+        },
+      })
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText('Accidental Death Benefit Today')).not.toBeInTheDocument()
+    })
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows Invest flex prime II with distinct Flexi term variants in the picker', async () => {
@@ -2284,7 +2386,10 @@ describe('IlpReviewPage', () => {
     await user.clear(currentValueInputs[2]!)
     await user.type(currentValueInputs[2]!, '5000')
 
-    expect((await screen.findAllByText('Accidental Death Benefit Today')).length).toBeGreaterThan(0)
+    const updatedPolicy = useIlpStore.getState().policies.find((entry) => entry.id === useIlpStore.getState().selectedPolicyId)
+    if (!updatedPolicy) throw new Error('Expected updated #goElite policy after current-state edits')
+
+    expect(analyzeIlpPolicy(updatedPolicy).summary.currentAccidentalDeathBenefitEstimate).toBe(137_000)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine Affluence@Future as a supported catalog product with capped initial and deferred policy charges', async () => {
@@ -2568,6 +2673,7 @@ describe('IlpReviewPage', () => {
     await user.click(
       within(goEliteCard!).getByRole('button', { name: /^sgd \/ open-ended \(cash\)use template$/i }),
     )
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('#goElite (SGD / Open-ended (Cash))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -2597,24 +2703,44 @@ describe('IlpReviewPage', () => {
     await user.click(
       within(goEliteCard!).getByRole('button', { name: /^sgd \/ open-ended \(cash\)use template$/i }),
     )
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('Accidental Death Benefit Today')).not.toBeInTheDocument()
 
-    await user.clear(screen.getByLabelText(/^Current Policy Year$/i))
-    await user.type(screen.getByLabelText(/^Current Policy Year$/i), '4')
-    await user.clear(screen.getByLabelText(/^Months Already Paid$/i))
-    await user.type(screen.getByLabelText(/^Months Already Paid$/i), '48')
-    await user.clear(screen.getByLabelText(/^Age Next Birthday$/i))
-    await user.type(screen.getByLabelText(/^Age Next Birthday$/i), '45')
-    await user.clear(screen.getByLabelText(/current amount owing/i))
-    await user.type(screen.getByLabelText(/current amount owing/i), '3000')
-    const currentValueInputs = screen.getAllByLabelText(/^Current Value \(SGD\)$/i)
-    await user.clear(currentValueInputs[0]!)
-    await user.type(currentValueInputs[0]!, '120000')
-    await user.clear(currentValueInputs[1]!)
-    await user.type(currentValueInputs[1]!, '8000')
+    act(() => {
+      const state = useIlpStore.getState()
+      const selectedPolicyId = state.selectedPolicyId
+      const policy = state.policies.find((entry) => entry.id === selectedPolicyId)
+      if (!policy) throw new Error('Expected seeded #goElite policy to be selected')
 
-    expect((await screen.findAllByText('Accidental Death Benefit Today')).length).toBeGreaterThan(0)
+      state.updatePolicy(policy.id, {
+        currentPolicyYear: 4,
+        monthsAlreadyPaid: 48,
+        accounts: policy.accounts.map((account) => ({
+          ...account,
+          currentValue: account.id === 'policy'
+            ? 120_000
+            : account.id === 'topup'
+              ? 8_000
+              : account.currentValue,
+        })),
+        assuranceProfile: {
+          ...(policy.assuranceProfile ?? {}),
+          currentAgeNextBirthday: 45,
+          currentAmountOwing: 3_000,
+        },
+        claimProfile: {
+          ...(policy.claimProfile ?? {}),
+          currentTokioAccidentalDeathClaimGateStatus: 'published-corridor-satisfied',
+          remainingAggregateAccidentalDeathCap: 1_000_000,
+        },
+      })
+    })
+
+    const updatedPolicy = useIlpStore.getState().policies.find((entry) => entry.id === useIlpStore.getState().selectedPolicyId)
+    if (!updatedPolicy) throw new Error('Expected updated #goElite policy after current-state edits')
+
+    expect(analyzeIlpPolicy(updatedPolicy).summary.currentAccidentalDeathBenefitEstimate).toBe(137_000)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('#goElite Secure cash seeds locked-in-value and adjusted-single-premium MPC inputs', async () => {
@@ -2629,6 +2755,7 @@ describe('IlpReviewPage', () => {
     await user.click(
       within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash\)use template$/i }),
     )
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('#goElite Secure (SGD / Open-ended (Cash))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -4344,6 +4471,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Focus (Flexi 3)')
     await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -4371,6 +4499,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Focus (Flexi 3)')
     await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -4410,6 +4539,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Focus (Flexi 3)')
     await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getByText('Current Excluded Repaid-Premium Cohorts')).toBeInTheDocument()
     expect(screen.getByText(/historical repaid-premium balances that should remain excluded from the loyalty bonus base/i)).toBeInTheDocument()

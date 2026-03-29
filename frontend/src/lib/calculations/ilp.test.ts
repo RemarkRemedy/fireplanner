@@ -32549,6 +32549,10 @@ describe('computeSummaryMetrics', () => {
         currentAgeNextBirthday: 45,
         currentAmountOwing: 3_000,
       },
+      claimProfile: {
+        currentTokioAccidentalDeathClaimGateStatus: 'published-corridor-satisfied',
+        remainingAggregateAccidentalDeathCap: 1_000_000,
+      },
       catalogSource: {
         productId: 'tokio-marine-goelite',
         productName: '#goElite',
@@ -32605,6 +32609,10 @@ describe('computeSummaryMetrics', () => {
         currentAgeNextBirthday: 45,
         currentAmountOwing: 3_000,
       },
+      claimProfile: {
+        currentTokioAccidentalDeathClaimGateStatus: 'published-corridor-satisfied',
+        remainingAggregateAccidentalDeathCap: 1_000_000,
+      },
       catalogSource: {
         productId: 'tokio-marine-goelite',
         productName: '#goElite',
@@ -32624,6 +32632,333 @@ describe('computeSummaryMetrics', () => {
     expect(analysis.summary.currentAccidentalDeathBenefitEstimate).toBe(137_000)
   })
 
+  it('uses a manual current admitted accidental-death claim amount for #goElite', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 4,
+      monthsAlreadyPaid: 48,
+      mipBasis: 'open-ended',
+      mipLength: null,
+      initialSinglePremium: 100_000,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Single Premium Units Account',
+          feeRate: 0.01,
+          currentValue: 120_000,
+          contributionShare: 1,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [{ phase: 'during-icp', contributionShare: 1 }],
+        },
+        {
+          id: 'topup',
+          label: 'Top-up Units Account',
+          feeRate: 0,
+          currentValue: 8_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [{ phase: 'top-up', contributionShare: 1 }],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAgeNextBirthday: 45,
+        currentAmountOwing: 3_000,
+      },
+      claimProfile: {
+        currentTokioAccidentalDeathClaimGateStatus: 'published-corridor-satisfied',
+        remainingAggregateAccidentalDeathCap: 1_000_000,
+        currentAccidentalDeathClaimStatus: 'admitted',
+        currentAccidentalDeathClaimBenefitAmount: 142_000,
+      },
+      catalogSource: {
+        productId: 'tokio-marine-goelite',
+        productName: '#goElite',
+        variantId: 'sgd-open-ended-cash',
+        variantLabel: 'SGD / Open-ended (Cash)',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: [
+          'kernel:current-death-benefit-estimate',
+          'kernel:current-accidental-death-benefit-estimate',
+        ],
+        metadataOnlyBehaviors: ['tokio-marine-goelite-accidental-death-benefit-exclusions-and-broader-settlement'],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentDeathBenefitEstimate).toBe(0)
+    expect(analysis.summary.currentAccidentalDeathBenefitEstimate).toBe(142_000)
+    expect(analysis.summary.currentTiBenefitEstimate).toBeUndefined()
+    expect(analysis.summary.currentResidualDeathBenefitAfterTiEstimate).toBeUndefined()
+  })
+
+  it('ignores #goElite admitted accidental-death claim inputs until the Tokio corridor is confirmed', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 4,
+      monthsAlreadyPaid: 48,
+      mipBasis: 'open-ended',
+      mipLength: null,
+      initialSinglePremium: 100_000,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Single Premium Units Account',
+          feeRate: 0.01,
+          currentValue: 120_000,
+          contributionShare: 1,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [{ phase: 'during-icp', contributionShare: 1 }],
+        },
+        {
+          id: 'topup',
+          label: 'Top-up Units Account',
+          feeRate: 0,
+          currentValue: 8_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [{ phase: 'top-up', contributionShare: 1 }],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAgeNextBirthday: 45,
+        currentAmountOwing: 3_000,
+      },
+      claimProfile: {
+        remainingAggregateAccidentalDeathCap: 1_000_000,
+        currentAccidentalDeathClaimStatus: 'admitted',
+        currentAccidentalDeathClaimBenefitAmount: 142_000,
+      },
+      catalogSource: {
+        productId: 'tokio-marine-goelite',
+        productName: '#goElite',
+        variantId: 'sgd-open-ended-cash',
+        variantLabel: 'SGD / Open-ended (Cash)',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: [
+          'kernel:current-death-benefit-estimate',
+          'kernel:current-accidental-death-benefit-estimate',
+        ],
+        metadataOnlyBehaviors: ['tokio-marine-goelite-accidental-death-benefit-exclusions-and-broader-settlement'],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentDeathBenefitEstimate).toBe(131_000)
+    expect(analysis.summary.currentAccidentalDeathBenefitEstimate).toBeUndefined()
+    expect(analysis.summary.currentTiBenefitEstimate).toBeUndefined()
+    expect(analysis.summary.currentResidualDeathBenefitAfterTiEstimate).toBeUndefined()
+  })
+
+  it('hides #goElite accidental-death metrics after an admitted and settled accidental-death claim', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 4,
+      monthsAlreadyPaid: 48,
+      mipBasis: 'open-ended',
+      mipLength: null,
+      initialSinglePremium: 100_000,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Single Premium Units Account',
+          feeRate: 0.01,
+          currentValue: 120_000,
+          contributionShare: 1,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [{ phase: 'during-icp', contributionShare: 1 }],
+        },
+        {
+          id: 'topup',
+          label: 'Top-up Units Account',
+          feeRate: 0,
+          currentValue: 8_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [{ phase: 'top-up', contributionShare: 1 }],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAgeNextBirthday: 45,
+        currentAmountOwing: 3_000,
+      },
+      claimProfile: {
+        currentTokioAccidentalDeathClaimGateStatus: 'published-corridor-satisfied',
+        remainingAggregateAccidentalDeathCap: 1_000_000,
+        currentAccidentalDeathClaimStatus: 'admitted-and-settled',
+      },
+      catalogSource: {
+        productId: 'tokio-marine-goelite',
+        productName: '#goElite',
+        variantId: 'sgd-open-ended-cash',
+        variantLabel: 'SGD / Open-ended (Cash)',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: [
+          'kernel:current-death-benefit-estimate',
+          'kernel:current-accidental-death-benefit-estimate',
+        ],
+        metadataOnlyBehaviors: ['tokio-marine-goelite-accidental-death-benefit-exclusions-and-broader-settlement'],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentDeathBenefitEstimate).toBe(0)
+    expect(analysis.summary.currentAccidentalDeathBenefitEstimate).toBeUndefined()
+    expect(analysis.summary.currentTiBenefitEstimate).toBeUndefined()
+    expect(analysis.summary.currentResidualDeathBenefitAfterTiEstimate).toBeUndefined()
+  })
+
+  it('still hides #goElite accidental-death metrics after an admitted and settled claim even when the Tokio corridor flag is missing', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 4,
+      monthsAlreadyPaid: 48,
+      mipBasis: 'open-ended',
+      mipLength: null,
+      initialSinglePremium: 100_000,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Single Premium Units Account',
+          feeRate: 0.01,
+          currentValue: 120_000,
+          contributionShare: 1,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [{ phase: 'during-icp', contributionShare: 1 }],
+        },
+        {
+          id: 'topup',
+          label: 'Top-up Units Account',
+          feeRate: 0,
+          currentValue: 8_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [{ phase: 'top-up', contributionShare: 1 }],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAgeNextBirthday: 45,
+        currentAmountOwing: 3_000,
+      },
+      claimProfile: {
+        remainingAggregateAccidentalDeathCap: 1_000_000,
+        currentAccidentalDeathClaimStatus: 'admitted-and-settled',
+      },
+      catalogSource: {
+        productId: 'tokio-marine-goelite',
+        productName: '#goElite',
+        variantId: 'sgd-open-ended-cash',
+        variantLabel: 'SGD / Open-ended (Cash)',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: [
+          'kernel:current-death-benefit-estimate',
+          'kernel:current-accidental-death-benefit-estimate',
+        ],
+        metadataOnlyBehaviors: ['tokio-marine-goelite-accidental-death-benefit-exclusions-and-broader-settlement'],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentDeathBenefitEstimate).toBe(0)
+    expect(analysis.summary.currentAccidentalDeathBenefitEstimate).toBeUndefined()
+    expect(analysis.summary.currentTiBenefitEstimate).toBeUndefined()
+    expect(analysis.summary.currentResidualDeathBenefitAfterTiEstimate).toBeUndefined()
+  })
+
+  it('caps #goElite Accidental Death Benefit Today at the remaining aggregate accidental-death cap when it is tighter than the resident corridor', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 4,
+      monthsAlreadyPaid: 48,
+      mipBasis: 'open-ended',
+      mipLength: null,
+      initialSinglePremium: 100_000,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Single Premium Units Account',
+          feeRate: 0.01,
+          currentValue: 120_000,
+          contributionShare: 1,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [{ phase: 'during-icp', contributionShare: 1 }],
+        },
+        {
+          id: 'topup',
+          label: 'Top-up Units Account',
+          feeRate: 0,
+          currentValue: 8_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [{ phase: 'top-up', contributionShare: 1 }],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAgeNextBirthday: 45,
+        currentAmountOwing: 3_000,
+      },
+      claimProfile: {
+        currentTokioAccidentalDeathClaimGateStatus: 'published-corridor-satisfied',
+        remainingAggregateAccidentalDeathCap: 135_000,
+      },
+      catalogSource: {
+        productId: 'tokio-marine-goelite',
+        productName: '#goElite',
+        variantId: 'sgd-open-ended-cash',
+        variantLabel: 'SGD / Open-ended (Cash)',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate', 'kernel:current-accidental-death-benefit-estimate'],
+        metadataOnlyBehaviors: ['tokio-marine-goelite-non-resident-101-death-benefit'],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentAccidentalDeathBenefitEstimate).toBe(135_000)
+  })
   it('models TM Wealth Enhancer (CPFIS) death benefit today as 105% of the single premium policy value plus 100% of the top-up premium policy value', () => {
     const policy = makeDefaultPolicy({
       currentPolicyYear: 4,

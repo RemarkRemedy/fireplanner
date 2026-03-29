@@ -47,8 +47,9 @@ describe('parseTokioMarineGoElite', () => {
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-marine-goelite-dividend-payout-threshold')
     expect(product.warnings[0]).toContain('resident-corridor current-state death benefit as 105% of the Single Premium Units Account value plus 100% of the Top-up Units Account value less current amounts owing')
     expect(product.warnings[0]).toContain('resident-corridor current accidental-death estimate before age 75 as 110% of the Single Premium Units Account value plus 100% of the Top-up Units Account value less current amounts owing')
+    expect(product.warnings[0]).toContain('manual current admitted accidental-death claim benefit amount plus admitted-and-settled termination state on that same resident corridor')
     expect(product.warnings[0]).toContain('published S$500 minimum one-off partial withdrawal amount plus the 10%-of-initial-single-premium minimum remaining Single Premium Units Account floor')
-    expect(product.warnings[0]).toContain('non-resident 101% death-benefit corridor, accidental-death claim gates and cap aggregation, multi-life last-survivor handling, and fund-level charges remain informational only')
+    expect(product.warnings[0]).toContain('non-resident 101% death-benefit corridor, broader accidental-death claim gates and cap aggregation, multi-life last-survivor handling, and fund-level charges remain informational only')
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended-cash', 'sgd-open-ended-srs'])
 
     const [cashVariant, srsVariant] = product.variants
