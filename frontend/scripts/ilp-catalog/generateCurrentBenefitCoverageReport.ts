@@ -79,7 +79,7 @@ function csvEscape(value: string): string {
   return value
 }
 
-function buildSearchNeedles(product: IlpCatalogProduct): string[] {
+export function buildSearchNeedles(product: IlpCatalogProduct): string[] {
   const needles = new Set<string>([product.id, product.productName])
   const withoutParenthetical = product.productName.replace(/\s*\([^)]*\)/g, '').trim()
   if (withoutParenthetical.length > 0) {
@@ -89,7 +89,7 @@ function buildSearchNeedles(product: IlpCatalogProduct): string[] {
   return [...needles].sort((left, right) => right.length - left.length)
 }
 
-function metricNeedlesFor(kernel: CoverageNeedle): MetricNeedles {
+export function metricNeedlesFor(kernel: CoverageNeedle): MetricNeedles {
   switch (kernel) {
     case 'kernel:current-death-benefit-estimate':
       return {
@@ -111,8 +111,17 @@ function metricNeedlesFor(kernel: CoverageNeedle): MetricNeedles {
       }
     case 'kernel:current-residual-death-benefit-after-ti-estimate':
       return {
-        calculator: ['residual death benefit after a ti claim today', 'death benefit after ti claim today'],
-        review: ['death benefit after ti claim today', 'residual death-benefit estimate after a ti claim today'],
+        calculator: [
+          'residual death benefit after a ti claim today',
+          'residual death-benefit estimate after a ti claim today',
+          'residual death-benefit estimate after ti claim today',
+          'death benefit after ti claim today',
+        ],
+        review: [
+          'death benefit after ti claim today',
+          'residual death-benefit estimate after a ti claim today',
+          'residual death-benefit estimate after ti claim today',
+        ],
         template: [kernel],
       }
     case 'kernel:current-accidental-death-benefit-estimate':
@@ -141,8 +150,17 @@ function metricNeedlesFor(kernel: CoverageNeedle): MetricNeedles {
       }
     case 'kernel:current-residual-death-benefit-after-tpd-estimate':
       return {
-        calculator: ['residual death benefit after a tpd claim today', 'death benefit after tpd claim today'],
-        review: ['death benefit after tpd claim today', 'current residual death-benefit estimate after a tpd claim today'],
+        calculator: [
+          'residual death benefit after a tpd claim today',
+          'residual death-benefit estimate after a tpd claim today',
+          'residual death-benefit estimate after tpd claim today',
+          'death benefit after tpd claim today',
+        ],
+        review: [
+          'death benefit after tpd claim today',
+          'current residual death-benefit estimate after a tpd claim today',
+          'current residual death-benefit estimate after tpd claim today',
+        ],
         template: [kernel],
       }
   }
@@ -160,7 +178,7 @@ function splitTestBlocks(haystack: string): string[] {
   ]
 }
 
-function findMatchingNeedle(
+export function findMatchingNeedle(
   haystack: string,
   productNeedles: string[],
   metricNeedles: string[],
@@ -187,7 +205,7 @@ function findMatchingNeedle(
   return null
 }
 
-function collectRows(
+export function collectRows(
   products: IlpCatalogProduct[],
   calculatorTests: string,
   reviewTests: string,
@@ -231,7 +249,7 @@ function collectRows(
   ))
 }
 
-function classifyRow(row: CoverageRow): CoverageClassification {
+export function classifyRow(row: CoverageRow): CoverageClassification {
   if (!row.calculatorCoverage || !row.reviewCoverage) {
     return 'suspicious-gap'
   }
@@ -375,4 +393,6 @@ async function main() {
   console.log(`Wrote CSV to ${OUTPUT_CSV_PATH}`)
 }
 
-void main()
+if (process.argv[1] != null && path.resolve(process.argv[1]) === __filename) {
+  void main()
+}

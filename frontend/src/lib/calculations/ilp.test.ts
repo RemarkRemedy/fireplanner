@@ -17084,6 +17084,78 @@ describe('computeSummaryMetrics', () => {
     expect(summary.currentTiBenefitEstimate).toBeUndefined()
   })
 
+  it('adds a current residual death benefit after a TI claim today for HSBC Flexi Protector Choice Cover corridors', () => {
+    const policy = makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      postMipYears: 1,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 3_500_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 35,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentBasicSumAssured: 100_000,
+        currentNetSupplementaryPremiumBase: 20_000,
+      },
+      claimProfile: {
+        currentIndebtedness: 10_000,
+        remainingAggregateTiCap: 3_000_000,
+      },
+      chargeRules: [
+        {
+          id: 'hsbc-choice-death-ti',
+          label: 'Death / TI Insurance Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'hsbc-flexi-choice-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      catalogSource: {
+        productId: 'hsbc-life-flexi-protector',
+        productName: 'HSBC Life Flexi Protector',
+        variantId: 'sgd-open-ended-choice-cover',
+        variantLabel: 'SGD / Open-ended (Choice Cover)',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: [
+          'kernel:current-death-benefit-estimate',
+          'kernel:current-ti-benefit-estimate',
+          'kernel:current-residual-death-benefit-after-ti-estimate',
+        ],
+        metadataOnlyBehaviors: [],
+      },
+    })
+
+    const summary = computeSummaryMetrics(policy, projectIlpPolicy(policy, 'mid'))
+
+    expect(summary.currentTiBenefitEstimate).toBe(3_000_000)
+    expect(summary.currentResidualDeathBenefitAfterTiEstimate).toBe(500_000)
+  })
+
   it('uses the remaining account value after the modeled TI payout for HSBC Flexi Protector admitted TI claims', () => {
     const policy = makeOpenEndedPolicy({
       monthlyContribution: 0,

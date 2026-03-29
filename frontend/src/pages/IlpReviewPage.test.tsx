@@ -7153,6 +7153,46 @@ describe('IlpReviewPage', () => {
     expect(screen.getAllByText('S$90,000').length).toBeGreaterThan(0)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('shows HSBC Life Flexi Protector death benefit after TI claim today once the current TI corridor is filled', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Flexi Protector')
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(choice cover\)use template$/i }))
+
+    expect(screen.queryByText('Death Benefit After TI Claim Today')).not.toBeInTheDocument()
+
+    act(() => {
+      const state = useIlpStore.getState()
+      const selectedPolicyId = state.selectedPolicyId
+      const policy = state.policies.find((entry) => entry.id === selectedPolicyId)
+      if (!policy) throw new Error('Expected seeded HSBC Life Flexi Protector policy to be selected')
+
+      state.updatePolicy(policy.id, {
+        assuranceProfile: {
+          currentAgeNextBirthday: 35,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentBasicSumAssured: 100_000,
+          currentNetSupplementaryPremiumBase: 20_000,
+        },
+        accounts: policy.accounts.map((account) => ({
+          ...account,
+          currentValue: account.id === 'policy' ? 3_500_000 : account.currentValue,
+        })),
+        claimProfile: {
+          currentIndebtedness: 10_000,
+          remainingAggregateTiCap: 3_000_000,
+        },
+      })
+    })
+
+    expect(screen.getAllByText('Death Benefit After TI Claim Today').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('S$500,000').length).toBeGreaterThan(0)
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('shows HSBC Life Flexi Protector staged TPD balance snapshots once the current payout stage and claim-history remaining balance are filled', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
