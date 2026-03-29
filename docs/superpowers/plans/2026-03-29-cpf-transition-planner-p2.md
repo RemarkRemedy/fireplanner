@@ -14,6 +14,59 @@
 4. **PolicyPack has `contributionRates`** — Use `ctx.policy.contributionRates` for rate lookups. Do NOT import `CPF_RATES` or `getCpfRatesForAge` directly. All data flows through PolicyPack for testability.
 5. **`estimateCpfLifePayout()` returns ANNUAL** — Divide by 12 for monthly. Use a helper: `const toMonthly = (annual: number) => annual / 12`.
 
+---
+
+### REFERENCE SCHEME TEMPLATE
+
+> All Plan 2 schemes MUST follow this pattern. The code blocks in Tasks 2-18 below were written before the Plan 1 review fixes. Implementing agents MUST adapt each scheme to this template.
+
+```typescript
+// === REFERENCE TEMPLATE: All Plan 2 schemes MUST follow this pattern ===
+// The code blocks below were written before the Plan 1 review fixes.
+// Implementing agents MUST adapt each scheme to this template.
+
+import type { SchemeDefinition, PlannerContext, SchemeResult } from '../types'
+
+export const exampleScheme: SchemeDefinition = {
+  id: 'example-scheme',
+  title: 'Goal-oriented title',
+  goalLabel: 'User goal',
+  chapters: ['at55', 'post55'],  // ARRAY, not singular
+  actionType: 'optional',
+
+  // CHEAP assessment — runs on ALL schemes every input change
+  assess: (ctx: PlannerContext) => ({
+    eligible: ctx.profile.age >= 55,
+    relevance: 80,
+  }),
+
+  // FULL computation — called lazily per card, NOT eagerly
+  compute: (ctx: PlannerContext): SchemeResult => ({
+    headline: 'What happens',
+    summary: 'Plain English explanation',
+    defaultOutcome: 'If you do nothing: ...',
+    metrics: [
+      {
+        metric: 'Monthly payout',
+        defaultNumeric: 1200,      // RAW NUMBER, not formatCurrency()
+        actionNumeric: 1800,       // RAW NUMBER
+        unit: 'currency',          // REQUIRED
+        suffix: '/month',          // OPTIONAL
+        confidence: 'estimated',
+      },
+    ],
+    deltas: [{ label: 'Payout increase', value: 600, formatted: '+$600/month', direction: 'positive' }],
+    citations: [CITATIONS.reaching55],
+    confidence: 'estimated',
+    caveats: [],
+  }),
+}
+```
+
+> **Test note:** Tests must call `scheme.assess(ctx).eligible` (not `scheme.eligibility(ctx)`) and check `scheme.chapters` (array, not `scheme.chapter`).
+
+---
+
 **Tech Stack:** React 19, TypeScript, Zustand (existing stores), Recharts (CpfMiniWaterfall), Framer Motion (TransitionAnimator), Vitest
 
 **Spec:** `docs/superpowers/specs/2026-03-29-cpf-transition-planner-design.md`
@@ -210,20 +263,20 @@ describe('propertyPledgeScheme', () => {
     remainingLease: 60,
   }
 
-  describe('eligibility', () => {
+  describe('assess', () => {
     it('is eligible for property owners aged 50-64 who have not already pledged', () => {
       const ctx = buildPlannerContext(baseInputs)
-      expect(propertyPledgeScheme.eligibility(ctx)).toBe(true)
+      expect(propertyPledgeScheme.assess(ctx).eligible).toBe(true)
     })
 
     it('is not eligible for non-property owners', () => {
       const ctx = buildPlannerContext({ ...baseInputs, ownsProperty: false })
-      expect(propertyPledgeScheme.eligibility(ctx)).toBe(false)
+      expect(propertyPledgeScheme.assess(ctx).eligible).toBe(false)
     })
 
     it('is not eligible if property is already pledged', () => {
       const ctx = buildPlannerContext({ ...baseInputs, propertyPledged: true })
-      expect(propertyPledgeScheme.eligibility(ctx)).toBe(false)
+      expect(propertyPledgeScheme.assess(ctx).eligible).toBe(false)
     })
 
     it('is not eligible for age 65+', () => {
@@ -233,22 +286,20 @@ describe('propertyPledgeScheme', () => {
         sa: 0,
         ra: 220000,
       })
-      expect(propertyPledgeScheme.eligibility(ctx)).toBe(false)
+      expect(propertyPledgeScheme.assess(ctx).eligible).toBe(false)
     })
-  })
 
-  describe('relevanceScore', () => {
-    it('returns higher score closer to age 55', () => {
+    it('returns higher relevance closer to age 55', () => {
       const ctx53 = buildPlannerContext(baseInputs)
       const ctx50 = buildPlannerContext({ ...baseInputs, age: 50 })
-      expect(propertyPledgeScheme.relevanceScore(ctx53)).toBeGreaterThan(
-        propertyPledgeScheme.relevanceScore(ctx50)
+      expect(propertyPledgeScheme.assess(ctx53).relevance).toBeGreaterThan(
+        propertyPledgeScheme.assess(ctx50).relevance
       )
     })
 
-    it('returns positive score for eligible user', () => {
+    it('returns positive relevance for eligible user', () => {
       const ctx = buildPlannerContext(baseInputs)
-      expect(propertyPledgeScheme.relevanceScore(ctx)).toBeGreaterThan(0)
+      expect(propertyPledgeScheme.assess(ctx).relevance).toBeGreaterThan(0)
     })
   })
 
@@ -289,7 +340,7 @@ describe('propertyPledgeScheme', () => {
 
   it('is optional action type in at55 chapter', () => {
     expect(propertyPledgeScheme.actionType).toBe('optional')
-    expect(propertyPledgeScheme.chapter).toBe('at55')
+    expect(propertyPledgeScheme.chapters).toEqual(['at55'])
   })
 })
 ```
@@ -305,32 +356,30 @@ Expected: FAIL -- module not found
 // frontend/src/lib/cpf-transition/schemes/property-pledge.ts
 import type { SchemeDefinition, PlannerContext, SchemeResult } from '../types'
 import { performAge55Transfer, estimateCpfLifePayout, getRetirementSumAmount } from '@/lib/calculations/cpf'
-import { formatCurrency } from '@/lib/utils'
 import { CITATIONS } from '../policy/citations'
 
 export const propertyPledgeScheme: SchemeDefinition = {
   id: 'property-pledge',
   title: 'Pledge your property to unlock more cash at 55',
   goalLabel: 'Increase withdrawable savings',
-  chapter: 'at55',
+  chapters: ['at55'],
   actionType: 'optional',
 
-  eligibility: (ctx: PlannerContext): boolean => {
-    return (
+  assess: (ctx: PlannerContext) => {
+    const eligible =
       ctx.property.owns &&
       !ctx.property.pledged &&
       ctx.profile.age >= 50 &&
       ctx.profile.age < 65
-    )
-  },
 
-  relevanceScore: (ctx: PlannerContext): number => {
     // Most relevant close to 55 and when combined SA+OA is above FRS
     const distance = Math.abs(ctx.profile.age - 55)
     const base = Math.max(0, 75 - distance * 8)
     const combinedSavings = ctx.accounts.oa + ctx.accounts.sa + ctx.accounts.ra
     const frs = ctx.policy.retirementSums.frs
-    return combinedSavings > frs ? base + 10 : base
+    const relevance = eligible ? (combinedSavings > frs ? base + 10 : base) : 0
+
+    return { eligible, relevance }
   },
 
   compute: (ctx: PlannerContext): SchemeResult => {
@@ -351,38 +400,45 @@ export const propertyPledgeScheme: SchemeDefinition = {
     const payoutReduction = payoutFRS - payoutBRS
 
     return {
-      headline: `Pledge your property to reduce locked RA from ${formatCurrency(frs)} to ${formatCurrency(brs)}`,
+      headline: `Pledge your property to reduce locked RA from FRS to BRS`,
       summary: `If you own a property, you can pledge it to CPF Board. This reduces the amount locked in your RA from the Full Retirement Sum to the Basic Retirement Sum, freeing up more cash for withdrawal at 55.`,
-      defaultOutcome: `If you do nothing, ${formatCurrency(frs)} (FRS) stays locked in your RA. You can withdraw OA above this amount.`,
+      defaultOutcome: `If you do nothing, the FRS stays locked in your RA. You can withdraw OA above this amount.`,
       metrics: [
         {
           metric: 'Locked in RA',
-          defaultValue: formatCurrency(frs),
-          actionValue: formatCurrency(brs),
+          defaultNumeric: frs,
+          actionNumeric: brs,
+          unit: 'currency',
           confidence: 'estimated',
         },
         {
           metric: 'Withdrawable at 55',
-          defaultValue: formatCurrency(withdrawableFRS),
-          actionValue: formatCurrency(withdrawableBRS),
+          defaultNumeric: withdrawableFRS,
+          actionNumeric: withdrawableBRS,
+          unit: 'currency',
           confidence: 'estimated',
         },
         {
           metric: 'Extra cash unlocked',
-          defaultValue: '$0',
-          actionValue: `+${formatCurrency(extraWithdrawable)}`,
+          defaultNumeric: 0,
+          actionNumeric: extraWithdrawable,
+          unit: 'currency',
           confidence: 'estimated',
         },
         {
           metric: 'Est. monthly payout at 65',
-          defaultValue: `~${formatCurrency(payoutFRS, 0)}/month`,
-          actionValue: `~${formatCurrency(payoutBRS, 0)}/month`,
+          defaultNumeric: payoutFRS,
+          actionNumeric: payoutBRS,
+          unit: 'currency',
+          suffix: '/month',
           confidence: 'estimated',
         },
         {
           metric: 'Monthly payout reduction',
-          defaultValue: '$0',
-          actionValue: `-${formatCurrency(payoutReduction, 0)}/month`,
+          defaultNumeric: 0,
+          actionNumeric: -payoutReduction,
+          unit: 'currency',
+          suffix: '/month',
           confidence: 'estimated',
         },
       ],
@@ -390,13 +446,13 @@ export const propertyPledgeScheme: SchemeDefinition = {
         {
           label: 'Extra withdrawable cash',
           value: extraWithdrawable,
-          formatted: `+${formatCurrency(extraWithdrawable)}`,
+          formatted: `+$${extraWithdrawable.toLocaleString()}`,
           direction: 'positive',
         },
         {
           label: 'Monthly payout reduction',
           value: -payoutReduction * 12,
-          formatted: `-${formatCurrency(payoutReduction, 0)}/month`,
+          formatted: `-$${Math.round(payoutReduction).toLocaleString()}/month`,
           direction: 'negative',
         },
       ],
@@ -440,7 +496,7 @@ import { oaWithdrawal55Scheme } from '../schemes/oa-withdrawal-55'
 import { buildPlannerContext } from '../domain/context'
 
 describe('oaWithdrawal55Scheme', () => {
-  describe('eligibility', () => {
+  describe('assess', () => {
     it('is eligible for users aged 50-64 with OA balance', () => {
       const ctx = buildPlannerContext({
         age: 53,
@@ -450,7 +506,7 @@ describe('oaWithdrawal55Scheme', () => {
         ma: 70000,
         monthlySalary: 8000,
       })
-      expect(oaWithdrawal55Scheme.eligibility(ctx)).toBe(true)
+      expect(oaWithdrawal55Scheme.assess(ctx).eligible).toBe(true)
     })
 
     it('is not eligible for users under 50', () => {
@@ -462,7 +518,7 @@ describe('oaWithdrawal55Scheme', () => {
         ma: 70000,
         monthlySalary: 8000,
       })
-      expect(oaWithdrawal55Scheme.eligibility(ctx)).toBe(false)
+      expect(oaWithdrawal55Scheme.assess(ctx).eligible).toBe(false)
     })
 
     it('is not eligible if OA is zero', () => {
@@ -474,12 +530,10 @@ describe('oaWithdrawal55Scheme', () => {
         ma: 70000,
         monthlySalary: 0,
       })
-      expect(oaWithdrawal55Scheme.eligibility(ctx)).toBe(false)
+      expect(oaWithdrawal55Scheme.assess(ctx).eligible).toBe(false)
     })
-  })
 
-  describe('relevanceScore', () => {
-    it('returns higher score when OA excess above FRS is larger', () => {
+    it('returns higher relevance when OA excess above FRS is larger', () => {
       const ctxRich = buildPlannerContext({
         age: 56,
         oa: 500000,
@@ -496,8 +550,8 @@ describe('oaWithdrawal55Scheme', () => {
         ma: 70000,
         monthlySalary: 0,
       })
-      expect(oaWithdrawal55Scheme.relevanceScore(ctxRich)).toBeGreaterThan(
-        oaWithdrawal55Scheme.relevanceScore(ctxModest)
+      expect(oaWithdrawal55Scheme.assess(ctxRich).relevance).toBeGreaterThan(
+        oaWithdrawal55Scheme.assess(ctxModest).relevance
       )
     })
   })
@@ -555,7 +609,7 @@ describe('oaWithdrawal55Scheme', () => {
 
   it('is optional action type in at55 chapter', () => {
     expect(oaWithdrawal55Scheme.actionType).toBe('optional')
-    expect(oaWithdrawal55Scheme.chapter).toBe('at55')
+    expect(oaWithdrawal55Scheme.chapters).toEqual(['at55'])
   })
 })
 ```
@@ -571,7 +625,6 @@ Expected: FAIL -- module not found
 // frontend/src/lib/cpf-transition/schemes/oa-withdrawal-55.ts
 import type { SchemeDefinition, PlannerContext, SchemeResult } from '../types'
 import { performAge55Transfer } from '@/lib/calculations/cpf'
-import { formatCurrency } from '@/lib/utils'
 import { CITATIONS } from '../policy/citations'
 
 /** Minimum guaranteed withdrawal at 55 even if RA < FRS */
@@ -581,24 +634,28 @@ export const oaWithdrawal55Scheme: SchemeDefinition = {
   id: 'oa-withdrawal-55',
   title: 'Withdraw your OA savings at 55',
   goalLabel: 'Access cash at 55',
-  chapter: 'at55',
+  chapters: ['at55'],
   actionType: 'optional',
 
-  eligibility: (ctx: PlannerContext): boolean => {
-    return ctx.profile.age >= 50 && ctx.profile.age < 65 && ctx.accounts.oa > 0
-  },
+  assess: (ctx: PlannerContext) => {
+    const eligible = ctx.profile.age >= 50 && ctx.profile.age < 65 && ctx.accounts.oa > 0
 
-  relevanceScore: (ctx: PlannerContext): number => {
     // Higher relevance when there is significant OA above FRS
-    const frs = ctx.policy.retirementSums.frs
-    if (ctx.profile.age >= 55) {
-      // Post-55: OA is already separated, excess is directly withdrawable
-      const excessRatio = Math.min(ctx.accounts.oa / frs, 1)
-      return Math.round(60 + excessRatio * 30)
+    let relevance = 0
+    if (eligible) {
+      const frs = ctx.policy.retirementSums.frs
+      if (ctx.profile.age >= 55) {
+        // Post-55: OA is already separated, excess is directly withdrawable
+        const excessRatio = Math.min(ctx.accounts.oa / frs, 1)
+        relevance = Math.round(60 + excessRatio * 30)
+      } else {
+        // Pre-55: estimate post-transfer OA
+        const { newOA } = performAge55Transfer(ctx.accounts.oa, ctx.accounts.sa, frs)
+        relevance = newOA > 0 ? Math.round(50 + Math.min(newOA / frs, 1) * 30) : 30
+      }
     }
-    // Pre-55: estimate post-transfer OA
-    const { newOA } = performAge55Transfer(ctx.accounts.oa, ctx.accounts.sa, frs)
-    return newOA > 0 ? Math.round(50 + Math.min(newOA / frs, 1) * 30) : 30
+
+    return { eligible, relevance }
   },
 
   compute: (ctx: PlannerContext): SchemeResult => {
@@ -634,28 +691,31 @@ export const oaWithdrawal55Scheme: SchemeDefinition = {
       : (ctx.accounts.sa + Math.max(0, ctx.accounts.oa - (ctx.accounts.sa >= frs ? 0 : frs - ctx.accounts.sa))) >= frs
 
     return {
-      headline: `Withdraw up to ${formatCurrency(withdrawable)} from your OA at 55`,
+      headline: `Withdraw your excess OA savings at 55`,
       summary: raMetFRS
-        ? `Once your RA meets the FRS (${formatCurrency(frs)}), you can withdraw all excess OA savings freely. This money is yours to use, but it stops earning 2.5% interest.`
-        : `Your RA is below the FRS (${formatCurrency(frs)}). You can still withdraw up to $5,000 from your OA at 55.`,
-      defaultOutcome: `If you do nothing, your ${formatCurrency(oaAfterTransfer)} stays in OA earning 2.5% per year.`,
+        ? `Once your RA meets the FRS, you can withdraw all excess OA savings freely. This money is yours to use, but it stops earning 2.5% interest.`
+        : `Your RA is below the FRS. You can still withdraw up to $5,000 from your OA at 55.`,
+      defaultOutcome: `If you do nothing, your OA balance stays in CPF earning 2.5% per year.`,
       metrics: [
         {
           metric: 'Withdrawable at 55',
-          defaultValue: '$0 (leave in CPF)',
-          actionValue: formatCurrency(withdrawable),
+          defaultNumeric: 0,
+          actionNumeric: withdrawable,
+          unit: 'currency',
           confidence: ctx.profile.age >= 55 ? 'known' : 'estimated',
         },
         {
           metric: 'OA balance after withdrawal',
-          defaultValue: formatCurrency(oaAfterTransfer),
-          actionValue: formatCurrency(oaAfterTransfer - withdrawable),
+          defaultNumeric: oaAfterTransfer,
+          actionNumeric: oaAfterTransfer - withdrawable,
+          unit: 'currency',
           confidence: ctx.profile.age >= 55 ? 'known' : 'estimated',
         },
         {
           metric: 'Opportunity cost (interest over 10 years)',
-          defaultValue: `+${formatCurrency(interestOver10Years, 0)}`,
-          actionValue: '$0 (money withdrawn)',
+          defaultNumeric: interestOver10Years,
+          actionNumeric: 0,
+          unit: 'currency',
           confidence: 'estimated',
         },
       ],
@@ -663,13 +723,13 @@ export const oaWithdrawal55Scheme: SchemeDefinition = {
         {
           label: 'Cash received',
           value: withdrawable,
-          formatted: `+${formatCurrency(withdrawable)}`,
+          formatted: `+$${withdrawable.toLocaleString()}`,
           direction: 'positive',
         },
         {
           label: 'Foregone interest (10yr)',
           value: -interestOver10Years,
-          formatted: `-${formatCurrency(interestOver10Years, 0)}`,
+          formatted: `-$${Math.round(interestOver10Years).toLocaleString()}`,
           direction: 'negative',
         },
       ],
@@ -699,6 +759,8 @@ cd /Users/tj/TJDevelopment/fireplanner && git add frontend/src/lib/cpf-transitio
 ---
 
 ## Task 4: Scheme -- Post-55 Contribution Routing
+
+> **API MIGRATION:** The code below uses a stale API. See the REFERENCE TEMPLATE above. Implementing agents must adapt `eligibility` to `assess`, `chapter` to `chapters`, and string metrics (`defaultValue`/`actionValue`) to numeric metrics (`defaultNumeric`/`actionNumeric` + `unit`).
 
 **Files:**
 - Create: `frontend/src/lib/cpf-transition/schemes/post55-contributions.ts`
@@ -916,6 +978,8 @@ cd /Users/tj/TJDevelopment/fireplanner && git add frontend/src/lib/cpf-transitio
 ---
 
 ## Task 5: Scheme -- Interest Growth (Tiered Rates Visualization)
+
+> **API MIGRATION:** The code below uses a stale API. See the REFERENCE TEMPLATE above. Implementing agents must adapt `eligibility` to `assess`, `chapter` to `chapters`, and string metrics (`defaultValue`/`actionValue`) to numeric metrics (`defaultNumeric`/`actionNumeric` + `unit`).
 
 **Files:**
 - Create: `frontend/src/lib/cpf-transition/schemes/interest-growth.ts`
@@ -1210,6 +1274,8 @@ cd /Users/tj/TJDevelopment/fireplanner && git add frontend/src/lib/cpf-transitio
 
 ## Task 6: Scheme -- MA BHS Overflow Routing
 
+> **API MIGRATION:** The code below uses a stale API. See the REFERENCE TEMPLATE above. Implementing agents must adapt `eligibility` to `assess`, `chapter` to `chapters`, and string metrics (`defaultValue`/`actionValue`) to numeric metrics (`defaultNumeric`/`actionNumeric` + `unit`).
+
 **Files:**
 - Create: `frontend/src/lib/cpf-transition/schemes/ma-bhs-overflow.ts`
 - Test: `frontend/src/lib/cpf-transition/tests/ma-bhs-overflow.test.ts`
@@ -1498,6 +1564,8 @@ cd /Users/tj/TJDevelopment/fireplanner && git add frontend/src/lib/cpf-transitio
 
 ## Task 7: Scheme -- Voluntary Housing Refund (VHR)
 
+> **API MIGRATION:** The code below uses a stale API. See the REFERENCE TEMPLATE above. Implementing agents must adapt `eligibility` to `assess`, `chapter` to `chapters`, and string metrics (`defaultValue`/`actionValue`) to numeric metrics (`defaultNumeric`/`actionNumeric` + `unit`).
+
 **Files:**
 - Create: `frontend/src/lib/cpf-transition/schemes/vhr-housing-refund.ts`
 - Test: `frontend/src/lib/cpf-transition/tests/vhr-housing-refund.test.ts`
@@ -1732,6 +1800,8 @@ cd /Users/tj/TJDevelopment/fireplanner && git add frontend/src/lib/cpf-transitio
 ---
 
 ## Task 8: Scheme -- MRSS Matching
+
+> **API MIGRATION:** The code below uses a stale API. See the REFERENCE TEMPLATE above. Implementing agents must adapt `eligibility` to `assess`, `chapter` to `chapters`, and string metrics (`defaultValue`/`actionValue`) to numeric metrics (`defaultNumeric`/`actionNumeric` + `unit`).
 
 **Files:**
 - Create: `frontend/src/lib/cpf-transition/schemes/mrss-matching.ts`
@@ -1973,6 +2043,8 @@ cd /Users/tj/TJDevelopment/fireplanner && git add frontend/src/lib/cpf-transitio
 
 ## Task 9: Scheme -- MMSS MediSave Matching
 
+> **API MIGRATION:** The code below uses a stale API. See the REFERENCE TEMPLATE above. Implementing agents must adapt `eligibility` to `assess`, `chapter` to `chapters`, and string metrics (`defaultValue`/`actionValue`) to numeric metrics (`defaultNumeric`/`actionNumeric` + `unit`).
+
 **Files:**
 - Create: `frontend/src/lib/cpf-transition/schemes/mmss-medisave.ts`
 - Test: `frontend/src/lib/cpf-transition/tests/mmss-medisave.test.ts`
@@ -2185,6 +2257,8 @@ cd /Users/tj/TJDevelopment/fireplanner && git add frontend/src/lib/cpf-transitio
 ---
 
 ## Task 10: Scheme -- CPF LIFE Deferral Bonus
+
+> **API MIGRATION:** The code below uses a stale API. See the REFERENCE TEMPLATE above. Implementing agents must adapt `eligibility` to `assess`, `chapter` to `chapters`, and string metrics (`defaultValue`/`actionValue`) to numeric metrics (`defaultNumeric`/`actionNumeric` + `unit`).
 
 **Files:**
 - Create: `frontend/src/lib/cpf-transition/schemes/cpf-life-deferral.ts`
@@ -2423,6 +2497,8 @@ cd /Users/tj/TJDevelopment/fireplanner && git add frontend/src/lib/cpf-transitio
 
 ## Task 11: Scheme -- 20% RA Lump Sum Withdrawal at 65
 
+> **API MIGRATION:** The code below uses a stale API. See the REFERENCE TEMPLATE above. Implementing agents must adapt `eligibility` to `assess`, `chapter` to `chapters`, and string metrics (`defaultValue`/`actionValue`) to numeric metrics (`defaultNumeric`/`actionNumeric` + `unit`).
+
 **Files:**
 - Create: `frontend/src/lib/cpf-transition/schemes/ra-lumpsum-65.ts`
 - Test: `frontend/src/lib/cpf-transition/tests/ra-lumpsum-65.test.ts`
@@ -2652,6 +2728,8 @@ cd /Users/tj/TJDevelopment/fireplanner && git add frontend/src/lib/cpf-transitio
 ---
 
 ## Task 12: Scheme -- Lease Buyback Scheme
+
+> **API MIGRATION:** The code below uses a stale API. See the REFERENCE TEMPLATE above. Implementing agents must adapt `eligibility` to `assess`, `chapter` to `chapters`, and string metrics (`defaultValue`/`actionValue`) to numeric metrics (`defaultNumeric`/`actionNumeric` + `unit`).
 
 **Files:**
 - Create: `frontend/src/lib/cpf-transition/schemes/lease-buyback.ts`
@@ -2906,6 +2984,8 @@ cd /Users/tj/TJDevelopment/fireplanner && git add frontend/src/lib/cpf-transitio
 
 ## Task 13: Scheme -- Silver Support
 
+> **API MIGRATION:** The code below uses a stale API. See the REFERENCE TEMPLATE above. Implementing agents must adapt `eligibility` to `assess`, `chapter` to `chapters`, and string metrics (`defaultValue`/`actionValue`) to numeric metrics (`defaultNumeric`/`actionNumeric` + `unit`).
+
 **Files:**
 - Create: `frontend/src/lib/cpf-transition/schemes/silver-support.ts`
 - Test: `frontend/src/lib/cpf-transition/tests/silver-support.test.ts`
@@ -3119,6 +3199,8 @@ cd /Users/tj/TJDevelopment/fireplanner && git add frontend/src/lib/cpf-transitio
 ---
 
 ## Task 14: Scheme -- SRS Withdrawal Timeline
+
+> **API MIGRATION:** The code below uses a stale API. See the REFERENCE TEMPLATE above. Implementing agents must adapt `eligibility` to `assess`, `chapter` to `chapters`, and string metrics (`defaultValue`/`actionValue`) to numeric metrics (`defaultNumeric`/`actionNumeric` + `unit`).
 
 **Files:**
 - Create: `frontend/src/lib/cpf-transition/schemes/srs-withdrawal.ts`
@@ -3371,6 +3453,8 @@ cd /Users/tj/TJDevelopment/fireplanner && git add frontend/src/lib/cpf-transitio
 
 ## Task 15: Scheme -- Spousal RA Transfer
 
+> **API MIGRATION:** The code below uses a stale API. See the REFERENCE TEMPLATE above. Implementing agents must adapt `eligibility` to `assess`, `chapter` to `chapters`, and string metrics (`defaultValue`/`actionValue`) to numeric metrics (`defaultNumeric`/`actionNumeric` + `unit`).
+
 **Files:**
 - Create: `frontend/src/lib/cpf-transition/schemes/spousal-transfer.ts`
 - Test: `frontend/src/lib/cpf-transition/tests/spousal-transfer.test.ts`
@@ -3585,6 +3669,8 @@ cd /Users/tj/TJDevelopment/fireplanner && git add frontend/src/lib/cpf-transitio
 ---
 
 ## Task 16: Scheme -- WIS/Workfare Income Supplement
+
+> **API MIGRATION:** The code below uses a stale API. See the REFERENCE TEMPLATE above. Implementing agents must adapt `eligibility` to `assess`, `chapter` to `chapters`, and string metrics (`defaultValue`/`actionValue`) to numeric metrics (`defaultNumeric`/`actionNumeric` + `unit`).
 
 **Files:**
 - Create: `frontend/src/lib/cpf-transition/schemes/wis-workfare.ts`
@@ -3810,6 +3896,8 @@ cd /Users/tj/TJDevelopment/fireplanner && git add frontend/src/lib/cpf-transitio
 
 ## Task 17: Scheme -- CPF Nomination/Bequest
 
+> **API MIGRATION:** The code below uses a stale API. See the REFERENCE TEMPLATE above. Implementing agents must adapt `eligibility` to `assess`, `chapter` to `chapters`, and string metrics (`defaultValue`/`actionValue`) to numeric metrics (`defaultNumeric`/`actionNumeric` + `unit`).
+
 **Files:**
 - Create: `frontend/src/lib/cpf-transition/schemes/nomination.ts`
 - Test: `frontend/src/lib/cpf-transition/tests/nomination.test.ts`
@@ -4004,6 +4092,8 @@ cd /Users/tj/TJDevelopment/fireplanner && git add frontend/src/lib/cpf-transitio
 ---
 
 ## Task 18: Scheme -- Healthcare Deductions (MediShield + CareShield)
+
+> **API MIGRATION:** The code below uses a stale API. See the REFERENCE TEMPLATE above. Implementing agents must adapt `eligibility` to `assess`, `chapter` to `chapters`, and string metrics (`defaultValue`/`actionValue`) to numeric metrics (`defaultNumeric`/`actionNumeric` + `unit`).
 
 **Files:**
 - Create: `frontend/src/lib/cpf-transition/schemes/healthcare-deductions.ts`
@@ -4332,6 +4422,8 @@ cd /Users/tj/TJDevelopment/fireplanner && git add frontend/src/lib/cpf-transitio
 
 **Files:**
 - Create: `frontend/src/components/cpf-transition/TransitionAnimator.tsx`
+
+**MOBILE RESPONSIVE (autoplan fix 4):** At `< 640px`, the horizontal Sankey SVG is infeasible (287px usable width can't fit 3 source boxes + flow lines + 3 target boxes with readable text). Replace with a **vertical flow diagram** on mobile: source box at top, animated arrow/line pointing down, target box at bottom, dollar amounts inline. Same information, mobile-native layout. Use a `useMediaQuery` or Tailwind `sm:` breakpoint to toggle between horizontal (desktop) and vertical (mobile) layouts. Trigger animation on scroll-into-view via `IntersectionObserver`, duration 1.5s, easing `easeInOut`, sequential flow (SA->RA first 0-800ms, excess SA->OA 800-1200ms, OA->RA shortfall 1200-1500ms). Include a "Replay" button below.
 
 - [ ] **Step 1: Implement TransitionAnimator**
 
