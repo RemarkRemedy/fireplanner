@@ -25957,6 +25957,64 @@ describe('computeSummaryMetrics', () => {
     expect(analysis.summary.currentTiBenefitEstimate).toBe(50_000)
   })
 
+  it('models AIA Platinum Wealth Elite 2.0 residual death benefit after a TI claim today from the same current insured-amount corridor', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 4,
+      monthsAlreadyPaid: 48,
+      monthlyContribution: 350,
+      mipLength: 5,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Regular Premium Policy Account',
+          feeRate: 0,
+          currentValue: 40_000,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAgeNextBirthday: 45,
+        sex: 'female',
+        smokerStatus: 'non-smoker',
+        currentSumAssured: 55_000,
+      },
+      claimProfile: {
+        remainingAggregateTiCap: 50_000,
+      },
+      catalogSource: {
+        productId: 'aia-platinum-wealth-elite-2',
+        productName: 'AIA Platinum Wealth Elite 2.0',
+        variantId: 'sgd-mip-5',
+        variantLabel: 'SGD / MIP 5',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: [
+          'kernel:current-death-benefit-estimate',
+          'kernel:current-ti-benefit-estimate',
+          'kernel:current-residual-death-benefit-after-ti-estimate',
+        ],
+        metadataOnlyBehaviors: [],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentResidualDeathBenefitAfterTiEstimate).toBe(5_000)
+  })
+
   it('omits AIA Platinum Wealth Elite 2.0 current death benefit after an admitted TI claim until the current residual death amount is supplied', () => {
     const policy = makeDefaultPolicy({
       currentPolicyYear: 4,

@@ -9168,6 +9168,7 @@ export function computeCurrentResidualDeathBenefitAfterTiEstimate(
     && input.catalogSource?.productId !== 'hsbc-life-wealth-focus-flexi-3'
     && input.catalogSource?.productId !== 'hsbc-life-wealth-focus-flexi-5'
     && input.catalogSource?.productId !== 'hsbc-life-flexi-protector'
+    && input.catalogSource?.productId !== 'aia-platinum-wealth-elite-2'
     && input.catalogSource?.productId !== 'manulife-manuinvest-duo'
     && input.catalogSource?.productId !== 'manulife-manulink-investor-ii'
     && input.catalogSource?.productId !== 'manulife-investready-growth'

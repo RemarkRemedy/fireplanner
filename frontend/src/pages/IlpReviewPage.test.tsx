@@ -6460,7 +6460,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('3% top-up premium charge')
     expect(seededAlert?.textContent).toContain('premium-holiday charge schedule')
     expect(seededAlert?.textContent).toContain('current-state death benefit as the higher of current insured amount or policy value via a manual current insured amount input')
-    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap')
+    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied')
     expect(seededAlert?.textContent).toContain('current insured amount before the current death-benefit estimate can be trusted')
     expect(seededAlert?.textContent).toContain('optional extension of the regular premium term beyond five years')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
@@ -6534,6 +6534,39 @@ describe('IlpReviewPage', () => {
     })
 
     expect(screen.getAllByText('TI Benefit Today').length).toBeGreaterThan(0)
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('shows AIA Platinum Wealth Elite 2.0 death benefit after TI claim today once current insured amount and the remaining aggregate TI cap are filled', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Wealth Elite 2.0')
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+
+    expect(screen.queryByText('Death Benefit After TI Claim Today')).not.toBeInTheDocument()
+
+    act(() => {
+      const state = useIlpStore.getState()
+      const selectedPolicyId = state.selectedPolicyId
+      const policy = state.policies.find((entry) => entry.id === selectedPolicyId)
+      if (!policy) throw new Error('Expected seeded AIA Platinum Wealth Elite 2.0 policy to be selected')
+
+      state.updatePolicy(policy.id, {
+        assuranceProfile: {
+          currentAgeNextBirthday: 45,
+          sex: 'female',
+          smokerStatus: 'non-smoker',
+          currentSumAssured: 55_000,
+        },
+        claimProfile: {
+          remainingAggregateTiCap: 50_000,
+        },
+      })
+    })
+
+    expect(screen.getAllByText('Death Benefit After TI Claim Today').length).toBeGreaterThan(0)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows the admitted-state residual death input for AIA Platinum Wealth Elite 2.0 and requires it before the current death snapshot can be trusted', async () => {
