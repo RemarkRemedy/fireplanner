@@ -7202,6 +7202,53 @@ describe('IlpReviewPage', () => {
     expect(screen.queryByText('Accidental Death Benefit Today')).not.toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('keeps Goal Builder II historical scheduled-withdrawal history off the active-year manual current-state inputs once the payout window has ended', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Goal Builder II')
+    await user.click(within(dialog).getByRole('button', { name: /^usd \/ mip 15use template$/i }))
+
+    act(() => {
+      const state = useIlpStore.getState()
+      const selectedPolicyId = state.selectedPolicyId
+      const policy = state.policies.find((entry) => entry.id === selectedPolicyId)
+      if (!policy) throw new Error('Expected seeded Goal Builder II policy to be selected')
+
+      state.updatePolicy(policy.id, {
+        currentPolicyYear: 5,
+        monthsAlreadyPaid: 60,
+        monthlyContribution: 500,
+        scheduledPayoutSupport: {
+          mode: 'manual-assumption',
+          accountId: 'policy',
+          source: 'policy-redemption',
+        },
+        scheduledPayoutAssumption: {
+          mode: 'scheduled-redemption',
+          accountId: 'policy',
+          annualPayoutAmount: 2_400,
+          startPolicyYear: 3,
+          durationYears: 2,
+        },
+        assuranceProfile: {
+          currentAgeNextBirthday: 35,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentAmountOwing: 250,
+        },
+        claimProfile: {
+          remainingAggregateTiCap: 27_000,
+        },
+      })
+    })
+
+    expect(screen.queryByLabelText('Current Insured Amount (USD)')).not.toBeInTheDocument()
+    expect(screen.queryByText(/current insured amount before the current death-benefit estimate can be trusted/i)).not.toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('shows Goal Builder II current accidental-death sum insured input once scheduled withdrawals are already active', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()

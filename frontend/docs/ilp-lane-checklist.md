@@ -16,6 +16,9 @@ Rules:
 - Secondary view: per-policy coverage only to show what is now unlocked or still blocked.
 - Current active repo: `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend`
 - Current live cursor:
+  - Current-State Reconstruction override note:
+    - `HSBC Life Goal Builder II` now reconstructs completed prior-year scheduled-redemption erosion into the current ordinary sum-insured corridor after the scheduled payout window has already ended, so `Death Benefit Today` and `TI Benefit Today` no longer overstate past regular-withdrawal history on that bounded path
+    - same-year scheduled-payout timing and the accidental-death sum-insured corridor remain separate seams, so active-current-year manual insured / accidental-floor inputs stay in place
   - the HSBC monthly-rate bonus family is now landed on the existing `monthly-rate` seam
   - that HSBC bonus slice is intentionally narrow:
     - source-monthly account-value bonuses now credit monthly on the seeded/runtime path rather than being approximated through annual-rate support

@@ -447,6 +447,10 @@ function getCurrentAccidentalDeathFloorAmountLabel(policy: IlpPolicyInput): stri
 }
 
 function supportsCurrentSumAssuredDeathBenefit(policy: IlpPolicyInput): boolean {
+  const scheduledPayoutEndPolicyYear = policy.scheduledPayoutAssumption?.mode === 'scheduled-redemption'
+    ? policy.scheduledPayoutAssumption.startPolicyYear + policy.scheduledPayoutAssumption.durationYears - 1
+    : null
+
   return policy.catalogSource?.productId === 'aia-platinum-wealth-elite-2'
     || policy.catalogSource?.productId === 'aia-platinum-wealth-legacy'
     || policy.catalogSource?.productId === 'aia-pro-lifetime-protector-ii'
@@ -454,6 +458,8 @@ function supportsCurrentSumAssuredDeathBenefit(policy: IlpPolicyInput): boolean 
       policy.catalogSource?.productId === 'hsbc-life-goal-builder-ii'
       && policy.scheduledPayoutAssumption?.mode === 'scheduled-redemption'
       && policy.scheduledPayoutAssumption.startPolicyYear <= policy.currentPolicyYear
+      && scheduledPayoutEndPolicyYear != null
+      && policy.currentPolicyYear <= scheduledPayoutEndPolicyYear
     )
 }
 

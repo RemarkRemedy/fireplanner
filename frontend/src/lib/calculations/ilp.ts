@@ -6548,6 +6548,73 @@ function hasActiveCurrentGoalBuilderIiScheduledPayout(
     && hasActiveCurrentScheduledRedemption(input)
 }
 
+function hasCurrentPolicyYearGoalBuilderIiScheduledPayout(
+  input: IlpPolicyInput,
+): boolean {
+  const scheduledPayout = input.scheduledPayoutAssumption
+  const payoutEndPolicyYear = (
+    scheduledPayout?.mode === 'scheduled-redemption'
+      ? scheduledPayout.startPolicyYear + scheduledPayout.durationYears - 1
+      : null
+  )
+
+  return hasActiveCurrentGoalBuilderIiScheduledPayout(input)
+    && payoutEndPolicyYear != null
+    && input.currentPolicyYear <= payoutEndPolicyYear
+}
+
+function getGoalBuilderIiCompletedScheduledPayoutErosion(
+  input: IlpPolicyInput,
+): number {
+  if (input.catalogSource?.productId !== 'hsbc-life-goal-builder-ii') {
+    return 0
+  }
+
+  const scheduledPayout = input.scheduledPayoutAssumption
+  if (!scheduledPayout || scheduledPayout.mode !== 'scheduled-redemption') {
+    return 0
+  }
+
+  if (!isScheduledPayoutFrequencyAllowed(input.scheduledPayoutSupport, scheduledPayout.frequency)) {
+    return 0
+  }
+
+  const minimumAnnualWithdrawalAmount = input.scheduledPayoutSupport?.minimumAnnualWithdrawalAmount
+  if (
+    minimumAnnualWithdrawalAmount != null
+    && scheduledPayout.annualPayoutAmount + CONTRIBUTION_TOLERANCE < minimumAnnualWithdrawalAmount
+  ) {
+    return 0
+  }
+
+  const minimumWithdrawalAmountPerOccurrence = input.scheduledPayoutSupport?.minimumWithdrawalAmountPerOccurrence
+  if (minimumWithdrawalAmountPerOccurrence != null) {
+    const payoutAmountPerOccurrence = scheduledPayout.annualPayoutAmount
+      / scheduledPayoutFrequencyOccurrencesPerYear(scheduledPayout.frequency)
+    if (payoutAmountPerOccurrence + CONTRIBUTION_TOLERANCE < minimumWithdrawalAmountPerOccurrence) {
+      return 0
+    }
+  }
+
+  const payoutEndPolicyYear = scheduledPayout.startPolicyYear + scheduledPayout.durationYears - 1
+  const lastCompletedPolicyYear = Math.min(input.currentPolicyYear - 1, payoutEndPolicyYear)
+  if (lastCompletedPolicyYear < scheduledPayout.startPolicyYear) {
+    return 0
+  }
+
+  let completedScheduledPayoutErosion = 0
+  for (let policyYear = scheduledPayout.startPolicyYear; policyYear <= lastCompletedPolicyYear; policyYear += 1) {
+    if (isScheduledPayoutBlockedAtPolicyYear(input, policyYear)) {
+      continue
+    }
+
+    // Keep the active current policy year manual because intra-year payout timing is still not reconstructable.
+    completedScheduledPayoutErosion += scheduledPayout.annualPayoutAmount
+  }
+
+  return completedScheduledPayoutErosion
+}
+
 function resolveCurrentGoalBuilderIiSumInsured(
   input: IlpPolicyInput,
   currentPolicyMonth: number,
@@ -6556,7 +6623,7 @@ function resolveCurrentGoalBuilderIiSumInsured(
     return undefined
   }
 
-  if (hasActiveCurrentGoalBuilderIiScheduledPayout(input)) {
+  if (hasCurrentPolicyYearGoalBuilderIiScheduledPayout(input)) {
     if (input.assuranceProfile?.currentSumAssured == null) {
       return undefined
     }
@@ -6585,10 +6652,17 @@ function resolveCurrentGoalBuilderIiSumInsured(
       ? sum + event.amount
       : sum
   ), 0)
+  const completedScheduledPayoutErosion = getGoalBuilderIiCompletedScheduledPayoutErosion(input)
 
   return Math.max(
     0,
-    (cumulativeRegularPremiumPaid * 1.01) + adHocTopUpAmount + recurringSinglePremiumAmount - withdrawalAmount,
+    (
+      (cumulativeRegularPremiumPaid * 1.01)
+      + adHocTopUpAmount
+      + recurringSinglePremiumAmount
+      - withdrawalAmount
+      - completedScheduledPayoutErosion
+    ),
   )
 }
 

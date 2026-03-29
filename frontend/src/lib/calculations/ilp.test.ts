@@ -38029,6 +38029,66 @@ describe('computeSummaryMetrics', () => {
     expect(analysis.summary.currentDeathBenefitEstimate).toBe(23_990)
   })
 
+  it('reconstructs Goal Builder II death benefit today after completed scheduled withdrawals in prior policy years', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'USD',
+      currentPolicyYear: 5,
+      monthsAlreadyPaid: 60,
+      monthlyContribution: 500,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 22_000,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAmountOwing: 250,
+      },
+      scheduledPayoutSupport: {
+        mode: 'manual-assumption',
+        accountId: 'policy',
+        source: 'policy-redemption',
+      },
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        accountId: 'policy',
+        annualPayoutAmount: 2_400,
+        startPolicyYear: 3,
+        durationYears: 2,
+      },
+      catalogSource: {
+        productId: 'hsbc-life-goal-builder-ii',
+        productName: 'Goal Builder II',
+        variantId: 'usd-mip-15',
+        variantLabel: 'USD / MIP 15',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate'],
+        metadataOnlyBehaviors: ['goal-builder-ii-terminal-illness-post-claim-reduction-and-payout-mechanics'],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentDeathBenefitEstimate).toBe(25_250)
+  })
+
   it('uses a manual current insured amount for Goal Builder II death benefit today once scheduled withdrawals can already affect the current policy year', () => {
     const policy = makeDefaultPolicy({
       currency: 'USD',
@@ -38162,6 +38222,69 @@ describe('computeSummaryMetrics', () => {
     const analysis = analyzeCurrentOnlyIlpPolicy(policy)
 
     expect(analysis.summary.currentTiBenefitEstimate).toBe(20_000)
+  })
+
+  it('reconstructs Goal Builder II TI Benefit Today after completed scheduled withdrawals in prior policy years', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'USD',
+      currentPolicyYear: 5,
+      monthsAlreadyPaid: 60,
+      monthlyContribution: 500,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 22_000,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAmountOwing: 250,
+      },
+      claimProfile: {
+        remainingAggregateTiCap: 27_000,
+      },
+      scheduledPayoutSupport: {
+        mode: 'manual-assumption',
+        accountId: 'policy',
+        source: 'policy-redemption',
+      },
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        accountId: 'policy',
+        annualPayoutAmount: 2_400,
+        startPolicyYear: 3,
+        durationYears: 2,
+      },
+      catalogSource: {
+        productId: 'hsbc-life-goal-builder-ii',
+        productName: 'Goal Builder II',
+        variantId: 'usd-mip-15',
+        variantLabel: 'USD / MIP 15',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate', 'kernel:current-ti-benefit-estimate'],
+        metadataOnlyBehaviors: ['goal-builder-ii-terminal-illness-post-claim-reduction-and-payout-mechanics'],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentTiBenefitEstimate).toBe(25_250)
   })
 
   it('uses manual current TI and residual death amounts after an admitted TI claim for Goal Builder II', () => {
