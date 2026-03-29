@@ -10,6 +10,7 @@ import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { NumberInput } from '@/components/shared/NumberInput'
 import { PercentInput } from '@/components/shared/PercentInput'
 import {
+  canReconstructCurrentAiaEliteSecureIncomeSinglePremiumProtectedBase,
   canReconstructCurrentAiaEliteSecureIncome5PayProtectedBase,
   computeBlendedReturn,
   computeTotalProjectionYears,
@@ -414,7 +415,10 @@ function supportsCurrentAmountOwingDeathBenefit(policy: IlpPolicyInput): boolean
 }
 
 function supportsCurrentNetProtectedPremiumBaseDeathBenefit(policy: IlpPolicyInput): boolean {
-  return policy.catalogSource?.productId === 'aia-elite-secure-income-single-premium'
+  return (
+      policy.catalogSource?.productId === 'aia-elite-secure-income-single-premium'
+      && !canReconstructCurrentAiaEliteSecureIncomeSinglePremiumProtectedBase(policy)
+    )
     || (
       policy.catalogSource?.productId === 'aia-elite-secure-income-5-pay'
       && !canReconstructCurrentAiaEliteSecureIncome5PayProtectedBase(policy)

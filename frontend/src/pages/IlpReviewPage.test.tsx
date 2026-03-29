@@ -5758,6 +5758,53 @@ describe('IlpReviewPage', () => {
     expect(screen.getAllByText('TI Benefit Today').length).toBeGreaterThan(0)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('shows AIA Elite Secure Income - Single Premium TI Benefit Today before payout start without the manual current protected-base input', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Elite Secure Income - Single Premium')
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(sp\)use template$/i }))
+
+    expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
+    expect(screen.getByText(/current net protected premium base before the current death-benefit estimate can be trusted/i)).toBeInTheDocument()
+
+    act(() => {
+      const state = useIlpStore.getState()
+      const selectedPolicyId = state.selectedPolicyId
+      const policy = state.policies.find((entry) => entry.id === selectedPolicyId)
+      if (!policy) throw new Error('Expected seeded AIA Elite Secure Income - Single Premium policy to be selected')
+
+      state.updatePolicy(policy.id, {
+        currentPolicyYear: 4,
+        monthsAlreadyPaid: 48,
+        initialSinglePremium: 100_000,
+        accounts: policy.accounts.map((account) => ({
+          ...account,
+          currentValue: 90_000,
+        })),
+        assuranceProfile: {
+          currentAgeNextBirthday: 45,
+          sex: 'female',
+          smokerStatus: 'non-smoker',
+        },
+        scheduledPayoutAssumption: {
+          mode: 'scheduled-redemption',
+          source: 'manual-assumption',
+          accountId: 'policy',
+          startPolicyYear: 8,
+          durationYears: 15,
+          annualPayoutAmount: 6_000,
+          frequency: 'annual',
+        },
+      })
+    })
+
+    expect(screen.queryByText(/current net protected premium base before the current death-benefit estimate can be trusted/i)).not.toBeInTheDocument()
+    expect(screen.getAllByText('TI Benefit Today').length).toBeGreaterThan(0)
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('shows the admitted TI claim amount input for AIA Elite Secure Income - Single Premium and does not ask for a residual death amount', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
@@ -6270,7 +6317,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('scheduled payout capability through the payout-state kernel')
     expect(seededAlert?.textContent).toContain('published 5% single-premium charge')
     expect(seededAlert?.textContent).toContain('Power-up Bonus corridor from the end of policy year 10 and every fifth policy year thereafter including the published cumulative withdrawal-factor adjustment from policy year 6 onward')
-    expect(seededAlert?.textContent).toContain('current-state death and terminal-illness benefit amount as the higher of 105% of policy value or a manual current net protected premium base input')
+    expect(seededAlert?.textContent).toContain('current-state death and terminal-illness benefit amount as the higher of 105% of policy value or the single-premium-paid corridor before Secure Monthly Income starts')
     expect(seededAlert?.textContent).toContain('current accidental-death uplift as 10% of a manual initial single premium input during the first 5 policy years')
     expect(seededAlert?.textContent).toContain('current net protected premium base before the current death-benefit estimate can be trusted')
     expect(seededAlert?.textContent).toContain('open-ended single-premium product uses the no-MIP basis')

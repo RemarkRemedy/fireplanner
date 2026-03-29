@@ -6549,6 +6549,15 @@ export function canReconstructCurrentAiaEliteSecureIncome5PayProtectedBase(
     && input.scheduledPayoutAssumption.startPolicyYear > input.currentPolicyYear
 }
 
+export function canReconstructCurrentAiaEliteSecureIncomeSinglePremiumProtectedBase(
+  input: IlpPolicyInput,
+): boolean {
+  return input.catalogSource?.productId === 'aia-elite-secure-income-single-premium'
+    && (input.initialSinglePremium ?? 0) > CONTRIBUTION_TOLERANCE
+    && input.scheduledPayoutAssumption?.mode === 'scheduled-redemption'
+    && input.scheduledPayoutAssumption.startPolicyYear > input.currentPolicyYear
+}
+
 function hasActiveCurrentGoalBuilderIiScheduledPayout(
   input: IlpPolicyInput,
 ): boolean {
@@ -6745,6 +6754,24 @@ function resolveCurrentAiaEliteSecureIncome5PayProtectedBase(
     : 0
 
   return Math.max(0, cumulativeRegularPremiumPaid)
+}
+
+function resolveCurrentAiaEliteSecureIncomeSinglePremiumProtectedBase(
+  input: IlpPolicyInput,
+): number | undefined {
+  if (input.catalogSource?.productId !== 'aia-elite-secure-income-single-premium') {
+    return undefined
+  }
+
+  if (!canReconstructCurrentAiaEliteSecureIncomeSinglePremiumProtectedBase(input)) {
+    if (input.assuranceProfile?.currentNetProtectedPremiumBase == null) {
+      return undefined
+    }
+
+    return Math.max(0, input.assuranceProfile.currentNetProtectedPremiumBase)
+  }
+
+  return Math.max(0, input.initialSinglePremium ?? 0)
 }
 
 function resolveCurrentHsbcRegularProtectedFloor(
@@ -7456,12 +7483,12 @@ export function computeCurrentDeathBenefitEstimate(
   if (
     input.catalogSource?.productId === 'aia-elite-secure-income-single-premium'
   ) {
-    const profile = input.assuranceProfile
-    if (profile?.currentNetProtectedPremiumBase == null) {
+    const protectedBase = resolveCurrentAiaEliteSecureIncomeSinglePremiumProtectedBase(input)
+    if (protectedBase == null) {
       return undefined
     }
 
-    return Math.max(totalCurrentValue * 1.05, Math.max(0, profile.currentNetProtectedPremiumBase))
+    return Math.max(totalCurrentValue * 1.05, protectedBase)
   }
 
   if (input.catalogSource?.productId === 'aia-elite-secure-income-5-pay') {

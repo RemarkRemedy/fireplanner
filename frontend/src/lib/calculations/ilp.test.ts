@@ -22065,6 +22065,64 @@ describe('computeSummaryMetrics', () => {
     expect(analysis.summary.currentDeathBenefitEstimate).toBe(110_000)
   })
 
+  it('reconstructs AIA Elite Secure Income - Single Premium current death benefit today before Secure Monthly Income can start', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 4,
+      monthsAlreadyPaid: 48,
+      mipBasis: 'open-ended',
+      mipLength: null,
+      initialSinglePremium: 100_000,
+      monthlyContribution: 0,
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        startPolicyYear: 8,
+        durationYears: 15,
+        annualPayoutAmount: 6_000,
+        frequency: 'annual',
+      },
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 90_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAgeNextBirthday: 45,
+        sex: 'female',
+        smokerStatus: 'non-smoker',
+      },
+      catalogSource: {
+        productId: 'aia-elite-secure-income-single-premium',
+        productName: 'AIA Elite Secure Income - Single Premium',
+        variantId: 'sgd-open-ended-sp',
+        variantLabel: 'SGD / Open-ended (SP)',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate'],
+        metadataOnlyBehaviors: [],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentDeathBenefitEstimate).toBe(100_000)
+  })
+
   it('models AIA Elite Secure Income TI Benefit Today as the same current corridor as death benefit', () => {
     const policy = makeDefaultPolicy({
       currentPolicyYear: 4,
@@ -22115,6 +22173,64 @@ describe('computeSummaryMetrics', () => {
     const analysis = analyzeCurrentOnlyIlpPolicy(policy)
 
     expect(analysis.summary.currentTiBenefitEstimate).toBe(110_000)
+  })
+
+  it('reconstructs AIA Elite Secure Income - Single Premium TI Benefit Today before Secure Monthly Income can start', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 4,
+      monthsAlreadyPaid: 48,
+      mipBasis: 'open-ended',
+      mipLength: null,
+      initialSinglePremium: 100_000,
+      monthlyContribution: 0,
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        startPolicyYear: 8,
+        durationYears: 15,
+        annualPayoutAmount: 6_000,
+        frequency: 'annual',
+      },
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 90_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAgeNextBirthday: 45,
+        sex: 'female',
+        smokerStatus: 'non-smoker',
+      },
+      catalogSource: {
+        productId: 'aia-elite-secure-income-single-premium',
+        productName: 'AIA Elite Secure Income - Single Premium',
+        variantId: 'sgd-open-ended-sp',
+        variantLabel: 'SGD / Open-ended (SP)',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate', 'kernel:current-ti-benefit-estimate'],
+        metadataOnlyBehaviors: [],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentTiBenefitEstimate).toBe(100_000)
   })
 
   it('uses a manual current admitted TI claim amount for AIA Elite Secure Income - Single Premium', () => {
