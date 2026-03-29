@@ -555,6 +555,7 @@ export interface RawInputs {
   remainingLease?: number
   propertyPledged?: boolean
   isCoupleMode?: boolean
+  currentYear?: number  // Fix 7: injectable for test determinism, defaults to new Date().getFullYear()
 }
 
 /**
@@ -562,7 +563,7 @@ export interface RawInputs {
  * Fills in defaults for optional fields.
  */
 export function buildPlannerContext(inputs: RawInputs): PlannerContext {
-  const currentYear = new Date().getFullYear()
+  const currentYear = inputs.currentYear ?? new Date().getFullYear()
   const birthYear = currentYear - inputs.age
 
   return {
@@ -1459,9 +1460,11 @@ export function useCpfTransition(inputs: RawInputs): {
   isStaleData: boolean
   computeScheme: (scheme: SchemeDefinition) => SchemeResult
 } {
+  // Stable memo key: serialize all fields that affect computation
+  const contextKey = JSON.stringify(inputs)
   const context = useMemo(
     () => buildPlannerContext(inputs),
-    [inputs.age, inputs.oa, inputs.sa, inputs.ra, inputs.ma, inputs.monthlySalary]
+    [contextKey]  // Eng fix: covers ALL input fields, not just 6 primitives
   )
 
   const chapters = useMemo(
@@ -1573,7 +1576,7 @@ cd /Users/tj/TJDevelopment/fireplanner && git add frontend/src/components/cpf-tr
 - Create: `frontend/src/components/cpf-transition/CpfTransitionHero.tsx`
 - Create: `frontend/src/components/cpf-transition/CpfAccountCards.tsx`
 
-- [ ] **Step 1: Write CpfTransitionInput** — 3-5 field form using existing `CurrencyInput` and `NumberInput` wrappers. Dynamic SA/RA field based on age. Calls `updateField` from the params hook on change.
+- [ ] **Step 1: Write CpfTransitionInput** — 3-5 field form using existing `CurrencyInput` and `NumberInput` wrappers. Dynamic SA/RA field based on age. Calls `updateField` from the params hook on change. **Validation:** age range 45-75 (soft warning outside 50-70: "This tool is designed for ages 50-70"), balances >= 0. Show inline error for SA > 0 when age >= 55 ("SA closes at 55. Enter your RA balance instead").
 
 - [ ] **Step 2: Write CpfTransitionHero** — Displays monthly payout estimate from `useCpfLifeEstimate`. Hatched/faded styling for the projected number. **B4 fix: Label must say "in future dollars" to comply with CLAUDE.md dollar basis rule.** Example: "Your estimated monthly retirement income: ~$1,780 (in future dollars). Actual CPF LIFE payouts vary by birth year." Feedback CTA link.
 
@@ -1597,7 +1600,7 @@ cd /Users/tj/TJDevelopment/fireplanner && git add frontend/src/components/cpf-tr
 
 - [ ] **Step 1: Write StoryChapter** — Container for a chapter. Shows chapter title, age range, and renders automatic/decision cards for each scheme in the chapter.
 
-- [ ] **Step 2: Write CpfTransitionPage** — Assembles the full page: input form -> hero -> sticky account cards -> story chapters (from `useCpfTransition`). Preserves existing SEO schemas from CpfPlannerPage. Includes stale-data banner if `isStaleData`.
+- [ ] **Step 2: Write CpfTransitionPage** — Assembles the full page: input form -> hero -> sticky account cards -> story chapters (from `useCpfTransition`). Preserves existing SEO schemas from CpfPlannerPage. Includes stale-data banner if `isStaleData`. **EMPTY STATE (autoplan fix 3):** Before the user enters any data (no URL params, no profile data), show ONLY the input form with placeholder text ("Enter your age and CPF balances to see your personalized retirement plan"). Hide hero, account cards, and story chapters until minimum viable input is provided (age + at least one balance > 0). Show a single CTA button: "See my CPF plan" that reveals the full page. After the user's first input, all sections render immediately (no CTA gate on subsequent edits).
 
 - [ ] **Step 3: Update router** — Move `/cpf-planner` outside `PlannerRouteShell` for standalone access (matching the `/goal-calculator` pattern). Keep the existing lazy import.
 
@@ -1669,3 +1672,32 @@ cd /Users/tj/TJDevelopment/fireplanner && git add -A && git commit -m "fix(cpf-t
 **Plan 2 will add:** Remaining 14+ schemes, inline Sankey transition animator, mini waterfall summary chart, interest growth visualization.
 
 **Plan 3 will add:** Couples mode, couple-specific schemes, feedback API endpoint, share URL encoding, mobile polish.
+
+---
+
+<!-- AUTONOMOUS DECISION LOG -->
+## Decision Audit Trail
+
+| # | Phase | Decision | Principle | Rationale | Rejected |
+|---|-------|----------|-----------|-----------|----------|
+| 1 | CEO | Accept "full product" scope (user override) | P6 (action) | User explicitly chose full product over CEO recommendation of 5 schemes | Ship 5 schemes only |
+| 2 | CEO | Add impact ranking within chapters | P1 (completeness) | Both CEO voices: sort schemes by financial impact, not just relevance score | Leave unsorted |
+| 3 | CEO | Base64-encode URL params | P3 (pragmatic) | PII in plaintext URLs is a trust-destroying move for privacy-first product | Defer to future |
+| 4 | CEO | Keep explicit "Save to profile" (no auto-write) | P5 (explicit) | Anonymous Reddit visitors should not silently modify persisted stores | Auto-write on keystroke |
+| 5 | CEO | Centralize scheme thresholds in schemeConstants.ts | P4 (DRY) | 22 scheme files with scattered thresholds = maintenance nightmare | Leave in individual files |
+| 6 | CEO | TASTE: Keep/cut crowd-source feedback API | — | User wants it; both CEO voices say cut it (no feedback loop to engine) | Surfaced at gate |
+| 7 | Design | Add empty/initial state | P1 (completeness) | Both design voices: critical gap, page is undefined before input | Assume user enters data |
+| 8 | Design | Mobile Sankey → vertical flow at < 640px | P3 (pragmatic) | Horizontal Sankey infeasible at 375px; vertical flow is same info, mobile-native | Force horizontal at all sizes |
+| 9 | Design | Add "Key Actions" summary (top 3 schemes) | P1 (completeness) | Both voices: 19 schemes is a firehose without curation layer | Full scroll only |
+| 10 | Design | Define hatched styling as opacity-70 + italic + "Est." label | P5 (explicit) | Three conflicting descriptions across docs; need one canonical treatment | Leave ambiguous |
+| 11 | Design | Add chapter nav with anchor links | P1 (completeness) | Keyboard nav + "you are here" indicator; accessibility requirement | Scroll-only navigation |
+| 12 | Design | Fix Plan 2 ComparisonRow to match Plan 1 numeric interface | P5 (explicit) | Schema mismatch will cause compile errors or silent failures | Leave mixed |
+| 13 | Design | Fix Plan 3 Task 8 to extend Plan 1 hook (not rewrite) | P5 (explicit) | Contradicts B5 review fix; must keep local draft pattern | Allow store auto-write |
+| 14 | Design | TASTE: Couples UX — toggle views vs per-partner drilldown | — | Claude: toggle combined/by-partner; Codex: household summary + drilldown | Surfaced at gate |
+| 15 | Eng | Fix Plan 2 schemes to use post-review API | P5 (explicit) | All 17 schemes use stale eligibility/chapter/string API — won't compile | Leave stale |
+| 16 | Eng | Fix useMemo deps to cover all input fields | P1 (completeness) | JSON.stringify(inputs) as memo key covers all fields | Shallow 6-field dep list |
+| 17 | Eng | Add currentYear to RawInputs for test determinism | P3 (pragmatic) | Tests that use new Date() are time-bombs | Non-deterministic tests |
+| 18 | Eng | Cache compute() results by scheme.id when multi-chapter | P3 (pragmatic) | Same scheme in 3 chapters computes 3x identically | Accept duplication |
+| 19 | Eng | Add empty state gate before rendering story | P1 (completeness) | Page is undefined before input — shows $0/month hero | Render with zeros |
+| 20 | Eng | Base64-encode URL params for PII protection | P3 (pragmatic) | Plaintext CPF balances in browser history and link previews | Defer to future |
+| 21 | Eng | Fix Plan 3 Task 8 to extend not replace params hook | P5 (explicit) | Auto-write to stores undoes B5 fix | Allow store auto-write |

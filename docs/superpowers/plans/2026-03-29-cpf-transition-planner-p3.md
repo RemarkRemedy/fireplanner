@@ -12,8 +12,9 @@
 2. **PartnerProfile has `birthYear`** (B7) — Already included in Plan 1 types. Also has optional `cpfLifePlan`, `cpfLifeStartAge`, `cpfRetirementSum` fields. Do NOT hardcode 'standard'/'frs' for partner.
 3. **`assess()` + `compute()` pattern** — Schemes use `assess()` for cheap eligibility, `compute()` is called lazily. `buildCoupleTimeline` should use `assess()` for milestone generation, not full `compute()`.
 4. **Numeric ComparisonRow** — `defaultNumeric`/`actionNumeric` are numbers, not strings. Formatting happens in UI.
-5. **URL params encode financial PII** — Add a note in ShareSection that the link contains private financial data. Consider Base64-encoding the params blob in a future iteration.
-6. **`PartnerRawInputs` must be compatible with `RawInputs`** — Either widen PartnerRawInputs or add a conversion function that fills defaults for missing fields before passing to `buildPlannerContext`.
+5. **URL params encode financial PII** — **Base64-encode the params blob NOW** (autoplan fix 6). Use `btoa(JSON.stringify(inputs))` to encode and `JSON.parse(atob(param))` to decode. URL format: `?d=eyJhZ2UiOj...` instead of plaintext `?age=55&oa=330000`. Add a warning in ShareSection: "This link contains your CPF balances. Only share with people you trust."
+6. **`PartnerRawInputs` must be compatible with `RawInputs`** — Add a `partnerToRawInputs(partner: PartnerRawInputs, defaults: RawInputs): RawInputs` converter that fills missing fields (property, couple mode) from the primary partner's defaults. Use this in `buildCoupleTimeline`.
+7. **Plan 3 Task 8 MUST NOT replace Plan 1's params hook** (autoplan fix 2). Extend it by adding partner field support and Base64 encoding/decoding. Keep the local-draft + debounced-URL + explicit-save architecture. Do NOT write to stores on every keystroke.
 
 **Tech Stack:** React 19, TypeScript, Zustand (existing stores), Zod (URL validation), Cloudflare Pages Functions + D1, Vitest
 
