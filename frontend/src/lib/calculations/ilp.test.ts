@@ -24090,6 +24090,67 @@ describe('computeSummaryMetrics', () => {
     expect(analysis.summary.currentTiBenefitEstimate).toBe(40_000)
   })
 
+  it('models Prestige Legacy Advantage residual death benefit after a TI claim today from the same current sum-assured corridor', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 3,
+      monthsAlreadyPaid: 36,
+      mipLength: 5,
+      monthlyContribution: 0,
+      initialSinglePremium: 50_000,
+      currentValue: 42_000,
+      currentTotalFundValue: 42_000,
+      currentFundValues: { policy: 42_000 },
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 42_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAgeNextBirthday: 45,
+        sex: 'female',
+        smokerStatus: 'non-smoker',
+        currentSumAssured: 55_000,
+      },
+      claimProfile: {
+        remainingAggregateTiCap: 40_000,
+      },
+      catalogSource: {
+        productId: 'great-eastern-prestige-legacy-advantage',
+        productName: 'Prestige Legacy Advantage',
+        variantId: 'sgd-mip-5-single-premium',
+        variantLabel: 'SGD / MIP 5 (Single Premium)',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: [
+          'kernel:current-death-benefit-estimate',
+          'kernel:current-ti-benefit-estimate',
+          'kernel:current-residual-death-benefit-after-ti-estimate',
+        ],
+        metadataOnlyBehaviors: [],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentResidualDeathBenefitAfterTiEstimate).toBe(15_000)
+  })
+
   it('omits Prestige Legacy Advantage current death benefit after an admitted TI claim until the current residual death amount is supplied', () => {
     const policy = makeDefaultPolicy({
       currentPolicyYear: 3,

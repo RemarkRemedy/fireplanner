@@ -221,7 +221,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('current-state death-benefit estimate as the higher of the Regular Premium Account value or the 101%-of-paid-regular-premiums floor plus Top-up Account value after manual current amount owing')
     expect(seededAlert?.textContent).toContain('current accidental-death estimate before age 75 as the higher of that ordinary death amount or the 200%-of-paid-regular-premiums floor capped at S$2 million plus Top-up Account value after manual current age and current amount owing')
-    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap')
+    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied')
     expect(seededAlert?.textContent).toContain('hsbc voyage premium holiday charge after free duration')
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
     expect(screen.getAllByDisplayValue('Account Maintenance Fee')).toHaveLength(2)
@@ -2846,7 +2846,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('0.75% annual management charge')
     expect(seededAlert?.textContent).toContain('There is no insurance charge imposed on this policy')
     expect(seededAlert?.textContent).toContain('current-state death benefit as the higher of account value or the 105%-of-premiums floor')
-    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap')
+    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied')
     expect(seededAlert?.textContent).toContain('gross initial single premium as an inception seed')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.getByDisplayValue('Single Premium Charge')).toBeInTheDocument()
@@ -4525,7 +4525,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('initial single-premium charge')
     expect(seededAlert?.textContent).toContain('single-premium top-up charge')
     expect(seededAlert?.textContent).toContain('current-state death-benefit estimate as the higher of current sum assured or account value')
-    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap')
+    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied')
     expect(seededAlert?.textContent).toContain('entry-age-and-basic-sum-assured policy-fee surface through manual input')
     expect(seededAlert?.textContent).toContain('non-lapse privilege')
     expect(screen.getByLabelText('Current Sum Assured (SGD)')).toBeInTheDocument()
@@ -5090,6 +5090,39 @@ describe('IlpReviewPage', () => {
     })
 
     expect(screen.getAllByText('TI Benefit Today').length).toBeGreaterThan(0)
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('shows Prestige Legacy Advantage death benefit after TI claim today once current sum assured and the remaining aggregate TI cap are filled', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Prestige Legacy Advantage')
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5 \(single premium\)use template$/i }))
+
+    expect(screen.queryByText('Death Benefit After TI Claim Today')).not.toBeInTheDocument()
+
+    act(() => {
+      const state = useIlpStore.getState()
+      const selectedPolicyId = state.selectedPolicyId
+      const policy = state.policies.find((entry) => entry.id === selectedPolicyId)
+      if (!policy) throw new Error('Expected seeded Prestige Legacy Advantage policy to be selected')
+
+      state.updatePolicy(policy.id, {
+        assuranceProfile: {
+          currentAgeNextBirthday: 45,
+          sex: 'female',
+          smokerStatus: 'non-smoker',
+          currentSumAssured: 55_000,
+        },
+        claimProfile: {
+          remainingAggregateTiCap: 40_000,
+        },
+      })
+    })
+
+    expect(screen.getAllByText('Death Benefit After TI Claim Today').length).toBeGreaterThan(0)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows the admitted-state residual death input for Prestige Legacy Advantage and requires it before the current death snapshot can be trusted', async () => {
