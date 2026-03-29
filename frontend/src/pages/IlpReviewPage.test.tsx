@@ -1558,6 +1558,83 @@ describe('IlpReviewPage', () => {
     expect(screen.getAllByText('Accidental Death Benefit Today').length).toBeGreaterThan(0)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('shows Wealth Focus (Flexi 3) manual protected-base inputs once Regular Withdrawal assumptions are already active', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Focus (Flexi 3)')
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i }))
+
+    expect(screen.queryByLabelText('Current Net Protected Premium Base (SGD)')).not.toBeInTheDocument()
+
+    act(() => {
+      const state = useIlpStore.getState()
+      const selectedPolicyId = state.selectedPolicyId
+      const policy = state.policies.find((entry) => entry.id === selectedPolicyId)
+      if (!policy) throw new Error('Expected seeded Wealth Focus policy to be selected')
+
+      state.updatePolicy(policy.id, {
+        currentPolicyYear: 5,
+        monthsAlreadyPaid: 60,
+        monthlyContribution: 1_000,
+        scheduledPayoutSupport: {
+          mode: 'manual-assumption',
+          accountId: 'topup',
+          fallbackAccountIds: ['regular'],
+          source: 'policy-redemption',
+        },
+        scheduledPayoutAssumption: {
+          mode: 'scheduled-redemption',
+          accountId: 'topup',
+          annualPayoutAmount: 3_000,
+          startPolicyYear: 5,
+          durationYears: 2,
+        },
+        assuranceProfile: {
+          currentAgeNextBirthday: 45,
+          currentAmountOwing: 360,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+        },
+      })
+    })
+
+    expect(screen.getByLabelText('Current Net Protected Premium Base (SGD)')).toBeInTheDocument()
+    expect(screen.getByLabelText('Current Accidental-Death Regular-Premium Floor (SGD)')).toBeInTheDocument()
+    expect(screen.getByText(/current net protected premium base before the current death-benefit estimate can be trusted/i)).toBeInTheDocument()
+    expect(screen.getByText(/current accidental-death floor amount before the current accidental-death estimate can be trusted/i)).toBeInTheDocument()
+    expect(screen.queryByText('Accidental Death Benefit Today')).not.toBeInTheDocument()
+
+    act(() => {
+      const state = useIlpStore.getState()
+      const selectedPolicyId = state.selectedPolicyId
+      const policy = state.policies.find((entry) => entry.id === selectedPolicyId)
+      if (!policy) throw new Error('Expected seeded Wealth Focus policy to be selected')
+
+      state.updatePolicy(policy.id, {
+        assuranceProfile: {
+          currentAgeNextBirthday: 45,
+          currentAmountOwing: 360,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetProtectedPremiumBase: 26_000,
+          currentAccidentalDeathFloorAmount: 48_000,
+        },
+      })
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/current net protected premium base before the current death-benefit estimate can be trusted/i)).not.toBeInTheDocument()
+    })
+    await waitFor(() => {
+      expect(screen.queryByText(/current accidental-death floor amount before the current accidental-death estimate can be trusted/i)).not.toBeInTheDocument()
+    })
+    expect(screen.getByLabelText('Current Net Protected Premium Base (SGD)')).toHaveDisplayValue('26,000')
+    expect(screen.getByLabelText('Current Accidental-Death Regular-Premium Floor (SGD)')).toHaveDisplayValue('48,000')
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('shows Invest flex prime II with distinct Flexi term variants in the picker', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
