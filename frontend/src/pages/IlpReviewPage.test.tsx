@@ -3219,6 +3219,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('current-state death benefit as 105% of policy value')
+    expect(seededAlert?.textContent).toContain('published SGD 500 per-transaction minimum')
     expect(seededAlert?.textContent).toContain('open-ended single-premium product uses the no-MIP basis')
     expect(seededAlert?.textContent).toContain('gross commencement lump sum before trusting the seeded starting value')
     expect(seededAlert?.textContent).toContain('multi-life last-survivor handling, principal-tracking, and broader operational mechanics remain outside the current engine')

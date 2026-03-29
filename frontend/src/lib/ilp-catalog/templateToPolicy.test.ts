@@ -11510,6 +11510,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-goal-1-plan-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-goal-1-surrender-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-amount-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-goal-1-death-benefit')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-goal-1-plan-charge-single-premium-base')
@@ -11522,9 +11523,11 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.eecTable).toEqual([0.07, 0.056, 0.042, 0.028, 0.014, 0])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('supported V1 product'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current-state death benefit as 105% of policy value'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('published SGD 500 per-transaction minimum'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('10%-of-committed-initial-single-premium minimum remaining-value floor'))).toBe(true)
     expect(seed.policyStateSupport).toEqual({
       automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 500,
       partialWithdrawalMinimumRemainingValueRules: [
         {
           activeWindow: 'policy-term',
@@ -11555,6 +11558,27 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
+  })
+
+  it('maps FWD Invest Goal 1 USD into an open-ended single-premium seed with the published USD withdrawal minimum', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'fwd-invest-goal-1')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'usd-open-ended')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('published USD 375 per-transaction minimum'))).toBe(true)
+    expect(seed.policyStateSupport?.minimumPartialWithdrawalAmount).toBe(375)
+    expect(seed.policyStateSupport?.partialWithdrawalMinimumRemainingValueRules).toEqual([
+      {
+        activeWindow: 'policy-term',
+        basis: 'initial-single-premium',
+        accountId: 'policy',
+        minimumValueRate: 0.1,
+      },
+    ])
   })
 
   it('preserves template charge allocation, event activeWindow, and rateSchedule-only fee rules', () => {

@@ -100,6 +100,7 @@ describe('parseFwdInvestGoal1', () => {
       'branch:fwd-invest-goal-1-surrender-charge',
       'branch:fwd-invest-goal-1-zero-partial-withdrawal-charge',
       'kernel:current-death-benefit-estimate',
+      'kernel:partial-withdrawal-minimum-amount-block',
       'kernel:partial-withdrawal-minimum-remaining-value-block',
     ])
     expect(product.metadataOnlyBehaviors).not.toContain('fwd-invest-goal-1-death-benefit')
@@ -154,6 +155,19 @@ describe('parseFwdInvestGoal1', () => {
     ])
     expect(product.variants[0].policyStateSupport).toEqual({
       automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'initial-single-premium',
+          accountId: 'policy',
+          minimumValueRate: 0.1,
+        },
+      ],
+    })
+    expect(product.variants[1].policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 375,
       partialWithdrawalMinimumRemainingValueRules: [
         {
           activeWindow: 'policy-term',
