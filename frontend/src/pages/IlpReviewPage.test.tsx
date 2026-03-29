@@ -4516,6 +4516,8 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current-state death-benefit estimate as total investment value')
     expect(seededAlert?.textContent).toContain('current-state accidental-death estimate as the higher of total investment value or a manual current basic sum assured before age 80 next birthday')
     expect(seededAlert?.textContent).toContain('quote-driven top-up and recurrent-single-premium charge paths through manual input')
+    expect(seededAlert?.textContent).toContain('published S$1,000 minimum one-off partial withdrawal amount')
+    expect(seededAlert?.textContent).toContain('published S$1,000 selected-fund remaining-value floor')
     expect(getCatalogValue('Premium Charge')).toBeInTheDocument()
     expect(getCatalogValue('Wrap Fee')).toBeInTheDocument()
     expect(getCatalogValue('Investment Top-up Premium Charge')).toBeInTheDocument()

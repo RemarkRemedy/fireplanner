@@ -35,14 +35,17 @@ describe('parseGreatEasternPrestigePortfolio', () => {
       'branch:great-eastern-prestige-portfolio-top-up-premium-charge-manual-input',
       'branch:great-eastern-prestige-portfolio-partial-withdrawal-zero-charge',
       'branch:great-eastern-prestige-portfolio-open-ended-zero-surrender-charge',
+      'kernel:partial-withdrawal-minimum-amount-block',
+      'kernel:partial-withdrawal-selected-fund-minimum-value-block',
     ])
     expect(product.metadataOnlyBehaviors).toContain('great-eastern-prestige-portfolio-regular-premium-corridor')
     expect(product.metadataOnlyBehaviors).toContain('great-eastern-prestige-portfolio-regular-premium-surrender-deductions')
     expect(product.metadataOnlyBehaviors).toContain('great-eastern-prestige-portfolio-accidental-death-claim-exclusions')
     expect(product.metadataOnlyBehaviors).toContain('great-eastern-prestige-portfolio-basic-sum-assured-history')
+    expect(product.metadataOnlyBehaviors).toContain('great-eastern-prestige-portfolio-fund-switching-threshold-administration')
     expect(product.metadataOnlyBehaviors).not.toContain('great-eastern-prestige-portfolio-death-and-accidental-death-benefits')
     expect(product.warnings).toContain(
-      'Prestige Portfolio is cataloged as a supported V1 corridor for the single-premium cash, single-premium SRS, and recurrent-single-premium SRS paths. The parser captures the quote-driven premium-charge and wrap-fee surfaces through manual input, the published 0.2% p.a. policy fee, the current-state death-benefit estimate as total investment value, the current-state accidental-death estimate as the higher of total investment value or a manual current basic sum assured before age 80 next birthday, the quote-driven top-up and recurrent-single-premium charge paths through manual input, and the nil policy-level withdrawal / surrender charge path through the open-ended basis.',
+      'Prestige Portfolio is cataloged as a supported V1 corridor for the single-premium cash, single-premium SRS, and recurrent-single-premium SRS paths. The parser captures the quote-driven premium-charge and wrap-fee surfaces through manual input, the published 0.2% p.a. policy fee, the current-state death-benefit estimate as total investment value, the current-state accidental-death estimate as the higher of total investment value or a manual current basic sum assured before age 80 next birthday, the quote-driven top-up and recurrent-single-premium charge paths through manual input, and the nil policy-level withdrawal / surrender charge path through the open-ended basis together with the published S$1,000 minimum one-off partial withdrawal amount and the published S$1,000 selected-fund remaining-value floor.',
     )
     expect(product.warnings).toContain(
       'Accidental-death claim admission, exclusions, settlement timing, basic-sum-assured history after future withdrawals, and the regular-premium cash corridor with policy-illustration-specific surrender deductions remain informational only beyond the modeled current ordinary and accidental-death benefit estimates.',
@@ -100,14 +103,28 @@ describe('parseGreatEasternPrestigePortfolio', () => {
         rate: 0,
       }),
     ])
+    expect(singlePremiumCash?.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 1_000,
+      partialWithdrawalMinimumRemainingSelectedFundValueRules: [
+        {
+          activeWindow: 'policy-term',
+          accountId: 'policy',
+          minimumValue: 1_000,
+        },
+      ],
+    })
     expect(singlePremiumCash?.warnings).toContain(
-      'Prestige Portfolio (Single Premium / Cash) is cataloged as a supported V1 corridor. The parser captures the quote-driven premium-charge surface through manual input, the quote-driven wrap-fee surface through manual input, the published 0.2% p.a. policy fee, the current-state death-benefit estimate as total investment value, the current-state accidental-death estimate as the higher of total investment value or a manual current basic sum assured before age 80 next birthday, the quote-driven top-up premium-charge surface through manual input, and the nil policy-level withdrawal / surrender charge path through the open-ended basis.',
+      'Prestige Portfolio (Single Premium / Cash) is cataloged as a supported V1 corridor. The parser captures the quote-driven premium-charge surface through manual input, the quote-driven wrap-fee surface through manual input, the published 0.2% p.a. policy fee, the current-state death-benefit estimate as total investment value, the current-state accidental-death estimate as the higher of total investment value or a manual current basic sum assured before age 80 next birthday, the quote-driven top-up premium-charge surface through manual input, and the nil policy-level withdrawal / surrender charge path through the open-ended basis together with the published S$1,000 minimum one-off partial withdrawal amount and the published S$1,000 selected-fund remaining-value floor.',
     )
     expect(singlePremiumCash?.warnings).toContain(
       'Enter the actual premium-charge and wrap-fee percentages from the issued product quotation before trusting the analysis.',
     )
     expect(singlePremiumCash?.unsupportedItems).toContain(
       'Accidental-death claim admission, exclusions, settlement timing, and basic-sum-assured history after future withdrawals remain informational only beyond the modeled current ordinary and accidental-death benefit estimates.',
+    )
+    expect(singlePremiumCash?.unsupportedItems).toContain(
+      'Fund switching, premium-apportionment changes, exact per-fund NAV divergence, and future insurer revisions of the stated withdrawal thresholds remain informational only beyond the modeled explicit selected-fund partial-withdrawal floor that uses the current configured fund split as a proportional selected-fund balance proxy.',
     )
 
     const singlePremiumSrs = product.variants.find((variant) => variant.id === 'sgd-open-ended-single-premium-srs')

@@ -2699,8 +2699,11 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-prestige-portfolio-premium-charge-manual-input')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-prestige-portfolio-open-ended-zero-surrender-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-prestige-portfolio-wrap-fee-manual-input')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-amount-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-selected-fund-minimum-value-block')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-eastern-prestige-portfolio-regular-premium-corridor')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-eastern-prestige-portfolio-accidental-death-claim-exclusions')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-eastern-prestige-portfolio-fund-switching-threshold-administration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('great-eastern-prestige-portfolio-death-and-accidental-death-benefits')
     expect(seed.mipBasis).toBe('open-ended')
     expect(seed.mipLength).toBeNull()
@@ -2708,6 +2711,17 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.monthlyContribution).toBe(0)
     expect(seed.initialSinglePremium).toBe(0)
     expect(seed.eecTable).toEqual([])
+    expect(seed.policyStateSupport).toMatchObject({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 1_000,
+      partialWithdrawalMinimumRemainingSelectedFundValueRules: [
+        {
+          activeWindow: 'policy-term',
+          accountId: 'policy',
+          minimumValue: 1_000,
+        },
+      ],
+    })
     expect(seed.accounts).toEqual([
       expect.objectContaining({
         id: 'policy',

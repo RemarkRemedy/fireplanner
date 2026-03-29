@@ -154,7 +154,8 @@ function buildVariant(document: ExtractedPdfDocument, variantId: VariantId): Ilp
       allocation: 'equal-split',
       notes: [
         'Models the published no-stated-charge partial-withdrawal path at the policy level.',
-        'Minimum withdrawal and remaining-fund value thresholds remain informational only.',
+        'V1 blocks explicit one-off partial withdrawals below the published S$1,000 minimum value of units to be sold from the selected fund.',
+        'V1 also blocks explicit one-off partial withdrawals that would leave the selected fund below the published S$1,000 minimum remaining value, using the current configured fund split as a same-row proportional proxy for the selected-fund balance.',
       ],
       sourceRefs: [page4],
     },
@@ -184,16 +185,27 @@ function buildVariant(document: ExtractedPdfDocument, variantId: VariantId): Ilp
     bonuses: [],
     feeRules,
     eventChargeRules,
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 1_000,
+      partialWithdrawalMinimumRemainingSelectedFundValueRules: [
+        {
+          activeWindow: 'policy-term',
+          accountId: 'policy',
+          minimumValue: 1_000,
+        },
+      ],
+    },
     eecTable: [],
     warnings: [
-      `${variantWarningLabel} is cataloged as a supported V1 corridor. The parser captures the quote-driven premium-charge surface through manual input, the quote-driven wrap-fee surface through manual input, the published 0.2% p.a. policy fee, the current-state death-benefit estimate as total investment value, the current-state accidental-death estimate as the higher of total investment value or a manual current basic sum assured before age 80 next birthday, the quote-driven top-up premium-charge surface through manual input, and the nil policy-level withdrawal / surrender charge path through the open-ended basis.`,
+      `${variantWarningLabel} is cataloged as a supported V1 corridor. The parser captures the quote-driven premium-charge surface through manual input, the quote-driven wrap-fee surface through manual input, the published 0.2% p.a. policy fee, the current-state death-benefit estimate as total investment value, the current-state accidental-death estimate as the higher of total investment value or a manual current basic sum assured before age 80 next birthday, the quote-driven top-up premium-charge surface through manual input, and the nil policy-level withdrawal / surrender charge path through the open-ended basis together with the published S$1,000 minimum one-off partial withdrawal amount and the published S$1,000 selected-fund remaining-value floor.`,
       `Enter the actual premium-charge and wrap-fee percentages from the issued ${premiumDocumentLabel} before trusting the analysis.`,
     ],
     unsupportedItems: [
       'Regular-premium cash corridor remains informational only because the early-surrender deductions are shown only in the policy illustration rather than as a published fixed catalog schedule.',
       'Accidental-death claim admission, exclusions, settlement timing, and basic-sum-assured history after future withdrawals remain informational only beyond the modeled current ordinary and accidental-death benefit estimates.',
       'SRS return-destination handling on withdrawals and surrender remains informational only.',
-      'Fund switching, premium-apportionment changes, and minimum-transaction guards remain informational only.',
+      'Fund switching, premium-apportionment changes, exact per-fund NAV divergence, and future insurer revisions of the stated withdrawal thresholds remain informational only beyond the modeled explicit selected-fund partial-withdrawal floor that uses the current configured fund split as a proportional selected-fund balance proxy.',
       'Post-issue fee changes, newly introduced fees, and fund-level charges remain informational only.',
     ],
     sourceRefs: [page2, page3, page4],
@@ -222,6 +234,8 @@ export function parseGreatEasternPrestigePortfolio(context: ParseContext): IlpCa
       'branch:great-eastern-prestige-portfolio-top-up-premium-charge-manual-input',
       'branch:great-eastern-prestige-portfolio-partial-withdrawal-zero-charge',
       'branch:great-eastern-prestige-portfolio-open-ended-zero-surrender-charge',
+      'kernel:partial-withdrawal-minimum-amount-block',
+      'kernel:partial-withdrawal-selected-fund-minimum-value-block',
     ],
     coveredElsewhereBehaviors: [
       'great-eastern-prestige-portfolio-post-issue-fee-changes',
@@ -233,11 +247,11 @@ export function parseGreatEasternPrestigePortfolio(context: ParseContext): IlpCa
       'great-eastern-prestige-portfolio-accidental-death-claim-exclusions',
       'great-eastern-prestige-portfolio-basic-sum-assured-history',
       'great-eastern-prestige-portfolio-srs-return-destination',
-      'great-eastern-prestige-portfolio-minimum-transaction-guards',
+      'great-eastern-prestige-portfolio-fund-switching-threshold-administration',
       'great-eastern-prestige-portfolio-fund-switching',
     ],
     warnings: [
-      'Prestige Portfolio is cataloged as a supported V1 corridor for the single-premium cash, single-premium SRS, and recurrent-single-premium SRS paths. The parser captures the quote-driven premium-charge and wrap-fee surfaces through manual input, the published 0.2% p.a. policy fee, the current-state death-benefit estimate as total investment value, the current-state accidental-death estimate as the higher of total investment value or a manual current basic sum assured before age 80 next birthday, the quote-driven top-up and recurrent-single-premium charge paths through manual input, and the nil policy-level withdrawal / surrender charge path through the open-ended basis.',
+      'Prestige Portfolio is cataloged as a supported V1 corridor for the single-premium cash, single-premium SRS, and recurrent-single-premium SRS paths. The parser captures the quote-driven premium-charge and wrap-fee surfaces through manual input, the published 0.2% p.a. policy fee, the current-state death-benefit estimate as total investment value, the current-state accidental-death estimate as the higher of total investment value or a manual current basic sum assured before age 80 next birthday, the quote-driven top-up and recurrent-single-premium charge paths through manual input, and the nil policy-level withdrawal / surrender charge path through the open-ended basis together with the published S$1,000 minimum one-off partial withdrawal amount and the published S$1,000 selected-fund remaining-value floor.',
       'Accidental-death claim admission, exclusions, settlement timing, basic-sum-assured history after future withdrawals, and the regular-premium cash corridor with policy-illustration-specific surrender deductions remain informational only beyond the modeled current ordinary and accidental-death benefit estimates.',
     ],
     archived: false,

@@ -22298,6 +22298,170 @@ describe('computeSummaryMetrics', () => {
     expect(analysis.summary.currentAccidentalDeathBenefitEstimate).toBe(47_500)
   })
 
+  it('requires a selected fund before Prestige Portfolio one-off withdrawals can use the selected-fund floor seam', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'great-eastern-prestige-portfolio')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-single-premium-cash')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+
+    expect(() => ilpPolicySchema.parse({
+      id: 'seeded-policy',
+      ...seed,
+      currentPolicyYear: 2,
+      monthsAlreadyPaid: 12,
+      monthlyContribution: 0,
+      initialSinglePremium: 10_000,
+      accounts: seed.accounts.map((account) => ({
+        ...account,
+        currentValue: 5_000,
+      })),
+      funds: [
+        { ...ZERO_RETURN_FUND, name: 'Fund A', allocation: 0.7 },
+        { ...ZERO_RETURN_FUND, name: 'Fund B', allocation: 0.3 },
+      ],
+      policyEvents: [
+        {
+          id: 'prestige-portfolio-missing-selected-fund',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 13,
+          durationMonths: 1,
+          amount: 2_500,
+          accountId: 'policy',
+        },
+      ],
+    })).toThrow(/selected fund/i)
+  })
+
+  it('allows Prestige Portfolio one-off withdrawals that leave the chosen fund exactly at the published S$1,000 floor', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'great-eastern-prestige-portfolio')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-single-premium-cash')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
+      ...seed,
+      currentPolicyYear: 2,
+      monthsAlreadyPaid: 12,
+      monthlyContribution: 0,
+      initialSinglePremium: 10_000,
+      accounts: seed.accounts.map((account) => ({
+        ...account,
+        currentValue: 5_000,
+      })),
+      funds: [
+        { ...ZERO_RETURN_FUND, name: 'Fund A', allocation: 0.7 },
+        { ...ZERO_RETURN_FUND, name: 'Fund B', allocation: 0.3 },
+      ],
+      policyEvents: [
+        {
+          id: 'prestige-portfolio-at-floor-withdrawal',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 13,
+          durationMonths: 1,
+          amount: 2_493,
+          accountId: 'policy',
+          fundName: 'Fund A',
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(policy.policyStateSupport?.minimumPartialWithdrawalAmount).toBe(1_000)
+    expect(policy.policyStateSupport?.partialWithdrawalMinimumRemainingSelectedFundValueRules).toEqual([
+      {
+        activeWindow: 'policy-term',
+        accountId: 'policy',
+        minimumValue: 1_000,
+      },
+    ])
+    expect(accountRow(result.rows[0], 'policy').withdrawalAmount).toBe(2_493)
+    expect(accountRow(result.rows[0], 'policy').close).toBe(2_497)
+  })
+
+  it('blocks Prestige Portfolio one-off withdrawals that would leave the chosen fund below the published S$1,000 floor or below the published S$1,000 minimum amount', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'great-eastern-prestige-portfolio')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-single-premium-cash')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+
+    const belowFloorPolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
+      ...seed,
+      currentPolicyYear: 2,
+      monthsAlreadyPaid: 12,
+      monthlyContribution: 0,
+      initialSinglePremium: 10_000,
+      accounts: seed.accounts.map((account) => ({
+        ...account,
+        currentValue: 5_000,
+      })),
+      funds: [
+        { ...ZERO_RETURN_FUND, name: 'Fund A', allocation: 0.7 },
+        { ...ZERO_RETURN_FUND, name: 'Fund B', allocation: 0.3 },
+      ],
+      policyEvents: [
+        {
+          id: 'prestige-portfolio-below-floor-withdrawal',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 13,
+          durationMonths: 1,
+          amount: 2_494,
+          accountId: 'policy',
+          fundName: 'Fund A',
+        },
+      ],
+    })
+
+    const belowAmountPolicy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
+      ...seed,
+      currentPolicyYear: 2,
+      monthsAlreadyPaid: 12,
+      monthlyContribution: 0,
+      initialSinglePremium: 10_000,
+      accounts: seed.accounts.map((account) => ({
+        ...account,
+        currentValue: 5_000,
+      })),
+      funds: [
+        { ...ZERO_RETURN_FUND, name: 'Fund A', allocation: 0.7 },
+        { ...ZERO_RETURN_FUND, name: 'Fund B', allocation: 0.3 },
+      ],
+      policyEvents: [
+        {
+          id: 'prestige-portfolio-below-amount-withdrawal',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 13,
+          durationMonths: 1,
+          amount: 999,
+          accountId: 'policy',
+          fundName: 'Fund A',
+        },
+      ],
+    })
+
+    const belowFloorResult = projectIlpPolicy(belowFloorPolicy, 'mid')
+    const belowAmountResult = projectIlpPolicy(belowAmountPolicy, 'mid')
+
+    expect(accountRow(belowFloorResult.rows[0], 'policy').withdrawalAmount).toBe(0)
+    expect(accountRow(belowFloorResult.rows[0], 'policy').close).toBe(4_990)
+    expect(accountRow(belowAmountResult.rows[0], 'policy').withdrawalAmount).toBe(0)
+    expect(accountRow(belowAmountResult.rows[0], 'policy').close).toBe(4_990)
+  })
+
   it('models AIA Elite Secure Income current death benefit today as the higher of 105% of policy value or the current net protected premium base', () => {
     const policy = makeDefaultPolicy({
       currentPolicyYear: 4,
