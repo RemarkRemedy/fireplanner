@@ -26299,6 +26299,66 @@ describe('computeSummaryMetrics', () => {
     expect(analysis.summary.currentTiBenefitEstimate).toBe(80_000)
   })
 
+  it('models AIA Platinum Wealth Legacy residual death benefit after a TI claim today from the same current protection corridor', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 6,
+      monthsAlreadyPaid: 72,
+      monthlyContribution: 350,
+      mipLength: 5,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Regular Premium Policy Account',
+          feeRate: 0,
+          currentValue: 60_000,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAgeNextBirthday: 90,
+        sex: 'female',
+        smokerStatus: 'non-smoker',
+        currentSumAssured: 100_000,
+        currentAmountOwing: 5_000,
+        currentNoLapsePrivilegeMode: 'expiry-age-100',
+      },
+      claimProfile: {
+        remainingAggregateTiCap: 80_000,
+      },
+      catalogSource: {
+        productId: 'aia-platinum-wealth-legacy',
+        productName: 'AIA Platinum Wealth Legacy',
+        variantId: 'sgd-mip-5',
+        variantLabel: 'SGD / MIP 5',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: [
+          'kernel:current-death-benefit-estimate',
+          'kernel:current-ti-benefit-estimate',
+          'kernel:current-residual-death-benefit-after-ti-estimate',
+        ],
+        metadataOnlyBehaviors: [],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentResidualDeathBenefitAfterTiEstimate).toBe(15_000)
+  })
+
   it('omits AIA Platinum Wealth Legacy current death benefit after an admitted TI claim until the current residual death amount is supplied', () => {
     const policy = makeDefaultPolicy({
       currentPolicyYear: 6,
