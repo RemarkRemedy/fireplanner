@@ -65,6 +65,26 @@ The entire experience is one vertical scroll. No tabs, no separate modes.
 
 **Pre-fill logic:** If fireplanner profile store has data, pre-fill and show "Using your saved profile" with edit option.
 
+**Bidirectional data linking with main planner:**
+
+The CPF Transition Planner and the main fireplanner share the same underlying stores. Data flows both ways:
+
+*Main planner -> CPF planner (pre-fill):*
+- `useProfileStore`: `currentAge`, `cpfOA`, `cpfSA`, `cpfMA`, `cpfRA`, `srsBalance`, `maritalStatus`, `residencyStatus`, `cpfLifePlan`, `cpfLifeStartAge`, `cpfRetirementSum`, `cpfLifeActualMonthlyPayout`
+- `useIncomeStore`: `annualSalary`, `salaryGrowthRate`, `bonusMonths`
+- `usePropertyStore`: `propertyType`, `leaseYears`
+
+*CPF planner -> Main planner (write-back):*
+When a user enters data in the CPF planner (e.g., arriving from Reddit with no profile), write it back to the corresponding stores. This means:
+- Age, CPF balances -> `useProfileStore.setField()`
+- Salary -> `useIncomeStore.setField()`
+- Property details -> `usePropertyStore.setField()`
+- CPF LIFE preferences (plan, start age) -> `useProfileStore.setField()`
+
+This way, if someone starts on the CPF planner and then navigates to the full planner, their data is already there. And vice versa. The CTA "Try the full FirePlanner" becomes seamless because the user's data carries over.
+
+*URL params take precedence:* When the page loads from a shared URL with encoded params, those override store values for the session. The user can then "Save to my profile" to persist URL-sourced data into the stores.
+
 **Dynamic account fields:** The input form shows SA field for users under 55, RA field for users 55+. This reflects the Jan 2025 SA closure policy.
 
 ### Section 2: Hero -- Monthly Payout Estimate
@@ -409,7 +429,12 @@ pages/CpfTransitionPage.tsx  # Route component
 
 **Data files:** Existing `lib/data/cpfRates.ts` provides rates, ceilings, and retirement sums. PolicyPack wraps these with `asOfDate` and citation metadata.
 
-**State management:** Inputs stored in URL search params (for shareability) and parsed via a custom hook (`useCpfTransitionParams`). No new Zustand store. Derived hooks read from parsed URL params to compute scheme results. This follows the existing pattern of URL params for view state and derived hooks for computation.
+**State management:** No new Zustand store. The CPF planner reads from and writes to the existing stores (`useProfileStore`, `useIncomeStore`, `usePropertyStore`). A custom hook (`useCpfTransitionParams`) merges three sources in priority order:
+1. URL search params (highest -- from shared links)
+2. Existing store values (from main planner profile)
+3. Defaults (lowest -- for fresh anonymous users)
+
+When the user edits a value in the CPF planner, it writes back to the corresponding store via `setField()`. This ensures bidirectional sync with the main planner. URL params are parsed on mount and optionally persisted to stores via a "Save to my profile" action.
 
 **Rendering:** Plain React for the story flow. Recharts for the mini waterfall summary. Framer Motion for the transition animations. No d3 dependency needed.
 
