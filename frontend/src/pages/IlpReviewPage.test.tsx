@@ -7247,6 +7247,8 @@ describe('IlpReviewPage', () => {
 
     expect(screen.queryByLabelText('Current Insured Amount (USD)')).not.toBeInTheDocument()
     expect(screen.queryByText(/current insured amount before the current death-benefit estimate can be trusted/i)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Current Accidental-Death Sum Insured (USD)')).not.toBeInTheDocument()
+    expect(screen.queryByText(/current accidental-death floor amount before the current accidental-death estimate can be trusted/i)).not.toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows Goal Builder II current accidental-death sum insured input once scheduled withdrawals are already active', async () => {

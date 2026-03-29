@@ -428,6 +428,10 @@ function supportsCurrentNetProtectedPremiumBaseDeathBenefit(policy: IlpPolicyInp
 }
 
 function supportsCurrentAccidentalDeathFloorAmount(policy: IlpPolicyInput): boolean {
+  const scheduledPayoutEndPolicyYear = policy.scheduledPayoutAssumption?.mode === 'scheduled-redemption'
+    ? policy.scheduledPayoutAssumption.startPolicyYear + policy.scheduledPayoutAssumption.durationYears - 1
+    : null
+
   return (
     (
       policy.catalogSource?.productId?.startsWith('hsbc-life-wealth-focus-flexi-')
@@ -437,6 +441,10 @@ function supportsCurrentAccidentalDeathFloorAmount(policy: IlpPolicyInput): bool
     )
     && policy.scheduledPayoutAssumption?.mode === 'scheduled-redemption'
     && policy.scheduledPayoutAssumption.startPolicyYear <= policy.currentPolicyYear
+    && (
+      policy.catalogSource?.productId !== 'hsbc-life-goal-builder-ii'
+      || (scheduledPayoutEndPolicyYear != null && policy.currentPolicyYear <= scheduledPayoutEndPolicyYear)
+    )
   )
 }
 

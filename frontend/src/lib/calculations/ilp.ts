@@ -6674,7 +6674,7 @@ function resolveCurrentGoalBuilderIiAccidentalDeathSumInsured(
     return undefined
   }
 
-  if (hasActiveCurrentGoalBuilderIiScheduledPayout(input)) {
+  if (hasCurrentPolicyYearGoalBuilderIiScheduledPayout(input)) {
     if (input.assuranceProfile?.currentAccidentalDeathFloorAmount == null) {
       return undefined
     }
@@ -6703,13 +6703,15 @@ function resolveCurrentGoalBuilderIiAccidentalDeathSumInsured(
       ? sum + event.amount
       : sum
   ), 0)
+  const completedScheduledPayoutErosion = getGoalBuilderIiCompletedScheduledPayoutErosion(input)
 
   return Math.max(
     0,
     Math.min(2_000_000, cumulativeRegularPremiumPaid * 2)
       + adHocTopUpAmount
       + recurringSinglePremiumAmount
-      - withdrawalAmount,
+      - withdrawalAmount
+      - completedScheduledPayoutErosion,
   )
 }
 

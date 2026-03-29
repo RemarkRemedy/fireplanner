@@ -38688,6 +38688,67 @@ describe('computeSummaryMetrics', () => {
     expect(analysis.summary.currentAccidentalDeathBenefitEstimate).toBe(44_750)
   })
 
+  it('reconstructs Goal Builder II accidental death benefit today after completed scheduled withdrawals in prior policy years', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'USD',
+      currentPolicyYear: 5,
+      monthsAlreadyPaid: 60,
+      monthlyContribution: 500,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 22_000,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAgeNextBirthday: 35,
+        currentAmountOwing: 250,
+      },
+      scheduledPayoutSupport: {
+        mode: 'manual-assumption',
+        accountId: 'policy',
+        source: 'policy-redemption',
+      },
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        accountId: 'policy',
+        annualPayoutAmount: 2_400,
+        startPolicyYear: 3,
+        durationYears: 2,
+      },
+      catalogSource: {
+        productId: 'hsbc-life-goal-builder-ii',
+        productName: 'Goal Builder II',
+        variantId: 'usd-mip-15',
+        variantLabel: 'USD / MIP 15',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate', 'kernel:current-accidental-death-benefit-estimate'],
+        metadataOnlyBehaviors: ['goal-builder-ii-accidental-death-claim-exclusions'],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentAccidentalDeathBenefitEstimate).toBe(54_950)
+  })
+
   it('omits HSBC Wealth Voyage death benefit today once regular-withdrawal assumptions are active', () => {
     const policy = makeDefaultPolicy({
       currentPolicyYear: 5,
