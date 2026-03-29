@@ -4,7 +4,7 @@
 
 **Goal:** Build a working `/cpf-planner` page with guided story, 5 core schemes, hero payout estimate, decision cards, sticky account cards, and bidirectional store linking.
 
-**Architecture:** Scheme registry pattern — each CPF scheme is a thin metadata+rules definition over the existing CPF calculation engine. A narrative orchestrator filters by eligibility, sorts by relevance, and groups schemes into age chapters. The page is a single vertical scroll with no tabs. All state flows through existing Zustand stores with URL param override.
+**Architecture:** Scheme registry pattern — each CPF scheme is a thin metadata+rules definition over the existing CPF calculation engine. Each scheme has a cheap `assess()` for eligibility/relevance (runs on all schemes) and a full `compute()` that only runs for visible cards. A narrative orchestrator groups schemes into age chapters. The page is a single vertical scroll with no tabs. Editing state lives in local React state, with debounced URL sync and explicit "Save to profile" for store write-back.
 
 **Tech Stack:** React 19, TypeScript, Zustand (existing stores), Zod, Recharts (summary chart in Plan 2), Framer Motion (animations in Plan 2), Vitest
 
@@ -79,7 +79,7 @@ frontend/src/pages/CpfPlannerPage.tsx  # Rename/replace with CpfTransitionPage
 
 ```typescript
 // frontend/src/lib/cpf-transition/types.ts
-import type { CpfLifePlan, CpfRetirementSum, ResidencyStatus } from '@/lib/types'
+import type { CpfLifePlan, CpfRetirementSum, CpfRateEntry, ResidencyStatus } from '@/lib/types'
 
 // --- Chapter ages ---
 export type ChapterAge = 'pre55' | 'at55' | 'post55' | 'at65' | 'post65'
@@ -99,10 +99,13 @@ export interface Citation {
 
 // --- Comparison row for decision cards ---
 export interface ComparisonRow {
-  metric: string          // e.g. "Withdrawable now"
-  defaultValue: string    // e.g. "$219,200"
-  actionValue: string     // e.g. "$0"
+  metric: string                // e.g. "Withdrawable now"
+  defaultNumeric: number        // Raw number for charts/sorting/testing
+  actionNumeric: number         // Raw number for charts/sorting/testing
+  unit: 'currency' | 'percent' | 'months' | 'years' | 'text'
+  suffix?: string               // e.g. "/month" for payout rows
   confidence: ConfidenceLevel
+  textOverride?: string         // Optional text when unit is 'text' (e.g. "Requires property pledge")
 }
 
 // --- Delta metric ---
@@ -134,6 +137,7 @@ export interface PolicyPack {
   cpfLifeRates: { basic: number; standard: number; escalating: number }
   interestRates: { oa: number; sa: number; ra: number; ma: number }
   extraInterest: { combinedCap: number; oaCap: number; oaCap55Plus: number; rate: number; raAdditional: number }
+  contributionRates: CpfRateEntry[]  // B6 fix: include rates for Plan 2 contribution/interest schemes
   owCeilingAnnual: number
   awCeilingTotal: number
 }
@@ -141,12 +145,15 @@ export interface PolicyPack {
 // --- Partner profile (for couples) ---
 export interface PartnerProfile {
   age: number
-  birthYear: number
+  birthYear: number  // B7 fix: included for Plan 3 couple context builder
   oa: number
   sa: number
   ra: number
   ma: number
   monthlySalary: number
+  cpfLifePlan?: CpfLifePlan       // Optional: defaults to 'standard'
+  cpfLifeStartAge?: number        // Optional: defaults to 65
+  cpfRetirementSum?: CpfRetirementSum  // Optional: defaults to 'frs'
 }
 
 // --- Planner context (input to all scheme computations) ---
@@ -188,24 +195,35 @@ export interface PlannerContext {
   policy: PolicyPack
 }
 
+// --- Scheme assessment (cheap, runs on all schemes every input change) ---
+export interface SchemeAssessment {
+  eligible: boolean
+  relevance: number  // 0-100
+}
+
 // --- Scheme definition ---
 export interface SchemeDefinition {
   id: string
   title: string
   goalLabel: string
-  chapter: ChapterAge
+  chapters: ChapterAge[]              // B1 fix: schemes can span multiple chapters
   actionType: ActionType
-  eligibility: (ctx: PlannerContext) => boolean
-  relevanceScore: (ctx: PlannerContext) => number
-  compute: (ctx: PlannerContext) => SchemeResult
+  assess: (ctx: PlannerContext) => SchemeAssessment  // B3 fix: cheap eligibility+relevance check
+  compute: (ctx: PlannerContext) => SchemeResult      // B3 fix: full computation, only for visible cards
 }
 
-// --- Grouped output for rendering ---
+// --- Assessed scheme (cheap output from assess()) ---
+export interface AssessedScheme {
+  definition: SchemeDefinition
+  assessment: SchemeAssessment
+}
+
+// --- Grouped output for rendering (compute() called lazily per card) ---
 export interface ChapterGroup {
   chapter: ChapterAge
   label: string
   ageRange: string
-  schemes: Array<{ definition: SchemeDefinition; result: SchemeResult }>
+  schemes: AssessedScheme[]  // B3: results computed lazily, not eagerly
 }
 ```
 
@@ -343,10 +361,12 @@ export const CITATIONS = {
 // frontend/src/lib/cpf-transition/policy/packs.ts
 import type { PolicyPack } from '../types'
 import {
+  CPF_RATES,
   OW_CEILING_ANNUAL,
   AW_CEILING_TOTAL,
   OA_INTEREST_RATE,
   SA_INTEREST_RATE,
+  RA_INTEREST_RATE,  // W4 fix: use RA-specific constant
   MA_INTEREST_RATE,
   EXTRA_INTEREST_RATE,
   EXTRA_INTEREST_COMBINED_CAP,
@@ -392,9 +412,10 @@ export function buildPolicyPack(currentAge: number, currentYear: number = new Da
     interestRates: {
       oa: OA_INTEREST_RATE,
       sa: SA_INTEREST_RATE,
-      ra: SA_INTEREST_RATE,  // RA earns same as SA
+      ra: RA_INTEREST_RATE,  // W4 fix: use RA-specific constant (same value today, but future-proof)
       ma: MA_INTEREST_RATE,
     },
+    contributionRates: CPF_RATES,  // B6 fix: include for Plan 2 contribution/interest schemes
     extraInterest: {
       combinedCap: EXTRA_INTEREST_COMBINED_CAP,
       oaCap: EXTRA_INTEREST_OA_CAP,
@@ -731,19 +752,13 @@ export const age55TransitionScheme: SchemeDefinition = {
   id: 'age55-transition',
   title: 'Your SA merges into a new Retirement Account',
   goalLabel: 'Understand the age-55 transition',
-  chapter: 'at55',
+  chapters: ['at55'],                    // B1 fix: array
   actionType: 'automatic',
 
-  eligibility: (ctx: PlannerContext): boolean => {
-    // Show for users approaching or at 55 (ages 50-59)
-    return ctx.profile.age >= 50 && ctx.profile.age < 60
-  },
-
-  relevanceScore: (ctx: PlannerContext): number => {
-    // Highest relevance for users closest to 55
-    const distance = Math.abs(ctx.profile.age - 55)
-    return Math.max(0, 100 - distance * 10)
-  },
+  assess: (ctx: PlannerContext) => ({    // B3 fix: cheap assess()
+    eligible: ctx.profile.age >= 50 && ctx.profile.age < 60,
+    relevance: Math.max(0, 100 - Math.abs(ctx.profile.age - 55) * 10),
+  }),
 
   compute: (ctx: PlannerContext): SchemeResult => {
     const frs = ctx.policy.retirementSums.frs
@@ -765,36 +780,12 @@ export const age55TransitionScheme: SchemeDefinition = {
       summary: `At 55, CPF creates a Retirement Account (RA) using your SA first, then OA if needed, up to the ${ctx.cpfLife.retirementSum.toUpperCase()} (${formatCurrency(target)}). Your SA is permanently closed.`,
       defaultOutcome: `This happens automatically when you turn 55. No action needed.`,
       metrics: [
-        {
-          metric: 'SA transferred to RA',
-          defaultValue: formatCurrency(saToRA),
-          actionValue: formatCurrency(saToRA),
-          confidence: 'estimated',
-        },
-        {
-          metric: 'Excess SA to OA',
-          defaultValue: formatCurrency(saExcess),
-          actionValue: formatCurrency(saExcess),
-          confidence: 'estimated',
-        },
-        ...(oaToRA > 0 ? [{
-          metric: 'OA transferred to RA (shortfall)',
-          defaultValue: formatCurrency(oaToRA),
-          actionValue: formatCurrency(oaToRA),
-          confidence: 'estimated' as const,
-        }] : []),
-        {
-          metric: 'RA balance',
-          defaultValue: formatCurrency(newRA),
-          actionValue: formatCurrency(newRA),
-          confidence: 'estimated',
-        },
-        {
-          metric: 'OA balance after 55',
-          defaultValue: formatCurrency(newOA),
-          actionValue: formatCurrency(newOA),
-          confidence: 'estimated',
-        },
+        // B2 fix: numeric values, formatting happens in DecisionCard UI
+        { metric: 'SA transferred to RA', defaultNumeric: saToRA, actionNumeric: saToRA, unit: 'currency' as const, confidence: 'estimated' as const },
+        { metric: 'Excess SA to OA', defaultNumeric: saExcess, actionNumeric: saExcess, unit: 'currency' as const, confidence: 'estimated' as const },
+        ...(oaToRA > 0 ? [{ metric: 'OA transferred to RA (shortfall)', defaultNumeric: oaToRA, actionNumeric: oaToRA, unit: 'currency' as const, confidence: 'estimated' as const }] : []),
+        { metric: 'RA balance', defaultNumeric: newRA, actionNumeric: newRA, unit: 'currency' as const, confidence: 'estimated' as const },
+        { metric: 'OA balance after 55', defaultNumeric: newOA, actionNumeric: newOA, unit: 'currency' as const, confidence: 'estimated' as const },
       ],
       deltas: [
         { label: 'SA closed', value: -ctx.accounts.sa, formatted: `-${formatCurrency(ctx.accounts.sa)}`, direction: 'neutral' },
@@ -876,15 +867,13 @@ export const retirementSumTargetScheme: SchemeDefinition = {
   id: 'retirement-sum-target',
   title: 'Choose your retirement sum target',
   goalLabel: 'Set your retirement income target',
-  chapter: 'at55',
+  chapters: ['at55'],
   actionType: 'review',
 
-  eligibility: (ctx: PlannerContext): boolean => ctx.profile.age >= 50,
-
-  relevanceScore: (ctx: PlannerContext): number => {
-    const distance = Math.abs(ctx.profile.age - 55)
-    return Math.max(0, 90 - distance * 5)
-  },
+  assess: (ctx: PlannerContext) => ({
+    eligible: ctx.profile.age >= 50,
+    relevance: Math.max(0, 90 - Math.abs(ctx.profile.age - 55) * 5),
+  }),
 
   compute: (ctx: PlannerContext): SchemeResult => {
     const { brs, frs, ers } = ctx.policy.retirementSums
@@ -1018,21 +1007,15 @@ export const oaToRaTransferScheme: SchemeDefinition = {
   id: 'oa-to-ra-transfer',
   title: 'Transfer OA savings to RA for higher returns',
   goalLabel: 'Boost retirement income',
-  chapter: 'at55',
+  chapters: ['at55', 'post55'],  // B1 fix: available in both chapters
   actionType: 'optional',
 
-  eligibility: (ctx: PlannerContext): boolean => {
-    if (ctx.profile.age < 55) return false
-    if (ctx.accounts.oa <= 0) return false
-    return ctx.accounts.ra < ctx.policy.retirementSums.ers
-  },
-
-  relevanceScore: (ctx: PlannerContext): number => {
-    // Higher relevance when there's a large OA balance and RA room
+  assess: (ctx: PlannerContext) => {
+    if (ctx.profile.age < 55 || ctx.accounts.oa <= 0) return { eligible: false, relevance: 0 }
+    if (ctx.accounts.ra >= ctx.policy.retirementSums.ers) return { eligible: false, relevance: 0 }
     const raRoom = ctx.policy.retirementSums.ers - ctx.accounts.ra
     const transferable = Math.min(ctx.accounts.oa, raRoom)
-    if (transferable <= 0) return 0
-    return Math.min(80, Math.round(transferable / 5000))
+    return { eligible: true, relevance: Math.min(80, Math.round(transferable / 5000)) }
   },
 
   compute: (ctx: PlannerContext): SchemeResult => {
@@ -1189,15 +1172,20 @@ export const ALL_SCHEMES: SchemeDefinition[] = [
 // frontend/src/lib/cpf-transition/orchestration/eligibility.ts
 import type { SchemeDefinition, PlannerContext } from '../types'
 
+import type { AssessedScheme } from '../types'
+
 /**
- * Filter schemes to only those the user is eligible for.
- * Schemes that don't apply are completely omitted, not shown as disabled.
+ * Assess all schemes cheaply (eligibility + relevance).
+ * Returns only eligible schemes with their assessment.
+ * Does NOT call compute() — that's deferred to the UI.
  */
-export function filterEligibleSchemes(
+export function assessSchemes(
   schemes: SchemeDefinition[],
   ctx: PlannerContext,
-): SchemeDefinition[] {
-  return schemes.filter(s => s.eligibility(ctx))
+): AssessedScheme[] {
+  return schemes
+    .map(definition => ({ definition, assessment: definition.assess(ctx) }))
+    .filter(s => s.assessment.eligible)
 }
 ```
 
@@ -1205,8 +1193,8 @@ export function filterEligibleSchemes(
 
 ```typescript
 // frontend/src/lib/cpf-transition/orchestration/narrative.ts
-import type { SchemeDefinition, PlannerContext, ChapterGroup, ChapterAge } from '../types'
-import { filterEligibleSchemes } from './eligibility'
+import type { SchemeDefinition, PlannerContext, ChapterGroup, ChapterAge, AssessedScheme } from '../types'
+import { assessSchemes } from './eligibility'
 
 const CHAPTER_ORDER: ChapterAge[] = ['pre55', 'at55', 'post55', 'at65', 'post65']
 
@@ -1219,28 +1207,31 @@ const CHAPTER_META: Record<ChapterAge, { label: string; ageRange: string }> = {
 }
 
 /**
- * Build the narrative: filter eligible schemes, compute results, group by chapter.
- * Returns only chapters that have at least one eligible scheme.
+ * Build the narrative: assess all schemes cheaply, group by chapter.
+ * Does NOT call compute() — that's deferred to each card component.
+ * B1 fix: schemes with multiple chapters appear in all their chapters.
+ * B3 fix: only assess() runs here, compute() is lazy per-card.
  */
 export function buildNarrative(
   allSchemes: SchemeDefinition[],
   ctx: PlannerContext,
 ): ChapterGroup[] {
-  const eligible = filterEligibleSchemes(allSchemes, ctx)
+  const assessed = assessSchemes(allSchemes, ctx)
 
-  // Compute results and group by chapter
-  const byChapter = new Map<ChapterAge, ChapterGroup['schemes']>()
+  // B1 fix: index each scheme by ALL its chapters
+  const byChapter = new Map<ChapterAge, AssessedScheme[]>()
 
-  for (const scheme of eligible) {
-    const result = scheme.compute(ctx)
-    const list = byChapter.get(scheme.chapter) ?? []
-    list.push({ definition: scheme, result })
-    byChapter.set(scheme.chapter, list)
+  for (const item of assessed) {
+    for (const ch of item.definition.chapters) {
+      const list = byChapter.get(ch) ?? []
+      list.push(item)
+      byChapter.set(ch, list)
+    }
   }
 
   // Sort within each chapter by relevance (descending)
   for (const [, schemes] of byChapter) {
-    schemes.sort((a, b) => b.definition.relevanceScore(ctx) - a.definition.relevanceScore(ctx))
+    schemes.sort((a, b) => b.assessment.relevance - a.assessment.relevance)
   }
 
   // Build ordered chapters, skip empty ones
@@ -1277,9 +1268,26 @@ describe('buildNarrative', () => {
   it('returns chapters for a 57-year-old (post-55)', () => {
     const ctx = buildPlannerContext({ age: 57, oa: 300000, sa: 0, ra: 220000, ma: 75000, monthlySalary: 0 })
     const chapters = buildNarrative(ALL_SCHEMES, ctx)
-    // Should include at55 chapter for OA-to-RA transfer
+    // B1 fix: OA-to-RA transfer has chapters: ['at55', 'post55'], should appear in both
     const at55 = chapters.find(c => c.chapter === 'at55')
-    expect(at55).toBeDefined()
+    const post55 = chapters.find(c => c.chapter === 'post55')
+    // At least one of these should contain the OA-to-RA scheme
+    const hasOaToRa = [...(at55?.schemes ?? []), ...(post55?.schemes ?? [])]
+      .some(s => s.definition.id === 'oa-to-ra-transfer')
+    expect(hasOaToRa).toBe(true)
+  })
+
+  it('B1: multi-chapter schemes appear in all their chapters', () => {
+    const ctx = buildPlannerContext({ age: 57, oa: 300000, sa: 0, ra: 220000, ma: 75000, monthlySalary: 0 })
+    const chapters = buildNarrative(ALL_SCHEMES, ctx)
+    const oaToRaScheme = ALL_SCHEMES.find(s => s.id === 'oa-to-ra-transfer')!
+    for (const ch of oaToRaScheme.chapters) {
+      const chapterGroup = chapters.find(c => c.chapter === ch)
+      if (chapterGroup) {
+        const found = chapterGroup.schemes.some(s => s.definition.id === 'oa-to-ra-transfer')
+        expect(found).toBe(true)
+      }
+    }
   })
 
   it('skips empty chapters', () => {
@@ -1295,7 +1303,8 @@ describe('buildNarrative', () => {
     const chapters = buildNarrative(ALL_SCHEMES, ctx)
     const at55 = chapters.find(c => c.chapter === 'at55')
     if (at55 && at55.schemes.length >= 2) {
-      const scores = at55.schemes.map(s => s.definition.relevanceScore(ctx))
+      // B3 fix: relevance comes from assessment, not direct function call
+      const scores = at55.schemes.map(s => s.assessment.relevance)
       for (let i = 1; i < scores.length; i++) {
         expect(scores[i]).toBeLessThanOrEqual(scores[i - 1])
       }
@@ -1326,20 +1335,28 @@ cd /Users/tj/TJDevelopment/fireplanner && git add frontend/src/lib/cpf-transitio
 
 ```typescript
 // frontend/src/lib/cpf-transition/hooks/useCpfTransitionParams.ts
-import { useCallback, useMemo } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useProfileStore } from '@/stores/useProfileStore'
 import { useIncomeStore } from '@/stores/useIncomeStore'
 import type { RawInputs } from '../domain/context'
 
-/** Parse URL search params into RawInputs, falling back to store values, then defaults */
+/**
+ * B5 fix: Local draft state as single source of truth.
+ * - On mount: initialize from URL params (if shared link) or store values (if profile exists)
+ * - On edit: update local draft only (no store write, no URL write)
+ * - Debounced URL sync: URL params update 300ms after last edit (for shareable links)
+ * - Explicit "Save to profile": user clicks button to persist to stores
+ */
 export function useCpfTransitionParams(): {
   inputs: RawInputs
   updateField: (field: keyof RawInputs, value: number | string | boolean) => void
+  saveToProfile: () => void
+  isFromSharedLink: boolean
 } {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
 
-  // Read from stores as fallback
+  // Read store values once on mount for initialization
   const profileAge = useProfileStore(s => s.currentAge)
   const profileOA = useProfileStore(s => s.cpfOA)
   const profileSA = useProfileStore(s => s.cpfSA)
@@ -1347,16 +1364,16 @@ export function useCpfTransitionParams(): {
   const profileMA = useProfileStore(s => s.cpfMA)
   const annualSalary = useIncomeStore(s => s.annualSalary)
 
-  const profileSetField = useProfileStore(s => s.setField)
-  const incomeSetField = useIncomeStore(s => s.setField)
+  // Detect if arriving from a shared link (URL has age param)
+  const isFromSharedLink = searchParams.has('age')
 
-  const inputs = useMemo((): RawInputs => {
+  // Initialize local draft from URL params (priority) or stores (fallback)
+  const [inputs, setInputs] = useState<RawInputs>(() => {
     const p = (key: string) => searchParams.get(key)
     const num = (key: string, fallback: number) => {
       const v = p(key)
       return v !== null ? Number(v) : fallback
     }
-
     return {
       age: num('age', profileAge),
       oa: num('oa', profileOA),
@@ -1365,31 +1382,43 @@ export function useCpfTransitionParams(): {
       ma: num('ma', profileMA),
       monthlySalary: num('salary', Math.round(annualSalary / 12)),
     }
-  }, [searchParams, profileAge, profileOA, profileSA, profileRA, profileMA, annualSalary])
+  })
 
+  // Debounced URL sync (300ms after last edit)
+  const timerRef = useRef<ReturnType<typeof setTimeout>>()
+  useEffect(() => {
+    timerRef.current = setTimeout(() => {
+      const url = new URL(window.location.href)
+      url.searchParams.set('age', String(inputs.age))
+      url.searchParams.set('oa', String(inputs.oa))
+      url.searchParams.set('sa', String(inputs.sa))
+      url.searchParams.set('ra', String(inputs.ra))
+      url.searchParams.set('ma', String(inputs.ma))
+      url.searchParams.set('salary', String(inputs.monthlySalary))
+      window.history.replaceState(null, '', url.toString())
+    }, 300)
+    return () => clearTimeout(timerRef.current)
+  }, [inputs])
+
+  // Update local draft only (no store write)
   const updateField = useCallback((field: keyof RawInputs, value: number | string | boolean) => {
-    // Update URL params
-    setSearchParams(prev => {
-      const next = new URLSearchParams(prev)
-      const urlKey = field === 'monthlySalary' ? 'salary' : field
-      next.set(urlKey, String(value))
-      return next
-    }, { replace: true })
+    setInputs(prev => ({ ...prev, [field]: value }))
+  }, [])
 
-    // Write back to stores (bidirectional)
-    if (typeof value === 'number') {
-      switch (field) {
-        case 'age': profileSetField('currentAge', value); break
-        case 'oa': profileSetField('cpfOA', value); break
-        case 'sa': profileSetField('cpfSA', value); break
-        case 'ra': profileSetField('cpfRA', value); break
-        case 'ma': profileSetField('cpfMA', value); break
-        case 'monthlySalary': incomeSetField('annualSalary', value * 12); break
-      }
-    }
-  }, [setSearchParams, profileSetField, incomeSetField])
+  // Explicit "Save to profile" — writes to stores on user action
+  const profileSetField = useProfileStore(s => s.setField)
+  const incomeSetField = useIncomeStore(s => s.setField)
 
-  return { inputs, updateField }
+  const saveToProfile = useCallback(() => {
+    profileSetField('currentAge', inputs.age)
+    profileSetField('cpfOA', inputs.oa)
+    profileSetField('cpfSA', inputs.sa)
+    profileSetField('cpfRA', inputs.ra)
+    profileSetField('cpfMA', inputs.ma)
+    incomeSetField('annualSalary', inputs.monthlySalary * 12)
+  }, [inputs, profileSetField, incomeSetField])
+
+  return { inputs, updateField, saveToProfile, isFromSharedLink }
 }
 ```
 
@@ -1411,25 +1440,44 @@ cd /Users/tj/TJDevelopment/fireplanner && git add frontend/src/lib/cpf-transitio
 
 ```typescript
 // frontend/src/lib/cpf-transition/hooks/useCpfTransition.ts
-import { useMemo } from 'react'
+import { useMemo, useCallback } from 'react'
 import { buildPlannerContext } from '../domain/context'
 import { buildNarrative } from '../orchestration/narrative'
 import { ALL_SCHEMES } from '../schemes/registry'
 import { isPolicyStale } from '../policy/packs'
 import type { RawInputs } from '../domain/context'
-import type { PlannerContext, ChapterGroup } from '../types'
+import type { PlannerContext, ChapterGroup, SchemeResult, SchemeDefinition } from '../types'
 
+/**
+ * B3 fix: buildNarrative only calls assess() (cheap) on all schemes.
+ * compute() is called lazily per-card via computeScheme().
+ * useMemo deps are primitive values from inputs to ensure stability.
+ */
 export function useCpfTransition(inputs: RawInputs): {
   context: PlannerContext
   chapters: ChapterGroup[]
   isStaleData: boolean
+  computeScheme: (scheme: SchemeDefinition) => SchemeResult
 } {
-  return useMemo(() => {
-    const context = buildPlannerContext(inputs)
-    const chapters = buildNarrative(ALL_SCHEMES, context)
-    const isStaleData = isPolicyStale(context.policy)
-    return { context, chapters, isStaleData }
-  }, [inputs])
+  const context = useMemo(
+    () => buildPlannerContext(inputs),
+    [inputs.age, inputs.oa, inputs.sa, inputs.ra, inputs.ma, inputs.monthlySalary]
+  )
+
+  const chapters = useMemo(
+    () => buildNarrative(ALL_SCHEMES, context),
+    [context]
+  )
+
+  const isStaleData = useMemo(() => isPolicyStale(context.policy), [context.policy])
+
+  // Lazy compute: called by each card component when it renders
+  const computeScheme = useCallback(
+    (scheme: SchemeDefinition): SchemeResult => scheme.compute(context),
+    [context]
+  )
+
+  return { context, chapters, isStaleData, computeScheme }
 }
 ```
 
@@ -1527,7 +1575,7 @@ cd /Users/tj/TJDevelopment/fireplanner && git add frontend/src/components/cpf-tr
 
 - [ ] **Step 1: Write CpfTransitionInput** — 3-5 field form using existing `CurrencyInput` and `NumberInput` wrappers. Dynamic SA/RA field based on age. Calls `updateField` from the params hook on change.
 
-- [ ] **Step 2: Write CpfTransitionHero** — Displays monthly payout estimate from `useCpfLifeEstimate`. Hatched/faded styling for the projected number. Disclaimer text. Feedback CTA link.
+- [ ] **Step 2: Write CpfTransitionHero** — Displays monthly payout estimate from `useCpfLifeEstimate`. Hatched/faded styling for the projected number. **B4 fix: Label must say "in future dollars" to comply with CLAUDE.md dollar basis rule.** Example: "Your estimated monthly retirement income: ~$1,780 (in future dollars). Actual CPF LIFE payouts vary by birth year." Feedback CTA link.
 
 - [ ] **Step 3: Write CpfAccountCards** — Three cards (OA/SA/MA or OA/RA/MA depending on age). Sticky positioned. Collapsed on mobile (single line, tap to expand). Uses `formatCurrency` for display.
 

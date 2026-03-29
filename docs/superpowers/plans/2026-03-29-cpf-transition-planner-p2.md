@@ -2,9 +2,17 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement all remaining 17 CPF schemes plus 2 visualization components, building on the foundation from Plan 1. Each scheme follows the identical TDD pattern: SchemeDefinition implementing eligibility/relevanceScore/compute, registered in registry.ts.
+**Goal:** Implement all remaining 17 CPF schemes plus 2 visualization components, building on the foundation from Plan 1. Each scheme follows the updated TDD pattern from Plan 1: SchemeDefinition with `assess()` (cheap) and `compute()` (full), registered in registry.ts.
 
-**Architecture:** Same as Plan 1. Each scheme is a thin metadata+rules definition over the existing CPF calculation engine. Schemes delegate to functions in `lib/calculations/cpf.ts` and data in `lib/data/cpfRates.ts` / `lib/data/healthcarePremiums.ts`. New citations added to `policy/citations.ts` as needed.
+**Architecture:** Same as Plan 1 (post-review fixes). Each scheme is a thin metadata+rules definition over the existing CPF calculation engine. Schemes delegate to functions in `lib/calculations/cpf.ts` and data in `lib/data/cpfRates.ts` / `lib/data/healthcarePremiums.ts`. New citations added to `policy/citations.ts` as needed.
+
+**IMPORTANT — Review fixes applied to Plan 1 that affect ALL Plan 2 schemes:**
+
+1. **`chapters: ChapterAge[]`** (not `chapter: ChapterAge`) — Use an array. Multi-chapter schemes appear in all their chapters.
+2. **`assess()` + `compute()`** (not `eligibility()` + `relevanceScore()`) — `assess()` returns `{ eligible: boolean, relevance: number }`. `compute()` returns `SchemeResult`. See Plan 1 age55-transition for reference.
+3. **Numeric ComparisonRow** — `ComparisonRow` has `defaultNumeric: number` and `actionNumeric: number` with `unit: 'currency' | 'percent' | 'months' | 'years' | 'text'`. Do NOT use `formatCurrency` in compute(). Formatting happens in DecisionCard UI.
+4. **PolicyPack has `contributionRates`** — Use `ctx.policy.contributionRates` for rate lookups. Do NOT import `CPF_RATES` or `getCpfRatesForAge` directly. All data flows through PolicyPack for testability.
+5. **`estimateCpfLifePayout()` returns ANNUAL** — Divide by 12 for monthly. Use a helper: `const toMonthly = (annual: number) => annual / 12`.
 
 **Tech Stack:** React 19, TypeScript, Zustand (existing stores), Recharts (CpfMiniWaterfall), Framer Motion (TransitionAnimator), Vitest
 

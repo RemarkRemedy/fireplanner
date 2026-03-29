@@ -6,6 +6,15 @@
 
 **Architecture:** Extends Plan 1's PlannerContext with partner data. No new Zustand stores. Couple state lives in `PlannerContext.household` and URL params. The feedback API follows the existing D1 + rate limiting pattern established in `email-signup.ts` and `feedback.ts`.
 
+**IMPORTANT — Review fixes from Plan 1 that affect Plan 3:**
+
+1. **Local draft state (B5)** — `useCpfTransitionParams` uses local React state as the single source of truth. URL sync is debounced (300ms). Store write-back is explicit ("Save to profile" button). Do NOT write to stores on every keystroke.
+2. **PartnerProfile has `birthYear`** (B7) — Already included in Plan 1 types. Also has optional `cpfLifePlan`, `cpfLifeStartAge`, `cpfRetirementSum` fields. Do NOT hardcode 'standard'/'frs' for partner.
+3. **`assess()` + `compute()` pattern** — Schemes use `assess()` for cheap eligibility, `compute()` is called lazily. `buildCoupleTimeline` should use `assess()` for milestone generation, not full `compute()`.
+4. **Numeric ComparisonRow** — `defaultNumeric`/`actionNumeric` are numbers, not strings. Formatting happens in UI.
+5. **URL params encode financial PII** — Add a note in ShareSection that the link contains private financial data. Consider Base64-encoding the params blob in a future iteration.
+6. **`PartnerRawInputs` must be compatible with `RawInputs`** — Either widen PartnerRawInputs or add a conversion function that fills defaults for missing fields before passing to `buildPlannerContext`.
+
 **Tech Stack:** React 19, TypeScript, Zustand (existing stores), Zod (URL validation), Cloudflare Pages Functions + D1, Vitest
 
 **Spec:** `docs/superpowers/specs/2026-03-29-cpf-transition-planner-design.md`
