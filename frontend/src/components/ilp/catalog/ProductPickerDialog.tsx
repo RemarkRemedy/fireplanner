@@ -27,6 +27,7 @@ export function ProductPickerDialog({ open, onOpenChange, onSelect }: ProductPic
   const { products, manifest } = getIlpCatalog()
   const supportedProducts = products.filter((product) => product.supportStatus !== 'parser-error')
   const [query, setQuery] = useState('')
+  const [expandedProductId, setExpandedProductId] = useState<string | null>(null)
 
   const normalizedQuery = query.trim().toLowerCase()
   const visibleProducts = supportedProducts.filter((product) => {
@@ -75,12 +76,27 @@ export function ProductPickerDialog({ open, onOpenChange, onSelect }: ProductPic
                       {product.economicsStatus === 'supported' ? 'Modeled economics' : 'Narrower modeled scope'}
                     </Badge>
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    {supportCopy(product)}
-                  </div>
-                  {product.warnings.length > 0 && (
-                    <div className="text-xs text-muted-foreground">
-                      {product.warnings[0]}
+                  {(supportCopy(product) || product.warnings.length > 0) && (
+                    <div className="pt-1">
+                      <button
+                        type="button"
+                        className="text-xs font-medium text-muted-foreground hover:text-foreground"
+                        onClick={() => setExpandedProductId((current) => (current === product.id ? null : product.id))}
+                      >
+                        {expandedProductId === product.id ? 'Hide model notes' : 'Show model notes'}
+                      </button>
+                    </div>
+                  )}
+                  {expandedProductId === product.id && (
+                    <div className="space-y-2 pt-1">
+                      <div className="text-xs text-muted-foreground">
+                        {supportCopy(product)}
+                      </div>
+                      {product.warnings.length > 0 && (
+                        <div className="text-xs text-muted-foreground">
+                          {product.warnings[0]}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

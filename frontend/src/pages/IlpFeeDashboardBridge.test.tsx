@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { FeeBreakdownSection } from '@/components/ilp/FeeBreakdownSection'
+import { ProductPickerDialog } from '@/components/ilp/catalog/ProductPickerDialog'
 import { analyzeIlpPolicy } from '@/lib/calculations/ilp'
 import { createDefaultPolicy, useIlpStore } from '@/stores/useIlpStore'
 import { IlpLandingPage } from './IlpLandingPage'
@@ -83,6 +84,22 @@ describe('ILP fee dashboard blog bridge', () => {
       'href',
       '/blog/ilp-questions?utm_source=dashboard&utm_content=footer_card#when-ilp-makes-sense',
     )
+  })
+
+  it('keeps catalog model notes collapsed by default in the product picker', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter>
+        <ProductPickerDialog open onOpenChange={() => {}} onSelect={() => {}} />
+      </MemoryRouter>,
+    )
+
+    expect(screen.queryByText(/aia elite secure income - 5 pay is cataloged as supported in v1/i)).not.toBeInTheDocument()
+
+    await user.click(screen.getAllByRole('button', { name: /show model notes/i })[0]!)
+
+    expect(screen.getByText(/aia elite secure income - 5 pay is cataloged as supported in v1/i)).toBeInTheDocument()
   })
 
   it('shows the adviser-question callout inside the fee breakdown section', () => {
