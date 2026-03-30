@@ -32,6 +32,13 @@ export function PolicyTabs() {
     setRenamingId(null)
   }
 
+  function handleTabKeyDown(event: React.KeyboardEvent<HTMLDivElement>, policyId: string) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      selectPolicy(policyId)
+    }
+  }
+
   if (policies.length === 0) {
     return (
       <div className="rounded-lg border border-dashed p-4">
@@ -60,12 +67,16 @@ export function PolicyTabs() {
               {policies.map((policy) => {
                 const active = policy.id === selectedPolicyId
                 return (
-                  <button
-                    type="button"
+                  <div
                     key={policy.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={active}
+                    aria-label={`Select ${policy.name}`}
                     onClick={() => selectPolicy(policy.id)}
+                    onKeyDown={(event) => handleTabKeyDown(event, policy.id)}
                     className={cn(
-                      'min-w-[220px] rounded-lg border px-4 py-3 text-left transition-colors',
+                      'min-w-[220px] rounded-lg border px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
                       active
                         ? 'border-primary bg-primary/5 shadow-sm'
                         : 'border-border hover:border-primary/40 hover:bg-accent/50',
@@ -120,7 +131,7 @@ export function PolicyTabs() {
                         </Button>
                       </div>
                     </div>
-                  </button>
+                  </div>
                 )
               })}
             </div>
