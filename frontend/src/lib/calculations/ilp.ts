@@ -232,26 +232,33 @@ export type IlpBonusQualificationRule = {
       countFromPolicyYear: number
     }
   | {
-    disqualifyIfAnyFromPolicyYear: number
-  }
+      disqualifyIfAnyFromPolicyYear: number
+      endPolicyYear?: number | null
+    }
   | {
-    disqualifyIfAnyInLookbackMonths: number
-  }
+      basis: 'cumulative-withdrawals-exceed-open-balance-at-start-policy-year-rate'
+      startPolicyYear: number
+      endPolicyYear: number | null
+      maximumValueRate: number
+    }
+  | {
+      disqualifyIfAnyInLookbackMonths: number
+    }
 )
   | {
-    formula: 'policy-year-growth-measure'
-    minimumRatio: number
-    rounding: 'floor-whole-percent'
-  }
+      formula: 'policy-year-growth-measure'
+      minimumRatio: number
+      rounding: 'floor-whole-percent'
+    }
   | {
       formula: 'cumulative-effective-account-value-ratio'
       maximumRatio: number
       includeReinvestedDividendWithdrawals?: boolean
     }
   | {
-    formula: 'no-new-premium-arrears-in-lookback-months'
-    lookbackMonths: number
-  }
+      formula: 'no-new-premium-arrears-in-lookback-months'
+      lookbackMonths: number
+    }
 
 export interface IlpBonusRestorationRule {
   trigger: 'premium-holiday-repayment' | 'policy-repayment'
@@ -2967,73 +2974,6 @@ function getEligiblePartialWithdrawalsByAccount(
     withdrawals,
     acceptedEvents,
   }
-}
-
-function computeSimplePartialWithdrawalChargeForEvent(
-  normalized: IlpNormalizedPolicyInput,
-  event: Pick<IlpPolicyEvent, 'amount' | 'startPolicyMonth' | 'chargeWaived'>,
-): number | undefined {
-  if (event.amount == null || event.amount <= 0 || event.chargeWaived === true) {
-    return 0
-  }
-
-  const partialWithdrawalRules = (normalized.input.eventChargeRules ?? []).filter((rule) => (
-    rule.trigger === 'partial-withdrawal'
-  ))
-  if (partialWithdrawalRules.length === 0) {
-    return 0
-  }
-
-  const supportsPerEventShortcut = partialWithdrawalRules.every((rule) => (
-    rule.basis === 'event-amount'
-    && rule.exclusiveGroup == null
-    && rule.groupResolution == null
-    && rule.freeEventCount == null
-    && rule.freeEventStartPolicyYear == null
-    && rule.freeEventMaxAmountRate == null
-    && rule.freeEventMaxAmountBasis == null
-    && rule.freeAmountPoolRate == null
-    && rule.freeAmountPoolBasis == null
-    && rule.freeAmountPoolReferencePolicyYear == null
-  ))
-  if (!supportsPerEventShortcut) {
-    return undefined
-  }
-
-  const policyYear = getPolicyYearForMonth(event.startPolicyMonth)
-  const isPostMip = isPostMipPolicyYear(normalized.input, policyYear)
-  const eventContext: IlpCashflowYearContext = {
-    projectionYear: 1,
-    policyYear,
-    isPostMip,
-    range: {
-      startPolicyMonth: event.startPolicyMonth,
-      endPolicyMonth: event.startPolicyMonth,
-    },
-    premiumHolidayMonths: 0,
-    payableMonths: 1,
-    paymentHistory: {
-      premiumYearAtStart: getPremiumYearAtMonth(normalized, event.startPolicyMonth - 1),
-      premiumYearAtEnd: getPremiumYearAtMonth(normalized, event.startPolicyMonth),
-      premiumsPaidUpToDate: arePremiumsPaidUpToDateAtMonth(normalized, event.startPolicyMonth),
-    },
-  }
-
-  let totalCharge = 0
-
-  for (const rule of partialWithdrawalRules) {
-    const activeWindow = rule.activeWindow ?? 'policy-term'
-    if (
-      (activeWindow === 'during-mip' && isPostMip)
-      || (activeWindow === 'after-mip' && !isPostMip)
-    ) {
-      continue
-    }
-
-    totalCharge += Math.max(0, event.amount * resolveEventChargeRate(rule, eventContext)) + rule.amount
-  }
-
-  return totalCharge
 }
 
 function buildNextFundCloseBalancesByAccount(

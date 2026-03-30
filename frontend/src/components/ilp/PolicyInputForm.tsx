@@ -187,10 +187,6 @@ function supportsCurrentTpdContinuationEventStatus(policy: IlpPolicyInput): bool
   return policy.catalogSource?.productId === 'great-eastern-great-life-advantage-4'
 }
 
-function supportsCurrentResidualDeathBenefitAfterTpdClaim(policy: IlpPolicyInput): boolean {
-  return policy.catalogSource?.productId === 'tokio-marine-goassure'
-}
-
 function supportsCurrentAccidentalDeathClaimStatus(policy: IlpPolicyInput): boolean {
   const productId = policy.catalogSource?.productId
   if (productId?.startsWith('hsbc-life-wealth-focus-flexi-')) {
@@ -348,138 +344,6 @@ function supportsCurrentAccidentalDisabilityPayoutStage(policy: IlpPolicyInput):
 
 function supportsCurrentAccidentalDeathMode(policy: IlpPolicyInput): boolean {
   return policy.catalogSource?.productId === 'income-astralink-va2'
-}
-
-function supportsIncomeAccidentalDeathClaimGate(policy: IlpPolicyInput): boolean {
-  return policy.catalogSource?.productId === 'income-wealthlink-gl3'
-    && policy.assuranceProfile?.currentAgeNextBirthday != null
-    && policy.assuranceProfile.currentAgeNextBirthday >= 66
-    && policy.assuranceProfile.currentAgeNextBirthday < 75
-}
-
-function supportsAiaAccidentalDeathClaimGate(policy: IlpPolicyInput): boolean {
-  if (
-    policy.catalogSource?.productId === 'aia-invest-easy-cash-srs'
-    || policy.catalogSource?.productId === 'aia-invest-easy-cpf'
-  ) {
-    return policy.monthsAlreadyPaid < 12
-  }
-
-  return (
-    policy.catalogSource?.productId === 'aia-elite-secure-income-single-premium'
-    || policy.catalogSource?.productId === 'aia-elite-secure-income-5-pay'
-    || policy.catalogSource?.productId === 'aia-platinum-retirement-elite'
-    || policy.catalogSource?.productId === 'aia-pro-achiever-3'
-    || policy.catalogSource?.productId === 'aia-wealth-venture'
-    || policy.catalogSource?.productId === 'aia-platinum-wealth-venture-2'
-  ) && policy.monthsAlreadyPaid < (
-    policy.catalogSource?.productId === 'aia-pro-achiever-3'
-    || policy.catalogSource?.productId === 'aia-wealth-venture'
-    || policy.catalogSource?.productId === 'aia-platinum-wealth-venture-2'
-      ? 24
-      : 60
-  )
-}
-
-function supportsAiaPremiumPassRunway(policy: IlpPolicyInput): boolean {
-  return policy.catalogSource?.productId === 'aia-pro-achiever-3'
-}
-
-function supportsTokioAccidentalDeathClaimGate(policy: IlpPolicyInput): boolean {
-  if (
-    policy.catalogSource?.productId === 'tokio-marine-wealth-flexi-link-5-10'
-    || policy.catalogSource?.productId === 'tokio-marine-wealth-flexi-link-3-12'
-  ) {
-    return policy.monthsAlreadyPaid < 12
-  }
-
-  return policy.catalogSource?.productId === 'tokio-marine-goelite'
-    || policy.catalogSource?.productId === 'tokio-marine-gowealth-enrich'
-    || policy.catalogSource?.productId === 'tokio-marine-goaffluence'
-}
-
-function supportsTokioDoubleIndemnityClaimGate(policy: IlpPolicyInput): boolean {
-  return policy.catalogSource?.productId === 'tokio-marine-goaffluence'
-}
-
-function supportsTokioDeathExclusionSettlement(policy: IlpPolicyInput): boolean {
-  return policy.catalogSource?.productId === 'tokio-marine-harvest-pro'
-    || policy.catalogSource?.productId === 'tokio-marine-goclassic'
-    || policy.catalogSource?.productId === 'tokio-marine-goclassic-secure'
-    || policy.catalogSource?.productId === 'tokio-marine-goelite-secure'
-}
-
-function requiresTokioDeathExclusionInitialBonus(policy: IlpPolicyInput): boolean {
-  return policy.catalogSource?.productId === 'tokio-marine-harvest-pro'
-    || policy.catalogSource?.productId === 'tokio-marine-goclassic'
-    || policy.catalogSource?.productId === 'tokio-marine-goclassic-secure'
-}
-
-function supportsPrudentialDeathExclusionSettlement(policy: IlpPolicyInput): boolean {
-  return policy.catalogSource?.productId === 'prudential-pruvantage-prosper'
-    || policy.catalogSource?.productId === 'prudential-pruvantage-wealth-ii'
-    || policy.catalogSource?.productId === 'prudential-pruvantage-assure-ii'
-    || policy.catalogSource?.productId === 'prudential-pruvantage-assure-sp'
-    || policy.catalogSource?.productId === 'prudential-prulink-investgrowth'
-    || policy.catalogSource?.productId === 'prudential-prulink-investgrowth-sp'
-    || policy.catalogSource?.productId === 'prudential-pruactive-linkguard'
-}
-
-function requiresPrudentialWelcomeBonusPaid(policy: IlpPolicyInput): boolean {
-  return policy.catalogSource?.productId === 'prudential-pruvantage-prosper'
-    || policy.catalogSource?.productId === 'prudential-pruvantage-wealth-ii'
-    || policy.catalogSource?.productId === 'prudential-pruvantage-assure-ii'
-    || policy.catalogSource?.productId === 'prudential-pruvantage-assure-sp'
-}
-
-function supportsRemainingAggregateAccidentalDeathCap(policy: IlpPolicyInput): boolean {
-  return policy.catalogSource?.productId === 'tokio-marine-goelite'
-    || policy.catalogSource?.productId === 'tokio-marine-gowealth-enrich'
-}
-
-function supportsTokioFirstYearAccumulationWithdrawalAmount(policy: IlpPolicyInput): boolean {
-  if (
-    policy.catalogSource?.productId !== 'tokio-marine-wealth-flexi-link-5-10'
-    && policy.catalogSource?.productId !== 'tokio-marine-wealth-flexi-link-3-12'
-  ) {
-    return false
-  }
-
-  if (policy.monthsAlreadyPaid >= 12) {
-    return false
-  }
-
-  return (policy.policyEvents ?? []).some((event) => (
-    event.type === 'partial-withdrawal'
-    && event.accountId == null
-    && event.amount != null
-    && event.amount > 0
-    && event.startPolicyMonth <= policy.monthsAlreadyPaid
-  ))
-}
-
-function supportsTokioBuilderConvertedRiderCharge(policy: IlpPolicyInput): boolean {
-  return (policy.eventChargeRules ?? []).some((rule) => (
-    rule.trigger === 'premium-holiday'
-    && rule.basis === 'fixed-amount-with-overlap-months'
-    && rule.requiresManualInput === true
-    && rule.id === 'premium-holiday-converted-rider-charge'
-  ))
-}
-
-function supportsTokioAccidentalDeathAnnualisedPremium(policy: IlpPolicyInput): boolean {
-  if (policy.catalogSource?.productId !== 'tokio-marine-goaffluence') {
-    return false
-  }
-
-  return (policy.policyEvents ?? []).some((event) => (
-    event.startPolicyMonth <= policy.monthsAlreadyPaid
-    && (
-      event.type === 'premium-holiday'
-      || event.type === 'regular-premium-reduction'
-      || event.type === 'regular-premium-increase'
-    )
-  ))
 }
 
 function requiresSelectedFundForPartialWithdrawal(policy: IlpPolicyInput, accountId?: string): boolean {
@@ -804,35 +668,12 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
   const supportsCurrentAccidentalDisabilityStage = supportsCurrentAccidentalDisabilityPayoutStage(policy)
   const supportsCurrentAccidentalDeathModeInput = supportsCurrentAccidentalDeathMode(policy)
   const supportsCurrentAccidentalDeathClaimStatusInput = supportsCurrentAccidentalDeathClaimStatus(policy)
-  const hasActiveCurrentAccidentalDeathClaimState = claimProfile?.currentAccidentalDeathClaimStatus === 'admitted'
-    || claimProfile?.currentAccidentalDeathClaimStatus === 'admitted-and-settled'
   const supportsCurrentAccidentalDeathClaimBenefitAmountInput = supportsCurrentAccidentalDeathClaimStatusInput
     && (
       policy.catalogSource?.productId !== 'tokio-marine-goelite'
       || claimProfile?.currentTokioAccidentalDeathClaimGateStatus === 'published-corridor-satisfied'
     )
     && claimProfile?.currentAccidentalDeathClaimStatus === 'admitted'
-  const supportsIncomeAccidentalDeathClaimGateInput = supportsIncomeAccidentalDeathClaimGate(policy)
-  const supportsAiaAccidentalDeathClaimGateInput = supportsAiaAccidentalDeathClaimGate(policy)
-    && !hasActiveCurrentAccidentalDeathClaimState
-  const supportsTokioAccidentalDeathClaimGateInput = supportsTokioAccidentalDeathClaimGate(policy)
-  const supportsTokioDoubleIndemnityClaimGateInput = supportsTokioDoubleIndemnityClaimGate(policy)
-  const supportsTokioDeathExclusionSettlementInput = supportsTokioDeathExclusionSettlement(policy)
-  const supportsTokioInitialBonusPaidInput = supportsTokioDeathExclusionSettlementInput
-    && requiresTokioDeathExclusionInitialBonus(policy)
-    && claimProfile?.currentTokioDeathExclusionSettlementStatus === 'suicide-or-pre-existing-exclusion'
-  const supportsPrudentialDeathExclusionSettlementInput = supportsPrudentialDeathExclusionSettlement(policy)
-  const supportsPrudentialWelcomeBonusPaidInput = supportsPrudentialDeathExclusionSettlementInput
-    && requiresPrudentialWelcomeBonusPaid(policy)
-    && claimProfile?.currentPrudentialDeathExclusionSettlementStatus === 'pre-existing-higher-of-settlement'
-  const supportsPrudentialClaimExpenseDeductionsInput = supportsPrudentialDeathExclusionSettlementInput
-    && claimProfile?.currentPrudentialDeathExclusionSettlementStatus != null
-    && claimProfile.currentPrudentialDeathExclusionSettlementStatus !== 'standard-corridor'
-    && claimProfile.currentPrudentialDeathExclusionSettlementStatus !== 'special-exclusion-higher-of-settlement'
-  const supportsRemainingAggregateAccidentalDeathCapInput = supportsRemainingAggregateAccidentalDeathCap(policy)
-  const supportsTokioAccidentalDeathAnnualisedPremiumInput = supportsTokioAccidentalDeathAnnualisedPremium(policy)
-  const supportsTokioFirstYearAccumulationWithdrawalAmountInput = supportsTokioFirstYearAccumulationWithdrawalAmount(policy)
-  const supportsTokioBuilderConvertedRiderChargeInput = supportsTokioBuilderConvertedRiderCharge(policy)
   const supportsCurrentAgeAccidentalDeathBenefitInput = supportsCurrentAgeAccidentalDeathBenefit(policy)
   const supportsCurrentExcludedClaimBonusValue = supportsCurrentExcludedClaimBonusValueDeathBenefit(policy)
   const supportsGoalBuilderHistoricalExcludedSupplementaryPremiumCohorts = policy.catalogSource?.productId === 'hsbc-life-goal-builder-ii'
