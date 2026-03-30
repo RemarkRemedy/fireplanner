@@ -1,11 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUpDown, ExternalLink, Search } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { usePageMeta } from '@/hooks/usePageMeta'
+import { cn } from '@/lib/utils'
 import leaderboardData from '@/lib/data/generated/ilpLeaderboard.json'
 
 interface LeaderboardRow {
@@ -45,6 +44,14 @@ function formatPercent(value: number): string {
   return `${(value * 100).toFixed(1)}%`
 }
 
+function formatBonusSupport(row: LeaderboardRow): string {
+  if (row.bonusModellingStatus !== 'modelled' || row.totalFeesCharged <= 0 || row.totalBonusesReceived <= 0) {
+    return 'n/a'
+  }
+
+  return `${Math.round((row.totalBonusesReceived / row.totalFeesCharged) * 100)}%`
+}
+
 function SortButton({ field, label, activeKey, onToggle }: {
   field: SortKey
   label: string
@@ -54,7 +61,7 @@ function SortButton({ field, label, activeKey, onToggle }: {
   return (
     <button
       type="button"
-      className="flex items-center gap-1 text-left font-medium text-muted-foreground hover:text-foreground"
+      className="flex items-center gap-1 text-left font-medium text-[#5f6877] hover:text-[#0f1724]"
       onClick={() => onToggle(field)}
     >
       {label}
@@ -126,150 +133,247 @@ export function IlpLeaderboardPage() {
     return result
   }, [search, filterInsurer, filterPremiumType, sortKey, sortDir])
 
+  const summary = useMemo(() => {
+    if (filtered.length === 0) {
+      return null
+    }
+
+    const lowestFeeRow = filtered.reduce((best, row) => (row.netFeeDragPct < best.netFeeDragPct ? row : best), filtered[0])
+    const highestFeeRow = filtered.reduce((worst, row) => (row.netFeeDragPct > worst.netFeeDragPct ? row : worst), filtered[0])
+    const strongestBonusRow = filtered
+      .filter((row) => row.bonusModellingStatus === 'modelled' && row.totalBonusesReceived > 0 && row.totalFeesCharged > 0)
+      .sort((a, b) => (b.totalBonusesReceived / b.totalFeesCharged) - (a.totalBonusesReceived / a.totalFeesCharged))[0] ?? null
+
+    return { lowestFeeRow, highestFeeRow, strongestBonusRow }
+  }, [filtered])
+
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-bold">ILP Product Comparison</h1>
-        <p className="text-sm text-muted-foreground">
-          Compare modelled net fees as a share of premiums paid across {rows.length} product variants from {insurers.length} insurers.
-          Standardized at S$350/mo premium, policy year 1, mid return scenario.
-        </p>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative w-64">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search products..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <select
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-          value={filterInsurer ?? ''}
-          onChange={(e) => setFilterInsurer(e.target.value || null)}
-        >
-          <option value="">All insurers</option>
-          {insurers.map((insurer) => (
-            <option key={insurer} value={insurer}>{insurer}</option>
-          ))}
-        </select>
-        <select
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-          value={filterPremiumType}
-          onChange={(e) => setFilterPremiumType(e.target.value as 'all' | 'regular' | 'single')}
-        >
-          <option value="all">All premium types</option>
-          <option value="regular">Regular premium</option>
-          <option value="single">Single premium</option>
-        </select>
-        <span className="text-sm text-muted-foreground">{filtered.length} results</span>
-      </div>
-
-      {/* Table */}
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="border-b bg-muted/50">
-                <tr>
-                  <th className="px-3 py-3 text-left">
-                    <SortButton field="insurer" label="Insurer" activeKey={sortKey} onToggle={handleToggleSort} />
-                  </th>
-                  <th className="px-3 py-3 text-left">
-                    <SortButton field="productName" label="Product" activeKey={sortKey} onToggle={handleToggleSort} />
-                  </th>
-                  <th className="px-3 py-3 text-right">
-                    <SortButton field="mipLength" label="MIP" activeKey={sortKey} onToggle={handleToggleSort} />
-                  </th>
-                  <th className="px-3 py-3 text-right">
-                    <SortButton field="netFeeDragPct" label="Net Fees / Premiums" activeKey={sortKey} onToggle={handleToggleSort} />
-                  </th>
-                  <th className="px-3 py-3 text-right">
-                    <SortButton field="totalFeesCharged" label="Gross Fees" activeKey={sortKey} onToggle={handleToggleSort} />
-                  </th>
-                  <th className="px-3 py-3 text-right">
-                    <SortButton field="totalBonusesReceived" label="Bonuses" activeKey={sortKey} onToggle={handleToggleSort} />
-                  </th>
-                  <th className="px-3 py-3 text-right">
-                    <SortButton field="bestExitYear" label="Lowest-Fee Exit Yr" activeKey={sortKey} onToggle={handleToggleSort} />
-                  </th>
-                  <th className="px-3 py-3 text-center">Type</th>
-                  <th className="px-3 py-3 text-center">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((row) => (
-                  <tr key={`${row.productId}-${row.variantId}`} className="border-b last:border-0 hover:bg-muted/30">
-                    <td className="px-3 py-3 text-muted-foreground">{row.insurer}</td>
-                    <td className="px-3 py-3">
-                      <div className="font-medium">{row.productName}</div>
-                      <div className="text-xs text-muted-foreground">{row.variantLabel}</div>
-                    </td>
-                    <td className="px-3 py-3 text-right tabular-nums">
-                      {row.mipBasis === 'open-ended' ? 'Open' : row.mipLength != null ? `${row.mipLength} yr` : 'N/A'}
-                    </td>
-                    <td className="px-3 py-3 text-right tabular-nums font-medium">
-                      {formatPercent(row.netFeeDragPct)}
-                    </td>
-                    <td className="px-3 py-3 text-right tabular-nums">
-                      {formatCurrency(row.totalFeesCharged, row.currency)}
-                    </td>
-                    <td className="px-3 py-3 text-right tabular-nums">
-                      {row.bonusModellingStatus === 'metadata-only' ? (
-                        <span className="text-amber-600" title="Bonus data unavailable">
-                          *
-                        </span>
-                      ) : row.totalBonusesReceived > 0 ? (
-                        <span className="text-emerald-700 dark:text-emerald-400">
-                          {formatCurrency(row.totalBonusesReceived, row.currency)}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">N/A</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-3 text-right tabular-nums">{row.bestExitYear}</td>
-                    <td className="px-3 py-3 text-center">
-                      <Badge variant={row.premiumType === 'single' ? 'secondary' : 'outline'}>
-                        {row.premiumType === 'single' ? 'Single' : 'Regular'}
-                      </Badge>
-                    </td>
-                    <td className="px-3 py-3 text-center">
-                      <Link to={`/ilp-fees/story/${row.productId}?variantId=${encodeURIComponent(row.variantId)}`}>
-                        <Button variant="ghost" size="sm" className="gap-1">
-                          View
-                          <ExternalLink className="h-3 w-3" />
-                        </Button>
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-                {filtered.length === 0 && (
-                  <tr>
-                    <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
-                      No products match your filters.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+    <div className="space-y-6 text-[#0f1724]">
+      <section className="rounded-[28px] border border-[#d7cfbf] bg-[#fffdf8] px-5 py-5 shadow-[0_1px_0_rgba(15,23,36,0.04)] sm:px-7 sm:py-6">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.95fr)] lg:items-end">
+          <div className="space-y-3">
+            <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#5f6877]">Ranked fee report</div>
+            <div className="space-y-2">
+              <h1 className="font-serif text-3xl leading-tight sm:text-4xl">ILP Product Comparison</h1>
+              <p className="max-w-3xl text-sm leading-6 text-[#5f6877] sm:text-base">
+                Compare modelled net fees as a share of premiums paid across {rows.length} product variants from {insurers.length} insurers.
+                Standardized at S$350/mo premium, policy year 1, mid return scenario.
+              </p>
+            </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Footnotes */}
-      <div className="space-y-2 text-xs text-muted-foreground">
-        <p>* Products marked with * do not have bonus modelling. Their net fee drag may be overstated.</p>
-        <p>`Net Fees / Premiums` is total net fees divided by total premiums paid over the full modelled horizon. It is not an annualized drag rate.</p>
-        <p>
-          All values assume S$350/mo premium (regular) or catalog default (single premium), policy year 1, 0 months paid, mid return scenario, full horizon (MIP + 10 post-MIP years).
-          Your personal numbers may differ. Use the Exit Calculator for personalized analysis.
-        </p>
-        <p>Not financial advice. Consult a licensed financial adviser before making policy decisions.</p>
-      </div>
+          <div className="rounded-3xl border border-[#d7cfbf] bg-[#f6f1e8] p-4">
+            <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#5f6877]">How to read this table</div>
+            <ul className="mt-3 space-y-2 text-sm leading-6 text-[#5f6877]">
+              <li>Rank is based on the active sort, not a hidden score.</li>
+              <li>Gross fees and bonuses are shown separately so credits do not hide fee load.</li>
+              <li>Use the story view when you want the year-by-year fee path for a specific variant.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {summary && (
+        <section className="grid gap-px overflow-hidden rounded-[28px] border border-[#d7cfbf] bg-[#d7cfbf] md:grid-cols-2 xl:grid-cols-4">
+          <div className="bg-[#fffdf8] p-4 sm:p-5">
+            <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#5f6877]">Filtered set</div>
+            <div className="mt-3 text-3xl font-semibold tabular-nums">{filtered.length}</div>
+            <p className="mt-2 text-sm leading-6 text-[#5f6877]">Variants currently in view after search and insurer filters.</p>
+          </div>
+          <div className="bg-[#fffdf8] p-4 sm:p-5">
+            <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#22624a]">Lowest fee drag</div>
+            <div className="mt-3 text-2xl font-semibold tabular-nums">{formatPercent(summary.lowestFeeRow.netFeeDragPct)}</div>
+            <p className="mt-2 text-sm leading-6 text-[#5f6877]">
+              {summary.lowestFeeRow.productName} · {summary.lowestFeeRow.variantLabel}
+            </p>
+          </div>
+          <div className="bg-[#fffdf8] p-4 sm:p-5">
+            <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#b24a2f]">Highest fee drag</div>
+            <div className="mt-3 text-2xl font-semibold tabular-nums">{formatPercent(summary.highestFeeRow.netFeeDragPct)}</div>
+            <p className="mt-2 text-sm leading-6 text-[#5f6877]">
+              {summary.highestFeeRow.productName} · {summary.highestFeeRow.variantLabel}
+            </p>
+          </div>
+          <div className="bg-[#fffdf8] p-4 sm:p-5">
+            <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#174a7c]">Strongest bonus support</div>
+            <div className="mt-3 text-2xl font-semibold tabular-nums">
+              {summary.strongestBonusRow ? formatBonusSupport(summary.strongestBonusRow) : 'n/a'}
+            </div>
+            <p className="mt-2 text-sm leading-6 text-[#5f6877]">
+              {summary.strongestBonusRow
+                ? `${summary.strongestBonusRow.productName} · ${summary.strongestBonusRow.variantLabel}`
+                : 'No filtered product currently has modelled bonus support.'}
+            </p>
+          </div>
+        </section>
+      )}
+
+      <section className="rounded-[28px] border border-[#d7cfbf] bg-[#fffdf8] p-4 sm:p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-2">
+            <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#5f6877]">Filters</div>
+            <p className="text-sm leading-6 text-[#5f6877]">
+              Narrow the ranked table by insurer, premium type, or product name. Active sort decides the row rank.
+            </p>
+          </div>
+          <div className="text-sm text-[#5f6877]">{filtered.length} results</div>
+        </div>
+
+        <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1.3fr)_minmax(12rem,0.8fr)_minmax(12rem,0.8fr)]">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5f6877]" />
+            <Input
+              placeholder="Search insurer, product, or variant"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-11 border-[#d7cfbf] bg-[#fffdf8] pl-9 text-[#0f1724] placeholder:text-[#7b8491]"
+            />
+          </div>
+          <select
+            className="h-11 rounded-xl border border-[#d7cfbf] bg-[#fffdf8] px-3 text-sm text-[#0f1724]"
+            value={filterInsurer ?? ''}
+            onChange={(e) => setFilterInsurer(e.target.value || null)}
+          >
+            <option value="">All insurers</option>
+            {insurers.map((insurer) => (
+              <option key={insurer} value={insurer}>{insurer}</option>
+            ))}
+          </select>
+          <select
+            className="h-11 rounded-xl border border-[#d7cfbf] bg-[#fffdf8] px-3 text-sm text-[#0f1724]"
+            value={filterPremiumType}
+            onChange={(e) => setFilterPremiumType(e.target.value as 'all' | 'regular' | 'single')}
+          >
+            <option value="all">All premium types</option>
+            <option value="regular">Regular premium</option>
+            <option value="single">Single premium</option>
+          </select>
+        </div>
+      </section>
+
+      <section className="overflow-hidden rounded-[28px] border border-[#d7cfbf] bg-[#fffdf8] shadow-[0_1px_0_rgba(15,23,36,0.04)]">
+        <div className="border-b border-[#d7cfbf] px-4 py-3 sm:px-5">
+          <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#5f6877]">Scoreboard</div>
+          <p className="mt-2 text-sm leading-6 text-[#5f6877]">
+            `Net Fees / Premiums` stays the default sort because it is the clearest cross-product basis for comparison.
+          </p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1080px] text-sm">
+            <thead className="border-b border-[#d7cfbf] bg-[#f6f1e8]">
+              <tr className="text-[#0f1724]">
+                <th className="px-4 py-3 text-left font-mono text-[11px] uppercase tracking-[0.18em] text-[#5f6877]">Rank</th>
+                <th className="px-3 py-3 text-left">
+                  <SortButton field="insurer" label="Insurer" activeKey={sortKey} onToggle={handleToggleSort} />
+                </th>
+                <th className="px-3 py-3 text-left">
+                  <SortButton field="productName" label="Product" activeKey={sortKey} onToggle={handleToggleSort} />
+                </th>
+                <th className="px-3 py-3 text-right">
+                  <SortButton field="mipLength" label="MIP" activeKey={sortKey} onToggle={handleToggleSort} />
+                </th>
+                <th className="px-3 py-3 text-right">
+                  <SortButton field="netFeeDragPct" label="Net Fees / Premiums" activeKey={sortKey} onToggle={handleToggleSort} />
+                </th>
+                <th className="px-3 py-3 text-right">
+                  <SortButton field="totalFeesCharged" label="Gross Fees" activeKey={sortKey} onToggle={handleToggleSort} />
+                </th>
+                <th className="px-3 py-3 text-right">
+                  <SortButton field="totalBonusesReceived" label="Bonuses" activeKey={sortKey} onToggle={handleToggleSort} />
+                </th>
+                <th className="px-3 py-3 text-right">
+                  <SortButton field="bestExitYear" label="Lowest-Fee Exit Yr" activeKey={sortKey} onToggle={handleToggleSort} />
+                </th>
+                <th className="px-3 py-3 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-[#5f6877]">Type</th>
+                <th className="px-3 py-3 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-[#5f6877]">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((row, index) => (
+                <tr
+                  key={`${row.productId}-${row.variantId}`}
+                  className={cn(
+                    'border-b border-[#ece5d8] last:border-0 hover:bg-[#f8f4ec]',
+                    index < 3 && 'bg-[#fcfaf4]',
+                  )}
+                >
+                  <td className="px-4 py-3 align-top">
+                    <div className="font-mono text-sm font-semibold tabular-nums text-[#0f1724]">{index + 1}</div>
+                  </td>
+                  <td className="px-3 py-3 align-top text-[#5f6877]">{row.insurer}</td>
+                  <td className="px-3 py-3 align-top">
+                    <div className="font-medium text-[#0f1724]">{row.productName}</div>
+                    <div className="text-xs text-[#5f6877]">{row.variantLabel}</div>
+                  </td>
+                  <td className="px-3 py-3 text-right tabular-nums align-top text-[#0f1724]">
+                    {row.mipBasis === 'open-ended' ? 'Open' : row.mipLength != null ? `${row.mipLength} yr` : 'N/A'}
+                  </td>
+                  <td className="px-3 py-3 text-right tabular-nums align-top font-semibold text-[#0f1724]">
+                    {formatPercent(row.netFeeDragPct)}
+                  </td>
+                  <td className="px-3 py-3 text-right tabular-nums align-top text-[#b24a2f]">
+                    {formatCurrency(row.totalFeesCharged, row.currency)}
+                  </td>
+                  <td className="px-3 py-3 text-right tabular-nums align-top">
+                    {row.bonusModellingStatus === 'metadata-only' ? (
+                      <span className="text-[#8a6a18]" title="Bonus data unavailable">
+                        *
+                      </span>
+                    ) : row.totalBonusesReceived > 0 ? (
+                      <span className="text-[#22624a]">
+                        {formatCurrency(row.totalBonusesReceived, row.currency)}
+                      </span>
+                    ) : (
+                      <span className="text-[#5f6877]">N/A</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-3 text-right tabular-nums align-top text-[#0f1724]">{row.bestExitYear}</td>
+                  <td className="px-3 py-3 text-center align-top">
+                    <span
+                      className={cn(
+                        'inline-flex rounded-full border px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.08em]',
+                        row.premiumType === 'single'
+                          ? 'border-[#d7cfbf] bg-[#ece5d8] text-[#0f1724]'
+                          : 'border-[#d7cfbf] bg-[#fffdf8] text-[#5f6877]',
+                      )}
+                    >
+                      {row.premiumType === 'single' ? 'Single' : 'Regular'}
+                    </span>
+                  </td>
+                  <td className="px-3 py-3 text-center align-top">
+                    <Link to={`/ilp-fees/story/${row.productId}?variantId=${encodeURIComponent(row.variantId)}`}>
+                      <Button variant="ghost" size="sm" className="gap-1 text-[#174a7c] hover:bg-[#dce6f2] hover:text-[#0f1724]">
+                        View
+                        <ExternalLink className="h-3 w-3" />
+                      </Button>
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={10} className="px-3 py-8 text-center text-[#5f6877]">
+                    No products match your filters.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="rounded-[28px] border border-[#d7cfbf] bg-[#f6f1e8] p-4 sm:p-5">
+        <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#5f6877]">Method notes</div>
+        <div className="mt-3 space-y-2 text-sm leading-6 text-[#5f6877]">
+          <p>* Products marked with * do not have bonus modelling. Their net fee drag may be overstated.</p>
+          <p>`Net Fees / Premiums` is total net fees divided by total premiums paid over the full modelled horizon. It is not an annualized drag rate.</p>
+          <p>
+            All values assume S$350/mo premium (regular) or catalog default (single premium), policy year 1, 0 months paid, mid return scenario, full horizon (MIP + 10 post-MIP years).
+            Your personal numbers may differ. Use the Exit Calculator for personalized analysis.
+          </p>
+          <p>Not financial advice. Consult a licensed financial adviser before making policy decisions.</p>
+        </div>
+      </section>
     </div>
   )
 }

@@ -172,6 +172,18 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(screen.getByText(/not an annualized drag rate/i)).toBeInTheDocument()
   })
 
+  it('shows the compare-page ranked fee report summary strip', () => {
+    render(
+      <MemoryRouter>
+        <IlpLeaderboardPage />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText(/ranked fee report/i)).toBeInTheDocument()
+    expect(screen.getByText(/strongest bonus support/i)).toBeInTheDocument()
+    expect(screen.getByText(/filtered set/i)).toBeInTheDocument()
+  })
+
   it('uses the route variant to skip the story-mode variant picker', () => {
     render(
       <MemoryRouter initialEntries={['/ilp-fees/story/hsbc-life-wealth-voyage?variantId=usd-mip-15']}>
