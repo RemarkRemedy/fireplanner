@@ -321,6 +321,14 @@ export function IlpReviewPage() {
             </Alert>
           )}
           <SummaryCards policy={displayPolicy} analysis={displayAnalysis} />
+          <a
+            href="/blog/ilp-questions?utm_source=dashboard&utm_content=fee_summary"
+            className="mt-2 inline-block text-sm text-blue-600 underline decoration-dotted underline-offset-4 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Are these fees worth it? A framework to decide
+          </a>
           {displayAnalysis.mode === 'projected' && (
             <>
               <FeeWaterfallChart policy={displayPolicy} analysis={displayAnalysis} />
@@ -341,6 +349,23 @@ export function IlpReviewPage() {
         </Alert>
       ) : null}
 
+      {/* "Still not sure?" footer CTA */}
+      <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-5 text-center dark:border-amber-900 dark:bg-amber-950/20">
+        <h3 className="text-base font-semibold text-amber-900 dark:text-amber-200">
+          ILPs aren&apos;t always a bad deal
+        </h3>
+        <p className="mx-auto mt-2 max-w-md text-sm text-amber-800 dark:text-amber-300">
+          The numbers above show the cost. But cost isn&apos;t the only factor. Discipline, convenience, and your personal situation all matter.
+        </p>
+        <a
+          href="/blog/ilp-questions?utm_source=dashboard&utm_content=footer_card#when-ilp-makes-sense"
+          className="mt-3 inline-block rounded-md border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:bg-transparent dark:text-blue-400 dark:hover:bg-blue-950"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Read: When an ILP actually makes sense &rarr;
+        </a>
+      </div>
       <p className="text-xs text-muted-foreground">
         This tool is for educational purposes. It models generic ILP fee structures and does not constitute financial advice. Verify all assumptions against your actual policy documents.
       </p>

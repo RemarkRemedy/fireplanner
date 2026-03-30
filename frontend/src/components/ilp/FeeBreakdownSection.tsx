@@ -426,6 +426,29 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
               ))}
             </ul>
           </div>
+
+          {/* Blog CTA */}
+          <div className="mt-4 rounded-md border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900 dark:bg-blue-950/20">
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 text-lg">💬</span>
+              <div>
+                <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-200">
+                  Questions to ask your financial adviser about these fees
+                </h3>
+                <p className="mt-1 text-xs text-blue-800 dark:text-blue-300">
+                  7 questions with plain-English explanations of common answers.
+                </p>
+                <a
+                  href="/blog/ilp-questions?utm_source=dashboard&utm_content=chart_callout#questions"
+                  className="mt-2 inline-block text-xs font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Read the questions &rarr;
+                </a>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
