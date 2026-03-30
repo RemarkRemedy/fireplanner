@@ -6694,11 +6694,95 @@ function hasActiveCurrentScheduledRedemption(
     && !isScheduledPayoutBlockedAtPolicyYear(input, input.currentPolicyYear)
 }
 
+export function canReconstructCurrentAiaEliteSecureIncome5PayProtectedBase(
+  input: IlpPolicyInput,
+): boolean {
+  return input.catalogSource?.productId === 'aia-elite-secure-income-5-pay'
+    && input.scheduledPayoutAssumption?.mode === 'scheduled-redemption'
+    && input.scheduledPayoutAssumption.startPolicyYear > input.currentPolicyYear
+}
+
+export function canReconstructCurrentAiaEliteSecureIncomeSinglePremiumProtectedBase(
+  input: IlpPolicyInput,
+): boolean {
+  return input.catalogSource?.productId === 'aia-elite-secure-income-single-premium'
+    && (input.initialSinglePremium ?? 0) > CONTRIBUTION_TOLERANCE
+    && input.scheduledPayoutAssumption?.mode === 'scheduled-redemption'
+    && input.scheduledPayoutAssumption.startPolicyYear > input.currentPolicyYear
+}
+
 function hasActiveCurrentGoalBuilderIiScheduledPayout(
   input: IlpPolicyInput,
 ): boolean {
   return input.catalogSource?.productId === 'hsbc-life-goal-builder-ii'
     && hasActiveCurrentScheduledRedemption(input)
+}
+
+function hasCurrentPolicyYearGoalBuilderIiScheduledPayout(
+  input: IlpPolicyInput,
+): boolean {
+  const scheduledPayout = input.scheduledPayoutAssumption
+  const payoutEndPolicyYear = (
+    scheduledPayout?.mode === 'scheduled-redemption'
+      ? scheduledPayout.startPolicyYear + scheduledPayout.durationYears - 1
+      : null
+  )
+
+  return hasActiveCurrentGoalBuilderIiScheduledPayout(input)
+    && payoutEndPolicyYear != null
+    && input.currentPolicyYear <= payoutEndPolicyYear
+}
+
+function getGoalBuilderIiCompletedScheduledPayoutErosion(
+  input: IlpPolicyInput,
+): number {
+  if (input.catalogSource?.productId !== 'hsbc-life-goal-builder-ii') {
+    return 0
+  }
+
+  const scheduledPayout = input.scheduledPayoutAssumption
+  if (!scheduledPayout || scheduledPayout.mode !== 'scheduled-redemption') {
+    return 0
+  }
+
+  if (!isScheduledPayoutFrequencyAllowed(input.scheduledPayoutSupport, scheduledPayout.frequency)) {
+    return 0
+  }
+
+  const minimumAnnualWithdrawalAmount = input.scheduledPayoutSupport?.minimumAnnualWithdrawalAmount
+  if (
+    minimumAnnualWithdrawalAmount != null
+    && scheduledPayout.annualPayoutAmount + CONTRIBUTION_TOLERANCE < minimumAnnualWithdrawalAmount
+  ) {
+    return 0
+  }
+
+  const minimumWithdrawalAmountPerOccurrence = input.scheduledPayoutSupport?.minimumWithdrawalAmountPerOccurrence
+  if (minimumWithdrawalAmountPerOccurrence != null) {
+    const payoutAmountPerOccurrence = scheduledPayout.annualPayoutAmount
+      / scheduledPayoutFrequencyOccurrencesPerYear(scheduledPayout.frequency)
+    if (payoutAmountPerOccurrence + CONTRIBUTION_TOLERANCE < minimumWithdrawalAmountPerOccurrence) {
+      return 0
+    }
+  }
+
+  const payoutEndPolicyYear = scheduledPayout.startPolicyYear + scheduledPayout.durationYears - 1
+  const lastCompletedPolicyYear = Math.min(input.currentPolicyYear - 1, payoutEndPolicyYear)
+  if (lastCompletedPolicyYear < scheduledPayout.startPolicyYear) {
+    return 0
+  }
+
+  let completedScheduledPayoutErosion = 0
+  for (let policyYear = scheduledPayout.startPolicyYear; policyYear <= lastCompletedPolicyYear; policyYear += 1) {
+    if (isScheduledPayoutBlockedAtPolicyYear(input, policyYear)) {
+      continue
+    }
+
+    // Keep the active current policy year manual because intra-year payout timing is still not reconstructable.
+    completedScheduledPayoutErosion += scheduledPayout.annualPayoutAmount
+  }
+
+  return completedScheduledPayoutErosion
 }
 
 function resolveCurrentGoalBuilderIiSumInsured(
@@ -6709,7 +6793,7 @@ function resolveCurrentGoalBuilderIiSumInsured(
     return undefined
   }
 
-  if (hasActiveCurrentGoalBuilderIiScheduledPayout(input)) {
+  if (hasCurrentPolicyYearGoalBuilderIiScheduledPayout(input)) {
     if (input.assuranceProfile?.currentSumAssured == null) {
       return undefined
     }
@@ -6738,10 +6822,17 @@ function resolveCurrentGoalBuilderIiSumInsured(
       ? sum + event.amount
       : sum
   ), 0)
+  const completedScheduledPayoutErosion = getGoalBuilderIiCompletedScheduledPayoutErosion(input)
 
   return Math.max(
     0,
-    (cumulativeRegularPremiumPaid * 1.01) + adHocTopUpAmount + recurringSinglePremiumAmount - withdrawalAmount,
+    (
+      (cumulativeRegularPremiumPaid * 1.01)
+      + adHocTopUpAmount
+      + recurringSinglePremiumAmount
+      - withdrawalAmount
+      - completedScheduledPayoutErosion
+    ),
   )
 }
 
@@ -6753,7 +6844,7 @@ function resolveCurrentGoalBuilderIiAccidentalDeathSumInsured(
     return undefined
   }
 
-  if (hasActiveCurrentGoalBuilderIiScheduledPayout(input)) {
+  if (hasCurrentPolicyYearGoalBuilderIiScheduledPayout(input)) {
     if (input.assuranceProfile?.currentAccidentalDeathFloorAmount == null) {
       return undefined
     }
@@ -6782,14 +6873,58 @@ function resolveCurrentGoalBuilderIiAccidentalDeathSumInsured(
       ? sum + event.amount
       : sum
   ), 0)
+  const completedScheduledPayoutErosion = getGoalBuilderIiCompletedScheduledPayoutErosion(input)
 
   return Math.max(
     0,
     Math.min(2_000_000, cumulativeRegularPremiumPaid * 2)
       + adHocTopUpAmount
       + recurringSinglePremiumAmount
-      - withdrawalAmount,
+      - withdrawalAmount
+      - completedScheduledPayoutErosion,
   )
+}
+
+function resolveCurrentAiaEliteSecureIncome5PayProtectedBase(
+  input: IlpPolicyInput,
+  currentPolicyMonth: number,
+): number | undefined {
+  if (input.catalogSource?.productId !== 'aia-elite-secure-income-5-pay') {
+    return undefined
+  }
+
+  if (!canReconstructCurrentAiaEliteSecureIncome5PayProtectedBase(input)) {
+    if (input.assuranceProfile?.currentNetProtectedPremiumBase == null) {
+      return undefined
+    }
+
+    return Math.max(0, input.assuranceProfile.currentNetProtectedPremiumBase)
+  }
+
+  const normalized = buildNormalizedPolicyInput(input)
+  const cumulativeRegularPremiumPaid = currentPolicyMonth > 0
+    ? getCumulativePaidRegularPremiumAtMonth(normalized, currentPolicyMonth)
+    : 0
+
+  return Math.max(0, cumulativeRegularPremiumPaid)
+}
+
+function resolveCurrentAiaEliteSecureIncomeSinglePremiumProtectedBase(
+  input: IlpPolicyInput,
+): number | undefined {
+  if (input.catalogSource?.productId !== 'aia-elite-secure-income-single-premium') {
+    return undefined
+  }
+
+  if (!canReconstructCurrentAiaEliteSecureIncomeSinglePremiumProtectedBase(input)) {
+    if (input.assuranceProfile?.currentNetProtectedPremiumBase == null) {
+      return undefined
+    }
+
+    return Math.max(0, input.assuranceProfile.currentNetProtectedPremiumBase)
+  }
+
+  return Math.max(0, input.initialSinglePremium ?? 0)
 }
 
 function resolveCurrentHsbcRegularProtectedFloor(
@@ -7500,14 +7635,22 @@ export function computeCurrentDeathBenefitEstimate(
 
   if (
     input.catalogSource?.productId === 'aia-elite-secure-income-single-premium'
-    || input.catalogSource?.productId === 'aia-elite-secure-income-5-pay'
   ) {
-    const profile = input.assuranceProfile
-    if (profile?.currentNetProtectedPremiumBase == null) {
+    const protectedBase = resolveCurrentAiaEliteSecureIncomeSinglePremiumProtectedBase(input)
+    if (protectedBase == null) {
       return undefined
     }
 
-    return Math.max(totalCurrentValue * 1.05, Math.max(0, profile.currentNetProtectedPremiumBase))
+    return Math.max(totalCurrentValue * 1.05, protectedBase)
+  }
+
+  if (input.catalogSource?.productId === 'aia-elite-secure-income-5-pay') {
+    const protectedBase = resolveCurrentAiaEliteSecureIncome5PayProtectedBase(input, currentPolicyMonth)
+    if (protectedBase == null) {
+      return undefined
+    }
+
+    return Math.max(totalCurrentValue * 1.05, protectedBase)
   }
 
   if (input.catalogSource?.productId === 'aia-pro-achiever-3') {
@@ -9175,6 +9318,9 @@ export function computeCurrentResidualDeathBenefitAfterTiEstimate(
     && input.catalogSource?.productId !== 'hsbc-life-wealth-focus-flexi-3'
     && input.catalogSource?.productId !== 'hsbc-life-wealth-focus-flexi-5'
     && input.catalogSource?.productId !== 'hsbc-life-flexi-protector'
+    && input.catalogSource?.productId !== 'great-eastern-prestige-legacy-advantage'
+    && input.catalogSource?.productId !== 'aia-platinum-wealth-elite-2'
+    && input.catalogSource?.productId !== 'aia-platinum-wealth-legacy'
     && input.catalogSource?.productId !== 'manulife-manuinvest-duo'
     && input.catalogSource?.productId !== 'manulife-manulink-investor-ii'
     && input.catalogSource?.productId !== 'manulife-investready-growth'

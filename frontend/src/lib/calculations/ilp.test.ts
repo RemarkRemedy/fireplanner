@@ -17297,6 +17297,78 @@ describe('computeSummaryMetrics', () => {
     expect(summary.currentTiBenefitEstimate).toBeUndefined()
   })
 
+  it('adds a current residual death benefit after a TI claim today for HSBC Flexi Protector Choice Cover corridors', () => {
+    const policy = makeOpenEndedPolicy({
+      monthlyContribution: 0,
+      postMipYears: 1,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 3_500_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      assuranceProfile: {
+        currentAgeNextBirthday: 35,
+        sex: 'male',
+        smokerStatus: 'non-smoker',
+        currentBasicSumAssured: 100_000,
+        currentNetSupplementaryPremiumBase: 20_000,
+      },
+      claimProfile: {
+        currentIndebtedness: 10_000,
+        remainingAggregateTiCap: 3_000_000,
+      },
+      chargeRules: [
+        {
+          id: 'hsbc-choice-death-ti',
+          label: 'Death / TI Insurance Charge',
+          basis: 'assurance-sum-at-risk',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 0,
+          assuranceConfig: {
+            formula: 'hsbc-flexi-choice-death-ti',
+            monthlyModalFactor: 1 / 12,
+            maxAgeNextBirthday: 99,
+          },
+          allocation: 'pro-rata-by-value',
+        },
+      ],
+      catalogSource: {
+        productId: 'hsbc-life-flexi-protector',
+        productName: 'HSBC Life Flexi Protector',
+        variantId: 'sgd-open-ended-choice-cover',
+        variantLabel: 'SGD / Open-ended (Choice Cover)',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: [
+          'kernel:current-death-benefit-estimate',
+          'kernel:current-ti-benefit-estimate',
+          'kernel:current-residual-death-benefit-after-ti-estimate',
+        ],
+        metadataOnlyBehaviors: [],
+      },
+    })
+
+    const summary = computeSummaryMetrics(policy, projectIlpPolicy(policy, 'mid'))
+
+    expect(summary.currentTiBenefitEstimate).toBe(3_000_000)
+    expect(summary.currentResidualDeathBenefitAfterTiEstimate).toBe(500_000)
+  })
+
   it('uses the remaining account value after the modeled TI payout for HSBC Flexi Protector admitted TI claims', () => {
     const policy = makeOpenEndedPolicy({
       monthlyContribution: 0,
@@ -22278,6 +22350,64 @@ describe('computeSummaryMetrics', () => {
     expect(analysis.summary.currentDeathBenefitEstimate).toBe(110_000)
   })
 
+  it('reconstructs AIA Elite Secure Income - Single Premium current death benefit today before Secure Monthly Income can start', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 4,
+      monthsAlreadyPaid: 48,
+      mipBasis: 'open-ended',
+      mipLength: null,
+      initialSinglePremium: 100_000,
+      monthlyContribution: 0,
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        startPolicyYear: 8,
+        durationYears: 15,
+        annualPayoutAmount: 6_000,
+        frequency: 'annual',
+      },
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 90_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAgeNextBirthday: 45,
+        sex: 'female',
+        smokerStatus: 'non-smoker',
+      },
+      catalogSource: {
+        productId: 'aia-elite-secure-income-single-premium',
+        productName: 'AIA Elite Secure Income - Single Premium',
+        variantId: 'sgd-open-ended-sp',
+        variantLabel: 'SGD / Open-ended (SP)',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate'],
+        metadataOnlyBehaviors: [],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentDeathBenefitEstimate).toBe(100_000)
+  })
+
   it('models AIA Elite Secure Income TI Benefit Today as the same current corridor as death benefit', () => {
     const policy = makeDefaultPolicy({
       currentPolicyYear: 4,
@@ -22328,6 +22458,64 @@ describe('computeSummaryMetrics', () => {
     const analysis = analyzeCurrentOnlyIlpPolicy(policy)
 
     expect(analysis.summary.currentTiBenefitEstimate).toBe(110_000)
+  })
+
+  it('reconstructs AIA Elite Secure Income - Single Premium TI Benefit Today before Secure Monthly Income can start', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 4,
+      monthsAlreadyPaid: 48,
+      mipBasis: 'open-ended',
+      mipLength: null,
+      initialSinglePremium: 100_000,
+      monthlyContribution: 0,
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        startPolicyYear: 8,
+        durationYears: 15,
+        annualPayoutAmount: 6_000,
+        frequency: 'annual',
+      },
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 90_000,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAgeNextBirthday: 45,
+        sex: 'female',
+        smokerStatus: 'non-smoker',
+      },
+      catalogSource: {
+        productId: 'aia-elite-secure-income-single-premium',
+        productName: 'AIA Elite Secure Income - Single Premium',
+        variantId: 'sgd-open-ended-sp',
+        variantLabel: 'SGD / Open-ended (SP)',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate', 'kernel:current-ti-benefit-estimate'],
+        metadataOnlyBehaviors: [],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentTiBenefitEstimate).toBe(100_000)
   })
 
   it('uses a manual current admitted TI claim amount for AIA Elite Secure Income - Single Premium', () => {
@@ -24185,6 +24373,67 @@ describe('computeSummaryMetrics', () => {
     const analysis = analyzeIlpPolicy(policy)
 
     expect(analysis.summary.currentTiBenefitEstimate).toBe(40_000)
+  })
+
+  it('models Prestige Legacy Advantage residual death benefit after a TI claim today from the same current sum-assured corridor', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 3,
+      monthsAlreadyPaid: 36,
+      mipLength: 5,
+      monthlyContribution: 0,
+      initialSinglePremium: 50_000,
+      currentValue: 42_000,
+      currentTotalFundValue: 42_000,
+      currentFundValues: { policy: 42_000 },
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 42_000,
+          contributionShare: 0,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAgeNextBirthday: 45,
+        sex: 'female',
+        smokerStatus: 'non-smoker',
+        currentSumAssured: 55_000,
+      },
+      claimProfile: {
+        remainingAggregateTiCap: 40_000,
+      },
+      catalogSource: {
+        productId: 'great-eastern-prestige-legacy-advantage',
+        productName: 'Prestige Legacy Advantage',
+        variantId: 'sgd-mip-5-single-premium',
+        variantLabel: 'SGD / MIP 5 (Single Premium)',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: [
+          'kernel:current-death-benefit-estimate',
+          'kernel:current-ti-benefit-estimate',
+          'kernel:current-residual-death-benefit-after-ti-estimate',
+        ],
+        metadataOnlyBehaviors: [],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentResidualDeathBenefitAfterTiEstimate).toBe(15_000)
   })
 
   it('omits Prestige Legacy Advantage current death benefit after an admitted TI claim until the current residual death amount is supplied', () => {
@@ -26055,6 +26304,64 @@ describe('computeSummaryMetrics', () => {
     expect(analysis.summary.currentTiBenefitEstimate).toBe(50_000)
   })
 
+  it('models AIA Platinum Wealth Elite 2.0 residual death benefit after a TI claim today from the same current insured-amount corridor', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 4,
+      monthsAlreadyPaid: 48,
+      monthlyContribution: 350,
+      mipLength: 5,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Regular Premium Policy Account',
+          feeRate: 0,
+          currentValue: 40_000,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAgeNextBirthday: 45,
+        sex: 'female',
+        smokerStatus: 'non-smoker',
+        currentSumAssured: 55_000,
+      },
+      claimProfile: {
+        remainingAggregateTiCap: 50_000,
+      },
+      catalogSource: {
+        productId: 'aia-platinum-wealth-elite-2',
+        productName: 'AIA Platinum Wealth Elite 2.0',
+        variantId: 'sgd-mip-5',
+        variantLabel: 'SGD / MIP 5',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: [
+          'kernel:current-death-benefit-estimate',
+          'kernel:current-ti-benefit-estimate',
+          'kernel:current-residual-death-benefit-after-ti-estimate',
+        ],
+        metadataOnlyBehaviors: [],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentResidualDeathBenefitAfterTiEstimate).toBe(5_000)
+  })
+
   it('omits AIA Platinum Wealth Elite 2.0 current death benefit after an admitted TI claim until the current residual death amount is supplied', () => {
     const policy = makeDefaultPolicy({
       currentPolicyYear: 4,
@@ -26339,6 +26646,66 @@ describe('computeSummaryMetrics', () => {
     expect(analysis.summary.currentTiBenefitEstimate).toBe(80_000)
   })
 
+  it('models AIA Platinum Wealth Legacy residual death benefit after a TI claim today from the same current protection corridor', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 6,
+      monthsAlreadyPaid: 72,
+      monthlyContribution: 350,
+      mipLength: 5,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Regular Premium Policy Account',
+          feeRate: 0,
+          currentValue: 60_000,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAgeNextBirthday: 90,
+        sex: 'female',
+        smokerStatus: 'non-smoker',
+        currentSumAssured: 100_000,
+        currentAmountOwing: 5_000,
+        currentNoLapsePrivilegeMode: 'expiry-age-100',
+      },
+      claimProfile: {
+        remainingAggregateTiCap: 80_000,
+      },
+      catalogSource: {
+        productId: 'aia-platinum-wealth-legacy',
+        productName: 'AIA Platinum Wealth Legacy',
+        variantId: 'sgd-mip-5',
+        variantLabel: 'SGD / MIP 5',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: [
+          'kernel:current-death-benefit-estimate',
+          'kernel:current-ti-benefit-estimate',
+          'kernel:current-residual-death-benefit-after-ti-estimate',
+        ],
+        metadataOnlyBehaviors: [],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentResidualDeathBenefitAfterTiEstimate).toBe(15_000)
+  })
+
   it('omits AIA Platinum Wealth Legacy current death benefit after an admitted TI claim until the current residual death amount is supplied', () => {
     const policy = makeDefaultPolicy({
       currentPolicyYear: 6,
@@ -26514,6 +26881,120 @@ describe('computeSummaryMetrics', () => {
     const analysis = analyzeCurrentOnlyIlpPolicy(policy)
 
     expect(analysis.summary.currentDeathBenefitEstimate).toBeUndefined()
+  })
+
+  it('reconstructs AIA Elite Secure Income - 5 Pay current death benefit today from paid regular premiums before Secure Monthly Income can start', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 4,
+      monthsAlreadyPaid: 48,
+      monthlyContribution: 350,
+      mipLength: 5,
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        startPolicyYear: 8,
+        durationYears: 15,
+        annualPayoutAmount: 6_000,
+        frequency: 'annual',
+      },
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 15_000,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAgeNextBirthday: 45,
+        sex: 'female',
+        smokerStatus: 'non-smoker',
+      },
+      catalogSource: {
+        productId: 'aia-elite-secure-income-5-pay',
+        productName: 'AIA Elite Secure Income - 5 Pay',
+        variantId: 'sgd-mip-5',
+        variantLabel: 'SGD / MIP 5',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate'],
+        metadataOnlyBehaviors: [],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentDeathBenefitEstimate).toBe(16_800)
+  })
+
+  it('reconstructs AIA Elite Secure Income - 5 Pay TI Benefit Today from paid regular premiums before Secure Monthly Income can start', () => {
+    const policy = makeDefaultPolicy({
+      currentPolicyYear: 4,
+      monthsAlreadyPaid: 48,
+      monthlyContribution: 350,
+      mipLength: 5,
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        startPolicyYear: 8,
+        durationYears: 15,
+        annualPayoutAmount: 6_000,
+        frequency: 'annual',
+      },
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 15_000,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAgeNextBirthday: 45,
+        sex: 'female',
+        smokerStatus: 'non-smoker',
+      },
+      catalogSource: {
+        productId: 'aia-elite-secure-income-5-pay',
+        productName: 'AIA Elite Secure Income - 5 Pay',
+        variantId: 'sgd-mip-5',
+        variantLabel: 'SGD / MIP 5',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate', 'kernel:current-ti-benefit-estimate'],
+        metadataOnlyBehaviors: [],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentTiBenefitEstimate).toBe(16_800)
   })
 
   it('omits AIA Elite Secure Income TI Benefit Today without the current net protected premium base input', () => {
@@ -38323,6 +38804,66 @@ describe('computeSummaryMetrics', () => {
     expect(analysis.summary.currentDeathBenefitEstimate).toBe(23_990)
   })
 
+  it('reconstructs Goal Builder II death benefit today after completed scheduled withdrawals in prior policy years', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'USD',
+      currentPolicyYear: 5,
+      monthsAlreadyPaid: 60,
+      monthlyContribution: 500,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 22_000,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAmountOwing: 250,
+      },
+      scheduledPayoutSupport: {
+        mode: 'manual-assumption',
+        accountId: 'policy',
+        source: 'policy-redemption',
+      },
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        accountId: 'policy',
+        annualPayoutAmount: 2_400,
+        startPolicyYear: 3,
+        durationYears: 2,
+      },
+      catalogSource: {
+        productId: 'hsbc-life-goal-builder-ii',
+        productName: 'Goal Builder II',
+        variantId: 'usd-mip-15',
+        variantLabel: 'USD / MIP 15',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate'],
+        metadataOnlyBehaviors: ['goal-builder-ii-terminal-illness-post-claim-reduction-and-payout-mechanics'],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentDeathBenefitEstimate).toBe(25_250)
+  })
+
   it('uses a manual current insured amount for Goal Builder II death benefit today once scheduled withdrawals can already affect the current policy year', () => {
     const policy = makeDefaultPolicy({
       currency: 'USD',
@@ -38456,6 +38997,69 @@ describe('computeSummaryMetrics', () => {
     const analysis = analyzeCurrentOnlyIlpPolicy(policy)
 
     expect(analysis.summary.currentTiBenefitEstimate).toBe(20_000)
+  })
+
+  it('reconstructs Goal Builder II TI Benefit Today after completed scheduled withdrawals in prior policy years', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'USD',
+      currentPolicyYear: 5,
+      monthsAlreadyPaid: 60,
+      monthlyContribution: 500,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 22_000,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAmountOwing: 250,
+      },
+      claimProfile: {
+        remainingAggregateTiCap: 27_000,
+      },
+      scheduledPayoutSupport: {
+        mode: 'manual-assumption',
+        accountId: 'policy',
+        source: 'policy-redemption',
+      },
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        accountId: 'policy',
+        annualPayoutAmount: 2_400,
+        startPolicyYear: 3,
+        durationYears: 2,
+      },
+      catalogSource: {
+        productId: 'hsbc-life-goal-builder-ii',
+        productName: 'Goal Builder II',
+        variantId: 'usd-mip-15',
+        variantLabel: 'USD / MIP 15',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate', 'kernel:current-ti-benefit-estimate'],
+        metadataOnlyBehaviors: ['goal-builder-ii-terminal-illness-post-claim-reduction-and-payout-mechanics'],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentTiBenefitEstimate).toBe(25_250)
   })
 
   it('uses manual current TI and residual death amounts after an admitted TI claim for Goal Builder II', () => {
@@ -38857,6 +39461,67 @@ describe('computeSummaryMetrics', () => {
 
     expect(analysis.summary.currentDeathBenefitEstimate).toBe(29_750)
     expect(analysis.summary.currentAccidentalDeathBenefitEstimate).toBe(44_750)
+  })
+
+  it('reconstructs Goal Builder II accidental death benefit today after completed scheduled withdrawals in prior policy years', () => {
+    const policy = makeDefaultPolicy({
+      currency: 'USD',
+      currentPolicyYear: 5,
+      monthsAlreadyPaid: 60,
+      monthlyContribution: 500,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 22_000,
+          contributionShare: 1,
+          subjectToEec: true,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+      chargeRules: [],
+      eventChargeRules: [],
+      assuranceProfile: {
+        currentAgeNextBirthday: 35,
+        currentAmountOwing: 250,
+      },
+      scheduledPayoutSupport: {
+        mode: 'manual-assumption',
+        accountId: 'policy',
+        source: 'policy-redemption',
+      },
+      scheduledPayoutAssumption: {
+        mode: 'scheduled-redemption',
+        accountId: 'policy',
+        annualPayoutAmount: 2_400,
+        startPolicyYear: 3,
+        durationYears: 2,
+      },
+      catalogSource: {
+        productId: 'hsbc-life-goal-builder-ii',
+        productName: 'Goal Builder II',
+        variantId: 'usd-mip-15',
+        variantLabel: 'USD / MIP 15',
+        catalogVersion: 'test',
+        supportStatus: 'supported',
+        economicsStatus: 'supported',
+        structureStatus: 'structured',
+        modeledEconomics: ['kernel:current-death-benefit-estimate', 'kernel:current-accidental-death-benefit-estimate'],
+        metadataOnlyBehaviors: ['goal-builder-ii-accidental-death-claim-exclusions'],
+      },
+    })
+
+    const analysis = analyzeCurrentOnlyIlpPolicy(policy)
+
+    expect(analysis.summary.currentAccidentalDeathBenefitEstimate).toBe(54_950)
   })
 
   it('omits HSBC Wealth Voyage death benefit today once regular-withdrawal assumptions are active', () => {

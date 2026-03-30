@@ -101,6 +101,7 @@ describe('parseAiaPlatinumWealthLegacy', () => {
     expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-legacy-protection-benefits')
     expect(product.warnings.some((warning) => warning.includes('regular-pay 5-year corridor'))).toBe(true)
     expect(product.warnings.some((warning) => warning.includes('manual-input administration-charge and insurance-risk-charge placeholders sourced from the policy illustration'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('current No Lapse Privilege mode inputs that remain user-supplied by design in this app'))).toBe(true)
 
     const variant = product.variants[0]
     expect(variant).toMatchObject({
@@ -158,8 +159,8 @@ describe('parseAiaPlatinumWealthLegacy', () => {
         ],
       }),
     ])
-    expect(variant.unsupportedItems).toContain('The current death benefit needs manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs because adjusted partial withdrawals and no-lapse history are not reconstructed from history in V1.')
-    expect(variant.unsupportedItems).toContain('The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both need manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs because adjusted partial withdrawals and TI usage are not reconstructed from history in V1.')
+    expect(variant.unsupportedItems).toContain('The current death benefit keeps manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs because adjusted partial-withdrawal history, debt, and no-lapse state are live policy facts this app cannot observe; those inputs are manual by design in V1.')
+    expect(variant.unsupportedItems).toContain('The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both keep manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs because debt, no-lapse status, and cross-policy TI usage are current policy facts this app cannot observe; those inputs are manual by design in V1.')
     expect(variant.unsupportedItems).toContain('Terminal-illness claim exclusions, settlement workflow, and non-manual post-claim state remain informational only beyond the modeled current terminal-illness and residual-after-TI snapshot surface.')
     expect(variant.unsupportedItems).toContain('Other protection-side payout handling remains informational only.')
   })

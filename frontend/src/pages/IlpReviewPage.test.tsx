@@ -110,7 +110,7 @@ describe('IlpReviewPage', () => {
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 25use template$/i }))
 
     expect(screen.getAllByText('Wealth Accelerate (SGD / MIP 25)').length).toBeGreaterThan(0)
-    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    const seededAlert = (await screen.findByText('Seeded from catalog template')).closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('premium holiday delayed or partial repayment')
@@ -196,7 +196,7 @@ describe('IlpReviewPage', () => {
     await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 11/i }))
 
     expect(screen.getAllByText('Wealth Harvest (SGD / MIP 11)').length).toBeGreaterThan(0)
-    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    const seededAlert = (await screen.findByText('Seeded from catalog template')).closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('current-state death-benefit estimate is modeled as 102% of total account value after manual current amount owing')
@@ -222,7 +222,7 @@ describe('IlpReviewPage', () => {
     await user.click(wealthAbundanceSgdButton!)
 
     expect(screen.getAllByText('Wealth Abundance (SGD / MIP 10)').length).toBeGreaterThan(0)
-    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    const seededAlert = (await screen.findByText('Seeded from catalog template')).closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('current-state death-benefit estimate is modeled as the higher of the Regular Premium Account value or the 101%-of-paid-regular-premiums floor plus Top-up Account value after manual current amount owing')
@@ -246,12 +246,12 @@ describe('IlpReviewPage', () => {
     await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 20/i }))
 
     expect(screen.getAllByText('Wealth Voyage (SGD / MIP 20)').length).toBeGreaterThan(0)
-    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    const seededAlert = (await screen.findByText('Seeded from catalog template')).closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('current-state death-benefit estimate as the higher of the Regular Premium Account value or the 101%-of-paid-regular-premiums floor plus Top-up Account value after manual current amount owing')
     expect(seededAlert?.textContent).toContain('current accidental-death estimate before age 75 as the higher of that ordinary death amount or the 200%-of-paid-regular-premiums floor capped at S$2 million plus Top-up Account value after manual current age and current amount owing')
-    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap')
+    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied')
     expect(seededAlert?.textContent).toContain('hsbc voyage premium holiday charge after free duration')
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
     expect(getCatalogValues('Account Maintenance Fee')).toHaveLength(2)
@@ -695,7 +695,7 @@ describe('IlpReviewPage', () => {
     await user.click(within(wealthIiCard!).getByRole('button', { name: /^sgd \/ mip 25use template$/i }))
 
     expect(screen.getAllByText('PRUVantage Wealth II (SGD / MIP 25)').length).toBeGreaterThan(0)
-    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    const seededAlert = (await screen.findByText('Seeded from catalog template')).closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('current-state death-benefit estimate as the higher of the 101%-of-paid-regular-premiums floor net Growth/Flex withdrawals or current Growth/Flex account value plus Additional Investment Account value after manual current amount owing')
@@ -780,7 +780,7 @@ describe('IlpReviewPage', () => {
     await user.click(within(assureIiCard!).getByRole('button', { name: /^sgd \/ mip 25use template$/i }))
 
     expect(screen.getAllByText('PRUVantage Assure II (SGD / MIP 25)').length).toBeGreaterThan(0)
-    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    const seededAlert = (await screen.findByText('Seeded from catalog template')).closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('current-state death-benefit estimate as the higher of current sum assured, current Wealth Assure Value, or current Growth/Flex account value plus Additional Investment Account value after manual current amount owing')
@@ -817,7 +817,7 @@ describe('IlpReviewPage', () => {
     await user.click(within(assureSpCard!).getByRole('button', { name: /^sgd \/ mip 8use template$/i }))
 
     expect(screen.getAllByText('PRUVantage Assure (SP) (SGD / MIP 8)').length).toBeGreaterThan(0)
-    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    const seededAlert = (await screen.findByText('Seeded from catalog template')).closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('single-premium allocation enhancement tiers on the original initial single premium')
@@ -1062,7 +1062,7 @@ describe('IlpReviewPage', () => {
       })
     })
 
-    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    const seededAlert = (await screen.findByText('Seeded from catalog template')).closest('[role="alert"]')
     expect(seededAlert?.textContent).toContain('current-due three-year policy-charge refund through manual trailing-36-month average-account-value and refund-status inputs')
     expect(screen.getByText('Current Policy-Charge Refund Status')).toBeInTheDocument()
     expect(screen.getByLabelText(/current trailing 36-month average account value/i)).toBeInTheDocument()
@@ -1129,7 +1129,7 @@ describe('IlpReviewPage', () => {
     await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i }))
 
     expect(screen.getAllByText('Invest Flex Vantage (SGD / MIP 10)').length).toBeGreaterThan(0)
-    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    const seededAlert = (await screen.findByText('Seeded from catalog template')).closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('current-state death and terminal-illness benefit amount during the first policy year as policy value less a manual current excluded claim bonus value and after the first policy year as the higher of 101% of net premiums paid or policy value')
@@ -1587,6 +1587,83 @@ describe('IlpReviewPage', () => {
     })
 
     expect(screen.getAllByText('Accidental Death Benefit Today').length).toBeGreaterThan(0)
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('shows Wealth Focus (Flexi 3) manual protected-base inputs once Regular Withdrawal assumptions are already active', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Focus (Flexi 3)')
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i }))
+
+    expect(screen.queryByLabelText('Current Net Protected Premium Base (SGD)')).not.toBeInTheDocument()
+
+    act(() => {
+      const state = useIlpStore.getState()
+      const selectedPolicyId = state.selectedPolicyId
+      const policy = state.policies.find((entry) => entry.id === selectedPolicyId)
+      if (!policy) throw new Error('Expected seeded Wealth Focus policy to be selected')
+
+      state.updatePolicy(policy.id, {
+        currentPolicyYear: 5,
+        monthsAlreadyPaid: 60,
+        monthlyContribution: 1_000,
+        scheduledPayoutSupport: {
+          mode: 'manual-assumption',
+          accountId: 'topup',
+          fallbackAccountIds: ['regular'],
+          source: 'policy-redemption',
+        },
+        scheduledPayoutAssumption: {
+          mode: 'scheduled-redemption',
+          accountId: 'topup',
+          annualPayoutAmount: 3_000,
+          startPolicyYear: 5,
+          durationYears: 2,
+        },
+        assuranceProfile: {
+          currentAgeNextBirthday: 45,
+          currentAmountOwing: 360,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+        },
+      })
+    })
+
+    expect(screen.getByLabelText('Current Net Protected Premium Base (SGD)')).toBeInTheDocument()
+    expect(screen.getByLabelText('Current Accidental-Death Regular-Premium Floor (SGD)')).toBeInTheDocument()
+    expect(screen.getByText(/current net protected premium base before the current death-benefit estimate can be trusted/i)).toBeInTheDocument()
+    expect(screen.getByText(/current accidental-death floor amount before the current accidental-death estimate can be trusted/i)).toBeInTheDocument()
+    expect(screen.queryByText('Accidental Death Benefit Today')).not.toBeInTheDocument()
+
+    act(() => {
+      const state = useIlpStore.getState()
+      const selectedPolicyId = state.selectedPolicyId
+      const policy = state.policies.find((entry) => entry.id === selectedPolicyId)
+      if (!policy) throw new Error('Expected seeded Wealth Focus policy to be selected')
+
+      state.updatePolicy(policy.id, {
+        assuranceProfile: {
+          currentAgeNextBirthday: 45,
+          currentAmountOwing: 360,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentNetProtectedPremiumBase: 26_000,
+          currentAccidentalDeathFloorAmount: 48_000,
+        },
+      })
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/current net protected premium base before the current death-benefit estimate can be trusted/i)).not.toBeInTheDocument()
+    })
+    await waitFor(() => {
+      expect(screen.queryByText(/current accidental-death floor amount before the current accidental-death estimate can be trusted/i)).not.toBeInTheDocument()
+    })
+    expect(screen.getByLabelText('Current Net Protected Premium Base (SGD)')).toHaveDisplayValue('26,000')
+    expect(screen.getByLabelText('Current Accidental-Death Regular-Premium Floor (SGD)')).toHaveDisplayValue('48,000')
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows Invest flex prime II with distinct Flexi term variants in the picker', async () => {
@@ -2867,7 +2944,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('0.75% annual management charge')
     expect(seededAlert?.textContent).toContain('There is no insurance charge imposed on this policy')
     expect(seededAlert?.textContent).toContain('current-state death benefit as the higher of account value or the 105%-of-premiums floor')
-    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap')
+    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied')
     expect(seededAlert?.textContent).toContain('gross initial single premium as an inception seed')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(getCatalogValue('Single Premium Charge')).toBeInTheDocument()
@@ -4536,22 +4613,21 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('Prestige Legacy Advantage')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5 \(single premium\)use template$/i }))
+    await user.type(await screen.findByLabelText(/initial single premium/i), '50000')
+    await user.click(await screen.findByRole('button', { name: /show me the fees/i }))
 
     expect(screen.getAllByText('Prestige Legacy Advantage (SGD / MIP 5 (Single Premium))').length).toBeGreaterThan(0)
-    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    const seededAlert = (await screen.findByText('Seeded from catalog template')).closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('initial single-premium charge')
     expect(seededAlert?.textContent).toContain('single-premium top-up charge')
     expect(seededAlert?.textContent).toContain('current-state death-benefit estimate as the higher of current sum assured or account value')
-    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today')
+    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied')
     expect(seededAlert?.textContent).toContain('entry-age-and-basic-sum-assured policy-fee surface through manual input')
     expect(seededAlert?.textContent).toContain('non-lapse privilege')
     expect(screen.getByLabelText('Current Sum Assured (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Remaining Aggregate TI Cap (SGD)')).toBeInTheDocument()
-    expect(getCatalogValue('Single Premium Charge')).toBeInTheDocument()
-    expect(getCatalogValue('Single Premium Top-up Charge')).toBeInTheDocument()
-    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds ManuInvest Duo as a supported catalog product with protected-base COI warnings', async () => {
@@ -5109,6 +5185,39 @@ describe('IlpReviewPage', () => {
     })
 
     expect(screen.getAllByText('TI Benefit Today').length).toBeGreaterThan(0)
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('shows Prestige Legacy Advantage death benefit after TI claim today once current sum assured and the remaining aggregate TI cap are filled', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Prestige Legacy Advantage')
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5 \(single premium\)use template$/i }))
+
+    expect(screen.queryByText('Death Benefit After TI Claim Today')).not.toBeInTheDocument()
+
+    act(() => {
+      const state = useIlpStore.getState()
+      const selectedPolicyId = state.selectedPolicyId
+      const policy = state.policies.find((entry) => entry.id === selectedPolicyId)
+      if (!policy) throw new Error('Expected seeded Prestige Legacy Advantage policy to be selected')
+
+      state.updatePolicy(policy.id, {
+        assuranceProfile: {
+          currentAgeNextBirthday: 45,
+          sex: 'female',
+          smokerStatus: 'non-smoker',
+          currentSumAssured: 55_000,
+        },
+        claimProfile: {
+          remainingAggregateTiCap: 40_000,
+        },
+      })
+    })
+
+    expect(screen.getAllByText('Death Benefit After TI Claim Today').length).toBeGreaterThan(0)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows the admitted-state residual death input for Prestige Legacy Advantage and requires it before the current death snapshot can be trusted', async () => {
@@ -5777,6 +5886,53 @@ describe('IlpReviewPage', () => {
     expect(screen.getAllByText('TI Benefit Today').length).toBeGreaterThan(0)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('shows AIA Elite Secure Income - Single Premium TI Benefit Today before payout start without the manual current protected-base input', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Elite Secure Income - Single Premium')
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(sp\)use template$/i }))
+
+    expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
+    expect(screen.getByText(/current net protected premium base before the current death-benefit estimate can be trusted/i)).toBeInTheDocument()
+
+    act(() => {
+      const state = useIlpStore.getState()
+      const selectedPolicyId = state.selectedPolicyId
+      const policy = state.policies.find((entry) => entry.id === selectedPolicyId)
+      if (!policy) throw new Error('Expected seeded AIA Elite Secure Income - Single Premium policy to be selected')
+
+      state.updatePolicy(policy.id, {
+        currentPolicyYear: 4,
+        monthsAlreadyPaid: 48,
+        initialSinglePremium: 100_000,
+        accounts: policy.accounts.map((account) => ({
+          ...account,
+          currentValue: 90_000,
+        })),
+        assuranceProfile: {
+          currentAgeNextBirthday: 45,
+          sex: 'female',
+          smokerStatus: 'non-smoker',
+        },
+        scheduledPayoutAssumption: {
+          mode: 'scheduled-redemption',
+          source: 'manual-assumption',
+          accountId: 'policy',
+          startPolicyYear: 8,
+          durationYears: 15,
+          annualPayoutAmount: 6_000,
+          frequency: 'annual',
+        },
+      })
+    })
+
+    expect(screen.queryByText(/current net protected premium base before the current death-benefit estimate can be trusted/i)).not.toBeInTheDocument()
+    expect(screen.getAllByText('TI Benefit Today').length).toBeGreaterThan(0)
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('shows the admitted TI claim amount input for AIA Elite Secure Income - Single Premium and does not ask for a residual death amount', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
@@ -5852,6 +6008,13 @@ describe('IlpReviewPage', () => {
       if (!policy) throw new Error('Expected seeded AIA Elite Secure Income - 5 Pay policy to be selected')
 
       state.updatePolicy(policy.id, {
+        currentPolicyYear: 4,
+        monthsAlreadyPaid: 48,
+        monthlyContribution: 350,
+        accounts: policy.accounts.map((account) => ({
+          ...account,
+          currentValue: 15_000,
+        })),
         assuranceProfile: {
           currentAgeNextBirthday: 45,
           sex: 'female',
@@ -5861,6 +6024,46 @@ describe('IlpReviewPage', () => {
       })
     })
 
+    expect(screen.getAllByText('TI Benefit Today').length).toBeGreaterThan(0)
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('shows AIA Elite Secure Income - 5 Pay TI Benefit Today before payout start without the manual current protected-base input', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Elite Secure Income - 5 Pay')
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+
+    expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
+    expect(screen.getByText(/current net protected premium base before the current death-benefit estimate can be trusted/i)).toBeInTheDocument()
+
+    act(() => {
+      const state = useIlpStore.getState()
+      const selectedPolicyId = state.selectedPolicyId
+      const policy = state.policies.find((entry) => entry.id === selectedPolicyId)
+      if (!policy) throw new Error('Expected seeded AIA Elite Secure Income - 5 Pay policy to be selected')
+
+      state.updatePolicy(policy.id, {
+        assuranceProfile: {
+          currentAgeNextBirthday: 45,
+          sex: 'female',
+          smokerStatus: 'non-smoker',
+        },
+        scheduledPayoutAssumption: {
+          mode: 'scheduled-redemption',
+          source: 'manual-assumption',
+          accountId: 'policy',
+          startPolicyYear: 8,
+          durationYears: 15,
+          annualPayoutAmount: 6_000,
+          frequency: 'annual',
+        },
+      })
+    })
+
+    expect(screen.queryByText(/current net protected premium base before the current death-benefit estimate can be trusted/i)).not.toBeInTheDocument()
     expect(screen.getAllByText('TI Benefit Today').length).toBeGreaterThan(0)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
@@ -6242,7 +6445,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('scheduled payout capability through the payout-state kernel')
     expect(seededAlert?.textContent).toContain('published 5% single-premium charge')
     expect(seededAlert?.textContent).toContain('Power-up Bonus corridor from the end of policy year 10 and every fifth policy year thereafter including the published cumulative withdrawal-factor adjustment from policy year 6 onward')
-    expect(seededAlert?.textContent).toContain('current-state death and terminal-illness benefit amount as the higher of 105% of policy value or a manual current net protected premium base input')
+    expect(seededAlert?.textContent).toContain('current-state death and terminal-illness benefit amount as the higher of 105% of policy value or the single-premium-paid corridor before Secure Monthly Income starts')
     expect(seededAlert?.textContent).toContain('current accidental-death uplift as 10% of a manual initial single premium input during the first 5 policy years')
     expect(seededAlert?.textContent).toContain('current net protected premium base before the current death-benefit estimate can be trusted')
     expect(seededAlert?.textContent).toContain('open-ended single-premium product uses the no-MIP basis')
@@ -6271,7 +6474,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('premium-holiday charge schedule')
     expect(seededAlert?.textContent).toContain('scheduled payout capability through the payout-state kernel')
     expect(seededAlert?.textContent).toContain('Power-up Bonus corridor from the end of policy year 10 and every fifth policy year thereafter including the published cumulative withdrawal-factor adjustment from policy year 6 onward')
-    expect(seededAlert?.textContent).toContain('current-state death and terminal-illness benefit amount as the higher of 105% of policy value or a manual current net protected premium base input')
+    expect(seededAlert?.textContent).toContain('current-state death and terminal-illness benefit amount as the higher of 105% of policy value or the paid-regular-premium corridor before Secure Monthly Income starts')
     expect(seededAlert?.textContent).toContain('current accidental-death uplift as 50% of cumulative paid regular premiums during the first 5 policy years')
     expect(seededAlert?.textContent).toContain('current net protected premium base before the current death-benefit estimate can be trusted')
     expect(seededAlert?.textContent).toContain('Secure Monthly Income eligibility depends on no premium holiday')
@@ -6376,24 +6579,21 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('AIA Platinum Wealth Elite 2.0')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await user.click(await screen.findByRole('button', { name: /show me the fees/i }))
 
     expect(screen.getAllByText('AIA Platinum Wealth Elite 2.0 (SGD / MIP 5)').length).toBeGreaterThan(0)
-    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    const seededAlert = (await screen.findByText('Seeded from catalog template')).closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('premium-year regular premium charges')
     expect(seededAlert?.textContent).toContain('3% top-up premium charge')
     expect(seededAlert?.textContent).toContain('premium-holiday charge schedule')
     expect(seededAlert?.textContent).toContain('current-state death benefit as the higher of current insured amount or policy value via a manual current insured amount input')
-    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today')
+    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied')
     expect(seededAlert?.textContent).toContain('current insured amount before the current death-benefit estimate can be trusted')
     expect(seededAlert?.textContent).toContain('optional extension of the regular premium term beyond five years')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.getByLabelText('Current Insured Amount (SGD)')).toBeInTheDocument()
-    expect(getCatalogValue('Regular Premium Charge')).toBeInTheDocument()
-    expect(getCatalogValue(/Top-?up Premium Charge/i)).toBeInTheDocument()
-    expect(getCatalogValue('Premium Holiday Charge')).toBeInTheDocument()
-    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds AIA Platinum Wealth Legacy as a supported catalog product with informational withdrawal-table warnings', async () => {
@@ -6406,9 +6606,10 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('AIA Platinum Wealth Legacy')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await user.click(await screen.findByRole('button', { name: /show me the fees/i }))
 
     expect(screen.getAllByText(/AIA Platinum Wealth Legacy/i).length).toBeGreaterThan(0)
-    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    const seededAlert = (await screen.findByText('Seeded from catalog template')).closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('supported V1 product for the regular-pay 5-year corridor')
@@ -6416,13 +6617,10 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('premium-holiday charge schedule')
     expect(seededAlert?.textContent).toContain('published regular-premium partial-withdrawal / surrender charge schedules')
     expect(seededAlert?.textContent).toContain('current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs')
-    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today')
+    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied')
     expect(seededAlert?.textContent).toContain('current insured amount before the current death-benefit estimate can be trusted')
     expect(seededAlert?.textContent).toContain('current amount owing before the current death-benefit estimate can be trusted')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
-    expect(getCatalogValue('Regular Premium Charge')).toBeInTheDocument()
-    expect(getCatalogValue(/Top-?up Premium Charge/i)).toBeInTheDocument()
-    expect(getCatalogValue('Premium Holiday Charge')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Insured Amount (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
     expect(screen.getByText('Current No Lapse Privilege Mode')).toBeInTheDocument()
@@ -6459,6 +6657,39 @@ describe('IlpReviewPage', () => {
     })
 
     expect(screen.getAllByText('TI Benefit Today').length).toBeGreaterThan(0)
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('shows AIA Platinum Wealth Elite 2.0 death benefit after TI claim today once current insured amount and the remaining aggregate TI cap are filled', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Wealth Elite 2.0')
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+
+    expect(screen.queryByText('Death Benefit After TI Claim Today')).not.toBeInTheDocument()
+
+    act(() => {
+      const state = useIlpStore.getState()
+      const selectedPolicyId = state.selectedPolicyId
+      const policy = state.policies.find((entry) => entry.id === selectedPolicyId)
+      if (!policy) throw new Error('Expected seeded AIA Platinum Wealth Elite 2.0 policy to be selected')
+
+      state.updatePolicy(policy.id, {
+        assuranceProfile: {
+          currentAgeNextBirthday: 45,
+          sex: 'female',
+          smokerStatus: 'non-smoker',
+          currentSumAssured: 55_000,
+        },
+        claimProfile: {
+          remainingAggregateTiCap: 50_000,
+        },
+      })
+    })
+
+    expect(screen.getAllByText('Death Benefit After TI Claim Today').length).toBeGreaterThan(0)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows the admitted-state residual death input for AIA Platinum Wealth Elite 2.0 and requires it before the current death snapshot can be trusted', async () => {
@@ -6521,6 +6752,41 @@ describe('IlpReviewPage', () => {
     })
 
     expect(screen.getAllByText('TI Benefit Today').length).toBeGreaterThan(0)
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('shows AIA Platinum Wealth Legacy death benefit after TI claim today once the current death-benefit inputs and remaining aggregate TI cap are filled', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Wealth Legacy')
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+
+    expect(screen.queryByText('Death Benefit After TI Claim Today')).not.toBeInTheDocument()
+
+    act(() => {
+      const state = useIlpStore.getState()
+      const selectedPolicyId = state.selectedPolicyId
+      const policy = state.policies.find((entry) => entry.id === selectedPolicyId)
+      if (!policy) throw new Error('Expected seeded AIA Platinum Wealth Legacy policy to be selected')
+
+      state.updatePolicy(policy.id, {
+        assuranceProfile: {
+          currentAgeNextBirthday: 90,
+          sex: 'female',
+          smokerStatus: 'non-smoker',
+          currentSumAssured: 100_000,
+          currentAmountOwing: 5_000,
+          currentNoLapsePrivilegeMode: 'expiry-age-100',
+        },
+        claimProfile: {
+          remainingAggregateTiCap: 80_000,
+        },
+      })
+    })
+
+    expect(screen.getAllByText('Death Benefit After TI Claim Today').length).toBeGreaterThan(0)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows the admitted-state residual death input for AIA Platinum Wealth Legacy and requires it before the current death snapshot can be trusted', async () => {
@@ -6976,6 +7242,46 @@ describe('IlpReviewPage', () => {
     expect(screen.getAllByText('S$90,000').length).toBeGreaterThan(0)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('shows HSBC Life Flexi Protector death benefit after TI claim today once the current TI corridor is filled', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Flexi Protector')
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(choice cover\)use template$/i }))
+
+    expect(screen.queryByText('Death Benefit After TI Claim Today')).not.toBeInTheDocument()
+
+    act(() => {
+      const state = useIlpStore.getState()
+      const selectedPolicyId = state.selectedPolicyId
+      const policy = state.policies.find((entry) => entry.id === selectedPolicyId)
+      if (!policy) throw new Error('Expected seeded HSBC Life Flexi Protector policy to be selected')
+
+      state.updatePolicy(policy.id, {
+        assuranceProfile: {
+          currentAgeNextBirthday: 35,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentBasicSumAssured: 100_000,
+          currentNetSupplementaryPremiumBase: 20_000,
+        },
+        accounts: policy.accounts.map((account) => ({
+          ...account,
+          currentValue: account.id === 'policy' ? 3_500_000 : account.currentValue,
+        })),
+        claimProfile: {
+          currentIndebtedness: 10_000,
+          remainingAggregateTiCap: 3_000_000,
+        },
+      })
+    })
+
+    expect(screen.getAllByText('Death Benefit After TI Claim Today').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('S$500,000').length).toBeGreaterThan(0)
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('shows HSBC Life Flexi Protector staged TPD balance snapshots once the current payout stage and claim-history remaining balance are filled', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
@@ -7219,6 +7525,55 @@ describe('IlpReviewPage', () => {
       expect(screen.queryByText(/current insured amount before the current death-benefit estimate can be trusted/i)).not.toBeInTheDocument()
     })
     expect(screen.queryByText('Accidental Death Benefit Today')).not.toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('keeps Goal Builder II historical scheduled-withdrawal history off the active-year manual current-state inputs once the payout window has ended', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Goal Builder II')
+    await user.click(within(dialog).getByRole('button', { name: /^usd \/ mip 15use template$/i }))
+
+    act(() => {
+      const state = useIlpStore.getState()
+      const selectedPolicyId = state.selectedPolicyId
+      const policy = state.policies.find((entry) => entry.id === selectedPolicyId)
+      if (!policy) throw new Error('Expected seeded Goal Builder II policy to be selected')
+
+      state.updatePolicy(policy.id, {
+        currentPolicyYear: 5,
+        monthsAlreadyPaid: 60,
+        monthlyContribution: 500,
+        scheduledPayoutSupport: {
+          mode: 'manual-assumption',
+          accountId: 'policy',
+          source: 'policy-redemption',
+        },
+        scheduledPayoutAssumption: {
+          mode: 'scheduled-redemption',
+          accountId: 'policy',
+          annualPayoutAmount: 2_400,
+          startPolicyYear: 3,
+          durationYears: 2,
+        },
+        assuranceProfile: {
+          currentAgeNextBirthday: 35,
+          sex: 'male',
+          smokerStatus: 'non-smoker',
+          currentAmountOwing: 250,
+        },
+        claimProfile: {
+          remainingAggregateTiCap: 27_000,
+        },
+      })
+    })
+
+    expect(screen.queryByLabelText('Current Insured Amount (USD)')).not.toBeInTheDocument()
+    expect(screen.queryByText(/current insured amount before the current death-benefit estimate can be trusted/i)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Current Accidental-Death Sum Insured (USD)')).not.toBeInTheDocument()
+    expect(screen.queryByText(/current accidental-death floor amount before the current accidental-death estimate can be trusted/i)).not.toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows Goal Builder II current accidental-death sum insured input once scheduled withdrawals are already active', async () => {

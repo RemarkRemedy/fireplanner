@@ -115,6 +115,7 @@ describe('parseAiaPlatinumWealthElite2', () => {
     expect(product.warnings.some((warning) => warning.includes('administration charge'))).toBe(true)
     expect(product.warnings.some((warning) => warning.includes('manual-input insurance-risk-charge placeholder'))).toBe(true)
     expect(product.warnings.some((warning) => warning.includes('Vitality Fund Boost schedule'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('manual current insured amount input that remains user-supplied by design in this app'))).toBe(true)
 
     const variant = product.variants[0]
     expect(variant).toMatchObject({
@@ -191,9 +192,9 @@ describe('parseAiaPlatinumWealthElite2', () => {
     expect(variant.unsupportedItems).toContain('Administration charge is modeled for the first issue-date insured-amount layer only. Change-of-insured layering and new-layer charge resets remain informational only.')
     expect(variant.unsupportedItems).toContain('Insurance Risk Charge is modeled only as a manual-input annualized placeholder because the applicable insurer illustration rate depends on underwriting and Free Legacy Cover state. Free Legacy Cover and No Lapse Privilege debt accrual remain informational only.')
     expect(variant.unsupportedItems).toContain('Income Withdrawal Privilege and change-of-insured effects remain informational only, while Vitality Fund Boost is modeled under a static assumed status for the regular-pay corridor only.')
-    expect(variant.unsupportedItems).toContain('The current death benefit needs a manual current insured amount input because withdrawals, Income Withdrawal Privilege usage, and claim-side reductions are not reconstructed from history in V1.')
+    expect(variant.unsupportedItems).toContain('The current death benefit keeps a manual current insured amount input because withdrawals, Income Withdrawal Privilege usage, and claim-side reductions change the live insured amount in ways this app cannot observe; that field is manual by design in V1.')
     expect(variant.unsupportedItems).toContain('Death Benefit Bequest Option and other protection-side payout handling remain informational only.')
-    expect(variant.unsupportedItems).toContain('The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both need manual current insured amount and remaining aggregate TI cap inputs because claim-side reductions and TI usage are not reconstructed from history in V1.')
+    expect(variant.unsupportedItems).toContain('The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both keep manual current insured amount and remaining aggregate TI cap inputs because the live insured amount and cross-policy TI usage are current policy facts this app cannot observe; those inputs are manual by design in V1.')
     expect(variant.unsupportedItems).toContain('Terminal-illness claim exclusions, settlement workflow, and non-manual post-claim state remain informational only beyond the modeled current terminal-illness and residual-after-TI snapshot surface.')
   })
 
