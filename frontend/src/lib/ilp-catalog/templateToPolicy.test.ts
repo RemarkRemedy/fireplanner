@@ -3045,10 +3045,12 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-ti-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-residual-death-benefit-after-ti-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:no-lapse-fixed-and-assurance-charge-debt-carry')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-pla-years-11-to-15-no-lapse-free-withdrawal-limit')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-pla-policy-fee-manual-input')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-pla-standard-life-insurance-charge')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-eastern-pla-free-partial-withdrawal-annual-limit')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-eastern-pla-no-lapse-history-and-reinstatement')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('great-eastern-pla-free-partial-withdrawal-annual-limit')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-eastern-pla-non-standard-insurance-rate-classes')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('great-eastern-pla-death-and-terminal-illness-benefits')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('great-eastern-pla-terminal-illness-benefit-limit-and-post-claim-state')
@@ -3057,10 +3059,18 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.policyStateSupport).toEqual({
       automaticLapseOnAccountValueDepletion: true,
       accountValueDepletionNonLapseWindows: [
-        { startPolicyYear: 1, endPolicyYear: 10 },
+        { startPolicyYear: 1, endPolicyYear: 15 },
       ],
       accountValueDepletionNonLapseTerminationRules: [
-        { trigger: 'partial-withdrawal', disqualifyIfAnyFromPolicyYear: 1 },
+        { trigger: 'partial-withdrawal', disqualifyIfAnyFromPolicyYear: 1, endPolicyYear: 10 },
+        {
+          trigger: 'partial-withdrawal',
+          basis: 'cumulative-withdrawals-exceed-open-balance-at-start-policy-year-rate',
+          startPolicyYear: 11,
+          endPolicyYear: 15,
+          maximumValueRate: 0.05,
+          accountIds: ['policy'],
+        },
       ],
       minimumTopUpAmount: 1_000,
     })
@@ -3079,21 +3089,21 @@ describe('templateVariantToPolicySeed', () => {
           requiresManualInput: true,
           carryForwardOnInsufficientDeductionWithinPolicyYears: {
             startPolicyYear: 1,
-            endPolicyYear: 10,
+            endPolicyYear: 15,
           },
         }),
         expect.objectContaining({
           id: 'insurance-charge',
           basis: 'assurance-sum-at-risk',
           requiresManualInput: true,
+          carryForwardOnInsufficientDeductionWithinPolicyYears: {
+            startPolicyYear: 1,
+            endPolicyYear: 15,
+          },
           assuranceConfig: {
             formula: 'great-eastern-pla-death-ti',
             monthlyModalFactor: 1,
             maxAgeNextBirthday: 122,
-            carryForwardOnInsufficientDeductionWithinPolicyYears: {
-              startPolicyYear: 1,
-              endPolicyYear: 10,
-            },
           },
         }),
       ]),

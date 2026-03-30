@@ -238,6 +238,9 @@ function mapFeeRulesToChargeRules(variant: IlpTemplateVariant): IlpChargeRule[] 
               countRateSchedule: rule.cumulativePaidPremiumConfig.countRateSchedule?.map((tier) => ({ ...tier })),
             }
           : undefined,
+        carryForwardOnInsufficientDeductionWithinPolicyYears: rule.carryForwardOnInsufficientDeductionWithinPolicyYears
+          ? { ...rule.carryForwardOnInsufficientDeductionWithinPolicyYears }
+          : undefined,
         requiresManualInput: rule.requiresManualInput,
         allocation: isFixedAnnual || isAssurance || isInitialSinglePremium ? 'pro-rata-by-value' : 'equal-split',
         sourceRefs: rule.sourceRefs?.map((ref) => ({ ...ref })),
@@ -446,6 +449,34 @@ export function templateVariantToPolicySeed(
         ...(variant.policyStateSupport.blockTopUpsWhenPremiumsNotPaidUpToDate != null
           ? {
               blockTopUpsWhenPremiumsNotPaidUpToDate: variant.policyStateSupport.blockTopUpsWhenPremiumsNotPaidUpToDate,
+            }
+          : {}),
+        ...(variant.policyStateSupport.accountValueDepletionNonLapseWindows
+          ? {
+              accountValueDepletionNonLapseWindows: variant.policyStateSupport.accountValueDepletionNonLapseWindows.map((window) => ({
+                startPolicyYear: window.startPolicyYear,
+                endPolicyYear: window.endPolicyYear,
+              })),
+            }
+          : {}),
+        ...(variant.policyStateSupport.accountValueDepletionNonLapseTerminationRules
+          ? {
+              accountValueDepletionNonLapseTerminationRules: variant.policyStateSupport.accountValueDepletionNonLapseTerminationRules.map((rule) => (
+                'disqualifyIfAnyFromPolicyYear' in rule
+                  ? {
+                      trigger: rule.trigger,
+                      disqualifyIfAnyFromPolicyYear: rule.disqualifyIfAnyFromPolicyYear,
+                      ...(rule.endPolicyYear != null ? { endPolicyYear: rule.endPolicyYear } : {}),
+                    }
+                  : {
+                      trigger: rule.trigger,
+                      basis: rule.basis,
+                      startPolicyYear: rule.startPolicyYear,
+                      endPolicyYear: rule.endPolicyYear,
+                      maximumValueRate: rule.maximumValueRate,
+                      ...(rule.accountIds ? { accountIds: [...rule.accountIds] } : {}),
+                    }
+              )),
             }
           : {}),
         ...(variant.policyStateSupport.requiresCommencementPremiumForRecurringSinglePremiumResumption != null

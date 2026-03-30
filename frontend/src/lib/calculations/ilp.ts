@@ -99,6 +99,25 @@ export interface IlpScheduledPayoutSupport {
 
 export interface IlpPolicyStateSupport {
   automaticLapseOnAccountValueDepletion: boolean
+  accountValueDepletionNonLapseWindows?: Array<{
+    startPolicyYear: number
+    endPolicyYear: number
+  }>
+  accountValueDepletionNonLapseTerminationRules?: Array<
+    | {
+        trigger: 'partial-withdrawal' | 'premium-holiday'
+        disqualifyIfAnyFromPolicyYear: number
+        endPolicyYear?: number | null
+      }
+    | {
+        trigger: 'partial-withdrawal'
+        basis: 'cumulative-withdrawals-exceed-open-balance-at-start-policy-year-rate'
+        startPolicyYear: number
+        endPolicyYear: number | null
+        maximumValueRate: number
+        accountIds?: string[]
+      }
+  >
   minimumRegularPremiumVariationStartPolicyMonth?: number
   minimumRegularPremiumAmountByFrequency?: Partial<Record<IlpRegularPremiumPaymentFrequency, number>>
   blockRegularPremiumVariationDuringPremiumHoliday?: boolean
@@ -541,6 +560,10 @@ export interface IlpChargeRule {
   assuranceConfig?: IlpAssuranceChargeConfig
   premiumBaseConfig?: IlpPremiumBaseChargeConfig
   cumulativePaidPremiumConfig?: IlpCumulativePaidPremiumChargeConfig
+  carryForwardOnInsufficientDeductionWithinPolicyYears?: {
+    startPolicyYear: number
+    endPolicyYear: number
+  }
   requiresManualInput?: boolean
   allocation: 'pro-rata-by-value' | 'pro-rata-by-contribution-share' | 'equal-split'
   /** Source references from the policy document (page, section, excerpt). Display-only metadata. */
@@ -6586,6 +6609,76 @@ function getEffectiveCurrentValue(
   return account.currentValue + (initialSinglePremiumState.netContributionByAccount.get(account.id) ?? 0)
 }
 
+function isAccountValueDepletionNonLapseWindowDisqualified(
+  normalized: IlpNormalizedPolicyInput,
+  policyYear: number,
+  endPolicyMonth: number,
+  openingBalancesByPolicyYear: Map<number, Map<string, number>>,
+  rules: IlpPolicyStateSupport['accountValueDepletionNonLapseTerminationRules'],
+): boolean {
+  return rules?.some((rule) => {
+    if ('disqualifyIfAnyFromPolicyYear' in rule) {
+      const events = rule.trigger === 'partial-withdrawal'
+        ? normalized.events.partialWithdrawals
+        : normalized.events.premiumHolidays
+
+      return events.some((event) => (
+        event.startPolicyMonth <= endPolicyMonth
+        && getPolicyYearForMonth(event.startPolicyMonth) >= rule.disqualifyIfAnyFromPolicyYear
+        && (rule.endPolicyYear == null || getPolicyYearForMonth(event.startPolicyMonth) <= rule.endPolicyYear)
+      ))
+    }
+
+    if (
+      rule.trigger !== 'partial-withdrawal'
+      || rule.basis !== 'cumulative-withdrawals-exceed-open-balance-at-start-policy-year-rate'
+    ) {
+      return false
+    }
+
+    // The annual projection only carries a breached free-withdrawal limit into the
+    // following policy year; exact within-year termination timing stays informational.
+    const evaluatedPolicyYear = policyYear - 1
+    if (
+      evaluatedPolicyYear < rule.startPolicyYear
+      || (rule.endPolicyYear != null && evaluatedPolicyYear > rule.endPolicyYear)
+    ) {
+      return false
+    }
+
+    for (let year = rule.startPolicyYear; year <= evaluatedPolicyYear; year += 1) {
+      const openingBalances = openingBalancesByPolicyYear.get(year)
+      if (!openingBalances) {
+        continue
+      }
+
+      const openingBalance = (rule.accountIds?.length
+        ? rule.accountIds.reduce((sum, accountId) => sum + (openingBalances.get(accountId) ?? 0), 0)
+        : Array.from(openingBalances.values()).reduce((sum, value) => sum + value, 0))
+      const cumulativeWithdrawals = normalized.events.partialWithdrawals.reduce((sum, event) => {
+        if (
+          event.startPolicyMonth > endPolicyMonth
+          || getPolicyYearForMonth(event.startPolicyMonth) !== year
+        ) {
+          return sum
+        }
+
+        if (rule.accountIds?.length && (!event.accountId || !rule.accountIds.includes(event.accountId))) {
+          return sum
+        }
+
+        return sum + Math.max(0, event.amount ?? 0)
+      }, 0)
+
+      if (cumulativeWithdrawals > ((openingBalance * rule.maximumValueRate) + CONTRIBUTION_TOLERANCE)) {
+        return true
+      }
+    }
+
+    return false
+  }) ?? false
+}
+
 function resolveCurrentExitChargeRate(input: IlpPolicyInput): number {
   if (getExitChargeBasis(input) === 'initial-single-premium-base') {
     return lookupEecRate(input.currentPolicyYear, input.eecTable)
@@ -11940,6 +12033,17 @@ export function projectIlpPolicy(
       openBalances,
       input,
     )
+    const hasStaticNonLapseWindowForDepletion = input.policyStateSupport?.accountValueDepletionNonLapseWindows?.some((window) => (
+      policyYear >= window.startPolicyYear && policyYear <= window.endPolicyYear
+    )) ?? false
+    const hasNonLapseWindowForDepletion = hasStaticNonLapseWindowForDepletion
+      && !isAccountValueDepletionNonLapseWindowDisqualified(
+        normalized,
+        policyYear,
+        context.range.endPolicyMonth,
+        openingBalancesByPolicyYear,
+        input.policyStateSupport?.accountValueDepletionNonLapseTerminationRules,
+      )
 
     if (policyState === 'lapsed') {
       const combinedValue = Array.from(openBalances.values()).reduce((sum, value) => sum + value, 0)
@@ -12569,6 +12673,7 @@ export function projectIlpPolicy(
     if (
       input.policyStateSupport?.automaticLapseOnAccountValueDepletion
       && combinedValue <= CONTRIBUTION_TOLERANCE
+      && !hasNonLapseWindowForDepletion
     ) {
       isPolicyLapsed = true
     }

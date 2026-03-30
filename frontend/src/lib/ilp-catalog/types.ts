@@ -259,6 +259,10 @@ export interface IlpTemplateFeeRule {
       rate: number
     }>
   }
+  carryForwardOnInsufficientDeductionWithinPolicyYears?: {
+    startPolicyYear: number
+    endPolicyYear: number
+  }
   requiresManualInput?: boolean
   appliesTo: string[]
   assuranceValueAppliesTo?: string[]
@@ -367,6 +371,25 @@ export interface IlpTemplateDistributionSupport {
 
 export interface IlpTemplatePolicyStateSupport {
   automaticLapseOnAccountValueDepletion: boolean
+  accountValueDepletionNonLapseWindows?: Array<{
+    startPolicyYear: number
+    endPolicyYear: number
+  }>
+  accountValueDepletionNonLapseTerminationRules?: Array<
+    | {
+        trigger: 'partial-withdrawal' | 'premium-holiday'
+        disqualifyIfAnyFromPolicyYear: number
+        endPolicyYear?: number | null
+      }
+    | {
+        trigger: 'partial-withdrawal'
+        basis: 'cumulative-withdrawals-exceed-open-balance-at-start-policy-year-rate'
+        startPolicyYear: number
+        endPolicyYear: number | null
+        maximumValueRate: number
+        accountIds?: string[]
+      }
+  >
   minimumRegularPremiumVariationStartPolicyMonth?: number
   minimumRegularPremiumAmountByFrequency?: Partial<Record<IlpRegularPremiumPaymentFrequency, number>>
   blockRegularPremiumVariationDuringPremiumHoliday?: boolean

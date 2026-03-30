@@ -1527,10 +1527,152 @@ describe('projectIlpPolicy', () => {
 
     expect(policy.catalogSource?.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
     expect(policy.policyStateSupport).toMatchObject({
-      automaticLapseOnAccountValueDepletion: false,
+      automaticLapseOnAccountValueDepletion: true,
       minimumTopUpAmount: 1_000,
     })
     expect(result.rows[0]?.annualContribution).toBe(0)
+  })
+
+  it('keeps Prestige Legacy Advantage in force into policy year 12 when year-11 cumulative withdrawals stay within the published 5% opening-balance free-withdrawal limit', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'great-eastern-prestige-legacy-advantage')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-5-single-premium')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-pla-year-11-free-withdrawal-limit-holds',
+      ...seed,
+      currentPolicyYear: 4,
+      monthsAlreadyPaid: 36,
+      monthlyContribution: 0,
+      accounts: seed.accounts.map((account) => ({
+        ...account,
+        currentValue: 1,
+      })),
+      chargeRules: seed.chargeRules?.map((rule) => (
+        rule.id === 'policy-fee'
+          ? { ...rule, amount: 5_000 }
+          : rule
+      )),
+      assuranceProfile: {
+        ...seed.assuranceProfile,
+        currentAgeNextBirthday: 52,
+        sex: 'female',
+        smokerStatus: 'non-smoker',
+        currentSumAssured: 250_000,
+      },
+      policyEvents: [
+        {
+          id: 'pla-year-10-recovery-top-up',
+          type: 'top-up',
+          startPolicyMonth: 120,
+          durationMonths: 1,
+          amount: 1_000,
+        },
+        {
+          id: 'pla-year-11-within-free-limit',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 121,
+          durationMonths: 1,
+          amount: 10,
+          accountId: 'policy',
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(policy.policyStateSupport?.accountValueDepletionNonLapseWindows).toEqual([
+      { startPolicyYear: 1, endPolicyYear: 15 },
+    ])
+    expect(policy.policyStateSupport?.accountValueDepletionNonLapseTerminationRules).toEqual([
+      { trigger: 'partial-withdrawal', disqualifyIfAnyFromPolicyYear: 1, endPolicyYear: 10 },
+      {
+        trigger: 'partial-withdrawal',
+        basis: 'cumulative-withdrawals-exceed-open-balance-at-start-policy-year-rate',
+        startPolicyYear: 11,
+        endPolicyYear: 15,
+        maximumValueRate: 0.05,
+        accountIds: ['policy'],
+      },
+    ])
+    const policyYear11 = result.rows.find((row) => row.policyYear === 11)
+    const policyYear12 = result.rows.find((row) => row.policyYear === 12)
+    expect(policyYear11?.policyState).toBe('in-force')
+    expect(policyYear12?.policyState).toBe('in-force')
+  })
+
+  it('lapses Prestige Legacy Advantage by policy year 14 once a year-11 free-withdrawal-limit breach carries into later rows and year-13 value depletes', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'great-eastern-prestige-legacy-advantage')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-5-single-premium')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-pla-year-11-free-withdrawal-limit-breached',
+      ...seed,
+      currentPolicyYear: 4,
+      monthsAlreadyPaid: 36,
+      monthlyContribution: 0,
+      accounts: seed.accounts.map((account) => ({
+        ...account,
+        currentValue: 1,
+      })),
+      chargeRules: seed.chargeRules?.map((rule) => (
+        rule.id === 'policy-fee'
+          ? { ...rule, amount: 5_000 }
+          : rule
+      )),
+      assuranceProfile: {
+        ...seed.assuranceProfile,
+        currentAgeNextBirthday: 52,
+        sex: 'female',
+        smokerStatus: 'non-smoker',
+        currentSumAssured: 250_000,
+      },
+      policyEvents: [
+        {
+          id: 'pla-year-10-recovery-top-up',
+          type: 'top-up',
+          startPolicyMonth: 120,
+          durationMonths: 1,
+          amount: 1_000,
+        },
+        {
+          id: 'pla-year-11-breach-first-withdrawal',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 121,
+          durationMonths: 1,
+          amount: 100,
+          accountId: 'policy',
+        },
+        {
+          id: 'pla-year-11-breach-second-withdrawal',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 122,
+          durationMonths: 1,
+          amount: 101,
+          accountId: 'policy',
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    const policyYear11 = result.rows.find((row) => row.policyYear === 11)
+    const policyYear12 = result.rows.find((row) => row.policyYear === 12)
+    const policyYear13 = result.rows.find((row) => row.policyYear === 13)
+    const policyYear14 = result.rows.find((row) => row.policyYear === 14)
+    expect(policyYear11?.policyState).toBe('in-force')
+    expect(policyYear12?.policyState).toBe('in-force')
+    expect(policyYear13?.policyState).toBe('in-force')
+    expect(policyYear14?.policyState).toBe('lapsed')
   })
 
   it.each([

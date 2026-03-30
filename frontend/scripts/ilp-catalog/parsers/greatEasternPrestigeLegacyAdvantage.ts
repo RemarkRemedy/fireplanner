@@ -86,7 +86,12 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       notes: [
         'Enter the actual annual policy-fee amount derived from the published entry-age and basic-sum-assured table before trusting the projection.',
         'The published schedule applies only during the first five policy years and is based on the basic sum assured at policy commencement.',
+        'Within the first 15 policy years, any unpaid modeled policy-fee deduction now carries forward while the published Non-Lapse Privilege remains in effect and is deducted once policy value recovers.',
       ],
+      carryForwardOnInsufficientDeductionWithinPolicyYears: {
+        startPolicyYear: 1,
+        endPolicyYear: 15,
+      },
       sourceRefs: [page4],
     },
     {
@@ -106,8 +111,13 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       notes: [
         'Models the published Standard Life monthly insurance-charge appendix on net sum assured.',
         'Enter the current sum assured before trusting the projection; current-sum-assured tracking after future top-ups, withdrawals, and free-withdrawal limits remains informational only.',
+        'Within the first 15 policy years, any unpaid modeled insurance charge now carries forward while the published Non-Lapse Privilege remains in effect and is deducted once policy value recovers.',
         'Non-standard underwriting classes and region-specific insurance-charge rates remain informational only.',
       ],
+      carryForwardOnInsufficientDeductionWithinPolicyYears: {
+        startPolicyYear: 1,
+        endPolicyYear: 15,
+      },
       sourceRefs: [page5, page17],
     },
   ]
@@ -142,7 +152,6 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       allocation: 'equal-split',
       notes: [
         'Models the published policy-year partial withdrawal charge schedule during the first five policy years.',
-        'The free 5% annual partial-withdrawal allowance from policy year 11 onward remains informational only in V1.',
       ],
       sourceRefs: [page3, page5],
     },
@@ -171,20 +180,34 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
     feeRules,
     eventChargeRules,
     policyStateSupport: {
-      automaticLapseOnAccountValueDepletion: false,
+      automaticLapseOnAccountValueDepletion: true,
+      accountValueDepletionNonLapseWindows: [
+        { startPolicyYear: 1, endPolicyYear: 15 },
+      ],
+      accountValueDepletionNonLapseTerminationRules: [
+        { trigger: 'partial-withdrawal', disqualifyIfAnyFromPolicyYear: 1, endPolicyYear: 10 },
+        {
+          trigger: 'partial-withdrawal',
+          basis: 'cumulative-withdrawals-exceed-open-balance-at-start-policy-year-rate',
+          startPolicyYear: 11,
+          endPolicyYear: 15,
+          maximumValueRate: 0.05,
+          accountIds: ['policy'],
+        },
+      ],
       minimumTopUpAmount: 1_000,
     },
     eecTable: [...WITHDRAWAL_AND_SURRENDER_CHARGE],
     warnings: [
-      'Prestige Legacy Advantage is cataloged as a supported Standard Life single-premium corridor in V1. The parser captures the initial single-premium charge, the published S$1,000 single-premium top-up minimum, the first-five-policy-year withdrawal / surrender charge schedule, the current-state death-benefit estimate as the higher of current sum assured or account value, the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, the entry-age-and-basic-sum-assured policy-fee surface through manual input, and the Standard Life monthly insurance-charge appendix on net sum assured.',
+      'Prestige Legacy Advantage is cataloged as a supported Standard Life single-premium corridor in V1. The parser captures the initial single-premium charge, the published S$1,000 single-premium top-up minimum, the first-five-policy-year withdrawal / surrender charge schedule, the current-state death-benefit estimate as the higher of current sum assured or account value, the current terminal-illness snapshot plus the current admitted-state TI payable amount and current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, the entry-age-and-basic-sum-assured policy-fee surface through manual input, the Standard Life monthly insurance-charge appendix on net sum assured, and a bounded projected Non-Lapse Privilege debt-carry corridor for those modeled policy-fee and insurance-charge deductions during policy years 1 to 15, with policy years 1 to 10 disqualified by any partial withdrawal and policy years 11 to 15 continuing unless the prior policy year has already breached the published 5%-of-account-value-at-the-start-of-that-policy-year annual withdrawal limit.',
       'Enter the actual first-five-year policy-fee amount, current sum assured, and remaining aggregate TI cap before trusting the projection, current death / terminal-illness estimate, or current residual death estimate after an admitted TI claim.',
     ],
     unsupportedItems: [
       'Single-premium principal tracking remains informational only in V1.',
       'Current-sum-assured tracking after future top-ups, partial withdrawals, and the free partial withdrawal annual limit from policy year 11 onward remains informational only.',
       'The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both need manual current sum assured and remaining aggregate TI cap inputs because post-claim current-sum-assured or account-value reductions are not reconstructed from history in V1.',
-      'Terminal-illness claim exclusions, settlement workflow, and non-manual post-claim current-sum-assured or account-value reductions remain informational only beyond the modeled current death, terminal-illness, and residual-after-TI snapshot surface.',
-      'Non-lapse privilege debt carry and lapse/reinstatement behavior remain informational only.',
+      'Terminal-illness claim exclusions, settlement workflow, and non-manual post-claim current-sum-assured or account-value reductions remain informational only beyond the modeled current death, admitted TI, and residual-after-TI snapshot surface.',
+      'The projected Non-Lapse Privilege debt-carry seam now covers modeled policy-fee and insurance-charge deductions during policy years 1 to 15, with policy years 11 to 15 conditioned on the published 5%-of-account-value-at-the-start-of-that-policy-year annual withdrawal limit and projected disqualification taking effect from the following policy year. Exact excess-withdrawal termination timing within a policy year, lapse / reinstatement history, and free-withdrawal-limit current-sum-assured adjustments remain informational only.',
       'Non-standard underwriting classes and region-specific insurance-charge rates remain informational only.',
       'Fund-level management and custodian fees remain informational only.',
       'Sum assured reductions and fund switching remain informational only.',
@@ -210,6 +233,8 @@ export function parseGreatEasternPrestigeLegacyAdvantage({ document, sourceCheck
       'kernel:current-death-benefit-estimate',
       'kernel:current-ti-benefit-estimate',
       'kernel:current-residual-death-benefit-after-ti-estimate',
+      'kernel:no-lapse-fixed-and-assurance-charge-debt-carry',
+      'branch:great-eastern-pla-years-11-to-15-no-lapse-free-withdrawal-limit',
       'branch:great-eastern-pla-single-premium-charge',
       'branch:great-eastern-pla-top-up-premium-charge',
       'kernel:top-up-amount-gate-block',
@@ -222,14 +247,13 @@ export function parseGreatEasternPrestigeLegacyAdvantage({ document, sourceCheck
     metadataOnlyBehaviors: [
       'great-eastern-pla-single-premium-principal-tracking',
       'great-eastern-pla-current-sum-assured-tracking',
-      'great-eastern-pla-non-lapse-privilege',
-      'great-eastern-pla-free-partial-withdrawal-annual-limit',
+      'great-eastern-pla-no-lapse-history-and-reinstatement',
       'great-eastern-pla-non-standard-insurance-rate-classes',
       'great-eastern-pla-sum-assured-reduction',
       'great-eastern-pla-fund-switching',
     ],
     warnings: [
-      'Prestige Legacy Advantage is cataloged as a supported Standard Life single-premium corridor in V1. The parser captures the initial single-premium charge, single-premium top-up charge, the published S$1,000 single-premium top-up minimum, the first-five-policy-year withdrawal / surrender charge schedule, the current-state death-benefit estimate as the higher of current sum assured or account value, the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, the entry-age-and-basic-sum-assured policy-fee surface through manual input, and the Standard Life monthly insurance-charge appendix on net sum assured, while terminal-illness claim exclusions / settlement workflow and non-manual post-claim reduction handling, non-lapse privilege debt carry, free-withdrawal-limit current-sum-assured adjustments, and non-standard insurance-rate classes remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.',
+      'Prestige Legacy Advantage is cataloged as a supported Standard Life single-premium corridor in V1. The parser captures the initial single-premium charge, single-premium top-up charge, the published S$1,000 single-premium top-up minimum, the first-five-policy-year withdrawal / surrender charge schedule, the current-state death-benefit estimate as the higher of current sum assured or account value, the current terminal-illness snapshot plus the current admitted-state TI payable amount and current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, the entry-age-and-basic-sum-assured policy-fee surface through manual input, the Standard Life monthly insurance-charge appendix on net sum assured, and a bounded projected Non-Lapse Privilege debt-carry corridor for those modeled policy-fee and insurance-charge deductions during policy years 1 to 15, with policy years 1 to 10 disqualified by any partial withdrawal and policy years 11 to 15 continuing unless the prior policy year has already breached the published 5%-of-account-value-at-the-start-of-that-policy-year annual withdrawal limit, while terminal-illness claim exclusions / settlement workflow and non-manual post-claim reduction handling, no-lapse history / reinstatement, free-withdrawal-limit current-sum-assured adjustments, and non-standard insurance-rate classes remain informational only beyond the modeled current ordinary death, admitted TI, residual-after-TI snapshot surface, and bounded fixed-and-assurance-charge debt-carry seam.',
     ],
     archived: false,
     variants: [buildVariant(document)],

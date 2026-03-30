@@ -284,6 +284,10 @@ export const ilpTemplateFeeRuleSchema = z.object({
       rate: z.number().min(0).max(1),
     })).min(1).max(40).optional(),
   }).optional(),
+  carryForwardOnInsufficientDeductionWithinPolicyYears: z.object({
+    startPolicyYear: z.number().int().min(1).max(100),
+    endPolicyYear: z.number().int().min(1).max(100),
+  }).optional(),
   requiresManualInput: z.boolean().optional(),
   appliesTo: z.array(z.string().min(1)).max(20),
   assuranceValueAppliesTo: z.array(z.string().min(1)).min(1).max(10).optional(),
@@ -309,6 +313,18 @@ export const ilpTemplateFeeRuleSchema = z.object({
       code: z.ZodIssueCode.custom,
       message: 'assuranceValueAppliesTo can only be used on assurance-sum-at-risk fee rules',
       path: ['assuranceValueAppliesTo'],
+    })
+  }
+
+  if (
+    rule.carryForwardOnInsufficientDeductionWithinPolicyYears != null
+    && rule.carryForwardOnInsufficientDeductionWithinPolicyYears.endPolicyYear
+      < rule.carryForwardOnInsufficientDeductionWithinPolicyYears.startPolicyYear
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'carryForwardOnInsufficientDeductionWithinPolicyYears endPolicyYear must be greater than or equal to startPolicyYear',
+      path: ['carryForwardOnInsufficientDeductionWithinPolicyYears', 'endPolicyYear'],
     })
   }
 
@@ -500,6 +516,25 @@ export const ilpTemplateDistributionSupportSchema = z.object({
 
 export const ilpTemplatePolicyStateSupportSchema = z.object({
   automaticLapseOnAccountValueDepletion: z.boolean(),
+  accountValueDepletionNonLapseWindows: z.array(z.object({
+    startPolicyYear: z.number().int().min(1).max(100),
+    endPolicyYear: z.number().int().min(1).max(100),
+  })).max(10).optional(),
+  accountValueDepletionNonLapseTerminationRules: z.array(z.union([
+    z.object({
+      trigger: z.enum(['partial-withdrawal', 'premium-holiday']),
+      disqualifyIfAnyFromPolicyYear: z.number().int().min(1).max(100),
+      endPolicyYear: z.number().int().min(1).max(100).nullable().optional(),
+    }),
+    z.object({
+      trigger: z.literal('partial-withdrawal'),
+      basis: z.literal('cumulative-withdrawals-exceed-open-balance-at-start-policy-year-rate'),
+      startPolicyYear: z.number().int().min(1).max(100),
+      endPolicyYear: z.number().int().min(1).max(100).nullable(),
+      maximumValueRate: z.number().min(0).max(100),
+      accountIds: z.array(z.string().min(1)).min(1).max(10).optional(),
+    }),
+  ])).max(10).optional(),
   minimumRegularPremiumVariationStartPolicyMonth: z.number().int().min(1).max(1200).optional(),
   minimumRegularPremiumAmountByFrequency: z.object({
     annual: z.number().min(0).max(100_000_000).optional(),
@@ -555,6 +590,37 @@ export const ilpTemplatePolicyStateSupportSchema = z.object({
     })).min(1).max(5).optional(),
   }).optional(),
 }).superRefine((support, ctx) => {
+  support.accountValueDepletionNonLapseWindows?.forEach((window, index) => {
+    if (window.endPolicyYear < window.startPolicyYear) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'accountValueDepletionNonLapseWindows endPolicyYear must be greater than or equal to startPolicyYear',
+        path: ['accountValueDepletionNonLapseWindows', index, 'endPolicyYear'],
+      })
+    }
+  })
+
+  support.accountValueDepletionNonLapseTerminationRules?.forEach((rule, index) => {
+    if (
+      'disqualifyIfAnyFromPolicyYear' in rule
+      && rule.endPolicyYear != null
+      && rule.endPolicyYear < rule.disqualifyIfAnyFromPolicyYear
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'accountValueDepletionNonLapseTerminationRules endPolicyYear must be greater than or equal to disqualifyIfAnyFromPolicyYear',
+        path: ['accountValueDepletionNonLapseTerminationRules', index, 'endPolicyYear'],
+      })
+    }
+    if ('startPolicyYear' in rule && rule.endPolicyYear != null && rule.endPolicyYear < rule.startPolicyYear) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'accountValueDepletionNonLapseTerminationRules endPolicyYear must be greater than or equal to startPolicyYear',
+        path: ['accountValueDepletionNonLapseTerminationRules', index, 'endPolicyYear'],
+      })
+    }
+  })
+
   support.partialWithdrawalMinimumRemainingValueRules?.forEach((rule, index) => {
     if (rule.basis === 'account-value' && !rule.accountId) {
       ctx.addIssue({
@@ -713,6 +779,20 @@ export const ilpTemplateVariantSchema = z.object({
         code: z.ZodIssueCode.custom,
         message: 'policyStateSupport.minimumPartialWithdrawalStartPolicyMonthByAccount accountId must reference an existing account',
         path: ['policyStateSupport', 'minimumPartialWithdrawalStartPolicyMonthByAccount', ruleIndex, 'accountId'],
+      })
+    }
+  })
+
+  variant.policyStateSupport?.accountValueDepletionNonLapseTerminationRules?.forEach((rule, ruleIndex) => {
+    if ('accountIds' in rule) {
+      rule.accountIds?.forEach((accountId, accountIndex) => {
+        if (!accountIds.has(accountId)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'policyStateSupport.accountValueDepletionNonLapseTerminationRules accountIds must reference existing accounts',
+            path: ['policyStateSupport', 'accountValueDepletionNonLapseTerminationRules', ruleIndex, 'accountIds', accountIndex],
+          })
+        }
       })
     }
   })
