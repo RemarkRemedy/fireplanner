@@ -2,7 +2,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { createBrowserRouter, Navigate, Link } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { FeeDashboardLayout } from '@/components/layout/FeeDashboardLayout'
 import { isCompanionMode } from '@/lib/companion/isCompanionMode'
 import { isHouseholdPlannerV1Enabled } from '@/lib/household/featureFlag'
 import { deriveHouseholdSectionToggles } from '@/lib/household/sectionVisibility'
@@ -92,16 +91,6 @@ const routerBasename = isCompanionMode() ? '/planner' : undefined
 
 export const router = createBrowserRouter([
   {
-    element: <FeeDashboardLayout />,
-    children: [
-      { path: '/ilp-fees', element: page(IlpLandingPage) },
-      { path: '/ilp-review', element: page(IlpReviewPage) },
-      { path: '/ilp-fees/story/:productId', element: page(IlpStoryModePage) },
-      { path: '/ilp-fees/exit', element: page(IlpExitCalculatorPage) },
-      { path: '/ilp-fees/compare', element: page(IlpLeaderboardPage) },
-    ],
-  },
-  {
     element: <PlannerRouteShell />,
     children: [
       { path: '/', element: page(StartPage) },
@@ -110,6 +99,11 @@ export const router = createBrowserRouter([
       { path: '/withdrawal', element: page(WithdrawalPage) },
       { path: '/stress-test', element: page(StressTestPage) },
       { path: '/health-check', element: page(HealthCheckPage) },
+      { path: '/ilp-fees', element: page(IlpLandingPage) },
+      { path: '/ilp-review', element: page(IlpReviewPage) },
+      { path: '/ilp-fees/story/:productId', element: page(IlpStoryModePage) },
+      { path: '/ilp-fees/exit', element: page(IlpExitCalculatorPage) },
+      { path: '/ilp-fees/compare', element: page(IlpLeaderboardPage) },
       { path: '/dashboard', element: page(DashboardPage) },
       { path: '/reference', element: page(ReferencePage) },
       { path: '/checklist', element: page(ChecklistPage) },
