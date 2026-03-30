@@ -34,10 +34,31 @@ function renderIlpReviewPage() {
   )
 }
 
+async function confirmSeededPolicy(user: ReturnType<typeof userEvent.setup>) {
+  const confirmButton = await screen.findByRole('button', { name: /show me the fees/i })
+
+  if (confirmButton.hasAttribute('disabled')) {
+    const initialSinglePremiumInput = screen.queryByLabelText(/initial single premium/i)
+    if (initialSinglePremiumInput instanceof HTMLInputElement) {
+      await user.clear(initialSinglePremiumInput)
+      await user.type(initialSinglePremiumInput, '50000')
+    }
+
+    const monthlyPremiumInput = screen.queryByLabelText(/monthly premium/i)
+    if (monthlyPremiumInput instanceof HTMLInputElement) {
+      await user.clear(monthlyPremiumInput)
+      await user.type(monthlyPremiumInput, '500')
+    }
+  }
+
+  await waitFor(() => expect(confirmButton).toBeEnabled())
+  await user.click(confirmButton)
+}
+
 type CatalogTextMatcher = Parameters<typeof screen.queryAllByText>[0]
 
 function expandCatalogReadOnlySections() {
-  for (const button of screen.queryAllByRole('button', { name: /show details \(read-only\)/i })) {
+  for (const button of screen.queryAllByRole('button', { name: /show (details|rates)( \(read-only\))?/i })) {
     act(() => {
       button.click()
     })
@@ -108,6 +129,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Accelerate')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 25use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Wealth Accelerate (SGD / MIP 25)').length).toBeGreaterThan(0)
     const seededAlert = (await screen.findByText('Seeded from catalog template')).closest('[role="alert"]')
@@ -130,6 +152,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Accelerate')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 25use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
 
@@ -166,6 +189,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Accelerate')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 25use template$/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -618,6 +642,7 @@ describe('IlpReviewPage', () => {
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Prosper')
 
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 25use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('PRUVantage Prosper (SGD / MIP 25)').length).toBeGreaterThan(0)
     expect(screen.getByText('Seeded from catalog template')).toBeInTheDocument()
@@ -658,6 +683,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Prosper')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 25use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('Accidental Death Benefit Today')).not.toBeInTheDocument()
 
@@ -1010,6 +1036,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Invest starter')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
     await screen.findByText('Seeded from catalog template')
 
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
@@ -1045,6 +1072,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Invest starter')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
     await screen.findByText('Seeded from catalog template')
 
     act(() => {
@@ -1076,6 +1104,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Invest starter')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
     await screen.findByText('Seeded from catalog template')
 
     act(() => {
@@ -1149,7 +1178,7 @@ describe('IlpReviewPage', () => {
     await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 10/i }))
 
     expect(screen.getAllByText('Invest Flex TriVantage (SGD / MIP 10)').length).toBeGreaterThan(0)
-    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    const seededAlert = (await screen.findByText('Seeded from catalog template')).closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('current-state death and terminal-illness benefit amount during the first policy year as policy value less a manual current excluded claim bonus value and after the first policy year as the higher of 101% of net premiums paid or policy value')
@@ -1189,7 +1218,7 @@ describe('IlpReviewPage', () => {
     await user.click(within(card as HTMLElement).getByRole('button', { name: /sgd \/ mip 10/i }))
 
     expect(screen.getAllByText('Invest Flex (SGD / MIP 10)').length).toBeGreaterThan(0)
-    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    const seededAlert = (await screen.findByText('Seeded from catalog template')).closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('current-state death and terminal-illness benefit amount during the first policy year as policy value less a manual current excluded claim bonus value and after the first policy year as the higher of 101% of net premiums paid or policy value')
@@ -1473,6 +1502,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('Goal Builder II')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^usd \/ mip 15use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Goal Builder II (USD / MIP 15)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -1499,6 +1529,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Goal Builder II')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getByRole('button', { name: /add cohort/i })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /add cohort/i }))
@@ -1954,6 +1985,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('Wealth Builder@Future')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Wealth Builder@Future (SGD / MIP 10)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -2145,6 +2177,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('#goLuxe')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 15use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('#goLuxe (SGD / MIP 15)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -2167,6 +2200,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('#goAffluence')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 15use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('#goAffluence (SGD / MIP 15)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -2263,6 +2297,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('Affluence@Future')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 15use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Affluence@Future (SGD / MIP 15)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -2325,6 +2360,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('#goAssure')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('#goAssure (SGD / MIP 10)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -2355,6 +2391,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'goAssure')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(await screen.findByText('Seeded from catalog template')).toBeInTheDocument()
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
@@ -2392,6 +2429,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'goAssure')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -2428,6 +2466,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'goAssure')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(await screen.findByText('Seeded from catalog template')).toBeInTheDocument()
     expect(screen.queryByText('TPD Benefit Today')).not.toBeInTheDocument()
@@ -2495,6 +2534,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'goWealth Enrich')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('Accidental Death Benefit Today')).not.toBeInTheDocument()
 
@@ -2612,6 +2652,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('TM Wealth Enhancer (CPFIS)')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cpf\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('TM Wealth Enhancer (CPFIS)').length).toBeGreaterThan(0)
     const seededAlert = (await screen.findByText('Seeded from catalog template')).closest('[role="alert"]')
@@ -2636,6 +2677,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('WealthLink (GL3)')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash or srs\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('WealthLink (GL3) (SGD / Open-ended (Cash Or Srs))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -2659,6 +2701,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'WealthLink')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash or srs\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('Accidental Death Benefit Today')).not.toBeInTheDocument()
 
@@ -2694,6 +2737,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('GREAT Invest Advantage (SP)')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash or srs\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('GREAT Invest Advantage (SP) (SGD / Open-ended (Cash Or Srs))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -2719,6 +2763,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('GREAT Invest Advantage (RSP)')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash or srs\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('GREAT Invest Advantage (RSP) (SGD / Open-ended (Cash Or Srs))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -2744,6 +2789,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('PRULink InvestGrowth (SP)')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('PRULink InvestGrowth (SP) (SGD / Open-ended (Cash))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -2790,6 +2836,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('AIA Invest Easy (Cash/SRS)')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash srs\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('AIA Invest Easy (Cash/SRS) (SGD / Open-ended (Cash Srs))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -2814,6 +2861,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('AIA Invest Easy (CPF)')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cpf\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('AIA Invest Easy (CPF) (SGD / Open-ended (Cpf))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -2836,6 +2884,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Invest Easy (Cash/SRS)')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash srs\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     await user.clear(screen.getByLabelText(/^Current Policy Year$/i))
     await user.type(screen.getByLabelText(/^Current Policy Year$/i), '1')
@@ -2857,6 +2906,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Invest Easy (CPF)')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cpf\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     await user.clear(screen.getByLabelText(/^Current Policy Year$/i))
     await user.type(screen.getByLabelText(/^Current Policy Year$/i), '1')
@@ -2880,6 +2930,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('SNACK-Investment')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-endeduse template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('SNACK-Investment (SGD / Open-ended)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -2888,7 +2939,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current-state ordinary death benefit as cash-in value')
     expect(seededAlert?.textContent).toContain('current accidental-death estimate before age 75 as the higher of cash-in value or 105% of net premium')
     expect(seededAlert?.textContent).toContain('does not support cash payouts')
-    expect(seededAlert?.textContent).toContain('gross initial single premium as an inception seed')
+    expect(seededAlert?.textContent).toContain('zero-charge initial premium, top-up, and no-penalty withdrawal path')
     expect(getCatalogValue('Single Premium Charge')).toBeInTheDocument()
     expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
     expect(getCatalogValue('Withdrawal Charge')).toBeInTheDocument()
@@ -2902,6 +2953,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'SNACK-Investment')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-endeduse template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('Accidental Death Benefit Today')).not.toBeInTheDocument()
 
@@ -2936,6 +2988,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('Tiq Invest')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-endeduse template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Tiq Invest (SGD / Open-ended)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -2962,6 +3015,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Tiq Invest')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-endeduse template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
 
@@ -2995,6 +3049,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Tiq Invest')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-endeduse template$/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -3023,6 +3078,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('Dash PET Plus')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(rider\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Dash PET Plus (SGD / Open-ended (Rider))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -3050,6 +3106,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Dash PET Plus')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(rider\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
 
@@ -3083,6 +3140,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'smart flex II')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
@@ -3117,6 +3175,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'smart flex II')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -3143,6 +3202,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'smart flex II')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
@@ -3160,6 +3220,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Invest flex wealth II')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
@@ -3194,6 +3255,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Invest flex wealth II')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
@@ -3213,15 +3275,16 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('FWD Invest Goal 1')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-endeduse template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('FWD Invest Goal 1 (SGD / Open-ended)').length).toBeGreaterThan(0)
-    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    const seededAlert = (await screen.findByText('Seeded from catalog template')).closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('current-state death benefit as 105% of policy value')
     expect(seededAlert?.textContent).toContain('published SGD 500 per-transaction minimum')
     expect(seededAlert?.textContent).toContain('open-ended single-premium product uses the no-MIP basis')
-    expect(seededAlert?.textContent).toContain('gross commencement lump sum before trusting the seeded starting value')
+    expect(seededAlert?.textContent).toContain('10%-of-committed-initial-single-premium minimum remaining-value floor')
     expect(seededAlert?.textContent).toContain('multi-life last-survivor handling, principal-tracking, and broader operational mechanics remain outside the current engine')
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(getCatalogValue('Single Premium Charge')).toBeInTheDocument()
@@ -3240,6 +3303,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('Manulink Investor (II)')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Manulink Investor (II) (SGD / Open-ended (Cash))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -3264,6 +3328,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Manulink Investor (II)')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
 
@@ -3294,6 +3359,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('Invest plus SP')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(single premium initial only\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Invest plus SP (SGD / Open-ended (Single Premium Initial Only))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -3320,6 +3386,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Invest plus SP')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(single premium initial only\)use template$/i }))
+    await confirmSeededPolicy(user)
     await screen.findByText('Seeded from catalog template')
 
     act(() => {
@@ -3354,6 +3421,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('Manulife SmartRetire (V) - Income')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 8 \(flexi 3\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Manulife SmartRetire (V) - Income (SGD / MIP 8 (Flexi 3))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -3382,6 +3450,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('Manulife SmartRetire (V) - Sum')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 8 \(flexi 3\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Manulife SmartRetire (V) - Sum (SGD / MIP 8 (Flexi 3))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -3410,6 +3479,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Manulife SmartRetire (V) - Income')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 8 \(flexi 3\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByLabelText(/current refund-eligible death coi collected/i)).not.toBeInTheDocument()
 
@@ -3466,6 +3536,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Manulife SmartRetire (V) - Sum')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 8 \(flexi 3\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByLabelText(/current refund-eligible death coi collected/i)).not.toBeInTheDocument()
 
@@ -3522,6 +3593,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Manulife SmartRetire (V) - Income')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 8 \(flexi 3\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -3574,6 +3646,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Manulife SmartRetire (V) - Income')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 8 \(flexi 3\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -3611,6 +3684,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('FWD Invest Flexi VII')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('FWD Invest Flexi VII (SGD / MIP 10)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -3639,6 +3713,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'FWD Invest Flexi VII')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
 
@@ -3676,6 +3751,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('FWD Invest Flexi Elite')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10 \(flexi 3\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('FWD Invest Flexi Elite (SGD / MIP 10 (Flexi 3))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -3706,6 +3782,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('FWD Invest First Horizon')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 20use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('FWD Invest First Horizon (SGD / MIP 20)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -3734,6 +3811,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'FWD Invest First Horizon')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 20use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
@@ -3772,6 +3850,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('AstraLink (VA2)')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('AstraLink (VA2) (SGD / MIP 10)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -3800,6 +3879,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AstraLink (VA2)')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('Accidental Death Benefit Today')).not.toBeInTheDocument()
 
@@ -3833,6 +3913,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AstraLink (VA2)')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
 
@@ -3863,6 +3944,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AstraLink (VA2)')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TPD Benefit Today')).not.toBeInTheDocument()
 
@@ -3896,6 +3978,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AstraLink (VA2)')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('Accidental TPD Benefit Today')).not.toBeInTheDocument()
 
@@ -3932,6 +4015,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('AIA Platinum Wealth Venture 2.0')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('AIA Platinum Wealth Venture 2.0 (SGD / MIP 5)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -3964,6 +4048,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Wealth Venture 2.0')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Accidental Death Benefit Today').length).toBeGreaterThan(0)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
@@ -3978,6 +4063,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('Legacy Flex Solitaire (VA3S / VA3R)')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Legacy Flex Solitaire (VA3S / VA3R) (SGD / MIP 5)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -4004,6 +4090,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Legacy Flex Solitaire')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
 
@@ -4034,6 +4121,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Legacy Flex Solitaire')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
     await screen.findByText('Seeded from catalog template')
 
     act(() => {
@@ -4068,6 +4156,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Legacy Flex Solitaire')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
     await screen.findByText('Seeded from catalog template')
 
     act(() => {
@@ -4103,6 +4192,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('Manulife InvestReady Growth')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 15 \(flexi 10\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Manulife InvestReady Growth (SGD / MIP 15 (Flexi 10))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -4136,6 +4226,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getAllByText('Manulife InvestReady (III)').length).toBeGreaterThan(0)
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5 \(flexi 4\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Manulife InvestReady (III) (SGD / MIP 5 (Flexi 4))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -4161,6 +4252,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Manulife InvestReady (III)')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 13 \(flexi 10\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Manulife InvestReady (III) (SGD / MIP 13 (Flexi 10))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -4186,6 +4278,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Manulife InvestReady Growth')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 15 \(flexi 10\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
     expect(screen.getByLabelText(/current claim-time amount owing \/ outstanding charges/i)).toBeInTheDocument()
@@ -4224,6 +4317,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Manulife InvestReady Growth')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 15 \(flexi 10\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -4330,6 +4424,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Manulife InvestReady (III)')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5 \(flexi 4\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
 
@@ -4368,6 +4463,7 @@ describe('IlpReviewPage', () => {
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Manulife InvestReady (III)')
 
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5 \(flexi 4 sep 2025\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     const seededAlert = await screen.findByText('Seeded from catalog template')
     expect(seededAlert.closest('[role="alert"]')?.textContent).toContain('Sep-2025 summary cohort')
@@ -4409,6 +4505,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('Prestige Portfolio')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(single premium cash\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Prestige Portfolio (SGD / Open-ended (Single Premium Cash))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -4434,6 +4531,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Prestige Portfolio')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(single premium cash\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('Accidental Death Benefit Today')).not.toBeInTheDocument()
 
@@ -4454,6 +4552,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('GREAT Life Advantage 4')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(regular pay\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('GREAT Life Advantage 4 (SGD / Open-ended (Regular Pay))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -4487,6 +4586,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'GREAT Life Advantage 4')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(regular pay\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
 
@@ -4518,6 +4618,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'GREAT Life Advantage 4')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(regular pay\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TPD Benefit Today')).not.toBeInTheDocument()
 
@@ -4552,6 +4653,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'GREAT Life Advantage 4')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(regular pay\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('Death Benefit After TPD Claim Today')).not.toBeInTheDocument()
     expect(screen.queryByText('TI Benefit After TPD Claim Today')).not.toBeInTheDocument()
@@ -4583,6 +4685,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'GREAT Life Advantage 4')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(regular pay\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('Current Admitted TPD Claim Benefit Amount (SGD)')).not.toBeInTheDocument()
 
@@ -4614,8 +4717,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('Prestige Legacy Advantage')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5 \(single premium\)use template$/i }))
-    await user.type(await screen.findByLabelText(/initial single premium/i), '50000')
-    await user.click(await screen.findByRole('button', { name: /show me the fees/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Prestige Legacy Advantage (SGD / MIP 5 (Single Premium))').length).toBeGreaterThan(0)
     const seededAlert = (await screen.findByText('Seeded from catalog template')).closest('[role="alert"]')
@@ -4641,6 +4743,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('ManuInvest Duo')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('ManuInvest Duo (SGD / MIP 10)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -4669,6 +4772,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'ManuInvest Duo')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
 
@@ -4704,6 +4808,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'ManuInvest Duo')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TPD Benefit Today')).not.toBeInTheDocument()
 
@@ -4741,6 +4846,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('PRUActive LinkGuard')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash or srs\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('PRUActive LinkGuard (SGD / Open-ended (Cash Or Srs))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -4770,6 +4876,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'PRUActive LinkGuard')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash or srs\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getByLabelText('Current Sum Assured (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
@@ -4811,6 +4918,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'PRUActive LinkGuard')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash or srs\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getByText('Current TPD Settlement Mode')).toBeInTheDocument()
     expect(screen.getByText('Current TPD Payout Stage')).toBeInTheDocument()
@@ -4856,6 +4964,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'PRUActive LinkGuard')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash or srs\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -4918,6 +5027,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('Investment-linked Insurance Plan 2')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10 \(choice 5\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Investment-linked Insurance Plan 2 (SGD / MIP 10 (Choice 5))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -4949,6 +5059,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Investment-linked Insurance Plan 2')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10 \(choice 10 under 6000\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
 
@@ -4979,6 +5090,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Investment-linked Insurance Plan 2')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10 \(choice 10 under 6000\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByLabelText('Current Admitted TI Claim Benefit Amount (SGD)')).not.toBeInTheDocument()
 
@@ -5013,6 +5125,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Investment-linked Insurance Plan 2')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10 \(choice 10 under 6000\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TPD Benefit Today')).not.toBeInTheDocument()
 
@@ -5046,6 +5159,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Investment-linked Insurance Plan 2')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10 \(choice 10 under 6000\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -5096,6 +5210,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Investment-linked Insurance Plan 2')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10 \(choice 10 under 6000\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('Current Admitted TPD Claim Benefit Amount (SGD)')).not.toBeInTheDocument()
 
@@ -5133,6 +5248,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('GREAT Wealth Advantage 4')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10 \(choice 10 6000 and above\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('GREAT Wealth Advantage 4 (SGD / MIP 10 (Choice 10 6000 And Above))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -5163,6 +5279,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Prestige Legacy Advantage')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5 \(single premium\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
 
@@ -5196,6 +5313,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Prestige Legacy Advantage')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5 \(single premium\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('Death Benefit After TI Claim Today')).not.toBeInTheDocument()
 
@@ -5229,6 +5347,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Prestige Legacy Advantage')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5 \(single premium\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -5256,6 +5375,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'GREAT Wealth Advantage 4')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10 \(choice 10 6000 and above\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
 
@@ -5286,6 +5406,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'GREAT Wealth Advantage 4')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10 \(choice 10 6000 and above\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TPD Benefit Today')).not.toBeInTheDocument()
 
@@ -5319,6 +5440,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'GREAT Wealth Advantage 4')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10 \(choice 10 6000 and above\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -5364,6 +5486,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'GREAT Wealth Advantage 4')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10 \(choice 10 6000 and above\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -5416,6 +5539,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('HSBC Life Wealth Invest (CPF)')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cpf\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('HSBC Life Wealth Invest (CPF) (SGD / Open-ended (Cpf))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -5445,6 +5569,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('HSBC Life Wealth Invest (Cash/SRS)')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('HSBC Life Wealth Invest (Cash/SRS) (SGD / Open-ended (Cash))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -5471,6 +5596,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'HSBC Life Wealth Invest (CPF)')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cpf\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
 
@@ -5501,6 +5627,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'HSBC Life Wealth Invest (Cash/SRS)')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
 
@@ -5561,6 +5688,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Singlife Legacy Invest')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10 \(term 15\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
 
@@ -5591,6 +5719,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Singlife Legacy Invest')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10 \(term 15\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getByText('Current TI Claim Status')).toBeInTheDocument()
 
@@ -5625,6 +5754,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Singlife Savvy Invest II')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10 \(fixed\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
 
@@ -5655,6 +5785,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Singlife Savvy Invest II')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10 \(fixed\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getByText('Current TI Claim Status')).toBeInTheDocument()
 
@@ -5689,6 +5820,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'GREAT Invest Advantage (SP)')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash or srs\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
 
@@ -5719,6 +5851,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'GREAT Invest Advantage (SP)')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash or srs\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -5763,6 +5896,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'GREAT Invest Advantage (SP)')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash or srs\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -5795,6 +5929,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'GREAT Invest Advantage (RSP)')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash or srs\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
 
@@ -5825,6 +5960,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Retirement Elite')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('TI Benefit Today').length).toBeGreaterThan(0)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
@@ -5837,6 +5973,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Retirement Elite')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getByText('Current TI Claim Status')).toBeInTheDocument()
     expect(screen.getAllByText('TI Benefit Today').length).toBeGreaterThan(0)
@@ -5865,6 +6002,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Elite Secure Income - Single Premium')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(sp\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
 
@@ -5895,6 +6033,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Elite Secure Income - Single Premium')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(sp\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
     expect(screen.getByText(/current net protected premium base before the current death-benefit estimate can be trusted/i)).toBeInTheDocument()
@@ -5942,6 +6081,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Elite Secure Income - Single Premium')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(sp\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -5968,6 +6108,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Elite Secure Income - Single Premium')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(sp\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('Accidental Death Benefit Today')).not.toBeInTheDocument()
 
@@ -5999,6 +6140,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Elite Secure Income - 5 Pay')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
 
@@ -6036,6 +6178,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Elite Secure Income - 5 Pay')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
     expect(screen.getByText(/current net protected premium base before the current death-benefit estimate can be trusted/i)).toBeInTheDocument()
@@ -6076,6 +6219,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Elite Secure Income - 5 Pay')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getByText('Current TI Claim Status')).toBeInTheDocument()
 
@@ -6110,6 +6254,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Elite Secure Income - 5 Pay')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('Accidental Death Benefit Today')).not.toBeInTheDocument()
 
@@ -6144,6 +6289,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('Invest Smart Vista')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Invest Smart Vista (SGD / MIP 10)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -6170,6 +6316,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Invest Smart Vista')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
@@ -6186,6 +6333,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Invest flex prime II')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10 \(flexi 5\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Invest flex prime II (SGD / MIP 10 (Flexi 5))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -6207,6 +6355,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Invest flex prime II')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10 \(flexi 3\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Invest flex prime II (SGD / MIP 10 (Flexi 3))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -6225,6 +6374,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Invest flex pro')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 20use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Invest flex pro (SGD / MIP 20)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -6247,6 +6397,7 @@ describe('IlpReviewPage', () => {
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Purpose')
     expect(within(dialog).getByText('Invest Wealth Purpose')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
@@ -6282,6 +6433,7 @@ describe('IlpReviewPage', () => {
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Purpose')
     expect(within(dialog).getByText('Invest Wealth Purpose')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
@@ -6299,6 +6451,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Invest Smart Vista')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
@@ -6333,6 +6486,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Invest vista')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10 \(flexi 3\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
@@ -6367,6 +6521,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Invest flex prime II')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10 \(flexi 5\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
@@ -6401,6 +6556,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Invest flex pro')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 20use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
@@ -6437,6 +6593,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('AIA Elite Secure Income - Single Premium')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(sp\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText(/AIA Elite Secure Income - Single Premium/i).length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -6466,6 +6623,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('AIA Elite Secure Income - 5 Pay')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('AIA Elite Secure Income - 5 Pay (SGD / MIP 5)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -6511,6 +6669,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('AIA Platinum Retirement Elite')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('AIA Platinum Retirement Elite (SGD / MIP 5)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -6541,6 +6700,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('AIA Platinum Retirement Elite')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(sp\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
@@ -6566,6 +6726,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Retirement Elite')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Accidental Death Benefit Today').length).toBeGreaterThan(0)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
@@ -6580,7 +6741,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('AIA Platinum Wealth Elite 2.0')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
-    await user.click(await screen.findByRole('button', { name: /show me the fees/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('AIA Platinum Wealth Elite 2.0 (SGD / MIP 5)').length).toBeGreaterThan(0)
     const seededAlert = (await screen.findByText('Seeded from catalog template')).closest('[role="alert"]')
@@ -6607,7 +6768,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('AIA Platinum Wealth Legacy')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
-    await user.click(await screen.findByRole('button', { name: /show me the fees/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText(/AIA Platinum Wealth Legacy/i).length).toBeGreaterThan(0)
     const seededAlert = (await screen.findByText('Seeded from catalog template')).closest('[role="alert"]')
@@ -6635,6 +6796,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Wealth Elite 2.0')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
 
@@ -6668,6 +6830,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Wealth Elite 2.0')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('Death Benefit After TI Claim Today')).not.toBeInTheDocument()
 
@@ -6701,6 +6864,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Wealth Elite 2.0')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -6728,6 +6892,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Wealth Legacy')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
 
@@ -6763,6 +6928,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Wealth Legacy')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('Death Benefit After TI Claim Today')).not.toBeInTheDocument()
 
@@ -6798,6 +6964,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Wealth Legacy')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -6827,6 +6994,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('AIA Wealth Venture')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 8use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('AIA Wealth Venture (SGD / MIP 8)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -6874,6 +7042,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Wealth Venture')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 8use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Accidental Death Benefit Today').length).toBeGreaterThan(0)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
@@ -6888,6 +7057,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('AIA Pro Achiever 3.0')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('AIA Pro Achiever 3.0 (SGD / MIP 10)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -6919,6 +7089,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Pro Achiever 3.0')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('Accidental Death Benefit Today')).not.toBeInTheDocument()
 
@@ -6953,6 +7124,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('AIA Pro Lifetime Protector (II)')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(plus\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('AIA Pro Lifetime Protector (II) (SGD / Open-ended (Plus))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -6983,6 +7155,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('GREAT Invest Advantage 2 (SP)')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash or srs\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('GREAT Invest Advantage 2 (SP) (SGD / Open-ended (Cash Or Srs))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -7007,6 +7180,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('GREAT Invest Advantage 2 (RSP)')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash or srs\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('GREAT Invest Advantage 2 (RSP) (SGD / Open-ended (Cash Or Srs))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -7029,6 +7203,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'GREAT Invest Advantage 2 (SP)')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash or srs\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
@@ -7060,6 +7235,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'GREAT Invest Advantage 2 (RSP)')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(cash or srs\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
@@ -7179,6 +7355,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('HSBC Life Flexi Protector')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(choice cover\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('HSBC Life Flexi Protector (SGD / Open-ended (Choice Cover))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
@@ -7197,6 +7374,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Flexi Protector')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(choice cover\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getByLabelText(/current basic sum assured/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/current net rsp \+ top-up base/i)).toBeInTheDocument()
@@ -7251,6 +7429,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Flexi Protector')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(choice cover\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('Death Benefit After TI Claim Today')).not.toBeInTheDocument()
 
@@ -7291,6 +7470,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Flexi Protector')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(choice cover\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -7351,6 +7531,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Flexi Protector')
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ open-ended \(choice cover\)use template$/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -7393,6 +7574,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Goal Builder II')
     await user.click(within(dialog).getByRole('button', { name: /^usd \/ mip 15use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getByLabelText(/current amount owing/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/remaining aggregate ti cap/i)).toBeInTheDocument()
@@ -7429,6 +7611,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Goal Builder II')
     await user.click(within(dialog).getByRole('button', { name: /^usd \/ mip 15use template$/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -7462,6 +7645,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Goal Builder II')
     await user.click(within(dialog).getByRole('button', { name: /^usd \/ mip 15use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByLabelText('Current Insured Amount (USD)')).not.toBeInTheDocument()
 
@@ -7536,6 +7720,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Goal Builder II')
     await user.click(within(dialog).getByRole('button', { name: /^usd \/ mip 15use template$/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -7585,6 +7770,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Goal Builder II')
     await user.click(within(dialog).getByRole('button', { name: /^usd \/ mip 15use template$/i }))
+    await confirmSeededPolicy(user)
 
     act(() => {
       const state = useIlpStore.getState()
@@ -7655,6 +7841,7 @@ describe('IlpReviewPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Goal Builder II')
     await user.click(within(dialog).getByRole('button', { name: /^usd \/ mip 15use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.queryByText('Accidental Death Benefit Today')).not.toBeInTheDocument()
 
@@ -7796,6 +7983,7 @@ describe('IlpReviewPage', () => {
 
     expect(within(dialog).getByText('FWD Invest First Summit')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await confirmSeededPolicy(user)
 
     expect(screen.getAllByText(/FWD Invest First Summit/i).length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
