@@ -2,7 +2,20 @@ import { describe, expect, it } from 'vitest'
 import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
 import { templateVariantToPolicySeed } from '@/lib/ilp-catalog/templateToPolicy'
 import type { IlpCatalogManifest, IlpCatalogProduct, IlpTemplateVariant } from '@/lib/ilp-catalog/types'
+import { ilpPolicySchema } from '@/lib/validation/ilpSchema'
+import { createDefaultPolicy } from '@/stores/useIlpStore'
 import { useIlpStore } from '@/stores/useIlpStore'
+
+function expectSeedToMergeIntoValidPolicy(seed: ReturnType<typeof templateVariantToPolicySeed>) {
+  const parsed = ilpPolicySchema.safeParse({
+    ...createDefaultPolicy(),
+    ...seed,
+    id: 'seed-validation',
+  })
+
+  expect(parsed.success, parsed.success ? undefined : parsed.error.issues.map((issue) => issue.message).join('; '))
+    .toBe(true)
+}
 
 describe('templateVariantToPolicySeed', () => {
   it('maps the supported HSBC variant into a seeded ILP policy', () => {
@@ -12446,5 +12459,80 @@ describe('templateVariantToPolicySeed', () => {
     expect(() => templateVariantToPolicySeed(product, variant, manifest)).toThrow(
       'Fee rule "missing-basis-fee" is missing a basis',
     )
+  })
+
+  it('preserves recurring contribution fallback for top-up-only seeds', () => {
+    const manifest: IlpCatalogManifest = {
+      generatedAt: '2026-03-19T00:00:00.000Z',
+      catalogVersion: 'test',
+      parserVersion: 'test-parser',
+      sourceStrategy: 'manual-pdf-corpus',
+      productsCount: 1,
+      supportedCount: 1,
+      partialCount: 0,
+      parserErrorCount: 0,
+      summarySourceCount: 1,
+      brochureOnlySourceCount: 0,
+      brochurePartialEligibleCount: 0,
+    }
+    const variant: IlpTemplateVariant = {
+      id: 'topup-only',
+      currency: 'SGD',
+      mipBasis: 'open-ended',
+      mipLength: null,
+      icpMonths: 1,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy',
+          feeRate: 0,
+          postMipFeeRate: null,
+          subjectToEec: false,
+          contributionRules: [
+            { phase: 'top-up', targetAccountId: 'policy', contributionShare: 1 },
+          ],
+          sourceRefs: [],
+        },
+      ],
+      feeRules: [],
+      eventChargeRules: [],
+      bonuses: [],
+      eecTable: [],
+      warnings: [],
+      unsupportedItems: [],
+      sourceRefs: [],
+    }
+    const product: IlpCatalogProduct = {
+      id: 'topup-only-product',
+      insurer: 'Test Insurer',
+      productName: 'Top-up Only Product',
+      sourceFileName: 'test.pdf',
+      sourceChecksumSha256: 'abc123',
+      sourceDocumentType: 'summary',
+      sourceClass: 'summary',
+      supportStatus: 'supported',
+      structureStatus: 'structured',
+      economicsStatus: 'supported',
+      modeledEconomics: [],
+      coveredElsewhereBehaviors: [],
+      metadataOnlyBehaviors: [],
+      warnings: [],
+      archived: false,
+      variants: [variant],
+    }
+
+    const seed = templateVariantToPolicySeed(product, variant, manifest)
+
+    expect(seed.monthlyContribution).toBe(350)
+    expect(seed.accounts).toEqual([
+      expect.objectContaining({
+        id: 'policy',
+        contributionShare: 1,
+        contributionRules: [
+          { phase: 'top-up', contributionShare: 1 },
+        ],
+      }),
+    ])
+    expectSeedToMergeIntoValidPolicy(seed)
   })
 })

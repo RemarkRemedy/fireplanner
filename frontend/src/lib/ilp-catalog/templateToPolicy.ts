@@ -389,8 +389,15 @@ export function templateVariantToPolicySeed(
 ): IlpPolicySeed {
   const chargeRules = mapFeeRulesToChargeRules(variant)
   const eventChargeRules = mapEventChargeRules(variant)
-  const accountsWithoutRegularRules = variant.accounts.filter((account) => account.contributionRules.length === 0)
-  const defaultContributionShare = accountsWithoutRegularRules.length > 0 ? (1 / accountsWithoutRegularRules.length) : 0
+  const variantHasRecurringContributionRules = variant.accounts.some((account) => (
+    account.contributionRules.some((rule) => rule.phase !== 'top-up')
+  ))
+  const accountsWithoutAnyContributionRules = variant.accounts.filter((account) => account.contributionRules.length === 0)
+  const defaultRecurringContributionShare = accountsWithoutAnyContributionRules.length > 0
+    ? (1 / accountsWithoutAnyContributionRules.length)
+    : (!variantHasRecurringContributionRules && variant.accounts.length > 0)
+        ? (1 / variant.accounts.length)
+        : 0
   const vitalityStatus: IlpResolvedVitalityStatus | undefined = variant.bonuses.some((bonus) => (
     (bonus.vitalityStatusRateSchedule?.length ?? 0) > 0
   ))
@@ -623,7 +630,10 @@ export function templateVariantToPolicySeed(
       label: account.label,
       feeRate: deriveAccountFeeRate(account, variant.feeRules),
       currentValue: 0,
-      contributionShare: account.contributionRules.length > 0 ? 0 : defaultContributionShare,
+      contributionShare: account.contributionRules.length === 0
+        || (!variantHasRecurringContributionRules && accountsWithoutAnyContributionRules.length === 0)
+        ? defaultRecurringContributionShare
+        : 0,
       subjectToEec: account.subjectToEec,
       postMipFeeRate: account.postMipFeeRate,
       contributionRules: account.contributionRules
