@@ -61,7 +61,7 @@ export function IlpLandingPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
-      <section className="overflow-hidden rounded-lg border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-sky-50/70 p-6 shadow-sm dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 sm:p-8">
+      <section className="overflow-hidden rounded-md border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-sky-50/70 p-6 shadow-sm dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 sm:p-8">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(18rem,1fr)] lg:items-end">
           <div className="space-y-5">
             <div className="inline-flex items-center gap-2 rounded-full border border-slate-300/80 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-slate-600 backdrop-blur dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-300">
@@ -77,24 +77,24 @@ export function IlpLandingPage() {
               </p>
             </div>
             <div className="flex flex-wrap gap-3 text-sm">
-              <div className="rounded-lg border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+              <div className="rounded-md border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
                 <div className="font-semibold text-slate-950 dark:text-white">92 products</div>
                 <div className="text-slate-500 dark:text-slate-400">Catalogued for fee review</div>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+              <div className="rounded-md border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
                 <div className="font-semibold text-slate-950 dark:text-white">Year-by-year charges</div>
                 <div className="text-slate-500 dark:text-slate-400">Not just a headline fee rate</div>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+              <div className="rounded-md border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
                 <div className="font-semibold text-slate-950 dark:text-white">Runs locally</div>
                 <div className="text-slate-500 dark:text-slate-400">Your policy details stay in browser</div>
               </div>
             </div>
           </div>
 
-          <div className="rounded-lg border border-slate-200/80 bg-white/90 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+          <div className="rounded-md border border-slate-200/80 bg-white/90 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
             <div className="flex items-start gap-3">
-              <div className="rounded-lg bg-slate-100 p-3 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+              <div className="rounded-md bg-slate-100 p-3 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
                 <WalletCards className="h-5 w-5" />
               </div>
               <div className="space-y-2">
@@ -110,7 +110,7 @@ export function IlpLandingPage() {
         </div>
       </section>
 
-      <div className="rounded-lg border border-blue-200 bg-blue-50/70 px-4 py-3 text-center dark:border-blue-900 dark:bg-blue-950/30">
+      <div className="rounded-md border border-blue-200 bg-blue-50/70 px-4 py-3 text-center dark:border-blue-900 dark:bg-blue-950/30">
         <a
           href={`${BLOG_URL}?utm_source=dashboard&utm_content=landing_hero`}
           className="text-sm font-medium text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
@@ -123,7 +123,7 @@ export function IlpLandingPage() {
         {entryCards.map((entry) => {
           const Icon = entry.icon
           const content = (
-            <Card className={`relative h-full overflow-hidden border transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-lg ${entry.tone}`}>
+            <Card className={`relative h-full overflow-hidden rounded-md border transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-lg ${entry.tone}`}>
               <div className={`absolute inset-x-0 top-0 h-24 bg-gradient-to-br ${entry.accent}`} />
               <CardContent className="relative flex h-full flex-col gap-5 p-6">
                 <div className="flex items-start justify-between gap-4">
@@ -133,7 +133,7 @@ export function IlpLandingPage() {
                     </p>
                     <h2 className="text-xl font-semibold text-slate-950 dark:text-white">{entry.title}</h2>
                   </div>
-                  <div className="rounded-lg bg-white/90 p-3 text-slate-700 shadow-sm dark:bg-slate-900/90 dark:text-slate-200">
+                  <div className="rounded-md bg-white/90 p-3 text-slate-700 shadow-sm dark:bg-slate-900/90 dark:text-slate-200">
                     <Icon className="h-5 w-5" />
                   </div>
                 </div>
@@ -142,7 +142,7 @@ export function IlpLandingPage() {
                   {entry.description}
                 </p>
 
-                <div className="space-y-2 rounded-lg border border-white/70 bg-white/80 p-4 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
+                <div className="space-y-2 rounded-md border border-white/70 bg-white/80 p-4 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
                   {entry.bullets.map((bullet) => (
                     <div key={bullet} className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                       <span className="h-1.5 w-1.5 rounded-full bg-primary" />
