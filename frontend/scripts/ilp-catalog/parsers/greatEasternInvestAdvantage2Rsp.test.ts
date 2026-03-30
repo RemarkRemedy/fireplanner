@@ -28,6 +28,8 @@ describe('parseGreatEasternInvestAdvantage2Rsp', () => {
       'branch:great-eastern-gia2-rsp-recurrent-single-premium-charge',
       'branch:great-eastern-gia2-rsp-top-up-premium-charge',
       'branch:great-eastern-gia2-rsp-open-ended-zero-surrender-charge',
+      'kernel:partial-withdrawal-minimum-amount-block',
+      'kernel:partial-withdrawal-selected-fund-minimum-value-block',
       'kernel:current-death-benefit-estimate',
       'kernel:current-ti-benefit-estimate',
     ])
@@ -35,12 +37,15 @@ describe('parseGreatEasternInvestAdvantage2Rsp', () => {
     expect(product.metadataOnlyBehaviors).not.toContain('great-eastern-gia2-rsp-recurrent-single-premium-principal-tracking')
     expect(product.metadataOnlyBehaviors).not.toContain('great-eastern-gia2-rsp-terminal-illness-benefit')
     expect(product.variants[0]?.unsupportedItems).toContain(
-      'The current-state terminal-illness benefit amount is modeled as the same amount as the current death-benefit estimate after manual current amount owing, but terminal-illness claim admission, exclusions, settlement, and policy termination remain informational only.',
+      'The current admitted-state terminal-illness payable amount is supported through manual claim-amount input on the published full-termination terminal-illness corridor, and an admitted-and-settled terminal-illness claim is supported as a current policy-termination state, but terminal-illness exclusions and broader claim settlement remain informational only.',
     )
     expect(product.variants[0]?.unsupportedItems).not.toContain(
       'Death and terminal-illness benefit formulas remain informational only.',
     )
+    expect(product.warnings[0]).toContain('published S$50 minimum one-off partial withdrawal amount')
+    expect(product.warnings[0]).toContain('published explicit selected-fund partial-surrender floor that blocks withdrawals leaving the chosen fund below S$500 using the current configured fund split as a proportional selected-fund balance proxy on the same projection row')
     expect(product.warnings[0]).toContain('current-state death and terminal-illness benefit amount as the higher of 110% of recurrent single premiums plus top-ups less partial surrenders or account value less manual current amount owing')
+    expect(product.warnings[0]).toContain('the current admitted-state terminal-illness payable amount through manual claim-amount input on the published full-termination terminal-illness corridor')
     expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-open-ended-cash-or-srs'])
 
     const variant = product.variants[0]
@@ -74,5 +79,16 @@ describe('parseGreatEasternInvestAdvantage2Rsp', () => {
         rate: 0.03,
       }),
     ])
+    expect(variant?.policyStateSupport).toMatchObject({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 50,
+      partialWithdrawalMinimumRemainingSelectedFundValueRules: [
+        {
+          activeWindow: 'policy-term',
+          accountId: 'policy',
+          minimumValue: 500,
+        },
+      ],
+    })
   }, 30_000)
 })
