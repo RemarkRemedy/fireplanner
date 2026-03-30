@@ -35,7 +35,7 @@ function issueMessagesFromPolicy(policy: unknown): string[] {
 function TemplateCatalogSummary() {
   const { products, manifest } = getIlpCatalog()
   const supportedProducts = products.filter((product) => product.supportStatus === 'supported')
-  const partialProducts = products.filter((product) => product.supportStatus === 'partial')
+  const reviewProducts = products.filter((product) => product.supportStatus === 'partial')
 
   return (
     <Card>
@@ -45,10 +45,10 @@ function TemplateCatalogSummary() {
             <h2 className="text-lg font-semibold">Available Templates</h2>
             <Badge variant="outline">Catalog {manifest.catalogVersion}</Badge>
             <Badge>{supportedProducts.length} supported</Badge>
-            <Badge variant="secondary">{partialProducts.length} partial</Badge>
+            <Badge variant="secondary">{reviewProducts.length} need review</Badge>
           </div>
           <p className="text-sm text-muted-foreground">
-            Supported templates are release-gated within their modeled economics. Partial templates stay selectable, but still need document review for metadata-only behavior.
+            Supported templates are gated to the summary-described economics modeled here. Templates needing review stay selectable, but the dashboard keeps claims narrow to the slice it can justify today.
           </p>
         </div>
 
@@ -68,9 +68,9 @@ function TemplateCatalogSummary() {
           </div>
 
           <div className="space-y-2">
-            <div className="text-sm font-medium">Partial templates</div>
+            <div className="text-sm font-medium">Templates Needing Review</div>
             <div className="space-y-2">
-              {partialProducts.map((product) => (
+              {reviewProducts.map((product) => (
                 <div key={product.id} className="rounded-md border px-3 py-2">
                   <div className="font-medium">{product.productName}</div>
                   <div className="text-xs text-muted-foreground">
@@ -245,7 +245,7 @@ export function IlpReviewPage() {
         <AlertTriangle className="h-4 w-4" />
         <AlertTitle>Support boundary</AlertTitle>
         <AlertDescription>
-          Supported catalog templates are release-gated only within their declared modeled economics. Partial templates remain useful for structured review, but they still require manual verification of metadata-only behavior and unresolved charges.
+          Supported catalog templates are gated only within the summary-described economics modeled here. Templates needing review remain useful for structured comparison, but the dashboard should not be read as a statement that every unmodeled catalog note is part of the product scope.
         </AlertDescription>
       </Alert>
 

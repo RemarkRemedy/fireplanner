@@ -100,7 +100,7 @@ describe('IlpReviewPage', () => {
     expect(screen.getByText('ILP Review')).toBeInTheDocument()
     expect(screen.getByText('Available Templates')).toBeInTheDocument()
     expect(screen.getByText('Supported templates')).toBeInTheDocument()
-    expect(screen.getByText('Partial templates')).toBeInTheDocument()
+    expect(screen.getByText('Templates Needing Review')).toBeInTheDocument()
     expect(screen.getByText('Wealth Accelerate')).toBeInTheDocument()
     expect(screen.getByText('PRUVantage Wealth II')).toBeInTheDocument()
     expect(screen.getByText('Wealth Abundance')).toBeInTheDocument()
@@ -634,7 +634,7 @@ describe('IlpReviewPage', () => {
     expect(screen.getByText('This product also needs the current residual death benefit after the admitted TI claim before the admitted-state death snapshot can be trusted.')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
-  it('seeds a supported catalog product with explicit metadata-only warnings', async () => {
+  it('seeds a supported catalog product with review-needed catalog notes', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
 
@@ -651,7 +651,7 @@ describe('IlpReviewPage', () => {
     expect(screen.getByText(/current-state death-benefit estimate as the higher of the 101%-of-paid-regular-premiums floor net growth\/flex withdrawals or current growth\/flex account value plus additional investment account value after manual current amount owing/i)).toBeInTheDocument()
     expect(screen.getByText(/current accidental-death estimate as the higher of the 105%-of-paid-regular-premiums floor net growth\/flex withdrawals or current growth\/flex account value plus additional investment account value after manual current amount owing/i)).toBeInTheDocument()
     expect(screen.getByText(/prudential prosper assurance charges after you enter the insured-life details and current net regular premium base/i)).toBeInTheDocument()
-    expect(screen.getByText(/metadata-only behaviors still outside the calculator: pruvantage prosper accidental death and claim exclusions, premium pass wealth share secondary life options/i)).toBeInTheDocument()
+    expect(screen.getByText(/additional catalog notes remain informational only in this dashboard and should be checked against the product summary/i)).toBeInTheDocument()
     expect(screen.getByText(/growth account dividend payout is only allowed after 10 years/i)).toBeInTheDocument()
     expect(getCatalogValue('Assurance Charge (Death)')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()

@@ -23,6 +23,7 @@ Rules:
     - story-mode routes now carry an optional `variantId` so multi-variant products opened from a known template do not bounce users back into the variant picker
     - the exit-analysis page now reuses the same projected fee-breakdown charts and table as the explore dashboard, so cancel/hold decisions do not lose the year-by-year fee detail
     - the detailed fee table now exposes the year-specific surrender fee (`eecCharge`) explicitly instead of hiding it from the dashboard surface; the totals row leaves that column as `n/a` because summing alternate exit charges across years would be misleading
+    - fee-dashboard catalog surfaces no longer print raw `metadataOnlyBehaviors` lists under product names or seeded-template alerts; they now use review-needed wording so summary-absent features are not mislabeled as unsupported in the UI
     - broader seeded-premium / bonus-routing mechanics remain model-stream work and should not be patched around in dashboard copy
   - Current-State Reconstruction override note:
     - `HSBC Life Goal Builder II` now reconstructs completed prior-year scheduled-redemption erosion into the current ordinary sum-insured corridor and current accidental-death floor corridor after the scheduled payout window has already ended, so `Death Benefit Today`, `TI Benefit Today`, and `Accidental Death Benefit Today` no longer overstate that bounded past regular-withdrawal history

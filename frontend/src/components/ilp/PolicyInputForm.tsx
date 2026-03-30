@@ -43,12 +43,6 @@ function createDraftId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
-function humanizeCatalogTag(value: string): string {
-  return value
-    .replace(/^branch:/, '')
-    .replace(/-/g, ' ')
-}
-
 function requiresWealthAssureValue(rule: IlpChargeRule): boolean {
   return rule.assuranceConfig?.formula === 'prudential-assure-ii-combined'
 }
@@ -1296,10 +1290,10 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
           <AlertDescription className="space-y-2">
             <div className="flex flex-wrap gap-2">
               <Badge variant={policy.catalogSource.supportStatus === 'supported' ? 'default' : 'secondary'}>
-                {policy.catalogSource.supportStatus === 'supported' ? 'Supported template' : 'Partial template'}
+                {policy.catalogSource.supportStatus === 'supported' ? 'Supported template' : 'Template needing review'}
               </Badge>
               <Badge variant="outline">
-                {policy.catalogSource.economicsStatus === 'supported' ? 'Modeled economics' : 'Modeled subset'}
+                {policy.catalogSource.economicsStatus === 'supported' ? 'Modeled economics' : 'Narrower modeled scope'}
               </Badge>
             </div>
             <p>
@@ -1308,12 +1302,12 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
             </p>
             <p>
               {policy.catalogSource.supportStatus === 'supported'
-                ? 'This template is release-gated only for the modeled economics listed in the catalog. Anything outside that boundary still requires document review.'
-                : 'This template is only partially modeled. Use the analysis as a subset view and verify all remaining product mechanics against the source documents.'}
+                ? 'This template is release-gated only for the summary-described economics modeled in the catalog. Anything outside that boundary still requires document review.'
+                : 'This template still needs source review for some summary-described behaviors. Use the analysis as a narrow modeled view, not a claim that every catalog note belongs to the product scope.'}
             </p>
             {policy.catalogSource.metadataOnlyBehaviors.length > 0 && (
               <p>
-                Metadata-only behaviors still outside the calculator: {policy.catalogSource.metadataOnlyBehaviors.map(humanizeCatalogTag).join(', ')}.
+                Additional catalog notes remain informational only in this dashboard and should be checked against the product summary before treating them as in-scope product behavior.
               </p>
             )}
             {policy.catalogWarnings && policy.catalogWarnings.length > 0 && (

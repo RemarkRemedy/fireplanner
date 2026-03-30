@@ -15,18 +15,12 @@ interface ProductPickerDialogProps {
   onSelect: (product: IlpCatalogProduct, variant: IlpTemplateVariant) => void
 }
 
-function humanizeCatalogTag(value: string): string {
-  return value
-    .replace(/^branch:/, '')
-    .replace(/-/g, ' ')
-}
-
 function supportCopy(product: IlpCatalogProduct): string {
   if (product.supportStatus === 'supported') {
-    return 'Golden-gated within the modeled economics listed below.'
+    return 'Models the summary-described economics currently justified in this dashboard.'
   }
 
-  return 'Only the modeled subset below is simulated. Review metadata-only behavior separately.'
+  return 'Needs source review for some summary-described behaviors. The dashboard keeps claims narrow to the slice modeled today.'
 }
 
 export function ProductPickerDialog({ open, onOpenChange, onSelect }: ProductPickerDialogProps) {
@@ -75,20 +69,15 @@ export function ProductPickerDialog({ open, onOpenChange, onSelect }: ProductPic
                   <div className="font-semibold">{product.productName}</div>
                   <div className="flex flex-wrap gap-2">
                     <Badge variant={product.supportStatus === 'supported' ? 'default' : 'secondary'}>
-                      {product.supportStatus === 'supported' ? 'Supported' : 'Partial'}
+                      {product.supportStatus === 'supported' ? 'Supported' : 'Needs review'}
                     </Badge>
                     <Badge variant="outline">
-                      {product.economicsStatus === 'supported' ? 'Modeled economics' : 'Modeled subset'}
+                      {product.economicsStatus === 'supported' ? 'Modeled economics' : 'Narrower modeled scope'}
                     </Badge>
                   </div>
                   <div className="text-xs text-muted-foreground">
                     {supportCopy(product)}
                   </div>
-                  {product.metadataOnlyBehaviors.length > 0 && (
-                    <div className="text-xs text-muted-foreground">
-                      Outside the current model: {product.metadataOnlyBehaviors.map(humanizeCatalogTag).join(', ')}.
-                    </div>
-                  )}
                   {product.warnings.length > 0 && (
                     <div className="text-xs text-muted-foreground">
                       {product.warnings[0]}
@@ -106,9 +95,7 @@ export function ProductPickerDialog({ open, onOpenChange, onSelect }: ProductPic
                       onClick={() => onSelect(product, variant)}
                     >
                       <span>{formatCatalogVariantLabel(variant)}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {product.supportStatus === 'supported' ? 'Use template' : 'Use partial template'}
-                      </span>
+                      <span className="text-xs text-muted-foreground">Use template</span>
                     </Button>
                   ))}
                 </div>
