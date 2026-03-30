@@ -3,6 +3,7 @@ import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, X
 import { Card, CardContent } from '@/components/ui/card'
 import type { IlpPolicyAnalysis, IlpPolicyInput } from '@/lib/calculations/ilp'
 import { useChartColors } from '@/lib/chartTheme'
+import { computeAnnualFeeDragPct } from '@/lib/calculations/ilpFeeImpact'
 import { formatIlpCurrency, formatIlpPercent } from './formatters'
 
 interface HeadlineInsightProps {
@@ -63,14 +64,7 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
   // Blended OCF is already a per-annum % — just read it from the funds
   const blendedOcf = policy.funds.reduce((sum, fund) => sum + fund.allocation * fund.ocf, 0)
 
-  // All-in annual drag: always real-basis, always includes OCF (for fair comparison with ETFs)
-  const avgPortfolioValue = analysis.mode === 'projected'
-    ? analysis.projections.mid.rows.reduce((sum, row) => sum + row.combinedValue, 0) / analysis.projections.mid.rows.length
-    : 0
-  const realAllInCost = summary.realWrapperFees + summary.realFundCharges + summary.inceptionCharges - summary.realBonuses
-  const annualDragPct = avgPortfolioValue > 0 && horizonYears > 0
-    ? (realAllInCost / horizonYears) / avgPortfolioValue
-    : 0
+  const annualDragPct = computeAnnualFeeDragPct(analysis)
 
   const colors = useChartColors()
 

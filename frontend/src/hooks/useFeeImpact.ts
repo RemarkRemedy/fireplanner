@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import type { IlpPolicyAnalysis, IlpPolicyInput } from '@/lib/calculations/ilp'
 import { useChartColors } from '@/lib/chartTheme'
+import { computeAnnualFeeDragPct } from '@/lib/calculations/ilpFeeImpact'
 
 export interface FeeImpactTier {
   label: string
@@ -24,20 +25,12 @@ export function useFeeImpact(
   useReal: boolean,
 ): UseFeeImpactResult {
   const colors = useChartColors()
-  const { summary } = analysis
 
   const horizonYears = analysis.mode === 'projected'
     ? analysis.projections.mid.rows.length
     : 0
 
-  // All-in annual drag (always real-basis — a rate is basis-independent)
-  const avgPortfolioValue = analysis.mode === 'projected'
-    ? analysis.projections.mid.rows.reduce((sum, row) => sum + row.combinedValue, 0) / analysis.projections.mid.rows.length
-    : 0
-  const realAllInCost = summary.realWrapperFees + summary.realFundCharges + summary.inceptionCharges - summary.realBonuses
-  const annualDragPct = avgPortfolioValue > 0 && horizonYears > 0
-    ? (realAllInCost / horizonYears) / avgPortfolioValue
-    : 0
+  const annualDragPct = computeAnnualFeeDragPct(analysis)
 
   const tierDefs = useMemo(() => [
     { label: 'Low-cost ETF/robo', key: 'lowCost', drag: 0.003, color: colors.success },
