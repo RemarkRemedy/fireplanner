@@ -238,7 +238,7 @@ export function IlpLeaderboardPage() {
                       </Badge>
                     </td>
                     <td className="px-3 py-3 text-center">
-                      <Link to={`/ilp-fees/story/${row.productId}`}>
+                      <Link to={`/ilp-fees/story/${row.productId}?variantId=${encodeURIComponent(row.variantId)}`}>
                         <Button variant="ghost" size="sm" className="gap-1">
                           View
                           <ExternalLink className="h-3 w-3" />

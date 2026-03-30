@@ -1,12 +1,14 @@
-import { act, render, screen } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { FeeBreakdownSection } from '@/components/ilp/FeeBreakdownSection'
 import { analyzeIlpPolicy } from '@/lib/calculations/ilp'
 import { createDefaultPolicy, useIlpStore } from '@/stores/useIlpStore'
 import { IlpLandingPage } from './IlpLandingPage'
 import { IlpLeaderboardPage } from './IlpLeaderboardPage'
 import { IlpReviewPage } from './IlpReviewPage'
+import { IlpStoryModePage } from './IlpStoryModePage'
 
 vi.mock('recharts', () => {
   const Container = ({ children }: { children?: React.ReactNode }) => <div>{children}</div>
@@ -33,6 +35,11 @@ beforeEach(() => {
     useIlpStore.getState().reset()
   })
 })
+
+function LocationProbe() {
+  const location = useLocation()
+  return <div data-testid="location">{`${location.pathname}${location.search}`}</div>
+}
 
 describe('ILP fee dashboard blog bridge', () => {
   it('shows blog CTA entry points on the ILP fee landing page', () => {
@@ -93,6 +100,26 @@ describe('ILP fee dashboard blog bridge', () => {
     )
   })
 
+  it('carries the chosen template variant from landing into story mode', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <Routes>
+          <Route path="/" element={<IlpLandingPage />} />
+          <Route path="/ilp-fees/story/:productId" element={<LocationProbe />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole('button', { name: /i'm considering an ilp/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Voyage')
+    await user.click(within(dialog).getByRole('button', { name: /^USD \/ MIP 15Use template$/i }))
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/ilp-fees/story/hsbc-life-wealth-voyage?variantId=usd-mip-15')
+  })
+
   it('labels the comparison-table bonus column as bonuses instead of bonus offset', () => {
     render(
       <MemoryRouter>
@@ -104,6 +131,21 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(screen.queryByRole('button', { name: /bonus offset/i })).not.toBeInTheDocument()
   })
 
+  it('threads the leaderboard view link through the exact variant route', () => {
+    render(
+      <MemoryRouter>
+        <IlpLeaderboardPage />
+      </MemoryRouter>,
+    )
+
+    const wealthVoyageRow = screen.getAllByText('Wealth Voyage')[0]?.closest('tr')
+    expect(wealthVoyageRow).not.toBeNull()
+    expect(within(wealthVoyageRow!).getByRole('link', { name: /view/i })).toHaveAttribute(
+      'href',
+      '/ilp-fees/story/hsbc-life-wealth-voyage?variantId=sgd-mip-25',
+    )
+  })
+
   it('states that the leaderboard fee percentage is net fees over premiums, not annualized drag', () => {
     render(
       <MemoryRouter>
@@ -113,5 +155,18 @@ describe('ILP fee dashboard blog bridge', () => {
 
     expect(screen.getByRole('button', { name: /net fees \/ premiums/i })).toBeInTheDocument()
     expect(screen.getByText(/not an annualized drag rate/i)).toBeInTheDocument()
+  })
+
+  it('uses the route variant to skip the story-mode variant picker', () => {
+    render(
+      <MemoryRouter initialEntries={['/ilp-fees/story/hsbc-life-wealth-voyage?variantId=usd-mip-15']}>
+        <Routes>
+          <Route path="/ilp-fees/story/:productId" element={<IlpStoryModePage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText(/confirm your details/i)).toBeInTheDocument()
+    expect(screen.queryByText(/select one to continue/i)).not.toBeInTheDocument()
   })
 })

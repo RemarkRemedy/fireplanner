@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowRight, ChevronDown, Receipt } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -107,6 +107,9 @@ function VariantPicker({
 
 export function IlpStoryModePage() {
   const { productId } = useParams<{ productId: string }>()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const requestedVariantId = searchParams.get('variantId')
 
   usePageMeta({
     title: 'ILP Fee Story: SG FIRE Planner',
@@ -117,7 +120,6 @@ export function IlpStoryModePage() {
   const catalogProduct = useCatalogProduct(productId)
 
   // Hydration state machine: variant selection -> setup gate -> story
-  const [selectedVariant, setSelectedVariant] = useState<IlpTemplateVariant | null>(null)
   const [pendingSeed, setPendingSeed] = useState<IlpPolicySeed | null>(null)
   const [storyPolicy, setStoryPolicy] = useState<IlpPolicyInput | null>(null)
   const [showFeeStory, setShowFeeStory] = useState(true)
@@ -134,6 +136,14 @@ export function IlpStoryModePage() {
   }, [activePolicy])
   const { analysis, error: analysisError } = analysisResult
 
+  const routeSeed = useMemo(() => {
+    if (!catalogProduct || !requestedVariantId) return null
+    const requestedVariant = catalogProduct.variants.find((variant) => variant.id === requestedVariantId)
+    if (!requestedVariant) return null
+    const { manifest } = getIlpCatalog()
+    return templateVariantToPolicySeed(catalogProduct, requestedVariant, manifest)
+  }, [catalogProduct, requestedVariantId])
+
   // Derive default seed for single-variant products (no state update needed)
   const defaultSeed = useMemo(() => {
     if (!catalogProduct || catalogProduct.variants.length !== 1) return null
@@ -141,8 +151,8 @@ export function IlpStoryModePage() {
     return templateVariantToPolicySeed(catalogProduct, catalogProduct.variants[0], manifest)
   }, [catalogProduct])
 
-  // Effective seed: user-selected seed takes priority, then auto-derived default
-  const effectiveSeed = pendingSeed ?? defaultSeed
+  // Effective seed: user-selected seed takes priority, then route-selected, then auto-derived default
+  const effectiveSeed = pendingSeed ?? routeSeed ?? defaultSeed
 
   // --- Product not found ---
   if (!productId || !catalogProduct) {
@@ -161,12 +171,11 @@ export function IlpStoryModePage() {
 
   // --- Step 1: Variant selection (if multiple variants) ---
   if (!effectiveSeed && !storyPolicy) {
-    if (catalogProduct.variants.length > 1 && !selectedVariant) {
+    if (catalogProduct.variants.length > 1) {
       return (
         <div className="flex min-h-[50vh] flex-col items-center justify-center px-4">
           <div className="w-full max-w-md">
             <VariantPicker product={catalogProduct} onSelect={(variant) => {
-              setSelectedVariant(variant)
               const { manifest } = getIlpCatalog()
               const seed = templateVariantToPolicySeed(catalogProduct, variant, manifest)
               setPendingSeed(seed)
@@ -198,7 +207,9 @@ export function IlpStoryModePage() {
             }}
             onCancel={() => {
               setPendingSeed(null)
-              setSelectedVariant(null)
+              if (requestedVariantId && productId) {
+                navigate(`/ilp-fees/story/${productId}`, { replace: true })
+              }
             }}
           />
         </div>

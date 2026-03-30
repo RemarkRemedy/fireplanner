@@ -155,9 +155,9 @@ export function IlpLandingPage() {
       <ProductPickerDialog
         open={pickerOpen}
         onOpenChange={setPickerOpen}
-        onSelect={(product, _variant) => {
+        onSelect={(product, variant) => {
           setPickerOpen(false)
-          navigate(`/ilp-fees/story/${product.id}`)
+          navigate(`/ilp-fees/story/${product.id}?variantId=${encodeURIComponent(variant.id)}`)
         }}
       />
     </div>
