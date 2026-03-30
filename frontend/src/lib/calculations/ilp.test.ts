@@ -42318,7 +42318,7 @@ describe('computeSummaryMetrics', () => {
       ],
     }))
     expect(powerUpBonusCredit).toBeGreaterThan(0)
-    expect(powerUpBonusCredit).toBeLessThan(openBalance * 0.001)
+    expect(powerUpBonusCredit).toBeLessThan((openBalance + (policy.monthlyContribution * 12)) * 0.001)
   })
 
   it('credits HSBC Wealth Voyage loyalty bonus monthly after the MIP through the seeded product support seam', () => {
@@ -42359,7 +42359,7 @@ describe('computeSummaryMetrics', () => {
       ],
     }))
     expect(loyaltyBonusCredit).toBeGreaterThan(0)
-    expect(loyaltyBonusCredit).toBeLessThan(openBalance * 0.011)
+    expect(loyaltyBonusCredit).toBeLessThan((openBalance + (policy.monthlyContribution * 12)) * 0.011)
   })
 
   it('models Manulink Investor (II) death benefit today as the higher of account value or 1% of paid premiums less withdrawals', () => {
@@ -44928,6 +44928,29 @@ describe('computeSummaryMetrics', () => {
     }))
     expect(loyaltyBonusCredit).toBeGreaterThan(0)
     expect(loyaltyBonusCredit).toBeLessThan(postMipOpen * 0.001)
+  })
+
+  it('keeps the seeded HSBC Wealth Voyage prospect in force when monthly-rate bonus projection is active', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'hsbc-life-wealth-voyage')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-20')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
+      ...seed,
+      funds: [ZERO_RETURN_FUND],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'regular').contributionAmount).toBe(4_200)
+    expect(accountRow(result.rows[0], 'regular').close).toBeGreaterThan(4_000)
+    expect(result.rows[0]?.combinedValue).toBeGreaterThan(4_000)
+    expect(result.rows[1]?.policyState).toBe('in-force')
   })
 
   it('suspends Invest Wealth Purpose loyalty bonus for the twelve policy months after a regular-account partial withdrawal and resumes on the thirteenth month', () => {

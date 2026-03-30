@@ -6180,11 +6180,12 @@ function computeMonthlyRateBonusProjectionForAccount(
 
   for (let policyMonth = context.range.startPolicyMonth; policyMonth <= context.range.endPolicyMonth; policyMonth += 1) {
     const monthContext = buildCashflowMonthContext(normalized, policyMonth)
+    const monthlyContributionByAccount = getMonthlyContributionByAccount(normalized, policyMonth)
     const monthlyAdditionalCharge = computeAdditionalChargeByAccount(
       normalized,
       monthContext,
       new Map([[accountId, balance]]),
-      new Map([[accountId, 0]]),
+      monthlyContributionByAccount,
     ).get(accountId) ?? 0
     const monthlyGrossFee = monthlyAdditionalCharge + (annualAssuranceCharge / 12)
     const monthlyBonusCredit = monthlyBonuses.reduce((sum, normalizedBonus) => (
@@ -6197,10 +6198,14 @@ function computeMonthlyRateBonusProjectionForAccount(
         currency,
       )
     ), 0)
+    const monthlyContributionAmount = monthlyContributionByAccount.get(accountId) ?? 0
     const monthlyWithdrawalAmount = getMonthlyWithdrawalAmountForAccount(normalized, policyMonth, accountId)
 
     totalBonusCredit += monthlyBonusCredit
-    balance = Math.max(0, ((balance - (monthlyGrossFee - monthlyBonusCredit)) * (1 + monthlyNetReturn)) - monthlyWithdrawalAmount)
+    balance = Math.max(
+      0,
+      (((balance - (monthlyGrossFee - monthlyBonusCredit)) * (1 + monthlyNetReturn)) + monthlyContributionAmount) - monthlyWithdrawalAmount,
+    )
   }
 
   return {
@@ -10690,6 +10695,52 @@ function getRecurringSinglePremiumContributionByAccount(
         )
       }
     }
+  }
+
+  return contributionByAccount
+}
+
+function getMonthlyContributionByAccount(
+  normalized: IlpNormalizedPolicyInput,
+  policyMonth: number,
+): Map<string, number> {
+  const monthContext = buildCashflowMonthContext(normalized, policyMonth)
+  const contributionByAccount = new Map<string, number>(normalized.input.accounts.map((account) => [account.id, 0]))
+  const scheduledMonthlyPremium = getScheduledMonthlyPremiumAtMonth(normalized, policyMonth)
+
+  if (scheduledMonthlyPremium > CONTRIBUTION_TOLERANCE && monthContext.payableMonths > 0) {
+    const icpMonths = Math.max(normalized.input.icpMonths ?? 0, 0)
+    const recurringPhase: IlpRecurringContributionPhase = monthContext.isPostMip
+      ? 'after-mip'
+      : policyMonth <= icpMonths
+        ? 'during-icp'
+        : 'after-icp'
+
+    for (const route of normalized.contributionRoutesByPhase[recurringPhase]) {
+      contributionByAccount.set(
+        route.accountId,
+        (contributionByAccount.get(route.accountId) ?? 0) + (scheduledMonthlyPremium * route.share),
+      )
+    }
+  }
+
+  const repaymentEvents = [
+    ...getPremiumHolidayRepayments(normalized, monthContext.range),
+    ...getPolicyRepayments(normalized, monthContext.range),
+  ]
+  const repaymentContributionByAccount = getRepaymentContributionByAccount(normalized, repaymentEvents)
+  for (const [accountId, amount] of repaymentContributionByAccount.entries()) {
+    contributionByAccount.set(accountId, (contributionByAccount.get(accountId) ?? 0) + amount)
+  }
+
+  const topUpContributionByAccount = getTopUpContributionByAccount(normalized, monthContext.range)
+  for (const [accountId, amount] of topUpContributionByAccount.entries()) {
+    contributionByAccount.set(accountId, (contributionByAccount.get(accountId) ?? 0) + amount)
+  }
+
+  const recurringSinglePremiumContributionByAccount = getRecurringSinglePremiumContributionByAccount(normalized, monthContext.range)
+  for (const [accountId, amount] of recurringSinglePremiumContributionByAccount.entries()) {
+    contributionByAccount.set(accountId, (contributionByAccount.get(accountId) ?? 0) + amount)
   }
 
   return contributionByAccount
