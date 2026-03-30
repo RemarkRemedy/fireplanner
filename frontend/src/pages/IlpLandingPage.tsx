@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { BarChart3, Calculator, Search } from 'lucide-react'
+import { BarChart3, BookOpen, Calculator, Search } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { ProductPickerDialog } from '@/components/ilp/catalog/ProductPickerDialog'
 import { usePageMeta } from '@/hooks/usePageMeta'
+
+const BLOG_URL = '/blog/ilp-questions'
 
 export function IlpLandingPage() {
   usePageMeta({
@@ -28,6 +30,16 @@ export function IlpLandingPage() {
           Independent, privacy-first fee analysis for 92 Singapore ILP products.
           Your data never leaves the browser. No sales agenda. Open source.
         </p>
+      </div>
+
+      {/* CTA 1: educational hook below hero */}
+      <div className="rounded-lg border border-blue-200 bg-blue-50/50 px-4 py-3 text-center dark:border-blue-900 dark:bg-blue-950/30">
+        <a
+          href={`${BLOG_URL}?utm_source=dashboard&utm_content=landing_hero`}
+          className="text-sm font-medium text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+        >
+          New here? Read: 7 questions to ask your FA before signing an ILP &rarr;
+        </a>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -95,6 +107,31 @@ export function IlpLandingPage() {
         </Link>
       </div>
 
+      {/* CTA 2: educational guide card */}
+      <a href={`${BLOG_URL}?utm_source=dashboard&utm_content=landing_guide`} className="group block">
+        <Card className="transition-colors group-hover:border-primary group-hover:shadow-sm">
+          <CardContent className="flex items-start gap-4 p-6">
+            <BookOpen className="mt-0.5 h-6 w-6 shrink-0 text-muted-foreground group-hover:text-primary" />
+            <div className="space-y-1">
+              <p className="font-medium group-hover:text-primary">Questions to ask before you buy an ILP</p>
+              <p className="text-sm text-muted-foreground">
+                7 specific questions, what your FA might say, what that actually means, and interactive tools to visualise the fees. Takes 10 minutes.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </a>
+
+      {/* CTA 3: fee comparison hook */}
+      <div className="text-center">
+        <a
+          href={`${BLOG_URL}?utm_source=dashboard&utm_content=landing_compare#2-what-are-the-total-annual-fees-including-fund-level-charges`}
+          className="text-sm text-muted-foreground hover:text-foreground"
+        >
+          How do ILP fees compare to buying term life + ETFs? See the interactive comparison &rarr;
+        </a>
+      </div>
+
       <div className="space-y-3 text-center text-xs text-muted-foreground">
         <p>
           Not financial advice. This tool provides fee calculations based on product documentation
@@ -103,6 +140,16 @@ export function IlpLandingPage() {
         <p>
           Privacy-first. All computation runs in your browser. No data is sent to any server.
         </p>
+      </div>
+
+      {/* CTA 4: footer link */}
+      <div className="text-center">
+        <a
+          href={`${BLOG_URL}?utm_source=dashboard&utm_content=landing_footer#when-an-ilp-might-actually-make-sense`}
+          className="text-xs text-muted-foreground hover:text-foreground"
+        >
+          Read: When an ILP might actually make sense &rarr;
+        </a>
       </div>
 
       <ProductPickerDialog
