@@ -6,6 +6,7 @@ import { FeeBreakdownSection } from '@/components/ilp/FeeBreakdownSection'
 import { analyzeIlpPolicy } from '@/lib/calculations/ilp'
 import { createDefaultPolicy, useIlpStore } from '@/stores/useIlpStore'
 import { IlpLandingPage } from './IlpLandingPage'
+import { IlpExitCalculatorPage } from './IlpExitCalculatorPage'
 import { IlpLeaderboardPage } from './IlpLeaderboardPage'
 import { IlpReviewPage } from './IlpReviewPage'
 import { IlpStoryModePage } from './IlpStoryModePage'
@@ -168,5 +169,25 @@ describe('ILP fee dashboard blog bridge', () => {
 
     expect(screen.getByText(/confirm your details/i)).toBeInTheDocument()
     expect(screen.queryByText(/select one to continue/i)).not.toBeInTheDocument()
+  })
+
+  it('shows the detailed fee breakdown section in exit analysis results', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter>
+        <IlpExitCalculatorPage />
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Voyage')
+    await user.click(within(dialog).getByRole('button', { name: /^USD \/ MIP 15Use template$/i }))
+    await user.click(await screen.findByRole('button', { name: /calculate exit options/i }))
+
+    expect(await screen.findByText('Fee Breakdown')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 3, name: /annual fees by category/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 3, name: /detailed fee table/i })).toBeInTheDocument()
   })
 })

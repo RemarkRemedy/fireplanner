@@ -8,6 +8,7 @@ import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { NumberInput } from '@/components/shared/NumberInput'
 import { ProductPickerDialog } from '@/components/ilp/catalog/ProductPickerDialog'
 import { DecisionPanel } from '@/components/ilp/DecisionPanel'
+import { FeeBreakdownSection } from '@/components/ilp/FeeBreakdownSection'
 import { HeadlineInsight } from '@/components/ilp/HeadlineInsight'
 import { OpportunityCostCard } from '@/components/ilp/OpportunityCostCard'
 import { usePageMeta } from '@/hooks/usePageMeta'
@@ -283,7 +284,7 @@ export function IlpExitCalculatorPage() {
       || exitPolicy.accounts.every((a) => a.contributionShare === 0)
 
     return (
-      <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
+      <div className="mx-auto max-w-5xl space-y-6 px-4 py-8">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-2xl font-bold">Exit Analysis</h1>
@@ -295,6 +296,10 @@ export function IlpExitCalculatorPage() {
         </div>
 
         <HeadlineInsight policy={exitPolicy} analysis={analysis} />
+
+        {analysis.mode === 'projected' && (
+          <FeeBreakdownSection policy={exitPolicy} analysis={analysis} />
+        )}
 
         <DecisionPanel policy={exitPolicy} analysis={analysis} />
 
