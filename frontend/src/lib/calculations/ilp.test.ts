@@ -33316,7 +33316,177 @@ describe('computeSummaryMetrics', () => {
 
     const analysis = analyzeCurrentOnlyIlpPolicy(policy)
 
-    expect(analysis.summary.currentDeathBenefitEstimate).toBeCloseTo(12_100, 2)
+  expect(analysis.summary.currentDeathBenefitEstimate).toBeCloseTo(12_100, 2)
+  })
+
+  it('allows GREAT Invest Advantage (RSP) selected-fund one-off withdrawals that leave the chosen fund exactly at the published S$500 floor', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'great-eastern-great-invest-advantage-rsp')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-cash-or-srs')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
+      ...seed,
+      currentPolicyYear: 2,
+      monthsAlreadyPaid: 12,
+      monthlyContribution: 0,
+      accounts: seed.accounts.map((account) => ({
+        ...account,
+        currentValue: 5_000,
+      })),
+      funds: [
+        { ...ZERO_RETURN_FUND, name: 'Fund A', allocation: 0.7 },
+        { ...ZERO_RETURN_FUND, name: 'Fund B', allocation: 0.3 },
+      ],
+      policyEvents: [
+        {
+          id: 'gia-rsp-at-floor-withdrawal',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 13,
+          durationMonths: 1,
+          amount: 3_000,
+          accountId: 'policy',
+          fundName: 'Fund A',
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(policy.policyStateSupport?.partialWithdrawalMinimumRemainingSelectedFundValueRules).toEqual([
+      {
+        activeWindow: 'policy-term',
+        accountId: 'policy',
+        minimumValue: 500,
+      },
+    ])
+    expect(accountRow(result.rows[0], 'policy').withdrawalAmount).toBe(3_000)
+    expect(accountRow(result.rows[0], 'policy').close).toBe(2_000)
+  })
+
+  it('blocks GREAT Invest Advantage (RSP) selected-fund one-off withdrawals that would leave the chosen fund below the published S$500 floor', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'great-eastern-great-invest-advantage-rsp')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-cash-or-srs')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
+      ...seed,
+      currentPolicyYear: 2,
+      monthsAlreadyPaid: 12,
+      monthlyContribution: 0,
+      accounts: seed.accounts.map((account) => ({
+        ...account,
+        currentValue: 5_000,
+      })),
+      funds: [
+        { ...ZERO_RETURN_FUND, name: 'Fund A', allocation: 0.7 },
+        { ...ZERO_RETURN_FUND, name: 'Fund B', allocation: 0.3 },
+      ],
+      policyEvents: [
+        {
+          id: 'gia-rsp-below-floor-withdrawal',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 13,
+          durationMonths: 1,
+          amount: 3_001,
+          accountId: 'policy',
+          fundName: 'Fund A',
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'policy').withdrawalAmount).toBe(0)
+    expect(accountRow(result.rows[0], 'policy').close).toBe(5_000)
+  })
+
+  it('requires a selected fund before GREAT Invest Advantage (RSP) one-off withdrawals can use the selected-fund floor seam', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'great-eastern-great-invest-advantage-rsp')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-cash-or-srs')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+
+    expect(() => ilpPolicySchema.parse({
+      id: 'seeded-policy',
+      ...seed,
+      currentPolicyYear: 2,
+      monthsAlreadyPaid: 12,
+      monthlyContribution: 0,
+      accounts: seed.accounts.map((account) => ({
+        ...account,
+        currentValue: 5_000,
+      })),
+      funds: [
+        { ...ZERO_RETURN_FUND, name: 'Fund A', allocation: 0.7 },
+        { ...ZERO_RETURN_FUND, name: 'Fund B', allocation: 0.3 },
+      ],
+      policyEvents: [
+        {
+          id: 'gia-rsp-missing-selected-fund',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 13,
+          durationMonths: 1,
+          amount: 3_000,
+          accountId: 'policy',
+        },
+      ],
+    })).toThrow(/selected fund/i)
+  })
+
+  it('allows GREAT Invest Advantage (RSP) CPFIS selected-fund one-off withdrawals that leave the chosen fund exactly at the published S$500 floor', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'great-eastern-great-invest-advantage-rsp')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-open-ended-cpfis')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    const policy = ilpPolicySchema.parse({
+      id: 'seeded-policy',
+      ...seed,
+      currentPolicyYear: 2,
+      monthsAlreadyPaid: 12,
+      monthlyContribution: 0,
+      accounts: seed.accounts.map((account) => ({
+        ...account,
+        currentValue: 5_000,
+      })),
+      funds: [
+        { ...ZERO_RETURN_FUND, name: 'Fund A', allocation: 0.7 },
+        { ...ZERO_RETURN_FUND, name: 'Fund B', allocation: 0.3 },
+      ],
+      policyEvents: [
+        {
+          id: 'gia-rsp-cpfis-at-floor-withdrawal',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 13,
+          durationMonths: 1,
+          amount: 3_000,
+          accountId: 'policy',
+          fundName: 'Fund A',
+        },
+      ],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(accountRow(result.rows[0], 'policy').withdrawalAmount).toBe(3_000)
+    expect(accountRow(result.rows[0], 'policy').close).toBe(2_000)
   })
 
   it('models PRULink InvestGrowth death benefit today as the higher of policy value and the 110% premium floor net of top-ups and withdrawals', () => {

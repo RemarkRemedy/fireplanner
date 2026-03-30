@@ -2897,6 +2897,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
     expect(seededAlert?.textContent).toContain('published recurrent-premium charge path')
+    expect(seededAlert?.textContent).toContain('published explicit selected-fund partial-surrender floor')
     expect(seededAlert?.textContent).toContain('current-state death and terminal-illness benefit amount as the higher of 110% of recurrent single premiums plus top-ups less partial surrenders or account value less manual current amount owing')
     expect(seededAlert?.textContent).toContain('no-surrender-charge structure')
     expect(seededAlert?.textContent).toContain('open-ended no-MIP basis')

@@ -112,6 +112,17 @@ function buildVariant(
     bonuses: [],
     feeRules,
     eventChargeRules,
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalMinimumRemainingSelectedFundValueRules: [
+        {
+          activeWindow: 'policy-term',
+          accountId: 'policy',
+          minimumValue: 500,
+        },
+      ],
+    },
     eecTable: [],
     warnings: [
       paymentMode === 'cpfis'
@@ -120,8 +131,8 @@ function buildVariant(
       'This open-ended recurrent-single-premium product uses the no-MIP basis; ongoing premiums continue until the user changes them or the review horizon ends.',
     ],
     unsupportedItems: [
-      'The current-state terminal-illness benefit amount is modeled as the same amount as the current death-benefit estimate after manual current amount owing, but terminal-illness claim admission, exclusions, settlement, and policy termination remain informational only.',
-      'Fund-switching and minimum-transaction guards remain informational only.',
+      'The current admitted-state terminal-illness payable amount is supported through manual claim-amount input on the published full-termination terminal-illness corridor, and an admitted-and-settled terminal-illness claim is supported as a current policy-termination state, but terminal-illness exclusions and broader claim settlement remain informational only.',
+      'The published explicit selected-fund partial-surrender floor is supported on explicit one-off withdrawals using the current configured fund split as a proportional selected-fund balance proxy on the same projection row, but exact per-fund NAV divergence and fund-switching remain informational only.',
     ],
     sourceRefs: [page1, page2, page3],
   }
@@ -143,6 +154,8 @@ export function parseGreatEasternInvestAdvantageRsp(context: ParseContext): IlpC
       'branch:great-eastern-gia-rsp-recurrent-single-premium-charge',
       'branch:great-eastern-gia-rsp-top-up-premium-charge',
       'branch:great-eastern-gia-rsp-open-ended-zero-surrender-charge',
+      'kernel:partial-withdrawal-minimum-amount-block',
+      'kernel:partial-withdrawal-selected-fund-minimum-value-block',
       'kernel:current-death-benefit-estimate',
       'kernel:current-ti-benefit-estimate',
     ],
@@ -151,7 +164,7 @@ export function parseGreatEasternInvestAdvantageRsp(context: ParseContext): IlpC
       'great-eastern-gia-rsp-srs-cpfis-surrender-destination',
     ],
     warnings: [
-      'GREAT Invest Advantage (RSP) is cataloged as a supported V1 product. The parser captures the published recurrent-premium charge path, top-up premium charge, the current-state death and terminal-illness benefit amount as the higher of 110% of recurrent single premiums plus top-ups less partial surrenders or account value less manual current amount owing, and the explicit no-surrender-charge structure through the open-ended no-MIP basis, while terminal-illness claim admission / exclusions / settlement and surrender-destination handling remain informational only.',
+      'GREAT Invest Advantage (RSP) is cataloged as a supported V1 product. The parser captures the published recurrent-premium charge path, top-up premium charge, the published S$500 minimum one-off partial withdrawal amount, the published explicit selected-fund partial-surrender floor that blocks withdrawals leaving the chosen fund below S$500 using the current configured fund split as a proportional selected-fund balance proxy on the same projection row, the current-state death and terminal-illness benefit amount as the higher of 110% of recurrent single premiums plus top-ups less partial surrenders or account value less manual current amount owing, the current admitted-state terminal-illness payable amount through manual claim-amount input on the published full-termination terminal-illness corridor, an admitted-and-settled terminal-illness claim as a current policy-termination state, and the explicit no-surrender-charge structure through the open-ended no-MIP basis, while exact per-fund NAV divergence, fund-switching, terminal-illness exclusions, broader claim settlement, and surrender-destination handling remain informational only.',
     ],
     archived: false,
     variants: [

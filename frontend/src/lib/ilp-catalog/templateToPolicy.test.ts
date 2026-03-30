@@ -141,6 +141,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-residual-death-benefit-after-ti-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-start-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-account-minimum-holding-gate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:monthly-rate-bonus-crediting')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:premium-holiday-top-up-block')
@@ -156,6 +157,13 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.scheduledPayoutSupport).toEqual({
       mode: 'manual-assumption',
       accountId: 'regular',
+      minimumRemainingAccountValueRules: [
+        {
+          accountId: 'regular',
+          basis: 'fixed-amount',
+          amount: 3_600,
+        },
+      ],
       minimumStartPolicyYear: 12,
       minimumAnnualWithdrawalAmount: 1_200,
       source: 'policy-redemption',
@@ -224,6 +232,14 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'manual-assumption',
       accountId: 'topup',
       fallbackAccountIds: ['regular'],
+      minimumRemainingAccountValueRules: [
+        {
+          accountId: 'regular',
+          basis: 'fixed-amount',
+          amount: 3_600,
+          strictGreaterThan: true,
+        },
+      ],
       allowedFrequencies: ['annual', 'semi-annual', 'quarterly', 'monthly'],
       minimumStartPolicyYear: 11,
       minimumAnnualWithdrawalAmount: 1_200,
@@ -330,14 +346,27 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:premium-holiday-top-up-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-minimum-annual-withdrawal-amount')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-amount-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
     expect(seed.policyStateSupport).toEqual({
       automaticLapseOnAccountValueDepletion: false,
       blockTopUpsDuringPremiumHoliday: true,
+      minimumPartialWithdrawalAmount: 250,
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'policy-value',
+          minimumValue: 2_500,
+          minimumValueExclusive: true,
+        },
+      ],
     })
     expect(seed.scheduledPayoutSupport).toEqual({
       mode: 'manual-assumption',
       accountId: 'policy',
       minimumAnnualWithdrawalAmount: 1_200,
+      minimumRemainingPolicyValue: 2_500,
+      ceaseOnMinimumRemainingPolicyValueBreach: true,
       source: 'policy-redemption',
     })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('premium-holiday blocking of ad-hoc top-ups and recurring single premiums'))).toBe(true)
@@ -361,6 +390,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-residual-death-benefit-after-ti-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-frequency-eligibility-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-account-minimum-holding-gate')
     expect(seed.catalogSource?.modeledEconomics).toContain('hsbc-voyage-premium-base-amf')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:wealth-voyage-premium-holiday-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
@@ -381,6 +411,14 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'manual-assumption',
       accountId: 'topup',
       fallbackAccountIds: ['regular'],
+      minimumRemainingAccountValueRules: [
+        {
+          accountId: 'regular',
+          basis: 'annualised-regular-premium-multiple',
+          multiplier: 1.5,
+          strictGreaterThan: true,
+        },
+      ],
       allowedFrequencies: ['annual', 'semi-annual', 'quarterly', 'monthly'],
       minimumStartPolicyYear: 21,
       minimumAnnualWithdrawalAmount: 1_200,
@@ -524,6 +562,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-residual-death-benefit-after-ti-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-frequency-eligibility-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-account-minimum-holding-gate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:premium-holiday-top-up-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-start-policy-month-block')
@@ -535,8 +574,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('wealth-focus-life-replacement-cover-reset-and-rider-termination')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('wealth-focus-life-replacement-policy-reissue-fallback')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('wealth-focus-life-replacement-option')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('wealth-focus-accidental-death-claim-settlement-and-exclusions')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('wealth-focus-terminal-illness-claim-admission-and-settlement')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('wealth-focus-accidental-death-claim-exclusions-and-broader-settlement')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('wealth-focus-terminal-illness-notification-valuation-timing-and-settlement')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('wealth-focus-claim-side-benefit-settlement')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('wealth-focus-accidental-death-and-ti-claim-adjustments')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('wealth-focus-benefit-payout-handling')
@@ -555,6 +594,14 @@ describe('templateVariantToPolicySeed', () => {
       allowedFrequencies: ['annual', 'semi-annual', 'quarterly', 'monthly'],
       minimumStartPolicyYear: 6,
       minimumAnnualWithdrawalAmount: 1_200,
+      minimumRemainingAccountValueRules: [
+        {
+          accountId: 'regular',
+          basis: 'annualised-regular-premium-multiple',
+          multiplier: 0.75,
+          strictGreaterThan: true,
+        },
+      ],
       source: 'policy-redemption',
     })
     expect(seed.scheduledPayoutAssumption).toBeUndefined()
@@ -627,6 +674,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['regular', 'topup'],
+      minimumAnnualPayoutAmount: 40,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -653,6 +701,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-ti-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-residual-death-benefit-after-ti-estimate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-account-minimum-holding-gate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:premium-holiday-top-up-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-start-policy-month-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
@@ -663,6 +712,14 @@ describe('templateVariantToPolicySeed', () => {
       minimumTopUpAmount: 5_000,
       topUpAmountIncrement: 10,
     })
+    expect(seed.scheduledPayoutSupport?.minimumRemainingAccountValueRules).toEqual([
+      {
+        accountId: 'regular',
+        basis: 'annualised-regular-premium-multiple',
+        multiplier: 0.25,
+        strictGreaterThan: true,
+      },
+    ])
   })
 
   it('maps HSBC Wealth Focus Flexi 5 into a supported seed with residual death after TI support', () => {
@@ -679,6 +736,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-ti-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-residual-death-benefit-after-ti-estimate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-account-minimum-holding-gate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:premium-holiday-top-up-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-start-policy-month-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
@@ -689,6 +747,14 @@ describe('templateVariantToPolicySeed', () => {
       minimumTopUpAmount: 5_000,
       topUpAmountIncrement: 10,
     })
+    expect(seed.scheduledPayoutSupport?.minimumRemainingAccountValueRules).toEqual([
+      {
+        accountId: 'regular',
+        basis: 'annualised-regular-premium-multiple',
+        multiplier: 0.75,
+        strictGreaterThan: true,
+      },
+    ])
   })
 
   it('maps AIA Wealth Venture into a supported seed with reinvest-default distribution support', () => {
@@ -1075,6 +1141,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-ti-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-residual-death-benefit-after-ti-estimate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-amount-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulink-investor-ii-death-benefit')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulink-investor-ii-terminal-illness-benefit')
@@ -1091,6 +1159,18 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
+    expect(seed.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'account-value',
+          accountId: 'policy',
+          minimumValue: 3_000,
+        },
+      ],
+    })
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['policy'],
@@ -1107,6 +1187,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current-state death benefit as the higher of account value or 1% of single premium, top-up premium, and recurring single premium paid less withdrawals'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current terminal-illness benefit estimate as the lower of the modeled current death benefit and a manual remaining aggregate TI cap'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current residual death-benefit estimate after a TI claim today'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('published S$500 minimum one-off partial withdrawal amount with the published S$3,000 remaining account-value floor'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
@@ -1198,8 +1279,16 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.eventChargeRules?.find((rule) => rule.id === 'partial-withdrawal-charge')?.freeEventCount).toBe(1)
     expect(seed.eventChargeRules?.find((rule) => rule.id === 'partial-withdrawal-charge')?.freeEventStartPolicyYear).toBe(11)
     expect(seed.eventChargeRules?.find((rule) => rule.id === 'partial-withdrawal-charge')?.freeEventMaxAmountRate).toBe(0.1)
+    expect(seed.policyStateSupport?.minimumPartialWithdrawalAmount).toBe(1_000)
+    expect(seed.policyStateSupport?.partialWithdrawalMinimumRemainingValueRules).toEqual([
+      { activeWindow: 'policy-term', basis: 'account-value', accountId: 'growth', minimumValue: 1_000 },
+      { activeWindow: 'policy-term', basis: 'account-value', accountId: 'flex', minimumValue: 1_000 },
+      { activeWindow: 'policy-term', basis: 'account-value', accountId: 'additional', minimumValue: 1_000 },
+    ])
     expect(seed.bonuses.some((bonus) => bonus.label.includes('Growth Account Welcome Bonus'))).toBe(true)
     expect(seed.bonuses.some((bonus) => bonus.label.includes('Flex Account Welcome Bonus'))).toBe(true)
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-amount-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-accidental-death-benefit-estimate')
@@ -1220,10 +1309,12 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings).not.toContain('Top-up premium flows are retained as metadata and are not modeled in the current ILP calculator.')
     expect(seed.catalogWarnings).not.toContain('Additional Investment Account fallback for premium holiday charges is not modeled automatically.')
     expect(seed.catalogWarnings).not.toContain('Free first partial withdrawal after 10 years is not modeled automatically.')
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('published S$1,000 minimum one-off partial-withdrawal amount'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('quoted S$1,000 remaining-units floor on the explicit account-selected one-off path'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current-state death-benefit estimate as the higher of the 101%-of-paid-regular-premiums floor net Growth/Flex withdrawals or current Growth/Flex account value plus Additional Investment Account value after manual current amount owing'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current accidental-death estimate as the higher of the 105%-of-paid-regular-premiums floor net Growth/Flex withdrawals or current Growth/Flex account value plus Additional Investment Account value after manual current amount owing when cash dividend payouts are not active'))).toBe(true)
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('payable-now accidental-disability snapshot'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('current accidental-disability payout-stage corridor'))).toBe(true)
   })
 
   it('maps PRUVantage Prosper into a supported seed with assurance sum-at-risk rules', () => {
@@ -1241,6 +1332,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:prosper-assurance-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-accidental-death-benefit-estimate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-amount-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('growth-account-distribution-election')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('pruvantage-prosper-accidental-death-and-claim-exclusions')
@@ -1273,6 +1366,12 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
+    expect(seed.policyStateSupport?.minimumPartialWithdrawalAmount).toBe(1_000)
+    expect(seed.policyStateSupport?.partialWithdrawalMinimumRemainingValueRules).toEqual([
+      { activeWindow: 'policy-term', basis: 'account-value', accountId: 'growth', minimumValue: 1_000 },
+      { activeWindow: 'policy-term', basis: 'account-value', accountId: 'flex', minimumValue: 1_000 },
+      { activeWindow: 'policy-term', basis: 'account-value', accountId: 'additional', minimumValue: 1_000 },
+    ])
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['growth'],
@@ -1285,6 +1384,8 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'reinvest',
       source: 'catalog-default',
     })
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('published S$1,000 minimum one-off partial-withdrawal amount'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('quoted S$1,000 remaining-units floor on the explicit account-selected one-off path'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current-state death-benefit estimate as the higher of the 101%-of-paid-regular-premiums floor net Growth/Flex withdrawals or current Growth/Flex account value plus Additional Investment Account value after manual current amount owing'))).toBe(true)
   })
@@ -1305,9 +1406,17 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:assure-ii-manual-reduction-resumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-accidental-disability-benefit-estimate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-amount-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('pruvantage-assure-ii-death-claim-exclusions')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('premium-pass-wealth-share-change-of-life-assured-options')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('pruvantage-assure-ii-wealth-share-change-of-life-assured-options')
+    expect(seed.policyStateSupport?.minimumPartialWithdrawalAmount).toBe(1_000)
+    expect(seed.policyStateSupport?.partialWithdrawalMinimumRemainingValueRules).toEqual([
+      { activeWindow: 'policy-term', basis: 'account-value', accountId: 'growth', minimumValue: 1_000 },
+      { activeWindow: 'policy-term', basis: 'account-value', accountId: 'flex', minimumValue: 1_000 },
+      { activeWindow: 'policy-term', basis: 'account-value', accountId: 'additional', minimumValue: 1_000 },
+    ])
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -1338,7 +1447,9 @@ describe('templateVariantToPolicySeed', () => {
     })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current-state death-benefit estimate as the higher of current sum assured, current Wealth Assure Value, or current Growth/Flex account value plus Additional Investment Account value after manual current amount owing'))).toBe(true)
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('payable-now accidental-disability snapshot'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('published deferment-period not-payable-yet state, payable-now initial lump sum, and later balance-lump-sum release'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('published S$1,000 minimum one-off partial-withdrawal amount'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('quoted S$1,000 remaining-units floor on the explicit account-selected one-off path'))).toBe(true)
   })
 
   it('maps AIA Pro Lifetime Protector (II) into a supported Plus seed with an Appendix A benefit-charge rule', () => {
@@ -1354,17 +1465,38 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-pro-lifetime-protector-ii-plus-benefit-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:no-lapse-fixed-and-benefit-charge-debt-carry')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-pro-lifetime-protector-ii-premium-holiday-charge-fixed-monthly')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-pro-lifetime-protector-ii-no-lapse-premium-holiday-charge-carry')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-pro-lifetime-protector-ii-current-vitality-powerup-dollar')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:regular-premium-variation-start-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:regular-premium-variation-minimum-floor')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-start-policy-month-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-paid-up-to-date-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-pro-lifetime-protector-ii-premium-holiday-charge-fixed-monthly')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-pro-lifetime-protector-ii-death-benefit-plus-option')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-pro-lifetime-protector-ii-no-lapse-history-and-claim-settlement')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-pro-lifetime-protector-ii-aia-vitality-powerup-dollar-history-and-non-death-settlement')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-pro-lifetime-protector-ii-aia-vitality-powerup-dollar')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-pro-lifetime-protector-ii-no-lapse-privilege')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-pro-lifetime-protector-ii-regular-premium-increase-and-payment-history')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-pro-lifetime-protector-ii-regular-premium-variation')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-pro-lifetime-protector-ii-reinstatement-underwriting-and-extra-mortality')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-pro-lifetime-protector-ii-reinstatement')
     expect(seed.policyStateSupport).toEqual({
-      automaticLapseOnAccountValueDepletion: false,
+      automaticLapseOnAccountValueDepletion: true,
+      accountValueDepletionNonLapseWindows: [
+        { startPolicyYear: 1, endPolicyYear: 10 },
+      ],
+      minimumRegularPremiumVariationStartPolicyMonth: 25,
+      minimumRegularPremiumAmountByFrequency: {
+        annual: 1_200,
+        'semi-annual': 600,
+        quarterly: 300,
+        monthly: 100,
+      },
       blockTopUpsWhenPremiumsNotPaidUpToDate: true,
       minimumPartialWithdrawalAmount: 1_000,
       minimumPartialWithdrawalStartPolicyMonthByAccount: [
@@ -1397,6 +1529,10 @@ describe('templateVariantToPolicySeed', () => {
             formula: 'aia-plp2-plus-death',
             monthlyModalFactor: 1 / 12,
             maxAgeNextBirthday: 99,
+            carryForwardOnInsufficientDeductionWithinPolicyYears: {
+              startPolicyYear: 1,
+              endPolicyYear: 10,
+            },
             policyYearRateMultiplierSchedule: [
               { startPolicyYear: 1, endPolicyYear: 1, multiplier: 0.5 },
             ],
@@ -1418,6 +1554,10 @@ describe('templateVariantToPolicySeed', () => {
           basis: 'fixed-amount-with-overlap-months',
           appliesTo: ['policy'],
           amount: 50,
+          carryForwardOnInsufficientDeductionWithinPolicyYears: {
+            startPolicyYear: 1,
+            endPolicyYear: 10,
+          },
         }),
         expect.objectContaining({
           id: 'top-up-premium-charge',
@@ -1453,14 +1593,22 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:assure-sp-single-premium-allocation-enhancement')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:assure-sp-loyalty-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:assure-sp-first-free-withdrawal')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-amount-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-accidental-disability-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('pruvantage-assure-sp-death-claim-exclusions')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('pruvantage-assure-sp-accidental-disability-and-claim-exclusions')
+    expect(seed.policyStateSupport?.minimumPartialWithdrawalAmount).toBe(1_000)
+    expect(seed.policyStateSupport?.partialWithdrawalMinimumRemainingValueRules).toEqual([
+      { activeWindow: 'policy-term', basis: 'account-value', accountId: 'iia', minimumValue: 1_000 },
+      { activeWindow: 'policy-term', basis: 'account-value', accountId: 'aia', minimumValue: 1_000 },
+    ])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('supported V1 product'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('single-premium allocation enhancement tiers on the original initial single premium'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current-state death-benefit estimate as the higher of current sum assured, current Wealth Assure Value, or Initial Investment Account value plus Additional Investment Account value after manual current amount owing'))).toBe(true)
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('payable-now accidental-disability snapshot'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('published deferment-period not-payable-yet state, payable-now initial lump sum, and later balance-lump-sum release'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('published $1,000 minimum one-off partial-withdrawal amount'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('published $1,000 remaining-units floor across the Initial Investment Account and Additional Investment Account'))).toBe(true)
     expect(seed.monthlyContribution).toBe(0)
     expect(seed.initialSinglePremium).toBe(0)
     expect(seed.accounts.find((account) => account.id === 'iia')?.contributionRules).toEqual([
@@ -1874,6 +2022,10 @@ describe('templateVariantToPolicySeed', () => {
         rate: 0.03,
       }),
     ])
+    expect(seed.policyStateSupport).toMatchObject({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 50,
+    })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('default 20-year review horizon'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('gross initial single premium'))).toBe(true)
   })
@@ -1891,6 +2043,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-gia-rsp-recurrent-single-premium-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-selected-fund-minimum-value-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-ti-benefit-estimate')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('great-eastern-gia-rsp-death-benefit')
@@ -1920,6 +2073,17 @@ describe('templateVariantToPolicySeed', () => {
         rate: 0.03,
       }),
     ])
+    expect(seed.policyStateSupport).toMatchObject({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalMinimumRemainingSelectedFundValueRules: [
+        {
+          activeWindow: 'policy-term',
+          accountId: 'policy',
+          minimumValue: 500,
+        },
+      ],
+    })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('default 20-year review horizon'))).toBe(true)
   })
 
@@ -1965,6 +2129,10 @@ describe('templateVariantToPolicySeed', () => {
         rate: 0.03,
       }),
     ])
+    expect(seed.policyStateSupport).toMatchObject({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 50,
+    })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('default 20-year review horizon'))).toBe(true)
   })
 
@@ -1986,6 +2154,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-tpd-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-ti-benefit-after-tpd-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-residual-death-benefit-after-tpd-estimate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:no-lapse-fixed-and-assurance-charge-debt-carry')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-life-advantage-4-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-life-advantage-4-insurance-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
@@ -1994,6 +2163,13 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('great-life-advantage-4-insurance-charge')
     expect(seed.policyStateSupport).toEqual({
       automaticLapseOnAccountValueDepletion: true,
+      accountValueDepletionNonLapseWindows: [
+        { startPolicyYear: 1, endPolicyYear: 10 },
+      ],
+      accountValueDepletionNonLapseTerminationRules: [
+        { trigger: 'partial-withdrawal', disqualifyIfAnyFromPolicyYear: 1 },
+        { trigger: 'premium-holiday', disqualifyIfAnyFromPolicyYear: 1 },
+      ],
       blockTopUpsDuringPremiumHoliday: true,
       blockTopUpsWhenPremiumsNotPaidUpToDate: true,
       minimumTopUpAmount: 1_000,
@@ -2026,6 +2202,10 @@ describe('templateVariantToPolicySeed', () => {
         expect.objectContaining({
           id: 'policy-fee',
           basis: 'fixed-annual',
+          carryForwardOnInsufficientDeductionWithinPolicyYears: {
+            startPolicyYear: 1,
+            endPolicyYear: 10,
+          },
         }),
         expect.objectContaining({
           id: 'insurance-charge',
@@ -2035,6 +2215,10 @@ describe('templateVariantToPolicySeed', () => {
             formula: 'great-eastern-gla4-death-ti',
             monthlyModalFactor: 1 / 12,
             maxAgeNextBirthday: 99,
+            carryForwardOnInsufficientDeductionWithinPolicyYears: {
+              startPolicyYear: 1,
+              endPolicyYear: 10,
+            },
           },
         }),
       ]),
@@ -2116,6 +2300,11 @@ describe('templateVariantToPolicySeed', () => {
           id: 'policy-fee-fixed-low-annualised-premium',
           basis: 'fixed-annual',
           amountSchedule: [{ startPolicyYear: 1, endPolicyYear: null, amount: 60 }],
+          activationCondition: {
+            basis: 'scheduled-annual-premium',
+            operator: 'lt',
+            thresholdAmount: 6_000,
+          },
         }),
         expect.objectContaining({
           id: 'death-ti-insurance-charge',
@@ -2148,6 +2337,24 @@ describe('templateVariantToPolicySeed', () => {
       ]),
     )
     expect(seed.assuranceProfile).toBeUndefined()
+
+    const highVariant = product?.variants.find((entry) => entry.id === 'sgd-mip-10-choice-10-6000-and-above')
+    expect(highVariant).toBeDefined()
+
+    const highSeed = templateVariantToPolicySeed(product!, highVariant!, manifest)
+    expect(highSeed.chargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'policy-fee-fixed-low-annualised-premium',
+          basis: 'fixed-annual',
+          activationCondition: {
+            basis: 'scheduled-annual-premium',
+            operator: 'lt',
+            thresholdAmount: 6_000,
+          },
+        }),
+      ]),
+    )
   })
 
   it('maps Investment-linked Insurance Plan 2 into a supported MIP seed with Great Eastern appendix-based assurance charge', () => {
@@ -2201,6 +2408,11 @@ describe('templateVariantToPolicySeed', () => {
           id: 'policy-fee-fixed-low-annualised-premium',
           basis: 'fixed-annual',
           amountSchedule: [{ startPolicyYear: 1, endPolicyYear: null, amount: 60 }],
+          activationCondition: {
+            basis: 'scheduled-annual-premium',
+            operator: 'lt',
+            thresholdAmount: 6_000,
+          },
         }),
         expect.objectContaining({
           id: 'death-ti-insurance-charge',
@@ -2711,11 +2923,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-prestige-portfolio-premium-charge-manual-input')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-prestige-portfolio-open-ended-zero-surrender-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-prestige-portfolio-wrap-fee-manual-input')
-    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-amount-block')
-    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-selected-fund-minimum-value-block')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-eastern-prestige-portfolio-regular-premium-corridor')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-eastern-prestige-portfolio-accidental-death-claim-exclusions')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('great-eastern-prestige-portfolio-fund-switching-threshold-administration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('great-eastern-prestige-portfolio-death-and-accidental-death-benefits')
     expect(seed.mipBasis).toBe('open-ended')
     expect(seed.mipLength).toBeNull()
@@ -2723,17 +2932,6 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.monthlyContribution).toBe(0)
     expect(seed.initialSinglePremium).toBe(0)
     expect(seed.eecTable).toEqual([])
-    expect(seed.policyStateSupport).toMatchObject({
-      automaticLapseOnAccountValueDepletion: false,
-      minimumPartialWithdrawalAmount: 1_000,
-      partialWithdrawalMinimumRemainingSelectedFundValueRules: [
-        {
-          activeWindow: 'policy-term',
-          accountId: 'policy',
-          minimumValue: 1_000,
-        },
-      ],
-    })
     expect(seed.accounts).toEqual([
       expect.objectContaining({
         id: 'policy',
@@ -2795,6 +2993,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-ti-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-residual-death-benefit-after-ti-estimate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:no-lapse-fixed-and-assurance-charge-debt-carry')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-pla-policy-fee-manual-input')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-pla-standard-life-insurance-charge')
@@ -2805,7 +3004,13 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.mipLength).toBe(5)
     expect(seed.initialSinglePremium).toBe(0)
     expect(seed.policyStateSupport).toEqual({
-      automaticLapseOnAccountValueDepletion: false,
+      automaticLapseOnAccountValueDepletion: true,
+      accountValueDepletionNonLapseWindows: [
+        { startPolicyYear: 1, endPolicyYear: 10 },
+      ],
+      accountValueDepletionNonLapseTerminationRules: [
+        { trigger: 'partial-withdrawal', disqualifyIfAnyFromPolicyYear: 1 },
+      ],
       minimumTopUpAmount: 1_000,
     })
     expect(seed.eecTable).toEqual([0.17, 0.14, 0.11, 0.07, 0.04])
@@ -2821,6 +3026,10 @@ describe('templateVariantToPolicySeed', () => {
           basis: 'fixed-annual',
           amount: 0,
           requiresManualInput: true,
+          carryForwardOnInsufficientDeductionWithinPolicyYears: {
+            startPolicyYear: 1,
+            endPolicyYear: 10,
+          },
         }),
         expect.objectContaining({
           id: 'insurance-charge',
@@ -2830,6 +3039,10 @@ describe('templateVariantToPolicySeed', () => {
             formula: 'great-eastern-pla-death-ti',
             monthlyModalFactor: 1,
             maxAgeNextBirthday: 122,
+            carryForwardOnInsufficientDeductionWithinPolicyYears: {
+              startPolicyYear: 1,
+              endPolicyYear: 10,
+            },
           },
         }),
       ]),
@@ -2876,6 +3089,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-start-policy-month-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-start-policy-month-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-repayment-clearance-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-start-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-minimum-remaining-policy-value')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-first-horizon-premium-shortfall-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-first-horizon-booster-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-first-horizon-loyalty-bonus')
@@ -2885,6 +3101,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual remaining aggregate TI cap subject to the published S$2 million per-life limit'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('blocking below the published S$3,000 minimum, before policy month 13, and until aggregate repayment-clearance for missed premiums, prior initial-account withdrawals, and regular-premium-reduction differences'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('policy-month-25 one-off partial-withdrawal gate with the published S$3,000 minimum remaining-value floor'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual regular-withdrawal payout support after the end of the premium payment term with the published S$3,000 minimum remaining policy-value floor'))).toBe(true)
     expect(seed.regularPremiumPaymentFrequency).toBe('annual')
     expect(seed.mipLength).toBe(20)
     expect(seed.policyStateSupport).toEqual({
@@ -2923,6 +3140,15 @@ describe('templateVariantToPolicySeed', () => {
         ],
       }),
     ])
+    expect(seed.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      accountId: 'accumulation',
+      fallbackAccountIds: ['initial'],
+      allowedFrequencies: ['annual', 'semi-annual', 'quarterly', 'monthly'],
+      minimumStartPolicyYear: 21,
+      minimumRemainingPolicyValue: 3_000,
+      source: 'policy-redemption',
+    })
     expect(seed.chargeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -3091,13 +3317,19 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-first-max-recurring-single-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:regular-premium-variation-start-gate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:regular-premium-variation-minimum-floor')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-amount-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-start-policy-month-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-start-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-per-occurrence-minimum')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-minimum-remaining-policy-value')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-first-max-booster-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-first-max-loyalty-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-first-max-accumulation-bonus')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('fwd-invest-first-max-accumulation-bonus-current-year-top-up-proration')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('fwd-invest-first-max-accumulation-bonus-exact-acceptance-date-proration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('fwd-invest-first-max-increase-regular-premium-layer')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-first-max-minimum-withdrawal-rules')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current-state death-benefit estimate as 105% of policy value'))).toBe(true)
     expect(seed.mipLength).toBe(10)
     expect(seed.policyStateSupport).toEqual({
@@ -3109,7 +3341,9 @@ describe('templateVariantToPolicySeed', () => {
         quarterly: 1_500,
         monthly: 500,
       },
+      minimumPartialWithdrawalAmount: 500,
       minimumPartialWithdrawalStartPolicyMonthByAccount: [
+        { accountId: 'initial', startPolicyMonth: 121 },
         { accountId: 'accumulation', startPolicyMonth: 25 },
       ],
       partialWithdrawalMinimumRemainingValueRules: [
@@ -3117,6 +3351,20 @@ describe('templateVariantToPolicySeed', () => {
         { activeWindow: 'after-mip', basis: 'policy-value', minimumValue: 3_000 },
       ],
     })
+    expect(seed.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      eligibleAccountIds: ['initial', 'accumulation'],
+      allowedFrequencies: ['annual', 'semi-annual', 'quarterly', 'monthly'],
+      minimumStartPolicyYear: 11,
+      minimumWithdrawalAmountPerOccurrence: 500,
+      minimumRemainingPolicyValue: 3_000,
+      source: 'policy-redemption',
+    })
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('published S$500 minimum amount'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('initial-account month-121 start gating'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual regular-withdrawal payout support after the premium payment term'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('published S$500 per-withdrawal minimum'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('published S$3,000 minimum remaining Policy Value floor'))).toBe(true)
     expect(seed.accounts).toEqual([
       expect.objectContaining({
         id: 'initial',
@@ -3193,7 +3441,7 @@ describe('templateVariantToPolicySeed', () => {
         excludedValueRules: [
           {
             trigger: 'top-up',
-            basis: 'event-amount',
+            basis: 'event-amount-with-current-policy-year-proration',
             lookbackMonths: 12,
           },
         ],
@@ -3257,18 +3505,24 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-start-policy-month-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-start-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-per-occurrence-minimum')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-first-summit-death-benefit')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-first-summit-booster-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-first-summit-loyalty-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-first-summit-perpetual-bonus')
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('premium shortfall charge with admitted-state Support Benefit charge-waiver and retrospective charge-refund support on premium-holiday events'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('premium shortfall charge with admitted-state Support Benefit charge-waiver, current admitted waiver-runway support, and retrospective charge-refund support on premium-holiday events'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('blocking below the published S$3,000 minimum, before policy month 13, and in policy months where regular premiums are not paid up to date'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('initial-account month-121 start gating'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual regular-withdrawal payout support after the end of the premium payment term with the published S$500 per-withdrawal minimum'))).toBe(true)
     expect(seed.mipLength).toBe(10)
     expect(seed.policyStateSupport).toEqual({
       automaticLapseOnAccountValueDepletion: false,
       blockTopUpsWhenPremiumsNotPaidUpToDate: true,
       minimumTopUpAmount: 3_000,
       minimumPartialWithdrawalStartPolicyMonthByAccount: [
+        { accountId: 'initial', startPolicyMonth: 121 },
         { accountId: 'accumulation', startPolicyMonth: 25 },
       ],
       partialWithdrawalMinimumRemainingValueRules: [
@@ -3304,6 +3558,15 @@ describe('templateVariantToPolicySeed', () => {
         subjectToEec: false,
       }),
     ])
+    expect(seed.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      accountId: 'accumulation',
+      fallbackAccountIds: ['initial'],
+      allowedFrequencies: ['annual', 'semi-annual', 'quarterly', 'monthly'],
+      minimumStartPolicyYear: 11,
+      minimumWithdrawalAmountPerOccurrence: 500,
+      source: 'policy-redemption',
+    })
     expect(seed.chargeRules).toEqual([
       expect.objectContaining({
         id: 'initial-account-charge',
@@ -3387,6 +3650,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-repayment-clearance-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-start-policy-month-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-start-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-minimum-remaining-policy-value')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-flexi-vii-premium-shortfall-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-flexi-vii-booster-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-flexi-vii-loyalty-bonus')
@@ -3394,6 +3660,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-flexi-vii-insurance-charge')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual remaining aggregate TI cap subject to the published S$2 million per-life limit'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('blocking below the published S$3,000 minimum, before policy month 13, and aggregate repayment-clearance gating for missed premiums, prior initial-account withdrawals, and regular-premium-reduction differences'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual regular-withdrawal payout support after the end of the minimum investment term with the published S$3,000 minimum remaining policy-value floor'))).toBe(true)
     expect(seed.regularPremiumPaymentFrequency).toBe('annual')
     expect(seed.mipLength).toBe(10)
     expect(seed.policyStateSupport).toEqual({
@@ -3415,6 +3682,15 @@ describe('templateVariantToPolicySeed', () => {
         ],
       },
     })
+    expect(seed.scheduledPayoutSupport).toEqual(expect.objectContaining({
+      mode: 'manual-assumption',
+      accountId: 'accumulation',
+      fallbackAccountIds: ['initial'],
+      allowedFrequencies: ['annual', 'semi-annual', 'quarterly', 'monthly'],
+      minimumStartPolicyYear: 11,
+      minimumRemainingPolicyValue: 3_000,
+      source: 'policy-redemption',
+    }))
     expect(seed.accounts).toEqual([
       expect.objectContaining({
         id: 'initial',
@@ -3550,6 +3826,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-start-policy-month-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-start-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-minimum-remaining-policy-value')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-paid-up-to-date-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-flexi-elite-premium-shortfall-charge')
@@ -3561,6 +3840,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('fwd-invest-flexi-elite-free-partial-withdrawal-eligibility-and-proof')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current-state ordinary death benefit as the higher of 105% of policy value or 101% of the protected premium base'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Free Partial Withdrawal Benefit capped charge-waiver support on qualifying partial-withdrawal events'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual regular-withdrawal payout support after the end of the minimum investment term with the published S$3,000 minimum remaining policy-value floor'))).toBe(true)
     expect(seed.regularPremiumPaymentFrequency).toBe('annual')
     expect(seed.mipLength).toBe(10)
     expect(seed.policyStateSupport).toEqual({
@@ -3575,6 +3855,15 @@ describe('templateVariantToPolicySeed', () => {
         { activeWindow: 'after-mip', basis: 'policy-value', minimumValue: 3_000 },
       ],
     })
+    expect(seed.scheduledPayoutSupport).toEqual(expect.objectContaining({
+      mode: 'manual-assumption',
+      accountId: 'accumulation',
+      fallbackAccountIds: ['initial'],
+      allowedFrequencies: ['annual', 'semi-annual', 'quarterly', 'monthly'],
+      minimumStartPolicyYear: 11,
+      minimumRemainingPolicyValue: 3_000,
+      source: 'policy-redemption',
+    }))
     expect(seed.bonuses).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -4263,7 +4552,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:monthly-rate-bonus-crediting')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('etiqa-vista-premium-free-period-gated-shortfall-charge')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-vista-distribution-paying-fund-threshold-and-withdrawal-consequences')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-vista-distribution-paying-fund-payout-processing-and-withdrawal-consequences')
     expect(seed.policyStateSupport).toEqual(expect.objectContaining({
       automaticLapseOnAccountValueDepletion: false,
       blockTopUpsDuringPremiumHoliday: true,
@@ -4320,6 +4609,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['regular', 'topup'],
+      minimumAnnualPayoutAmount: 40,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -4426,9 +4716,22 @@ describe('templateVariantToPolicySeed', () => {
         ),
       ),
     ).toBe(true)
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['regular', 'topup'],
+      minimumAnnualPayoutAmount: 40,
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
   })
 
-  it('maps Invest plus SP into a supported single-premium seed with reinvest-default distribution support', () => {
+  it('maps Invest plus SP into a supported single-premium seed with reinvest-default distribution support and the published S$40 payout threshold', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'etiqa-invest-plus-sp')
     expect(product).toBeDefined()
@@ -4448,7 +4751,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-amount-increment-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-dividend-threshold-and-withdrawal-consequences')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-dividend-payout-processing-and-withdrawal-consequences')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-grace-period-top-up-funding')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-reinstatement')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-invest-plus-sp-free-look')
@@ -4517,6 +4820,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['policy', 'topup'],
+      minimumAnnualPayoutAmount: 40,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -4528,6 +4832,7 @@ describe('templateVariantToPolicySeed', () => {
     })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current ordinary death-benefit estimate as the higher of account value or 101% of net premium'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('future recurring Initial Account Power-up Bonus'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('published S$40 dividend-payout threshold on the cash-election path'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('supports distribution-paying fund elections'))).toBe(true)
   })
 
@@ -4613,7 +4918,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-start-gate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-per-occurrence-minimum')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('goal-builder-ii-terminal-illness-post-claim-reduction-and-payout-mechanics')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('goal-builder-ii-terminal-illness-claim-exclusions-notification-and-settlement')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('goal-builder-ii-dividend-payout-threshold')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('goal-builder-ii-no-dividend-insufficient-nav-gate')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('historical pre-projection excluded cohorts when explicit current excluded supplementary-premium inputs are supplied'))).toBe(true)
@@ -4698,6 +5003,8 @@ describe('templateVariantToPolicySeed', () => {
       accountId: 'policy',
       minimumStartPolicyYear: 11,
       minimumWithdrawalAmountPerOccurrence: 250,
+      minimumRemainingPolicyValue: 1_000,
+      ceaseOnMinimumRemainingPolicyValueBreach: true,
       source: 'policy-redemption',
     })
     expect(seed.scheduledPayoutAssumption).toBeUndefined()
@@ -4714,7 +5021,7 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'reinvest',
       source: 'catalog-default',
     })
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual payout assumption'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('minimum remaining account-value floor'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
@@ -4734,8 +5041,13 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-ti-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-tpd-benefit-estimate')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('pruactive-linkguard-no-lapse-period')
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('current-state death / terminal-illness / payable-now TPD estimates'))).toBe(true)
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:pruactive-linkguard-recurring-single-premium-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:minimum-recurring-single-premium-amount')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-start-policy-month-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-amount-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('pruactive-linkguard-no-lapse-history-and-reinstatement')
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('policy-month-26 earliest withdrawal gate'))).toBe(true)
     expect(seed.mipBasis).toBe('open-ended')
     expect(seed.mipLength).toBeNull()
     expect(seed.accounts).toEqual([
@@ -4789,6 +5101,12 @@ describe('templateVariantToPolicySeed', () => {
           rate: 0.03,
         }),
         expect.objectContaining({
+          id: 'recurring-single-premium-charge',
+          trigger: 'recurring-single-premium',
+          basis: 'event-amount-with-overlap-months',
+          rate: 0.03,
+        }),
+        expect.objectContaining({
           id: 'partial-withdrawal-charge',
           trigger: 'partial-withdrawal',
           basis: 'event-amount',
@@ -4796,6 +5114,22 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
+    expect(seed.policyStateSupport).toEqual(expect.objectContaining({
+      automaticLapseOnAccountValueDepletion: true,
+      minimumRecurringSinglePremiumMonthlyAmount: 75,
+      minimumPartialWithdrawalStartPolicyMonthByAccount: [
+        { accountId: 'policy', startPolicyMonth: 26 },
+      ],
+      minimumPartialWithdrawalAmount: 1_000,
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'account-value',
+          accountId: 'policy',
+          minimumValue: 1_000,
+        },
+      ],
+    }))
   })
 
   it('maps AstraLink (VA2) into a supported seed with loyalty, insurance, and Appendix 2 charge schedules', () => {
@@ -4818,18 +5152,31 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:astralink-va2-loyalty-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:astralink-va2-policy-fee')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:astralink-va2-insurance-cover-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:astralink-va2-no-lapse-premium-holiday-charge-carry')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:astralink-va2-premium-holiday-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:astralink-va2-surrender-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:minimum-premium-holiday-start-month')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-amount-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:premium-holiday-top-up-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('astralink-va2-accidental-tpd-and-claim-settlement')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('astralink-va2-loyalty-bonus')
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('carries forward unpaid insurance cover charges plus any due premium-holiday charge until policy value later recovers'))).toBe(true)
     expect(seed.mipLength).toBe(20)
     expect(seed.policyStateSupport).toEqual({
-      automaticLapseOnAccountValueDepletion: false,
+      automaticLapseOnAccountValueDepletion: true,
       blockTopUpsDuringPremiumHoliday: true,
       minimumPremiumHolidayStartPolicyMonth: 13,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'policy-value',
+          minimumValue: 1_000,
+          includeCurrentEventCharge: true,
+        },
+      ],
     })
     expect(seed.accounts).toEqual([
       expect.objectContaining({
@@ -4869,6 +5216,10 @@ describe('templateVariantToPolicySeed', () => {
         basis: 'annual-premium-with-overlap-months',
         freeLifetimeMonths: 24,
         freeLifetimeMonthsStartPolicyYear: 3,
+        carryForwardOnInsufficientDeductionWithinPolicyYears: {
+          startPolicyYear: 1,
+          endPolicyYear: 20,
+        },
         rateSchedule: [
           { startPolicyYear: 1, endPolicyYear: 1, rate: 1 },
           { startPolicyYear: 2, endPolicyYear: 2, rate: 1 },
@@ -4998,6 +5349,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('income-legacy-flex-solitaire-retirement-and-distribution-options')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('income-legacy-flex-solitaire-terminal-illness-and-claim-settlement')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('income-legacy-flex-solitaire-top-up-account-first-12-month-charge-window')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('income-legacy-flex-solitaire-loyalty-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('income-legacy-flex-solitaire-protection-benefits')
     expect(seed.catalogWarnings).toEqual(
@@ -5053,6 +5405,19 @@ describe('templateVariantToPolicySeed', () => {
       cashPayoutAllowedAfterMip: false,
       source: 'distribution-paying-funds',
     })
+    expect(seed.eventChargeRules).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'topup-partial-withdrawal-charge-first-12-months',
+        trigger: 'partial-withdrawal',
+        basis: 'event-amount',
+        appliesTo: ['topup'],
+        rate: 0,
+        rateSchedule: [
+          { startPolicyYear: 1, endPolicyYear: 1, rate: 0.9 },
+          { startPolicyYear: 2, endPolicyYear: null, rate: 0 },
+        ],
+      }),
+    ]))
     expect(seed.bonuses).toEqual([
       expect.objectContaining({
         id: 'loyalty-bonus',
@@ -5095,7 +5460,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('etiqa-flex-prime-ii-premium-free-period-gated-shortfall-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-flex-prime-ii-free-partial-withdrawal-benefit-administration')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-flex-prime-ii-distribution-paying-fund-threshold-and-withdrawal-consequences')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-flex-prime-ii-distribution-paying-fund-payout-processing-and-withdrawal-consequences')
     expect(seed.policyStateSupport).toEqual({
       automaticLapseOnAccountValueDepletion: false,
       blockTopUpsDuringPremiumHoliday: true,
@@ -5177,6 +5542,19 @@ describe('templateVariantToPolicySeed', () => {
       ]),
     )
     expect(seed.bonuses.find((bonus) => bonus.id === 'special-bonus')?.startPolicyYear).toBe(6)
+    expect(seed.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['regular', 'topup'],
+      minimumAnnualPayoutAmount: 40,
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+    })
+    expect(seed.distributionAssumption).toEqual({
+      mode: 'reinvest',
+      source: 'catalog-default',
+    })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Premium-Free Period gating'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('supports distribution-paying fund elections'))).toBe(true)
   })
@@ -5206,7 +5584,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('etiqa-flex-pro-insurance-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('etiqa-flex-pro-premium-free-period-gated-shortfall-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-flex-pro-free-partial-withdrawal-benefit-administration')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-flex-pro-distribution-paying-fund-threshold-and-withdrawal-consequences')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('etiqa-flex-pro-distribution-paying-fund-payout-processing-and-withdrawal-consequences')
     expect(seed.policyStateSupport).toEqual({
       automaticLapseOnAccountValueDepletion: false,
       blockTopUpsDuringPremiumHoliday: true,
@@ -5237,6 +5615,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['regular', 'topup'],
+      minimumAnnualPayoutAmount: 40,
       defaultMode: 'reinvest',
       cashPayoutAllowedDuringMip: true,
       cashPayoutAllowedAfterMip: true,
@@ -5411,9 +5790,15 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:minimum-recurring-single-premium-start-month')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:minimum-recurring-single-premium-amount')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:committed-premium-rsp-resumption-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-start-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-minimum-remaining-policy-value')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-start-policy-month-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-start-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-minimum-remaining-policy-value')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-max-ii-change-of-life-assured-and-life-replacement-administration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-max-ii-multiple-life-and-life-replacement-administration')
     expect(seed.accounts.find((account) => account.id === 'initial')?.contributionRules).toEqual([
@@ -5560,8 +5945,17 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'reinvest',
       source: 'catalog-default',
     })
+    expect(seed.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      eligibleAccountIds: ['initial', 'accumulation', 'topup'],
+      allowedFrequencies: ['annual', 'semi-annual', 'quarterly', 'monthly'],
+      minimumStartPolicyYear: 16,
+      minimumRemainingPolicyValue: 3_000,
+      source: 'policy-redemption',
+    })
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-initial-bonus-and-performance-loyalty-power-up-bonuses')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-dividend-payout-threshold-and-record-date-instructions')
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual regular-withdrawal support after that same minimum investment period'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
   })
@@ -6040,6 +6434,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-start-policy-month-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-start-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-minimum-remaining-policy-value')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-pro-ii-change-of-life-assured-and-life-replacement-administration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-pro-ii-multiple-life-and-life-replacement-administration')
     expect(seed.bonuses.find((bonus) => bonus.label === 'Initial Bonus')?.tieredRates).toEqual([
@@ -6079,11 +6476,20 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'reinvest',
       source: 'catalog-default',
     })
+    expect(seed.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      eligibleAccountIds: ['initial', 'accumulation', 'topup'],
+      allowedFrequencies: ['annual', 'semi-annual', 'quarterly', 'monthly'],
+      minimumStartPolicyYear: 11,
+      minimumRemainingPolicyValue: 3_000,
+      source: 'policy-redemption',
+    })
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-involuntary-unemployment-and-hospitalisation-waiver')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-initial-bonus-performance-investment-bonus-loyalty-bonus-and-power-up-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('annual / half-yearly / quarterly / monthly frequency corridor'))).toBe(true)
     expect(seed.eventChargeRules).toEqual(expect.arrayContaining([
       expect.objectContaining({
         id: 'partial-withdrawal-charge',
@@ -6480,7 +6886,7 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-advanced-death-payout-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-harvest-flexi-advanced-death-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-harvest-flexi-benefit-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-harvest-flexi-change-of-life-assured-and-life-replacement-administration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-harvest-flexi-multiple-life-and-life-replacement-administration')
@@ -6503,8 +6909,17 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'reinvest',
       source: 'catalog-default',
     })
+    expect(seed.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      eligibleAccountIds: ['accumulation', 'topup'],
+      allowedFrequencies: ['annual', 'semi-annual', 'quarterly', 'monthly'],
+      minimumStartPolicyYear: 11,
+      minimumRemainingPolicyValue: 3_000,
+      source: 'policy-redemption',
+    })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('Manual regular withdrawals are modeled after the minimum investment period'))).toBe(true)
   })
 
   it('maps Tokio Marine Harvest Flexi advanced-death into a supported seed with Tokio MPC inputs', () => {
@@ -6830,6 +7245,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:minimum-recurring-single-premium-start-month')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:minimum-recurring-single-premium-amount')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:committed-premium-rsp-resumption-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-start-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-minimum-remaining-policy-value')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-maximum-amount-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
     expect(seed.policyStateSupport).toEqual(expect.objectContaining({
@@ -6967,7 +7385,15 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'reinvest',
       source: 'catalog-default',
     })
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-advanced-death-payout-handling')
+    expect(seed.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      eligibleAccountIds: ['accumulation', 'topup'],
+      allowedFrequencies: ['annual', 'semi-annual', 'quarterly', 'monthly'],
+      minimumStartPolicyYear: 11,
+      minimumRemainingPolicyValue: 3_000,
+      source: 'policy-redemption',
+    })
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-advanced-death-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-benefit-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-wealth-flexi-change-of-life-assured-and-life-replacement-administration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-multiple-life-and-life-replacement-administration')
@@ -6975,6 +7401,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-wealth-flexi-dividend-payout-threshold-and-record-date-instructions')
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption surface'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('Manual regular withdrawals are modeled after the minimum investment period'))).toBe(true)
   })
 
   it('maps Tokio Marine Wealth Flexi advanced-death into a supported seed with Tokio MPC inputs', () => {
@@ -7946,6 +8373,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-maximum-amount-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-start-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-minimum-remaining-policy-value')
     expect(seed.accounts).toEqual([
       expect.objectContaining({ id: 'initial', feeRate: 0.03, postMipFeeRate: 0 }),
       expect.objectContaining({ id: 'accumulation', feeRate: 0.0135, postMipFeeRate: 0.0135 }),
@@ -8035,6 +8465,14 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'reinvest',
       source: 'catalog-default',
     })
+    expect(seed.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      eligibleAccountIds: ['initial', 'accumulation', 'topup'],
+      allowedFrequencies: ['annual', 'semi-annual', 'quarterly', 'monthly'],
+      minimumStartPolicyYear: 16,
+      minimumRemainingPolicyValue: 3_000,
+      source: 'policy-redemption',
+    })
     expect(seed.bonuses.find((bonus) => bonus.id === 'loyalty-bonus-policy-years-4-10')).toEqual(expect.objectContaining({
       rate: 0.005,
       adjustmentFactorConfig: {
@@ -8055,9 +8493,8 @@ describe('templateVariantToPolicySeed', () => {
       ],
     }))
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goluxe-achievement-bonus-qualification')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-advanced-death-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-change-of-life-assured-administration')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-regular-withdrawal-facility')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goluxe-regular-withdrawal-facility')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goluxe-loyalty-and-achievement-bonuses')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain(
       'tokio-goluxe-advanced-death-payout-handling-and-life-assured-administration',
@@ -8066,6 +8503,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('explicit recurring-single-premium resumption'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual regular-withdrawal support after the minimum investment period'))).toBe(true)
   })
 
   it('maps Tokio Marine #goLuxe advanced-death into a supported seed with accrued Tokio MPC valuation accounts', () => {
@@ -8085,6 +8523,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-current-only-multi-life-life-state')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-start-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-minimum-remaining-policy-value')
     expect(seed.accounts).toEqual([
       expect.objectContaining({ id: 'initial', feeRate: 0.03, postMipFeeRate: 0 }),
       expect.objectContaining({ id: 'accumulation', feeRate: 0.0135, postMipFeeRate: 0.0135 }),
@@ -8153,9 +8594,8 @@ describe('templateVariantToPolicySeed', () => {
       source: 'catalog-default',
     })
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goluxe-achievement-bonus-qualification')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-advanced-death-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-change-of-life-assured-administration')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goluxe-regular-withdrawal-facility')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goluxe-regular-withdrawal-facility')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain(
       'tokio-goluxe-advanced-death-payout-handling-and-life-assured-administration',
     )
@@ -8183,6 +8623,12 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:committed-premium-rsp-resumption-gate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-accidental-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-start-policy-month-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-amount-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-start-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-minimum-remaining-policy-value')
     expect(seed.bonuses.find((bonus) => bonus.label === 'Initial Bonus')?.tieredRates).toEqual([
       { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.5 },
       { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.57 },
@@ -8232,9 +8678,18 @@ describe('templateVariantToPolicySeed', () => {
     ])
     expect(seed.policyStateSupport).toEqual({
       automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 500,
+      minimumPartialWithdrawalStartPolicyMonthByAccount: [
+        { accountId: 'accumulation', startPolicyMonth: 25 },
+        { accountId: 'topup', startPolicyMonth: 25 },
+        { accountId: 'initial', startPolicyMonth: 181 },
+      ],
       minimumPremiumHolidayStartPolicyMonth: 25,
       minimumRecurringSinglePremiumMonthlyAmount: 50,
       minimumRecurringSinglePremiumStartPolicyMonth: 13,
+      partialWithdrawalMinimumRemainingValueRules: [
+        { activeWindow: 'policy-term', basis: 'policy-value', minimumValue: 3_000 },
+      ],
       requiresCommencementPremiumForRecurringSinglePremiumResumption: true,
     })
     expect(seed.distributionSupport).toEqual({
@@ -8256,6 +8711,14 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'reinvest',
       source: 'catalog-default',
     })
+    expect(seed.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      eligibleAccountIds: ['initial', 'accumulation', 'topup'],
+      allowedFrequencies: ['annual', 'semi-annual', 'quarterly', 'monthly'],
+      minimumStartPolicyYear: 16,
+      minimumRemainingPolicyValue: 3_000,
+      source: 'policy-redemption',
+    })
     expect(seed.bonuses.find((bonus) => bonus.id === 'loyalty-bonus-policy-years-3-10')).toEqual(expect.objectContaining({
       adjustmentFactorConfig: {
         formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
@@ -8276,7 +8739,8 @@ describe('templateVariantToPolicySeed', () => {
       ],
     }))
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goaffluence-achievement-bonus-qualification')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goaffluence-regular-withdrawal-and-partial-withdrawal-constraints')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goaffluence-selected-fund-residual-value-and-pending-transaction-withdrawal-processing')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goaffluence-regular-withdrawal-and-partial-withdrawal-constraints')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goaffluence-dividend-payout-threshold-record-date-regular-withdrawal-and-partial-withdrawal-constraints')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goaffluence-loyalty-bonus-adjustment-factor')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goaffluence-loyalty-and-achievement-bonuses')
@@ -8284,6 +8748,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('resident-corridor current accidental-death estimate before age 75'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('explicit recurring-single-premium resumption'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual regular withdrawals after the premium payment term'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('S$500 minimum amount'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('S$3,000 minimum remaining policy value'))).toBe(true)
   })
 
   it('maps Tokio Marine #goAffluence advanced-death into a supported seed with accrued Tokio MPC valuation accounts', () => {
@@ -8474,15 +8941,22 @@ describe('templateVariantToPolicySeed', () => {
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
     })
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-advanced-death-payout-handling')
+    expect(seed.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      eligibleAccountIds: ['initial', 'accumulation', 'topup'],
+      allowedFrequencies: ['annual', 'semi-annual', 'quarterly', 'monthly'],
+      minimumStartPolicyYear: 16,
+      minimumRemainingPolicyValue: 3_000,
+      source: 'policy-redemption',
+    })
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-life-benefit-rider')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-regular-withdrawal-behavior')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-selected-fund-residual-value-conditions')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain(
       'tokio-affluence-atfuture-change-of-life-assured-and-life-replacement-administration',
     )
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-premium-holiday-state-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-affluence-atfuture-non-sgd-or-non-15-year-variants')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-regular-withdrawal-behavior')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-loyalty-bonus-adjustment-factor')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-advanced-death-payout-and-life-assured-administration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-affluence-atfuture-advanced-death-payout-life-benefit-rider-and-life-assured-administration')
@@ -8595,9 +9069,14 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-start-policy-month-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:automatic-lapse-on-account-depletion')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-start-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-minimum-remaining-policy-value')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goclassic-additional-bonus-qualification')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goclassic-advanced-death-payout-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goclassic-advanced-death-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-goclassic-change-of-life-assured-administration')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goclassic-regular-withdrawal-facility')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goclassic-loyalty-bonus-adjustment-factor')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goclassic-advanced-death-payout-and-change-of-life-assured-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goclassic-dividend-payout-threshold-and-record-date-instructions')
@@ -8645,7 +9124,7 @@ describe('templateVariantToPolicySeed', () => {
     }))
     expect(seed.chargeRules).toEqual([])
     expect(seed.policyStateSupport).toEqual({
-      automaticLapseOnAccountValueDepletion: false,
+      automaticLapseOnAccountValueDepletion: true,
       minimumPartialWithdrawalAmount: 500,
       minimumPartialWithdrawalStartPolicyMonthByAccount: [
         { accountId: 'accumulation', startPolicyMonth: 25 },
@@ -8679,10 +9158,19 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'reinvest',
       source: 'catalog-default',
     })
+    expect(seed.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      eligibleAccountIds: ['initial', 'accumulation'],
+      allowedFrequencies: ['annual', 'semi-annual', 'quarterly', 'monthly'],
+      minimumStartPolicyYear: 26,
+      minimumRemainingPolicyValue: 3_000,
+      source: 'policy-redemption',
+    })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('premium-payment-term-25 (Basic Death) corridor only'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('S$500 minimum amount'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual regular withdrawals after the premium payment term'))).toBe(true)
   })
 
   it('maps Tokio Marine #goClassic advanced-death into a supported seed with accrued Tokio MPC disable-on-failure inputs', () => {
@@ -8739,6 +9227,10 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-start-policy-month-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:automatic-lapse-on-account-depletion')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-start-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-minimum-remaining-policy-value')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goclassic-secure-loyalty-bonus-adjustment-factor')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goclassic-secure-additional-bonus-qualification')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-goclassic-secure-dividend-payout-threshold-and-record-date-instructions')
@@ -8786,7 +9278,7 @@ describe('templateVariantToPolicySeed', () => {
     }))
     expect(seed.chargeRules).toEqual([])
     expect(seed.policyStateSupport).toEqual({
-      automaticLapseOnAccountValueDepletion: false,
+      automaticLapseOnAccountValueDepletion: true,
       minimumPartialWithdrawalAmount: 500,
       minimumPartialWithdrawalStartPolicyMonthByAccount: [
         { accountId: 'accumulation', startPolicyMonth: 25 },
@@ -8820,10 +9312,19 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'reinvest',
       source: 'catalog-default',
     })
+    expect(seed.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      eligibleAccountIds: ['initial', 'accumulation'],
+      allowedFrequencies: ['annual', 'semi-annual', 'quarterly', 'monthly'],
+      minimumStartPolicyYear: 26,
+      minimumRemainingPolicyValue: 3_000,
+      source: 'policy-redemption',
+    })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Basic Death'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual distribution-mode assumption'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('S$500 minimum amount'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual regular withdrawals after the premium payment term'))).toBe(true)
   })
 
   it('maps Tokio Marine #goClassic Secure advanced death into a supported seed with locked-in-value MPC', () => {
@@ -8885,8 +9386,10 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-ti-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-residual-death-benefit-after-ti-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-tpd-benefit-estimate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-amount-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-tpd-cross-policy-benefit-caps')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-tpd-adl-qualification-and-later-release')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-tpd-adl-qualification')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-ti-claim-currency-settlement')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-tpd-claim-currency-and-post-claim-continuation')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-premium-holiday-lapse-and-no-claim-state')
@@ -8895,7 +9398,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-gio-cross-policy-and-sum-assured-limits')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-life-replacement-eligibility-and-underwriting')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-life-replacement-cover-reset-and-beneficiary-reset')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-regular-withdrawal-minimum-holding-and-termination')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-regular-withdrawal-discretionary-suspension-and-multiples-of-10')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-policy-change-and-fund-switch-approvals')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-usd-no-monthly-regular-premium-mode')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('hsbc-life-flexi-protector-usd-no-rsp-corridor')
@@ -8962,6 +9465,19 @@ describe('templateVariantToPolicySeed', () => {
       expect.objectContaining({ id: 'recurring-single-premium-charge', rate: 0.05 }),
       expect.objectContaining({ id: 'partial-withdrawal-charge', rate: 0 }),
     ])
+    expect(seed.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: false,
+      blockTopUpsDuringPremiumHoliday: true,
+      minimumPartialWithdrawalAmount: 250,
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'policy-value',
+          minimumValue: 2_500,
+          minimumValueExclusive: true,
+        },
+      ],
+    })
     expect(seed.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['policy'],
@@ -8975,8 +9491,11 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'manual-assumption',
       accountId: 'policy',
       minimumAnnualWithdrawalAmount: 1_200,
+      minimumRemainingPolicyValue: 2_500,
+      ceaseOnMinimumRemainingPolicyValueBreach: true,
       source: 'policy-redemption',
     })
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('published SGD $250 minimum one-off Partial Withdrawal amount'))).toBe(true)
   })
 
   it('maps Singlife Legacy Invest into a supported seed with policy-year shortfall and withdrawal charges', () => {
@@ -9078,6 +9597,7 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'manual-assumption',
       accountId: 'policy',
       minimumWithdrawalAmountPerOccurrence: 500,
+      minimumRemainingPolicyValue: 1_000,
       source: 'policy-redemption',
     })
     expect(seed.scheduledPayoutAssumption).toBeUndefined()
@@ -9095,7 +9615,7 @@ describe('templateVariantToPolicySeed', () => {
       source: 'catalog-default',
     })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('policy-term-15-years corridor only'))).toBe(true)
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual payout assumption'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('published $1,000 minimum remaining account-value floor'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
@@ -9294,12 +9814,17 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:minimum-premium-holiday-start-month')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-start-policy-month-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:automatic-lapse-on-account-depletion')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-start-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-minimum-remaining-policy-value')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:regular-premium-variation-minimum-floor')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:regular-premium-variation-start-gate')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:tokio-current-only-multi-life-life-state')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:committed-premium-rsp-resumption-gate')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-atlas-advanced-death-payout-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-atlas-advanced-death-payout-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('tokio-atlas-change-of-life-assured-administration')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-atlas-regular-withdrawal-facility')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-atlas-loyalty-bonus-adjustment-factor')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-atlas-advanced-death-payout-and-life-assured-administration')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('tokio-atlas-change-of-life-assured-option')
@@ -9344,7 +9869,7 @@ describe('templateVariantToPolicySeed', () => {
       expect.objectContaining({ id: 'recurring-single-premium-charge', appliesTo: ['accumulation'], rate: 0.05 }),
     ])
     expect(seed.policyStateSupport).toEqual({
-      automaticLapseOnAccountValueDepletion: false,
+      automaticLapseOnAccountValueDepletion: true,
       minimumRegularPremiumVariationStartPolicyMonth: 13,
       minimumRecurringSinglePremiumMonthlyAmount: 50,
       minimumRecurringSinglePremiumStartPolicyMonth: 13,
@@ -9384,12 +9909,21 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'reinvest',
       source: 'catalog-default',
     })
+    expect(seed.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      eligibleAccountIds: ['initial', 'accumulation'],
+      allowedFrequencies: ['annual', 'semi-annual', 'quarterly', 'monthly'],
+      minimumStartPolicyYear: 26,
+      minimumRemainingPolicyValue: 3_000,
+      source: 'policy-redemption',
+    })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('premium-payment-term-25 (Basic Death) corridor only'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('30 days before the record date'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('explicit recurring-single-premium resumption'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('minimum regular-premium table'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('S$500 minimum withdrawal amount'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('S$3,000 minimum account value'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual regular withdrawals after the premium payment term'))).toBe(true)
   })
 
   it('maps Tokio Marine TM Atlas Wealth advanced-death into a supported seed with disable-on-failure Tokio MPC inputs', () => {
@@ -9457,7 +9991,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-zero-top-up-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-partial-withdrawal-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-full-surrender-charge')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-iii-ti-claim-admission-settlement-and-notification-timing')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-iii-ti-claim-settlement-and-notification-timing')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-iii-reinstatement-underwriting-and-pre-existing-condition-exclusions')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-reinstatement')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-benefit-payout-handling')
@@ -9608,7 +10142,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-growth-post-flexi-premium-variation')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-growth-ti-claim-admission-settlement-and-notification-timing')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-growth-ti-claim-settlement-and-notification-timing')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-growth-reinstatement-underwriting-and-pre-existing-condition-exclusions')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-growth-reinstatement')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-growth-dividend-payout-threshold')
@@ -9855,7 +10389,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-partial-withdrawal-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manulife-investready-iii-full-surrender-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-iii-life-stage-partial-withdrawal')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-iii-ti-claim-admission-settlement-and-notification-timing')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-iii-ti-claim-settlement-and-notification-timing')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-investready-iii-reinstatement-underwriting-and-pre-existing-condition-exclusions')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-step-up-booster-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-investready-iii-reinstatement')
@@ -10015,13 +10549,15 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-residual-death-benefit-after-ti-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-tpd-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-residual-death-benefit-after-tpd-estimate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-amount-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manuinvest-duo-welcome-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manuinvest-duo-loyalty-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manuinvest-duo-premium-shortfall-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manuinvest-duo-partial-withdrawal-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:manuinvest-duo-full-surrender-charge')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manuinvest-duo-death-ti-tpd-benefit-payout-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manuinvest-duo-death-ti-tpd-claim-exclusions-and-settlement')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manuinvest-duo-welcome-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manuinvest-duo-premium-shortfall-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manuinvest-duo-premium-flexibility-benefit')
@@ -10041,6 +10577,18 @@ describe('templateVariantToPolicySeed', () => {
         postMipFeeRate: 0.01,
       }),
     ])
+    expect(seed.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 350,
+      partialWithdrawalMinimumRemainingValueRules: [
+        {
+          activeWindow: 'policy-term',
+          basis: 'account-value',
+          accountId: 'policy',
+          minimumValue: 1_000,
+        },
+      ],
+    })
     expect(seed.chargeRules).toEqual([
       expect.objectContaining({
         id: 'cost-of-insurance',
@@ -10131,6 +10679,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current sum insured'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('$40 minimum annual payout threshold'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('published S$350 minimum on explicit one-off partial withdrawals with the published S$1,000 remaining account-value floor'))).toBe(true)
   })
 
   it('maps AIA Pro Achiever 3.0 into a supported seed with premium-year charge schedules', () => {
@@ -10150,13 +10699,16 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-pro-achiever-3-benefit-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-pro-achiever-3-regular-supplementary-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-pro-achiever-3-premium-holiday-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-pro-achiever-3-premium-reduction')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:regular-premium-variation-start-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:regular-premium-variation-minimum-floor')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-paid-up-to-date-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-accidental-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-pro-achiever-3-premium-reduction')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-pro-achiever-3-premium-pass')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-pro-achiever-3-premium-reduction')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-pro-achiever-3-premium-pass')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-pro-achiever-3-premium-holiday-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-pro-achiever-3-benefit-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-pro-achiever-3-supplementary-charge')
@@ -10169,6 +10721,13 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.mipLength).toBe(10)
     expect(seed.policyStateSupport).toEqual({
       automaticLapseOnAccountValueDepletion: false,
+      minimumRegularPremiumVariationStartPolicyMonth: 48,
+      minimumRegularPremiumAmountByFrequency: {
+        annual: 2_400,
+        'semi-annual': 1_200,
+        quarterly: 600,
+        monthly: 200,
+      },
       blockTopUpsWhenPremiumsNotPaidUpToDate: true,
       minimumTopUpAmount: 1_000,
     })
@@ -10298,9 +10857,12 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:automatic-lapse-on-account-depletion')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-target-retirement-age-gate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-target-retirement-sum-withdrawal')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-claim-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-sum-regular-income-drawdown')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-death-claim-settlement-and-post-claim-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-coi-refund-claim-history')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-sum-lapse-and-cover-termination')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-sum-reinstatement-underwriting-and-exclusion-resets')
@@ -10342,6 +10904,16 @@ describe('templateVariantToPolicySeed', () => {
       automaticLapseOnAccountValueDepletion: true,
       minimumTopUpAmount: 2_500,
     })
+    expect(seed.scheduledPayoutSupport).toEqual({
+      mode: 'manual-assumption',
+      accountId: 'policy',
+      allowedFrequencies: ['annual', 'semi-annual', 'quarterly', 'monthly'],
+      requiresTargetRetirementAgeStart: true,
+      minimumWithdrawalAmountPerOccurrence: 500,
+      minimumRemainingPolicyValue: 1_000,
+      source: 'policy-redemption',
+    })
+    expect(seed.scheduledPayoutAssumption).toBeUndefined()
     expect(seed.bonuses.find((bonus) => bonus.id === 'welcome-bonus')?.tieredRates).toEqual([
       { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.005 },
       { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.01 },
@@ -10383,6 +10955,7 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'reinvest',
       source: 'catalog-default',
     })
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('manual payout assumption'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
@@ -10410,7 +10983,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-target-retirement-age-gate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-claim-handling')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-death-claim-settlement-and-post-claim-handling')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-coi-refund-claim-history')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('manulife-smartretire-v-income-lapse-and-cover-termination')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('manulife-smartretire-v-income-reinstatement-underwriting-and-exclusion-resets')
@@ -10526,13 +11099,13 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-ti-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:lapse-reinstatement-payout-state')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-elite-secure-income-sp-secure-monthly-income-election')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-secure-monthly-income-election')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-death-benefit')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-reinstatement-payout-continuity')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-reinstatement')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-single-premium-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-accidental-death-benefit')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-elite-secure-income-sp-single-premium-principal-tracking')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-single-premium-principal-tracking')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-sp-withdrawal-adjusted-power-up-bonus')
     expect(seed.monthlyContribution).toBe(0)
     expect(seed.exitChargeBasis).toBe('account-value')
@@ -10547,10 +11120,13 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.scheduledPayoutSupport).toEqual({
       mode: 'manual-assumption',
       accountId: 'policy',
+      allowedFrequencies: ['monthly'],
       payoutStateSupport: {
         defaultState: 'secure-income',
         suppressWhileLapsed: true,
         stateAfterReinstatement: 'target-income',
+        stateAfterPartialWithdrawalActivation: 'target-income',
+        partialWithdrawalDisqualifyingAccountIds: ['policy'],
       },
       source: 'policy-redemption',
     })
@@ -10602,7 +11178,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual payout assumption'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('single-premium charge'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Power-up Bonus'))).toBe(true)
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('current-state death and terminal-illness benefit amount as the higher of 105% of policy value or a manual current net protected premium base input'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('current-state death and terminal-illness benefit amount as the higher of 105% of policy value or the modeled single-premium protected base after published charges and paid / deemed-paid Secure Monthly Income erosion'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current admitted-state terminal-illness payable amount as a manual current claim amount'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current accidental-death uplift as 10% of a manual initial single premium input during the first 5 policy years'))).toBe(true)
   })
@@ -10628,7 +11204,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-elite-secure-income-5p-supplementary-charge-manual-input')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-elite-secure-income-5p-power-up-bonus-no-withdrawal-corridor')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-elite-secure-income-5p-secure-monthly-income-gating')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-5p-secure-monthly-income-gating')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-5p-secure-monthly-income-election')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-5p-withdrawal-eligibility-gating')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-5p-withdrawal-adjusted-power-up-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-5p-death-benefit')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-elite-secure-income-5p-accidental-death-benefit')
@@ -10646,11 +11224,14 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.scheduledPayoutSupport).toEqual({
       mode: 'manual-assumption',
       accountId: 'policy',
+      allowedFrequencies: ['monthly'],
       payoutStateSupport: {
         defaultState: 'secure-income',
         suppressWhileLapsed: true,
         stateAfterPremiumHolidayActivation: 'target-income',
         stateAfterReinstatement: 'target-income',
+        stateAfterPartialWithdrawalActivation: 'target-income',
+        partialWithdrawalDisqualifyingAccountIds: ['policy'],
       },
       source: 'policy-redemption',
     })
@@ -10743,9 +11324,12 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-manual-assumption')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-target-retirement-age-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-first-year-proration')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:lapse-reinstatement-payout-state')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-platinum-retirement-elite-power-up-bonus-no-withdrawal-corridor')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-retirement-elite-withdrawal-adjusted-power-up-bonus')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-retirement-elite-monthly-retirement-income-election')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-retirement-elite-stepped-up-income-option')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-retirement-elite-usd-and-srs-single-pay-selection')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-retirement-elite-accidental-death-benefit')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-retirement-elite-protection-benefits')
@@ -10765,7 +11349,14 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.scheduledPayoutSupport).toEqual({
       mode: 'manual-assumption',
       accountId: 'policy',
+      firstYearStartMonthModel: 'prorated-payout',
+      allowedFrequencies: ['monthly'],
+      minimumStartPolicyYear: 11,
       requiresTargetRetirementAgeStart: true,
+      stepUpRateRange: {
+        minimumRate: 0,
+        maximumRate: 0.05,
+      },
       payoutStateSupport: {
         defaultState: 'target-income',
         suppressWhileLapsed: true,
@@ -10825,7 +11416,10 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current accidental-death uplift as 50% of cumulative paid regular premiums during the first 5 policy years'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('annual-state lapse after projected account-value depletion'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Power-up Bonus'))).toBe(true)
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('target-retirement-age start gate'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('10-year accumulation gate'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('first-payout-year start month'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('0% to 5% stepped-up-income rate'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('monthly payout cadence'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('single-pay corridor'))).toBe(true)
   })
 
@@ -10846,8 +11440,11 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-platinum-retirement-elite-single-supplementary-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-platinum-retirement-elite-power-up-bonus-no-withdrawal-corridor')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-target-retirement-age-gate')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-first-year-proration')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-retirement-elite-withdrawal-adjusted-power-up-bonus')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-retirement-elite-monthly-retirement-income-election')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-retirement-elite-stepped-up-income-option')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-retirement-elite-usd-and-srs-single-pay-selection')
     expect(seed.monthlyContribution).toBe(0)
     expect(seed.initialSinglePremium).toBe(0)
@@ -10862,7 +11459,14 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.scheduledPayoutSupport).toEqual({
       mode: 'manual-assumption',
       accountId: 'policy',
+      firstYearStartMonthModel: 'prorated-payout',
+      allowedFrequencies: ['monthly'],
+      minimumStartPolicyYear: 11,
       requiresTargetRetirementAgeStart: true,
+      stepUpRateRange: {
+        minimumRate: 0,
+        maximumRate: 0.05,
+      },
       payoutStateSupport: {
         defaultState: 'target-income',
         suppressWhileLapsed: true,
@@ -10915,6 +11519,9 @@ describe('templateVariantToPolicySeed', () => {
     ])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('0.50% p.a. single-premium supplementary charge'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current accidental-death uplift as 10% of a manual initial single premium input during the first 5 policy years'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('10-year accumulation gate'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('0% to 5% stepped-up-income rate'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('monthly payout cadence'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('single-pay corridor'))).toBe(true)
   })
 
@@ -10931,17 +11538,20 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-platinum-wealth-elite-2-vitality-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-paid-up-to-date-block')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:no-lapse-fixed-charge-debt-carry')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-platinum-wealth-elite-2-no-lapse-administration-charge-carry')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-ti-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-residual-death-benefit-after-ti-estimate')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-wealth-elite-2-no-lapse-privilege')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-wealth-elite-2-no-lapse-history-and-non-manual-charge-indebtedness')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-elite-2-no-lapse-privilege')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-elite-2-vitality-bonus')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-elite-2-protection-benefits')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(5)
     expect(seed.vitalityStatus).toBe('silver')
     expect(seed.policyStateSupport).toEqual({
-      automaticLapseOnAccountValueDepletion: false,
+      automaticLapseOnAccountValueDepletion: true,
       blockTopUpsWhenPremiumsNotPaidUpToDate: true,
     })
     expect(seed.chargeRules).toEqual(expect.arrayContaining([
@@ -10955,11 +11565,19 @@ describe('templateVariantToPolicySeed', () => {
         basis: 'insured-amount-at-issue',
         startPolicyYear: 1,
         endPolicyYear: 4,
+        carryForwardOnInsufficientDeductionWithinPolicyYears: {
+          startPolicyYear: 1,
+          endPolicyYear: 15,
+        },
       }),
       expect.objectContaining({
         id: 'insurance-risk-charge',
         basis: 'fixed-annual',
         requiresManualInput: true,
+        carryForwardOnInsufficientDeductionWithinPolicyYears: {
+          startPolicyYear: 1,
+          endPolicyYear: 15,
+        },
       }),
     ]))
     expect(seed.eventChargeRules).toEqual([
@@ -10978,6 +11596,9 @@ describe('templateVariantToPolicySeed', () => {
         trigger: 'partial-withdrawal',
       }),
     ])
+    const premiumHolidayChargeRule = seed.eventChargeRules?.find((rule) => rule.id === 'premium-holiday-charge')
+    expect(premiumHolidayChargeRule).toBeDefined()
+    expect(premiumHolidayChargeRule?.carryForwardOnInsufficientDeductionWithinPolicyYears).toBeUndefined()
     expect(seed.eecTable).toEqual([0.5, 0.4, 0.3, 0.2, 0.1, 0])
     expect(seed.bonuses).toEqual([
       expect.objectContaining({
@@ -10998,7 +11619,7 @@ describe('templateVariantToPolicySeed', () => {
     ])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('3% top-up premium charge with blocking in months where regular premiums are not paid when due'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('static-assumption Vitality Fund Boost schedule'))).toBe(true)
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('current-state death benefit as the higher of current insured amount or policy value via a manual current insured amount input'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('current-state death benefit as the higher of current insured amount or policy value, using manual current No Lapse Privilege status'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current residual death-benefit estimate after a TI claim today'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('premium-term extension'))).toBe(true)
   })
@@ -11017,15 +11638,17 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-paid-up-to-date-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-platinum-wealth-legacy-administration-charge-manual-input')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-platinum-wealth-legacy-insurance-risk-charge-manual-input')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:no-lapse-fixed-charge-debt-carry')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-ti-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-residual-death-benefit-after-ti-estimate')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-wealth-legacy-no-lapse-privilege')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-wealth-legacy-no-lapse-history-and-non-manual-charge-indebtedness')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-legacy-no-lapse-privilege')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-legacy-protection-benefits')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(5)
     expect(seed.policyStateSupport).toEqual({
-      automaticLapseOnAccountValueDepletion: false,
+      automaticLapseOnAccountValueDepletion: true,
       blockTopUpsWhenPremiumsNotPaidUpToDate: true,
     })
     expect(seed.chargeRules).toEqual(expect.arrayContaining([
@@ -11040,11 +11663,19 @@ describe('templateVariantToPolicySeed', () => {
         requiresManualInput: true,
         startPolicyYear: 1,
         endPolicyYear: 10,
+        carryForwardOnInsufficientDeductionWithinPolicyYears: {
+          startPolicyYear: 1,
+          endPolicyYear: 100,
+        },
       }),
       expect.objectContaining({
         id: 'insurance-risk-charge',
         basis: 'fixed-annual',
         requiresManualInput: true,
+        carryForwardOnInsufficientDeductionWithinPolicyYears: {
+          startPolicyYear: 1,
+          endPolicyYear: 100,
+        },
       }),
     ]))
     expect(seed.eventChargeRules).toEqual([
@@ -11536,7 +12167,6 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-goal-1-plan-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:fwd-invest-goal-1-surrender-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
-    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-amount-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-goal-1-death-benefit')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('fwd-invest-goal-1-plan-charge-single-premium-base')
@@ -11549,11 +12179,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.eecTable).toEqual([0.07, 0.056, 0.042, 0.028, 0.014, 0])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('supported V1 product'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current-state death benefit as 105% of policy value'))).toBe(true)
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('published SGD 500 per-transaction minimum'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('10%-of-committed-initial-single-premium minimum remaining-value floor'))).toBe(true)
     expect(seed.policyStateSupport).toEqual({
       automaticLapseOnAccountValueDepletion: false,
-      minimumPartialWithdrawalAmount: 500,
       partialWithdrawalMinimumRemainingValueRules: [
         {
           activeWindow: 'policy-term',
@@ -11584,27 +12212,6 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
-  })
-
-  it('maps FWD Invest Goal 1 USD into an open-ended single-premium seed with the published USD withdrawal minimum', () => {
-    const { manifest, products } = getIlpCatalog()
-    const product = products.find((entry) => entry.id === 'fwd-invest-goal-1')
-    expect(product).toBeDefined()
-
-    const variant = product?.variants.find((entry) => entry.id === 'usd-open-ended')
-    expect(variant).toBeDefined()
-
-    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('published USD 375 per-transaction minimum'))).toBe(true)
-    expect(seed.policyStateSupport?.minimumPartialWithdrawalAmount).toBe(375)
-    expect(seed.policyStateSupport?.partialWithdrawalMinimumRemainingValueRules).toEqual([
-      {
-        activeWindow: 'policy-term',
-        basis: 'initial-single-premium',
-        accountId: 'policy',
-        minimumValueRate: 0.1,
-      },
-    ])
   })
 
   it('preserves template charge allocation, event activeWindow, and rateSchedule-only fee rules', () => {
