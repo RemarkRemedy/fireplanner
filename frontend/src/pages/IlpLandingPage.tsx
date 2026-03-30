@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { BarChart3, BookOpen, Calculator, Search } from 'lucide-react'
+import { ArrowRight, BarChart3, BookOpen, Calculator, Search, ShieldCheck, WalletCards } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { ProductPickerDialog } from '@/components/ilp/catalog/ProductPickerDialog'
 import { usePageMeta } from '@/hooks/usePageMeta'
@@ -17,23 +17,100 @@ export function IlpLandingPage() {
   const navigate = useNavigate()
   const [pickerOpen, setPickerOpen] = useState(false)
 
-  return (
-    <div className="mx-auto max-w-3xl space-y-8 px-4 py-8">
-      <div className="space-y-3 text-center">
-        <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-          Returns are not guaranteed, but fees are.
-        </p>
-        <h1 className="text-3xl font-bold sm:text-4xl">
-          ILP Fee Transparency
-        </h1>
-        <p className="mx-auto max-w-xl text-muted-foreground">
-          Independent, privacy-first fee analysis for 92 Singapore ILP products.
-          Your data never leaves the browser. No sales agenda. Open source.
-        </p>
-      </div>
+  const entryCards = [
+    {
+      title: "I'm considering an ILP",
+      description: 'See the real fee cost of any ILP product in 4 screens. Year-by-year fee decomposition, bonus reality check, and exit math.',
+      cta: 'Pick a product',
+      footnote: 'Select your product and see its fee story.',
+      eyebrow: 'Prospect path',
+      icon: BarChart3,
+      tone: 'border-sky-200 bg-sky-50/70 dark:border-sky-900/80 dark:bg-sky-950/20',
+      accent: 'from-sky-500/15 via-sky-500/5 to-transparent',
+      bullets: ['Fee story in minutes', 'Works with public product docs', 'No signup required'],
+      action: () => setPickerOpen(true),
+      kind: 'button' as const,
+    },
+    {
+      title: 'I have an ILP',
+      description: 'Enter your current policy details and find out if staying or exiting makes more financial sense under your circumstances.',
+      cta: 'Calculate exit options',
+      footnote: 'You will need your latest policy statement.',
+      eyebrow: 'Policyholder path',
+      icon: Calculator,
+      tone: 'border-emerald-200 bg-emerald-50/70 dark:border-emerald-900/80 dark:bg-emerald-950/20',
+      accent: 'from-emerald-500/15 via-emerald-500/5 to-transparent',
+      bullets: ['Shows surrender charges', 'Compares hold vs exit paths', 'Uses your current policy inputs'],
+      href: '/ilp-fees/exit',
+      kind: 'link' as const,
+    },
+    {
+      title: "I'm researching",
+      description: 'Compare fee drag across all products. Sortable, filterable, and standardized for apples-to-apples comparison.',
+      cta: 'Open the leaderboard',
+      footnote: 'Standardized at S$350/mo, mid return scenario.',
+      eyebrow: 'Research path',
+      icon: Search,
+      tone: 'border-violet-200 bg-violet-50/70 dark:border-violet-900/80 dark:bg-violet-950/20',
+      accent: 'from-violet-500/15 via-violet-500/5 to-transparent',
+      bullets: ['Filter by insurer and premium type', 'Compare net fees vs premiums', 'Open exact product variants'],
+      href: '/ilp-fees/compare',
+      kind: 'link' as const,
+    },
+  ]
 
-      {/* CTA 1: educational hook below hero */}
-      <div className="rounded-lg border border-blue-200 bg-blue-50/50 px-4 py-3 text-center dark:border-blue-900 dark:bg-blue-950/30">
+  return (
+    <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
+      <section className="overflow-hidden rounded-[2rem] border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-sky-50/70 p-6 shadow-sm dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 sm:p-8">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(18rem,1fr)] lg:items-end">
+          <div className="space-y-5">
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-300/80 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-slate-600 backdrop-blur dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-300">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Returns are not guaranteed, but fees are.
+            </div>
+            <div className="space-y-3">
+              <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-5xl">
+                ILP Fee Transparency
+              </h1>
+              <p className="max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300 sm:text-lg">
+                Independent, privacy-first fee analysis for 92 Singapore ILP products. See where charges stack up, how bonuses really behave, and when exit math changes the decision.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3 text-sm">
+              <div className="rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+                <div className="font-semibold text-slate-950 dark:text-white">92 products</div>
+                <div className="text-slate-500 dark:text-slate-400">Catalogued for fee review</div>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+                <div className="font-semibold text-slate-950 dark:text-white">Year-by-year charges</div>
+                <div className="text-slate-500 dark:text-slate-400">Not just a headline fee rate</div>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+                <div className="font-semibold text-slate-950 dark:text-white">Runs locally</div>
+                <div className="text-slate-500 dark:text-slate-400">Your policy details stay in browser</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+            <div className="flex items-start gap-3">
+              <div className="rounded-2xl bg-slate-100 p-3 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                <WalletCards className="h-5 w-5" />
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-slate-950 dark:text-white">What this dashboard is good for</p>
+                <ul className="space-y-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  <li>Compare ILP fee drag without a sales pitch.</li>
+                  <li>Inspect bonuses separately from gross fees.</li>
+                  <li>Check surrender timing before you cancel.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="rounded-2xl border border-blue-200 bg-blue-50/70 px-4 py-3 text-center dark:border-blue-900 dark:bg-blue-950/30">
         <a
           href={`${BLOG_URL}?utm_source=dashboard&utm_content=landing_hero`}
           className="text-sm font-medium text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
@@ -42,69 +119,63 @@ export function IlpLandingPage() {
         </a>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        {/* Mode 1: Prospects — opens product picker, then navigates to story mode */}
-        <button type="button" onClick={() => setPickerOpen(true)} className="group text-left">
-          <Card className="h-full transition-colors group-hover:border-primary group-hover:shadow-sm">
-            <CardContent className="flex h-full flex-col gap-4 p-6">
-              <BarChart3 className="h-8 w-8 text-primary" />
-              <div className="flex-1 space-y-2">
-                <h2 className="text-lg font-semibold">I'm considering an ILP</h2>
-                <p className="text-sm text-muted-foreground">
-                  See the real fee cost of any ILP product in 4 screens. Year-by-year fee decomposition, bonus reality check, and exit math.
-                </p>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-primary group-hover:underline">
-                  Pick a product
-                </span>
-                <p className="mt-1 text-xs text-muted-foreground">Select your product and see its fee story.</p>
-              </div>
-            </CardContent>
-          </Card>
-        </button>
+      <div className="grid gap-4 xl:grid-cols-3">
+        {entryCards.map((entry) => {
+          const Icon = entry.icon
+          const content = (
+            <Card className={`relative h-full overflow-hidden border transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-lg ${entry.tone}`}>
+              <div className={`absolute inset-x-0 top-0 h-24 bg-gradient-to-br ${entry.accent}`} />
+              <CardContent className="relative flex h-full flex-col gap-5 p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                      {entry.eyebrow}
+                    </p>
+                    <h2 className="text-xl font-semibold text-slate-950 dark:text-white">{entry.title}</h2>
+                  </div>
+                  <div className="rounded-2xl bg-white/90 p-3 text-slate-700 shadow-sm dark:bg-slate-900/90 dark:text-slate-200">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                </div>
 
-        {/* Mode 2: Existing holders */}
-        <Link to="/ilp-fees/exit" className="group">
-          <Card className="h-full transition-colors group-hover:border-primary group-hover:shadow-sm">
-            <CardContent className="flex h-full flex-col gap-4 p-6">
-              <Calculator className="h-8 w-8 text-primary" />
-              <div className="flex-1 space-y-2">
-                <h2 className="text-lg font-semibold">I have an ILP</h2>
-                <p className="text-sm text-muted-foreground">
-                  Enter your current policy details and find out if staying or exiting makes more financial sense under your circumstances.
+                <p className="flex-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  {entry.description}
                 </p>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-primary group-hover:underline">
-                  Calculate exit options
-                </span>
-                <p className="mt-1 text-xs text-muted-foreground">You will need your latest policy statement.</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
 
-        {/* Mode 3: Researchers */}
-        <Link to="/ilp-fees/compare" className="group">
-          <Card className="h-full transition-colors group-hover:border-primary group-hover:shadow-sm">
-            <CardContent className="flex h-full flex-col gap-4 p-6">
-              <Search className="h-8 w-8 text-primary" />
-              <div className="flex-1 space-y-2">
-                <h2 className="text-lg font-semibold">I'm researching</h2>
-                <p className="text-sm text-muted-foreground">
-                  Compare fee drag across all products. Sortable, filterable, and standardized for apples-to-apples comparison.
-                </p>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-primary group-hover:underline">
-                  Open the leaderboard
-                </span>
-                <p className="mt-1 text-xs text-muted-foreground">Standardized at S$350/mo, mid return scenario.</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
+                <div className="space-y-2 rounded-2xl border border-white/70 bg-white/80 p-4 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
+                  {entry.bullets.map((bullet) => (
+                    <div key={bullet} className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                      <span>{bullet}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
+                    {entry.cta}
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{entry.footnote}</p>
+                </div>
+              </CardContent>
+            </Card>
+          )
+
+          if (entry.kind === 'button') {
+            return (
+              <button key={entry.title} type="button" onClick={entry.action} className="group text-left">
+                {content}
+              </button>
+            )
+          }
+
+          return (
+            <Link key={entry.title} to={entry.href!} className="group">
+              {content}
+            </Link>
+          )
+        })}
       </div>
 
       {/* CTA 2: educational guide card */}

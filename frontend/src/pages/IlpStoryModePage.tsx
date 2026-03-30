@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowRight, ChevronDown, Receipt } from 'lucide-react'
+import { ArrowRight, BadgeDollarSign, ChartColumnBig, ChevronDown, Clock3, Receipt, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { IlpFeeStory } from '@/components/ilp/IlpFeeStory'
@@ -57,6 +57,91 @@ function ScrollHint({ targetId, label }: { targetId: string; label: string }) {
       <ChevronDown className="h-4 w-4 animate-bounce" />
       {label}
     </button>
+  )
+}
+
+function ProspectSetupPreview({ seed }: { seed: IlpPolicySeed }) {
+  const pathLabel = (seed.initialSinglePremium ?? 0) > 0 || seed.monthlyContribution === 0
+    ? `${new Intl.NumberFormat('en-SG', { style: 'currency', currency: seed.currency, maximumFractionDigits: 0 }).format(seed.initialSinglePremium ?? 0)} single premium`
+    : `${new Intl.NumberFormat('en-SG', { style: 'currency', currency: seed.currency, maximumFractionDigits: 0 }).format(seed.monthlyContribution)} / month`
+  const horizonLabel = seed.mipLength != null ? `${seed.mipLength}+ years modelled` : 'Flexible projection horizon'
+
+  const previewCards = [
+    {
+      title: 'Fee story',
+      detail: 'Annual fee categories, cumulative fees, and the detailed table you saw on the explore dashboard.',
+      icon: ChartColumnBig,
+    },
+    {
+      title: 'Bonus reality check',
+      detail: 'Bonuses are shown separately from gross fees so they cannot masquerade as a fee rebate.',
+      icon: BadgeDollarSign,
+    },
+    {
+      title: 'Exit options',
+      detail: 'Hold-vs-exit comparisons with surrender charges and opportunity-cost framing.',
+      icon: ShieldCheck,
+    },
+  ]
+
+  return (
+    <div className="space-y-6">
+      <div className="space-y-3">
+        <div className="inline-flex items-center gap-2 rounded-full border border-slate-300/80 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-slate-600 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-300">
+          <Clock3 className="h-3.5 w-3.5" />
+          Prospect setup
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-3xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-4xl">
+            Confirm your details
+          </h2>
+          <p className="max-w-xl text-base leading-7 text-slate-600 dark:text-slate-300">
+            We only need the premium, fund fee, and projection horizon before we show the full fee breakdown. The product rules stay the same; these inputs only control the scenario we illustrate.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Template</div>
+          <div className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{seed.name}</div>
+          <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            {seed.insurer} · {seed.currency}
+            {seed.mipLength != null && ` · MIP ${seed.mipLength} years`}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Starting assumptions</div>
+          <div className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{pathLabel}</div>
+          <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">{horizonLabel}</div>
+        </div>
+      </div>
+
+      <div className="space-y-3 rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-900/60">
+        <div>
+          <p className="text-sm font-semibold text-slate-950 dark:text-white">What you’ll see next</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            This is the same dashboard detail, staged in a simpler path for prospective buyers.
+          </p>
+        </div>
+        <div className="grid gap-3">
+          {previewCards.map((card) => {
+            const Icon = card.icon
+            return (
+              <div key={card.title} className="flex items-start gap-3 rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
+                <div className="rounded-2xl bg-slate-100 p-2.5 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                  <Icon className="h-4 w-4" />
+                </div>
+                <div className="space-y-1">
+                  <div className="font-medium text-slate-950 dark:text-white">{card.title}</div>
+                  <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">{card.detail}</p>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -189,29 +274,31 @@ export function IlpStoryModePage() {
   // --- Step 2: Setup gate (confirm premium etc.) ---
   if (effectiveSeed && !storyPolicy) {
     return (
-      <div className="flex min-h-[50vh] flex-col items-center justify-center px-4">
-        <div className="w-full max-w-lg space-y-4">
-          <h2 className="text-xl font-semibold">Confirm your details</h2>
-          <p className="text-sm text-muted-foreground">
-            Verify or adjust the premium and policy details before we show you the fee breakdown.
-          </p>
-          <PolicySetupGate
-            seed={effectiveSeed!}
-            prospect
-            onConfirm={(adjustedSeed) => {
-              // Build policy in-memory only — no store persistence for story mode
-              const policy = mergePolicySeed(adjustedSeed)
-              setStoryPolicy(policy)
-              setShowFeeStory(true)
-              setPendingSeed(null)
-            }}
-            onCancel={() => {
-              setPendingSeed(null)
-              if (requestedVariantId && productId) {
-                navigate(`/ilp-fees/story/${productId}`, { replace: true })
-              }
-            }}
-          />
+      <div className="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-6xl items-center px-4 py-8">
+        <div className="grid w-full gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(22rem,30rem)] lg:items-start">
+          <ProspectSetupPreview seed={effectiveSeed} />
+          <div className="space-y-3">
+            <PolicySetupGate
+              seed={effectiveSeed}
+              prospect
+              onConfirm={(adjustedSeed) => {
+                // Build policy in-memory only — no store persistence for story mode
+                const policy = mergePolicySeed(adjustedSeed)
+                setStoryPolicy(policy)
+                setShowFeeStory(true)
+                setPendingSeed(null)
+              }}
+              onCancel={() => {
+                setPendingSeed(null)
+                if (requestedVariantId && productId) {
+                  navigate(`/ilp-fees/story/${productId}`, { replace: true })
+                }
+              }}
+            />
+            <p className="px-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+              No login, no saved lead form, and no adviser handoff. This route just turns the product template into a visible fee scenario.
+            </p>
+          </div>
         </div>
       </div>
     )
