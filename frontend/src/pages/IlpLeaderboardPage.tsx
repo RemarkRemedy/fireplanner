@@ -149,7 +149,7 @@ export function IlpLeaderboardPage() {
 
   return (
     <div className="space-y-6 text-[#0f1724]">
-      <section className="rounded-[28px] border border-[#d7cfbf] bg-[#fffdf8] px-5 py-5 shadow-[0_1px_0_rgba(15,23,36,0.04)] sm:px-7 sm:py-6">
+      <section className="rounded-[28px] border border-[#d9e4f2] bg-white px-5 py-5 shadow-[0_1px_0_rgba(15,23,36,0.04)] sm:px-7 sm:py-6">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.95fr)] lg:items-end">
           <div className="space-y-3">
             <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#5f6877]">Ranked fee report</div>
@@ -162,7 +162,7 @@ export function IlpLeaderboardPage() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[#d7cfbf] bg-[#f6f1e8] p-4">
+          <div className="rounded-3xl border border-[#d9e4f2] bg-[#f7faff] p-4">
             <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#5f6877]">How to read this table</div>
             <ul className="mt-3 space-y-2 text-sm leading-6 text-[#5f6877]">
               <li>Rank is based on the active sort, not a hidden score.</li>
@@ -174,27 +174,27 @@ export function IlpLeaderboardPage() {
       </section>
 
       {summary && (
-        <section className="grid gap-px overflow-hidden rounded-[28px] border border-[#d7cfbf] bg-[#d7cfbf] md:grid-cols-2 xl:grid-cols-4">
-          <div className="bg-[#fffdf8] p-4 sm:p-5">
+        <section className="grid gap-px overflow-hidden rounded-[28px] border border-[#d9e4f2] bg-[#d9e4f2] md:grid-cols-2 xl:grid-cols-4">
+          <div className="bg-white p-4 sm:p-5">
             <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#5f6877]">Filtered set</div>
             <div className="mt-3 text-3xl font-semibold tabular-nums">{filtered.length}</div>
             <p className="mt-2 text-sm leading-6 text-[#5f6877]">Variants currently in view after search and insurer filters.</p>
           </div>
-          <div className="bg-[#fffdf8] p-4 sm:p-5">
+          <div className="bg-white p-4 sm:p-5">
             <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#22624a]">Lowest fee drag</div>
             <div className="mt-3 text-2xl font-semibold tabular-nums">{formatPercent(summary.lowestFeeRow.netFeeDragPct)}</div>
             <p className="mt-2 text-sm leading-6 text-[#5f6877]">
               {summary.lowestFeeRow.productName} · {summary.lowestFeeRow.variantLabel}
             </p>
           </div>
-          <div className="bg-[#fffdf8] p-4 sm:p-5">
+          <div className="bg-white p-4 sm:p-5">
             <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#b24a2f]">Highest fee drag</div>
             <div className="mt-3 text-2xl font-semibold tabular-nums">{formatPercent(summary.highestFeeRow.netFeeDragPct)}</div>
             <p className="mt-2 text-sm leading-6 text-[#5f6877]">
               {summary.highestFeeRow.productName} · {summary.highestFeeRow.variantLabel}
             </p>
           </div>
-          <div className="bg-[#fffdf8] p-4 sm:p-5">
+          <div className="bg-white p-4 sm:p-5">
             <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#174a7c]">Strongest bonus support</div>
             <div className="mt-3 text-2xl font-semibold tabular-nums">
               {summary.strongestBonusRow ? formatBonusSupport(summary.strongestBonusRow) : 'n/a'}
@@ -208,7 +208,7 @@ export function IlpLeaderboardPage() {
         </section>
       )}
 
-      <section className="rounded-[28px] border border-[#d7cfbf] bg-[#fffdf8] p-4 sm:p-5">
+      <section className="rounded-[28px] border border-[#d9e4f2] bg-white p-4 sm:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
             <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#5f6877]">Filters</div>
@@ -226,11 +226,11 @@ export function IlpLeaderboardPage() {
               placeholder="Search insurer, product, or variant"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-11 border-[#d7cfbf] bg-[#fffdf8] pl-9 text-[#0f1724] placeholder:text-[#7b8491]"
+              className="h-11 border-[#d9e4f2] bg-white pl-9 text-[#0f1724] placeholder:text-[#7b8491]"
             />
           </div>
           <select
-            className="h-11 rounded-xl border border-[#d7cfbf] bg-[#fffdf8] px-3 text-sm text-[#0f1724]"
+            className="h-11 rounded-xl border border-[#d9e4f2] bg-white px-3 text-sm text-[#0f1724]"
             value={filterInsurer ?? ''}
             onChange={(e) => setFilterInsurer(e.target.value || null)}
           >
@@ -240,7 +240,7 @@ export function IlpLeaderboardPage() {
             ))}
           </select>
           <select
-            className="h-11 rounded-xl border border-[#d7cfbf] bg-[#fffdf8] px-3 text-sm text-[#0f1724]"
+            className="h-11 rounded-xl border border-[#d9e4f2] bg-white px-3 text-sm text-[#0f1724]"
             value={filterPremiumType}
             onChange={(e) => setFilterPremiumType(e.target.value as 'all' | 'regular' | 'single')}
           >
@@ -251,8 +251,8 @@ export function IlpLeaderboardPage() {
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-[28px] border border-[#d7cfbf] bg-[#fffdf8] shadow-[0_1px_0_rgba(15,23,36,0.04)]">
-        <div className="border-b border-[#d7cfbf] px-4 py-3 sm:px-5">
+      <section className="overflow-hidden rounded-[28px] border border-[#d9e4f2] bg-white shadow-[0_1px_0_rgba(15,23,36,0.04)]">
+        <div className="border-b border-[#d9e4f2] px-4 py-3 sm:px-5">
           <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#5f6877]">Scoreboard</div>
           <p className="mt-2 text-sm leading-6 text-[#5f6877]">
             `Net Fees / Premiums` stays the default sort because it is the clearest cross-product basis for comparison.
@@ -260,7 +260,7 @@ export function IlpLeaderboardPage() {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1080px] text-sm">
-            <thead className="border-b border-[#d7cfbf] bg-[#f6f1e8]">
+            <thead className="border-b border-[#d9e4f2] bg-[#f7faff]">
               <tr className="text-[#0f1724]">
                 <th className="px-4 py-3 text-left font-mono text-[11px] uppercase tracking-[0.18em] text-[#5f6877]">Rank</th>
                 <th className="px-3 py-3 text-left">
@@ -293,8 +293,8 @@ export function IlpLeaderboardPage() {
                 <tr
                   key={`${row.productId}-${row.variantId}`}
                   className={cn(
-                    'border-b border-[#ece5d8] last:border-0 hover:bg-[#f8f4ec]',
-                    index < 3 && 'bg-[#fcfaf4]',
+                    'border-b border-[#e8eef7] last:border-0 hover:bg-[#f8fbff]',
+                    index < 3 && 'bg-[#fbfdff]',
                   )}
                 >
                   <td className="px-4 py-3 align-top">
@@ -333,8 +333,8 @@ export function IlpLeaderboardPage() {
                       className={cn(
                         'inline-flex rounded-full border px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.08em]',
                         row.premiumType === 'single'
-                          ? 'border-[#d7cfbf] bg-[#ece5d8] text-[#0f1724]'
-                          : 'border-[#d7cfbf] bg-[#fffdf8] text-[#5f6877]',
+                          ? 'border-[#d9e4f2] bg-[#eef4fb] text-[#0f1724]'
+                          : 'border-[#d9e4f2] bg-white text-[#5f6877]',
                       )}
                     >
                       {row.premiumType === 'single' ? 'Single' : 'Regular'}
@@ -362,7 +362,7 @@ export function IlpLeaderboardPage() {
         </div>
       </section>
 
-      <section className="rounded-[28px] border border-[#d7cfbf] bg-[#f6f1e8] p-4 sm:p-5">
+      <section className="rounded-[28px] border border-[#d9e4f2] bg-[#f7faff] p-4 sm:p-5">
         <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#5f6877]">Method notes</div>
         <div className="mt-3 space-y-2 text-sm leading-6 text-[#5f6877]">
           <p>* Products marked with * do not have bonus modelling. Their net fee drag may be overstated.</p>

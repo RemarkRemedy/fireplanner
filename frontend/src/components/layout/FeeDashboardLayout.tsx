@@ -27,10 +27,10 @@ export function FeeDashboardLayout() {
   }, [location.pathname])
 
   return (
-    <div className="min-h-dvh bg-[#f4efe6] text-[#0f1724]">
+    <div className="min-h-dvh bg-[#f6f9fc] text-[#0f1724]">
       <Toaster position="bottom-right" />
 
-      <header className="sticky top-0 z-40 border-b border-[#d7cfbf] bg-[#f4efe6]/95 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-[#d9e4f2] bg-[#f6f9fc]/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-3">
@@ -42,7 +42,7 @@ export function FeeDashboardLayout() {
                 Back to FIRE Planner
               </Link>
               <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 rounded-full border border-[#d7cfbf] bg-[#fffdf8] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#5f6877]">
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#d9e4f2] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#5f6877]">
                   <ShieldCheck className="h-3.5 w-3.5" />
                   Independent fee investigation
                 </div>
@@ -58,11 +58,11 @@ export function FeeDashboardLayout() {
             </div>
 
             <div className="grid gap-2 text-sm text-[#5f6877] sm:grid-cols-2">
-              <div className="rounded-2xl border border-[#d7cfbf] bg-[#fffdf8] px-4 py-3">
+              <div className="rounded-2xl border border-[#d9e4f2] bg-white px-4 py-3">
                 <div className="font-mono text-[11px] uppercase tracking-[0.18em]">Point of view</div>
                 <div className="mt-1 font-medium text-[#0f1724]">Fees are certain. Sales framing is not.</div>
               </div>
-              <div className="rounded-2xl border border-[#d7cfbf] bg-[#fffdf8] px-4 py-3">
+              <div className="rounded-2xl border border-[#d9e4f2] bg-white px-4 py-3">
                 <div className="font-mono text-[11px] uppercase tracking-[0.18em]">Privacy</div>
                 <div className="mt-1 font-medium text-[#0f1724]">Policy details stay in your browser.</div>
               </div>
@@ -82,7 +82,7 @@ export function FeeDashboardLayout() {
                       'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors',
                       isActive
                         ? 'border-[#174a7c] bg-[#174a7c] text-white'
-                        : 'border-[#d7cfbf] bg-[#fffdf8] text-[#5f6877] hover:border-[#174a7c]/40 hover:text-[#0f1724]',
+                        : 'border-[#d9e4f2] bg-white text-[#5f6877] hover:border-[#174a7c]/40 hover:text-[#0f1724]',
                     )
                   }
                 >
@@ -101,7 +101,7 @@ export function FeeDashboardLayout() {
         </div>
       </main>
 
-      <footer className="border-t border-[#d7cfbf] bg-[#ece5d8]/55">
+      <footer className="border-t border-[#d9e4f2] bg-[#eef4fb]/80">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 sm:px-6 lg:flex-row lg:items-start lg:justify-between lg:px-8">
           <div className="max-w-2xl">
             <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#5f6877]">Not financial advice</div>
