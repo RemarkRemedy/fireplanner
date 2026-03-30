@@ -540,6 +540,12 @@ export const ilpTemplatePolicyStateSupportSchema = z.object({
     minimumValue: z.number().min(0).max(100_000_000).optional(),
     minimumValueRate: z.number().min(0).max(100).optional(),
   })).min(1).max(10).optional(),
+  partialWithdrawalMinimumRemainingSelectedFundValueRules: z.array(z.object({
+    activeWindow: z.enum(['during-mip', 'after-mip', 'policy-term']),
+    accountId: z.string().min(1),
+    minimumValue: z.number().min(0).max(100_000_000),
+    minimumValueExclusive: z.boolean().optional(),
+  })).min(1).max(10).optional(),
   minimumTopUpStartPolicyMonth: z.number().int().min(1).max(1200).optional(),
   topUpRepaymentClearance: z.object({
     includeMissedPremiums: z.boolean().optional(),
@@ -590,6 +596,16 @@ export const ilpTemplatePolicyStateSupportSchema = z.object({
           path: ['partialWithdrawalMinimumRemainingValueRules', index, 'minimumValueRate'],
         })
       }
+    }
+  })
+
+  support.partialWithdrawalMinimumRemainingSelectedFundValueRules?.forEach((rule, index) => {
+    if (rule.minimumValue < 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'selected-fund withdrawal minimum rules require non-negative minimumValue',
+        path: ['partialWithdrawalMinimumRemainingSelectedFundValueRules', index, 'minimumValue'],
+      })
     }
   })
 })

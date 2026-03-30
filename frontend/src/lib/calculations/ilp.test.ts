@@ -36344,7 +36344,6 @@ describe('computeSummaryMetrics', () => {
     expect(policy.policyStateSupport?.minimumPartialWithdrawalAmount).toBe(500)
     expect(accountRow(result.rows[0], 'policy').withdrawalAmount).toBe(500)
   })
-
   it('allows GREAT Invest Advantage (SP) selected-fund one-off withdrawals that leave the chosen fund exactly at the published S$500 floor', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'great-eastern-great-invest-advantage-sp')
@@ -36898,7 +36897,6 @@ describe('computeSummaryMetrics', () => {
       ],
     })).toThrow(/selected fund/i)
   })
-
   it('models Dash PET Plus death benefit today as the higher of rider account value and the 105% premium floor net of withdrawals and current amounts owing', () => {
     const policy = makeOpenEndedPolicy({
       currentPolicyYear: 1,

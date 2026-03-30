@@ -11,6 +11,7 @@ export const ilpPolicyEventSchema = z.object({
   durationMonths: z.number().int().min(1).max(120),
   amount: z.number().min(0).max(100_000_000).optional(),
   accountId: z.string().min(1).optional(),
+  fundName: z.string().min(1).optional(),
   chargeWaived: z.boolean().optional(),
   chargeWaiverGrantId: z.string().min(1).optional(),
   chargeRefunded: z.boolean().optional(),
@@ -314,6 +315,12 @@ export const ilpPolicyStateSupportSchema = z.object({
     accountId: z.string().min(1).optional(),
     minimumValue: z.number().min(0).max(100_000_000).optional(),
     minimumValueRate: z.number().min(0).max(100).optional(),
+  })).min(1).max(10).optional(),
+  partialWithdrawalMinimumRemainingSelectedFundValueRules: z.array(z.object({
+    activeWindow: z.enum(['during-mip', 'after-mip', 'policy-term']),
+    accountId: z.string().min(1),
+    minimumValue: z.number().min(0).max(100_000_000),
+    minimumValueExclusive: z.boolean().optional(),
   })).min(1).max(10).optional(),
   minimumTopUpStartPolicyMonth: z.number().int().min(1).max(1200).optional(),
   topUpRepaymentClearance: z.object({
@@ -1691,6 +1698,46 @@ export const ilpPolicySchema = z.object({
     }
   })
 
+  const selectedFundFloorRules = policy.policyStateSupport?.partialWithdrawalMinimumRemainingSelectedFundValueRules ?? []
+  const validFundNames = new Set(policy.funds.map((fund) => fund.name))
+  const hasSelectedFundRules = selectedFundFloorRules.length > 0
+  if (hasSelectedFundRules) {
+    const duplicateFundNames = new Set<string>()
+    for (const fund of policy.funds) {
+      if (policy.funds.filter((candidate) => candidate.name === fund.name).length > 1) {
+        duplicateFundNames.add(fund.name)
+      }
+    }
+    if (duplicateFundNames.size > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Policies using selected-fund withdrawal floors must have unique fund names',
+        path: ['funds'],
+      })
+    }
+  }
+
+  policy.policyEvents?.forEach((event, index) => {
+    if (event.fundName != null && !validFundNames.has(event.fundName)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Policy event fundName must reference an existing fund name',
+        path: ['policyEvents', index, 'fundName'],
+      })
+    }
+
+    const requiresSelectedFund = event.type === 'partial-withdrawal'
+      && event.accountId != null
+      && selectedFundFloorRules.some((rule) => rule.accountId === event.accountId)
+    if (requiresSelectedFund && !event.fundName) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Partial-withdrawal events must specify a selected fund when the product models a remaining selected-fund floor on that account',
+        path: ['policyEvents', index, 'fundName'],
+      })
+    }
+  })
+
   policy.bonuses.forEach((bonus, index) => {
     if (bonus.appliesTo.some((accountId) => !validAccountIds.has(accountId))) {
       ctx.addIssue({
@@ -1900,6 +1947,16 @@ export const ilpPolicySchema = z.object({
         code: z.ZodIssueCode.custom,
         message: 'policyStateSupport.partialWithdrawalMinimumRemainingValueRules accountId must reference an existing account',
         path: ['policyStateSupport', 'partialWithdrawalMinimumRemainingValueRules', ruleIndex, 'accountId'],
+      })
+    }
+  })
+
+  policy.policyStateSupport?.partialWithdrawalMinimumRemainingSelectedFundValueRules?.forEach((rule, ruleIndex) => {
+    if (!accountIds.includes(rule.accountId)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'policyStateSupport.partialWithdrawalMinimumRemainingSelectedFundValueRules accountId must reference an existing account',
+        path: ['policyStateSupport', 'partialWithdrawalMinimumRemainingSelectedFundValueRules', ruleIndex, 'accountId'],
       })
     }
   })

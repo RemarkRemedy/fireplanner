@@ -319,6 +319,125 @@ function supportsCurrentAccidentalDeathMode(policy: IlpPolicyInput): boolean {
   return policy.catalogSource?.productId === 'income-astralink-va2'
 }
 
+function supportsIncomeAccidentalDeathClaimGate(policy: IlpPolicyInput): boolean {
+  return policy.catalogSource?.productId === 'income-wealthlink-gl3'
+    && policy.assuranceProfile?.currentAgeNextBirthday != null
+    && policy.assuranceProfile.currentAgeNextBirthday >= 66
+    && policy.assuranceProfile.currentAgeNextBirthday < 75
+}
+
+function supportsAiaAccidentalDeathClaimGate(policy: IlpPolicyInput): boolean {
+  if (
+    policy.catalogSource?.productId === 'aia-invest-easy-cash-srs'
+    || policy.catalogSource?.productId === 'aia-invest-easy-cpf'
+  ) {
+    return policy.monthsAlreadyPaid < 12
+  }
+
+  return (
+    policy.catalogSource?.productId === 'aia-elite-secure-income-single-premium'
+    || policy.catalogSource?.productId === 'aia-elite-secure-income-5-pay'
+    || policy.catalogSource?.productId === 'aia-platinum-retirement-elite'
+    || policy.catalogSource?.productId === 'aia-pro-achiever-3'
+    || policy.catalogSource?.productId === 'aia-wealth-venture'
+    || policy.catalogSource?.productId === 'aia-platinum-wealth-venture-2'
+  ) && policy.monthsAlreadyPaid < (
+    policy.catalogSource?.productId === 'aia-pro-achiever-3'
+    || policy.catalogSource?.productId === 'aia-wealth-venture'
+    || policy.catalogSource?.productId === 'aia-platinum-wealth-venture-2'
+      ? 24
+      : 60
+  )
+}
+
+function supportsAiaPremiumPassRunway(policy: IlpPolicyInput): boolean {
+  return policy.catalogSource?.productId === 'aia-pro-achiever-3'
+}
+
+function supportsTokioAccidentalDeathClaimGate(policy: IlpPolicyInput): boolean {
+  if (
+    policy.catalogSource?.productId === 'tokio-marine-wealth-flexi-link-5-10'
+    || policy.catalogSource?.productId === 'tokio-marine-wealth-flexi-link-3-12'
+  ) {
+    return policy.monthsAlreadyPaid < 12
+  }
+
+  return policy.catalogSource?.productId === 'tokio-marine-goelite'
+    || policy.catalogSource?.productId === 'tokio-marine-gowealth-enrich'
+    || policy.catalogSource?.productId === 'tokio-marine-goaffluence'
+}
+
+function supportsTokioDoubleIndemnityClaimGate(policy: IlpPolicyInput): boolean {
+  return policy.catalogSource?.productId === 'tokio-marine-goaffluence'
+}
+
+function supportsTokioDeathExclusionSettlement(policy: IlpPolicyInput): boolean {
+  return policy.catalogSource?.productId === 'tokio-marine-harvest-pro'
+    || policy.catalogSource?.productId === 'tokio-marine-goclassic'
+    || policy.catalogSource?.productId === 'tokio-marine-goclassic-secure'
+    || policy.catalogSource?.productId === 'tokio-marine-goelite-secure'
+}
+
+function requiresTokioDeathExclusionInitialBonus(policy: IlpPolicyInput): boolean {
+  return policy.catalogSource?.productId === 'tokio-marine-harvest-pro'
+    || policy.catalogSource?.productId === 'tokio-marine-goclassic'
+    || policy.catalogSource?.productId === 'tokio-marine-goclassic-secure'
+}
+
+function supportsRemainingAggregateAccidentalDeathCap(policy: IlpPolicyInput): boolean {
+  return policy.catalogSource?.productId === 'tokio-marine-goelite'
+    || policy.catalogSource?.productId === 'tokio-marine-gowealth-enrich'
+}
+
+function supportsTokioFirstYearAccumulationWithdrawalAmount(policy: IlpPolicyInput): boolean {
+  if (
+    policy.catalogSource?.productId !== 'tokio-marine-wealth-flexi-link-5-10'
+    && policy.catalogSource?.productId !== 'tokio-marine-wealth-flexi-link-3-12'
+  ) {
+    return false
+  }
+
+  if (policy.monthsAlreadyPaid >= 12) {
+    return false
+  }
+
+  return (policy.policyEvents ?? []).some((event) => (
+    event.type === 'partial-withdrawal'
+    && event.accountId == null
+    && event.amount != null
+    && event.amount > 0
+    && event.startPolicyMonth <= policy.monthsAlreadyPaid
+  ))
+}
+
+function supportsTokioAccidentalDeathAnnualisedPremium(policy: IlpPolicyInput): boolean {
+  if (policy.catalogSource?.productId !== 'tokio-marine-goaffluence') {
+    return false
+  }
+
+  return (policy.policyEvents ?? []).some((event) => (
+    event.startPolicyMonth <= policy.monthsAlreadyPaid
+    && (
+      event.type === 'premium-holiday'
+      || event.type === 'regular-premium-reduction'
+      || event.type === 'regular-premium-increase'
+    )
+  ))
+}
+
+function requiresSelectedFundForPartialWithdrawal(policy: IlpPolicyInput, accountId?: string): boolean {
+  if (!accountId) {
+    return false
+  }
+
+  return (policy.policyStateSupport?.partialWithdrawalMinimumRemainingSelectedFundValueRules ?? []).some((rule) => (
+    rule.accountId === accountId
+  ))
+}
+
+function getDefaultSelectedFundName(policy: IlpPolicyInput): string | undefined {
+  return policy.funds[0]?.name
+}
 function supportsCurrentAgeAccidentalDeathBenefit(policy: IlpPolicyInput): boolean {
   return policy.catalogSource?.productId === 'tokio-marine-goaffluence'
 }
@@ -3720,6 +3839,13 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                             : ((value === 'policy-repayment' || value === 'top-up' || value === 'recurring-single-premium')
                               ? (event.accountId ?? policy.accounts[0]?.id)
                               : undefined),
+                          fundName: value === 'partial-withdrawal'
+                            ? (
+                                requiresSelectedFundForPartialWithdrawal(policy, event.accountId ?? policy.accounts[0]?.id)
+                                  ? (event.fundName ?? getDefaultSelectedFundName(policy))
+                                  : undefined
+                              )
+                            : undefined,
                           chargeWaived: value === 'partial-withdrawal'
                             || value === 'premium-holiday'
                             || value === 'regular-premium-reduction'
@@ -3820,7 +3946,13 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                             value={event.accountId ?? policy.accounts[0]?.id ?? ''}
                             onValueChange={(value) => {
                               const nextEvents = [...(policy.policyEvents ?? [])]
-                              nextEvents[index] = { ...event, accountId: value }
+                              nextEvents[index] = {
+                                ...event,
+                                accountId: value,
+                                fundName: requiresSelectedFundForPartialWithdrawal(policy, value)
+                                  ? (event.fundName ?? getDefaultSelectedFundName(policy))
+                                  : undefined,
+                              }
                               updatePolicyEvents(nextEvents)
                             }}
                           >
@@ -3834,6 +3966,31 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                             </SelectContent>
                           </Select>
                         </div>
+                        {requiresSelectedFundForPartialWithdrawal(policy, event.accountId ?? policy.accounts[0]?.id) ? (
+                          <div className="space-y-1">
+                            <Label>Selected Fund</Label>
+                            <Select
+                              value={event.fundName ?? getDefaultSelectedFundName(policy) ?? ''}
+                              onValueChange={(value) => {
+                                const nextEvents = [...(policy.policyEvents ?? [])]
+                                nextEvents[index] = { ...event, fundName: value }
+                                updatePolicyEvents(nextEvents)
+                              }}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {policy.funds.map((fund) => (
+                                  <SelectItem key={fund.name} value={fund.name}>{fund.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground">
+                              This product only trusts explicit one-off withdrawals when you identify the fund being cancelled from.
+                            </p>
+                          </div>
+                        ) : null}
                         <div className="space-y-3 xl:col-span-2">
                           <Label className="text-sm font-medium">Charge Waiver</Label>
                           <label className="flex items-center gap-2 text-sm">

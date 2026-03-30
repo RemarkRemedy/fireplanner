@@ -489,6 +489,16 @@ export function templateVariantToPolicySeed(
                 ...(rule.accountId ? { accountId: rule.accountId } : {}),
                 ...(rule.minimumValue != null ? { minimumValue: rule.minimumValue } : {}),
                 ...(rule.minimumValueRate != null ? { minimumValueRate: rule.minimumValueRate } : {}),
+                })),
+              }
+            : {}),
+        ...(variant.policyStateSupport.partialWithdrawalMinimumRemainingSelectedFundValueRules
+          ? {
+              partialWithdrawalMinimumRemainingSelectedFundValueRules: variant.policyStateSupport.partialWithdrawalMinimumRemainingSelectedFundValueRules.map((rule) => ({
+                activeWindow: rule.activeWindow,
+                accountId: rule.accountId,
+                minimumValue: rule.minimumValue,
+                ...(rule.minimumValueExclusive === true ? { minimumValueExclusive: true } : {}),
               })),
             }
           : {}),

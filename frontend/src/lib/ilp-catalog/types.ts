@@ -401,6 +401,12 @@ export interface IlpTemplatePolicyStateSupport {
     minimumValue?: number
     minimumValueRate?: number
   }>
+  partialWithdrawalMinimumRemainingSelectedFundValueRules?: Array<{
+    activeWindow: 'during-mip' | 'after-mip' | 'policy-term'
+    accountId: string
+    minimumValue: number
+    minimumValueExclusive?: boolean
+  }>
   minimumTopUpStartPolicyMonth?: number
   topUpRepaymentClearance?: {
     includeMissedPremiums?: boolean

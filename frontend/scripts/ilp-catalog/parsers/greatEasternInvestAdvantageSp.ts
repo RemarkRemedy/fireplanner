@@ -109,6 +109,17 @@ function buildVariant(
     bonuses: [],
     feeRules,
     eventChargeRules,
+    policyStateSupport: {
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalMinimumRemainingSelectedFundValueRules: [
+        {
+          activeWindow: 'policy-term',
+          accountId: 'policy',
+          minimumValue: 500,
+        },
+      ],
+    },
     eecTable: [],
     warnings: [
       'Enter the gross initial single premium in the seeded policy if you want the starting policy value to include the upfront single-premium deduction path.',
@@ -116,7 +127,7 @@ function buildVariant(
     ],
     unsupportedItems: [
       'The current-state terminal-illness benefit amount is modeled as the same amount as the current death-benefit estimate after manual current amount owing, but terminal-illness claim admission, exclusions, settlement, and policy termination remain informational only.',
-      'Fund-switching and minimum-transaction guards remain informational only.',
+      'Fund-switching, surrender-destination handling, minimum-transaction guards, and exact per-fund NAV divergence remain informational only beyond the modeled explicit selected-fund partial-surrender floor that uses the current configured fund split as a proportional selected-fund balance proxy.',
     ],
     sourceRefs: [page1, page2, page3],
   }
@@ -138,6 +149,8 @@ export function parseGreatEasternInvestAdvantageSp(context: ParseContext): IlpCa
       'branch:great-eastern-gia-sp-initial-single-premium-charge',
       'branch:great-eastern-gia-sp-top-up-premium-charge',
       'branch:great-eastern-gia-sp-open-ended-zero-surrender-charge',
+      'kernel:partial-withdrawal-minimum-amount-block',
+      'kernel:partial-withdrawal-selected-fund-minimum-value-block',
       'kernel:current-death-benefit-estimate',
       'kernel:current-ti-benefit-estimate',
     ],
@@ -146,7 +159,7 @@ export function parseGreatEasternInvestAdvantageSp(context: ParseContext): IlpCa
       'great-eastern-gia-sp-srs-cpfis-surrender-destination',
     ],
     warnings: [
-      'GREAT Invest Advantage (SP) is cataloged as a supported V1 product. The parser captures the upfront initial single-premium charge, accepted top-up premium charge, the current-state death and terminal-illness benefit amount as the higher of 110% of single premium plus top-ups less partial surrenders or account value less manual current amount owing, and the explicit no-surrender-charge structure through the open-ended no-MIP basis, while terminal-illness claim admission / exclusions / settlement and surrender-destination handling remain informational only.',
+      'GREAT Invest Advantage (SP) is cataloged as a supported V1 product. The parser captures the upfront initial single-premium charge, accepted top-up premium charge, the published S$500 minimum one-off partial withdrawal amount, the published explicit selected-fund partial-surrender floor that blocks withdrawals leaving the chosen fund below S$500 using the current configured fund split as a proportional selected-fund balance proxy, the current-state death and terminal-illness benefit amount as the higher of 110% of single premium plus top-ups less partial surrenders or account value less manual current amount owing, and the explicit no-surrender-charge structure through the open-ended no-MIP basis, while terminal-illness claim admission / exclusions / settlement, surrender-destination handling, and exact per-fund NAV divergence remain informational only.',
     ],
     archived: false,
     variants: [

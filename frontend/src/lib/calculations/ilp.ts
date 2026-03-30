@@ -61,6 +61,7 @@ export interface IlpPolicyEvent {
   durationMonths: number
   amount?: number
   accountId?: string
+  fundName?: string
   chargeWaived?: boolean
   chargeWaiverGrantId?: string
   chargeRefunded?: boolean
@@ -131,6 +132,12 @@ export interface IlpPolicyStateSupport {
     accountId?: string
     minimumValue?: number
     minimumValueRate?: number
+  }>
+  partialWithdrawalMinimumRemainingSelectedFundValueRules?: Array<{
+    activeWindow: 'during-mip' | 'after-mip' | 'policy-term'
+    accountId: string
+    minimumValue: number
+    minimumValueExclusive?: boolean
   }>
   minimumTopUpStartPolicyMonth?: number
   topUpRepaymentClearance?: {
@@ -2528,12 +2535,147 @@ function getPriorPartialWithdrawalAmountsByAccount(
   ), 0)
 }
 
+type IlpFundBalancesByAccount = Map<string, Map<string, number>>
+
+interface IlpEligiblePartialWithdrawalResult {
+  withdrawals: Map<string, number>
+  acceptedEvents: IlpPolicyEvent[]
+}
+
+function getNormalizedFundWeights(input: Pick<IlpPolicyInput, 'funds'>): Array<{ fundName: string, weight: number }> {
+  const namedFunds = input.funds.filter((fund) => fund.name.trim().length > 0)
+  if (namedFunds.length === 0) {
+    return []
+  }
+
+  const totalAllocation = namedFunds.reduce((sum, fund) => sum + fund.allocation, 0)
+  if (totalAllocation <= CONTRIBUTION_TOLERANCE) {
+    const equalWeight = 1 / namedFunds.length
+    return namedFunds.map((fund) => ({ fundName: fund.name, weight: equalWeight }))
+  }
+
+  return namedFunds.map((fund) => ({ fundName: fund.name, weight: fund.allocation / totalAllocation }))
+}
+
+function scaleFundBalancesForTargetTotal(
+  existingBalances: Map<string, number> | undefined,
+  targetTotal: number,
+  normalizedFundWeights: Array<{ fundName: string, weight: number }>,
+): Map<string, number> {
+  const nextBalances = new Map<string, number>()
+  if (normalizedFundWeights.length === 0) {
+    return nextBalances
+  }
+
+  const sanitizedTargetTotal = Math.max(0, targetTotal)
+  const existingTotal = existingBalances == null
+    ? 0
+    : Array.from(existingBalances.values()).reduce((sum, value) => sum + Math.max(0, value), 0)
+
+  if (existingTotal > CONTRIBUTION_TOLERANCE) {
+    for (const { fundName } of normalizedFundWeights) {
+      const existingValue = Math.max(0, existingBalances?.get(fundName) ?? 0)
+      nextBalances.set(fundName, sanitizedTargetTotal * (existingValue / existingTotal))
+    }
+    return nextBalances
+  }
+
+  for (const { fundName, weight } of normalizedFundWeights) {
+    nextBalances.set(fundName, sanitizedTargetTotal * weight)
+  }
+
+  return nextBalances
+}
+
+function scaleFundBalancesByAccountToAccountTotals(
+  existingBalancesByAccount: IlpFundBalancesByAccount,
+  accountTotals: Map<string, number>,
+  input: Pick<IlpPolicyInput, 'accounts' | 'funds'>,
+): IlpFundBalancesByAccount {
+  const normalizedFundWeights = getNormalizedFundWeights(input)
+  const nextByAccount = new Map<string, Map<string, number>>()
+
+  for (const account of input.accounts) {
+    nextByAccount.set(
+      account.id,
+      scaleFundBalancesForTargetTotal(
+        existingBalancesByAccount.get(account.id),
+        accountTotals.get(account.id) ?? 0,
+        normalizedFundWeights,
+      ),
+    )
+  }
+
+  return nextByAccount
+}
+
+function cloneFundBalancesByAccount(balancesByAccount: IlpFundBalancesByAccount): IlpFundBalancesByAccount {
+  return new Map(
+    Array.from(balancesByAccount.entries()).map(([accountId, balances]) => [accountId, new Map(balances)] as const),
+  )
+}
+
+function applyProRataWithdrawalToFundBalances(
+  accountFundBalances: Map<string, number>,
+  amount: number,
+): void {
+  const sanitizedAmount = Math.max(0, amount)
+  if (sanitizedAmount <= CONTRIBUTION_TOLERANCE) {
+    return
+  }
+
+  const currentTotal = Array.from(accountFundBalances.values()).reduce((sum, value) => sum + Math.max(0, value), 0)
+  if (currentTotal <= CONTRIBUTION_TOLERANCE) {
+    return
+  }
+
+  const appliedAmount = Math.min(sanitizedAmount, currentTotal)
+  for (const [fundName, value] of accountFundBalances.entries()) {
+    const currentValue = Math.max(0, value)
+    accountFundBalances.set(
+      fundName,
+      Math.max(0, currentValue - (appliedAmount * (currentValue / currentTotal))),
+    )
+  }
+}
+
+function applyWithdrawalToFundBalances(
+  accountFundBalances: Map<string, number>,
+  amount: number,
+  selectedFundName?: string,
+): void {
+  const sanitizedAmount = Math.max(0, amount)
+  if (sanitizedAmount <= CONTRIBUTION_TOLERANCE) {
+    return
+  }
+
+  if (selectedFundName && accountFundBalances.has(selectedFundName)) {
+    accountFundBalances.set(
+      selectedFundName,
+      Math.max(0, (accountFundBalances.get(selectedFundName) ?? 0) - sanitizedAmount),
+    )
+    return
+  }
+
+  applyProRataWithdrawalToFundBalances(accountFundBalances, sanitizedAmount)
+}
+
+function normalizeFundBalancesToAccountTotal(
+  accountFundBalances: Map<string, number>,
+  targetTotal: number,
+  normalizedFundWeights: Array<{ fundName: string, weight: number }>,
+): Map<string, number> {
+  return scaleFundBalancesForTargetTotal(accountFundBalances, targetTotal, normalizedFundWeights)
+}
+
 function getEligiblePartialWithdrawalsByAccount(
   normalized: IlpNormalizedPolicyInput,
   context: IlpCashflowYearContext,
   availableBeforeWithdrawalsByAccount: Map<string, number>,
-): Map<string, number> {
+  availableBeforeWithdrawalsFundBalancesByAccount?: IlpFundBalancesByAccount,
+): IlpEligiblePartialWithdrawalResult {
   const withdrawals = new Map<string, number>(normalized.input.accounts.map((account) => [account.id, 0]))
+  const acceptedEvents: IlpPolicyEvent[] = []
   const startMonthRulesByAccount = new Map(
     (normalized.input.policyStateSupport?.minimumPartialWithdrawalStartPolicyMonthByAccount ?? [])
       .map((rule) => [rule.accountId, rule.startPolicyMonth] as const),
@@ -2542,6 +2684,7 @@ function getEligiblePartialWithdrawalsByAccount(
   const partialWithdrawalAmountIncrement = normalized.input.policyStateSupport?.partialWithdrawalAmountIncrement
   const maximumAmountRules = normalized.input.policyStateSupport?.partialWithdrawalMaximumAmountRules ?? []
   const remainingValueRules = normalized.input.policyStateSupport?.partialWithdrawalMinimumRemainingValueRules ?? []
+  const selectedFundValueRules = normalized.input.policyStateSupport?.partialWithdrawalMinimumRemainingSelectedFundValueRules ?? []
 
   if (
     startMonthRulesByAccount.size === 0
@@ -2549,14 +2692,33 @@ function getEligiblePartialWithdrawalsByAccount(
     && partialWithdrawalAmountIncrement == null
     && maximumAmountRules.length === 0
     && remainingValueRules.length === 0
+    && selectedFundValueRules.length === 0
   ) {
-    return getPartialWithdrawalsByAccount(normalized, context.range)
+    for (const event of normalized.events.partialWithdrawals) {
+      if (
+        event.accountId
+        && event.amount != null
+        && event.amount > 0
+        && event.startPolicyMonth >= context.range.startPolicyMonth
+        && event.startPolicyMonth <= context.range.endPolicyMonth
+      ) {
+        acceptedEvents.push(event)
+      }
+    }
+
+    return {
+      withdrawals: getPartialWithdrawalsByAccount(normalized, context.range),
+      acceptedEvents,
+    }
   }
 
   const runningBalances = new Map<string, number>(normalized.input.accounts.map((account) => [
     account.id,
     availableBeforeWithdrawalsByAccount.get(account.id) ?? 0,
   ]))
+  const runningFundBalancesByAccount = availableBeforeWithdrawalsFundBalancesByAccount != null
+    ? cloneFundBalancesByAccount(availableBeforeWithdrawalsFundBalancesByAccount)
+    : undefined
 
   for (const event of normalized.events.partialWithdrawals) {
     if (!event.accountId || event.amount == null || event.amount <= 0) continue
@@ -2618,6 +2780,14 @@ function getEligiblePartialWithdrawalsByAccount(
       || (rule.activeWindow === 'during-mip' && !eventIsPostMip)
       || (rule.activeWindow === 'after-mip' && eventIsPostMip)
     ))
+    const applicableSelectedFundValueRules = selectedFundValueRules.filter((rule) => (
+      rule.accountId === event.accountId
+      && (
+        rule.activeWindow === 'policy-term'
+        || (rule.activeWindow === 'during-mip' && !eventIsPostMip)
+        || (rule.activeWindow === 'after-mip' && eventIsPostMip)
+      )
+    ))
 
     const currentPolicyValue = Array.from(runningBalances.values()).reduce((sum, value) => sum + value, 0)
     const withdrawalAccountBalance = runningBalances.get(event.accountId) ?? 0
@@ -2648,13 +2818,176 @@ function getEligiblePartialWithdrawalsByAccount(
       continue
     }
 
+    if (applicableSelectedFundValueRules.length > 0) {
+      if (!event.fundName) {
+        continue
+      }
+
+      const accountFundBalances = runningFundBalancesByAccount?.get(event.accountId)
+      const currentSelectedFundValue = accountFundBalances?.get(event.fundName)
+      if (accountFundBalances == null || currentSelectedFundValue == null) {
+        continue
+      }
+
+      if (event.amount > currentSelectedFundValue + CONTRIBUTION_TOLERANCE) {
+        continue
+      }
+
+      const nextSelectedFundValue = Math.max(0, currentSelectedFundValue - event.amount)
+      const violatesSelectedFundRule = applicableSelectedFundValueRules.some((rule) => (
+        rule.minimumValueExclusive === true
+          ? nextSelectedFundValue <= rule.minimumValue + CONTRIBUTION_TOLERANCE
+          : nextSelectedFundValue + CONTRIBUTION_TOLERANCE < rule.minimumValue
+      ))
+      if (violatesSelectedFundRule) {
+        continue
+      }
+    }
+
     withdrawals.set(event.accountId, (withdrawals.get(event.accountId) ?? 0) + event.amount)
     runningBalances.set(event.accountId, nextWithdrawalAccountBalance)
+    acceptedEvents.push(event)
+    const accountFundBalances = runningFundBalancesByAccount?.get(event.accountId)
+    if (accountFundBalances) {
+      applyWithdrawalToFundBalances(accountFundBalances, event.amount, event.fundName)
+    }
   }
 
-  return withdrawals
+  return {
+    withdrawals,
+    acceptedEvents,
+  }
 }
 
+function computeSimplePartialWithdrawalChargeForEvent(
+  normalized: IlpNormalizedPolicyInput,
+  event: Pick<IlpPolicyEvent, 'amount' | 'startPolicyMonth' | 'chargeWaived'>,
+): number | undefined {
+  if (event.amount == null || event.amount <= 0 || event.chargeWaived === true) {
+    return 0
+  }
+
+  const partialWithdrawalRules = (normalized.input.eventChargeRules ?? []).filter((rule) => (
+    rule.trigger === 'partial-withdrawal'
+  ))
+  if (partialWithdrawalRules.length === 0) {
+    return 0
+  }
+
+  const supportsPerEventShortcut = partialWithdrawalRules.every((rule) => (
+    rule.basis === 'event-amount'
+    && rule.exclusiveGroup == null
+    && rule.groupResolution == null
+    && rule.freeEventCount == null
+    && rule.freeEventStartPolicyYear == null
+    && rule.freeEventMaxAmountRate == null
+    && rule.freeEventMaxAmountBasis == null
+    && rule.freeAmountPoolRate == null
+    && rule.freeAmountPoolBasis == null
+    && rule.freeAmountPoolReferencePolicyYear == null
+  ))
+  if (!supportsPerEventShortcut) {
+    return undefined
+  }
+
+  const policyYear = getPolicyYearForMonth(event.startPolicyMonth)
+  const isPostMip = isPostMipPolicyYear(normalized.input, policyYear)
+  const eventContext: IlpCashflowYearContext = {
+    projectionYear: 1,
+    policyYear,
+    isPostMip,
+    range: {
+      startPolicyMonth: event.startPolicyMonth,
+      endPolicyMonth: event.startPolicyMonth,
+    },
+    premiumHolidayMonths: 0,
+    payableMonths: 1,
+    paymentHistory: {
+      premiumYearAtStart: getPremiumYearAtMonth(normalized, event.startPolicyMonth - 1),
+      premiumYearAtEnd: getPremiumYearAtMonth(normalized, event.startPolicyMonth),
+      premiumsPaidUpToDate: arePremiumsPaidUpToDateAtMonth(normalized, event.startPolicyMonth),
+    },
+  }
+
+  let totalCharge = 0
+
+  for (const rule of partialWithdrawalRules) {
+    const activeWindow = rule.activeWindow ?? 'policy-term'
+    if (
+      (activeWindow === 'during-mip' && isPostMip)
+      || (activeWindow === 'after-mip' && !isPostMip)
+    ) {
+      continue
+    }
+
+    totalCharge += Math.max(0, event.amount * resolveEventChargeRate(rule, eventContext)) + rule.amount
+  }
+
+  return totalCharge
+}
+
+function buildNextFundCloseBalancesByAccount(
+  input: Pick<IlpPolicyInput, 'accounts' | 'funds'>,
+  availableBeforeWithdrawalsByAccount: Map<string, number>,
+  availableBeforeWithdrawalsFundBalancesByAccount: IlpFundBalancesByAccount,
+  acceptedPartialWithdrawalEvents: IlpPolicyEvent[],
+  scheduledPayoutByAccount: Map<string, number>,
+  reinvestedDividendWithdrawalByAccount: Map<string, number>,
+  distributionPayoutByAccount: Map<string, number>,
+): IlpFundBalancesByAccount {
+  const normalizedFundWeights = getNormalizedFundWeights(input)
+  const nextFundBalancesByAccount = cloneFundBalancesByAccount(availableBeforeWithdrawalsFundBalancesByAccount)
+
+  // The selected-fund floor is enforced on the same pre-bonus withdrawal surface as the
+  // existing account/policy-value checks. This replay only preserves the resulting fund drift
+  // for later projection years while keeping account totals as the source of truth.
+  for (const event of acceptedPartialWithdrawalEvents) {
+    if (!event.accountId || event.amount == null || event.amount <= 0) {
+      continue
+    }
+
+    const accountFundBalances = nextFundBalancesByAccount.get(event.accountId)
+    if (!accountFundBalances) {
+      continue
+    }
+
+    applyWithdrawalToFundBalances(accountFundBalances, event.amount, event.fundName)
+  }
+
+  for (const account of input.accounts) {
+    const accountFundBalances = nextFundBalancesByAccount.get(account.id)
+    if (!accountFundBalances) {
+      continue
+    }
+
+    const nonTargetedWithdrawalAmount = (scheduledPayoutByAccount.get(account.id) ?? 0)
+      + (reinvestedDividendWithdrawalByAccount.get(account.id) ?? 0)
+      + (distributionPayoutByAccount.get(account.id) ?? 0)
+    if (nonTargetedWithdrawalAmount > CONTRIBUTION_TOLERANCE) {
+      applyProRataWithdrawalToFundBalances(accountFundBalances, nonTargetedWithdrawalAmount)
+    }
+
+    const acceptedPartialWithdrawalAmount = acceptedPartialWithdrawalEvents
+      .filter((event) => event.accountId === account.id)
+      .reduce((sum, event) => sum + (event.amount ?? 0), 0)
+    const targetClose = Math.max(
+      0,
+      (availableBeforeWithdrawalsByAccount.get(account.id) ?? 0)
+        - acceptedPartialWithdrawalAmount
+        - nonTargetedWithdrawalAmount,
+    )
+    nextFundBalancesByAccount.set(
+      account.id,
+      normalizeFundBalancesToAccountTotal(
+        accountFundBalances,
+        targetClose,
+        normalizedFundWeights,
+      ),
+    )
+  }
+
+  return nextFundBalancesByAccount
+}
 function getReinvestedDividendWithdrawalsByAccount(
   normalized: IlpNormalizedPolicyInput,
   range: IlpProjectionYearRange,
@@ -11370,6 +11703,11 @@ export function projectIlpPolicy(
     account.id,
     getEffectiveCurrentValue(account, initialSinglePremiumState),
   ]))
+  let previousFundCloseByAccount = scaleFundBalancesByAccountToAccountTotals(
+    new Map<string, Map<string, number>>(),
+    previousClose,
+    input,
+  )
   const rows: IlpYearRow[] = []
 
   let cumulativeGrossFees = initialSinglePremiumState.totalCharge
@@ -11487,6 +11825,11 @@ export function projectIlpPolicy(
       input.accounts.map((account) => [account.id, previousClose.get(account.id) ?? getEffectiveCurrentValue(account, initialSinglePremiumState)]),
     )
     openingBalancesByPolicyYear.set(policyYear, new Map(openBalances))
+    const openFundBalancesByAccount = scaleFundBalancesByAccountToAccountTotals(
+      previousFundCloseByAccount,
+      openBalances,
+      input,
+    )
 
     if (policyState === 'lapsed') {
       const combinedValue = Array.from(openBalances.values()).reduce((sum, value) => sum + value, 0)
@@ -11646,11 +11989,18 @@ export function projectIlpPolicy(
       )
     }
 
-    const partialWithdrawalByAccount = getEligiblePartialWithdrawalsByAccount(
+    const preBonusAvailableBeforeBaseWithdrawalsFundBalancesByAccount = scaleFundBalancesByAccountToAccountTotals(
+      openFundBalancesByAccount,
+      preBonusAvailableBeforeBaseWithdrawalsByAccount,
+      input,
+    )
+    const partialWithdrawalResult = getEligiblePartialWithdrawalsByAccount(
       normalized,
       context,
       preBonusAvailableBeforeBaseWithdrawalsByAccount,
+      preBonusAvailableBeforeBaseWithdrawalsFundBalancesByAccount,
     )
+    const partialWithdrawalByAccount = partialWithdrawalResult.withdrawals
     const partialWithdrawalsThisYear = Array.from(partialWithdrawalByAccount.values()).reduce((sum, value) => sum + value, 0)
 
     const scheduledPayoutState = resolveScheduledPayoutStateForYear(normalized, context)
@@ -11777,6 +12127,20 @@ export function projectIlpPolicy(
       scheduledPayoutState,
       availableBeforeBaseWithdrawalsByAccount,
       partialWithdrawalByAccount,
+    )
+    const availableBeforeBaseWithdrawalsFundBalancesByAccount = scaleFundBalancesByAccountToAccountTotals(
+      openFundBalancesByAccount,
+      availableBeforeBaseWithdrawalsByAccount,
+      input,
+    )
+    previousFundCloseByAccount = buildNextFundCloseBalancesByAccount(
+      input,
+      availableBeforeBaseWithdrawalsByAccount,
+      availableBeforeBaseWithdrawalsFundBalancesByAccount,
+      partialWithdrawalResult.acceptedEvents,
+      scheduledPayoutByAccount,
+      reinvestedDividendWithdrawalByAccount,
+      distributionPayoutByAccount,
     )
 
     for (const account of input.accounts) {

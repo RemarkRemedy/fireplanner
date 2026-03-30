@@ -1780,6 +1780,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.economicsStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:great-eastern-gia-sp-initial-single-premium-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-selected-fund-minimum-value-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-ti-benefit-estimate')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('great-eastern-gia-sp-death-benefit')
@@ -1815,6 +1816,17 @@ describe('templateVariantToPolicySeed', () => {
         rate: 0.03,
       }),
     ])
+    expect(seed.policyStateSupport).toMatchObject({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalMinimumRemainingSelectedFundValueRules: [
+        {
+          activeWindow: 'policy-term',
+          accountId: 'policy',
+          minimumValue: 500,
+        },
+      ],
+    })
     expect(seed.catalogWarnings?.some((warning) => warning.includes('default 20-year review horizon'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('gross initial single premium'))).toBe(true)
   })

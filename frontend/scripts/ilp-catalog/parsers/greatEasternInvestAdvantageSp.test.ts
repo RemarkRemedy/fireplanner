@@ -28,6 +28,8 @@ describe('parseGreatEasternInvestAdvantageSp', () => {
       'branch:great-eastern-gia-sp-initial-single-premium-charge',
       'branch:great-eastern-gia-sp-top-up-premium-charge',
       'branch:great-eastern-gia-sp-open-ended-zero-surrender-charge',
+      'kernel:partial-withdrawal-minimum-amount-block',
+      'kernel:partial-withdrawal-selected-fund-minimum-value-block',
       'kernel:current-death-benefit-estimate',
       'kernel:current-ti-benefit-estimate',
     ])
@@ -41,6 +43,8 @@ describe('parseGreatEasternInvestAdvantageSp', () => {
     expect(product.variants[0]?.unsupportedItems).not.toContain(
       'Death and terminal-illness benefit formulas remain informational only.',
     )
+    expect(product.warnings[0]).toContain('published S$500 minimum one-off partial withdrawal amount')
+    expect(product.warnings[0]).toContain('published explicit selected-fund partial-surrender floor that blocks withdrawals leaving the chosen fund below S$500 using the current configured fund split as a proportional selected-fund balance proxy')
     expect(product.warnings[0]).toContain('current-state death and terminal-illness benefit amount as the higher of 110% of single premium plus top-ups less partial surrenders or account value less manual current amount owing')
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-open-ended-cash-or-srs',
@@ -78,6 +82,17 @@ describe('parseGreatEasternInvestAdvantageSp', () => {
         rate: 0.03,
       }),
     ])
+    expect(cashVariant?.policyStateSupport).toMatchObject({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalMinimumRemainingSelectedFundValueRules: [
+        {
+          activeWindow: 'policy-term',
+          accountId: 'policy',
+          minimumValue: 500,
+        },
+      ],
+    })
 
     const cpfisVariant = product.variants.find((variant) => variant.id === 'sgd-open-ended-cpfis')
     expect(cpfisVariant).toBeDefined()
@@ -96,5 +111,16 @@ describe('parseGreatEasternInvestAdvantageSp', () => {
         rate: 0,
       }),
     ])
+    expect(cpfisVariant?.policyStateSupport).toMatchObject({
+      automaticLapseOnAccountValueDepletion: false,
+      minimumPartialWithdrawalAmount: 500,
+      partialWithdrawalMinimumRemainingSelectedFundValueRules: [
+        {
+          activeWindow: 'policy-term',
+          accountId: 'policy',
+          minimumValue: 500,
+        },
+      ],
+    })
   }, 30_000)
 })
