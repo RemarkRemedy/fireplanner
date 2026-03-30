@@ -101,6 +101,20 @@ describe('ILP fee dashboard blog bridge', () => {
     )
   })
 
+  it('shows a surrender-fee column in the detailed fee table', () => {
+    const policy = createDefaultPolicy()
+    const analysis = analyzeIlpPolicy(policy)
+
+    if (analysis.mode !== 'projected') {
+      throw new Error('Expected the default policy to produce a projected ILP analysis.')
+    }
+
+    render(<FeeBreakdownSection policy={policy} analysis={analysis} />)
+
+    expect(screen.getByText('Surrender Fee')).toBeInTheDocument()
+    expect(screen.getByText('n/a')).toBeInTheDocument()
+  })
+
   it('carries the chosen template variant from landing into story mode', async () => {
     const user = userEvent.setup()
 
