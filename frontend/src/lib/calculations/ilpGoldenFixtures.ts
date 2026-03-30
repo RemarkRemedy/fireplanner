@@ -3634,10 +3634,11 @@ function greatEasternPrestigePortfolioBasePolicy(
     monthsAlreadyPaid: isSinglePremium ? 0 : 36,
   })
 
-  return withResolvedManualInputs(withFunds(
+  return withResolvedManualInputs(
     ilpPolicySchema.parse({
       ...base,
       name: `Golden Prestige Portfolio (${variantId.toUpperCase()})`,
+      funds: cloneFunds(funds),
       chargeRules: (base.chargeRules ?? []).map((rule) => {
         if (rule.id === 'premium-charge' || rule.id === 'recurrent-single-premium-charge') {
           return { ...rule, rate: 0.03 }
@@ -3660,8 +3661,7 @@ function greatEasternPrestigePortfolioBasePolicy(
       policyEvents: [],
       ...overrides,
     }),
-    funds,
-  ))
+  )
 }
 
 function greatEasternPrestigePortfolioBaselinePolicy(
@@ -3706,6 +3706,7 @@ function greatEasternPrestigePortfolioEventHeavyPolicy(
         durationMonths: 1,
         amount: 6_000,
         accountId: 'policy',
+        fundName: 'Great Asia Growth',
       },
     ],
   })
@@ -7407,15 +7408,13 @@ function greatEasternGiaSpBasePolicy(
     monthsAlreadyPaid: 0,
   })
 
-  return withFunds(
-    ilpPolicySchema.parse({
-      ...base,
-      name: `Golden GREAT Invest Advantage (SP) (${variantId.toUpperCase()})`,
-      policyEvents: [],
-      ...overrides,
-    }),
-    funds,
-  )
+  return ilpPolicySchema.parse({
+    ...base,
+    name: `Golden GREAT Invest Advantage (SP) (${variantId.toUpperCase()})`,
+    funds: cloneFunds(funds),
+    policyEvents: [],
+    ...overrides,
+  })
 }
 
 function greatEasternGiaSpBaselinePolicy(
@@ -7447,6 +7446,7 @@ function greatEasternGiaSpEventHeavyPolicy(
         durationMonths: 1,
         amount: 4_000,
         accountId: 'policy',
+        fundName: 'Great Asia Growth',
       },
     ],
   })
@@ -7474,15 +7474,13 @@ function greatEasternGia2SpBasePolicy(
     monthsAlreadyPaid: 0,
   })
 
-  return withFunds(
-    ilpPolicySchema.parse({
-      ...base,
-      name: 'Golden GREAT Invest Advantage 2 (SP) (SGD / Open-ended Cash Or Srs)',
-      policyEvents: [],
-      ...overrides,
-    }),
-    funds,
-  )
+  return ilpPolicySchema.parse({
+    ...base,
+    name: 'Golden GREAT Invest Advantage 2 (SP) (SGD / Open-ended Cash Or Srs)',
+    funds: cloneFunds(funds),
+    policyEvents: [],
+    ...overrides,
+  })
 }
 
 function greatEasternGia2SpBaselinePolicy(
@@ -7513,6 +7511,7 @@ function greatEasternGia2SpEventHeavyPolicy(
         durationMonths: 1,
         amount: 4_000,
         accountId: 'policy',
+        fundName: 'Great Asia Growth',
       },
     ],
   })
@@ -7535,18 +7534,16 @@ function greatEasternGiaRspBasePolicy(
   overrides: Partial<IlpPolicyInput> = {},
 ): IlpPolicyInput {
   const base = seedPolicy(snapshot, 'great-eastern-great-invest-advantage-rsp', variantId, id)
-  return withFunds(
-    ilpPolicySchema.parse({
-      ...base,
-      name: `Golden GREAT Invest Advantage (RSP) (${variantId.toUpperCase()})`,
-      monthlyContribution: 350,
-      currentPolicyYear: 3,
-      monthsAlreadyPaid: 24,
-      policyEvents: [],
-      ...overrides,
-    }),
-    funds,
-  )
+  return ilpPolicySchema.parse({
+    ...base,
+    name: `Golden GREAT Invest Advantage (RSP) (${variantId.toUpperCase()})`,
+    funds: cloneFunds(funds),
+    monthlyContribution: 350,
+    currentPolicyYear: 3,
+    monthsAlreadyPaid: 24,
+    policyEvents: [],
+    ...overrides,
+  })
 }
 
 function greatEasternGiaRspBaselinePolicy(
@@ -7578,6 +7575,7 @@ function greatEasternGiaRspEventHeavyPolicy(
         durationMonths: 1,
         amount: 4_000,
         accountId: 'policy',
+        fundName: 'Great Asia Growth',
       },
     ],
   })
@@ -7599,18 +7597,16 @@ function greatEasternGia2RspBasePolicy(
   overrides: Partial<IlpPolicyInput> = {},
 ): IlpPolicyInput {
   const base = seedPolicy(snapshot, 'great-eastern-great-invest-advantage-2-rsp', 'sgd-open-ended-cash-or-srs', id)
-  return withFunds(
-    ilpPolicySchema.parse({
-      ...base,
-      name: 'Golden GREAT Invest Advantage 2 (RSP) (SGD / Open-ended Cash Or Srs)',
-      monthlyContribution: 350,
-      currentPolicyYear: 3,
-      monthsAlreadyPaid: 24,
-      policyEvents: [],
-      ...overrides,
-    }),
-    funds,
-  )
+  return ilpPolicySchema.parse({
+    ...base,
+    name: 'Golden GREAT Invest Advantage 2 (RSP) (SGD / Open-ended Cash Or Srs)',
+    funds: cloneFunds(funds),
+    monthlyContribution: 350,
+    currentPolicyYear: 3,
+    monthsAlreadyPaid: 24,
+    policyEvents: [],
+    ...overrides,
+  })
 }
 
 function greatEasternGia2RspBaselinePolicy(
@@ -7641,6 +7637,7 @@ function greatEasternGia2RspEventHeavyPolicy(
         durationMonths: 1,
         amount: 4_000,
         accountId: 'policy',
+        fundName: 'Great Asia Growth',
       },
     ],
   })
