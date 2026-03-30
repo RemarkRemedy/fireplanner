@@ -131,7 +131,7 @@ export function IlpLeaderboardPage() {
       <div className="space-y-2">
         <h1 className="text-2xl font-bold">ILP Product Comparison</h1>
         <p className="text-sm text-muted-foreground">
-          Compare net fee drag across {rows.length} product variants from {insurers.length} insurers.
+          Compare modelled net fees as a share of premiums paid across {rows.length} product variants from {insurers.length} insurers.
           Standardized at S$350/mo premium, policy year 1, mid return scenario.
         </p>
       </div>
@@ -186,7 +186,7 @@ export function IlpLeaderboardPage() {
                     <SortButton field="mipLength" label="MIP" activeKey={sortKey} onToggle={handleToggleSort} />
                   </th>
                   <th className="px-3 py-3 text-right">
-                    <SortButton field="netFeeDragPct" label="Net Fee Drag %" activeKey={sortKey} onToggle={handleToggleSort} />
+                    <SortButton field="netFeeDragPct" label="Net Fees / Premiums" activeKey={sortKey} onToggle={handleToggleSort} />
                   </th>
                   <th className="px-3 py-3 text-right">
                     <SortButton field="totalFeesCharged" label="Gross Fees" activeKey={sortKey} onToggle={handleToggleSort} />
@@ -263,6 +263,7 @@ export function IlpLeaderboardPage() {
       {/* Footnotes */}
       <div className="space-y-2 text-xs text-muted-foreground">
         <p>* Products marked with * do not have bonus modelling. Their net fee drag may be overstated.</p>
+        <p>`Net Fees / Premiums` is total net fees divided by total premiums paid over the full modelled horizon. It is not an annualized drag rate.</p>
         <p>
           All values assume S$350/mo premium (regular) or catalog default (single premium), policy year 1, 0 months paid, mid return scenario, full horizon (MIP + 10 post-MIP years).
           Your personal numbers may differ. Use the Exit Calculator for personalized analysis.

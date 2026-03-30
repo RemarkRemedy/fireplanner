@@ -19,6 +19,7 @@ Rules:
   - Fee dashboard stream:
     - the story-mode bonus card now describes modelled bonuses relative to gross fees without implying they are capped fee rebates
     - the comparison table no longer labels raw bonus amounts as `Bonus Offset`; it now uses `Bonuses`
+    - the comparison table now labels `netFeeDragPct` as `Net Fees / Premiums` and states explicitly that this is a full-horizon share of premiums paid, not an annualized drag rate
     - broader seeded-premium / bonus-routing mechanics remain model-stream work and should not be patched around in dashboard copy
   - Current-State Reconstruction override note:
     - `HSBC Life Goal Builder II` now reconstructs completed prior-year scheduled-redemption erosion into the current ordinary sum-insured corridor and current accidental-death floor corridor after the scheduled payout window has already ended, so `Death Benefit Today`, `TI Benefit Today`, and `Accidental Death Benefit Today` no longer overstate that bounded past regular-withdrawal history

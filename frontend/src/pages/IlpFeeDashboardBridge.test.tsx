@@ -103,4 +103,15 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(screen.getByRole('button', { name: /^bonuses$/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /bonus offset/i })).not.toBeInTheDocument()
   })
+
+  it('states that the leaderboard fee percentage is net fees over premiums, not annualized drag', () => {
+    render(
+      <MemoryRouter>
+        <IlpLeaderboardPage />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('button', { name: /net fees \/ premiums/i })).toBeInTheDocument()
+    expect(screen.getByText(/not an annualized drag rate/i)).toBeInTheDocument()
+  })
 })
