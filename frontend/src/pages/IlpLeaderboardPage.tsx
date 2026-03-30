@@ -192,7 +192,7 @@ export function IlpLeaderboardPage() {
                     <SortButton field="totalFeesCharged" label="Gross Fees" activeKey={sortKey} onToggle={handleToggleSort} />
                   </th>
                   <th className="px-3 py-3 text-right">
-                    <SortButton field="totalBonusesReceived" label="Bonus Offset" activeKey={sortKey} onToggle={handleToggleSort} />
+                    <SortButton field="totalBonusesReceived" label="Bonuses" activeKey={sortKey} onToggle={handleToggleSort} />
                   </th>
                   <th className="px-3 py-3 text-right">
                     <SortButton field="bestExitYear" label="Lowest-Fee Exit Yr" activeKey={sortKey} onToggle={handleToggleSort} />

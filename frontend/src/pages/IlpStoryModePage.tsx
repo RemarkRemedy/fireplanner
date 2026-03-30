@@ -13,6 +13,7 @@ import { PolicySetupGate } from '@/components/ilp/PolicySetupGate'
 import { ReceiptPreviewModal } from '@/components/ilp/receipt/ReceiptPreviewModal'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { analyzeIlpPolicy } from '@/lib/calculations/ilp'
+import { formatIlpBonusSupport } from '@/lib/ilpBonusSupport'
 import { buildFeeBreakdown } from '@/lib/calculations/ilpFeeBreakdown'
 import type { IlpPolicyInput, IlpProjectedPolicyAnalysis } from '@/lib/calculations/ilp'
 import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
@@ -250,6 +251,10 @@ function StoryDetailView({ policy, analysis, catalogProduct, onReplay }: {
 }) {
   const feeImpact = useFeeImpact(policy, analysis, true)
   const [receiptOpen, setReceiptOpen] = useState(false)
+  const bonusSupport = formatIlpBonusSupport(
+    analysis.summary.totalBonusesReceived,
+    analysis.summary.totalFeesCharged,
+  )
   const receiptFeeBreakdown = useMemo(
     () => buildFeeBreakdown(analysis.projections.mid, policy.funds, policy),
     [analysis, policy],
@@ -302,18 +307,13 @@ function StoryDetailView({ policy, analysis, catalogProduct, onReplay }: {
                   </div>
                 </div>
                 <div className="rounded-lg border p-4">
-                  <div className="text-sm text-muted-foreground">Bonus offset ratio</div>
-                  <div className="text-2xl font-bold">
-                    {analysis.summary.totalFeesCharged > 0
-                      ? `${((analysis.summary.totalBonusesReceived / analysis.summary.totalFeesCharged) * 100).toFixed(1)}%`
-                      : '0%'
-                    }
-                  </div>
-                  <div className="text-xs text-muted-foreground">of gross fees offset by bonuses</div>
+                  <div className="text-sm text-muted-foreground">Bonus support vs gross fees</div>
+                  <div className="text-2xl font-bold">{bonusSupport.value}</div>
+                  <div className="text-xs text-muted-foreground">{bonusSupport.detail}</div>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground">
-                Bonuses reduce your net fee burden, but they do not eliminate it. Many bonuses are conditional on continuous premium payments. Bonus rules: check your policy document for suspension, clawback, or vesting conditions.
+                Bonuses can cushion net cost, but they are not fee rebates. Some products credit premium bonuses that can be larger than gross fees over the modelled horizon. Check your policy document for suspension, clawback, vesting, and payout conditions.
               </p>
             </CardContent>
           </Card>
@@ -321,7 +321,7 @@ function StoryDetailView({ policy, analysis, catalogProduct, onReplay }: {
           <Card>
             <CardContent className="p-6">
               <p className="text-sm text-muted-foreground">
-                This product does not have modelled bonuses. All fee figures shown are gross fees with no bonus offset. Actual net fees may be lower if the product offers bonuses that are not yet captured in the catalog.
+                This product does not have modelled bonuses. All fee figures shown are gross fees with no modelled bonus support. Actual net fees may be lower if the product offers bonuses that are not yet captured in the catalog.
               </p>
             </CardContent>
           </Card>

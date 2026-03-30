@@ -5,6 +5,7 @@ import { FeeBreakdownSection } from '@/components/ilp/FeeBreakdownSection'
 import { analyzeIlpPolicy } from '@/lib/calculations/ilp'
 import { createDefaultPolicy, useIlpStore } from '@/stores/useIlpStore'
 import { IlpLandingPage } from './IlpLandingPage'
+import { IlpLeaderboardPage } from './IlpLeaderboardPage'
 import { IlpReviewPage } from './IlpReviewPage'
 
 vi.mock('recharts', () => {
@@ -90,5 +91,16 @@ describe('ILP fee dashboard blog bridge', () => {
       'href',
       '/blog/ilp-questions?utm_source=dashboard&utm_content=chart_callout#questions',
     )
+  })
+
+  it('labels the comparison-table bonus column as bonuses instead of bonus offset', () => {
+    render(
+      <MemoryRouter>
+        <IlpLeaderboardPage />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('button', { name: /^bonuses$/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /bonus offset/i })).not.toBeInTheDocument()
   })
 })

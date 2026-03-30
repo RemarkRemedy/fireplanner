@@ -16,6 +16,10 @@ Rules:
 - Secondary view: per-policy coverage only to show what is now unlocked or still blocked.
 - Current active repo: `/Users/tj/TJDevelopment/fireplanner-ilp-lane/frontend`
 - Current live cursor:
+  - Fee dashboard stream:
+    - the story-mode bonus card now describes modelled bonuses relative to gross fees without implying they are capped fee rebates
+    - the comparison table no longer labels raw bonus amounts as `Bonus Offset`; it now uses `Bonuses`
+    - broader seeded-premium / bonus-routing mechanics remain model-stream work and should not be patched around in dashboard copy
   - Current-State Reconstruction override note:
     - `HSBC Life Goal Builder II` now reconstructs completed prior-year scheduled-redemption erosion into the current ordinary sum-insured corridor and current accidental-death floor corridor after the scheduled payout window has already ended, so `Death Benefit Today`, `TI Benefit Today`, and `Accidental Death Benefit Today` no longer overstate that bounded past regular-withdrawal history
     - same-year scheduled-payout timing remains a separate seam, so active-current-year manual insured / accidental-floor inputs stay in place
