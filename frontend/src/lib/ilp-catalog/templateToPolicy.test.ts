@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { analyzeIlpPolicy } from '@/lib/calculations/ilp'
 import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
 import { templateVariantToPolicySeed } from '@/lib/ilp-catalog/templateToPolicy'
 import type { IlpCatalogManifest, IlpCatalogProduct, IlpTemplateVariant } from '@/lib/ilp-catalog/types'
@@ -15,6 +16,27 @@ function expectSeedToMergeIntoValidPolicy(seed: ReturnType<typeof templateVarian
 
   expect(parsed.success, parsed.success ? undefined : parsed.error.issues.map((issue) => issue.message).join('; '))
     .toBe(true)
+}
+
+function expectPostMipContributionPath(seed: ReturnType<typeof templateVariantToPolicySeed>) {
+  const policy = ilpPolicySchema.parse({
+    ...createDefaultPolicy(),
+    ...seed,
+    id: 'post-mip-contribution-check',
+    currentPolicyYear: 9,
+    monthsAlreadyPaid: 96,
+    postMipYears: 3,
+    monthlyContribution: 350,
+    accounts: seed.accounts.map((account) => ({
+      ...account,
+      currentValue: 24_000,
+    })),
+  })
+
+  const yearElevenRow = analyzeIlpPolicy(policy).projections.mid.rows
+    .find((row) => row.policyYear === 11)
+  expect(yearElevenRow?.policyYear).toBe(11)
+  expect(yearElevenRow?.annualContribution).toBeGreaterThan(0)
 }
 
 describe('templateVariantToPolicySeed', () => {
@@ -4209,9 +4231,11 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.accounts).toEqual([
       expect.objectContaining({
         id: 'policy',
+        contributionShare: 0,
         contributionRules: [
           { phase: 'during-icp', contributionShare: 1 },
           { phase: 'after-icp', contributionShare: 1 },
+          { phase: 'after-mip', contributionShare: 1 },
           { phase: 'top-up', contributionShare: 1 },
         ],
       }),
@@ -4291,6 +4315,7 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
+    expectPostMipContributionPath(seed)
   })
 
   it('maps Invest Flex into a supported regular-premium seed with policy-fee, bonus, and MIP-charge schedules', () => {
@@ -4343,9 +4368,11 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.accounts).toEqual([
       expect.objectContaining({
         id: 'policy',
+        contributionShare: 0,
         contributionRules: [
           { phase: 'during-icp', contributionShare: 1 },
           { phase: 'after-icp', contributionShare: 1 },
+          { phase: 'after-mip', contributionShare: 1 },
           { phase: 'top-up', contributionShare: 1 },
         ],
       }),
@@ -4436,6 +4463,7 @@ describe('templateVariantToPolicySeed', () => {
         }),
       ]),
     )
+    expectPostMipContributionPath(seed)
   })
 
   it('maps Invest Flex TriVantage into a supported regular-premium seed with fixed 10-year MIP bonus and charge schedules', () => {
@@ -4484,9 +4512,11 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.accounts).toEqual([
       expect.objectContaining({
         id: 'policy',
+        contributionShare: 0,
         contributionRules: [
           { phase: 'during-icp', contributionShare: 1 },
           { phase: 'after-icp', contributionShare: 1 },
+          { phase: 'after-mip', contributionShare: 1 },
           { phase: 'top-up', contributionShare: 1 },
         ],
       }),
@@ -4556,6 +4586,7 @@ describe('templateVariantToPolicySeed', () => {
       { startPolicyYear: 9, endPolicyYear: 9, rate: 0 },
       { startPolicyYear: 10, endPolicyYear: 10, rate: 0 },
     ])
+    expectPostMipContributionPath(seed)
   })
 
   it('maps Invest vista into a supported two-account seed with Etiqa flex-family bonus and charge schedules', () => {

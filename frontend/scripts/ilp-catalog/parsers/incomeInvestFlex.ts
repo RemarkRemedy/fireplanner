@@ -285,6 +285,7 @@ function buildVariant(document: ExtractedPdfDocument, term: MipTerm): IlpTemplat
         contributionRules: [
           { phase: 'during-icp', targetAccountId: 'policy', contributionShare: 1 },
           { phase: 'after-icp', targetAccountId: 'policy', contributionShare: 1 },
+          { phase: 'after-mip', targetAccountId: 'policy', contributionShare: 1 },
           { phase: 'top-up', targetAccountId: 'policy', contributionShare: 1 },
         ],
         sourceRefs: [page1, page2, page3],

@@ -70,6 +70,7 @@ describe('parseIncomeInvestFlexVantage', () => {
         contributionRules: [
           { phase: 'during-icp', targetAccountId: 'policy', contributionShare: 1 },
           { phase: 'after-icp', targetAccountId: 'policy', contributionShare: 1 },
+          { phase: 'after-mip', targetAccountId: 'policy', contributionShare: 1 },
           { phase: 'top-up', targetAccountId: 'policy', contributionShare: 1 },
         ],
       }),
