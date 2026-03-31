@@ -118,6 +118,19 @@ describe('ILP fee dashboard blog bridge', () => {
     )
   })
 
+  it('explains what the low-mid-high return tabs mean in the fee breakdown header', () => {
+    const policy = createDefaultPolicy()
+    const analysis = analyzeIlpPolicy(policy)
+
+    if (analysis.mode !== 'projected') {
+      throw new Error('Expected the default policy to produce a projected ILP analysis.')
+    }
+
+    render(<FeeBreakdownSection policy={policy} analysis={analysis} />)
+
+    expect(screen.getByText(/low, mid, and high use the product's low-, mid-, and high-return projection assumptions/i)).toBeInTheDocument()
+  })
+
   it('shows a surrender-fee column in the detailed fee table', () => {
     const policy = createDefaultPolicy()
     const analysis = analyzeIlpPolicy(policy)

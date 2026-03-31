@@ -155,14 +155,14 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <CardTitle>Fee Breakdown</CardTitle>
             <p className="text-sm text-muted-foreground">
               Returns are not guaranteed, but fees are. This breakdown shows the projected fees under your assumptions, year by year.
             </p>
           </div>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2 sm:items-end">
             <Tabs value={scenario} onValueChange={(value) => setScenario(value as ReturnScenario)}>
               <TabsList>
                 <TabsTrigger value="low">Low</TabsTrigger>
@@ -170,6 +170,9 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                 <TabsTrigger value="high">High</TabsTrigger>
               </TabsList>
             </Tabs>
+            <p className="text-xs text-muted-foreground sm:max-w-[18rem] sm:text-right">
+              Low, Mid, and High use the product&apos;s low-, mid-, and high-return projection assumptions.
+            </p>
             <div className="flex flex-wrap gap-3 text-xs">
               <div className="flex items-center gap-1.5">
                 <Checkbox id="include-ocf" checked={includeOcf} onCheckedChange={(v) => setIncludeOcf(v === true)} />
