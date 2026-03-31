@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { ExitTimingExplorer } from '@/components/ilp/ExitTimingExplorer'
 import { FeeBreakdownSection, getVisibleAnnualFeeCategoryKeys } from '@/components/ilp/FeeBreakdownSection'
 import { FeeImpactChart } from '@/components/ilp/FeeImpactChart'
+import { IlpFeeStory } from '@/components/ilp/IlpFeeStory'
 import { ProductPickerDialog } from '@/components/ilp/catalog/ProductPickerDialog'
 import { analyzeIlpPolicy } from '@/lib/calculations/ilp'
 import { createDefaultPolicy, useIlpStore } from '@/stores/useIlpStore'
@@ -194,6 +195,39 @@ describe('ILP fee dashboard blog bridge', () => {
     )
 
     expect(screen.getByRole('button', { name: /expand compound effect chart/i })).toBeInTheDocument()
+  })
+
+  it('reframes the wrapped story as a walkthrough with question-led cards', async () => {
+    const user = userEvent.setup()
+    const policy = createDefaultPolicy()
+    const analysis = analyzeIlpPolicy(policy)
+    const waitForStoryAdvance = async () => {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 400))
+      })
+    }
+
+    render(<IlpFeeStory policy={policy} analysis={analysis} onClose={vi.fn()} />)
+
+    expect(screen.getByText(/what this product may cost you/i)).toBeInTheDocument()
+    expect(screen.getByText(/estimated total fees over/i)).toBeInTheDocument()
+
+    await user.keyboard(' ')
+    await waitForStoryAdvance()
+    await waitFor(() => expect(screen.getByText(/where the cost comes from/i)).toBeInTheDocument())
+
+    await user.keyboard(' ')
+    await waitForStoryAdvance()
+    await waitFor(() => expect(screen.getByText(/how much bonuses really help/i)).toBeInTheDocument())
+
+    await user.keyboard(' ')
+    await waitForStoryAdvance()
+    await waitFor(() => expect(screen.getByText(/what happens if you stop early/i)).toBeInTheDocument())
+
+    await user.keyboard(' ')
+    await waitForStoryAdvance()
+    await waitFor(() => expect(screen.getByText(/what to verify before deciding/i)).toBeInTheDocument())
+    expect(screen.getByRole('button', { name: /continue walkthrough/i })).toBeInTheDocument()
   })
 
   it('shows surrender-fee and withdrawable-value columns in the detailed fee table', () => {
