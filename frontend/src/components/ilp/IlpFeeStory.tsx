@@ -328,45 +328,47 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                 <motion.p variants={staggerChild} className="text-xs uppercase tracking-widest text-white/60 font-medium">
                   Your fee summary
                 </motion.p>
-                <motion.div variants={staggerChild} className="flex flex-wrap justify-center gap-6">
-                  <div>
+                <motion.div variants={staggerChild} className="grid w-full max-w-3xl grid-cols-1 gap-5 text-center md:grid-cols-3 md:gap-8">
+                  <div className="space-y-1">
                     <div className="text-3xl font-bold">{formatIlpCurrency(netWrapperCost, policy.currency)}</div>
-                    <div className="text-sm text-white/60">net policy fees</div>
+                    <div className="text-sm leading-snug text-white/60">net policy fees</div>
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <div className="text-2xl font-semibold">{formatIlpPercent(wrapperPctOfPremiums)}</div>
-                    <div className="text-sm text-white/60">of premiums</div>
+                    <div className="text-sm leading-snug text-white/60">of premiums</div>
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <div className="text-2xl font-semibold">{formatIlpPercent(annualDragPct)} p.a.</div>
-                    <div className="text-sm text-white/60">estimated annual cost on your portfolio</div>
+                    <div className="text-sm leading-snug text-white/60">estimated annual cost on your portfolio</div>
                   </div>
                 </motion.div>
 
-                <motion.div variants={staggerChild} className="w-full max-w-sm space-y-1 text-sm">
-                  <div className="flex justify-between"><span>Policy fees</span><span className="tabular-nums">{formatIlpCurrency(wrapperFees, policy.currency)}</span></div>
-                  {inceptionCharges > 0 && <div className="flex justify-between"><span>Inception charges</span><span className="tabular-nums">{formatIlpCurrency(inceptionCharges, policy.currency)}</span></div>}
-                  {bonuses > 0 && <div className="flex justify-between text-emerald-300"><span>Bonuses returned</span><span className="tabular-nums">-{formatIlpCurrency(bonuses, policy.currency)}</span></div>}
-                  <div className="flex justify-between border-t border-white/20 pt-1 font-semibold">
+                <motion.div variants={staggerChild} className="w-full max-w-xl rounded-md border border-white/10 bg-white/[0.04] px-5 py-4 text-sm">
+                  <div className="space-y-1">
+                    <div className="flex justify-between gap-6"><span>Policy fees</span><span className="tabular-nums">{formatIlpCurrency(wrapperFees, policy.currency)}</span></div>
+                    {inceptionCharges > 0 && <div className="flex justify-between gap-6"><span>Inception charges</span><span className="tabular-nums">{formatIlpCurrency(inceptionCharges, policy.currency)}</span></div>}
+                    {bonuses > 0 && <div className="flex justify-between gap-6 text-emerald-300"><span>Bonuses returned</span><span className="tabular-nums">-{formatIlpCurrency(bonuses, policy.currency)}</span></div>}
+                  </div>
+                  <div className="mt-3 flex justify-between gap-6 border-t border-white/20 pt-2 font-semibold">
                     <span>Net policy fees</span><span className="tabular-nums">{formatIlpCurrency(netWrapperCost, policy.currency)}</span>
                   </div>
                   {fundCharges > 0 && (
                     <>
-                      <div className="flex justify-between pt-2 text-white/70">
-                        <div className="pr-4">
-                          <span>Fund charges</span>
-                          <div className="text-xs text-white/50">{formatIlpPercent(blendedOcf)} p.a. inside the fund</div>
+                      <div className="mt-4 flex justify-between gap-6 text-white/75">
+                        <div className="min-w-0 pr-4">
+                          <div>Fund charges</div>
+                          <div className="mt-1 text-xs text-white/45">{formatIlpPercent(blendedOcf)} p.a. inside the fund</div>
                         </div>
-                        <span className="tabular-nums text-white/70">{formatIlpCurrency(fundCharges, policy.currency)}</span>
+                        <span className="tabular-nums text-white/75">{formatIlpCurrency(fundCharges, policy.currency)}</span>
                       </div>
-                      <div className="flex justify-between border-t border-white/20 pt-1 font-semibold">
+                      <div className="mt-3 flex justify-between gap-6 border-t border-white/20 pt-2 font-semibold">
                         <span>Estimated total fees</span><span className="tabular-nums">{formatIlpCurrency(totalEstimatedFees, policy.currency)}</span>
                       </div>
                     </>
                   )}
                 </motion.div>
 
-                <motion.p variants={staggerChild} className="text-xs text-white/60 max-w-sm">
+                <motion.p variants={staggerChild} className="max-w-md text-center text-xs text-white/45">
                   Fees only. Does not include investment returns.
                   {useReal && ` Adjusted for ${formatIlpPercent(policy.inflationRate)} inflation.`}
                 </motion.p>
@@ -380,7 +382,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                 <motion.button
                   variants={staggerChild}
                   type="button"
-                  className="mt-2 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-gray-900 shadow-md transition-colors hover:bg-white/90"
+                  className="mt-4 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-gray-900 shadow-md transition-colors hover:bg-white/90"
                   onClick={(e) => { e.stopPropagation(); onClose() }}
                 >
                   See detailed breakdown
