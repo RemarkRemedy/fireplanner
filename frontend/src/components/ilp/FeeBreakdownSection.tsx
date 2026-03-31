@@ -11,10 +11,11 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { MessageCircle } from 'lucide-react'
+import { Maximize2, MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { cn } from '@/lib/utils'
@@ -76,6 +77,8 @@ type AnnualFeeChartDatum = {
   bonusCredits: number
 }
 
+type ExpandedFeePanel = 'annual-chart' | 'cumulative-chart' | 'fee-table' | null
+
 const UNMODELED_FEES = [
   'Fund switching charges (most ILPs give N free switches/year, then charge)',
   'Bid-offer spread beyond what OCF captures',
@@ -105,6 +108,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
   const [includeOcf, setIncludeOcf] = useState(true)
   const [useRealValues, setUseRealValues] = useState(false)
   const [tableExpanded, setTableExpanded] = useState(false)
+  const [expandedPanel, setExpandedPanel] = useState<ExpandedFeePanel>(null)
   const colors = useChartColors()
   const feeColumnInfo = deriveFeeColumnInfo(policy)
   const projection = analysis.projections[scenario]
@@ -211,6 +215,231 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
     ]
   }, [breakdown, hasInception, inceptionTotal, includeOcf, useRealValues, inflationRate])
 
+  const renderAnnualFeesChart = (expanded = false) => (
+    <div
+      className={cn(expanded ? 'min-h-[26rem] h-[70vh] max-h-[70vh]' : 'h-72')}
+      role="img"
+      aria-label="Stacked bar chart of annual ILP fees by category"
+    >
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={stackedBarData} margin={{ top: 10, right: 24, bottom: 10, left: 24 }}>
+          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+          <XAxis dataKey="policyYear" label={{ value: 'Policy Year', position: 'insideBottom', offset: -5, className: 'fill-muted-foreground text-xs' }} />
+          <YAxis tickFormatter={(value: number) => formatIlpCurrency(value, policy.currency)} />
+          <Tooltip
+            formatter={(value: number, name: string) => [
+              formatIlpCurrency(Math.abs(value), policy.currency),
+              name === 'bonusCredits' ? 'Bonus Credits' : name === 'additionalCharges' ? feeColumnInfo.additional.label : DEFAULT_FEE_CATEGORIES.find((c) => c.key === name)?.label ?? name,
+            ]}
+            labelFormatter={(label: number) => `Policy Year ${label}`}
+          />
+          <Legend
+            formatter={(value: string) =>
+              value === 'bonusCredits' ? 'Bonus Credits' : value === 'additionalCharges' ? feeColumnInfo.additional.label : DEFAULT_FEE_CATEGORIES.find((c) => c.key === value)?.label ?? value
+            }
+          />
+          {visibleAnnualFeeCategoryKeys.includes('accountFee') && (
+            <Bar dataKey="accountFee" stackId="fees" fill={categoryColors.accountFee} />
+          )}
+          {visibleAnnualFeeCategoryKeys.includes('additionalCharges') && (
+            <Bar dataKey="additionalCharges" stackId="fees" fill={categoryColors.additionalCharges} />
+          )}
+          {visibleAnnualFeeCategoryKeys.includes('assuranceCharges') && (
+            <Bar dataKey="assuranceCharges" stackId="fees" fill={categoryColors.assuranceCharges} />
+          )}
+          {visibleAnnualFeeCategoryKeys.includes('eventCharges') && (
+            <Bar dataKey="eventCharges" stackId="fees" fill={categoryColors.eventCharges} />
+          )}
+          {visibleAnnualFeeCategoryKeys.includes('implicitFundFee') && (
+            <Bar dataKey="implicitFundFee" stackId="fees" fill={categoryColors.implicitFundFee} />
+          )}
+          <Bar dataKey="bonusCredits" stackId="fees" fill={colors.success} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  )
+
+  const renderCumulativeFeesChart = (expanded = false) => (
+    <div
+      className={cn(expanded ? 'min-h-[24rem] h-[66vh] max-h-[66vh]' : 'h-64')}
+      role="img"
+      aria-label="Line chart of cumulative ILP fees and bonuses over time"
+    >
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={cumulativeData} margin={{ top: 10, right: 24, bottom: 10, left: 24 }}>
+          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+          <XAxis dataKey="policyYear" label={{ value: 'Policy Year', position: 'insideBottom', offset: -5, className: 'fill-muted-foreground text-xs' }} />
+          <YAxis tickFormatter={(value: number) => formatIlpCurrency(value, policy.currency)} />
+          <Tooltip
+            formatter={(value: number, name: string) => {
+              const labels: Record<string, string> = {
+                grossFees: 'Cumulative Gross Fees',
+                bonuses: 'Cumulative Bonuses',
+                netFees: 'Cumulative Net Fees',
+              }
+              return [formatIlpCurrency(value, policy.currency), labels[name] ?? name]
+            }}
+            labelFormatter={(label: number) => `Policy Year ${label}`}
+          />
+          <Legend
+            formatter={(value: string) => {
+              const labels: Record<string, string> = {
+                grossFees: 'Gross Fees',
+                bonuses: 'Bonuses',
+                netFees: 'Net Fees',
+              }
+              return labels[value] ?? value
+            }}
+          />
+          <Line type="monotone" dataKey="grossFees" stroke={colors.danger} strokeWidth={2.5} dot={false} />
+          <Line type="monotone" dataKey="bonuses" stroke={colors.success} strokeWidth={2.5} dot={false} />
+          <Line type="monotone" dataKey="netFees" stroke={colors.warning} strokeWidth={3} strokeDasharray="6 3" dot={false} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  )
+
+  const renderFeeTable = (showAllRows = false) => {
+    const rows = showAllRows ? breakdown.rows : visibleBreakdownRows
+
+    return (
+      <div className={cn('overflow-auto rounded-md border', showAllRows && 'max-h-[70vh]')}>
+        <table className="w-full text-sm">
+          <thead className="sticky top-0 z-20 border-b bg-background">
+            <tr>
+              <th className="sticky left-0 z-30 border-r bg-background px-3 py-2 text-left font-medium text-muted-foreground">PY</th>
+              <th className="px-2 py-2 text-right font-medium text-muted-foreground">Contribution</th>
+              <th className="px-2 py-2 text-right font-medium text-muted-foreground">
+                <span className="inline-flex items-center gap-0.5">
+                  Account Mgt
+                  <FeeRuleTooltip rules={feeColumnInfo.accountMgt} currency={policy.currency} />
+                </span>
+              </th>
+              <th className="px-2 py-2 text-right font-medium text-muted-foreground">
+                <span className="inline-flex items-center gap-0.5">
+                  {feeColumnInfo.additional.label}
+                  <FeeRuleTooltip rules={feeColumnInfo.additional.rules} currency={policy.currency} />
+                </span>
+              </th>
+              <th className="px-2 py-2 text-right font-medium text-muted-foreground">
+                <span className="inline-flex items-center gap-0.5">
+                  Assurance
+                  <FeeRuleTooltip rules={feeColumnInfo.assurance} currency={policy.currency} />
+                </span>
+              </th>
+              <th className="px-2 py-2 text-right font-medium text-muted-foreground">
+                <span className="inline-flex items-center gap-0.5">
+                  Event
+                  <EventRuleTooltip rules={feeColumnInfo.event} currency={policy.currency} />
+                </span>
+              </th>
+              {includeOcf && (
+                <th className="px-2 py-2 text-right font-medium text-muted-foreground">
+                  <span className="inline-flex items-center gap-0.5">
+                    Fund Mgt
+                    <FundFeeTooltip funds={policy.funds} />
+                  </span>
+                </th>
+              )}
+              <th className="px-2 py-2 text-right font-medium text-muted-foreground">Gross Fee</th>
+              <th className="px-2 py-2 text-right font-medium text-emerald-700 dark:text-emerald-400">
+                <span className="inline-flex items-center gap-0.5">
+                  Bonus
+                  <BonusRuleTooltip bonuses={feeColumnInfo.bonuses} currency={policy.currency} />
+                </span>
+              </th>
+              <th className="px-2 py-2 text-right font-medium text-muted-foreground">Net Fee</th>
+              <th className="px-2 py-2 text-right font-medium text-muted-foreground">Withdrawals</th>
+              <th className="px-2 py-2 text-right font-medium text-muted-foreground">Closing Value</th>
+              <th className="px-2 py-2 text-right font-medium text-muted-foreground">Surrender Fee</th>
+              <th className="px-2 py-2 text-right font-medium text-muted-foreground">Withdrawable Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            {breakdown.inceptionCharges.length > 0 && (
+              <tr className="border-b bg-amber-50/50 dark:bg-amber-950/20">
+                <td className="sticky left-0 z-10 border-r bg-amber-50/50 px-3 py-2 font-medium dark:bg-amber-950/20">0</td>
+                <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(policy.initialSinglePremium ?? 0, policy.currency)}</td>
+                <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>
+                <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0), policy.currency)}</td>
+                <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>
+                <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>
+                {includeOcf && <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>}
+                <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0), policy.currency)}</td>
+                <td className="px-2 py-2 text-right tabular-nums text-emerald-700 dark:text-emerald-400">{formatIlpCurrency(0, policy.currency)}</td>
+                <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0), policy.currency)}</td>
+                <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>
+                <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency((policy.initialSinglePremium ?? 0) - breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0), policy.currency)}</td>
+                <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>
+                <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency((policy.initialSinglePremium ?? 0) - breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0), policy.currency)}</td>
+              </tr>
+            )}
+            {rows.map((row, rowIndex) => {
+              const isPostMip = policy.mipBasis !== 'open-ended'
+                && policy.mipLength != null
+                && row.policyYear > policy.mipLength
+              const isFirstPostMip = rowIndex === mipEndIndex + 1
+              const isBestExit = row.year === analysis.npvAnalysis.bestExitYear
+              const stickyRowBackground = cn(
+                'bg-background',
+                isBestExit && 'bg-emerald-50 dark:bg-emerald-950/20',
+                isPostMip && 'bg-muted/30',
+              )
+
+              return (
+                <tr
+                  key={row.policyYear}
+                  className={cn(
+                    'border-b last:border-0',
+                    isBestExit && 'bg-emerald-50 dark:bg-emerald-950/20',
+                    isPostMip && 'bg-muted/30',
+                    isFirstPostMip && 'border-t-2 border-t-primary',
+                  )}
+                >
+                  <td className={cn('sticky left-0 z-10 border-r px-3 py-2 font-medium', stickyRowBackground)}>
+                    <div className="flex items-center gap-2">
+                      <span>{row.policyYear}</span>
+                      {isBestExit && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">Lowest Fee Year</span>}
+                    </div>
+                  </td>
+                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.contribution, policy.currency)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.accountFee, policy.currency)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.additionalCharges, policy.currency)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.assuranceCharges, policy.currency)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.eventCharges, policy.currency)}</td>
+                  {includeOcf && <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.implicitFundFee, policy.currency)}</td>}
+                  <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(includeOcf ? row.totalGrossFee : row.grossFee, policy.currency)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums text-emerald-700 dark:text-emerald-400">{formatIlpCurrency(row.bonusCredits, policy.currency)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency((includeOcf ? row.totalGrossFee : row.grossFee) - row.bonusCredits, policy.currency)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.withdrawals, policy.currency)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.closingValue, policy.currency)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.eecCharge, policy.currency)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.surrenderValue, policy.currency)}</td>
+                </tr>
+              )
+            })}
+            <tr className="border-t-2 bg-slate-100/80 font-semibold dark:bg-slate-800/70">
+              <td className="sticky left-0 z-10 border-r bg-slate-100/80 px-3 py-2 dark:bg-slate-800/70">Total</td>
+              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.rows.reduce((s, r) => s + r.contribution, 0), policy.currency)}</td>
+              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.totals.accountFee, policy.currency)}</td>
+              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.totals.additionalCharges, policy.currency)}</td>
+              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.totals.assuranceCharges, policy.currency)}</td>
+              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.totals.eventCharges, policy.currency)}</td>
+              {includeOcf && <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.totals.implicitFundFee, policy.currency)}</td>}
+              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(includeOcf ? breakdown.totals.totalGrossFee : breakdown.totals.grossFee, policy.currency)}</td>
+              <td className="px-2 py-2 text-right tabular-nums font-semibold text-emerald-700 dark:text-emerald-400">{formatIlpCurrency(breakdown.totals.bonusCredits, policy.currency)}</td>
+              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency((includeOcf ? breakdown.totals.totalGrossFee : breakdown.totals.grossFee) - breakdown.totals.bonusCredits, policy.currency)}</td>
+              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.rows.reduce((s, r) => s + r.withdrawals, 0), policy.currency)}</td>
+              <td className="px-2 py-2" />
+              <td className="px-2 py-2 text-right text-muted-foreground">n/a</td>
+              <td className="px-2 py-2" />
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -247,247 +476,85 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
         <CardContent className="space-y-8">
           {/* Stacked Bar Chart: Annual Fees by Category */}
           <div>
-            <h3 className="mb-2 text-sm font-medium">Annual Fees by Category</h3>
-            <p className="mb-4 text-xs text-muted-foreground">
-              Positive bars are fees charged. Negative bars (below zero) are bonus credits returned.
-            </p>
-            <div className="h-72" role="img" aria-label="Stacked bar chart of annual ILP fees by category">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={stackedBarData} margin={{ top: 10, right: 24, bottom: 10, left: 24 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="policyYear" label={{ value: 'Policy Year', position: 'insideBottom', offset: -5, className: 'fill-muted-foreground text-xs' }} />
-                  <YAxis tickFormatter={(value: number) => formatIlpCurrency(value, policy.currency)} />
-                  <Tooltip
-                    formatter={(value: number, name: string) => [
-                      formatIlpCurrency(Math.abs(value), policy.currency),
-                      name === 'bonusCredits' ? 'Bonus Credits' : name === 'additionalCharges' ? feeColumnInfo.additional.label : DEFAULT_FEE_CATEGORIES.find((c) => c.key === name)?.label ?? name,
-                    ]}
-                    labelFormatter={(label: number) => `Policy Year ${label}`}
-                  />
-                  <Legend
-                    formatter={(value: string) =>
-                      value === 'bonusCredits' ? 'Bonus Credits' : value === 'additionalCharges' ? feeColumnInfo.additional.label : DEFAULT_FEE_CATEGORIES.find((c) => c.key === value)?.label ?? value
-                    }
-                  />
-                  {visibleAnnualFeeCategoryKeys.includes('accountFee') && (
-                    <Bar dataKey="accountFee" stackId="fees" fill={categoryColors.accountFee} />
-                  )}
-                  {visibleAnnualFeeCategoryKeys.includes('additionalCharges') && (
-                    <Bar dataKey="additionalCharges" stackId="fees" fill={categoryColors.additionalCharges} />
-                  )}
-                  {visibleAnnualFeeCategoryKeys.includes('assuranceCharges') && (
-                    <Bar dataKey="assuranceCharges" stackId="fees" fill={categoryColors.assuranceCharges} />
-                  )}
-                  {visibleAnnualFeeCategoryKeys.includes('eventCharges') && (
-                    <Bar dataKey="eventCharges" stackId="fees" fill={categoryColors.eventCharges} />
-                  )}
-                  {visibleAnnualFeeCategoryKeys.includes('implicitFundFee') && (
-                    <Bar dataKey="implicitFundFee" stackId="fees" fill={categoryColors.implicitFundFee} />
-                  )}
-                  <Bar dataKey="bonusCredits" stackId="fees" fill={colors.success} />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="mb-2 flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-medium">Annual Fees by Category</h3>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Positive bars are fees charged. Negative bars (below zero) are bonus credits returned.
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setExpandedPanel('annual-chart')}
+                aria-label="Expand annual fees chart"
+              >
+                <Maximize2 className="h-4 w-4" />
+                Expand
+              </Button>
             </div>
+            {renderAnnualFeesChart()}
           </div>
 
           {/* Cumulative Line Chart */}
           <div>
-            <h3 className="mb-2 text-sm font-medium">Cumulative Fees Over Time</h3>
-            <p className="mb-4 text-xs text-muted-foreground">
-              Shows whether bonus credits meaningfully offset gross fees over the policy term.
-            </p>
-            <div className="h-64" role="img" aria-label="Line chart of cumulative ILP fees and bonuses over time">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={cumulativeData} margin={{ top: 10, right: 24, bottom: 10, left: 24 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="policyYear" label={{ value: 'Policy Year', position: 'insideBottom', offset: -5, className: 'fill-muted-foreground text-xs' }} />
-                  <YAxis tickFormatter={(value: number) => formatIlpCurrency(value, policy.currency)} />
-                  <Tooltip
-                    formatter={(value: number, name: string) => {
-                      const labels: Record<string, string> = {
-                        grossFees: 'Cumulative Gross Fees',
-                        bonuses: 'Cumulative Bonuses',
-                        netFees: 'Cumulative Net Fees',
-                      }
-                      return [formatIlpCurrency(value, policy.currency), labels[name] ?? name]
-                    }}
-                    labelFormatter={(label: number) => `Policy Year ${label}`}
-                  />
-                  <Legend
-                    formatter={(value: string) => {
-                      const labels: Record<string, string> = {
-                        grossFees: 'Gross Fees',
-                        bonuses: 'Bonuses',
-                        netFees: 'Net Fees',
-                      }
-                      return labels[value] ?? value
-                    }}
-                  />
-                  <Line type="monotone" dataKey="grossFees" stroke={colors.danger} strokeWidth={2.5} dot={false} />
-                  <Line type="monotone" dataKey="bonuses" stroke={colors.success} strokeWidth={2.5} dot={false} />
-                  <Line type="monotone" dataKey="netFees" stroke={colors.warning} strokeWidth={3} strokeDasharray="6 3" dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
+            <div className="mb-2 flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-medium">Cumulative Fees Over Time</h3>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Shows whether bonus credits meaningfully offset gross fees over the policy term.
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setExpandedPanel('cumulative-chart')}
+                aria-label="Expand cumulative fees chart"
+              >
+                <Maximize2 className="h-4 w-4" />
+                Expand
+              </Button>
             </div>
+            {renderCumulativeFeesChart()}
           </div>
 
           {/* Fee Breakdown Table */}
           <div>
             <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
               <h3 className="text-sm font-medium">Detailed Fee Table</h3>
-              {hasHiddenTableRows && (
+              <div className="flex flex-wrap items-center gap-2">
+                {hasHiddenTableRows && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setTableExpanded((expanded) => !expanded)}
+                  >
+                    {tableExpanded
+                      ? `Show first ${previewRowCount} rows`
+                      : `Show ${hiddenRowCount} more rows`}
+                  </Button>
+                )}
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
-                  onClick={() => setTableExpanded((expanded) => !expanded)}
+                  onClick={() => setExpandedPanel('fee-table')}
+                  aria-label="Expand fee table"
                 >
-                  {tableExpanded
-                    ? `Show first ${previewRowCount} rows`
-                    : `Show ${hiddenRowCount} more rows`}
+                  <Maximize2 className="h-4 w-4" />
+                  Expand
                 </Button>
-              )}
+              </div>
             </div>
             {hasHiddenTableRows && (
               <p className="mb-3 text-xs text-muted-foreground">
                 Showing the first {previewRowCount} policy years by default. Expand to inspect the full yearly fee path.
               </p>
             )}
-            <div className="overflow-auto rounded-md border">
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 z-20 border-b bg-background">
-                  <tr>
-                    <th className="sticky left-0 z-30 border-r bg-background px-3 py-2 text-left font-medium text-muted-foreground">PY</th>
-                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">Contribution</th>
-                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">
-                      <span className="inline-flex items-center gap-0.5">
-                        Account Mgt
-                        <FeeRuleTooltip rules={feeColumnInfo.accountMgt} currency={policy.currency} />
-                      </span>
-                    </th>
-                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">
-                      <span className="inline-flex items-center gap-0.5">
-                        {feeColumnInfo.additional.label}
-                        <FeeRuleTooltip rules={feeColumnInfo.additional.rules} currency={policy.currency} />
-                      </span>
-                    </th>
-                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">
-                      <span className="inline-flex items-center gap-0.5">
-                        Assurance
-                        <FeeRuleTooltip rules={feeColumnInfo.assurance} currency={policy.currency} />
-                      </span>
-                    </th>
-                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">
-                      <span className="inline-flex items-center gap-0.5">
-                        Event
-                        <EventRuleTooltip rules={feeColumnInfo.event} currency={policy.currency} />
-                      </span>
-                    </th>
-                    {includeOcf && (
-                      <th className="px-2 py-2 text-right font-medium text-muted-foreground">
-                        <span className="inline-flex items-center gap-0.5">
-                          Fund Mgt
-                          <FundFeeTooltip funds={policy.funds} />
-                        </span>
-                      </th>
-                    )}
-                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">Gross Fee</th>
-                    <th className="px-2 py-2 text-right font-medium text-emerald-700 dark:text-emerald-400">
-                      <span className="inline-flex items-center gap-0.5">
-                        Bonus
-                        <BonusRuleTooltip bonuses={feeColumnInfo.bonuses} currency={policy.currency} />
-                      </span>
-                    </th>
-                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">Net Fee</th>
-                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">Withdrawals</th>
-                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">Closing Value</th>
-                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">Surrender Fee</th>
-                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">Withdrawable Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {breakdown.inceptionCharges.length > 0 && (
-                    <tr className="border-b bg-amber-50/50 dark:bg-amber-950/20">
-                      <td className="sticky left-0 z-10 border-r bg-amber-50/50 px-3 py-2 font-medium dark:bg-amber-950/20">0</td>
-                      <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(policy.initialSinglePremium ?? 0, policy.currency)}</td>
-                      <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>
-                      <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0), policy.currency)}</td>
-                      <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>
-                      <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>
-                      {includeOcf && <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>}
-                      <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0), policy.currency)}</td>
-                      <td className="px-2 py-2 text-right tabular-nums text-emerald-700 dark:text-emerald-400">{formatIlpCurrency(0, policy.currency)}</td>
-                      <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0), policy.currency)}</td>
-                      <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>
-                      <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency((policy.initialSinglePremium ?? 0) - breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0), policy.currency)}</td>
-                      <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>
-                      <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency((policy.initialSinglePremium ?? 0) - breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0), policy.currency)}</td>
-                    </tr>
-                  )}
-                  {visibleBreakdownRows.map((row, rowIndex) => {
-                    const isPostMip = policy.mipBasis !== 'open-ended'
-                      && policy.mipLength != null
-                      && row.policyYear > policy.mipLength
-                    const isFirstPostMip = rowIndex === mipEndIndex + 1
-                    const isBestExit = row.year === analysis.npvAnalysis.bestExitYear
-                    const stickyRowBackground = cn(
-                      'bg-background',
-                      isBestExit && 'bg-emerald-50 dark:bg-emerald-950/20',
-                      isPostMip && 'bg-muted/30',
-                    )
-
-                    return (
-                      <tr
-                        key={row.policyYear}
-                        className={cn(
-                          'border-b last:border-0',
-                          isBestExit && 'bg-emerald-50 dark:bg-emerald-950/20',
-                          isPostMip && 'bg-muted/30',
-                          isFirstPostMip && 'border-t-2 border-t-primary',
-                        )}
-                      >
-                        <td className={cn('sticky left-0 z-10 border-r px-3 py-2 font-medium', stickyRowBackground)}>
-                          <div className="flex items-center gap-2">
-                            <span>{row.policyYear}</span>
-                            {isBestExit && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">Lowest Fee Year</span>}
-                          </div>
-                        </td>
-                        <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.contribution, policy.currency)}</td>
-                        <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.accountFee, policy.currency)}</td>
-                        <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.additionalCharges, policy.currency)}</td>
-                        <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.assuranceCharges, policy.currency)}</td>
-                        <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.eventCharges, policy.currency)}</td>
-                        {includeOcf && <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.implicitFundFee, policy.currency)}</td>}
-                        <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(includeOcf ? row.totalGrossFee : row.grossFee, policy.currency)}</td>
-                        <td className="px-2 py-2 text-right tabular-nums text-emerald-700 dark:text-emerald-400">{formatIlpCurrency(row.bonusCredits, policy.currency)}</td>
-                        <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency((includeOcf ? row.totalGrossFee : row.grossFee) - row.bonusCredits, policy.currency)}</td>
-                        <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.withdrawals, policy.currency)}</td>
-                        <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.closingValue, policy.currency)}</td>
-                        <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.eecCharge, policy.currency)}</td>
-                        <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.surrenderValue, policy.currency)}</td>
-                      </tr>
-                    )
-                  })}
-                  {/* Totals row */}
-                  <tr className="border-t-2 bg-slate-100/80 font-semibold dark:bg-slate-800/70">
-                    <td className="sticky left-0 z-10 border-r bg-slate-100/80 px-3 py-2 dark:bg-slate-800/70">Total</td>
-                    <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.rows.reduce((s, r) => s + r.contribution, 0), policy.currency)}</td>
-                    <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.totals.accountFee, policy.currency)}</td>
-                    <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.totals.additionalCharges, policy.currency)}</td>
-                    <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.totals.assuranceCharges, policy.currency)}</td>
-                    <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.totals.eventCharges, policy.currency)}</td>
-                    {includeOcf && <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.totals.implicitFundFee, policy.currency)}</td>}
-                    <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(includeOcf ? breakdown.totals.totalGrossFee : breakdown.totals.grossFee, policy.currency)}</td>
-                    <td className="px-2 py-2 text-right tabular-nums font-semibold text-emerald-700 dark:text-emerald-400">{formatIlpCurrency(breakdown.totals.bonusCredits, policy.currency)}</td>
-                    <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency((includeOcf ? breakdown.totals.totalGrossFee : breakdown.totals.grossFee) - breakdown.totals.bonusCredits, policy.currency)}</td>
-                    <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.rows.reduce((s, r) => s + r.withdrawals, 0), policy.currency)}</td>
-                    <td className="px-2 py-2" />
-                    <td className="px-2 py-2 text-right text-muted-foreground">n/a</td>
-                    <td className="px-2 py-2" />
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            {renderFeeTable()}
           </div>
 
           {/* Fee Category Explanations */}
@@ -568,6 +635,39 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={expandedPanel !== null} onOpenChange={(open) => !open && setExpandedPanel(null)}>
+        <DialogContent className="flex h-[95vh] max-h-[95vh] max-w-[95vw] flex-col p-4">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="text-lg font-bold">
+              {expandedPanel === 'annual-chart' && 'Annual Fees by Category'}
+              {expandedPanel === 'cumulative-chart' && 'Cumulative Fees Over Time'}
+              {expandedPanel === 'fee-table' && 'Detailed Fee Table'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="min-h-0 flex-1 overflow-auto">
+            <div className="space-y-4">
+              {expandedPanel === 'annual-chart' && (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    Positive bars are fees charged. Negative bars (below zero) are bonus credits returned.
+                  </p>
+                  {renderAnnualFeesChart(true)}
+                </>
+              )}
+              {expandedPanel === 'cumulative-chart' && (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    Shows whether bonus credits meaningfully offset gross fees over the policy term.
+                  </p>
+                  {renderCumulativeFeesChart(true)}
+                </>
+              )}
+              {expandedPanel === 'fee-table' && renderFeeTable(true)}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

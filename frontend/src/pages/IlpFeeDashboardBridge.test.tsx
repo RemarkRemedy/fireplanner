@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { FeeBreakdownSection, getVisibleAnnualFeeCategoryKeys } from '@/components/ilp/FeeBreakdownSection'
+import { FeeImpactChart } from '@/components/ilp/FeeImpactChart'
 import { ProductPickerDialog } from '@/components/ilp/catalog/ProductPickerDialog'
 import { analyzeIlpPolicy } from '@/lib/calculations/ilp'
 import { createDefaultPolicy, useIlpStore } from '@/stores/useIlpStore'
@@ -132,6 +133,48 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(screen.getByRole('tab', { name: '6.0%' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: '8.0%' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: '10.0%' })).toBeInTheDocument()
+  })
+
+  it('shows expand controls for the fee breakdown charts and table', () => {
+    const policy = createDefaultPolicy()
+    const analysis = analyzeIlpPolicy(policy)
+
+    if (analysis.mode !== 'projected') {
+      throw new Error('Expected the default policy to produce a projected ILP analysis.')
+    }
+
+    render(<FeeBreakdownSection policy={policy} analysis={analysis} />)
+
+    expect(screen.getByRole('button', { name: /expand annual fees chart/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /expand cumulative fees chart/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /expand fee table/i })).toBeInTheDocument()
+  })
+
+  it('shows an expand control for the compound effect chart', () => {
+    render(
+      <FeeImpactChart
+        tiers={[
+          { label: 'Low-cost ETF/robo', finalValue: 73372, drag: 0.003 },
+          { label: 'This product', finalValue: 65464, drag: 0.017 },
+          { label: 'High-cost product', finalValue: 61506, drag: 0.025 },
+        ]}
+        timeSeries={[
+          { year: 0, lowCost: 0, thisProduct: 0, highCost: 0 },
+          { year: 15, lowCost: 73372, thisProduct: 65464, highCost: 61506 },
+        ]}
+        tierDefs={[
+          { label: 'Low-cost ETF/robo', key: 'lowCost', drag: 0.003, color: '#22c55e' },
+          { label: 'This product', key: 'thisProduct', drag: 0.017, color: '#2563eb' },
+          { label: 'High-cost product', key: 'highCost', drag: 0.025, color: '#ef4444' },
+        ]}
+        horizonYears={15}
+        currency="SGD"
+        monthlyContribution={350}
+        useReal
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: /expand compound effect chart/i })).toBeInTheDocument()
   })
 
   it('shows surrender-fee and withdrawable-value columns in the detailed fee table', () => {
