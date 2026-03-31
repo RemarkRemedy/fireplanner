@@ -102,7 +102,7 @@ function ProspectSetupPreview({ seed }: { seed: IlpPolicySeed }) {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+        <div className="rounded-md border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
           <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Template</div>
           <div className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{seed.name}</div>
           <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -110,14 +110,14 @@ function ProspectSetupPreview({ seed }: { seed: IlpPolicySeed }) {
             {seed.mipLength != null && ` · MIP ${seed.mipLength} years`}
           </div>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+        <div className="rounded-md border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
           <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Starting assumptions</div>
           <div className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{pathLabel}</div>
           <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">{horizonLabel}</div>
         </div>
       </div>
 
-      <div className="space-y-3 rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-900/60">
+      <div className="space-y-3 rounded-md border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-900/60">
         <div>
           <p className="text-sm font-semibold text-slate-950 dark:text-white">What you’ll see next</p>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -128,8 +128,8 @@ function ProspectSetupPreview({ seed }: { seed: IlpPolicySeed }) {
           {previewCards.map((card) => {
             const Icon = card.icon
             return (
-              <div key={card.title} className="flex items-start gap-3 rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
-                <div className="rounded-2xl bg-slate-100 p-2.5 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+              <div key={card.title} className="flex items-start gap-3 rounded-md border border-white/80 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
+                <div className="rounded-md bg-slate-100 p-2.5 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
                   <Icon className="h-4 w-4" />
                 </div>
                 <div className="space-y-1">
