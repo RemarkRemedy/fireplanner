@@ -357,6 +357,22 @@ function StoryDetailView({ policy, analysis, catalogProduct }: {
             </li>
           </ul>
         </div>
+        <Card>
+          <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold">Want to compare this against your own cash flow?</h2>
+              <p className="text-sm leading-6 text-muted-foreground">
+                Set up or review your planner income and spending inputs in the full app, then come back here to judge whether this ILP fee path fits your own circumstances.
+              </p>
+            </div>
+            <Link to="/inputs#section-income" className="shrink-0">
+              <Button variant="outline">
+                Open planner inputs
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
         <FeeImpactChart
           tiers={feeImpact.tiers}
           timeSeries={feeImpact.timeSeries}
