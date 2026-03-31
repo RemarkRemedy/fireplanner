@@ -132,6 +132,8 @@ describe('ILP fee dashboard blog bridge', () => {
     render(<ExitTimingExplorer policy={policy} analysis={analysis} />)
 
     expect(screen.getByText('Exit Timing Calculator')).toBeInTheDocument()
+    expect(screen.getByText('Net gap by exit year')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /bar chart showing net gap by exit year/i })).toBeInTheDocument()
     expect(screen.getByText('Added from now to exit')).toBeInTheDocument()
     expect(screen.getByText(/Contributions avoided vs year/i)).toBeInTheDocument()
   })
