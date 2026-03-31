@@ -408,7 +408,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                 <tbody>
                   {breakdown.inceptionCharges.length > 0 && (
                     <tr className="border-b bg-amber-50/50 dark:bg-amber-950/20">
-                      <td className="sticky left-0 z-10 border-r bg-inherit px-3 py-2 font-medium">0</td>
+                      <td className="sticky left-0 z-10 border-r bg-amber-50/50 px-3 py-2 font-medium dark:bg-amber-950/20">0</td>
                       <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(policy.initialSinglePremium ?? 0, policy.currency)}</td>
                       <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>
                       <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0), policy.currency)}</td>
@@ -430,6 +430,11 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                       && row.policyYear > policy.mipLength
                     const isFirstPostMip = rowIndex === mipEndIndex + 1
                     const isBestExit = row.year === analysis.npvAnalysis.bestExitYear
+                    const stickyRowBackground = cn(
+                      'bg-background',
+                      isBestExit && 'bg-emerald-50 dark:bg-emerald-950/20',
+                      isPostMip && 'bg-muted/30',
+                    )
 
                     return (
                       <tr
@@ -441,7 +446,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                           isFirstPostMip && 'border-t-2 border-t-primary',
                         )}
                       >
-                        <td className="sticky left-0 z-10 border-r bg-inherit px-3 py-2 font-medium">
+                        <td className={cn('sticky left-0 z-10 border-r px-3 py-2 font-medium', stickyRowBackground)}>
                           <div className="flex items-center gap-2">
                             <span>{row.policyYear}</span>
                             {isBestExit && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">Lowest Fee Year</span>}
@@ -465,7 +470,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                   })}
                   {/* Totals row */}
                   <tr className="border-t-2 bg-slate-100/80 font-semibold dark:bg-slate-800/70">
-                    <td className="sticky left-0 z-10 border-r bg-inherit px-3 py-2">Total</td>
+                    <td className="sticky left-0 z-10 border-r bg-slate-100/80 px-3 py-2 dark:bg-slate-800/70">Total</td>
                     <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.rows.reduce((s, r) => s + r.contribution, 0), policy.currency)}</td>
                     <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.totals.accountFee, policy.currency)}</td>
                     <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.totals.additionalCharges, policy.currency)}</td>
