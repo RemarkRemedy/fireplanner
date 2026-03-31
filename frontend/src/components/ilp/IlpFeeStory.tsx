@@ -355,7 +355,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                   {fundCharges > 0 && (
                     <>
                       <div className="mt-4 flex justify-between gap-6">
-                        <div className="min-w-0 pr-4">
+                        <div className="min-w-0 pr-4 text-left">
                           <div>Fund charges</div>
                           <div className="mt-1 text-xs text-white/45">{formatIlpPercent(blendedOcf)} p.a. inside the fund</div>
                         </div>
