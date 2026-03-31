@@ -42,6 +42,10 @@ export function FeeImpactChart({
     ? { background: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, color: 'white' }
     : undefined
   const legendColor = dark ? 'rgba(255,255,255,0.7)' : undefined
+  const comparisonBlockClass = dark ? 'mx-auto w-full max-w-xl' : 'w-full'
+  const comparisonRowClass = dark
+    ? 'rounded-md border border-white/10 bg-white/5 px-4 py-3'
+    : 'rounded-md border border-border/60 bg-background/70 px-4 py-3'
 
   const content = (
     <div className="space-y-4">
@@ -61,23 +65,23 @@ export function FeeImpactChart({
         </p>
       )}
 
-      <div className="space-y-2">
+      <div className={`${comparisonBlockClass} space-y-2 text-left`}>
         {tiers.map((tier) => (
-          <div key={tier.label} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 text-sm">
+          <div key={tier.label} className={`${comparisonRowClass} grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-6 text-sm`}>
             <div className="min-w-0">
-              <div className="leading-tight" style={{ color: tier.color }}>{tier.label}</div>
+              <div className="font-medium leading-tight" style={{ color: tier.color }}>{tier.label}</div>
               <div className={`text-xs ${dark ? 'text-white/60' : 'text-muted-foreground'}`}>
                 {formatIlpPercent(tier.drag)} p.a. fee drag
               </div>
             </div>
-            <div className="shrink-0 pt-0.5 text-right tabular-nums font-medium leading-tight" style={{ color: tier.color }}>
+            <div className="shrink-0 pt-0.5 text-right tabular-nums text-base font-semibold leading-tight" style={{ color: tier.color }}>
               {formatIlpCurrency(tier.finalValue, currency)}
             </div>
           </div>
         ))}
       </div>
 
-      <div className="h-56">
+      <div className={`${comparisonBlockClass} h-56`}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={timeSeries} margin={{ top: 5, right: 10, bottom: 5, left: 10 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} className={dark ? '' : 'stroke-muted'} />
