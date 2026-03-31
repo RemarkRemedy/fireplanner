@@ -134,10 +134,10 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(screen.getByText('Exit Timing Calculator')).toBeInTheDocument()
     expect(screen.getByText('Net gap by exit year')).toBeInTheDocument()
     expect(screen.getByRole('img', { name: /bar chart showing net gap by exit year/i })).toBeInTheDocument()
+    expect(screen.getByText('Annualized return by exit year')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /line chart showing gross and net annualized return by exit year/i })).toBeInTheDocument()
     expect(screen.getByText('Added from now to exit')).toBeInTheDocument()
     expect(screen.getByText(/Contributions avoided vs year/i)).toBeInTheDocument()
-    expect(screen.getByText('Gross annualized return')).toBeInTheDocument()
-    expect(screen.getByText('Net annualized return')).toBeInTheDocument()
     expect(screen.getByText(/includes year 0/i)).toBeInTheDocument()
   })
 

@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useChartColors } from '@/lib/chartTheme'
-import { computeAnnualFeeDragPct } from '@/lib/calculations/ilpFeeImpact'
 import {
   Select,
   SelectContent,
@@ -14,7 +13,10 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  Line,
+  LineChart,
   ReferenceLine,
+  ReferenceDot,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -28,11 +30,57 @@ interface ExitTimingExplorerProps {
   analysis: IlpProjectedPolicyAnalysis
 }
 
+function solveAnnualizedReturn(cashflows: number[]): number | null {
+  if (cashflows.length < 2) return null
+
+  const hasNegative = cashflows.some((value) => value < 0)
+  const hasPositive = cashflows.some((value) => value > 0)
+  if (!hasNegative || !hasPositive) return null
+
+  const npv = (rate: number) => cashflows.reduce(
+    (sum, value, index) => sum + (value / Math.pow(1 + rate, index)),
+    0,
+  )
+
+  let low = -0.9999
+  let high = 1
+  let npvLow = npv(low)
+  let npvHigh = npv(high)
+
+  let expansionGuard = 0
+  while (npvLow * npvHigh > 0 && expansionGuard < 16) {
+    high *= 2
+    npvHigh = npv(high)
+    expansionGuard += 1
+  }
+
+  if (npvLow * npvHigh > 0) {
+    return null
+  }
+
+  for (let iteration = 0; iteration < 80; iteration += 1) {
+    const mid = (low + high) / 2
+    const npvMid = npv(mid)
+    if (Math.abs(npvMid) < 1e-8) {
+      return mid
+    }
+    if (npvLow * npvMid <= 0) {
+      high = mid
+      npvHigh = npvMid
+    } else {
+      low = mid
+      npvLow = npvMid
+    }
+  }
+
+  return (low + high) / 2
+}
+
 export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps) {
   const colors = useChartColors()
-  const annualFeeDragPct = computeAnnualFeeDragPct(analysis)
   const horizonYear = analysis.projections.mid.rows.at(-1)?.policyYear ?? analysis.npvAnalysis.bestExitYear
   const paidSoFarEstimate = (policy.initialSinglePremium ?? 0) + (policy.monthlyContribution * policy.monthsAlreadyPaid)
+  const currentGrossValue = analysis.summary.currentSurrenderValue + analysis.summary.cancelNowPenalty
   const exitOptions = useMemo(
     () => [
       {
@@ -66,17 +114,26 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
     analysis.npvAnalysis.holdToMip.totalContributions - selectedOption.totalContributions,
   )
   const valueVsAddedContributions = selectedOption.netSurrenderValue - addedContributionsUntilExit
-  const totalAllocation = policy.funds.reduce((sum, fund) => sum + fund.allocation, 0)
-  const grossAnnualizedReturn = totalAllocation > 0
-    ? policy.funds.reduce(
-        (sum, fund) => sum + ((fund.allocation / totalAllocation) * fund.grossReturnMid),
-        0,
-      )
-    : 0
-  const netAnnualizedReturn = Math.max(-1, grossAnnualizedReturn - annualFeeDragPct)
   const chartData = useMemo(
     () => exitOptions.map((option) => {
       const addedFromNowToExit = Math.max(0, option.totalContributions - paidSoFarEstimate)
+      const matchingRow = option.exitYear > 0
+        ? analysis.projections.mid.rows.find((row) => row.year === option.exitYear)
+        : null
+      const annualContributions = analysis.projections.mid.rows
+        .filter((row) => row.year <= option.exitYear)
+        .map((row) => -row.annualContribution)
+      const grossCashflows = [-currentGrossValue, ...annualContributions]
+      const netCashflows = [-analysis.summary.currentSurrenderValue, ...annualContributions]
+      if (option.exitYear > 0 && matchingRow) {
+        grossCashflows[grossCashflows.length - 1] += matchingRow.combinedValue
+        netCashflows[netCashflows.length - 1] += option.netSurrenderValue
+      } else {
+        grossCashflows[0] += currentGrossValue
+        netCashflows[0] += analysis.summary.currentSurrenderValue
+      }
+      const grossAnnualizedReturn = option.exitYear > 0 ? solveAnnualizedReturn(grossCashflows) : 0
+      const netAnnualizedReturn = option.exitYear > 0 ? solveAnnualizedReturn(netCashflows) : 0
       return {
         exitYear: option.exitYear,
         policyYear: option.policyYear,
@@ -85,10 +142,14 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
         addedFromNowToExit,
         netSurrenderValue: option.netSurrenderValue,
         eecCharge: option.eecCharge,
+        grossExitValue: matchingRow?.combinedValue ?? currentGrossValue,
+        grossAnnualizedReturn: grossAnnualizedReturn ?? null,
+        netAnnualizedReturn: netAnnualizedReturn ?? null,
       }
     }),
-    [exitOptions, paidSoFarEstimate],
+    [analysis.projections.mid.rows, analysis.summary.currentSurrenderValue, currentGrossValue, exitOptions, paidSoFarEstimate],
   )
+  const selectedReturnPoint = chartData.find((entry) => String(entry.exitYear) === selectedExitYear) ?? chartData[0]
 
   return (
     <Card>
@@ -172,7 +233,83 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="space-y-3">
+          <div>
+            <h3 className="text-sm font-semibold">Annualized return by exit year</h3>
+            <p className="text-sm text-muted-foreground">
+              Gross is before the exit charge. Net is after the exit charge. Both are annualized from your current position to the selected exit year.
+            </p>
+          </div>
+          <div className="h-72 rounded-md border border-border/80 bg-white/70 p-3 dark:bg-muted/10" role="img" aria-label="Line chart showing gross and net annualized return by exit year">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 8, right: 16, bottom: 8, left: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
+                <XAxis dataKey="label" tickLine={false} axisLine={false} />
+                <YAxis
+                  width={92}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value: number) => formatIlpPercent(value)}
+                />
+                <Tooltip
+                  formatter={(value, name) => {
+                    const numericValue = typeof value === 'number' ? value : Number(value)
+                    if (!Number.isFinite(numericValue)) return ['n/a', name]
+                    return [`${formatIlpPercent(numericValue)} p.a.`, name]
+                  }}
+                  labelFormatter={(_label, payload) => {
+                    const point = payload?.[0]?.payload
+                    if (!point) return ''
+                    return `${point.label} · Gross exit value ${formatIlpCurrency(point.grossExitValue, policy.currency)} · Net value ${formatIlpCurrency(point.netSurrenderValue, policy.currency)}`
+                  }}
+                />
+                <ReferenceLine y={0} stroke={colors.muted} strokeWidth={1.5} />
+                <Line
+                  type="monotone"
+                  dataKey="grossAnnualizedReturn"
+                  name="Gross annualized return"
+                  stroke={colors.primary}
+                  strokeWidth={2.5}
+                  dot={false}
+                  activeDot={{ r: 5 }}
+                  connectNulls={false}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="netAnnualizedReturn"
+                  name="Net annualized return"
+                  stroke={colors.success}
+                  strokeWidth={2.5}
+                  dot={false}
+                  activeDot={{ r: 5 }}
+                  connectNulls={false}
+                />
+                {selectedReturnPoint?.grossAnnualizedReturn != null ? (
+                  <ReferenceDot
+                    x={selectedReturnPoint.label}
+                    y={selectedReturnPoint.grossAnnualizedReturn}
+                    r={5}
+                    fill={colors.primary}
+                    stroke="white"
+                    strokeWidth={2}
+                  />
+                ) : null}
+                {selectedReturnPoint?.netAnnualizedReturn != null ? (
+                  <ReferenceDot
+                    x={selectedReturnPoint.label}
+                    y={selectedReturnPoint.netAnnualizedReturn}
+                    r={5}
+                    fill={colors.success}
+                    stroke="white"
+                    strokeWidth={2}
+                  />
+                ) : null}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-md border p-4">
             <div className="text-sm text-muted-foreground">Value available at exit</div>
             <div className="mt-2 text-2xl font-semibold tabular-nums">
@@ -196,20 +333,6 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
             <div className="mt-2 text-2xl font-semibold tabular-nums">
               {formatIlpCurrency(contributionsAvoidedVsHold, policy.currency)}
             </div>
-          </div>
-          <div className="rounded-md border p-4">
-            <div className="text-sm text-muted-foreground">Gross annualized return</div>
-            <div className="mt-2 text-2xl font-semibold tabular-nums">
-              {formatIlpPercent(grossAnnualizedReturn)} p.a.
-            </div>
-            <div className="mt-1 text-xs text-muted-foreground">Mid-scenario fund return assumption</div>
-          </div>
-          <div className="rounded-md border p-4">
-            <div className="text-sm text-muted-foreground">Net annualized return</div>
-            <div className="mt-2 text-2xl font-semibold tabular-nums">
-              {formatIlpPercent(netAnnualizedReturn)} p.a.
-            </div>
-            <div className="mt-1 text-xs text-muted-foreground">Estimated after fee drag</div>
           </div>
         </div>
 
