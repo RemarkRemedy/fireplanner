@@ -73,8 +73,8 @@ function ProspectSetupPreview({ seed }: { seed: IlpPolicySeed }) {
       icon: ChartColumnBig,
     },
     {
-      title: 'Bonus reality check',
-      detail: 'Bonuses are shown separately from gross fees so they cannot masquerade as a fee rebate.',
+      title: 'How bonuses affect fees',
+      detail: 'Bonuses are shown separately from gross fees so you can see how much support they provide to net cost.',
       icon: BadgeDollarSign,
     },
     {
@@ -391,9 +391,9 @@ function StoryDetailView({ policy, analysis, catalogProduct, onReplay }: {
         <ScrollHint targetId="story-bonuses" label="What about bonuses?" />
       </StoryScreen>
 
-      {/* Screen 3: The Bonus Reality Check */}
+      {/* Screen 3: Bonus impact */}
       <StoryScreen id="story-bonuses" wide>
-        <h2 className="text-2xl font-bold">The bonus reality check</h2>
+        <h2 className="text-2xl font-bold">How bonuses affect your fees</h2>
         {analysis.summary.totalBonusesReceived > 0 ? (
           <Card>
             <CardContent className="space-y-4 p-6">
@@ -411,7 +411,7 @@ function StoryDetailView({ policy, analysis, catalogProduct, onReplay }: {
                 </div>
               </div>
               <p className="text-sm text-muted-foreground">
-                Bonuses can cushion net cost, but they are not fee rebates. Some products credit premium bonuses that can be larger than gross fees over the modelled horizon. Check your policy document for suspension, clawback, vesting, and payout conditions.
+                Bonuses can reduce your net cost, but they are separate from the policy&apos;s gross fees. Some products credit premium bonuses that may be large relative to fees over the modelled horizon. Check your policy document for suspension, clawback, vesting, and payout conditions.
               </p>
             </CardContent>
           </Card>

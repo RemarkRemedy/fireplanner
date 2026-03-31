@@ -20,7 +20,7 @@ export function IlpLandingPage() {
   const entryCards = [
     {
       title: "I'm considering an ILP",
-      description: 'See the real fee cost of any ILP product in 4 screens. Year-by-year fee decomposition, bonus reality check, and exit math.',
+      description: 'See the real fee cost of any ILP product in 4 screens. Year-by-year fee decomposition, how bonuses affect fees, and exit math.',
       cta: 'Pick a product',
       footnote: 'Select your product and see its fee story.',
       eyebrow: 'Prospect path',
