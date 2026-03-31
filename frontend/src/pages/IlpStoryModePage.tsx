@@ -843,16 +843,12 @@ function StoryDetailView({
             </p>
             <h1 className="text-2xl font-bold">{catalogProduct.productName}</h1>
           </div>
-          <div className="flex flex-col gap-3 sm:items-end">
-            <Button variant="outline" onClick={onReplayStory}>
-              <Play className="mr-2 h-4 w-4" />
-              Replay walkthrough
-            </Button>
-            <div className="space-y-2">
-              <div className="text-right text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                View mode
-              </div>
-              <Tabs value={mode} onValueChange={(value) => onModeChange(value as StoryDetailMode)}>
+          <div className="space-y-2 lg:min-w-[32rem]">
+            <div className="text-right text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              View mode
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-end">
+              <Tabs value={mode} onValueChange={(value) => onModeChange(value as StoryDetailMode)} className="sm:flex-1">
                 <TabsList className="grid h-12 w-full grid-cols-2 rounded-2xl border-[#d9e4f2] bg-[#f3f7fd] p-1">
                   <TabsTrigger value="walkthrough" className="rounded-xl px-5 py-2.5">
                     Walkthrough
@@ -862,6 +858,10 @@ function StoryDetailView({
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
+              <Button variant="outline" onClick={onReplayStory} className="h-12 px-5">
+                <Play className="mr-2 h-4 w-4" />
+                Replay walkthrough
+              </Button>
             </div>
           </div>
         </div>
