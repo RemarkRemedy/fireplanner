@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
@@ -359,6 +359,41 @@ describe('ILP fee dashboard blog bridge', () => {
 
     expect(screen.getByRole('tab', { name: /single premium/i })).toHaveAttribute('data-state', 'active')
     expect(screen.getAllByText(/aia elite secure income - single premium/i).length).toBeGreaterThan(0)
+  })
+
+  it('supports standardized and custom basis modes for the regular-premium leaderboard only', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter>
+        <IlpLeaderboardPage />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('tab', { name: /standardized/i })).toHaveAttribute('data-state', 'active')
+    expect(screen.queryByLabelText(/monthly premium/i)).not.toBeInTheDocument()
+
+    const firstWealthVoyageRow = screen.getAllByText('Wealth Voyage')[0]?.closest('tr')
+    const standardizedRowText = firstWealthVoyageRow?.textContent
+
+    await user.click(screen.getByRole('tab', { name: /custom/i }))
+
+    const monthlyPremiumInput = screen.getByLabelText(/monthly premium/i)
+    expect(monthlyPremiumInput).toBeInTheDocument()
+    expect(screen.getByText(/reranks regular-premium products only/i)).toBeInTheDocument()
+
+    await user.clear(monthlyPremiumInput)
+    await user.type(monthlyPremiumInput, '700')
+
+    await waitFor(() => {
+      const customWealthVoyageRow = screen.getAllByText('Wealth Voyage')[0]?.closest('tr')
+      expect(customWealthVoyageRow?.textContent).not.toEqual(standardizedRowText)
+    })
+
+    await user.click(screen.getByRole('tab', { name: /single premium/i }))
+
+    expect(screen.queryByLabelText(/monthly premium/i)).not.toBeInTheDocument()
+    expect(screen.getByText(/single-premium products stay standardized here/i)).toBeInTheDocument()
   })
 
   it('uses the route variant to skip the story-mode variant picker', () => {

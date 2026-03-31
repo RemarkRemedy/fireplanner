@@ -1,12 +1,17 @@
-import { useMemo, useState } from 'react'
+import { useDeferredValue, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUpDown, ExternalLink, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { usePageMeta } from '@/hooks/usePageMeta'
-import { cn } from '@/lib/utils'
+import { analyzeIlpPolicy, type IlpPolicyInput } from '@/lib/calculations/ilp'
 import leaderboardData from '@/lib/data/generated/ilpLeaderboard.json'
+import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
+import type { IlpPolicySeed } from '@/lib/ilp-catalog/policySeedSchema'
+import { templateVariantToPolicySeed } from '@/lib/ilp-catalog/templateToPolicy'
+import { cn } from '@/lib/utils'
+import { createDefaultPolicy } from '@/stores/useIlpStore'
 
 interface LeaderboardRow {
   productId: string
@@ -27,10 +32,52 @@ interface LeaderboardRow {
   bonusModellingStatus: 'modelled' | 'metadata-only' | 'none'
 }
 
-const rows = leaderboardData as LeaderboardRow[]
-
 type SortKey = 'netFeeDragPct' | 'totalFeesCharged' | 'totalBonusesReceived' | 'bestExitYear' | 'mipLength' | 'insurer' | 'productName'
 type SortDir = 'asc' | 'desc'
+type PremiumSection = 'regular' | 'single'
+type RegularBasisMode = 'standardized' | 'custom'
+
+interface SeededLeaderboardRow {
+  baseRow: LeaderboardRow
+  seed: IlpPolicySeed
+}
+
+const rows = leaderboardData as LeaderboardRow[]
+const STANDARD_MONTHLY_PREMIUM = 350
+const STANDARD_POLICY_YEAR = 1
+const STANDARD_MONTHS_PAID = 0
+const REGULAR_ROWS = rows.filter((row) => row.premiumType === 'regular')
+const SINGLE_ROWS = rows.filter((row) => row.premiumType === 'single')
+const INSURER_COUNT = Array.from(new Set(rows.map((row) => row.insurer))).length
+const { manifest, products } = getIlpCatalog()
+
+const regularSeedRows: SeededLeaderboardRow[] = REGULAR_ROWS.flatMap((row) => {
+  const product = products.find((candidate) => candidate.id === row.productId)
+  const variant = product?.variants.find((candidate) => candidate.id === row.variantId)
+  if (!product || !variant) {
+    return []
+  }
+
+  return [{
+    baseRow: row,
+    seed: templateVariantToPolicySeed(product, variant, manifest),
+  }]
+})
+
+function seedToPolicy(seed: IlpPolicySeed): IlpPolicyInput {
+  const base = createDefaultPolicy()
+  return {
+    ...base,
+    ...seed,
+    eecTable: [...(seed.eecTable ?? base.eecTable)],
+    funds: (seed.funds ?? base.funds).map((fund) => ({ ...fund })),
+    accounts: (seed.accounts ?? base.accounts).map((account) => ({ ...account })),
+    bonuses: (seed.bonuses ?? base.bonuses).map((bonus) => ({ ...bonus })),
+    chargeRules: (seed.chargeRules ?? base.chargeRules ?? []).map((rule) => ({ ...rule })),
+    eventChargeRules: (seed.eventChargeRules ?? base.eventChargeRules ?? []).map((rule) => ({ ...rule })),
+    policyEvents: seed.policyEvents?.map((event) => ({ ...event })) ?? [],
+  }
+}
 
 function formatCurrency(value: number, currency: string): string {
   return new Intl.NumberFormat('en-SG', {
@@ -43,6 +90,13 @@ function formatCurrency(value: number, currency: string): string {
 
 function formatPercent(value: number): string {
   return `${(value * 100).toFixed(1)}%`
+}
+
+function formatNumber(value: number): string {
+  return new Intl.NumberFormat('en-SG', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value)
 }
 
 function formatBonusSupport(row: LeaderboardRow): string {
@@ -81,22 +135,62 @@ export function IlpLeaderboardPage() {
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('netFeeDragPct')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
-  const [activePremiumSection, setActivePremiumSection] = useState<'regular' | 'single'>('regular')
+  const [activePremiumSection, setActivePremiumSection] = useState<PremiumSection>('regular')
+  const [regularBasisMode, setRegularBasisMode] = useState<RegularBasisMode>('standardized')
+  const [customMonthlyPremiumInput, setCustomMonthlyPremiumInput] = useState(String(STANDARD_MONTHLY_PREMIUM))
   const [filterInsurer, setFilterInsurer] = useState<string | null>(null)
+  const deferredCustomMonthlyPremiumInput = useDeferredValue(customMonthlyPremiumInput)
 
-  const sectionRows = useMemo(
-    () => rows.filter((row) => row.premiumType === activePremiumSection),
-    [activePremiumSection],
-  )
+  const customMonthlyPremium = useMemo(() => {
+    const parsed = Number(deferredCustomMonthlyPremiumInput)
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+  }, [deferredCustomMonthlyPremiumInput])
+
+  const customRegularRows = useMemo(() => {
+    if (regularBasisMode !== 'custom' || customMonthlyPremium == null) {
+      return REGULAR_ROWS
+    }
+
+    return regularSeedRows.map(({ baseRow, seed }) => {
+      const policy = seedToPolicy({
+        ...seed,
+        monthlyContribution: customMonthlyPremium,
+        currentPolicyYear: STANDARD_POLICY_YEAR,
+        monthsAlreadyPaid: STANDARD_MONTHS_PAID,
+      })
+      const analysis = analyzeIlpPolicy(policy)
+      const { summary } = analysis
+
+      return {
+        ...baseRow,
+        netFeeDrag: summary.netFeeDrag,
+        netFeeDragPct: summary.totalPremiumsPaid > 0
+          ? summary.netFeeDrag / summary.totalPremiumsPaid
+          : 0,
+        totalPremiumsPaid: summary.totalPremiumsPaid,
+        totalFeesCharged: summary.totalFeesCharged,
+        totalBonusesReceived: summary.totalBonusesReceived,
+        bestExitYear: analysis.npvAnalysis.bestExitYear,
+      }
+    })
+  }, [customMonthlyPremium, regularBasisMode])
+
+  const sectionRows = useMemo(() => {
+    if (activePremiumSection === 'single') {
+      return SINGLE_ROWS
+    }
+
+    return regularBasisMode === 'custom' ? customRegularRows : REGULAR_ROWS
+  }, [activePremiumSection, customRegularRows, regularBasisMode])
 
   const insurers = useMemo(() => {
-    const set = new Set(sectionRows.map((r) => r.insurer))
+    const set = new Set(sectionRows.map((row) => row.insurer))
     return Array.from(set).sort()
   }, [sectionRows])
 
   function handleToggleSort(key: SortKey) {
     if (sortKey === key) {
-      setSortDir((d) => d === 'asc' ? 'desc' : 'asc')
+      setSortDir((dir) => (dir === 'asc' ? 'desc' : 'asc'))
     } else {
       setSortKey(key)
       setSortDir('asc')
@@ -107,33 +201,32 @@ export function IlpLeaderboardPage() {
     let result = sectionRows
 
     if (search) {
-      const q = search.toLowerCase()
-      result = result.filter((r) =>
-        r.productName.toLowerCase().includes(q)
-        || r.insurer.toLowerCase().includes(q)
-        || r.variantLabel.toLowerCase().includes(q),
-      )
+      const query = search.toLowerCase()
+      result = result.filter((row) => (
+        row.productName.toLowerCase().includes(query)
+        || row.insurer.toLowerCase().includes(query)
+        || row.variantLabel.toLowerCase().includes(query)
+      ))
     }
 
     if (filterInsurer) {
-      result = result.filter((r) => r.insurer === filterInsurer)
+      result = result.filter((row) => row.insurer === filterInsurer)
     }
 
-    // Sort
-    result = [...result].sort((a, b) => {
-      const aVal = a[sortKey]
-      const bVal = b[sortKey]
-      if (aVal == null && bVal == null) return 0
-      if (aVal == null) return 1
-      if (bVal == null) return -1
-      const cmp = typeof aVal === 'string'
-        ? aVal.localeCompare(bVal as string)
-        : (aVal as number) - (bVal as number)
-      return sortDir === 'asc' ? cmp : -cmp
-    })
+    return [...result].sort((left, right) => {
+      const leftValue = left[sortKey]
+      const rightValue = right[sortKey]
+      if (leftValue == null && rightValue == null) return 0
+      if (leftValue == null) return 1
+      if (rightValue == null) return -1
 
-    return result
-  }, [sectionRows, search, filterInsurer, sortKey, sortDir])
+      const comparison = typeof leftValue === 'string'
+        ? leftValue.localeCompare(rightValue as string)
+        : (leftValue as number) - (rightValue as number)
+
+      return sortDir === 'asc' ? comparison : -comparison
+    })
+  }, [filterInsurer, search, sectionRows, sortDir, sortKey])
 
   const summary = useMemo(() => {
     if (filtered.length === 0) {
@@ -144,10 +237,14 @@ export function IlpLeaderboardPage() {
     const highestFeeRow = filtered.reduce((worst, row) => (row.netFeeDragPct > worst.netFeeDragPct ? row : worst), filtered[0])
     const strongestBonusRow = filtered
       .filter((row) => row.bonusModellingStatus === 'modelled' && row.totalBonusesReceived > 0 && row.totalFeesCharged > 0)
-      .sort((a, b) => (b.totalBonusesReceived / b.totalFeesCharged) - (a.totalBonusesReceived / a.totalFeesCharged))[0] ?? null
+      .sort((left, right) => (right.totalBonusesReceived / right.totalFeesCharged) - (left.totalBonusesReceived / left.totalFeesCharged))[0] ?? null
 
-    return { lowestFeeRow, highestFeeRow, strongestBonusRow }
+    return { highestFeeRow, lowestFeeRow, strongestBonusRow }
   }, [filtered])
+
+  const regularMethodNote = regularBasisMode === 'custom'
+    ? `Regular-premium rows use your custom ${customMonthlyPremium != null ? formatNumber(customMonthlyPremium) : 'custom'} per-month amount in each product's policy currency, policy year 1, 0 months paid, the mid return scenario, and the full horizon basis.`
+    : 'Regular-premium rows use the standardized 350/month basis in each product\'s policy currency, policy year 1, 0 months paid, the mid return scenario, and the full horizon basis.'
 
   return (
     <div className="space-y-6 text-[#0f1724]">
@@ -158,7 +255,7 @@ export function IlpLeaderboardPage() {
             <div className="space-y-2">
               <h1 className="font-serif text-3xl leading-tight sm:text-4xl">ILP Product Comparison</h1>
               <p className="max-w-3xl text-sm leading-6 text-[#5f6877] sm:text-base">
-                Compare modelled net fees as a share of premiums paid across {rows.length} product variants from {Array.from(new Set(rows.map((row) => row.insurer))).length} insurers.
+                Compare modelled net fees as a share of premiums paid across {rows.length} product variants from {INSURER_COUNT} insurers.
                 Regular-premium and single-premium products are separated so they are not ranked on the same table.
               </p>
             </div>
@@ -174,26 +271,80 @@ export function IlpLeaderboardPage() {
           </div>
         </div>
 
-        <div className="mt-6 flex flex-col gap-3 border-t border-[#e8eef7] pt-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-2">
+        <div className="mt-6 flex flex-col gap-4 border-t border-[#e8eef7] pt-6 xl:flex-row xl:items-end xl:justify-between">
+          <div className="max-w-3xl space-y-2">
             <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#5f6877]">Premium basis</div>
             <p className="text-sm leading-6 text-[#5f6877]">
-              Keep regular-pay and single-premium products in separate ranked sections. The current ranking remains standardized inside each section.
+              Keep regular-pay and single-premium products in separate ranked sections. Regular-premium rows can be compared on a standardized basis or reranked using your own monthly premium.
+            </p>
+            <p className="text-sm leading-6 text-[#5f6877]">
+              Single-premium products stay standardized because a lump-sum basis needs a separate comparison input.
             </p>
           </div>
-          <Tabs value={activePremiumSection} onValueChange={(value) => {
-            setActivePremiumSection(value as 'regular' | 'single')
-            setFilterInsurer(null)
-          }}>
-            <TabsList className="h-12 rounded-2xl border-[#d9e4f2] bg-[#f3f7fd] p-1">
-              <TabsTrigger value="regular" className="min-w-[11rem] rounded-xl px-5 py-2.5">
-                Regular premium
-              </TabsTrigger>
-              <TabsTrigger value="single" className="min-w-[11rem] rounded-xl px-5 py-2.5">
-                Single premium
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+
+          <div className="flex flex-col gap-3 xl:min-w-[24rem] xl:items-end">
+            <Tabs value={activePremiumSection} onValueChange={(value) => {
+              setActivePremiumSection(value as PremiumSection)
+              setFilterInsurer(null)
+            }}>
+              <TabsList className="h-12 rounded-2xl border-[#d9e4f2] bg-[#f3f7fd] p-1">
+                <TabsTrigger value="regular" className="min-w-[11rem] rounded-xl px-5 py-2.5">
+                  Regular premium
+                </TabsTrigger>
+                <TabsTrigger value="single" className="min-w-[11rem] rounded-xl px-5 py-2.5">
+                  Single premium
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            {activePremiumSection === 'regular' ? (
+              <div className="w-full space-y-3 rounded-2xl border border-[#d9e4f2] bg-[#f7faff] p-4">
+                <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#5f6877]">Comparison basis</div>
+                <Tabs value={regularBasisMode} onValueChange={(value) => setRegularBasisMode(value as RegularBasisMode)}>
+                  <TabsList className="grid h-11 w-full grid-cols-2 rounded-2xl border-[#d9e4f2] bg-white p-1">
+                    <TabsTrigger value="standardized" className="rounded-xl px-4 py-2">
+                      Standardized
+                    </TabsTrigger>
+                    <TabsTrigger value="custom" className="rounded-xl px-4 py-2">
+                      Custom
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+
+                {regularBasisMode === 'custom' ? (
+                  <div className="space-y-2">
+                    <label htmlFor="leaderboard-monthly-premium" className="text-sm font-medium text-[#0f1724]">
+                      Monthly premium
+                    </label>
+                    <Input
+                      id="leaderboard-monthly-premium"
+                      type="number"
+                      inputMode="decimal"
+                      min="1"
+                      step="1"
+                      value={customMonthlyPremiumInput}
+                      onChange={(event) => setCustomMonthlyPremiumInput(event.target.value)}
+                      className="h-11 border-[#d9e4f2] bg-white text-[#0f1724]"
+                    />
+                    <p className="text-sm leading-6 text-[#5f6877]">
+                      This reranks regular-premium products only. The same numeric premium is applied in each product&apos;s own policy currency.
+                    </p>
+                    {customMonthlyPremium == null && (
+                      <p className="text-sm leading-6 text-[#b24a2f]">Enter a monthly premium above 0 to rerank this section.</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm leading-6 text-[#5f6877]">
+                    Standardized mode uses 350/month in each product&apos;s policy currency, policy year 1, 0 months paid, the mid return scenario, and the full modelled horizon.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="w-full rounded-2xl border border-[#d9e4f2] bg-[#f7faff] p-4 text-sm leading-6 text-[#5f6877]">
+                Single-premium products stay standardized here. Use the story view if you want to test a specific lump-sum amount for one product.
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
@@ -251,14 +402,14 @@ export function IlpLeaderboardPage() {
             <Input
               placeholder="Search insurer, product, or variant"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(event) => setSearch(event.target.value)}
               className="h-11 border-[#d9e4f2] bg-white pl-9 text-[#0f1724] placeholder:text-[#7b8491]"
             />
           </div>
           <select
             className="h-11 rounded-xl border border-[#d9e4f2] bg-white px-3 text-sm text-[#0f1724]"
             value={filterInsurer ?? ''}
-            onChange={(e) => setFilterInsurer(e.target.value || null)}
+            onChange={(event) => setFilterInsurer(event.target.value || null)}
           >
             <option value="">All insurers</option>
             {insurers.map((insurer) => (
@@ -333,9 +484,7 @@ export function IlpLeaderboardPage() {
                   </td>
                   <td className="px-3 py-3 text-right tabular-nums align-top">
                     {row.bonusModellingStatus === 'metadata-only' ? (
-                      <span className="text-[#8a6a18]" title="Bonus data unavailable">
-                        *
-                      </span>
+                      <span className="text-[#8a6a18]" title="Bonus data unavailable">*</span>
                     ) : row.totalBonusesReceived > 0 ? (
                       <span className="text-[#22624a]">
                         {formatCurrency(row.totalBonusesReceived, row.currency)}
@@ -386,8 +535,8 @@ export function IlpLeaderboardPage() {
           <p>`Net Fees / Premiums` is total net fees divided by total premiums paid over the full modelled horizon. It is not an annualized drag rate.</p>
           <p>
             {activePremiumSection === 'regular'
-              ? 'Regular-premium rows use the standardized S$350/mo, policy year 1, 0 months paid, mid return scenario, full horizon basis.'
-              : 'Single-premium rows use the catalog default single-premium setup, policy year 1, 0 months paid, mid return scenario, and full horizon basis.'}
+              ? regularMethodNote
+              : 'Single-premium rows use the catalog default single-premium setup, policy year 1, 0 months paid, the mid return scenario, and the full horizon basis. Custom premium mode is unavailable in this section.'}
             {' '}
             Your personal numbers may differ. Use the story or exit calculator for personalized analysis.
           </p>
