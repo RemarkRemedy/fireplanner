@@ -132,6 +132,28 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(screen.getByText('n/a')).toBeInTheDocument()
   })
 
+  it('shows only five policy-year rows in the detailed fee table until expanded', async () => {
+    const user = userEvent.setup()
+    const policy = createDefaultPolicy()
+    const analysis = analyzeIlpPolicy(policy)
+
+    if (analysis.mode !== 'projected') {
+      throw new Error('Expected the default policy to produce a projected ILP analysis.')
+    }
+
+    render(<FeeBreakdownSection policy={policy} analysis={analysis} />)
+
+    const expandButton = screen.getByRole('button', { name: /show \d+ more rows/i })
+    expect(expandButton).toBeInTheDocument()
+    expect(screen.getByText(/showing the first 5 policy years by default/i)).toBeInTheDocument()
+    expect(screen.queryByText(/^6$/)).not.toBeInTheDocument()
+
+    await user.click(expandButton)
+
+    expect(screen.getByRole('button', { name: /show first 5 rows/i })).toBeInTheDocument()
+    expect(screen.getByText(/^6$/)).toBeInTheDocument()
+  })
+
   it('carries the chosen template variant from landing into story mode', async () => {
     const user = userEvent.setup()
 

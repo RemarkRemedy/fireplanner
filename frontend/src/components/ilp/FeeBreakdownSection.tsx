@@ -76,6 +76,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
   const [scenario, setScenario] = useState<ReturnScenario>('mid')
   const [includeOcf, setIncludeOcf] = useState(true)
   const [useRealValues, setUseRealValues] = useState(false)
+  const [tableExpanded, setTableExpanded] = useState(false)
   const colors = useChartColors()
   const feeColumnInfo = deriveFeeColumnInfo(policy)
   const projection = analysis.projections[scenario]
@@ -93,6 +94,10 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
 
   const inceptionTotal = breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0)
   const hasInception = inceptionTotal > 0
+  const previewRowCount = 5
+  const hasHiddenTableRows = breakdown.rows.length > previewRowCount
+  const visibleBreakdownRows = tableExpanded ? breakdown.rows : breakdown.rows.slice(0, previewRowCount)
+  const hiddenRowCount = Math.max(0, breakdown.rows.length - previewRowCount)
 
   const stackedBarData = useMemo(() => {
     const discount = (value: number, year: number) => useRealValues ? value / Math.pow(1 + inflationRate, year) : value
@@ -256,7 +261,25 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
 
           {/* Fee Breakdown Table */}
           <div>
-            <h3 className="mb-2 text-sm font-medium">Detailed Fee Table</h3>
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+              <h3 className="text-sm font-medium">Detailed Fee Table</h3>
+              {hasHiddenTableRows && (
+                <button
+                  type="button"
+                  className="text-xs font-medium text-primary transition-colors hover:text-primary/80"
+                  onClick={() => setTableExpanded((expanded) => !expanded)}
+                >
+                  {tableExpanded
+                    ? `Show first ${previewRowCount} rows`
+                    : `Show ${hiddenRowCount} more rows`}
+                </button>
+              )}
+            </div>
+            {hasHiddenTableRows && (
+              <p className="mb-3 text-xs text-muted-foreground">
+                Showing the first {previewRowCount} policy years by default. Expand to inspect the full yearly fee path.
+              </p>
+            )}
             <div className="overflow-auto rounded-md border">
               <table className="w-full text-sm">
                 <thead className="sticky top-0 z-20 border-b bg-background">
@@ -326,7 +349,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                       <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency((policy.initialSinglePremium ?? 0) - breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0), policy.currency)}</td>
                     </tr>
                   )}
-                  {breakdown.rows.map((row, rowIndex) => {
+                  {visibleBreakdownRows.map((row, rowIndex) => {
                     const isPostMip = policy.mipBasis !== 'open-ended'
                       && policy.mipLength != null
                       && row.policyYear > policy.mipLength
