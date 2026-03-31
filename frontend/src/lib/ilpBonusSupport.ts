@@ -7,14 +7,14 @@ export function formatIlpBonusSupport(totalBonusesReceived: number, totalFeesCha
   if (totalBonusesReceived <= 0) {
     return {
       value: '0%',
-      detail: 'no modeled bonuses relative to gross fees',
+      detail: 'no modeled bonuses relative to gross policy fees',
     }
   }
 
   if (totalFeesCharged <= 0) {
     return {
       value: 'N/A',
-      detail: 'no modeled gross fees to compare against',
+      detail: 'no modeled gross policy fees to compare against',
     }
   }
 
@@ -22,12 +22,12 @@ export function formatIlpBonusSupport(totalBonusesReceived: number, totalFeesCha
   if (ratio >= 1) {
     return {
       value: `${ratio.toFixed(1)}x`,
-      detail: 'gross-fee equivalent in modeled bonuses',
+      detail: 'gross-policy-fee equivalent in modeled bonuses',
     }
   }
 
   return {
     value: `${(ratio * 100).toFixed(1)}%`,
-    detail: 'of gross fees represented by modeled bonuses',
+    detail: 'of gross policy fees represented by modeled bonuses',
   }
 }

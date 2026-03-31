@@ -391,7 +391,7 @@ function StoryDetailView({ policy, analysis, catalogProduct }: {
                   </div>
                 </div>
                 <div className="rounded-lg border p-4">
-                  <div className="text-sm text-muted-foreground">How much bonuses cover</div>
+                  <div className="text-sm text-muted-foreground">How much bonuses cover gross policy fees</div>
                   <div className="text-2xl font-bold">{bonusSupport.value}</div>
                   <div className="text-xs text-muted-foreground">{bonusSupport.detail}</div>
                 </div>
