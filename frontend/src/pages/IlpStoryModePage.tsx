@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowRight, BadgeDollarSign, ChartColumnBig, ChevronDown, Clock3, Receipt, ShieldCheck } from 'lucide-react'
+import { ArrowRight, BadgeDollarSign, ChartColumnBig, Clock3, Receipt, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { IlpFeeStory } from '@/components/ilp/IlpFeeStory'
@@ -30,34 +30,6 @@ function useCatalogProduct(productId: string | undefined) {
     const { products } = getIlpCatalog()
     return products.find((p) => p.id === productId) ?? null
   }, [productId])
-}
-
-// --- Story screen wrapper ---
-
-function StoryScreen({ children, id, wide }: { children: React.ReactNode; id: string; wide?: boolean }) {
-  return (
-    <section
-      id={id}
-      className="flex min-h-[100dvh] flex-col items-center justify-center px-4 py-8"
-    >
-      <div className={`w-full space-y-6 ${wide ? 'max-w-5xl' : 'max-w-2xl'}`}>
-        {children}
-      </div>
-    </section>
-  )
-}
-
-function ScrollHint({ targetId, label }: { targetId: string; label: string }) {
-  return (
-    <button
-      type="button"
-      className="mt-6 flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-      onClick={() => document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth' })}
-    >
-      <ChevronDown className="h-4 w-4 animate-bounce" />
-      {label}
-    </button>
-  )
 }
 
 function ProspectSetupPreview({ seed }: { seed: IlpPolicySeed }) {
@@ -335,17 +307,15 @@ export function IlpStoryModePage() {
       policy={activePolicy}
       analysis={analysis}
       catalogProduct={catalogProduct}
-      onReplay={() => setShowFeeStory(true)}
     />
   )
 }
 
 /** Detail view after the Wrapped story closes. Separate component so hooks can be called unconditionally. */
-function StoryDetailView({ policy, analysis, catalogProduct, onReplay }: {
+function StoryDetailView({ policy, analysis, catalogProduct }: {
   policy: IlpPolicyInput
   analysis: IlpProjectedPolicyAnalysis
   catalogProduct: IlpCatalogProduct
-  onReplay: () => void
 }) {
   const feeImpact = useFeeImpact(policy, analysis, true)
   const [receiptOpen, setReceiptOpen] = useState(false)
@@ -359,23 +329,15 @@ function StoryDetailView({ policy, analysis, catalogProduct, onReplay }: {
   )
 
   return (
-    <div>
-      {/* Screen 1: Fee Breakdown */}
-      <StoryScreen id="story-fees" wide>
-        <div className="flex items-center justify-between">
+    <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
+      <section className="space-y-6">
+        <div className="space-y-1">
           <div>
             <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
               {catalogProduct.insurer}
             </p>
             <h1 className="text-2xl font-bold">{catalogProduct.productName}</h1>
           </div>
-          <button
-            type="button"
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-            onClick={onReplay}
-          >
-            Replay fee story
-          </button>
         </div>
         <FeeImpactChart
           tiers={feeImpact.tiers}
@@ -388,11 +350,9 @@ function StoryDetailView({ policy, analysis, catalogProduct, onReplay }: {
           useReal
         />
         <FeeBreakdownSection policy={policy} analysis={analysis} />
-        <ScrollHint targetId="story-bonuses" label="What about bonuses?" />
-      </StoryScreen>
+      </section>
 
-      {/* Screen 3: Bonus impact */}
-      <StoryScreen id="story-bonuses" wide>
+      <section className="space-y-4">
         <h2 className="text-2xl font-bold">How bonuses affect your fees</h2>
         {analysis.summary.totalBonusesReceived > 0 ? (
           <Card>
@@ -424,11 +384,9 @@ function StoryDetailView({ policy, analysis, catalogProduct, onReplay }: {
             </CardContent>
           </Card>
         )}
-        <ScrollHint targetId="story-exit" label="What are your exit options?" />
-      </StoryScreen>
+      </section>
 
-      {/* Screen 4: The Exit Math */}
-      <StoryScreen id="story-exit" wide>
+      <section className="space-y-4">
         <h2 className="text-2xl font-bold">Your exit options</h2>
         <DecisionPanel policy={policy} analysis={analysis} />
         <OpportunityCostCard policy={policy} analysis={analysis} />
@@ -458,7 +416,7 @@ function StoryDetailView({ policy, analysis, catalogProduct, onReplay }: {
             View the complete projection table, fee waterfall, and NPV timeline.
           </p>
         </div>
-      </StoryScreen>
+      </section>
 
       <ReceiptPreviewModal
         open={receiptOpen}
