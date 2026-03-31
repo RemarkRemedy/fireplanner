@@ -72,7 +72,7 @@ export function PolicySetupGate({ seed, onConfirm, onCancel, prospect }: PolicyS
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 sm:[&>div>label]:min-h-12 sm:[&>div>label]:items-start">
           {isSinglePremium ? (
             <CurrencyInput
               label="Initial Single Premium"
