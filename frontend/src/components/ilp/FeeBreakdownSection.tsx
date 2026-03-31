@@ -400,8 +400,9 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                     </th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">Net Fee</th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">Withdrawals</th>
-                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">Surrender Fee</th>
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">Closing Value</th>
+                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">Surrender Fee</th>
+                    <th className="px-2 py-2 text-right font-medium text-muted-foreground">Withdrawable Value</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -418,6 +419,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                       <td className="px-2 py-2 text-right tabular-nums text-emerald-700 dark:text-emerald-400">{formatIlpCurrency(0, policy.currency)}</td>
                       <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0), policy.currency)}</td>
                       <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>
+                      <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency((policy.initialSinglePremium ?? 0) - breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0), policy.currency)}</td>
                       <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(0, policy.currency)}</td>
                       <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency((policy.initialSinglePremium ?? 0) - breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0), policy.currency)}</td>
                     </tr>
@@ -455,8 +457,9 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                         <td className="px-2 py-2 text-right tabular-nums text-emerald-700 dark:text-emerald-400">{formatIlpCurrency(row.bonusCredits, policy.currency)}</td>
                         <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency((includeOcf ? row.totalGrossFee : row.grossFee) - row.bonusCredits, policy.currency)}</td>
                         <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.withdrawals, policy.currency)}</td>
-                        <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.eecCharge, policy.currency)}</td>
                         <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.closingValue, policy.currency)}</td>
+                        <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.eecCharge, policy.currency)}</td>
+                        <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.surrenderValue, policy.currency)}</td>
                       </tr>
                     )
                   })}
@@ -473,6 +476,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                     <td className="px-2 py-2 text-right tabular-nums font-semibold text-emerald-700 dark:text-emerald-400">{formatIlpCurrency(breakdown.totals.bonusCredits, policy.currency)}</td>
                     <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency((includeOcf ? breakdown.totals.totalGrossFee : breakdown.totals.grossFee) - breakdown.totals.bonusCredits, policy.currency)}</td>
                     <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.rows.reduce((s, r) => s + r.withdrawals, 0), policy.currency)}</td>
+                    <td className="px-2 py-2" />
                     <td className="px-2 py-2 text-right text-muted-foreground">n/a</td>
                     <td className="px-2 py-2" />
                   </tr>

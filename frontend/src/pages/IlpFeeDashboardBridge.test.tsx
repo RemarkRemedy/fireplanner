@@ -134,7 +134,7 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(screen.getByRole('tab', { name: '10.0%' })).toBeInTheDocument()
   })
 
-  it('shows a surrender-fee column in the detailed fee table', () => {
+  it('shows surrender-fee and withdrawable-value columns in the detailed fee table', () => {
     const policy = createDefaultPolicy()
     const analysis = analyzeIlpPolicy(policy)
 
@@ -145,6 +145,7 @@ describe('ILP fee dashboard blog bridge', () => {
     render(<FeeBreakdownSection policy={policy} analysis={analysis} />)
 
     expect(screen.getByText('Surrender Fee')).toBeInTheDocument()
+    expect(screen.getByText('Withdrawable Value')).toBeInTheDocument()
     expect(screen.getByText('n/a')).toBeInTheDocument()
   })
 

@@ -18,6 +18,7 @@ export interface IlpFeeBreakdownRow {
   eecCharge: number
   withdrawals: number
   closingValue: number
+  surrenderValue: number
   cumulativeGrossFees: number
   cumulativeBonuses: number
   cumulativeNetFees: number
@@ -135,6 +136,7 @@ export function buildFeeBreakdown(
       eecCharge: yearRow.eecCharge,
       withdrawals: yearRow.annualWithdrawals,
       closingValue: yearRow.combinedValue,
+      surrenderValue: yearRow.surrenderValue,
       cumulativeGrossFees,
       cumulativeBonuses,
       cumulativeNetFees: cumulativeGrossFees - cumulativeBonuses,
