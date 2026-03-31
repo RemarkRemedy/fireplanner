@@ -11,6 +11,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { MessageCircle } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -321,9 +323,9 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                       return labels[value] ?? value
                     }}
                   />
-                  <Line type="monotone" dataKey="grossFees" stroke={colors.danger} strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="bonuses" stroke={colors.success} strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="netFees" stroke={colors.warning} strokeWidth={2} strokeDasharray="6 3" dot={false} />
+                  <Line type="monotone" dataKey="grossFees" stroke={colors.danger} strokeWidth={2.5} dot={false} />
+                  <Line type="monotone" dataKey="bonuses" stroke={colors.success} strokeWidth={2.5} dot={false} />
+                  <Line type="monotone" dataKey="netFees" stroke={colors.warning} strokeWidth={3} strokeDasharray="6 3" dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -334,15 +336,16 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
             <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
               <h3 className="text-sm font-medium">Detailed Fee Table</h3>
               {hasHiddenTableRows && (
-                <button
+                <Button
                   type="button"
-                  className="text-xs font-medium text-primary transition-colors hover:text-primary/80"
+                  size="sm"
+                  variant="outline"
                   onClick={() => setTableExpanded((expanded) => !expanded)}
                 >
                   {tableExpanded
                     ? `Show first ${previewRowCount} rows`
                     : `Show ${hiddenRowCount} more rows`}
-                </button>
+                </Button>
               )}
             </div>
             {hasHiddenTableRows && (
@@ -458,18 +461,18 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                     )
                   })}
                   {/* Totals row */}
-                  <tr className="border-t-2 bg-muted/50 font-semibold">
-                    <td className="sticky left-0 z-10 border-r bg-muted/50 px-3 py-2">Total</td>
-                    <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(breakdown.rows.reduce((s, r) => s + r.contribution, 0), policy.currency)}</td>
-                    <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(breakdown.totals.accountFee, policy.currency)}</td>
-                    <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(breakdown.totals.additionalCharges, policy.currency)}</td>
-                    <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(breakdown.totals.assuranceCharges, policy.currency)}</td>
-                    <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(breakdown.totals.eventCharges, policy.currency)}</td>
-                    {includeOcf && <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(breakdown.totals.implicitFundFee, policy.currency)}</td>}
-                    <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(includeOcf ? breakdown.totals.totalGrossFee : breakdown.totals.grossFee, policy.currency)}</td>
-                    <td className="px-2 py-2 text-right tabular-nums text-emerald-700 dark:text-emerald-400">{formatIlpCurrency(breakdown.totals.bonusCredits, policy.currency)}</td>
-                    <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency((includeOcf ? breakdown.totals.totalGrossFee : breakdown.totals.grossFee) - breakdown.totals.bonusCredits, policy.currency)}</td>
-                    <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(breakdown.rows.reduce((s, r) => s + r.withdrawals, 0), policy.currency)}</td>
+                  <tr className="border-t-2 bg-slate-100/80 font-semibold dark:bg-slate-800/70">
+                    <td className="sticky left-0 z-10 border-r bg-inherit px-3 py-2">Total</td>
+                    <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.rows.reduce((s, r) => s + r.contribution, 0), policy.currency)}</td>
+                    <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.totals.accountFee, policy.currency)}</td>
+                    <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.totals.additionalCharges, policy.currency)}</td>
+                    <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.totals.assuranceCharges, policy.currency)}</td>
+                    <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.totals.eventCharges, policy.currency)}</td>
+                    {includeOcf && <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.totals.implicitFundFee, policy.currency)}</td>}
+                    <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(includeOcf ? breakdown.totals.totalGrossFee : breakdown.totals.grossFee, policy.currency)}</td>
+                    <td className="px-2 py-2 text-right tabular-nums font-semibold text-emerald-700 dark:text-emerald-400">{formatIlpCurrency(breakdown.totals.bonusCredits, policy.currency)}</td>
+                    <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency((includeOcf ? breakdown.totals.totalGrossFee : breakdown.totals.grossFee) - breakdown.totals.bonusCredits, policy.currency)}</td>
+                    <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.rows.reduce((s, r) => s + r.withdrawals, 0), policy.currency)}</td>
                     <td className="px-2 py-2 text-right text-muted-foreground">n/a</td>
                     <td className="px-2 py-2" />
                   </tr>
@@ -533,9 +536,9 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
           </div>
 
           {/* Blog CTA */}
-          <div className="mt-4 rounded-md border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900 dark:bg-blue-950/20">
-            <div className="flex items-start gap-3">
-              <span className="mt-0.5 text-lg">💬</span>
+            <div className="mt-4 rounded-md border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900 dark:bg-blue-950/20">
+              <div className="flex items-start gap-3">
+                <MessageCircle className="mt-0.5 h-5 w-5 text-blue-700 dark:text-blue-300" />
               <div>
                 <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-200">
                   Questions to ask your financial adviser about these fees

@@ -10,6 +10,7 @@ interface OpportunityCostCardProps {
 
 export function OpportunityCostCard({ policy, analysis }: OpportunityCostCardProps) {
   const { opportunityCost } = analysis
+  const horizonYear = analysis.projections.mid.rows.at(-1)?.policyYear ?? analysis.opportunityCost.atBestExit.exitYear
 
   return (
     <Card>
@@ -21,23 +22,23 @@ export function OpportunityCostCard({ policy, analysis }: OpportunityCostCardPro
       </CardHeader>
       <CardContent className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-lg border p-4">
-          <div className="text-sm font-medium">Did not start. Invest outside the policy from year 0</div>
+          <div className="text-sm font-medium">Did not start. Invest outside the policy from year 0.</div>
           <div className="mt-2 text-2xl font-semibold tabular-nums">
             {formatIlpCurrency(opportunityCost.alternativePortfolioValue, policy.currency)}
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
-            Versus ILP value at the analysis horizon of {formatIlpCurrency(opportunityCost.ilpValueAtHorizon, policy.currency)}.
+            Versus your ILP&apos;s projected value of {formatIlpCurrency(opportunityCost.ilpValueAtHorizon, policy.currency)} at year {horizonYear}.
             <DeltaBadge value={opportunityCost.difference} format={(value) => formatIlpCurrency(Math.abs(value), policy.currency)} />
           </p>
         </div>
 
         <div className="rounded-lg border p-4">
-          <div className="text-sm font-medium">Invest outside the policy at the lowest-fee year</div>
+          <div className="text-sm font-medium">Invest outside the policy at the best exit point</div>
           <div className="mt-2 text-2xl font-semibold tabular-nums">
             {formatIlpCurrency(opportunityCost.atBestExit.alternativeValue, policy.currency)}
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
-            Switch in year {opportunityCost.atBestExit.exitYear} and compare against the same ILP horizon-end value.
+            Exit in year {opportunityCost.atBestExit.exitYear} and compare against the same projected ILP value at year {horizonYear}.
             <DeltaBadge value={opportunityCost.atBestExit.difference} format={(value) => formatIlpCurrency(Math.abs(value), policy.currency)} />
           </p>
         </div>

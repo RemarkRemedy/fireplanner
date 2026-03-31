@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowRight, BadgeDollarSign, ChartColumnBig, Clock3, Receipt, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { InterpretationCallout } from '@/components/shared/InterpretationCallout'
 import { IlpFeeStory } from '@/components/ilp/IlpFeeStory'
 import { FeeBreakdownSection } from '@/components/ilp/FeeBreakdownSection'
 import { FeeImpactChart } from '@/components/ilp/FeeImpactChart'
@@ -36,7 +37,7 @@ function ProspectSetupPreview({ seed }: { seed: IlpPolicySeed }) {
   const pathLabel = (seed.initialSinglePremium ?? 0) > 0 || seed.monthlyContribution === 0
     ? `${new Intl.NumberFormat('en-SG', { style: 'currency', currency: seed.currency, maximumFractionDigits: 0 }).format(seed.initialSinglePremium ?? 0)} single premium`
     : `${new Intl.NumberFormat('en-SG', { style: 'currency', currency: seed.currency, maximumFractionDigits: 0 }).format(seed.monthlyContribution)} / month`
-  const horizonLabel = seed.mipLength != null ? `${seed.mipLength}+ years modelled` : 'Flexible projection horizon'
+  const horizonLabel = seed.mipLength != null ? `${seed.mipLength}+ years modeled` : 'Flexible projection horizon'
 
   const previewCards = [
     {
@@ -366,6 +367,14 @@ function StoryDetailView({ policy, analysis, catalogProduct }: {
           useReal
         />
         <FeeBreakdownSection policy={policy} analysis={analysis} />
+        {analysis.summary.totalPremiumsPaid > 0 && (
+          <div className="flex justify-center pt-2">
+            <Button variant="outline" size="lg" onClick={() => setReceiptOpen(true)}>
+              <Receipt className="mr-2 h-4 w-4" />
+              Generate Your ILP Receipt
+            </Button>
+          </div>
+        )}
       </section>
 
       <section className="space-y-4">
@@ -381,22 +390,24 @@ function StoryDetailView({ policy, analysis, catalogProduct }: {
                   </div>
                 </div>
                 <div className="rounded-lg border p-4">
-                  <div className="text-sm text-muted-foreground">Bonus support vs gross fees</div>
+                  <div className="text-sm text-muted-foreground">How much bonuses cover</div>
                   <div className="text-2xl font-bold">{bonusSupport.value}</div>
                   <div className="text-xs text-muted-foreground">{bonusSupport.detail}</div>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Bonuses can reduce your net cost, but they are separate from the policy&apos;s gross fees. Some products credit premium bonuses that may be large relative to fees over the modelled horizon. Check your policy document for suspension, clawback, vesting, and payout conditions.
-              </p>
+              <InterpretationCallout
+                level="success"
+                message="Bonuses can reduce your net cost, but they are separate from the policy's gross fees. Some products credit premium bonuses that may be large relative to fees over the modeled horizon. Check your policy document for suspension, clawback, vesting, and payout conditions."
+              />
             </CardContent>
           </Card>
         ) : (
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground">
-                This product does not have modelled bonuses. All fee figures shown are gross fees with no modelled bonus support. Actual net fees may be lower if the product offers bonuses that are not yet captured in the catalog.
-              </p>
+              <InterpretationCallout
+                level="warning"
+                message="This product does not have modeled bonuses. All fee figures shown are gross fees with no modeled bonus support. Actual net fees may be lower if the product offers bonuses that are not yet captured in the catalog."
+              />
             </CardContent>
           </Card>
         )}
@@ -405,6 +416,10 @@ function StoryDetailView({ policy, analysis, catalogProduct }: {
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">Your possible path and the opportunity cost</h2>
         <DecisionPanel policy={policy} analysis={analysis} />
+        <InterpretationCallout
+          level="warning"
+          message="These path comparisons are scenario estimates based on your current inputs. Use them to compare tradeoffs, then confirm the actual exit values and charges with your adviser or policy documents."
+        />
         <OpportunityCostCard policy={policy} analysis={analysis} />
         <Card>
           <CardContent className="p-6">
@@ -413,14 +428,6 @@ function StoryDetailView({ policy, analysis, catalogProduct }: {
             </p>
           </CardContent>
         </Card>
-        {analysis.summary.totalPremiumsPaid > 0 && (
-          <div className="flex justify-center">
-            <Button variant="outline" size="lg" onClick={() => setReceiptOpen(true)}>
-              <Receipt className="mr-2 h-4 w-4" />
-              Generate Your ILP Receipt
-            </Button>
-          </div>
-        )}
         <div className="flex flex-col items-center gap-3 pt-4">
           <Link to="/ilp-review">
             <Button size="lg">

@@ -1,3 +1,4 @@
+import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { IlpPolicyInput, IlpProjectedPolicyAnalysis } from '@/lib/calculations/ilp'
@@ -13,6 +14,7 @@ export function DecisionPanel({ policy, analysis }: DecisionPanelProps) {
     (option) => option.exitYear === analysis.npvAnalysis.bestExitYear,
   )
   if (!bestExitOption) return null
+  const horizonYear = analysis.projections.mid.rows.at(-1)?.policyYear ?? analysis.npvAnalysis.bestExitYear
 
   const options = [
     {
@@ -24,17 +26,17 @@ export function DecisionPanel({ policy, analysis }: DecisionPanelProps) {
     },
     {
       id: 'lowest-fee-year',
-      title: `Lowest Fee Year (Year ${analysis.npvAnalysis.bestExitYear})`,
+      title: `Best exit point (Year ${analysis.npvAnalysis.bestExitYear})`,
       feeDrag: analysis.npvAnalysis.bestExitNpvFees,
       primaryValue: `Value available ${formatIlpCurrency(bestExitOption.netSurrenderValue, policy.currency)}`,
       detail: `Stop in policy year ${bestExitOption.policyYear}, assuming contributions continue until then.`,
     },
     {
       id: 'hold-to-mip',
-      title: 'Hold to Horizon',
+      title: `Keep policy for ${horizonYear} years`,
       feeDrag: analysis.npvAnalysis.holdToMip.totalNpvFees,
       primaryValue: `Final value ${formatIlpCurrency(analysis.npvAnalysis.holdToMip.finalValue, policy.currency)}`,
-      detail: `Total contributions ${formatIlpCurrency(analysis.npvAnalysis.holdToMip.totalContributions, policy.currency)} by the analysis horizon.`,
+      detail: `Total contributions ${formatIlpCurrency(analysis.npvAnalysis.holdToMip.totalContributions, policy.currency)} over ${horizonYear} years.`,
     },
   ]
 
@@ -44,7 +46,7 @@ export function DecisionPanel({ policy, analysis }: DecisionPanelProps) {
   return (
     <div className="space-y-3">
       <div>
-        <h2 className="text-lg font-semibold">Scenario Comparison</h2>
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Scenario comparison</h3>
         <p className="text-sm text-muted-foreground">
           Three scenarios showing fee costs at different decision points. These are calculations based on your inputs, not financial advice. Consult a licensed financial adviser before making policy decisions.
         </p>
@@ -56,16 +58,19 @@ export function DecisionPanel({ policy, analysis }: DecisionPanelProps) {
           const isLowestFeeDrag = option.feeDrag === lowestFeeDrag
 
           return (
-            <Card key={option.id} className={isLowestFeeDrag ? 'border-primary shadow-sm' : ''}>
+            <Card key={option.id} className={isLowestFeeDrag ? 'border-primary bg-primary/[0.04] shadow-sm ring-1 ring-primary/10' : ''}>
               <CardHeader>
                 <div className="flex items-start justify-between gap-3">
                   <CardTitle className="text-base">{option.title}</CardTitle>
-                  {isLowestFeeDrag && <Badge variant="outline">Lowest NPV Fees</Badge>}
+                  {isLowestFeeDrag && <Badge variant="outline">Lowest total fee cost</Badge>}
                 </div>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <div>
-                  <div className="text-xs uppercase tracking-wide text-muted-foreground">NPV of Fees</div>
+                  <div className="inline-flex items-center gap-1 text-xs uppercase tracking-wide text-muted-foreground">
+                    Total fee cost
+                    <InfoTooltip text="Discounted into today's dollars so charges from different years can be compared on the same basis." />
+                  </div>
                   <div className="text-2xl font-semibold tabular-nums">
                     {formatIlpCurrency(option.feeDrag, policy.currency)}
                   </div>
@@ -74,8 +79,8 @@ export function DecisionPanel({ policy, analysis }: DecisionPanelProps) {
                 <p className="text-muted-foreground">{option.detail}</p>
                 <p className="text-xs text-muted-foreground">
                   {savingsVsWorst > 0
-                    ? `Fee drag is ${formatIlpCurrency(savingsVsWorst, policy.currency)} lower than the most expensive path.`
-                    : 'This is currently the highest fee-drag path.'}
+                    ? `You would pay ${formatIlpCurrency(savingsVsWorst, policy.currency)} less in fees than the most expensive path.`
+                    : 'This is currently the highest-fee path.'}
                 </p>
               </CardContent>
             </Card>
