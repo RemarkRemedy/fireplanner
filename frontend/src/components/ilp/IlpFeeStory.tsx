@@ -214,7 +214,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                   />
                 </motion.div>
                 <motion.p variants={staggerChild} className="text-lg md:text-xl text-white/90 max-w-sm">
-                  in wrapper fees over {horizonYears} years ({basisLabel}).
+                  in net policy fees over {horizonYears} years ({basisLabel}).
                 </motion.p>
                 <motion.p variants={staggerChild} className="text-base text-white/70">
                   That's {formatIlpPercent(wrapperPctOfPremiums)} of every dollar you put in.
@@ -262,7 +262,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                   )}
                 </motion.div>
                 <motion.div variants={staggerChild} className="border-t border-white/20 pt-3 w-full max-w-sm flex justify-between">
-                  <span className="font-semibold">Net wrapper cost</span>
+                  <span className="font-semibold">Net policy fees</span>
                   <span className="tabular-nums font-bold text-lg">{formatIlpCurrency(netWrapperCost, policy.currency)}</span>
                 </motion.div>
               </WrappedCard>
@@ -330,7 +330,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                 <motion.div variants={staggerChild} className="flex flex-wrap justify-center gap-6">
                   <div>
                     <div className="text-3xl font-bold">{formatIlpCurrency(netWrapperCost, policy.currency)}</div>
-                    <div className="text-sm text-white/60">net wrapper cost</div>
+                    <div className="text-sm text-white/60">net policy fees</div>
                   </div>
                   <div>
                     <div className="text-2xl font-semibold">{formatIlpPercent(wrapperPctOfPremiums)}</div>
@@ -338,7 +338,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                   </div>
                   <div>
                     <div className="text-2xl font-semibold">{formatIlpPercent(annualDragPct)} p.a.</div>
-                    <div className="text-sm text-white/60">all-in drag</div>
+                    <div className="text-sm text-white/60">estimated annual cost on your portfolio</div>
                   </div>
                 </motion.div>
 
@@ -356,7 +356,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                   {inceptionCharges > 0 && <div className="flex justify-between"><span>Inception</span><span className="tabular-nums">{formatIlpCurrency(inceptionCharges, policy.currency)}</span></div>}
                   {bonuses > 0 && <div className="flex justify-between text-emerald-300"><span>Bonuses</span><span className="tabular-nums">-{formatIlpCurrency(bonuses, policy.currency)}</span></div>}
                   <div className="flex justify-between border-t border-white/20 pt-1 font-semibold">
-                    <span>Net wrapper cost</span><span className="tabular-nums">{formatIlpCurrency(netWrapperCost, policy.currency)}</span>
+                    <span>Net policy fees</span><span className="tabular-nums">{formatIlpCurrency(netWrapperCost, policy.currency)}</span>
                   </div>
                 </motion.div>
 

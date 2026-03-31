@@ -142,11 +142,11 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
           </div>
         </div>
 
-        {/* Headline metrics — wrapper cost only (ILP-specific) */}
+        {/* Headline metrics — policy-level fees only (ILP-specific) */}
         <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
           <div>
             <div className="text-3xl font-bold">{formatIlpCurrency(netWrapperCost, policy.currency)}</div>
-            <div className="text-sm text-muted-foreground">net wrapper cost over {horizonYears} years</div>
+            <div className="text-sm text-muted-foreground">net policy fees over {horizonYears} years</div>
           </div>
           <div>
             <div className="text-2xl font-semibold">{formatIlpPercent(wrapperPctOfPremiums)}</div>
@@ -155,7 +155,7 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
           {horizonYears > 0 && annualDragPct > 0 && (
             <div>
               <div className="text-2xl font-semibold">{formatIlpPercent(annualDragPct)} p.a.</div>
-              <div className="text-sm text-muted-foreground">all-in annual drag on portfolio</div>
+              <div className="text-sm text-muted-foreground">estimated annual cost on your portfolio</div>
             </div>
           )}
         </div>
@@ -296,7 +296,7 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
 
           <div className="border-t pt-2">
             <div className="flex items-center justify-between">
-              <span className="font-semibold">Net wrapper cost</span>
+              <span className="font-semibold">Net policy fees</span>
               <span className="shrink-0 tabular-nums font-semibold">{formatIlpCurrency(netWrapperCost, policy.currency)}</span>
             </div>
           </div>
