@@ -171,6 +171,16 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
     const roundedMax = Math.ceil(rawMax / 0.05) * 0.05
     return [roundedMin, roundedMax]
   }, [returnValues])
+  const zoomedReturnDomain = useMemo<[number, number]>(() => {
+    const nonNegativeValues = returnChartData.flatMap((entry) => [
+      entry.grossAnnualizedReturn,
+      entry.netAnnualizedReturn,
+    ]).filter((value): value is number => value != null && Number.isFinite(value) && value > -0.12)
+    const maxValue = nonNegativeValues.length > 0 ? Math.max(...nonNegativeValues) : 0.08
+    return [-0.12, Math.ceil((maxValue + 0.02) / 0.02) * 0.02]
+  }, [returnChartData])
+  const negativeReturnYears = returnChartData.filter((entry) => (entry.netAnnualizedReturn ?? 0) < 0).length
+  const negativeWidthPct = returnChartData.length > 0 ? (negativeReturnYears / returnChartData.length) * 100 : 0
   const selectedReturnLabel = selectedReturnPoint?.exitYear != null && selectedReturnPoint.exitYear > 0
     ? `Year ${selectedReturnPoint.policyYear}`
     : 'Year 0'
@@ -369,6 +379,115 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
                 ) : null}
               </LineChart>
             </ResponsiveContainer>
+          </div>
+          <div className="grid gap-4 xl:grid-cols-2">
+            <div className="space-y-2 rounded-md border border-dashed border-border/80 bg-muted/10 p-4">
+              <div>
+                <div className="text-sm font-semibold">Prototype A: break-even zoom</div>
+                <p className="text-sm text-muted-foreground">
+                  Keeps the same trend lines, but zooms the y-axis around the negative-to-positive crossover so later years are easier to read.
+                </p>
+              </div>
+              <div className="h-56 rounded-md border border-border/80 bg-white/80 p-3 dark:bg-muted/10" role="img" aria-label="Prototype chart showing annualized returns zoomed around break-even">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={returnChartData} margin={{ top: 12, right: 12, bottom: 4, left: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted/70" vertical={false} />
+                    <XAxis
+                      dataKey="label"
+                      tickLine={false}
+                      axisLine={false}
+                      interval="preserveStartEnd"
+                      minTickGap={24}
+                    />
+                    <YAxis
+                      width={76}
+                      tickLine={false}
+                      axisLine={false}
+                      domain={zoomedReturnDomain}
+                      tickFormatter={(value: number) => formatIlpPercent(value)}
+                    />
+                    <ReferenceLine y={0} stroke={colors.muted} strokeWidth={1.5} />
+                    <Line
+                      type="monotone"
+                      dataKey="grossAnnualizedReturn"
+                      stroke={colors.primary}
+                      strokeWidth={2.25}
+                      dot={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="netAnnualizedReturn"
+                      stroke={colors.success}
+                      strokeWidth={2.25}
+                      dot={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            <div className="space-y-2 rounded-md border border-dashed border-border/80 bg-muted/10 p-4">
+              <div>
+                <div className="text-sm font-semibold">Prototype B: loss vs positive bands</div>
+                <p className="text-sm text-muted-foreground">
+                  Keeps the full range, but adds background bands so users can see at a glance when net annualized returns are still below zero and when they turn positive.
+                </p>
+              </div>
+              <div className="h-56 rounded-md border border-border/80 bg-white/80 p-3 dark:bg-muted/10" role="img" aria-label="Prototype chart showing annualized returns with loss and positive return bands">
+                <div className="relative h-full overflow-hidden rounded-sm">
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-y-0 left-0 bg-red-50/80"
+                    style={{ width: `${negativeWidthPct}%` }}
+                  />
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-y-0 right-0 bg-emerald-50/80"
+                    style={{ width: `${100 - negativeWidthPct}%` }}
+                  />
+                  <div className="absolute left-3 top-2 z-10 text-[11px] font-medium uppercase tracking-wide text-red-700/80">
+                    Loss years
+                  </div>
+                  <div className="absolute right-3 top-2 z-10 text-[11px] font-medium uppercase tracking-wide text-emerald-700/80">
+                    Positive years
+                  </div>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={returnChartData} margin={{ top: 24, right: 12, bottom: 4, left: 8 }}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted/60" vertical={false} />
+                      <XAxis
+                        dataKey="label"
+                        tickLine={false}
+                        axisLine={false}
+                        interval="preserveStartEnd"
+                        minTickGap={24}
+                      />
+                      <YAxis
+                        width={76}
+                        tickLine={false}
+                        axisLine={false}
+                        domain={returnDomain}
+                        tickFormatter={(value: number) => formatIlpPercent(value)}
+                      />
+                      <ReferenceLine y={0} stroke={colors.muted} strokeWidth={1.5} />
+                      <Line
+                        type="monotone"
+                        dataKey="grossAnnualizedReturn"
+                        stroke={colors.primary}
+                        strokeWidth={2.25}
+                        strokeDasharray="6 4"
+                        dot={false}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="netAnnualizedReturn"
+                        stroke={colors.success}
+                        strokeWidth={2.25}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
