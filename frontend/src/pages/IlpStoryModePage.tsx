@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowRight, BadgeDollarSign, ChartColumnBig, Clock3, Receipt, ShieldCheck } from 'lucide-react'
+import { ArrowRight, BadgeDollarSign, ChartColumnBig, Clock3, Play, Receipt, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -322,6 +322,7 @@ export function IlpStoryModePage() {
       catalogProduct={catalogProduct}
       mode={detailMode}
       onModeChange={setDetailMode}
+      onReplayStory={() => setShowFeeStory(true)}
     />
   )
 }
@@ -812,12 +813,14 @@ function StoryDetailView({
   catalogProduct,
   mode,
   onModeChange,
+  onReplayStory,
 }: {
   policy: IlpPolicyInput
   analysis: IlpProjectedPolicyAnalysis
   catalogProduct: IlpCatalogProduct
   mode: StoryDetailMode
   onModeChange: (mode: StoryDetailMode) => void
+  onReplayStory: () => void
 }) {
   const feeImpact = useFeeImpact(policy, analysis, true)
   const [receiptOpen, setReceiptOpen] = useState(false)
@@ -837,20 +840,26 @@ function StoryDetailView({
             </p>
             <h1 className="text-2xl font-bold">{catalogProduct.productName}</h1>
           </div>
-          <div className="space-y-2">
-            <div className="text-right text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              View mode
+          <div className="flex flex-col gap-3 sm:items-end">
+            <Button variant="outline" onClick={onReplayStory}>
+              <Play className="mr-2 h-4 w-4" />
+              Replay walkthrough
+            </Button>
+            <div className="space-y-2">
+              <div className="text-right text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                View mode
+              </div>
+              <Tabs value={mode} onValueChange={(value) => onModeChange(value as StoryDetailMode)}>
+                <TabsList className="grid h-11 w-full grid-cols-2 rounded-lg border-[#d9e4f2] bg-white p-1">
+                  <TabsTrigger value="walkthrough" className="rounded-md px-4 py-2">
+                    Walkthrough
+                  </TabsTrigger>
+                  <TabsTrigger value="detailed" className="rounded-md px-4 py-2">
+                    Detailed view
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
-            <Tabs value={mode} onValueChange={(value) => onModeChange(value as StoryDetailMode)}>
-              <TabsList className="grid h-11 w-full grid-cols-2 rounded-lg border-[#d9e4f2] bg-white p-1">
-                <TabsTrigger value="walkthrough" className="rounded-md px-4 py-2">
-                  Walkthrough
-                </TabsTrigger>
-                <TabsTrigger value="detailed" className="rounded-md px-4 py-2">
-                  Detailed view
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
           </div>
         </div>
         <GuideNote />

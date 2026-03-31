@@ -562,6 +562,28 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(screen.getByRole('button', { name: /expand annual fees chart/i })).toBeInTheDocument()
   })
 
+  it('lets users reopen the wrapped story from the story detail header', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter initialEntries={['/ilp-fees/story/aia-elite-secure-income-5-pay']}>
+        <Routes>
+          <Route path="/ilp-fees/story/:productId" element={<IlpStoryModePage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole('button', { name: /show me the fees/i }))
+    await user.click(await screen.findByRole('button', { name: /close/i }))
+
+    expect(await screen.findByRole('button', { name: /replay walkthrough/i })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /replay walkthrough/i }))
+
+    expect(await screen.findByText(/what this product may cost you/i)).toBeInTheDocument()
+    expect(screen.getByText(/estimated total fees over/i)).toBeInTheDocument()
+  })
+
   it('lets non-planner users add a quick cash-flow entry on the story detail page', async () => {
     const user = userEvent.setup()
 
