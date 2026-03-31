@@ -365,8 +365,8 @@ function PlannerHandoffCard() {
 
 function BonusSection({ policy, analysis }: { policy: IlpPolicyInput; analysis: IlpProjectedPolicyAnalysis }) {
   const bonusSupport = formatIlpBonusSupport(
-    analysis.summary.totalBonusesReceived,
-    analysis.summary.totalFeesCharged,
+    analysis.summary.realBonuses,
+    analysis.summary.realWrapperFees + analysis.summary.inceptionCharges,
   )
 
   return (
@@ -379,8 +379,9 @@ function BonusSection({ policy, analysis }: { policy: IlpPolicyInput; analysis: 
               <div className="rounded-lg border p-4">
                 <div className="text-sm text-muted-foreground">Total bonuses received</div>
                 <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
-                  {formatIlpCurrency(analysis.summary.totalBonusesReceived, policy.currency)}
+                  {formatIlpCurrency(analysis.summary.realBonuses, policy.currency)}
                 </div>
+                <div className="mt-1 text-xs text-muted-foreground">In today&apos;s dollars</div>
               </div>
               <div className="rounded-lg border p-4">
                 <div className="text-sm text-muted-foreground">How much bonuses cover gross policy fees</div>
