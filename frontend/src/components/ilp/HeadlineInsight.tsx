@@ -189,15 +189,15 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
             </p>
             <div className="space-y-2">
               {feeImpactTiers.map((tier) => (
-                  <div key={tier.label} className="flex items-center justify-between gap-3 text-sm">
+                  <div key={tier.label} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 text-sm">
                     <div className="min-w-0">
-                      <div className={tier.color}>{tier.label}</div>
+                      <div className={`leading-tight ${tier.color}`}>{tier.label}</div>
                       <div className="text-xs text-muted-foreground">
                         {formatIlpPercent(tier.drag)} p.a. fee drag
                       </div>
                     </div>
-                    <div className="shrink-0 text-right">
-                      <div className={`tabular-nums ${tier.color}`}>
+                    <div className="shrink-0 pt-0.5 text-right">
+                      <div className={`tabular-nums leading-tight ${tier.color}`}>
                         {formatIlpCurrency(tier.finalValue, policy.currency)}
                       </div>
                     </div>

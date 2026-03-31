@@ -63,14 +63,14 @@ export function FeeImpactChart({
 
       <div className="space-y-2">
         {tiers.map((tier) => (
-          <div key={tier.label} className="flex items-center justify-between gap-3 text-sm">
+          <div key={tier.label} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 text-sm">
             <div className="min-w-0">
-              <div style={{ color: tier.color }}>{tier.label}</div>
+              <div className="leading-tight" style={{ color: tier.color }}>{tier.label}</div>
               <div className={`text-xs ${dark ? 'text-white/60' : 'text-muted-foreground'}`}>
                 {formatIlpPercent(tier.drag)} p.a. fee drag
               </div>
             </div>
-            <div className="shrink-0 tabular-nums font-medium" style={{ color: tier.color }}>
+            <div className="shrink-0 pt-0.5 text-right tabular-nums font-medium leading-tight" style={{ color: tier.color }}>
               {formatIlpCurrency(tier.finalValue, currency)}
             </div>
           </div>
