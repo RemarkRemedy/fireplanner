@@ -354,12 +354,12 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                   </div>
                   {fundCharges > 0 && (
                     <>
-                      <div className="mt-4 flex justify-between gap-6 text-white/75">
+                      <div className="mt-4 flex justify-between gap-6">
                         <div className="min-w-0 pr-4">
                           <div>Fund charges</div>
                           <div className="mt-1 text-xs text-white/45">{formatIlpPercent(blendedOcf)} p.a. inside the fund</div>
                         </div>
-                        <span className="tabular-nums text-white/75">{formatIlpCurrency(fundCharges, policy.currency)}</span>
+                        <span className="tabular-nums">{formatIlpCurrency(fundCharges, policy.currency)}</span>
                       </div>
                       <div className="mt-3 flex justify-between gap-6 border-t border-white/20 pt-2 font-semibold">
                         <span>Estimated total fees</span><span className="tabular-nums">{formatIlpCurrency(totalEstimatedFees, policy.currency)}</span>
