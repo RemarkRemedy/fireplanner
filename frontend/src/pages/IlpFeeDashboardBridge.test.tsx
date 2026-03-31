@@ -225,6 +225,9 @@ describe('ILP fee dashboard blog bridge', () => {
     await user.keyboard(' ')
     await waitForStoryAdvance()
     await waitFor(() => expect(screen.getByText(/what happens if you stop early/i)).toBeInTheDocument())
+    expect(screen.getByText(/projected value after/i)).toBeInTheDocument()
+    expect(screen.getByText(/total contributions/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/total fee cost/i).length).toBeGreaterThan(0)
 
     await user.keyboard(' ')
     await waitForStoryAdvance()

@@ -330,11 +330,15 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                         <div className="mt-1 text-2xl font-semibold">
                           {formatIlpCurrency(analysis.npvAnalysis.holdToMip.finalValue, policy.currency)}
                         </div>
-                        <div className="mt-1 text-xs text-white/55">Final value after {horizonYear} years</div>
+                        <div className="mt-1 text-xs text-white/55">Projected value after {horizonYear} years</div>
+                        <div className="mt-3 space-y-1 text-xs text-white/60">
+                          <div>Total contributions {formatIlpCurrency(analysis.npvAnalysis.holdToMip.totalContributions, policy.currency)}</div>
+                          <div>Total fee cost {formatIlpCurrency(analysis.npvAnalysis.holdToMip.totalNpvFees, policy.currency)}</div>
+                        </div>
                       </div>
                     </motion.div>
                     <motion.p variants={staggerChild} className="max-w-lg text-base text-white/70">
-                      Early exit can still leave a meaningful surrender deduction. Use this walkthrough to spot the tradeoff, then confirm the actual exit value on your statement before acting.
+                      Early exit can still leave a meaningful surrender deduction. Holding to {horizonYear} years is not a free upside path either: it also means contributing {formatIlpCurrency(analysis.npvAnalysis.holdToMip.totalContributions, policy.currency)} and carrying the highest total fee cost in this estimate.
                     </motion.p>
                   </>
                 ) : (
