@@ -136,6 +136,9 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(screen.getByRole('img', { name: /bar chart showing net gap by exit year/i })).toBeInTheDocument()
     expect(screen.getByText('Added from now to exit')).toBeInTheDocument()
     expect(screen.getByText(/Contributions avoided vs year/i)).toBeInTheDocument()
+    expect(screen.getByText('Gross annualized return')).toBeInTheDocument()
+    expect(screen.getByText('Net annualized return')).toBeInTheDocument()
+    expect(screen.getByText(/includes year 0/i)).toBeInTheDocument()
   })
 
   it('shows the actual low-mid-high return assumptions in the fee breakdown header', () => {

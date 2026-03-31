@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useChartColors } from '@/lib/chartTheme'
+import { computeAnnualFeeDragPct } from '@/lib/calculations/ilpFeeImpact'
 import {
   Select,
   SelectContent,
@@ -20,7 +21,7 @@ import {
   YAxis,
 } from 'recharts'
 import type { IlpPolicyInput, IlpProjectedPolicyAnalysis } from '@/lib/calculations/ilp'
-import { formatIlpCurrency } from './formatters'
+import { formatIlpCurrency, formatIlpPercent } from './formatters'
 
 interface ExitTimingExplorerProps {
   policy: IlpPolicyInput
@@ -29,8 +30,27 @@ interface ExitTimingExplorerProps {
 
 export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps) {
   const colors = useChartColors()
-  const exitOptions = analysis.npvAnalysis.futureExitOptions
+  const annualFeeDragPct = computeAnnualFeeDragPct(analysis)
   const horizonYear = analysis.projections.mid.rows.at(-1)?.policyYear ?? analysis.npvAnalysis.bestExitYear
+  const paidSoFarEstimate = (policy.initialSinglePremium ?? 0) + (policy.monthlyContribution * policy.monthsAlreadyPaid)
+  const exitOptions = useMemo(
+    () => [
+      {
+        exitYear: 0,
+        policyYear: 0,
+        eecRate: analysis.npvAnalysis.surrenderNow.eecRate,
+        eecCharge: analysis.npvAnalysis.surrenderNow.eecCharge,
+        pvEec: analysis.npvAnalysis.surrenderNow.eecCharge,
+        npvGrossFees: 0,
+        npvBonuses: 0,
+        totalNpvFees: analysis.npvAnalysis.surrenderNow.npvFees,
+        netSurrenderValue: analysis.npvAnalysis.surrenderNow.netSurrenderValue,
+        totalContributions: paidSoFarEstimate,
+      },
+      ...analysis.npvAnalysis.futureExitOptions,
+    ],
+    [analysis.npvAnalysis.futureExitOptions, analysis.npvAnalysis.surrenderNow, paidSoFarEstimate],
+  )
   const [selectedExitYear, setSelectedExitYear] = useState(String(analysis.npvAnalysis.bestExitYear))
 
   const selectedOption = useMemo(
@@ -40,13 +60,20 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
 
   if (!selectedOption) return null
 
-  const paidSoFarEstimate = (policy.initialSinglePremium ?? 0) + (policy.monthlyContribution * policy.monthsAlreadyPaid)
   const addedContributionsUntilExit = Math.max(0, selectedOption.totalContributions - paidSoFarEstimate)
   const contributionsAvoidedVsHold = Math.max(
     0,
     analysis.npvAnalysis.holdToMip.totalContributions - selectedOption.totalContributions,
   )
   const valueVsAddedContributions = selectedOption.netSurrenderValue - addedContributionsUntilExit
+  const totalAllocation = policy.funds.reduce((sum, fund) => sum + fund.allocation, 0)
+  const grossAnnualizedReturn = totalAllocation > 0
+    ? policy.funds.reduce(
+        (sum, fund) => sum + ((fund.allocation / totalAllocation) * fund.grossReturnMid),
+        0,
+      )
+    : 0
+  const netAnnualizedReturn = Math.max(-1, grossAnnualizedReturn - annualFeeDragPct)
   const chartData = useMemo(
     () => exitOptions.map((option) => {
       const addedFromNowToExit = Math.max(0, option.totalContributions - paidSoFarEstimate)
@@ -70,6 +97,9 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
           <CardTitle className="text-lg">Exit Timing Calculator</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
             Pick a projected exit year to compare how much you could take out against how much more you would pay in before that point.
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Includes year 0 if you want to compare against stopping before any further premiums are paid.
           </p>
         </div>
         <div className="w-full sm:w-56">
@@ -142,7 +172,7 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <div className="rounded-md border p-4">
             <div className="text-sm text-muted-foreground">Value available at exit</div>
             <div className="mt-2 text-2xl font-semibold tabular-nums">
@@ -166,6 +196,20 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
             <div className="mt-2 text-2xl font-semibold tabular-nums">
               {formatIlpCurrency(contributionsAvoidedVsHold, policy.currency)}
             </div>
+          </div>
+          <div className="rounded-md border p-4">
+            <div className="text-sm text-muted-foreground">Gross annualized return</div>
+            <div className="mt-2 text-2xl font-semibold tabular-nums">
+              {formatIlpPercent(grossAnnualizedReturn)} p.a.
+            </div>
+            <div className="mt-1 text-xs text-muted-foreground">Mid-scenario fund return assumption</div>
+          </div>
+          <div className="rounded-md border p-4">
+            <div className="text-sm text-muted-foreground">Net annualized return</div>
+            <div className="mt-2 text-2xl font-semibold tabular-nums">
+              {formatIlpPercent(netAnnualizedReturn)} p.a.
+            </div>
+            <div className="mt-1 text-xs text-muted-foreground">Estimated after fee drag</div>
           </div>
         </div>
 
