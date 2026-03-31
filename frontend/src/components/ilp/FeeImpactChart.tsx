@@ -53,7 +53,7 @@ export function FeeImpactChart({
     : 'rounded-md border border-border/60 bg-background/70 px-4 py-3'
 
   const renderChart = (expanded = false) => (
-    <div className={expanded ? 'min-h-[28rem] flex-1' : `${comparisonBlockClass} h-56`}>
+    <div className={expanded ? 'h-[65vh] min-h-[32rem] w-full' : `${comparisonBlockClass} h-56`}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={timeSeries} margin={{ top: 5, right: 10, bottom: 5, left: 10 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} className={dark ? '' : 'stroke-muted'} />
@@ -103,7 +103,7 @@ export function FeeImpactChart({
   const renderComparisonRows = (expanded = false) => {
     if (expanded && !dark) {
       return (
-        <div className="grid gap-3 lg:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-3">
           {tiers.map((tier) => (
             <div key={tier.label} className={`${comparisonRowClass} h-full`}>
               <div className="font-medium leading-tight" style={{ color: tier.color }}>{tier.label}</div>
@@ -139,7 +139,7 @@ export function FeeImpactChart({
   }
 
   const renderContent = (expanded = false) => (
-    <div className={expanded ? 'flex h-full min-h-0 flex-col gap-4' : 'space-y-4'}>
+    <div className={expanded ? 'mx-auto flex h-full min-h-0 w-full max-w-6xl flex-col gap-5' : 'space-y-4'}>
       {dark && !expanded && (
         <p className="text-xs text-white/60">
           What your portfolio could be worth after {horizonYears} years at 7% gross return ({basisLabel}). {contributionLabel}
@@ -147,13 +147,18 @@ export function FeeImpactChart({
       )}
 
       {expanded && (
-        <p className="text-sm text-muted-foreground">
-          What your portfolio could be worth after {horizonYears} years at 7% gross return ({basisLabel}). {contributionLabel}
-        </p>
+        <div className="space-y-2">
+          <p className="text-sm text-muted-foreground">
+            What your portfolio could be worth after {horizonYears} years at 7% gross return ({basisLabel}). {contributionLabel}
+          </p>
+          {renderComparisonRows(true)}
+        </div>
       )}
 
-      {renderComparisonRows(expanded)}
-      {renderChart(expanded)}
+      {!expanded && renderComparisonRows()}
+      <div className={expanded ? 'rounded-lg border border-border/60 bg-background/70 p-4' : ''}>
+        {renderChart(expanded)}
+      </div>
     </div>
   )
 
@@ -195,7 +200,7 @@ export function FeeImpactChart({
           <DialogHeader className="shrink-0">
             <DialogTitle className="text-lg font-bold">Compound Effect</DialogTitle>
           </DialogHeader>
-          <div className="flex min-h-0 flex-1 overflow-auto">
+          <div className="flex min-h-0 flex-1 overflow-auto px-2 pb-2">
             {renderContent(true)}
           </div>
         </DialogContent>
