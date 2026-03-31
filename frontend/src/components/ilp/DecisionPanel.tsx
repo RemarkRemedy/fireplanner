@@ -17,7 +17,7 @@ export function DecisionPanel({ policy, analysis }: DecisionPanelProps) {
   const options = [
     {
       id: 'year-1-stop',
-      title: 'Do not start',
+      title: 'Did not start',
       feeDrag: analysis.npvAnalysis.surrenderNow.npvFees,
       primaryValue: `Value available ${formatIlpCurrency(analysis.npvAnalysis.surrenderNow.netSurrenderValue, policy.currency)}`,
       detail: `Early-exit charge in year 0: ${formatIlpCurrency(analysis.npvAnalysis.surrenderNow.eecCharge, policy.currency)}.`,

@@ -21,7 +21,7 @@ export function OpportunityCostCard({ policy, analysis }: OpportunityCostCardPro
       </CardHeader>
       <CardContent className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-lg border p-4">
-          <div className="text-sm font-medium">Do not start. Invest outside the policy from year 0</div>
+          <div className="text-sm font-medium">Did not start. Invest outside the policy from year 0</div>
           <div className="mt-2 text-2xl font-semibold tabular-nums">
             {formatIlpCurrency(opportunityCost.alternativePortfolioValue, policy.currency)}
           </div>
