@@ -21,7 +21,7 @@ import { getMipEndProjectionIndex } from '@/lib/calculations/ilp'
 import { buildFeeBreakdown } from '@/lib/calculations/ilpFeeBreakdown'
 import { useChartColors } from '@/lib/chartTheme'
 import { FeeRuleTooltip, BonusRuleTooltip, EventRuleTooltip, FundFeeTooltip } from './FeeRuleTooltip'
-import { formatIlpCurrency } from './formatters'
+import { formatIlpCurrency, formatIlpPercent } from './formatters'
 
 interface FeeBreakdownSectionProps {
   policy: IlpPolicyInput
@@ -161,6 +161,25 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
     () => stackedBarData.some((row) => Math.abs(row.bonusCredits) > 0.005),
     [stackedBarData],
   )
+  const scenarioReturnAssumptions = useMemo(() => {
+    const totalAllocation = policy.funds.reduce((sum, fund) => sum + fund.allocation, 0)
+    if (totalAllocation <= 0) {
+      return {
+        low: 0,
+        mid: 0,
+        high: 0,
+      }
+    }
+
+    return policy.funds.reduce(
+      (totals, fund) => ({
+        low: totals.low + ((fund.allocation / totalAllocation) * fund.grossReturnLow),
+        mid: totals.mid + ((fund.allocation / totalAllocation) * fund.grossReturnMid),
+        high: totals.high + ((fund.allocation / totalAllocation) * fund.grossReturnHigh),
+      }),
+      { low: 0, mid: 0, high: 0 },
+    )
+  }, [policy.funds])
 
   const cumulativeData = useMemo(() => {
     const discount = (value: number, year: number) => useRealValues ? value / Math.pow(1 + inflationRate, year) : value
@@ -203,13 +222,21 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
           <div className="flex flex-col gap-2 sm:items-end">
             <Tabs value={scenario} onValueChange={(value) => setScenario(value as ReturnScenario)}>
               <TabsList>
-                <TabsTrigger value="low">Low</TabsTrigger>
-                <TabsTrigger value="mid">Mid</TabsTrigger>
-                <TabsTrigger value="high">High</TabsTrigger>
+                <TabsTrigger value="low">{formatIlpPercent(scenarioReturnAssumptions.low)}</TabsTrigger>
+                <TabsTrigger value="mid">{formatIlpPercent(scenarioReturnAssumptions.mid)}</TabsTrigger>
+                <TabsTrigger value="high">{formatIlpPercent(scenarioReturnAssumptions.high)}</TabsTrigger>
               </TabsList>
             </Tabs>
             <p className="text-xs text-muted-foreground sm:max-w-[18rem] sm:text-right">
-              Low, Mid, and High use the product&apos;s low-, mid-, and high-return projection assumptions.
+              Gross return assumptions used for the low, mid, and high projections:
+              {' '}
+              {formatIlpPercent(scenarioReturnAssumptions.low)},
+              {' '}
+              {formatIlpPercent(scenarioReturnAssumptions.mid)},
+              {' '}
+              and
+              {' '}
+              {formatIlpPercent(scenarioReturnAssumptions.high)}.
             </p>
             <div className="flex flex-wrap gap-3 text-xs">
               <div className="flex items-center gap-1.5">

@@ -118,7 +118,7 @@ describe('ILP fee dashboard blog bridge', () => {
     )
   })
 
-  it('explains what the low-mid-high return tabs mean in the fee breakdown header', () => {
+  it('shows the actual low-mid-high return assumptions in the fee breakdown header', () => {
     const policy = createDefaultPolicy()
     const analysis = analyzeIlpPolicy(policy)
 
@@ -128,7 +128,10 @@ describe('ILP fee dashboard blog bridge', () => {
 
     render(<FeeBreakdownSection policy={policy} analysis={analysis} />)
 
-    expect(screen.getByText(/low, mid, and high use the product's low-, mid-, and high-return projection assumptions/i)).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: '6.0%' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: '8.0%' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: '10.0%' })).toBeInTheDocument()
+    expect(screen.getByText(/gross return assumptions used for the low, mid, and high projections: 6\.0%, 8\.0%, and 10\.0%\./i)).toBeInTheDocument()
   })
 
   it('shows a surrender-fee column in the detailed fee table', () => {
