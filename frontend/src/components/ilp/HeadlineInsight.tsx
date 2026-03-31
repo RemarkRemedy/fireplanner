@@ -251,11 +251,11 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
           </div>
         )}
 
-        {/* Breakdown — wrapper fees only */}
+        {/* Breakdown — policy-layer fees only */}
         <div className="space-y-2 rounded-md border bg-background/50 p-4 text-sm">
           <div className="flex items-center justify-between">
             <div>
-              <span className="font-medium">Wrapper fees</span>
+              <span className="font-medium">Policy fees</span>
               <p className="text-xs text-muted-foreground">
                 The insurer's charges: account management, premium-based charges, and insurance costs.
               </p>
@@ -277,7 +277,7 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
 
           <div className="border-t pt-2">
             <div className="flex items-center justify-between">
-              <span className="font-medium">Gross wrapper fees</span>
+              <span className="font-medium">Gross policy fees</span>
               <span className="shrink-0 tabular-nums font-medium">{formatIlpCurrency(grossWrapperFees, policy.currency)}</span>
             </div>
           </div>

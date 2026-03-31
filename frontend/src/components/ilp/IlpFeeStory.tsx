@@ -78,6 +78,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
 
   const grossWrapperFees = wrapperFees + inceptionCharges
   const netWrapperCost = grossWrapperFees - bonuses
+  const totalEstimatedFees = netWrapperCost + fundCharges
 
   const wrapperPctOfPremiums = summary.totalPremiumsPaid > 0
     ? (wrapperFees + inceptionCharges - bonuses) / summary.totalPremiumsPaid
@@ -231,7 +232,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                 <motion.div variants={staggerChild} className="w-full max-w-sm space-y-4">
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span>Wrapper fees</span>
+                      <span>Policy fees</span>
                       <span className="tabular-nums">{formatIlpCurrency(wrapperFees, policy.currency)}</span>
                     </div>
                     <div className="h-3 rounded-full bg-white/10 overflow-hidden">
@@ -342,22 +343,27 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                   </div>
                 </motion.div>
 
-                {blendedOcf > 0 && (
-                  <motion.div variants={staggerChild} className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 w-full max-w-sm">
-                    <div className="flex justify-between text-sm">
-                      <span>Plus {formatIlpPercent(blendedOcf)} p.a. fund charges</span>
-                      {fundCharges > 0 && <span className="tabular-nums text-white/60">{formatIlpCurrency(fundCharges, policy.currency)}</span>}
-                    </div>
-                  </motion.div>
-                )}
-
                 <motion.div variants={staggerChild} className="w-full max-w-sm space-y-1 text-sm">
-                  <div className="flex justify-between"><span>Wrapper fees</span><span className="tabular-nums">{formatIlpCurrency(wrapperFees, policy.currency)}</span></div>
-                  {inceptionCharges > 0 && <div className="flex justify-between"><span>Inception</span><span className="tabular-nums">{formatIlpCurrency(inceptionCharges, policy.currency)}</span></div>}
-                  {bonuses > 0 && <div className="flex justify-between text-emerald-300"><span>Bonuses</span><span className="tabular-nums">-{formatIlpCurrency(bonuses, policy.currency)}</span></div>}
+                  <div className="flex justify-between"><span>Policy fees</span><span className="tabular-nums">{formatIlpCurrency(wrapperFees, policy.currency)}</span></div>
+                  {inceptionCharges > 0 && <div className="flex justify-between"><span>Inception charges</span><span className="tabular-nums">{formatIlpCurrency(inceptionCharges, policy.currency)}</span></div>}
+                  {bonuses > 0 && <div className="flex justify-between text-emerald-300"><span>Bonuses returned</span><span className="tabular-nums">-{formatIlpCurrency(bonuses, policy.currency)}</span></div>}
                   <div className="flex justify-between border-t border-white/20 pt-1 font-semibold">
                     <span>Net policy fees</span><span className="tabular-nums">{formatIlpCurrency(netWrapperCost, policy.currency)}</span>
                   </div>
+                  {fundCharges > 0 && (
+                    <>
+                      <div className="flex justify-between pt-2 text-white/70">
+                        <div className="pr-4">
+                          <span>Fund charges</span>
+                          <div className="text-xs text-white/50">{formatIlpPercent(blendedOcf)} p.a. inside the fund</div>
+                        </div>
+                        <span className="tabular-nums text-white/70">{formatIlpCurrency(fundCharges, policy.currency)}</span>
+                      </div>
+                      <div className="flex justify-between border-t border-white/20 pt-1 font-semibold">
+                        <span>Estimated total fees</span><span className="tabular-nums">{formatIlpCurrency(totalEstimatedFees, policy.currency)}</span>
+                      </div>
+                    </>
+                  )}
                 </motion.div>
 
                 <motion.p variants={staggerChild} className="text-xs text-white/60 max-w-sm">
