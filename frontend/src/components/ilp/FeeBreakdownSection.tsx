@@ -63,6 +63,15 @@ function deriveFeeColumnInfo(policy: IlpPolicyInput) {
 }
 
 type FeeCategoryKey = typeof DEFAULT_FEE_CATEGORIES[number]['key']
+type AnnualFeeChartDatum = {
+  policyYear: number
+  accountFee: number
+  additionalCharges: number
+  assuranceCharges: number
+  eventCharges: number
+  implicitFundFee: number
+  bonusCredits: number
+}
 
 const UNMODELED_FEES = [
   'Fund switching charges (most ILPs give N free switches/year, then charge)',
@@ -71,6 +80,16 @@ const UNMODELED_FEES = [
   'Late payment interest (premium arrears interest is not modeled, but bonus disqualification from late payment IS modeled)',
   'Platform/wrap fees vs fund-level OCF overlap',
 ]
+
+export function getVisibleAnnualFeeCategoryKeys(
+  data: AnnualFeeChartDatum[],
+  includeOcf: boolean,
+): FeeCategoryKey[] {
+  return DEFAULT_FEE_CATEGORIES
+    .filter((category) => includeOcf || category.key !== 'implicitFundFee')
+    .filter((category) => data.some((row) => Math.abs(row[category.key]) > 0.005))
+    .map((category) => category.key)
+}
 
 export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionProps) {
   const [scenario, setScenario] = useState<ReturnScenario>('mid')
@@ -123,6 +142,10 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
       })),
     ]
   }, [breakdown, hasInception, inceptionTotal, includeOcf, useRealValues, inflationRate])
+  const visibleAnnualFeeCategoryKeys = useMemo(
+    () => getVisibleAnnualFeeCategoryKeys(stackedBarData, includeOcf),
+    [stackedBarData, includeOcf],
+  )
 
   const cumulativeData = useMemo(() => {
     const discount = (value: number, year: number) => useRealValues ? value / Math.pow(1 + inflationRate, year) : value
@@ -210,11 +233,21 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                       value === 'bonusCredits' ? 'Bonus Credits' : value === 'additionalCharges' ? feeColumnInfo.additional.label : DEFAULT_FEE_CATEGORIES.find((c) => c.key === value)?.label ?? value
                     }
                   />
-                  <Bar dataKey="accountFee" stackId="fees" fill={categoryColors.accountFee} />
-                  <Bar dataKey="additionalCharges" stackId="fees" fill={categoryColors.additionalCharges} />
-                  <Bar dataKey="assuranceCharges" stackId="fees" fill={categoryColors.assuranceCharges} />
-                  <Bar dataKey="eventCharges" stackId="fees" fill={categoryColors.eventCharges} />
-                  <Bar dataKey="implicitFundFee" stackId="fees" fill={categoryColors.implicitFundFee} />
+                  {visibleAnnualFeeCategoryKeys.includes('accountFee') && (
+                    <Bar dataKey="accountFee" stackId="fees" fill={categoryColors.accountFee} />
+                  )}
+                  {visibleAnnualFeeCategoryKeys.includes('additionalCharges') && (
+                    <Bar dataKey="additionalCharges" stackId="fees" fill={categoryColors.additionalCharges} />
+                  )}
+                  {visibleAnnualFeeCategoryKeys.includes('assuranceCharges') && (
+                    <Bar dataKey="assuranceCharges" stackId="fees" fill={categoryColors.assuranceCharges} />
+                  )}
+                  {visibleAnnualFeeCategoryKeys.includes('eventCharges') && (
+                    <Bar dataKey="eventCharges" stackId="fees" fill={categoryColors.eventCharges} />
+                  )}
+                  {visibleAnnualFeeCategoryKeys.includes('implicitFundFee') && (
+                    <Bar dataKey="implicitFundFee" stackId="fees" fill={categoryColors.implicitFundFee} />
+                  )}
                   <Bar dataKey="bonusCredits" stackId="fees" fill={colors.success} />
                 </BarChart>
               </ResponsiveContainer>

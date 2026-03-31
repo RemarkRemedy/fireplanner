@@ -2,7 +2,7 @@ import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
-import { FeeBreakdownSection } from '@/components/ilp/FeeBreakdownSection'
+import { FeeBreakdownSection, getVisibleAnnualFeeCategoryKeys } from '@/components/ilp/FeeBreakdownSection'
 import { ProductPickerDialog } from '@/components/ilp/catalog/ProductPickerDialog'
 import { analyzeIlpPolicy } from '@/lib/calculations/ilp'
 import { createDefaultPolicy, useIlpStore } from '@/stores/useIlpStore'
@@ -143,6 +143,33 @@ describe('ILP fee dashboard blog bridge', () => {
 
     expect(screen.getByText('Surrender Fee')).toBeInTheDocument()
     expect(screen.getByText('n/a')).toBeInTheDocument()
+  })
+
+  it('omits zero-only annual fee categories from the chart series', () => {
+    const visibleKeys = getVisibleAnnualFeeCategoryKeys([
+      {
+        policyYear: 1,
+        accountFee: 120,
+        additionalCharges: 840,
+        assuranceCharges: 0,
+        eventCharges: 0,
+        implicitFundFee: 0,
+        bonusCredits: 0,
+      },
+      {
+        policyYear: 2,
+        accountFee: 180,
+        additionalCharges: 420,
+        assuranceCharges: 0,
+        eventCharges: 0,
+        implicitFundFee: 55,
+        bonusCredits: -40,
+      },
+    ], true)
+
+    expect(visibleKeys).toEqual(['accountFee', 'additionalCharges', 'implicitFundFee'])
+    expect(visibleKeys).not.toContain('assuranceCharges')
+    expect(visibleKeys).not.toContain('eventCharges')
   })
 
   it('shows only five policy-year rows in the detailed fee table until expanded', async () => {
