@@ -194,12 +194,15 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
 
         <div className="space-y-3">
           <div>
-            <h3 className="text-sm font-semibold">Withdrawable value vs added from now</h3>
+            <h3 className="text-sm font-semibold">Withdrawable value vs added from now vs ETF benchmark</h3>
             <p className="text-sm text-muted-foreground">
-              Compare how much you could withdraw at each exit year against how much more you would still add from today to reach that point.
+              Compare how much you could withdraw, how much more you would still add from today, and what the same money could look like in a low-cost ETF benchmark.
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              ETF benchmark uses the current alternative-return assumption of {formatIlpPercent(policy.alternativeReturn)} a year. It is illustrative, not a guarantee.
             </p>
           </div>
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-4">
             <div className="rounded-md border border-border/80 bg-muted/20 px-4 py-3">
               <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Selected exit year</div>
               <div className="mt-1 text-lg font-semibold">
@@ -228,8 +231,19 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
                   : 'n/a'}
               </div>
             </div>
+            <div className="rounded-md border border-border/80 bg-muted/20 px-4 py-3">
+              <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-500" />
+                ETF benchmark
+              </div>
+              <div className="mt-1 text-lg font-semibold tabular-nums">
+                {selectedChartPoint != null
+                  ? formatIlpCurrency(selectedChartPoint.etfAlternativeValue, policy.currency)
+                  : 'n/a'}
+              </div>
+            </div>
           </div>
-          <div className="h-72 rounded-md border border-border/80 bg-white/70 p-3 dark:bg-muted/10" role="img" aria-label="Line chart showing withdrawable value and added contributions by exit year">
+          <div className="h-80 rounded-md border border-border/80 bg-white/70 p-3 dark:bg-muted/10" role="img" aria-label="Line chart showing withdrawable value, added contributions, and ETF benchmark by exit year">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={projectedChartData} margin={{ top: 12, right: 20, bottom: 8, left: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted/70" vertical={false} />
@@ -256,7 +270,7 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
                   labelFormatter={(_label, payload) => {
                     const point = payload?.[0]?.payload
                     if (!point) return ''
-                    return `${point.label} · Withdrawable ${formatIlpCurrency(point.netSurrenderValue, policy.currency)} · Added ${formatIlpCurrency(point.addedFromNowToExit, policy.currency)}`
+                    return `${point.label} · Withdrawable ${formatIlpCurrency(point.netSurrenderValue, policy.currency)} · Added ${formatIlpCurrency(point.addedFromNowToExit, policy.currency)} · ETF benchmark ${formatIlpCurrency(point.etfAlternativeValue, policy.currency)}`
                   }}
                 />
                 {selectedChartPoint?.exitYear != null && selectedChartPoint.exitYear > 0 ? (
@@ -280,6 +294,15 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
                   dot={false}
                   activeDot={{ r: 5 }}
                 />
+                <Line
+                  type="monotone"
+                  dataKey="etfAlternativeValue"
+                  name="ETF benchmark"
+                  stroke="#f59e0b"
+                  strokeWidth={2.5}
+                  dot={false}
+                  activeDot={{ r: 5 }}
+                />
                 {selectedChartPoint?.exitYear != null && selectedChartPoint.exitYear > 0 ? (
                   <ReferenceDot
                     x={selectedChartPoint.label}
@@ -296,109 +319,6 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
                     y={selectedChartPoint.addedFromNowToExit}
                     r={5}
                     fill={colors.primary}
-                    stroke="white"
-                    strokeWidth={2}
-                  />
-                ) : null}
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <div>
-            <h3 className="text-sm font-semibold">If the same money went into a low-cost ETF instead</h3>
-            <p className="text-sm text-muted-foreground">
-              This benchmark uses the current alternative-return assumption of {formatIlpPercent(policy.alternativeReturn)} a year. It is an illustrative comparison, not a guarantee.
-            </p>
-          </div>
-          <div className="grid gap-3 md:grid-cols-3">
-            <div className="rounded-md border border-border/80 bg-muted/20 px-4 py-3">
-              <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Selected exit year</div>
-              <div className="mt-1 text-lg font-semibold">
-                {selectedChartPoint != null ? `Year ${selectedChartPoint.policyYear}` : 'n/a'}
-              </div>
-            </div>
-            <div className="rounded-md border border-border/80 bg-muted/20 px-4 py-3">
-              <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors.success }} />
-                Withdrawable value
-              </div>
-              <div className="mt-1 text-lg font-semibold tabular-nums">
-                {selectedChartPoint != null
-                  ? formatIlpCurrency(selectedChartPoint.netSurrenderValue, policy.currency)
-                  : 'n/a'}
-              </div>
-            </div>
-            <div className="rounded-md border border-border/80 bg-muted/20 px-4 py-3">
-              <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-500" />
-                ETF benchmark
-              </div>
-              <div className="mt-1 text-lg font-semibold tabular-nums">
-                {selectedChartPoint != null
-                  ? formatIlpCurrency(selectedChartPoint.etfAlternativeValue, policy.currency)
-                  : 'n/a'}
-              </div>
-            </div>
-          </div>
-          <div className="h-72 rounded-md border border-border/80 bg-white/70 p-3 dark:bg-muted/10" role="img" aria-label="Line chart showing withdrawable value and ETF benchmark by exit year">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={projectedChartData} margin={{ top: 12, right: 20, bottom: 8, left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted/70" vertical={false} />
-                <XAxis
-                  dataKey="label"
-                  tickLine={false}
-                  axisLine={false}
-                  interval="preserveStartEnd"
-                  minTickGap={24}
-                />
-                <YAxis
-                  width={92}
-                  tickLine={false}
-                  axisLine={false}
-                  domain={projectedValueDomain}
-                  tickFormatter={(value: number) => formatIlpCurrency(value, policy.currency)}
-                />
-                <Tooltip
-                  formatter={(value, name) => {
-                    const numericValue = typeof value === 'number' ? value : Number(value)
-                    if (!Number.isFinite(numericValue)) return ['n/a', name]
-                    return [formatIlpCurrency(numericValue, policy.currency), name]
-                  }}
-                  labelFormatter={(_label, payload) => {
-                    const point = payload?.[0]?.payload
-                    if (!point) return ''
-                    return `${point.label} · Withdrawable ${formatIlpCurrency(point.netSurrenderValue, policy.currency)} · ETF benchmark ${formatIlpCurrency(point.etfAlternativeValue, policy.currency)}`
-                  }}
-                />
-                {selectedChartPoint?.exitYear != null && selectedChartPoint.exitYear > 0 ? (
-                  <ReferenceLine x={selectedChartPoint.label} stroke={colors.muted} strokeDasharray="4 4" />
-                ) : null}
-                <Line
-                  type="monotone"
-                  dataKey="netSurrenderValue"
-                  name="Withdrawable value"
-                  stroke={colors.success}
-                  strokeWidth={2.5}
-                  dot={false}
-                  activeDot={{ r: 5 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="etfAlternativeValue"
-                  name="ETF benchmark"
-                  stroke="#f59e0b"
-                  strokeWidth={2.5}
-                  dot={false}
-                  activeDot={{ r: 5 }}
-                />
-                {selectedChartPoint?.exitYear != null && selectedChartPoint.exitYear > 0 ? (
-                  <ReferenceDot
-                    x={selectedChartPoint.label}
-                    y={selectedChartPoint.netSurrenderValue}
-                    r={5}
-                    fill={colors.success}
                     stroke="white"
                     strokeWidth={2}
                   />
