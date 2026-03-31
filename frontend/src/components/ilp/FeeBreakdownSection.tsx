@@ -450,7 +450,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
               Returns are not guaranteed, but fees are. This breakdown shows the projected fees under your assumptions, year by year.
             </p>
           </div>
-          <div className="flex flex-col gap-2 sm:items-end">
+          <div className="flex flex-col gap-3 sm:items-end">
             <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase sm:text-right">
               Estimated return
             </p>
@@ -461,14 +461,19 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                 <TabsTrigger value="high">{formatIlpPercent(scenarioReturnAssumptions.high)}</TabsTrigger>
               </TabsList>
             </Tabs>
-            <div className="flex flex-wrap gap-3 text-xs">
-              <div className="flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+              <div className="flex items-center gap-1.5 text-xs">
                 <Checkbox id="include-ocf" checked={includeOcf} onCheckedChange={(v) => setIncludeOcf(v === true)} />
                 <label htmlFor="include-ocf" className="cursor-pointer">Include fund fees (OCF)</label>
               </div>
-              <div className="flex items-center gap-1.5">
-                <Checkbox id="use-real-values" checked={useRealValues} onCheckedChange={(v) => setUseRealValues(v === true)} />
-                <label htmlFor="use-real-values" className="cursor-pointer">Today's dollars</label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-muted-foreground">Dollar basis</span>
+                <Tabs value={useRealValues ? 'real' : 'nominal'} onValueChange={(value) => setUseRealValues(value === 'real')}>
+                  <TabsList>
+                    <TabsTrigger value="nominal">Nominal</TabsTrigger>
+                    <TabsTrigger value="real">Today's dollars</TabsTrigger>
+                  </TabsList>
+                </Tabs>
               </div>
             </div>
           </div>

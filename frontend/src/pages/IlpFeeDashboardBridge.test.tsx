@@ -133,6 +133,9 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(screen.getByRole('tab', { name: '6.0%' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: '8.0%' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: '10.0%' })).toBeInTheDocument()
+    expect(screen.getByText('Dollar basis')).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Nominal' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: "Today's dollars" })).toBeInTheDocument()
   })
 
   it('shows expand controls for the fee breakdown charts and table', () => {
