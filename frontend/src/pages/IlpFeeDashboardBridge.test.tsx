@@ -132,7 +132,6 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(screen.getByRole('tab', { name: '6.0%' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: '8.0%' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: '10.0%' })).toBeInTheDocument()
-    expect(screen.getByText(/gross return assumptions used for the low, mid, and high projections: 6\.0%, 8\.0%, and 10\.0%\./i)).toBeInTheDocument()
   })
 
   it('shows a surrender-fee column in the detailed fee table', () => {

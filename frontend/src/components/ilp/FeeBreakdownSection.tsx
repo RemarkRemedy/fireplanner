@@ -230,17 +230,6 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                 <TabsTrigger value="high">{formatIlpPercent(scenarioReturnAssumptions.high)}</TabsTrigger>
               </TabsList>
             </Tabs>
-            <p className="text-xs text-muted-foreground sm:max-w-[18rem] sm:text-right">
-              Gross return assumptions used for the low, mid, and high projections:
-              {' '}
-              {formatIlpPercent(scenarioReturnAssumptions.low)},
-              {' '}
-              {formatIlpPercent(scenarioReturnAssumptions.mid)},
-              {' '}
-              and
-              {' '}
-              {formatIlpPercent(scenarioReturnAssumptions.high)}.
-            </p>
             <div className="flex flex-wrap gap-3 text-xs">
               <div className="flex items-center gap-1.5">
                 <Checkbox id="include-ocf" checked={includeOcf} onCheckedChange={(v) => setIncludeOcf(v === true)} />
