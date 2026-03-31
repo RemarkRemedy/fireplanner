@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeReceiptData, computeIndexFundValue } from './ilpReceiptData'
+import { computeFeeOpportunityValue, computeReceiptData, computeIndexFundValue } from './ilpReceiptData'
 import { INDEX_FUND_NET_RETURN } from '@/lib/data/ilpReceiptConstants'
 import type { IlpPolicyInput } from '@/lib/calculations/ilp'
 import { analyzeIlpPolicy } from '@/lib/calculations/ilp'
@@ -188,15 +188,15 @@ describe('computeReceiptData', () => {
     expect(receipt.feeDragPercent).toBeCloseTo(receipt.whatTheyKeep / receipt.youPay, 6)
   })
 
-  it('leavingOnTable equals indexFundValue minus ilpValueAtHorizon (clamped to zero)', () => {
+  it('feeOpportunityValue compounds fee drag into the receipt index-fund benchmark', () => {
     const policy = makePolicy()
     const analysis = analyzeIlpPolicy(policy)
     const projection = analysis.projections.mid
     const breakdown = buildFeeBreakdown(projection, policy.funds, policy)
 
     const receipt = computeReceiptData(policy, analysis, breakdown, true)
-    expect(receipt.leavingOnTable).toBeCloseTo(
-      Math.max(0, receipt.indexFundValue - receipt.ilpValueAtHorizon),
+    expect(receipt.feeOpportunityValue).toBeCloseTo(
+      computeFeeOpportunityValue(breakdown, projection.rows.length, true),
       2,
     )
   })
@@ -235,7 +235,7 @@ describe('computeReceiptData', () => {
     expect(receipt.whatTheyKeep).toBeGreaterThanOrEqual(0)
   })
 
-  it('clamps leavingOnTable to zero when ILP outperforms index fund', () => {
+  it('feeOpportunityValue remains non-negative even when the ILP outperforms the index fund', () => {
     const policy = makePolicy({
       funds: [{
         name: 'High Return Fund',
@@ -263,6 +263,6 @@ describe('computeReceiptData', () => {
     const breakdown = buildFeeBreakdown(projection, policy.funds, policy)
 
     const receipt = computeReceiptData(policy, analysis, breakdown, true)
-    expect(receipt.leavingOnTable).toBeGreaterThanOrEqual(0)
+    expect(receipt.feeOpportunityValue).toBeGreaterThanOrEqual(0)
   })
 })

@@ -181,9 +181,9 @@ export const ReceiptCanvas = forwardRef<HTMLDivElement, ReceiptCanvasProps>(
 
         <div style={dotSeparator} />
 
-        {/* Leaving on the table */}
+        {/* Fee opportunity value */}
         <div style={{ textAlign: 'center', padding: `${s(format, 8, 4)}px 0` }}>
-          <div style={sectionLabel}>YOU'RE LEAVING ON THE TABLE</div>
+          <div style={sectionLabel}>IF THOSE FEES STAYED INVESTED</div>
           <div
             style={{
               fontSize: px(secondaryPunchSize),
@@ -191,7 +191,7 @@ export const ReceiptCanvas = forwardRef<HTMLDivElement, ReceiptCanvasProps>(
               margin: `${s(format, 12, 8)}px 0`,
             }}
           >
-            {cur(data.leavingOnTable)}
+            {cur(data.feeOpportunityValue)}
           </div>
         </div>
 

@@ -13,7 +13,7 @@ export interface ReceiptData {
   feeDragPercent: number
   indexFundValue: number
   ilpValueAtHorizon: number
-  leavingOnTable: number
+  feeOpportunityValue: number
   dataFreshness: string
   includesOcf: boolean
 }
@@ -57,6 +57,28 @@ export function computeIndexFundValue(
   return total
 }
 
+export function computeFeeOpportunityValue(
+  feeBreakdown: IlpFeeBreakdownResult,
+  years: number,
+  includeOcf: boolean,
+): number {
+  if (years <= 0) return 0
+
+  const inceptionCharges = feeBreakdown.inceptionCharges.reduce((sum, charge) => sum + charge.amount, 0)
+  let total = inceptionCharges * Math.pow(1 + INDEX_FUND_NET_RETURN, years)
+
+  for (const row of feeBreakdown.rows) {
+    const feeForYear = Math.max(
+      0,
+      (includeOcf ? row.totalGrossFee : row.grossFee) - row.bonusCredits,
+    )
+    const yearsRemaining = Math.max(0, years - row.policyYear)
+    total += feeForYear * Math.pow(1 + INDEX_FUND_NET_RETURN, yearsRemaining)
+  }
+
+  return total
+}
+
 export function computeReceiptData(
   policy: IlpPolicyInput,
   analysis: IlpProjectedPolicyAnalysis,
@@ -84,7 +106,7 @@ export function computeReceiptData(
     policy.initialSinglePremium ?? 0,
     horizonYears,
   )
-  const leavingOnTable = Math.max(0, indexFundValue - ilpValueAtHorizon)
+  const feeOpportunityValue = computeFeeOpportunityValue(feeBreakdown, horizonYears, includeOcf)
 
   return {
     productLabel: buildProductLabel(policy),
@@ -96,7 +118,7 @@ export function computeReceiptData(
     feeDragPercent,
     indexFundValue,
     ilpValueAtHorizon,
-    leavingOnTable,
+    feeOpportunityValue,
     dataFreshness: formatDataVintage(DATA_VINTAGE),
     includesOcf: includeOcf,
   }
