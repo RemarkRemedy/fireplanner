@@ -341,6 +341,9 @@ function GuideNote() {
           The fund-fee impact shown here depends on the market-return assumptions you use. You can use past returns as a reference point, but past performance does not guarantee future performance.
         </li>
         <li>
+          One purpose of this page is to make the fee load visible. If the charges feel high or unclear, do not be shy about asking for a full explanation before you sign.
+        </li>
+        <li>
           Check your policy documents and confirm the actual numbers with your adviser before relying on them for a decision.
         </li>
       </ul>
