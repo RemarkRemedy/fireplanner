@@ -15,8 +15,8 @@ import {
   Cell,
   Line,
   LineChart,
-  ReferenceLine,
   ReferenceDot,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -30,57 +30,10 @@ interface ExitTimingExplorerProps {
   analysis: IlpProjectedPolicyAnalysis
 }
 
-function solveAnnualizedReturn(cashflows: number[]): number | null {
-  if (cashflows.length < 2) return null
-
-  const hasNegative = cashflows.some((value) => value < 0)
-  const hasPositive = cashflows.some((value) => value > 0)
-  if (!hasNegative || !hasPositive) return null
-
-  const npv = (rate: number) => cashflows.reduce(
-    (sum, value, index) => sum + (value / Math.pow(1 + rate, index)),
-    0,
-  )
-
-  let low = -0.9999
-  let high = 1
-  let npvLow = npv(low)
-  let npvHigh = npv(high)
-
-  let expansionGuard = 0
-  while (npvLow * npvHigh > 0 && expansionGuard < 16) {
-    high *= 2
-    npvHigh = npv(high)
-    expansionGuard += 1
-  }
-
-  if (npvLow * npvHigh > 0) {
-    return null
-  }
-
-  for (let iteration = 0; iteration < 80; iteration += 1) {
-    const mid = (low + high) / 2
-    const npvMid = npv(mid)
-    if (Math.abs(npvMid) < 1e-8) {
-      return mid
-    }
-    if (npvLow * npvMid <= 0) {
-      high = mid
-      npvHigh = npvMid
-    } else {
-      low = mid
-      npvLow = npvMid
-    }
-  }
-
-  return (low + high) / 2
-}
-
 export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps) {
   const colors = useChartColors()
   const horizonYear = analysis.projections.mid.rows.at(-1)?.policyYear ?? analysis.npvAnalysis.bestExitYear
   const paidSoFarEstimate = (policy.initialSinglePremium ?? 0) + (policy.monthlyContribution * policy.monthsAlreadyPaid)
-  const currentGrossValue = analysis.summary.currentSurrenderValue + analysis.summary.cancelNowPenalty
   const exitOptions = useMemo(
     () => [
       {
@@ -114,26 +67,15 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
     analysis.npvAnalysis.holdToMip.totalContributions - selectedOption.totalContributions,
   )
   const valueVsAddedContributions = selectedOption.netSurrenderValue - addedContributionsUntilExit
+
   const chartData = useMemo(
     () => exitOptions.map((option) => {
       const addedFromNowToExit = Math.max(0, option.totalContributions - paidSoFarEstimate)
-      const matchingRow = option.exitYear > 0
-        ? analysis.projections.mid.rows.find((row) => row.year === option.exitYear)
-        : null
-      const annualContributions = analysis.projections.mid.rows
-        .filter((row) => row.year <= option.exitYear)
-        .map((row) => -row.annualContribution)
-      const grossCashflows = [-currentGrossValue, ...annualContributions]
-      const netCashflows = [-analysis.summary.currentSurrenderValue, ...annualContributions]
-      if (option.exitYear > 0 && matchingRow) {
-        grossCashflows[grossCashflows.length - 1] += matchingRow.combinedValue
-        netCashflows[netCashflows.length - 1] += option.netSurrenderValue
-      } else {
-        grossCashflows[0] += currentGrossValue
-        netCashflows[0] += analysis.summary.currentSurrenderValue
+      let etfAlternativeValue = analysis.summary.currentSurrenderValue * Math.pow(1 + policy.alternativeReturn, option.exitYear)
+      for (const row of analysis.projections.mid.rows.filter((row) => row.year <= option.exitYear)) {
+        etfAlternativeValue += row.annualContribution * Math.pow(1 + policy.alternativeReturn, option.exitYear - row.year)
       }
-      const grossAnnualizedReturn = option.exitYear > 0 ? solveAnnualizedReturn(grossCashflows) : 0
-      const netAnnualizedReturn = option.exitYear > 0 ? solveAnnualizedReturn(netCashflows) : 0
+
       return {
         exitYear: option.exitYear,
         policyYear: option.policyYear,
@@ -142,48 +84,33 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
         addedFromNowToExit,
         netSurrenderValue: option.netSurrenderValue,
         eecCharge: option.eecCharge,
-        grossExitValue: matchingRow?.combinedValue ?? currentGrossValue,
-        grossAnnualizedReturn: grossAnnualizedReturn ?? null,
-        netAnnualizedReturn: netAnnualizedReturn ?? null,
+        etfAlternativeValue,
       }
     }),
-    [analysis.projections.mid.rows, analysis.summary.currentSurrenderValue, currentGrossValue, exitOptions, paidSoFarEstimate],
+    [analysis.projections.mid.rows, analysis.summary.currentSurrenderValue, exitOptions, paidSoFarEstimate, policy.alternativeReturn],
   )
-  const selectedReturnPoint = chartData.find((entry) => String(entry.exitYear) === selectedExitYear) ?? chartData[0]
-  const returnChartData = useMemo(
+
+  const projectedChartData = useMemo(
     () => chartData.filter((entry) => entry.exitYear > 0),
     [chartData],
   )
-  const returnValues = returnChartData.flatMap((entry) => [
-    entry.grossAnnualizedReturn,
-    entry.netAnnualizedReturn,
-  ]).filter((value): value is number => value != null && Number.isFinite(value))
-  const returnDomain = useMemo<[number, number]>(() => {
-    if (returnValues.length === 0) {
-      return [-0.1, 0.1]
+
+  const projectedValueDomain = useMemo<[number, number]>(() => {
+    const values = projectedChartData.flatMap((entry) => [
+      entry.netSurrenderValue,
+      entry.addedFromNowToExit,
+      entry.etfAlternativeValue,
+    ])
+    if (values.length === 0) {
+      return [0, 1000]
     }
-    const minValue = Math.min(...returnValues)
-    const maxValue = Math.max(...returnValues)
-    const padding = 0.03
-    const rawMin = Math.min(minValue - padding, -0.02)
-    const rawMax = Math.max(maxValue + padding, 0.02)
-    const roundedMin = Math.floor(rawMin / 0.05) * 0.05
-    const roundedMax = Math.ceil(rawMax / 0.05) * 0.05
-    return [roundedMin, roundedMax]
-  }, [returnValues])
-  const zoomedReturnDomain = useMemo<[number, number]>(() => {
-    const nonNegativeValues = returnChartData.flatMap((entry) => [
-      entry.grossAnnualizedReturn,
-      entry.netAnnualizedReturn,
-    ]).filter((value): value is number => value != null && Number.isFinite(value) && value > -0.12)
-    const maxValue = nonNegativeValues.length > 0 ? Math.max(...nonNegativeValues) : 0.08
-    return [-0.12, Math.ceil((maxValue + 0.02) / 0.02) * 0.02]
-  }, [returnChartData])
-  const negativeReturnYears = returnChartData.filter((entry) => (entry.netAnnualizedReturn ?? 0) < 0).length
-  const negativeWidthPct = returnChartData.length > 0 ? (negativeReturnYears / returnChartData.length) * 100 : 0
-  const selectedReturnLabel = selectedReturnPoint?.exitYear != null && selectedReturnPoint.exitYear > 0
-    ? `Year ${selectedReturnPoint.policyYear}`
-    : 'Year 0'
+
+    const maxValue = Math.max(...values)
+    const roundedMax = Math.ceil((maxValue * 1.08) / 1000) * 1000
+    return [0, Math.max(roundedMax, 1000)]
+  }, [projectedChartData])
+
+  const selectedChartPoint = chartData.find((entry) => String(entry.exitYear) === selectedExitYear) ?? chartData[0]
 
   return (
     <Card>
@@ -215,13 +142,11 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-3">
-          <div className="flex items-end justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-semibold">Net gap by exit year</h3>
-              <p className="text-sm text-muted-foreground">
-                Positive bars mean the exit value is higher than the additional contributions you would make from now to that year.
-              </p>
-            </div>
+          <div>
+            <h3 className="text-sm font-semibold">Net gap by exit year</h3>
+            <p className="text-sm text-muted-foreground">
+              Positive bars mean the exit value is higher than the additional contributions you would make from now to that year.
+            </p>
           </div>
           <div className="h-72 rounded-md border border-border/80 bg-white/70 p-3 dark:bg-muted/10" role="img" aria-label="Bar chart showing net gap by exit year">
             <ResponsiveContainer width="100%" height="100%">
@@ -243,7 +168,7 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
                   labelFormatter={(_label, payload) => {
                     const point = payload?.[0]?.payload
                     if (!point) return ''
-                    return `${point.label} · Value ${formatIlpCurrency(point.netSurrenderValue, policy.currency)} · Added ${formatIlpCurrency(point.addedFromNowToExit, policy.currency)} · Exit charge ${formatIlpCurrency(point.eecCharge, policy.currency)}`
+                    return `${point.label} · Withdrawable ${formatIlpCurrency(point.netSurrenderValue, policy.currency)} · Added ${formatIlpCurrency(point.addedFromNowToExit, policy.currency)} · Exit charge ${formatIlpCurrency(point.eecCharge, policy.currency)}`
                   }}
                 />
                 <Bar
@@ -269,42 +194,44 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
 
         <div className="space-y-3">
           <div>
-            <h3 className="text-sm font-semibold">Annualized return by exit year</h3>
+            <h3 className="text-sm font-semibold">Withdrawable value vs added from now</h3>
             <p className="text-sm text-muted-foreground">
-              Gross is before the exit charge. Net is after the exit charge. Both are annualized from your current position to each projected exit year.
+              Compare how much you could withdraw at each exit year against how much more you would still add from today to reach that point.
             </p>
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             <div className="rounded-md border border-border/80 bg-muted/20 px-4 py-3">
               <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Selected exit year</div>
-              <div className="mt-1 text-lg font-semibold">{selectedReturnLabel}</div>
-            </div>
-            <div className="rounded-md border border-border/80 bg-muted/20 px-4 py-3">
-              <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors.primary }} />
-                Gross annualized return
-              </div>
-              <div className="mt-1 text-lg font-semibold tabular-nums">
-                {selectedReturnPoint?.grossAnnualizedReturn != null
-                  ? `${formatIlpPercent(selectedReturnPoint.grossAnnualizedReturn)} p.a.`
-                  : 'n/a'}
+              <div className="mt-1 text-lg font-semibold">
+                {selectedChartPoint != null ? `Year ${selectedChartPoint.policyYear}` : 'n/a'}
               </div>
             </div>
             <div className="rounded-md border border-border/80 bg-muted/20 px-4 py-3">
               <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors.success }} />
-                Net annualized return
+                Withdrawable value
               </div>
               <div className="mt-1 text-lg font-semibold tabular-nums">
-                {selectedReturnPoint?.netAnnualizedReturn != null
-                  ? `${formatIlpPercent(selectedReturnPoint.netAnnualizedReturn)} p.a.`
+                {selectedChartPoint != null
+                  ? formatIlpCurrency(selectedChartPoint.netSurrenderValue, policy.currency)
+                  : 'n/a'}
+              </div>
+            </div>
+            <div className="rounded-md border border-border/80 bg-muted/20 px-4 py-3">
+              <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors.primary }} />
+                Added from now
+              </div>
+              <div className="mt-1 text-lg font-semibold tabular-nums">
+                {selectedChartPoint != null
+                  ? formatIlpCurrency(selectedChartPoint.addedFromNowToExit, policy.currency)
                   : 'n/a'}
               </div>
             </div>
           </div>
-          <div className="h-72 rounded-md border border-border/80 bg-white/70 p-3 dark:bg-muted/10" role="img" aria-label="Line chart showing gross and net annualized return by exit year">
+          <div className="h-72 rounded-md border border-border/80 bg-white/70 p-3 dark:bg-muted/10" role="img" aria-label="Line chart showing withdrawable value and added contributions by exit year">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={returnChartData} margin={{ top: 12, right: 20, bottom: 8, left: 8 }}>
+              <LineChart data={projectedChartData} margin={{ top: 12, right: 20, bottom: 8, left: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted/70" vertical={false} />
                 <XAxis
                   dataKey="label"
@@ -317,62 +244,58 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
                   width={92}
                   tickLine={false}
                   axisLine={false}
-                  domain={returnDomain}
-                  tickFormatter={(value: number) => formatIlpPercent(value)}
+                  domain={projectedValueDomain}
+                  tickFormatter={(value: number) => formatIlpCurrency(value, policy.currency)}
                 />
                 <Tooltip
                   formatter={(value, name) => {
                     const numericValue = typeof value === 'number' ? value : Number(value)
                     if (!Number.isFinite(numericValue)) return ['n/a', name]
-                    return [`${formatIlpPercent(numericValue)} p.a.`, name]
+                    return [formatIlpCurrency(numericValue, policy.currency), name]
                   }}
                   labelFormatter={(_label, payload) => {
                     const point = payload?.[0]?.payload
                     if (!point) return ''
-                    return `${point.label} · Gross exit value ${formatIlpCurrency(point.grossExitValue, policy.currency)} · Net value ${formatIlpCurrency(point.netSurrenderValue, policy.currency)}`
+                    return `${point.label} · Withdrawable ${formatIlpCurrency(point.netSurrenderValue, policy.currency)} · Added ${formatIlpCurrency(point.addedFromNowToExit, policy.currency)}`
                   }}
                 />
-                <ReferenceLine y={0} stroke={colors.muted} strokeWidth={1.5} />
-                {selectedReturnPoint?.exitYear != null && selectedReturnPoint.exitYear > 0 ? (
-                  <ReferenceLine x={selectedReturnPoint.label} stroke={colors.muted} strokeDasharray="4 4" />
+                {selectedChartPoint?.exitYear != null && selectedChartPoint.exitYear > 0 ? (
+                  <ReferenceLine x={selectedChartPoint.label} stroke={colors.muted} strokeDasharray="4 4" />
                 ) : null}
                 <Line
                   type="monotone"
-                  dataKey="grossAnnualizedReturn"
-                  name="Gross annualized return"
-                  stroke={colors.primary}
-                  strokeWidth={2.5}
-                  strokeDasharray="6 4"
-                  dot={false}
-                  activeDot={{ r: 5 }}
-                  connectNulls={false}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="netAnnualizedReturn"
-                  name="Net annualized return"
+                  dataKey="netSurrenderValue"
+                  name="Withdrawable value"
                   stroke={colors.success}
                   strokeWidth={2.5}
                   dot={false}
                   activeDot={{ r: 5 }}
-                  connectNulls={false}
                 />
-                {selectedReturnPoint?.grossAnnualizedReturn != null ? (
+                <Line
+                  type="monotone"
+                  dataKey="addedFromNowToExit"
+                  name="Added from now"
+                  stroke={colors.primary}
+                  strokeWidth={2.5}
+                  dot={false}
+                  activeDot={{ r: 5 }}
+                />
+                {selectedChartPoint?.exitYear != null && selectedChartPoint.exitYear > 0 ? (
                   <ReferenceDot
-                    x={selectedReturnPoint.label}
-                    y={selectedReturnPoint.grossAnnualizedReturn}
+                    x={selectedChartPoint.label}
+                    y={selectedChartPoint.netSurrenderValue}
                     r={5}
-                    fill={colors.primary}
+                    fill={colors.success}
                     stroke="white"
                     strokeWidth={2}
                   />
                 ) : null}
-                {selectedReturnPoint?.netAnnualizedReturn != null ? (
+                {selectedChartPoint?.exitYear != null && selectedChartPoint.exitYear > 0 ? (
                   <ReferenceDot
-                    x={selectedReturnPoint.label}
-                    y={selectedReturnPoint.netAnnualizedReturn}
+                    x={selectedChartPoint.label}
+                    y={selectedChartPoint.addedFromNowToExit}
                     r={5}
-                    fill={colors.success}
+                    fill={colors.primary}
                     stroke="white"
                     strokeWidth={2}
                   />
@@ -380,114 +303,118 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <div className="grid gap-4 xl:grid-cols-2">
-            <div className="space-y-2 rounded-md border border-dashed border-border/80 bg-muted/10 p-4">
-              <div>
-                <div className="text-sm font-semibold">Prototype A: break-even zoom</div>
-                <p className="text-sm text-muted-foreground">
-                  Keeps the same trend lines, but zooms the y-axis around the negative-to-positive crossover so later years are easier to read.
-                </p>
-              </div>
-              <div className="h-56 rounded-md border border-border/80 bg-white/80 p-3 dark:bg-muted/10" role="img" aria-label="Prototype chart showing annualized returns zoomed around break-even">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={returnChartData} margin={{ top: 12, right: 12, bottom: 4, left: 8 }}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted/70" vertical={false} />
-                    <XAxis
-                      dataKey="label"
-                      tickLine={false}
-                      axisLine={false}
-                      interval="preserveStartEnd"
-                      minTickGap={24}
-                    />
-                    <YAxis
-                      width={76}
-                      tickLine={false}
-                      axisLine={false}
-                      domain={zoomedReturnDomain}
-                      tickFormatter={(value: number) => formatIlpPercent(value)}
-                    />
-                    <ReferenceLine y={0} stroke={colors.muted} strokeWidth={1.5} />
-                    <Line
-                      type="monotone"
-                      dataKey="grossAnnualizedReturn"
-                      stroke={colors.primary}
-                      strokeWidth={2.25}
-                      dot={false}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="netAnnualizedReturn"
-                      stroke={colors.success}
-                      strokeWidth={2.25}
-                      dot={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <h3 className="text-sm font-semibold">If the same money went into a low-cost ETF instead</h3>
+            <p className="text-sm text-muted-foreground">
+              This benchmark uses the current alternative-return assumption of {formatIlpPercent(policy.alternativeReturn)} a year. It is an illustrative comparison, not a guarantee.
+            </p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="rounded-md border border-border/80 bg-muted/20 px-4 py-3">
+              <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Selected exit year</div>
+              <div className="mt-1 text-lg font-semibold">
+                {selectedChartPoint != null ? `Year ${selectedChartPoint.policyYear}` : 'n/a'}
               </div>
             </div>
-            <div className="space-y-2 rounded-md border border-dashed border-border/80 bg-muted/10 p-4">
-              <div>
-                <div className="text-sm font-semibold">Prototype B: loss vs positive bands</div>
-                <p className="text-sm text-muted-foreground">
-                  Keeps the full range, but adds background bands so users can see at a glance when net annualized returns are still below zero and when they turn positive.
-                </p>
+            <div className="rounded-md border border-border/80 bg-muted/20 px-4 py-3">
+              <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors.success }} />
+                Withdrawable value
               </div>
-              <div className="h-56 rounded-md border border-border/80 bg-white/80 p-3 dark:bg-muted/10" role="img" aria-label="Prototype chart showing annualized returns with loss and positive return bands">
-                <div className="relative h-full overflow-hidden rounded-sm">
-                  <div
-                    aria-hidden="true"
-                    className="absolute inset-y-0 left-0 bg-red-50/80"
-                    style={{ width: `${negativeWidthPct}%` }}
-                  />
-                  <div
-                    aria-hidden="true"
-                    className="absolute inset-y-0 right-0 bg-emerald-50/80"
-                    style={{ width: `${100 - negativeWidthPct}%` }}
-                  />
-                  <div className="absolute left-3 top-2 z-10 text-[11px] font-medium uppercase tracking-wide text-red-700/80">
-                    Loss years
-                  </div>
-                  <div className="absolute right-3 top-2 z-10 text-[11px] font-medium uppercase tracking-wide text-emerald-700/80">
-                    Positive years
-                  </div>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={returnChartData} margin={{ top: 24, right: 12, bottom: 4, left: 8 }}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted/60" vertical={false} />
-                      <XAxis
-                        dataKey="label"
-                        tickLine={false}
-                        axisLine={false}
-                        interval="preserveStartEnd"
-                        minTickGap={24}
-                      />
-                      <YAxis
-                        width={76}
-                        tickLine={false}
-                        axisLine={false}
-                        domain={returnDomain}
-                        tickFormatter={(value: number) => formatIlpPercent(value)}
-                      />
-                      <ReferenceLine y={0} stroke={colors.muted} strokeWidth={1.5} />
-                      <Line
-                        type="monotone"
-                        dataKey="grossAnnualizedReturn"
-                        stroke={colors.primary}
-                        strokeWidth={2.25}
-                        strokeDasharray="6 4"
-                        dot={false}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="netAnnualizedReturn"
-                        stroke={colors.success}
-                        strokeWidth={2.25}
-                        dot={false}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
+              <div className="mt-1 text-lg font-semibold tabular-nums">
+                {selectedChartPoint != null
+                  ? formatIlpCurrency(selectedChartPoint.netSurrenderValue, policy.currency)
+                  : 'n/a'}
               </div>
             </div>
+            <div className="rounded-md border border-border/80 bg-muted/20 px-4 py-3">
+              <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-500" />
+                ETF benchmark
+              </div>
+              <div className="mt-1 text-lg font-semibold tabular-nums">
+                {selectedChartPoint != null
+                  ? formatIlpCurrency(selectedChartPoint.etfAlternativeValue, policy.currency)
+                  : 'n/a'}
+              </div>
+            </div>
+          </div>
+          <div className="h-72 rounded-md border border-border/80 bg-white/70 p-3 dark:bg-muted/10" role="img" aria-label="Line chart showing withdrawable value and ETF benchmark by exit year">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={projectedChartData} margin={{ top: 12, right: 20, bottom: 8, left: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted/70" vertical={false} />
+                <XAxis
+                  dataKey="label"
+                  tickLine={false}
+                  axisLine={false}
+                  interval="preserveStartEnd"
+                  minTickGap={24}
+                />
+                <YAxis
+                  width={92}
+                  tickLine={false}
+                  axisLine={false}
+                  domain={projectedValueDomain}
+                  tickFormatter={(value: number) => formatIlpCurrency(value, policy.currency)}
+                />
+                <Tooltip
+                  formatter={(value, name) => {
+                    const numericValue = typeof value === 'number' ? value : Number(value)
+                    if (!Number.isFinite(numericValue)) return ['n/a', name]
+                    return [formatIlpCurrency(numericValue, policy.currency), name]
+                  }}
+                  labelFormatter={(_label, payload) => {
+                    const point = payload?.[0]?.payload
+                    if (!point) return ''
+                    return `${point.label} · Withdrawable ${formatIlpCurrency(point.netSurrenderValue, policy.currency)} · ETF benchmark ${formatIlpCurrency(point.etfAlternativeValue, policy.currency)}`
+                  }}
+                />
+                {selectedChartPoint?.exitYear != null && selectedChartPoint.exitYear > 0 ? (
+                  <ReferenceLine x={selectedChartPoint.label} stroke={colors.muted} strokeDasharray="4 4" />
+                ) : null}
+                <Line
+                  type="monotone"
+                  dataKey="netSurrenderValue"
+                  name="Withdrawable value"
+                  stroke={colors.success}
+                  strokeWidth={2.5}
+                  dot={false}
+                  activeDot={{ r: 5 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="etfAlternativeValue"
+                  name="ETF benchmark"
+                  stroke="#f59e0b"
+                  strokeWidth={2.5}
+                  dot={false}
+                  activeDot={{ r: 5 }}
+                />
+                {selectedChartPoint?.exitYear != null && selectedChartPoint.exitYear > 0 ? (
+                  <ReferenceDot
+                    x={selectedChartPoint.label}
+                    y={selectedChartPoint.netSurrenderValue}
+                    r={5}
+                    fill={colors.success}
+                    stroke="white"
+                    strokeWidth={2}
+                  />
+                ) : null}
+                {selectedChartPoint?.exitYear != null && selectedChartPoint.exitYear > 0 ? (
+                  <ReferenceDot
+                    x={selectedChartPoint.label}
+                    y={selectedChartPoint.etfAlternativeValue}
+                    r={5}
+                    fill="#f59e0b"
+                    stroke="white"
+                    strokeWidth={2}
+                  />
+                ) : null}
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
