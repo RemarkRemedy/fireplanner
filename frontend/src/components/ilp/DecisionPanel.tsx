@@ -16,18 +16,18 @@ export function DecisionPanel({ policy, analysis }: DecisionPanelProps) {
 
   const options = [
     {
-      id: 'cancel-now',
-      title: 'Cancel Now',
+      id: 'year-1-stop',
+      title: 'Stop at Year 1',
       feeDrag: analysis.npvAnalysis.surrenderNow.npvFees,
-      primaryValue: `Net surrender ${formatIlpCurrency(analysis.npvAnalysis.surrenderNow.netSurrenderValue, policy.currency)}`,
-      detail: `EEC charge today: ${formatIlpCurrency(analysis.npvAnalysis.surrenderNow.eecCharge, policy.currency)}.`,
+      primaryValue: `Value available ${formatIlpCurrency(analysis.npvAnalysis.surrenderNow.netSurrenderValue, policy.currency)}`,
+      detail: `Early-exit charge in year 1: ${formatIlpCurrency(analysis.npvAnalysis.surrenderNow.eecCharge, policy.currency)}.`,
     },
     {
       id: 'lowest-fee-year',
       title: `Lowest Fee Year (Year ${analysis.npvAnalysis.bestExitYear})`,
       feeDrag: analysis.npvAnalysis.bestExitNpvFees,
-      primaryValue: `Surrender ${formatIlpCurrency(bestExitOption.netSurrenderValue, policy.currency)}`,
-      detail: `Policy year ${bestExitOption.policyYear}, assuming contributions continue until then.`,
+      primaryValue: `Value available ${formatIlpCurrency(bestExitOption.netSurrenderValue, policy.currency)}`,
+      detail: `Stop in policy year ${bestExitOption.policyYear}, assuming contributions continue until then.`,
     },
     {
       id: 'hold-to-mip',
@@ -44,9 +44,9 @@ export function DecisionPanel({ policy, analysis }: DecisionPanelProps) {
   return (
     <div className="space-y-3">
       <div>
-        <h2 className="text-lg font-semibold">Exit Scenarios</h2>
+        <h2 className="text-lg font-semibold">Scenario Comparison</h2>
         <p className="text-sm text-muted-foreground">
-          Three scenarios showing fee costs at different exit points. These are calculations based on your inputs, not financial advice. Consult a licensed financial adviser before making policy decisions.
+          Three scenarios showing fee costs at different decision points. These are calculations based on your inputs, not financial advice. Consult a licensed financial adviser before making policy decisions.
         </p>
       </div>
 

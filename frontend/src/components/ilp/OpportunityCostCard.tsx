@@ -21,7 +21,7 @@ export function OpportunityCostCard({ policy, analysis }: OpportunityCostCardPro
       </CardHeader>
       <CardContent className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-lg border p-4">
-          <div className="text-sm font-medium">Surrender now and invest instead</div>
+          <div className="text-sm font-medium">Invest outside the policy from year 1</div>
           <div className="mt-2 text-2xl font-semibold tabular-nums">
             {formatIlpCurrency(opportunityCost.alternativePortfolioValue, policy.currency)}
           </div>
@@ -32,12 +32,12 @@ export function OpportunityCostCard({ policy, analysis }: OpportunityCostCardPro
         </div>
 
         <div className="rounded-lg border p-4">
-          <div className="text-sm font-medium">Exit at lowest-fee-drag year</div>
+          <div className="text-sm font-medium">Invest outside the policy at the lowest-fee year</div>
           <div className="mt-2 text-2xl font-semibold tabular-nums">
             {formatIlpCurrency(opportunityCost.atBestExit.alternativeValue, policy.currency)}
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
-            Exit year {opportunityCost.atBestExit.exitYear} and compare against the same ILP horizon-end value.
+            Switch in year {opportunityCost.atBestExit.exitYear} and compare against the same ILP horizon-end value.
             <DeltaBadge value={opportunityCost.atBestExit.difference} format={(value) => formatIlpCurrency(Math.abs(value), policy.currency)} />
           </p>
         </div>
