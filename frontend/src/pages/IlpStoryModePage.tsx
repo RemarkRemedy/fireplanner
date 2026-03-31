@@ -341,10 +341,10 @@ function StoryDetailView({ policy, analysis, catalogProduct }: {
         </div>
         <div className="rounded-md border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-900 dark:bg-amber-950/20">
           <div className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-900 dark:text-amber-200">
-            Before you rely on this
+            Use this as a guide, not a quote
           </div>
           <p className="mt-2 text-sm leading-6 text-amber-900/90 dark:text-amber-100/90">
-            We try to be as accurate as possible, but this page may not be the most precise calculation for your specific policy. It is still a useful way to think about the fees this product could incur and whether those fees make sense in your current circumstances.
+            We aim to keep this estimate close to the published product rules, but it may not match the exact charges on your specific policy. The fund-fee impact shown here depends on the market-return assumptions you use. You can use past returns as a reference point, but past performance does not guarantee future performance. Check your policy documents and confirm the actual numbers with your adviser before relying on them for a decision.
           </p>
         </div>
         <FeeImpactChart

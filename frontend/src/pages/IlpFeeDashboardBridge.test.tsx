@@ -312,4 +312,24 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(screen.getByRole('heading', { level: 3, name: /annual fees by category/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 3, name: /detailed fee table/i })).toBeInTheDocument()
   })
+
+  it('shows guidance that the story detail page is an estimate to confirm with an adviser', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter initialEntries={['/ilp-fees/story/aia-elite-secure-income-5-pay']}>
+        <Routes>
+          <Route path="/ilp-fees/story/:productId" element={<IlpStoryModePage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText(/confirm your details/i)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /show me the fees/i }))
+    await user.click(await screen.findByRole('button', { name: /close/i }))
+
+    expect(await screen.findByText(/use this as a guide, not a quote/i)).toBeInTheDocument()
+    expect(screen.getByText(/past performance does not guarantee future performance/i)).toBeInTheDocument()
+    expect(screen.getByText(/confirm the actual numbers with your adviser/i)).toBeInTheDocument()
+  })
 })
