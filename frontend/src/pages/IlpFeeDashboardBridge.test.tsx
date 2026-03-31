@@ -128,6 +128,7 @@ describe('ILP fee dashboard blog bridge', () => {
 
     render(<FeeBreakdownSection policy={policy} analysis={analysis} />)
 
+    expect(screen.getByText('Estimated return')).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: '6.0%' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: '8.0%' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: '10.0%' })).toBeInTheDocument()

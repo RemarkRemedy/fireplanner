@@ -220,6 +220,9 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:items-end">
+            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase sm:text-right">
+              Estimated return
+            </p>
             <Tabs value={scenario} onValueChange={(value) => setScenario(value as ReturnScenario)}>
               <TabsList>
                 <TabsTrigger value="low">{formatIlpPercent(scenarioReturnAssumptions.low)}</TabsTrigger>
