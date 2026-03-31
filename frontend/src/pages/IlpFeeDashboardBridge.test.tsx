@@ -485,6 +485,8 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(screen.getByText(/past performance does not guarantee future performance/i)).toBeInTheDocument()
     expect(screen.getByText(/confirm the actual numbers with your adviser/i)).toBeInTheDocument()
     expect(screen.getByText(/want to compare this against your own cash flow/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/monthly take-home income \(sgd\)/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/monthly expenses \(sgd\)/i)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /open planner inputs/i })).toHaveAttribute('href', '/inputs#section-income')
     expect(screen.getByText(/what this product is likely costing you/i)).toBeInTheDocument()
     expect(screen.getByText(/how much bonuses cover/i)).toBeInTheDocument()
@@ -518,5 +520,31 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(screen.getByRole('tab', { name: /detailed view/i })).toHaveAttribute('data-state', 'active')
     expect(await screen.findByText(/^fee breakdown$/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /expand annual fees chart/i })).toBeInTheDocument()
+  })
+
+  it('lets non-planner users add a quick cash-flow entry on the story detail page', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter initialEntries={['/ilp-fees/story/aia-elite-secure-income-5-pay']}>
+        <Routes>
+          <Route path="/ilp-fees/story/:productId" element={<IlpStoryModePage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole('button', { name: /show me the fees/i }))
+    await user.click(await screen.findByRole('button', { name: /close/i }))
+
+    await user.clear(screen.getByLabelText(/monthly take-home income \(sgd\)/i))
+    await user.type(screen.getByLabelText(/monthly take-home income \(sgd\)/i), '5000')
+    await user.clear(screen.getByLabelText(/monthly expenses \(sgd\)/i))
+    await user.type(screen.getByLabelText(/monthly expenses \(sgd\)/i), '3200')
+
+    expect(screen.getByText(/estimated monthly surplus/i)).toBeInTheDocument()
+    expect(screen.getByText('S$1,800')).toBeInTheDocument()
+    expect(screen.getByText(/this policy's monthly premium/i)).toBeInTheDocument()
+    expect(screen.getByText(/surplus left after premium/i)).toBeInTheDocument()
+    expect(screen.getByText(/monthly premium uses 19.4% of your entered monthly surplus/i)).toBeInTheDocument()
   })
 })

@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowRight, BadgeDollarSign, ChartColumnBig, Clock3, Receipt, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { InterpretationCallout } from '@/components/shared/InterpretationCallout'
+import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { IlpFeeStory } from '@/components/ilp/IlpFeeStory'
 import { FeeBreakdownSection } from '@/components/ilp/FeeBreakdownSection'
 import { FeeImpactChart } from '@/components/ilp/FeeImpactChart'
@@ -27,6 +28,10 @@ import { formatIlpCurrency, formatIlpPercent } from '@/components/ilp/formatters
 import { mergePolicySeed } from '@/stores/useIlpStore'
 
 type StoryDetailMode = 'walkthrough' | 'detailed'
+type CashFlowQuickEntry = {
+  monthlyIncome: number
+  monthlyExpenses: number
+}
 
 // --- Hydration: resolve productId to catalog product ---
 
@@ -342,22 +347,135 @@ function GuideNote() {
   )
 }
 
-function PlannerHandoffCard() {
+function PlannerHandoffCard({
+  policy,
+  quickEntry,
+  onMonthlyIncomeChange,
+  onMonthlyExpensesChange,
+}: {
+  policy: IlpPolicyInput
+  quickEntry: CashFlowQuickEntry
+  onMonthlyIncomeChange: (value: number) => void
+  onMonthlyExpensesChange: (value: number) => void
+}) {
+  const hasQuickEntry = quickEntry.monthlyIncome > 0 || quickEntry.monthlyExpenses > 0
+  const monthlySurplus = quickEntry.monthlyIncome - quickEntry.monthlyExpenses
+  const annualSurplus = monthlySurplus * 12
+  const canCompareMonthlyPremium = policy.currency === 'SGD' && policy.monthlyContribution > 0
+  const remainingAfterPremium = canCompareMonthlyPremium ? monthlySurplus - policy.monthlyContribution : null
+  const premiumShareOfSurplus = canCompareMonthlyPremium && monthlySurplus > 0
+    ? policy.monthlyContribution / monthlySurplus
+    : null
+
+  let quickEntryCallout: ReactNode = null
+  if (hasQuickEntry) {
+    if (canCompareMonthlyPremium && monthlySurplus <= 0) {
+      quickEntryCallout = (
+        <InterpretationCallout
+          level="danger"
+          message="Your entered spending leaves no monthly surplus before this policy premium. Use the full planner if you want a broader affordability check."
+        />
+      )
+    } else if (canCompareMonthlyPremium && remainingAfterPremium != null && remainingAfterPremium < 0) {
+      quickEntryCallout = (
+        <InterpretationCallout
+          level="danger"
+          message={`This policy's ${formatIlpCurrency(policy.monthlyContribution, 'SGD')} monthly premium is higher than your entered monthly surplus. Treat that as a prompt to double-check the commitment against your own numbers.`}
+        />
+      )
+    } else if (canCompareMonthlyPremium && remainingAfterPremium != null && premiumShareOfSurplus != null) {
+      quickEntryCallout = (
+        <InterpretationCallout
+          level="success"
+          message={`At this quick-entry level, the monthly premium uses ${formatIlpPercent(premiumShareOfSurplus)} of your entered monthly surplus and leaves about ${formatIlpCurrency(remainingAfterPremium, 'SGD')} after the premium.`}
+        />
+      )
+    } else if (policy.monthlyContribution > 0 && policy.currency !== 'SGD') {
+      quickEntryCallout = (
+        <InterpretationCallout
+          level="warning"
+          message="This quick entry is in SGD, so it does not directly compare against this USD premium. Use planner inputs or your own FX assumption if you want a cleaner comparison."
+        />
+      )
+    } else if ((policy.initialSinglePremium ?? 0) > 0) {
+      quickEntryCallout = (
+        <InterpretationCallout
+          level="warning"
+          message="This quick entry helps you judge monthly cash flow only. For a one-off premium, use planner inputs if you want to compare the upfront amount against your broader finances."
+        />
+      )
+    }
+  }
+
   return (
     <Card>
-      <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <h2 className="text-lg font-semibold">Want to compare this against your own cash flow?</h2>
-          <p className="text-sm leading-6 text-muted-foreground">
-            Set up or review your planner income and spending inputs in the full app, then come back here to judge whether this ILP fee path fits your own circumstances.
-          </p>
+      <CardContent className="space-y-5 p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold">Want to compare this against your own cash flow?</h2>
+            <p className="text-sm leading-6 text-muted-foreground">
+              If you do not use the planner, enter a quick monthly estimate here. This stays on this page only and gives you a rough cash-flow check before you decide whether to open the full app.
+            </p>
+          </div>
+          <Link to="/inputs#section-income" className="shrink-0">
+            <Button variant="outline">
+              Open planner inputs
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
         </div>
-        <Link to="/inputs#section-income" className="shrink-0">
-          <Button variant="outline">
-            Open planner inputs
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </Link>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <CurrencyInput
+            label="Monthly take-home income (SGD)"
+            value={quickEntry.monthlyIncome}
+            onChange={onMonthlyIncomeChange}
+          />
+          <CurrencyInput
+            label="Monthly expenses (SGD)"
+            value={quickEntry.monthlyExpenses}
+            onChange={onMonthlyExpensesChange}
+          />
+        </div>
+
+        {hasQuickEntry ? (
+          <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-md border p-4">
+                <div className="text-sm text-muted-foreground">Estimated monthly surplus</div>
+                <div className="mt-1 text-2xl font-bold">{formatIlpCurrency(monthlySurplus, 'SGD')}</div>
+              </div>
+              <div className="rounded-md border p-4">
+                <div className="text-sm text-muted-foreground">Estimated annual surplus</div>
+                <div className="mt-1 text-2xl font-bold">{formatIlpCurrency(annualSurplus, 'SGD')}</div>
+              </div>
+              {canCompareMonthlyPremium ? (
+                <>
+                  <div className="rounded-md border p-4">
+                    <div className="text-sm text-muted-foreground">This policy&apos;s monthly premium</div>
+                    <div className="mt-1 text-2xl font-bold">{formatIlpCurrency(policy.monthlyContribution, 'SGD')}</div>
+                  </div>
+                  <div className="rounded-md border p-4">
+                    <div className="text-sm text-muted-foreground">Surplus left after premium</div>
+                    <div className="mt-1 text-2xl font-bold">{formatIlpCurrency(remainingAfterPremium ?? 0, 'SGD')}</div>
+                  </div>
+                </>
+              ) : (
+                <div className="rounded-md border p-4 sm:col-span-2">
+                  <div className="text-sm text-muted-foreground">How to use this quick check</div>
+                  <div className="mt-1 text-sm leading-6 text-muted-foreground">
+                    Use this to judge your own monthly breathing room. For one-off premiums or non-SGD premiums, open planner inputs if you want deeper context.
+                  </div>
+                </div>
+              )}
+            </div>
+            {quickEntryCallout}
+          </div>
+        ) : (
+          <p className="text-sm leading-6 text-muted-foreground">
+            Quick entry is optional. Add your own monthly numbers here if you want a rough surplus check without doing full planner onboarding.
+          </p>
+        )}
       </CardContent>
     </Card>
   )
@@ -526,7 +644,19 @@ function WalkthroughExitSection({
   )
 }
 
-function VerificationSection({ onOpenDetailed }: { onOpenDetailed: () => void }) {
+function VerificationSection({
+  policy,
+  quickEntry,
+  onMonthlyIncomeChange,
+  onMonthlyExpensesChange,
+  onOpenDetailed,
+}: {
+  policy: IlpPolicyInput
+  quickEntry: CashFlowQuickEntry
+  onMonthlyIncomeChange: (value: number) => void
+  onMonthlyExpensesChange: (value: number) => void
+  onOpenDetailed: () => void
+}) {
   return (
     <section className="space-y-4">
       <h2 className="text-2xl font-bold">What should you verify before deciding?</h2>
@@ -538,7 +668,12 @@ function VerificationSection({ onOpenDetailed }: { onOpenDetailed: () => void })
             <li>Verify the actual fund fees on the funds chosen inside the policy.</li>
             <li>Ask your adviser or insurer illustration to confirm the exact numbers before acting.</li>
           </ul>
-          <PlannerHandoffCard />
+          <PlannerHandoffCard
+            policy={policy}
+            quickEntry={quickEntry}
+            onMonthlyIncomeChange={onMonthlyIncomeChange}
+            onMonthlyExpensesChange={onMonthlyExpensesChange}
+          />
           <div className="flex flex-wrap gap-3">
             <Button onClick={onOpenDetailed}>
               Open detailed view
@@ -555,12 +690,18 @@ function WalkthroughDetailView({
   policy,
   analysis,
   feeImpact,
+  quickEntry,
+  onMonthlyIncomeChange,
+  onMonthlyExpensesChange,
   onOpenDetailed,
   onOpenReceipt,
 }: {
   policy: IlpPolicyInput
   analysis: IlpProjectedPolicyAnalysis
   feeImpact: ReturnType<typeof useFeeImpact>
+  quickEntry: CashFlowQuickEntry
+  onMonthlyIncomeChange: (value: number) => void
+  onMonthlyExpensesChange: (value: number) => void
   onOpenDetailed: () => void
   onOpenReceipt: () => void
 }) {
@@ -569,7 +710,13 @@ function WalkthroughDetailView({
       <WalkthroughSummarySection policy={policy} analysis={analysis} feeImpact={feeImpact} onOpenDetailed={onOpenDetailed} />
       <BonusSection policy={policy} analysis={analysis} />
       <WalkthroughExitSection policy={policy} analysis={analysis} onOpenDetailed={onOpenDetailed} />
-      <VerificationSection onOpenDetailed={onOpenDetailed} />
+      <VerificationSection
+        policy={policy}
+        quickEntry={quickEntry}
+        onMonthlyIncomeChange={onMonthlyIncomeChange}
+        onMonthlyExpensesChange={onMonthlyExpensesChange}
+        onOpenDetailed={onOpenDetailed}
+      />
       {analysis.summary.totalPremiumsPaid > 0 && (
         <div className="flex justify-center pt-2">
           <Button variant="outline" size="lg" onClick={onOpenReceipt}>
@@ -586,16 +733,27 @@ function DetailedAnalysisView({
   policy,
   analysis,
   feeImpact,
+  quickEntry,
+  onMonthlyIncomeChange,
+  onMonthlyExpensesChange,
   onOpenReceipt,
 }: {
   policy: IlpPolicyInput
   analysis: IlpProjectedPolicyAnalysis
   feeImpact: ReturnType<typeof useFeeImpact>
+  quickEntry: CashFlowQuickEntry
+  onMonthlyIncomeChange: (value: number) => void
+  onMonthlyExpensesChange: (value: number) => void
   onOpenReceipt: () => void
 }) {
   return (
     <>
-      <PlannerHandoffCard />
+      <PlannerHandoffCard
+        policy={policy}
+        quickEntry={quickEntry}
+        onMonthlyIncomeChange={onMonthlyIncomeChange}
+        onMonthlyExpensesChange={onMonthlyExpensesChange}
+      />
       <FeeImpactChart
         tiers={feeImpact.tiers}
         timeSeries={feeImpact.timeSeries}
@@ -663,6 +821,7 @@ function StoryDetailView({
 }) {
   const feeImpact = useFeeImpact(policy, analysis, true)
   const [receiptOpen, setReceiptOpen] = useState(false)
+  const [quickEntry, setQuickEntry] = useState<CashFlowQuickEntry>({ monthlyIncome: 0, monthlyExpenses: 0 })
   const receiptFeeBreakdown = useMemo(
     () => buildFeeBreakdown(analysis.projections.mid, policy.funds, policy),
     [analysis, policy],
@@ -702,6 +861,9 @@ function StoryDetailView({
           policy={policy}
           analysis={analysis}
           feeImpact={feeImpact}
+          quickEntry={quickEntry}
+          onMonthlyIncomeChange={(value) => setQuickEntry((current) => ({ ...current, monthlyIncome: value }))}
+          onMonthlyExpensesChange={(value) => setQuickEntry((current) => ({ ...current, monthlyExpenses: value }))}
           onOpenDetailed={() => onModeChange('detailed')}
           onOpenReceipt={() => setReceiptOpen(true)}
         />
@@ -710,6 +872,9 @@ function StoryDetailView({
           policy={policy}
           analysis={analysis}
           feeImpact={feeImpact}
+          quickEntry={quickEntry}
+          onMonthlyIncomeChange={(value) => setQuickEntry((current) => ({ ...current, monthlyIncome: value }))}
+          onMonthlyExpensesChange={(value) => setQuickEntry((current) => ({ ...current, monthlyExpenses: value }))}
           onOpenReceipt={() => setReceiptOpen(true)}
         />
       )}
