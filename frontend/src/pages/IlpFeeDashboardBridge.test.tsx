@@ -479,15 +479,40 @@ describe('ILP fee dashboard blog bridge', () => {
     await user.click(await screen.findByRole('button', { name: /close/i }))
 
     expect(await screen.findByText(/use this as a guide, not a quote/i)).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /walkthrough/i })).toHaveAttribute('data-state', 'active')
+    expect(screen.getByRole('tab', { name: /detailed view/i })).toBeInTheDocument()
     expect(screen.getByText(/it is still a useful guide to help you visualize the fees this product could incur/i)).toBeInTheDocument()
     expect(screen.getByText(/past performance does not guarantee future performance/i)).toBeInTheDocument()
     expect(screen.getByText(/confirm the actual numbers with your adviser/i)).toBeInTheDocument()
     expect(screen.getByText(/want to compare this against your own cash flow/i)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /open planner inputs/i })).toHaveAttribute('href', '/inputs#section-income')
+    expect(screen.getByText(/what this product is likely costing you/i)).toBeInTheDocument()
     expect(screen.getByText(/how much bonuses cover/i)).toBeInTheDocument()
     expect(screen.getByText(/best exit point \(year 1\)/i)).toBeInTheDocument()
     expect(screen.getByText(/keep policy for 15 years/i)).toBeInTheDocument()
     expect(screen.getAllByText(/total fee cost/i).length).toBeGreaterThan(0)
     expect(screen.getByRole('button', { name: /generate your ilp receipt/i })).toBeInTheDocument()
+    expect(screen.queryByText(/^fee breakdown$/i)).not.toBeInTheDocument()
+  })
+
+  it('switches the story detail route from walkthrough to detailed view', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter initialEntries={['/ilp-fees/story/aia-elite-secure-income-5-pay']}>
+        <Routes>
+          <Route path="/ilp-fees/story/:productId" element={<IlpStoryModePage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole('button', { name: /show me the fees/i }))
+    await user.click(await screen.findByRole('button', { name: /close/i }))
+
+    await user.click(screen.getByRole('tab', { name: /detailed view/i }))
+
+    expect(screen.getByRole('tab', { name: /detailed view/i })).toHaveAttribute('data-state', 'active')
+    expect(await screen.findByText(/^fee breakdown$/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /expand annual fees chart/i })).toBeInTheDocument()
   })
 })

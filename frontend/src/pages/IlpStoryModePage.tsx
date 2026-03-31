@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowRight, BadgeDollarSign, ChartColumnBig, Clock3, Receipt, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { InterpretationCallout } from '@/components/shared/InterpretationCallout'
 import { IlpFeeStory } from '@/components/ilp/IlpFeeStory'
 import { FeeBreakdownSection } from '@/components/ilp/FeeBreakdownSection'
@@ -22,7 +23,10 @@ import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
 import type { IlpPolicySeed } from '@/lib/ilp-catalog/policySeedSchema'
 import { templateVariantToPolicySeed } from '@/lib/ilp-catalog/templateToPolicy'
 import type { IlpCatalogProduct, IlpTemplateVariant } from '@/lib/ilp-catalog/types'
+import { formatIlpCurrency, formatIlpPercent } from '@/components/ilp/formatters'
 import { mergePolicySeed } from '@/stores/useIlpStore'
+
+type StoryDetailMode = 'walkthrough' | 'detailed'
 
 // --- Hydration: resolve productId to catalog product ---
 
@@ -182,6 +186,7 @@ export function IlpStoryModePage() {
   const [pendingSeed, setPendingSeed] = useState<IlpPolicySeed | null>(null)
   const [storyPolicy, setStoryPolicy] = useState<IlpPolicyInput | null>(null)
   const [showFeeStory, setShowFeeStory] = useState(true)
+  const [detailMode, setDetailMode] = useState<StoryDetailMode>('walkthrough')
 
   // No persistence — always fresh from setup gate
   const activePolicy = storyPolicy
@@ -260,6 +265,7 @@ export function IlpStoryModePage() {
                 const policy = mergePolicySeed(adjustedSeed)
                 setStoryPolicy(policy)
                 setShowFeeStory(true)
+                setDetailMode('walkthrough')
                 setPendingSeed(null)
               }}
               onCancel={() => {
@@ -309,127 +315,306 @@ export function IlpStoryModePage() {
       policy={activePolicy}
       analysis={analysis}
       catalogProduct={catalogProduct}
+      mode={detailMode}
+      onModeChange={setDetailMode}
     />
   )
 }
 
-/** Detail view after the Wrapped story closes. Separate component so hooks can be called unconditionally. */
-function StoryDetailView({ policy, analysis, catalogProduct }: {
-  policy: IlpPolicyInput
-  analysis: IlpProjectedPolicyAnalysis
-  catalogProduct: IlpCatalogProduct
-}) {
-  const feeImpact = useFeeImpact(policy, analysis, true)
-  const [receiptOpen, setReceiptOpen] = useState(false)
+function GuideNote() {
+  return (
+    <div className="rounded-md border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-900 dark:bg-amber-950/20">
+      <div className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-900 dark:text-amber-200">
+        Use this as a guide, not a quote
+      </div>
+      <ul className="mt-2 space-y-2 text-sm leading-6 text-amber-900/90 dark:text-amber-100/90">
+        <li>
+          We try to keep this estimate close to the published product rules, but it may not match the exact charges on your specific policy. It is still a useful guide to help you visualize the fees this product could incur.
+        </li>
+        <li>
+          The fund-fee impact shown here depends on the market-return assumptions you use. You can use past returns as a reference point, but past performance does not guarantee future performance.
+        </li>
+        <li>
+          Check your policy documents and confirm the actual numbers with your adviser before relying on them for a decision.
+        </li>
+      </ul>
+    </div>
+  )
+}
+
+function PlannerHandoffCard() {
+  return (
+    <Card>
+      <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <h2 className="text-lg font-semibold">Want to compare this against your own cash flow?</h2>
+          <p className="text-sm leading-6 text-muted-foreground">
+            Set up or review your planner income and spending inputs in the full app, then come back here to judge whether this ILP fee path fits your own circumstances.
+          </p>
+        </div>
+        <Link to="/inputs#section-income" className="shrink-0">
+          <Button variant="outline">
+            Open planner inputs
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </Link>
+      </CardContent>
+    </Card>
+  )
+}
+
+function BonusSection({ policy, analysis }: { policy: IlpPolicyInput; analysis: IlpProjectedPolicyAnalysis }) {
   const bonusSupport = formatIlpBonusSupport(
     analysis.summary.totalBonusesReceived,
     analysis.summary.totalFeesCharged,
   )
-  const receiptFeeBreakdown = useMemo(
-    () => buildFeeBreakdown(analysis.projections.mid, policy.funds, policy),
-    [analysis, policy],
-  )
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
-      <section className="space-y-6">
-        <div className="space-y-1">
-          <div>
-            <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-              {catalogProduct.insurer}
-            </p>
-            <h1 className="text-2xl font-bold">{catalogProduct.productName}</h1>
-          </div>
-        </div>
-        <div className="rounded-md border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-900 dark:bg-amber-950/20">
-          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-900 dark:text-amber-200">
-            Use this as a guide, not a quote
-          </div>
-          <ul className="mt-2 space-y-2 text-sm leading-6 text-amber-900/90 dark:text-amber-100/90">
-            <li>
-              We try to keep this estimate close to the published product rules, but it may not match the exact charges on your specific policy. It is still a useful guide to help you visualize the fees this product could incur.
-            </li>
-            <li>
-              The fund-fee impact shown here depends on the market-return assumptions you use. You can use past returns as a reference point, but past performance does not guarantee future performance.
-            </li>
-            <li>
-              Check your policy documents and confirm the actual numbers with your adviser before relying on them for a decision.
-            </li>
-          </ul>
-        </div>
+    <section className="space-y-4">
+      <h2 className="text-2xl font-bold">How bonuses affect your fees</h2>
+      {analysis.summary.totalBonusesReceived > 0 ? (
         <Card>
-          <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1">
-              <h2 className="text-lg font-semibold">Want to compare this against your own cash flow?</h2>
-              <p className="text-sm leading-6 text-muted-foreground">
-                Set up or review your planner income and spending inputs in the full app, then come back here to judge whether this ILP fee path fits your own circumstances.
-              </p>
-            </div>
-            <Link to="/inputs#section-income" className="shrink-0">
-              <Button variant="outline">
-                Open planner inputs
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-        <FeeImpactChart
-          tiers={feeImpact.tiers}
-          timeSeries={feeImpact.timeSeries}
-          tierDefs={feeImpact.tierDefs}
-          horizonYears={feeImpact.horizonYears}
-          currency={policy.currency}
-          monthlyContribution={policy.monthlyContribution}
-          initialSinglePremium={policy.initialSinglePremium}
-          useReal
-        />
-        <FeeBreakdownSection policy={policy} analysis={analysis} />
-        {analysis.summary.totalPremiumsPaid > 0 && (
-          <div className="flex justify-center pt-2">
-            <Button variant="outline" size="lg" onClick={() => setReceiptOpen(true)}>
-              <Receipt className="mr-2 h-4 w-4" />
-              Generate Your ILP Receipt
-            </Button>
-          </div>
-        )}
-      </section>
-
-      <section className="space-y-4">
-        <h2 className="text-2xl font-bold">How bonuses affect your fees</h2>
-        {analysis.summary.totalBonusesReceived > 0 ? (
-          <Card>
-            <CardContent className="space-y-4 p-6">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-lg border p-4">
-                  <div className="text-sm text-muted-foreground">Total bonuses received</div>
-                  <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
-                    {new Intl.NumberFormat('en-SG', { style: 'currency', currency: policy.currency }).format(analysis.summary.totalBonusesReceived)}
-                  </div>
-                </div>
-                <div className="rounded-lg border p-4">
-                  <div className="text-sm text-muted-foreground">How much bonuses cover gross policy fees</div>
-                  <div className="text-2xl font-bold">{bonusSupport.value}</div>
-                  <div className="text-xs text-muted-foreground">{bonusSupport.detail}</div>
+          <CardContent className="space-y-4 p-6">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-lg border p-4">
+                <div className="text-sm text-muted-foreground">Total bonuses received</div>
+                <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
+                  {formatIlpCurrency(analysis.summary.totalBonusesReceived, policy.currency)}
                 </div>
               </div>
-              <InterpretationCallout
-                level="success"
-                message="Bonuses can reduce your net cost, but they are separate from the policy's gross fees. Some products credit premium bonuses that may be large relative to fees over the modeled horizon. Check your policy document for suspension, clawback, vesting, and payout conditions."
-              />
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardContent className="p-6">
-              <InterpretationCallout
-                level="warning"
-                message="This product does not have modeled bonuses. All fee figures shown are gross fees with no modeled bonus support. Actual net fees may be lower if the product offers bonuses that are not yet captured in the catalog."
-              />
-            </CardContent>
-          </Card>
-        )}
-      </section>
+              <div className="rounded-lg border p-4">
+                <div className="text-sm text-muted-foreground">How much bonuses cover gross policy fees</div>
+                <div className="text-2xl font-bold">{bonusSupport.value}</div>
+                <div className="text-xs text-muted-foreground">{bonusSupport.detail}</div>
+              </div>
+            </div>
+            <InterpretationCallout
+              level="success"
+              message="Bonuses can reduce your net cost, but they are separate from the policy's gross fees. Some products credit premium bonuses that may be large relative to fees over the modeled horizon. Check your policy document for suspension, clawback, vesting, and payout conditions."
+            />
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="p-6">
+            <InterpretationCallout
+              level="warning"
+              message="This product does not have modeled bonuses. All fee figures shown are gross fees with no modeled bonus support. Actual net fees may be lower if the product offers bonuses that are not yet captured in the catalog."
+            />
+          </CardContent>
+        </Card>
+      )}
+    </section>
+  )
+}
 
+function WalkthroughSummarySection({
+  policy,
+  analysis,
+  feeImpact,
+  onOpenDetailed,
+}: {
+  policy: IlpPolicyInput
+  analysis: IlpProjectedPolicyAnalysis
+  feeImpact: ReturnType<typeof useFeeImpact>
+  onOpenDetailed: () => void
+}) {
+  const [showCalculation, setShowCalculation] = useState(false)
+  const netPolicyFees = analysis.summary.realWrapperFees + analysis.summary.inceptionCharges - analysis.summary.realBonuses
+  const totalEstimatedFees = netPolicyFees + analysis.summary.realFundCharges
+
+  return (
+    <section className="space-y-4">
+      <div className="space-y-1">
+        <h2 className="text-2xl font-bold">What this product is likely costing you</h2>
+        <p className="text-sm text-muted-foreground">
+          Start with the big picture before opening the charts and full year-by-year table.
+        </p>
+      </div>
+      <Card>
+        <CardContent className="space-y-5 p-6">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-lg border p-4">
+              <div className="text-sm text-muted-foreground">Estimated total fees</div>
+              <div className="mt-1 text-2xl font-bold">{formatIlpCurrency(totalEstimatedFees, policy.currency)}</div>
+            </div>
+            <div className="rounded-lg border p-4">
+              <div className="text-sm text-muted-foreground">Net policy fees</div>
+              <div className="mt-1 text-2xl font-bold">{formatIlpCurrency(netPolicyFees, policy.currency)}</div>
+            </div>
+            <div className="rounded-lg border p-4">
+              <div className="text-sm text-muted-foreground">Estimated annual cost on your portfolio</div>
+              <div className="mt-1 text-2xl font-bold">{formatIlpPercent(feeImpact.annualDragPct)} p.a.</div>
+            </div>
+          </div>
+          <InterpretationCallout
+            level="warning"
+            message="Under these assumptions, most of the cost comes from policy-layer charges first, with fund charges building in the background over time."
+          />
+          <div className="flex flex-wrap gap-3">
+            <Button variant="outline" onClick={() => setShowCalculation((value) => !value)}>
+              {showCalculation ? 'Hide fee calculation' : 'See fee calculation'}
+            </Button>
+            <Button variant="ghost" onClick={onOpenDetailed}>
+              Open detailed view
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+          {showCalculation && (
+            <div className="rounded-lg border bg-muted/20 p-4 text-sm">
+              <div className="space-y-2">
+                <div className="flex justify-between gap-4">
+                  <span>Gross policy fees</span>
+                  <span className="tabular-nums">{formatIlpCurrency(analysis.summary.totalFeesCharged, policy.currency)}</span>
+                </div>
+                <div className="flex justify-between gap-4 text-emerald-700 dark:text-emerald-400">
+                  <span>Bonuses returned</span>
+                  <span className="tabular-nums">-{formatIlpCurrency(analysis.summary.totalBonusesReceived, policy.currency)}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span>Net policy fees</span>
+                  <span className="tabular-nums">{formatIlpCurrency(netPolicyFees, policy.currency)}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span>Fund charges</span>
+                  <span className="tabular-nums">{formatIlpCurrency(analysis.summary.realFundCharges, policy.currency)}</span>
+                </div>
+                <div className="flex justify-between gap-4 border-t pt-2 font-semibold">
+                  <span>Estimated total fees</span>
+                  <span className="tabular-nums">{formatIlpCurrency(totalEstimatedFees, policy.currency)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </section>
+  )
+}
+
+function WalkthroughExitSection({
+  policy,
+  analysis,
+  onOpenDetailed,
+}: {
+  policy: IlpPolicyInput
+  analysis: IlpProjectedPolicyAnalysis
+  onOpenDetailed: () => void
+}) {
+  const [showExitDetails, setShowExitDetails] = useState(false)
+
+  return (
+    <section className="space-y-4">
+      <h2 className="text-2xl font-bold">What happens if you stop early</h2>
+      <DecisionPanel policy={policy} analysis={analysis} />
+      <InterpretationCallout
+        level="warning"
+        message="These path comparisons are scenario estimates based on your current inputs. Use them to compare tradeoffs, then confirm the actual exit values and charges with your adviser or policy documents."
+      />
+      <div className="flex flex-wrap gap-3">
+        <Button variant="outline" onClick={() => setShowExitDetails((value) => !value)}>
+          {showExitDetails ? 'Hide exit details' : 'See exit details'}
+        </Button>
+        <Button variant="ghost" onClick={onOpenDetailed}>
+          Open detailed view
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
+      {showExitDetails && <ExitTimingExplorer policy={policy} analysis={analysis} />}
+    </section>
+  )
+}
+
+function VerificationSection({ onOpenDetailed }: { onOpenDetailed: () => void }) {
+  return (
+    <section className="space-y-4">
+      <h2 className="text-2xl font-bold">What should you verify before deciding?</h2>
+      <Card>
+        <CardContent className="space-y-5 p-6">
+          <ul className="space-y-3 text-sm leading-6 text-muted-foreground">
+            <li>Check the exact surrender value or exit value on the latest insurer statement.</li>
+            <li>Confirm whether bonuses are vested, conditional, or clawed back on exit.</li>
+            <li>Verify the actual fund fees on the funds chosen inside the policy.</li>
+            <li>Ask your adviser or insurer illustration to confirm the exact numbers before acting.</li>
+          </ul>
+          <PlannerHandoffCard />
+          <div className="flex flex-wrap gap-3">
+            <Button onClick={onOpenDetailed}>
+              Open detailed view
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </section>
+  )
+}
+
+function WalkthroughDetailView({
+  policy,
+  analysis,
+  feeImpact,
+  onOpenDetailed,
+  onOpenReceipt,
+}: {
+  policy: IlpPolicyInput
+  analysis: IlpProjectedPolicyAnalysis
+  feeImpact: ReturnType<typeof useFeeImpact>
+  onOpenDetailed: () => void
+  onOpenReceipt: () => void
+}) {
+  return (
+    <>
+      <WalkthroughSummarySection policy={policy} analysis={analysis} feeImpact={feeImpact} onOpenDetailed={onOpenDetailed} />
+      <BonusSection policy={policy} analysis={analysis} />
+      <WalkthroughExitSection policy={policy} analysis={analysis} onOpenDetailed={onOpenDetailed} />
+      <VerificationSection onOpenDetailed={onOpenDetailed} />
+      {analysis.summary.totalPremiumsPaid > 0 && (
+        <div className="flex justify-center pt-2">
+          <Button variant="outline" size="lg" onClick={onOpenReceipt}>
+            <Receipt className="mr-2 h-4 w-4" />
+            Generate Your ILP Receipt
+          </Button>
+        </div>
+      )}
+    </>
+  )
+}
+
+function DetailedAnalysisView({
+  policy,
+  analysis,
+  feeImpact,
+  onOpenReceipt,
+}: {
+  policy: IlpPolicyInput
+  analysis: IlpProjectedPolicyAnalysis
+  feeImpact: ReturnType<typeof useFeeImpact>
+  onOpenReceipt: () => void
+}) {
+  return (
+    <>
+      <PlannerHandoffCard />
+      <FeeImpactChart
+        tiers={feeImpact.tiers}
+        timeSeries={feeImpact.timeSeries}
+        tierDefs={feeImpact.tierDefs}
+        horizonYears={feeImpact.horizonYears}
+        currency={policy.currency}
+        monthlyContribution={policy.monthlyContribution}
+        initialSinglePremium={policy.initialSinglePremium}
+        useReal
+      />
+      <FeeBreakdownSection policy={policy} analysis={analysis} />
+      {analysis.summary.totalPremiumsPaid > 0 && (
+        <div className="flex justify-center pt-2">
+          <Button variant="outline" size="lg" onClick={onOpenReceipt}>
+            <Receipt className="mr-2 h-4 w-4" />
+            Generate Your ILP Receipt
+          </Button>
+        </div>
+      )}
+      <BonusSection policy={policy} analysis={analysis} />
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">Your possible path and the opportunity cost</h2>
         <DecisionPanel policy={policy} analysis={analysis} />
@@ -458,6 +643,75 @@ function StoryDetailView({ policy, analysis, catalogProduct }: {
           </p>
         </div>
       </section>
+    </>
+  )
+}
+
+function StoryDetailView({
+  policy,
+  analysis,
+  catalogProduct,
+  mode,
+  onModeChange,
+}: {
+  policy: IlpPolicyInput
+  analysis: IlpProjectedPolicyAnalysis
+  catalogProduct: IlpCatalogProduct
+  mode: StoryDetailMode
+  onModeChange: (mode: StoryDetailMode) => void
+}) {
+  const feeImpact = useFeeImpact(policy, analysis, true)
+  const [receiptOpen, setReceiptOpen] = useState(false)
+  const receiptFeeBreakdown = useMemo(
+    () => buildFeeBreakdown(analysis.projections.mid, policy.funds, policy),
+    [analysis, policy],
+  )
+
+  return (
+    <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
+      <section className="space-y-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-1">
+            <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              {catalogProduct.insurer}
+            </p>
+            <h1 className="text-2xl font-bold">{catalogProduct.productName}</h1>
+          </div>
+          <div className="space-y-2">
+            <div className="text-right text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              View mode
+            </div>
+            <Tabs value={mode} onValueChange={(value) => onModeChange(value as StoryDetailMode)}>
+              <TabsList className="grid h-11 w-full grid-cols-2 rounded-2xl border-[#d9e4f2] bg-white p-1">
+                <TabsTrigger value="walkthrough" className="rounded-xl px-4 py-2">
+                  Walkthrough
+                </TabsTrigger>
+                <TabsTrigger value="detailed" className="rounded-xl px-4 py-2">
+                  Detailed view
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        </div>
+        <GuideNote />
+      </section>
+
+      {mode === 'walkthrough' ? (
+        <WalkthroughDetailView
+          policy={policy}
+          analysis={analysis}
+          feeImpact={feeImpact}
+          onOpenDetailed={() => onModeChange('detailed')}
+          onOpenReceipt={() => setReceiptOpen(true)}
+        />
+      ) : (
+        <DetailedAnalysisView
+          policy={policy}
+          analysis={analysis}
+          feeImpact={feeImpact}
+          onOpenReceipt={() => setReceiptOpen(true)}
+        />
+      )}
 
       <ReceiptPreviewModal
         open={receiptOpen}
