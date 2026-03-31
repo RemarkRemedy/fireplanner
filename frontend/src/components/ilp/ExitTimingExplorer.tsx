@@ -150,6 +150,30 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
     [analysis.projections.mid.rows, analysis.summary.currentSurrenderValue, currentGrossValue, exitOptions, paidSoFarEstimate],
   )
   const selectedReturnPoint = chartData.find((entry) => String(entry.exitYear) === selectedExitYear) ?? chartData[0]
+  const returnChartData = useMemo(
+    () => chartData.filter((entry) => entry.exitYear > 0),
+    [chartData],
+  )
+  const returnValues = returnChartData.flatMap((entry) => [
+    entry.grossAnnualizedReturn,
+    entry.netAnnualizedReturn,
+  ]).filter((value): value is number => value != null && Number.isFinite(value))
+  const returnDomain = useMemo<[number, number]>(() => {
+    if (returnValues.length === 0) {
+      return [-0.1, 0.1]
+    }
+    const minValue = Math.min(...returnValues)
+    const maxValue = Math.max(...returnValues)
+    const padding = 0.03
+    const rawMin = Math.min(minValue - padding, -0.02)
+    const rawMax = Math.max(maxValue + padding, 0.02)
+    const roundedMin = Math.floor(rawMin / 0.05) * 0.05
+    const roundedMax = Math.ceil(rawMax / 0.05) * 0.05
+    return [roundedMin, roundedMax]
+  }, [returnValues])
+  const selectedReturnLabel = selectedReturnPoint?.exitYear != null && selectedReturnPoint.exitYear > 0
+    ? `Year ${selectedReturnPoint.policyYear}`
+    : 'Year 0'
 
   return (
     <Card>
@@ -237,18 +261,53 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
           <div>
             <h3 className="text-sm font-semibold">Annualized return by exit year</h3>
             <p className="text-sm text-muted-foreground">
-              Gross is before the exit charge. Net is after the exit charge. Both are annualized from your current position to the selected exit year.
+              Gross is before the exit charge. Net is after the exit charge. Both are annualized from your current position to each projected exit year.
             </p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="rounded-md border border-border/80 bg-muted/20 px-4 py-3">
+              <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Selected exit year</div>
+              <div className="mt-1 text-lg font-semibold">{selectedReturnLabel}</div>
+            </div>
+            <div className="rounded-md border border-border/80 bg-muted/20 px-4 py-3">
+              <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors.primary }} />
+                Gross annualized return
+              </div>
+              <div className="mt-1 text-lg font-semibold tabular-nums">
+                {selectedReturnPoint?.grossAnnualizedReturn != null
+                  ? `${formatIlpPercent(selectedReturnPoint.grossAnnualizedReturn)} p.a.`
+                  : 'n/a'}
+              </div>
+            </div>
+            <div className="rounded-md border border-border/80 bg-muted/20 px-4 py-3">
+              <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors.success }} />
+                Net annualized return
+              </div>
+              <div className="mt-1 text-lg font-semibold tabular-nums">
+                {selectedReturnPoint?.netAnnualizedReturn != null
+                  ? `${formatIlpPercent(selectedReturnPoint.netAnnualizedReturn)} p.a.`
+                  : 'n/a'}
+              </div>
+            </div>
           </div>
           <div className="h-72 rounded-md border border-border/80 bg-white/70 p-3 dark:bg-muted/10" role="img" aria-label="Line chart showing gross and net annualized return by exit year">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 8, right: 16, bottom: 8, left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
-                <XAxis dataKey="label" tickLine={false} axisLine={false} />
+              <LineChart data={returnChartData} margin={{ top: 12, right: 20, bottom: 8, left: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted/70" vertical={false} />
+                <XAxis
+                  dataKey="label"
+                  tickLine={false}
+                  axisLine={false}
+                  interval="preserveStartEnd"
+                  minTickGap={24}
+                />
                 <YAxis
                   width={92}
                   tickLine={false}
                   axisLine={false}
+                  domain={returnDomain}
                   tickFormatter={(value: number) => formatIlpPercent(value)}
                 />
                 <Tooltip
@@ -264,12 +323,16 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
                   }}
                 />
                 <ReferenceLine y={0} stroke={colors.muted} strokeWidth={1.5} />
+                {selectedReturnPoint?.exitYear != null && selectedReturnPoint.exitYear > 0 ? (
+                  <ReferenceLine x={selectedReturnPoint.label} stroke={colors.muted} strokeDasharray="4 4" />
+                ) : null}
                 <Line
                   type="monotone"
                   dataKey="grossAnnualizedReturn"
                   name="Gross annualized return"
                   stroke={colors.primary}
                   strokeWidth={2.5}
+                  strokeDasharray="6 4"
                   dot={false}
                   activeDot={{ r: 5 }}
                   connectNulls={false}
