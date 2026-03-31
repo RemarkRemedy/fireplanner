@@ -268,14 +268,6 @@ export function IlpLeaderboardPage() {
               <li>Gross fees and bonuses are shown separately so credits do not hide fee load.</li>
               <li>Use the story view when you want the year-by-year fee path for a specific variant.</li>
             </ul>
-            <div className="mt-4 border-t border-[#d9e4f2] pt-4">
-              <Link to="/ilp-fees" className="text-sm font-medium text-[#174a7c] hover:underline">
-                Not sure where to start? Try Walkthrough View.
-              </Link>
-              <p className="mt-1 text-sm leading-6 text-[#5f6877]">
-                Pick one product first if you want the simpler fee story before using the ranked table.
-              </p>
-            </div>
           </div>
         </div>
 
