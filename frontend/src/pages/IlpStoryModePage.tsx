@@ -467,6 +467,7 @@ function StoryDetailView({ policy, analysis, catalogProduct, onReplay }: {
         analysis={analysis}
         feeBreakdown={receiptFeeBreakdown}
         includeOcf
+        defaultUseReal
       />
     </div>
   )

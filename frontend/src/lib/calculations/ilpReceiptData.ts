@@ -16,6 +16,7 @@ export interface ReceiptData {
   feeOpportunityValue: number
   dataFreshness: string
   includesOcf: boolean
+  basisLabel: string
 }
 
 function formatDataVintage(vintage: string): string {
@@ -84,6 +85,7 @@ export function computeReceiptData(
   analysis: IlpProjectedPolicyAnalysis,
   feeBreakdown: IlpFeeBreakdownResult,
   includeOcf: boolean,
+  useReal: boolean,
 ): ReceiptData {
   const { summary } = analysis
   const horizonRows = analysis.projections.mid.rows
@@ -91,22 +93,33 @@ export function computeReceiptData(
     throw new Error('computeReceiptData: projection has no rows')
   }
   const horizonYears = horizonRows.length
-  const ilpValueAtHorizon = horizonRows[horizonRows.length - 1].combinedValue
+  const inflationFactor = Math.pow(1 + policy.inflationRate, horizonYears)
+  const ilpValueAtHorizonNominal = horizonRows[horizonRows.length - 1].combinedValue
 
-  const grossFees = includeOcf
-    ? summary.totalFeesCharged + feeBreakdown.totals.implicitFundFee
-    : summary.totalFeesCharged
-  const bonusesReceived = summary.totalBonusesReceived
+  const realPremiumsPaid = (policy.initialSinglePremium ?? 0) + horizonRows.reduce((sum, row) => (
+    sum + (row.annualContribution / Math.pow(1 + policy.inflationRate, row.year))
+  ), 0)
+  const inceptionCharges = feeBreakdown.inceptionCharges.reduce((sum, charge) => sum + charge.amount, 0)
+
+  const grossFees = useReal
+    ? (includeOcf ? summary.realGrossFees : summary.realGrossFees - summary.realFundCharges)
+    : (includeOcf ? summary.totalFeesCharged + feeBreakdown.totals.implicitFundFee : summary.totalFeesCharged)
+  const bonusesReceived = useReal ? summary.realBonuses : summary.totalBonusesReceived
   const whatTheyKeep = Math.max(0, grossFees - bonusesReceived)
-  const youPay = summary.totalPremiumsPaid
+  const youPay = useReal
+    ? Math.max(realPremiumsPaid, inceptionCharges)
+    : summary.totalPremiumsPaid
   const feeDragPercent = youPay > 0 ? whatTheyKeep / youPay : 0
 
-  const indexFundValue = computeIndexFundValue(
+  const indexFundValueNominal = computeIndexFundValue(
     policy.monthlyContribution,
     policy.initialSinglePremium ?? 0,
     horizonYears,
   )
-  const feeOpportunityValue = computeFeeOpportunityValue(feeBreakdown, horizonYears, includeOcf)
+  const indexFundValue = useReal ? indexFundValueNominal / inflationFactor : indexFundValueNominal
+  const ilpValueAtHorizon = useReal ? ilpValueAtHorizonNominal / inflationFactor : ilpValueAtHorizonNominal
+  const feeOpportunityValueNominal = computeFeeOpportunityValue(feeBreakdown, horizonYears, includeOcf)
+  const feeOpportunityValue = useReal ? feeOpportunityValueNominal / inflationFactor : feeOpportunityValueNominal
 
   return {
     productLabel: buildProductLabel(policy),
@@ -121,5 +134,6 @@ export function computeReceiptData(
     feeOpportunityValue,
     dataFreshness: formatDataVintage(DATA_VINTAGE),
     includesOcf: includeOcf,
+    basisLabel: useReal ? "today's dollars" : 'nominal',
   }
 }

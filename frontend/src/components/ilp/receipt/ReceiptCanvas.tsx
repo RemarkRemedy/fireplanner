@@ -175,7 +175,7 @@ export const ReceiptCanvas = forwardRef<HTMLDivElement, ReceiptCanvasProps>(
               marginTop: px(6),
             }}
           >
-            (global equity, 7% gross return)
+            (global equity, 7% gross return, {data.basisLabel})
           </div>
         </div>
 

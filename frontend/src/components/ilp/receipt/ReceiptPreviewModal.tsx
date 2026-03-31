@@ -1,5 +1,5 @@
 // frontend/src/components/ilp/receipt/ReceiptPreviewModal.tsx
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toBlob } from 'html-to-image'
 import { Download, Share2, Copy, Check } from 'lucide-react'
 import {
@@ -23,6 +23,7 @@ interface ReceiptPreviewModalProps {
   analysis: IlpProjectedPolicyAnalysis
   feeBreakdown: IlpFeeBreakdownResult
   includeOcf: boolean
+  defaultUseReal?: boolean
 }
 
 const FORMAT_OPTIONS: { value: ReceiptFormat; label: string }[] = [
@@ -53,15 +54,23 @@ export function ReceiptPreviewModal({
   analysis,
   feeBreakdown,
   includeOcf,
+  defaultUseReal = true,
 }: ReceiptPreviewModalProps) {
   const [format, setFormat] = useState<ReceiptFormat>('story')
+  const [useReal, setUseReal] = useState(defaultUseReal)
   const [isGenerating, setIsGenerating] = useState(false)
   const [copied, setCopied] = useState(false)
   const canvasRef = useRef<HTMLDivElement>(null)
 
+  useEffect(() => {
+    if (open) {
+      setUseReal(defaultUseReal)
+    }
+  }, [open, defaultUseReal])
+
   const receiptData = useMemo(
-    () => computeReceiptData(policy, analysis, feeBreakdown, includeOcf),
-    [policy, analysis, feeBreakdown, includeOcf],
+    () => computeReceiptData(policy, analysis, feeBreakdown, includeOcf, useReal),
+    [policy, analysis, feeBreakdown, includeOcf, useReal],
   )
   const dims = RECEIPT_DIMENSIONS[format]
   const previewScale = Math.min(360 / dims.width, 640 / dims.height)
@@ -148,6 +157,29 @@ export function ReceiptPreviewModal({
               {opt.label}
             </button>
           ))}
+        </div>
+
+        <div className="flex gap-1 rounded-lg border p-1">
+          <button
+            onClick={() => setUseReal(true)}
+            className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              useReal
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Today&apos;s dollars
+          </button>
+          <button
+            onClick={() => setUseReal(false)}
+            className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              !useReal
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Nominal
+          </button>
         </div>
 
         {/* Scaled preview */}

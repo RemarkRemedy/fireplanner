@@ -373,6 +373,7 @@ export function IlpReviewPage() {
           analysis={displayAnalysis}
           feeBreakdown={receiptFeeBreakdown}
           includeOcf
+          defaultUseReal
         />
       )}
 

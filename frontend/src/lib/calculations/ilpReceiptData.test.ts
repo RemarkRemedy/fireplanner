@@ -123,7 +123,7 @@ describe('computeReceiptData', () => {
     const projection = analysis.projections.mid
     const breakdown = buildFeeBreakdown(projection, policy.funds, policy)
 
-    const receipt = computeReceiptData(policy, analysis, breakdown, true)
+    const receipt = computeReceiptData(policy, analysis, breakdown, true, true)
     expect(receipt.productLabel).toBe('Major Insurer, 25-Year ILP')
     expect(receipt.productLabel).not.toContain('Prudential')
   })
@@ -148,7 +148,7 @@ describe('computeReceiptData', () => {
     const projection = analysis.projections.mid
     const breakdown = buildFeeBreakdown(projection, policy.funds, policy)
 
-    const receipt = computeReceiptData(policy, analysis, breakdown, true)
+    const receipt = computeReceiptData(policy, analysis, breakdown, true, true)
     expect(receipt.productLabel).toBe('Major Insurer, Single Premium ILP')
   })
 
@@ -158,8 +158,8 @@ describe('computeReceiptData', () => {
     const projection = analysis.projections.mid
     const breakdown = buildFeeBreakdown(projection, policy.funds, policy)
 
-    const withOcf = computeReceiptData(policy, analysis, breakdown, true)
-    const withoutOcf = computeReceiptData(policy, analysis, breakdown, false)
+    const withOcf = computeReceiptData(policy, analysis, breakdown, true, true)
+    const withoutOcf = computeReceiptData(policy, analysis, breakdown, false, true)
 
     expect(withOcf.grossFees).toBeGreaterThan(withoutOcf.grossFees)
     expect(withOcf.includesOcf).toBe(true)
@@ -172,7 +172,7 @@ describe('computeReceiptData', () => {
     const projection = analysis.projections.mid
     const breakdown = buildFeeBreakdown(projection, policy.funds, policy)
 
-    const receipt = computeReceiptData(policy, analysis, breakdown, true)
+    const receipt = computeReceiptData(policy, analysis, breakdown, true, true)
     expect(receipt.whatTheyKeep).toBeCloseTo(
       Math.max(0, receipt.grossFees - receipt.bonusesReceived), 2,
     )
@@ -184,21 +184,43 @@ describe('computeReceiptData', () => {
     const projection = analysis.projections.mid
     const breakdown = buildFeeBreakdown(projection, policy.funds, policy)
 
-    const receipt = computeReceiptData(policy, analysis, breakdown, true)
+    const receipt = computeReceiptData(policy, analysis, breakdown, true, true)
     expect(receipt.feeDragPercent).toBeCloseTo(receipt.whatTheyKeep / receipt.youPay, 6)
   })
 
-  it('feeOpportunityValue compounds fee drag into the receipt index-fund benchmark', () => {
+  it('uses the same low-cost benchmark assumption in nominal mode as the fee story chart', () => {
     const policy = makePolicy()
     const analysis = analyzeIlpPolicy(policy)
     const projection = analysis.projections.mid
     const breakdown = buildFeeBreakdown(projection, policy.funds, policy)
 
-    const receipt = computeReceiptData(policy, analysis, breakdown, true)
-    expect(receipt.feeOpportunityValue).toBeCloseTo(
-      computeFeeOpportunityValue(breakdown, projection.rows.length, true),
+    const receipt = computeReceiptData(policy, analysis, breakdown, true, false)
+    const expectedIndexFundValue = computeIndexFundValue(
+      policy.monthlyContribution,
+      policy.initialSinglePremium ?? 0,
+      projection.rows.length,
+    )
+
+    expect(receipt.indexFundValue).toBeCloseTo(expectedIndexFundValue, 2)
+    expect(receipt.basisLabel).toBe('nominal')
+  })
+
+  it("discounts the benchmark and fee opportunity value in today's-dollar mode", () => {
+    const policy = makePolicy()
+    const analysis = analyzeIlpPolicy(policy)
+    const projection = analysis.projections.mid
+    const breakdown = buildFeeBreakdown(projection, policy.funds, policy)
+
+    const nominalReceipt = computeReceiptData(policy, analysis, breakdown, true, false)
+    const realReceipt = computeReceiptData(policy, analysis, breakdown, true, true)
+    const inflationFactor = Math.pow(1 + policy.inflationRate, projection.rows.length)
+
+    expect(realReceipt.indexFundValue).toBeCloseTo(nominalReceipt.indexFundValue / inflationFactor, 2)
+    expect(realReceipt.feeOpportunityValue).toBeCloseTo(
+      computeFeeOpportunityValue(breakdown, projection.rows.length, true) / inflationFactor,
       2,
     )
+    expect(realReceipt.basisLabel).toBe("today's dollars")
   })
 
   it('preserves currency from policy', () => {
@@ -207,7 +229,7 @@ describe('computeReceiptData', () => {
     const projection = analysis.projections.mid
     const breakdown = buildFeeBreakdown(projection, policy.funds, policy)
 
-    const receipt = computeReceiptData(policy, analysis, breakdown, true)
+    const receipt = computeReceiptData(policy, analysis, breakdown, true, true)
     expect(receipt.currency).toBe('USD')
   })
 
@@ -231,7 +253,7 @@ describe('computeReceiptData', () => {
     const projection = analysis.projections.mid
     const breakdown = buildFeeBreakdown(projection, policy.funds, policy)
 
-    const receipt = computeReceiptData(policy, analysis, breakdown, true)
+    const receipt = computeReceiptData(policy, analysis, breakdown, true, true)
     expect(receipt.whatTheyKeep).toBeGreaterThanOrEqual(0)
   })
 
@@ -262,7 +284,7 @@ describe('computeReceiptData', () => {
     const projection = analysis.projections.mid
     const breakdown = buildFeeBreakdown(projection, policy.funds, policy)
 
-    const receipt = computeReceiptData(policy, analysis, breakdown, true)
+    const receipt = computeReceiptData(policy, analysis, breakdown, true, true)
     expect(receipt.feeOpportunityValue).toBeGreaterThanOrEqual(0)
   })
 })
