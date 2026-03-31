@@ -387,7 +387,7 @@ function StoryDetailView({ policy, analysis, catalogProduct }: {
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold">Your exit options</h2>
+        <h2 className="text-2xl font-bold">Your possible path and the opportunity cost</h2>
         <DecisionPanel policy={policy} analysis={analysis} />
         <OpportunityCostCard policy={policy} analysis={analysis} />
         <Card>
