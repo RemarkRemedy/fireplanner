@@ -10,6 +10,7 @@ import { FeeImpactChart } from '@/components/ilp/FeeImpactChart'
 import { useFeeImpact } from '@/hooks/useFeeImpact'
 import { DecisionPanel } from '@/components/ilp/DecisionPanel'
 import { OpportunityCostCard } from '@/components/ilp/OpportunityCostCard'
+import { ExitTimingExplorer } from '@/components/ilp/ExitTimingExplorer'
 import { PolicySetupGate } from '@/components/ilp/PolicySetupGate'
 import { ReceiptPreviewModal } from '@/components/ilp/receipt/ReceiptPreviewModal'
 import { usePageMeta } from '@/hooks/usePageMeta'
@@ -416,6 +417,7 @@ function StoryDetailView({ policy, analysis, catalogProduct }: {
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">Your possible path and the opportunity cost</h2>
         <DecisionPanel policy={policy} analysis={analysis} />
+        <ExitTimingExplorer policy={policy} analysis={analysis} />
         <InterpretationCallout
           level="warning"
           message="These path comparisons are scenario estimates based on your current inputs. Use them to compare tradeoffs, then confirm the actual exit values and charges with your adviser or policy documents."

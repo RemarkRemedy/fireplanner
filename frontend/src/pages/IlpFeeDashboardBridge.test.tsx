@@ -2,6 +2,7 @@ import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
+import { ExitTimingExplorer } from '@/components/ilp/ExitTimingExplorer'
 import { FeeBreakdownSection, getVisibleAnnualFeeCategoryKeys } from '@/components/ilp/FeeBreakdownSection'
 import { FeeImpactChart } from '@/components/ilp/FeeImpactChart'
 import { ProductPickerDialog } from '@/components/ilp/catalog/ProductPickerDialog'
@@ -117,6 +118,21 @@ describe('ILP fee dashboard blog bridge', () => {
       'href',
       '/blog/ilp-questions?utm_source=dashboard&utm_content=chart_callout#questions',
     )
+  })
+
+  it('shows the exit timing calculator with exit-year tradeoff metrics', () => {
+    const policy = createDefaultPolicy()
+    const analysis = analyzeIlpPolicy(policy)
+
+    if (analysis.mode !== 'projected') {
+      throw new Error('Expected the default policy to produce a projected ILP analysis.')
+    }
+
+    render(<ExitTimingExplorer policy={policy} analysis={analysis} />)
+
+    expect(screen.getByText('Exit Timing Calculator')).toBeInTheDocument()
+    expect(screen.getByText('Added from now to exit')).toBeInTheDocument()
+    expect(screen.getByText(/Contributions avoided vs year/i)).toBeInTheDocument()
   })
 
   it('shows the actual low-mid-high return assumptions in the fee breakdown header', () => {
