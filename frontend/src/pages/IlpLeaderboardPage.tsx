@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { ArrowUpDown, ExternalLink, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { cn } from '@/lib/utils'
 import leaderboardData from '@/lib/data/generated/ilpLeaderboard.json'
@@ -80,13 +81,18 @@ export function IlpLeaderboardPage() {
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('netFeeDragPct')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
+  const [activePremiumSection, setActivePremiumSection] = useState<'regular' | 'single'>('regular')
   const [filterInsurer, setFilterInsurer] = useState<string | null>(null)
-  const [filterPremiumType, setFilterPremiumType] = useState<'all' | 'regular' | 'single'>('all')
+
+  const sectionRows = useMemo(
+    () => rows.filter((row) => row.premiumType === activePremiumSection),
+    [activePremiumSection],
+  )
 
   const insurers = useMemo(() => {
-    const set = new Set(rows.map((r) => r.insurer))
+    const set = new Set(sectionRows.map((r) => r.insurer))
     return Array.from(set).sort()
-  }, [])
+  }, [sectionRows])
 
   function handleToggleSort(key: SortKey) {
     if (sortKey === key) {
@@ -98,7 +104,7 @@ export function IlpLeaderboardPage() {
   }
 
   const filtered = useMemo(() => {
-    let result = rows
+    let result = sectionRows
 
     if (search) {
       const q = search.toLowerCase()
@@ -111,10 +117,6 @@ export function IlpLeaderboardPage() {
 
     if (filterInsurer) {
       result = result.filter((r) => r.insurer === filterInsurer)
-    }
-
-    if (filterPremiumType !== 'all') {
-      result = result.filter((r) => r.premiumType === filterPremiumType)
     }
 
     // Sort
@@ -131,7 +133,7 @@ export function IlpLeaderboardPage() {
     })
 
     return result
-  }, [search, filterInsurer, filterPremiumType, sortKey, sortDir])
+  }, [sectionRows, search, filterInsurer, sortKey, sortDir])
 
   const summary = useMemo(() => {
     if (filtered.length === 0) {
@@ -156,8 +158,8 @@ export function IlpLeaderboardPage() {
             <div className="space-y-2">
               <h1 className="font-serif text-3xl leading-tight sm:text-4xl">ILP Product Comparison</h1>
               <p className="max-w-3xl text-sm leading-6 text-[#5f6877] sm:text-base">
-                Compare modelled net fees as a share of premiums paid across {rows.length} product variants from {insurers.length} insurers.
-                Standardized at S$350/mo premium, policy year 1, mid return scenario.
+                Compare modelled net fees as a share of premiums paid across {rows.length} product variants from {Array.from(new Set(rows.map((row) => row.insurer))).length} insurers.
+                Regular-premium and single-premium products are separated so they are not ranked on the same table.
               </p>
             </div>
           </div>
@@ -171,6 +173,28 @@ export function IlpLeaderboardPage() {
             </ul>
           </div>
         </div>
+
+        <div className="mt-6 flex flex-col gap-3 border-t border-[#e8eef7] pt-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-2">
+            <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#5f6877]">Premium basis</div>
+            <p className="text-sm leading-6 text-[#5f6877]">
+              Keep regular-pay and single-premium products in separate ranked sections. The current ranking remains standardized inside each section.
+            </p>
+          </div>
+          <Tabs value={activePremiumSection} onValueChange={(value) => {
+            setActivePremiumSection(value as 'regular' | 'single')
+            setFilterInsurer(null)
+          }}>
+            <TabsList className="h-12 rounded-2xl border-[#d9e4f2] bg-[#f3f7fd] p-1">
+              <TabsTrigger value="regular" className="min-w-[11rem] rounded-xl px-5 py-2.5">
+                Regular premium
+              </TabsTrigger>
+              <TabsTrigger value="single" className="min-w-[11rem] rounded-xl px-5 py-2.5">
+                Single premium
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </section>
 
       {summary && (
@@ -178,7 +202,9 @@ export function IlpLeaderboardPage() {
           <div className="bg-white p-4 sm:p-5">
             <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#5f6877]">Filtered set</div>
             <div className="mt-3 text-3xl font-semibold tabular-nums">{filtered.length}</div>
-            <p className="mt-2 text-sm leading-6 text-[#5f6877]">Variants currently in view after search and insurer filters.</p>
+            <p className="mt-2 text-sm leading-6 text-[#5f6877]">
+              {activePremiumSection === 'regular' ? 'Regular-premium' : 'Single-premium'} variants currently in view after search and insurer filters.
+            </p>
           </div>
           <div className="bg-white p-4 sm:p-5">
             <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#22624a]">Lowest fee drag</div>
@@ -213,13 +239,13 @@ export function IlpLeaderboardPage() {
           <div className="space-y-2">
             <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#5f6877]">Filters</div>
             <p className="text-sm leading-6 text-[#5f6877]">
-              Narrow the ranked table by insurer, premium type, or product name. Active sort decides the row rank.
+              Narrow the active ranked table by insurer or product name. Active sort decides the row rank inside this premium section.
             </p>
           </div>
           <div className="text-sm text-[#5f6877]">{filtered.length} results</div>
         </div>
 
-        <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1.3fr)_minmax(12rem,0.8fr)_minmax(12rem,0.8fr)]">
+        <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_minmax(12rem,0.9fr)]">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5f6877]" />
             <Input
@@ -238,15 +264,6 @@ export function IlpLeaderboardPage() {
             {insurers.map((insurer) => (
               <option key={insurer} value={insurer}>{insurer}</option>
             ))}
-          </select>
-          <select
-            className="h-11 rounded-xl border border-[#d9e4f2] bg-white px-3 text-sm text-[#0f1724]"
-            value={filterPremiumType}
-            onChange={(e) => setFilterPremiumType(e.target.value as 'all' | 'regular' | 'single')}
-          >
-            <option value="all">All premium types</option>
-            <option value="regular">Regular premium</option>
-            <option value="single">Single premium</option>
           </select>
         </div>
       </section>
@@ -368,8 +385,11 @@ export function IlpLeaderboardPage() {
           <p>* Products marked with * do not have bonus modelling. Their net fee drag may be overstated.</p>
           <p>`Net Fees / Premiums` is total net fees divided by total premiums paid over the full modelled horizon. It is not an annualized drag rate.</p>
           <p>
-            All values assume S$350/mo premium (regular) or catalog default (single premium), policy year 1, 0 months paid, mid return scenario, full horizon (MIP + 10 post-MIP years).
-            Your personal numbers may differ. Use the Exit Calculator for personalized analysis.
+            {activePremiumSection === 'regular'
+              ? 'Regular-premium rows use the standardized S$350/mo, policy year 1, 0 months paid, mid return scenario, full horizon basis.'
+              : 'Single-premium rows use the catalog default single-premium setup, policy year 1, 0 months paid, mid return scenario, and full horizon basis.'}
+            {' '}
+            Your personal numbers may differ. Use the story or exit calculator for personalized analysis.
           </p>
           <p>Not financial advice. Consult a licensed financial adviser before making policy decisions.</p>
         </div>

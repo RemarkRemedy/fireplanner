@@ -343,6 +343,24 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(screen.getByText(/filtered set/i)).toBeInTheDocument()
   })
 
+  it('separates regular-premium and single-premium products into distinct leaderboard tabs', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter>
+        <IlpLeaderboardPage />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('tab', { name: /regular premium/i })).toHaveAttribute('data-state', 'active')
+    expect(screen.queryByText(/aia elite secure income - single premium/i)).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('tab', { name: /single premium/i }))
+
+    expect(screen.getByRole('tab', { name: /single premium/i })).toHaveAttribute('data-state', 'active')
+    expect(screen.getAllByText(/aia elite secure income - single premium/i).length).toBeGreaterThan(0)
+  })
+
   it('uses the route variant to skip the story-mode variant picker', () => {
     render(
       <MemoryRouter initialEntries={['/ilp-fees/story/hsbc-life-wealth-voyage?variantId=usd-mip-15']}>
