@@ -376,14 +376,14 @@ function BonusSection({ policy, analysis }: { policy: IlpPolicyInput; analysis: 
         <Card>
           <CardContent className="space-y-4 p-6">
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-lg border p-4">
+              <div className="rounded-md border p-4">
                 <div className="text-sm text-muted-foreground">Total bonuses received</div>
                 <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
                   {formatIlpCurrency(analysis.summary.realBonuses, policy.currency)}
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground">In today&apos;s dollars</div>
               </div>
-              <div className="rounded-lg border p-4">
+              <div className="rounded-md border p-4">
                 <div className="text-sm text-muted-foreground">How much bonuses cover gross policy fees</div>
                 <div className="text-2xl font-bold">{bonusSupport.value}</div>
                 <div className="text-xs text-muted-foreground">{bonusSupport.detail}</div>
@@ -435,15 +435,15 @@ function WalkthroughSummarySection({
       <Card>
         <CardContent className="space-y-5 p-6">
           <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-lg border p-4">
+            <div className="rounded-md border p-4">
               <div className="text-sm text-muted-foreground">Estimated total fees</div>
               <div className="mt-1 text-2xl font-bold">{formatIlpCurrency(totalEstimatedFees, policy.currency)}</div>
             </div>
-            <div className="rounded-lg border p-4">
+            <div className="rounded-md border p-4">
               <div className="text-sm text-muted-foreground">Net policy fees</div>
               <div className="mt-1 text-2xl font-bold">{formatIlpCurrency(netPolicyFees, policy.currency)}</div>
             </div>
-            <div className="rounded-lg border p-4">
+            <div className="rounded-md border p-4">
               <div className="text-sm text-muted-foreground">Estimated annual cost on your portfolio</div>
               <div className="mt-1 text-2xl font-bold">{formatIlpPercent(feeImpact.annualDragPct)} p.a.</div>
             </div>
@@ -462,7 +462,7 @@ function WalkthroughSummarySection({
             </Button>
           </div>
           {showCalculation && (
-            <div className="rounded-lg border bg-muted/20 p-4 text-sm">
+            <div className="rounded-md border bg-muted/20 p-4 text-sm">
               <div className="space-y-2">
                 <div className="flex justify-between gap-4">
                   <span>Gross policy fees</span>
@@ -683,11 +683,11 @@ function StoryDetailView({
               View mode
             </div>
             <Tabs value={mode} onValueChange={(value) => onModeChange(value as StoryDetailMode)}>
-              <TabsList className="grid h-11 w-full grid-cols-2 rounded-2xl border-[#d9e4f2] bg-white p-1">
-                <TabsTrigger value="walkthrough" className="rounded-xl px-4 py-2">
+              <TabsList className="grid h-11 w-full grid-cols-2 rounded-lg border-[#d9e4f2] bg-white p-1">
+                <TabsTrigger value="walkthrough" className="rounded-md px-4 py-2">
                   Walkthrough
                 </TabsTrigger>
-                <TabsTrigger value="detailed" className="rounded-xl px-4 py-2">
+                <TabsTrigger value="detailed" className="rounded-md px-4 py-2">
                   Detailed view
                 </TabsTrigger>
               </TabsList>
