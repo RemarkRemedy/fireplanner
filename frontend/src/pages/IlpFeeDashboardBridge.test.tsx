@@ -1,7 +1,8 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
+import type { HTMLAttributes, ReactNode } from 'react'
 import { ExitTimingExplorer } from '@/components/ilp/ExitTimingExplorer'
 import { FeeBreakdownSection, getVisibleAnnualFeeCategoryKeys } from '@/components/ilp/FeeBreakdownSection'
 import { FeeImpactChart } from '@/components/ilp/FeeImpactChart'
@@ -16,10 +17,37 @@ import { IlpReviewPage } from './IlpReviewPage'
 import { IlpStoryModePage } from './IlpStoryModePage'
 
 vi.mock('recharts', () => {
-  const Container = ({ children }: { children?: React.ReactNode }) => <div>{children}</div>
+  const Container = ({ children, ...props }: HTMLAttributes<HTMLDivElement> & { children?: ReactNode }) => (
+    <div {...props}>{children}</div>
+  )
+  const MockLineChart = ({
+    children,
+    data,
+    onClick,
+    ...props
+  }: HTMLAttributes<HTMLDivElement> & {
+    children?: ReactNode
+    data?: Array<{ exitYear?: number; label?: string }>
+    onClick?: (state?: { activePayload?: Array<{ payload?: { exitYear?: number; label?: string } }> }) => void
+  }) => (
+    <div {...props}>
+      {children}
+      <div>
+        {data?.map((entry, index) => (
+          <button
+            key={entry.exitYear ?? entry.label ?? `entry-${index}`}
+            type="button"
+            onClick={() => onClick?.({ activePayload: [{ payload: entry }] })}
+          >
+            {entry.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
   return {
     ResponsiveContainer: Container,
-    LineChart: Container,
+    LineChart: MockLineChart,
     BarChart: Container,
     Line: () => null,
     Bar: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
@@ -121,7 +149,7 @@ describe('ILP fee dashboard blog bridge', () => {
     )
   })
 
-  it('shows the exit timing calculator with exit-year tradeoff metrics', () => {
+  it('shows the exit timing calculator with exit-year tradeoff metrics and lets chart clicks update the cards', () => {
     const policy = createDefaultPolicy()
     const analysis = analyzeIlpPolicy(policy)
 
@@ -139,6 +167,10 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(screen.getByText('Added from now to exit')).toBeInTheDocument()
     expect(screen.getByText(/Contributions avoided vs year/i)).toBeInTheDocument()
     expect(screen.getByText(/includes year 0/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Year 9' }))
+
+    expect(screen.getAllByText('Year 9').length).toBeGreaterThan(0)
   })
 
   it('shows the actual low-mid-high return assumptions in the fee breakdown header', () => {

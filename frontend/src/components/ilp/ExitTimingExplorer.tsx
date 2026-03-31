@@ -54,6 +54,11 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
   )
   const [selectedExitYear, setSelectedExitYear] = useState(String(analysis.npvAnalysis.bestExitYear))
 
+  const selectExitYear = (exitYear: number | string | null | undefined) => {
+    if (exitYear == null) return
+    setSelectedExitYear(String(exitYear))
+  }
+
   const selectedOption = useMemo(
     () => exitOptions.find((option) => String(option.exitYear) === selectedExitYear) ?? exitOptions[0],
     [exitOptions, selectedExitYear],
@@ -111,6 +116,18 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
   }, [projectedChartData])
 
   const selectedChartPoint = chartData.find((entry) => String(entry.exitYear) === selectedExitYear) ?? chartData[0]
+  const selectedProjectedChartPoint =
+    projectedChartData.find((entry) => String(entry.exitYear) === selectedExitYear) ?? projectedChartData.at(-1) ?? null
+
+  const handleComparisonChartClick = (state?: {
+    activePayload?: Array<{ payload?: { exitYear?: number } }>
+  }) => {
+    const exitYear = state?.activePayload?.[0]?.payload?.exitYear
+    selectExitYear(exitYear)
+  }
+
+  const metricCardClassName = 'rounded-md border border-border/80 bg-background px-4 py-3 shadow-sm'
+  const chartPanelClassName = 'rounded-md border border-border/80 bg-background p-4 shadow-sm'
 
   return (
     <Card>
@@ -148,7 +165,27 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
               Positive bars mean the exit value is higher than the additional contributions you would make from now to that year.
             </p>
           </div>
-          <div className="h-72 rounded-md border border-border/80 bg-white/70 p-3 dark:bg-muted/10" role="img" aria-label="Bar chart showing net gap by exit year">
+          <div className={chartPanelClassName} role="img" aria-label="Bar chart showing net gap by exit year">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-3">
+              <div className="text-sm text-muted-foreground">
+                Year{' '}
+                <span className="font-semibold text-foreground">
+                  {selectedChartPoint != null ? selectedChartPoint.policyYear : 'n/a'}
+                </span>{' '}
+                is currently selected.
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
+                <span className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/20 px-2.5 py-1">
+                  <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors.success }} />
+                  Above added contributions
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/20 px-2.5 py-1">
+                  <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors.danger }} />
+                  Below added contributions
+                </span>
+              </div>
+            </div>
+            <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 8, right: 16, bottom: 8, left: 16 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
@@ -175,7 +212,7 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
                   dataKey="netGap"
                   radius={[6, 6, 0, 0]}
                   onClick={(point) => {
-                    if (point?.exitYear != null) setSelectedExitYear(String(point.exitYear))
+                    selectExitYear(point?.exitYear)
                   }}
                 >
                   {chartData.map((entry) => {
@@ -189,6 +226,7 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
@@ -203,13 +241,13 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
             </p>
           </div>
           <div className="grid gap-3 md:grid-cols-4">
-            <div className="rounded-md border border-border/80 bg-muted/20 px-4 py-3">
+            <div className={metricCardClassName}>
               <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Selected exit year</div>
               <div className="mt-1 text-lg font-semibold">
                 {selectedChartPoint != null ? `Year ${selectedChartPoint.policyYear}` : 'n/a'}
               </div>
             </div>
-            <div className="rounded-md border border-border/80 bg-muted/20 px-4 py-3">
+            <div className={metricCardClassName}>
               <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors.success }} />
                 Withdrawable value
@@ -220,7 +258,7 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
                   : 'n/a'}
               </div>
             </div>
-            <div className="rounded-md border border-border/80 bg-muted/20 px-4 py-3">
+            <div className={metricCardClassName}>
               <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors.primary }} />
                 Added from now
@@ -231,7 +269,7 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
                   : 'n/a'}
               </div>
             </div>
-            <div className="rounded-md border border-border/80 bg-muted/20 px-4 py-3">
+            <div className={metricCardClassName}>
               <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-500" />
                 ETF benchmark
@@ -243,9 +281,38 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
               </div>
             </div>
           </div>
-          <div className="h-80 rounded-md border border-border/80 bg-white/70 p-3 dark:bg-muted/10" role="img" aria-label="Line chart showing withdrawable value, added contributions, and ETF benchmark by exit year">
+          <div className={chartPanelClassName} role="img" aria-label="Line chart showing withdrawable value, added contributions, and ETF benchmark by exit year">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-3">
+              <div>
+                <div className="text-sm font-semibold text-foreground">
+                  Selected year: {selectedProjectedChartPoint != null ? `Year ${selectedProjectedChartPoint.policyYear}` : 'n/a'}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Click a year on the chart to update the cards below.
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
+                <span className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/20 px-2.5 py-1">
+                  <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors.success }} />
+                  Withdrawable value
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/20 px-2.5 py-1">
+                  <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors.primary }} />
+                  Added from now
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/20 px-2.5 py-1">
+                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-500" />
+                  ETF benchmark
+                </span>
+              </div>
+            </div>
+            <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={projectedChartData} margin={{ top: 12, right: 20, bottom: 8, left: 8 }}>
+              <LineChart
+                data={projectedChartData}
+                margin={{ top: 12, right: 20, bottom: 8, left: 8 }}
+                onClick={handleComparisonChartClick}
+              >
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted/70" vertical={false} />
                 <XAxis
                   dataKey="label"
@@ -262,6 +329,13 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
                   tickFormatter={(value: number) => formatIlpCurrency(value, policy.currency)}
                 />
                 <Tooltip
+                  cursor={{ stroke: colors.muted, strokeDasharray: '4 4' }}
+                  contentStyle={{
+                    borderRadius: 10,
+                    borderColor: 'hsl(var(--border))',
+                    boxShadow: '0 10px 24px rgba(15, 23, 42, 0.08)',
+                  }}
+                  itemStyle={{ paddingTop: 2, paddingBottom: 2 }}
                   formatter={(value, name) => {
                     const numericValue = typeof value === 'number' ? value : Number(value)
                     if (!Number.isFinite(numericValue)) return ['n/a', name]
@@ -270,64 +344,65 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
                   labelFormatter={(_label, payload) => {
                     const point = payload?.[0]?.payload
                     if (!point) return ''
-                    return `${point.label} · Withdrawable ${formatIlpCurrency(point.netSurrenderValue, policy.currency)} · Added ${formatIlpCurrency(point.addedFromNowToExit, policy.currency)} · ETF benchmark ${formatIlpCurrency(point.etfAlternativeValue, policy.currency)}`
+                    return `${point.label}`
                   }}
                 />
-                {selectedChartPoint?.exitYear != null && selectedChartPoint.exitYear > 0 ? (
-                  <ReferenceLine x={selectedChartPoint.label} stroke={colors.muted} strokeDasharray="4 4" />
+                {selectedProjectedChartPoint?.exitYear != null ? (
+                  <ReferenceLine x={selectedProjectedChartPoint.label} stroke={colors.muted} strokeDasharray="4 4" />
                 ) : null}
                 <Line
                   type="monotone"
                   dataKey="netSurrenderValue"
                   name="Withdrawable value"
                   stroke={colors.success}
-                  strokeWidth={2.5}
+                  strokeWidth={3}
                   dot={false}
-                  activeDot={{ r: 5 }}
+                  activeDot={{ r: 6 }}
                 />
                 <Line
                   type="monotone"
                   dataKey="addedFromNowToExit"
                   name="Added from now"
                   stroke={colors.primary}
-                  strokeWidth={2.5}
+                  strokeWidth={3}
                   dot={false}
-                  activeDot={{ r: 5 }}
+                  activeDot={{ r: 6 }}
                 />
                 <Line
                   type="monotone"
                   dataKey="etfAlternativeValue"
                   name="ETF benchmark"
                   stroke="#f59e0b"
-                  strokeWidth={2.5}
+                  strokeWidth={3}
+                  strokeDasharray="7 5"
                   dot={false}
-                  activeDot={{ r: 5 }}
+                  activeDot={{ r: 6 }}
                 />
-                {selectedChartPoint?.exitYear != null && selectedChartPoint.exitYear > 0 ? (
+                {selectedProjectedChartPoint?.exitYear != null ? (
                   <ReferenceDot
-                    x={selectedChartPoint.label}
-                    y={selectedChartPoint.netSurrenderValue}
-                    r={5}
+                    x={selectedProjectedChartPoint.label}
+                    y={selectedProjectedChartPoint.netSurrenderValue}
+                    r={6}
                     fill={colors.success}
                     stroke="white"
                     strokeWidth={2}
                   />
                 ) : null}
-                {selectedChartPoint?.exitYear != null && selectedChartPoint.exitYear > 0 ? (
+                {selectedProjectedChartPoint?.exitYear != null ? (
                   <ReferenceDot
-                    x={selectedChartPoint.label}
-                    y={selectedChartPoint.addedFromNowToExit}
-                    r={5}
+                    x={selectedProjectedChartPoint.label}
+                    y={selectedProjectedChartPoint.addedFromNowToExit}
+                    r={6}
                     fill={colors.primary}
                     stroke="white"
                     strokeWidth={2}
                   />
                 ) : null}
-                {selectedChartPoint?.exitYear != null && selectedChartPoint.exitYear > 0 ? (
+                {selectedProjectedChartPoint?.exitYear != null ? (
                   <ReferenceDot
-                    x={selectedChartPoint.label}
-                    y={selectedChartPoint.etfAlternativeValue}
-                    r={5}
+                    x={selectedProjectedChartPoint.label}
+                    y={selectedProjectedChartPoint.etfAlternativeValue}
+                    r={6}
                     fill="#f59e0b"
                     stroke="white"
                     strokeWidth={2}
@@ -335,6 +410,7 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
                 ) : null}
               </LineChart>
             </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
