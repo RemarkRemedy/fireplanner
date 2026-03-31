@@ -26,6 +26,10 @@ import { ExpenseTrackerModal } from '@/components/email/ExpenseTrackerModal'
 // Pages that show the stats strip (inputs and analysis pages, not start/reference)
 const STATS_ROUTES = ['/inputs', '/projection', '/withdrawal', '/stress-test', '/dashboard', '/planner', '/health-check']
 
+function isIlpFeeDashboardRoute(pathname: string) {
+  return pathname === '/ilp-review' || pathname.startsWith('/ilp-fees')
+}
+
 function AppLayoutBannerArea() {
   const { isEligible } = useExpenseTracker()
   return isEligible ? <ExpenseTrackerBanner /> : <BetaBanner />
@@ -79,6 +83,7 @@ export function AppLayout() {
   const navigate = useNavigate()
   const isDesktop = useIsDesktop()
   const companionMode = isCompanionMode()
+  const previousPathRef = useRef<string | null>(null)
 
   // Strip trailing slashes so Umami and React Router see consistent paths
   // (Cloudflare Pages adds trailing slashes to pre-rendered routes)
@@ -114,6 +119,19 @@ export function AppLayout() {
   // Scroll to top on route change (needed for mobile body scroll)
   useEffect(() => {
     window.scrollTo(0, 0)
+  }, [location.pathname])
+
+  // The help panel state is persisted globally. When users enter the fee dashboard,
+  // close it once so the ILP report surfaces do not start with the side panel already open.
+  useEffect(() => {
+    const previousPath = previousPathRef.current
+    const enteringIlpFeeDashboard = isIlpFeeDashboardRoute(location.pathname) && !isIlpFeeDashboardRoute(previousPath ?? '')
+
+    if (enteringIlpFeeDashboard && useUIStore.getState().helpPanelOpen) {
+      useUIStore.getState().setField('helpPanelOpen', false)
+    }
+
+    previousPathRef.current = location.pathname
   }, [location.pathname])
 
   // Track page navigations with previous page for funnel analysis
