@@ -145,6 +145,20 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(screen.getByText('n/a')).toBeInTheDocument()
   })
 
+  it('hides fee-explanation cards for zero-only categories', () => {
+    const policy = createDefaultPolicy()
+    const analysis = analyzeIlpPolicy(policy)
+
+    if (analysis.mode !== 'projected') {
+      throw new Error('Expected the default policy to produce a projected ILP analysis.')
+    }
+
+    render(<FeeBreakdownSection policy={policy} analysis={analysis} />)
+
+    expect(screen.queryByText('Assurance/COI')).not.toBeInTheDocument()
+    expect(screen.queryByText(/cost-of-insurance charges for death, terminal illness, tpd, and accidental death coverage/i)).not.toBeInTheDocument()
+  })
+
   it('omits zero-only annual fee categories from the chart series', () => {
     const visibleKeys = getVisibleAnnualFeeCategoryKeys([
       {

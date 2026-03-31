@@ -146,6 +146,14 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
     () => getVisibleAnnualFeeCategoryKeys(stackedBarData, includeOcf),
     [stackedBarData, includeOcf],
   )
+  const visibleExplanationCategories = useMemo(
+    () => DEFAULT_FEE_CATEGORIES.filter((category) => visibleAnnualFeeCategoryKeys.includes(category.key)),
+    [visibleAnnualFeeCategoryKeys],
+  )
+  const hasVisibleBonusCredits = useMemo(
+    () => stackedBarData.some((row) => Math.abs(row.bonusCredits) > 0.005),
+    [stackedBarData],
+  )
 
   const cumulativeData = useMemo(() => {
     const discount = (value: number, year: number) => useRealValues ? value / Math.pow(1 + inflationRate, year) : value
@@ -448,7 +456,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
           <div className="space-y-3">
             <h3 className="text-sm font-medium">Fee Categories Explained</h3>
             <div className="grid gap-3 sm:grid-cols-2">
-              {DEFAULT_FEE_CATEGORIES.map((category) => {
+              {visibleExplanationCategories.map((category) => {
                 const label = category.key === 'additionalCharges' ? feeColumnInfo.additional.label : category.label
                 const description = category.key === 'additionalCharges' && feeColumnInfo.additional.rules.length > 0
                   ? feeColumnInfo.additional.rules.map((r) => r.label).join(', ')
@@ -466,15 +474,17 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                   </div>
                 )
               })}
-              <div className="rounded-md border border-emerald-200 p-3 dark:border-emerald-900">
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: colors.success }} />
-                  <span className="text-sm font-medium">Bonus Credits</span>
+              {hasVisibleBonusCredits && (
+                <div className="rounded-md border border-emerald-200 p-3 dark:border-emerald-900">
+                  <div className="flex items-center gap-2">
+                    <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: colors.success }} />
+                    <span className="text-sm font-medium">Bonus Credits</span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Power-up, loyalty, allocation, and sign-up bonuses credited to accounts. May be suspended or disqualified during premium holidays, partial withdrawals, or premium reductions.
+                  </p>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Power-up, loyalty, allocation, and sign-up bonuses credited to accounts. May be suspended or disqualified during premium holidays, partial withdrawals, or premium reductions.
-                </p>
-              </div>
+              )}
             </div>
           </div>
 
