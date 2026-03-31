@@ -329,6 +329,7 @@ describe('ILP fee dashboard blog bridge', () => {
     await user.click(await screen.findByRole('button', { name: /close/i }))
 
     expect(await screen.findByText(/use this as a guide, not a quote/i)).toBeInTheDocument()
+    expect(screen.getByText(/it is still a useful guide to help you visualize the fees this product could incur/i)).toBeInTheDocument()
     expect(screen.getByText(/past performance does not guarantee future performance/i)).toBeInTheDocument()
     expect(screen.getByText(/confirm the actual numbers with your adviser/i)).toBeInTheDocument()
   })

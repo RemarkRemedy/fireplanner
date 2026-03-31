@@ -343,9 +343,17 @@ function StoryDetailView({ policy, analysis, catalogProduct }: {
           <div className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-900 dark:text-amber-200">
             Use this as a guide, not a quote
           </div>
-          <p className="mt-2 text-sm leading-6 text-amber-900/90 dark:text-amber-100/90">
-            We aim to keep this estimate close to the published product rules, but it may not match the exact charges on your specific policy. The fund-fee impact shown here depends on the market-return assumptions you use. You can use past returns as a reference point, but past performance does not guarantee future performance. Check your policy documents and confirm the actual numbers with your adviser before relying on them for a decision.
-          </p>
+          <ul className="mt-2 space-y-2 text-sm leading-6 text-amber-900/90 dark:text-amber-100/90">
+            <li>
+              We try to keep this estimate close to the published product rules, but it may not match the exact charges on your specific policy. It is still a useful guide to help you visualize the fees this product could incur.
+            </li>
+            <li>
+              The fund-fee impact shown here depends on the market-return assumptions you use. You can use past returns as a reference point, but past performance does not guarantee future performance.
+            </li>
+            <li>
+              Check your policy documents and confirm the actual numbers with your adviser before relying on them for a decision.
+            </li>
+          </ul>
         </div>
         <FeeImpactChart
           tiers={feeImpact.tiers}
