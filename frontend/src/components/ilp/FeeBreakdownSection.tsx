@@ -14,6 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { cn } from '@/lib/utils'
 import type { IlpPolicyInput, IlpProjectedPolicyAnalysis, ReturnScenario } from '@/lib/calculations/ilp'
 import { getMipEndProjectionIndex } from '@/lib/calculations/ilp'
@@ -80,6 +81,12 @@ const UNMODELED_FEES = [
   'Late payment interest (premium arrears interest is not modeled, but bonus disqualification from late payment IS modeled)',
   'Platform/wrap fees vs fund-level OCF overlap',
 ]
+
+const BONUS_CONDITION_TOOLTIPS = {
+  premiumHoliday: 'A premium holiday is a period when you stop paying regular premiums for a while under the policy rules. Some products reduce or suspend bonuses during that period.',
+  partialWithdrawal: 'A partial withdrawal means taking out part of the policy value without fully surrendering the policy. That can affect bonus eligibility, surrender charges, or remaining value floors.',
+  premiumReduction: 'A premium reduction means lowering the regular premium you commit to pay. Some products treat that as a change that can reduce, suspend, or claw back bonus support.',
+} as const
 
 export function getVisibleAnnualFeeCategoryKeys(
   data: AnnualFeeChartDatum[],
@@ -481,7 +488,13 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                     <span className="text-sm font-medium">Bonus Credits</span>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Power-up, loyalty, allocation, and sign-up bonuses credited to accounts. May be suspended or disqualified during premium holidays, partial withdrawals, or premium reductions.
+                    Power-up, loyalty, allocation, and sign-up bonuses credited to accounts. May be suspended or disqualified during premium holidays
+                    <InfoTooltip text={BONUS_CONDITION_TOOLTIPS.premiumHoliday} />
+                    , partial withdrawals
+                    <InfoTooltip text={BONUS_CONDITION_TOOLTIPS.partialWithdrawal} />
+                    , or premium reductions
+                    <InfoTooltip text={BONUS_CONDITION_TOOLTIPS.premiumReduction} />
+                    .
                   </p>
                 </div>
               )}
