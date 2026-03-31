@@ -341,6 +341,7 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(screen.getByText(/ranked fee report/i)).toBeInTheDocument()
     expect(screen.getByText(/strongest bonus support/i)).toBeInTheDocument()
     expect(screen.getByText(/filtered set/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /not sure where to start\? try walkthrough view\./i })).toHaveAttribute('href', '/ilp-fees')
   })
 
   it('separates regular-premium and single-premium products into distinct leaderboard tabs', async () => {
