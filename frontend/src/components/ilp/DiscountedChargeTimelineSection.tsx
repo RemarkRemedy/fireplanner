@@ -65,23 +65,31 @@ export function DiscountedChargeTimelineSection({
                 tickFormatter={(value: number) => formatIlpCurrency(value, policy.currency)}
               />
               <Tooltip
-                labelFormatter={(value: number) => `Exit in Year ${value}`}
-                formatter={(value: number, name: string, item) => {
-                  const point = item.payload
-                  if (name !== 'totalDiscountedCharges') {
-                    return [formatIlpCurrency(value, policy.currency), name]
-                  }
-                                return [
-                                  [
-                                    `Total ${formatIlpCurrency(value, policy.currency)}`,
-                                    `Policy ${formatIlpCurrency(point.discountedPolicyCharges, policy.currency)}`,
-                                    ...(!excludeFundFees ? [`Fund ${formatIlpCurrency(point.discountedFundCharges, policy.currency)}`] : []),
-                                    `Bonuses -${formatIlpCurrency(point.discountedBonuses, policy.currency)}`,
-                                    `Initial ${formatIlpCurrency(point.discountedInceptionCharges, policy.currency)}`,
-                                    `EEC ${formatIlpCurrency(point.discountedEec, policy.currency)}`,
-                    ].join(' | '),
-                    "Today's-dollar total to exit",
+                content={({ active, payload, label }) => {
+                  if (!active || !payload?.length) return null
+                  const point = payload[0]?.payload
+                  if (!point) return null
+                  const rows = [
+                    { label: 'Total', value: formatIlpCurrency(point.totalDiscountedCharges, policy.currency), bold: true },
+                    { label: 'Policy charges', value: formatIlpCurrency(point.discountedPolicyCharges, policy.currency) },
+                    ...(!excludeFundFees ? [{ label: 'Fund charges', value: formatIlpCurrency(point.discountedFundCharges, policy.currency) }] : []),
+                    { label: 'Bonuses offset', value: `-${formatIlpCurrency(point.discountedBonuses, policy.currency)}` },
+                    { label: 'Initial charges', value: formatIlpCurrency(point.discountedInceptionCharges, policy.currency) },
+                    { label: 'Early-exit charge', value: formatIlpCurrency(point.discountedEec, policy.currency) },
                   ]
+                  return (
+                    <div className="rounded-md border bg-popover px-3 py-2 text-sm shadow-md">
+                      <div className="mb-1.5 font-medium">Exit in Year {label}</div>
+                      <div className="space-y-0.5">
+                        {rows.map((row) => (
+                          <div key={row.label} className={`flex justify-between gap-4 ${row.bold ? 'font-semibold' : 'text-muted-foreground'}`}>
+                            <span>{row.label}</span>
+                            <span className="tabular-nums">{row.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
                 }}
               />
               <Line
