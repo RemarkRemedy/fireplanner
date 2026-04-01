@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUpDown, ExternalLink, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -138,13 +138,16 @@ export function IlpLeaderboardPage() {
   const [activePremiumSection, setActivePremiumSection] = useState<PremiumSection>('regular')
   const [regularBasisMode, setRegularBasisMode] = useState<RegularBasisMode>('standardized')
   const [customMonthlyPremiumInput, setCustomMonthlyPremiumInput] = useState(String(STANDARD_MONTHLY_PREMIUM))
+  const [confirmedPremium, setConfirmedPremium] = useState<number | null>(null)
   const [filterInsurer, setFilterInsurer] = useState<string | null>(null)
-  const deferredCustomMonthlyPremiumInput = useDeferredValue(customMonthlyPremiumInput)
 
-  const customMonthlyPremium = useMemo(() => {
-    const parsed = Number(deferredCustomMonthlyPremiumInput)
+  const parsedInput = useMemo(() => {
+    const parsed = Number(customMonthlyPremiumInput)
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null
-  }, [deferredCustomMonthlyPremiumInput])
+  }, [customMonthlyPremiumInput])
+
+  const customMonthlyPremium = confirmedPremium
+  const inputDirty = parsedInput !== confirmedPremium
 
   const customRegularRows = useMemo(() => {
     if (regularBasisMode !== 'custom' || customMonthlyPremium == null) {
@@ -316,20 +319,30 @@ export function IlpLeaderboardPage() {
                     <label htmlFor="leaderboard-monthly-premium" className="text-sm font-medium text-foreground">
                       Monthly premium
                     </label>
-                    <Input
-                      id="leaderboard-monthly-premium"
-                      type="number"
-                      inputMode="decimal"
-                      min="1"
-                      step="1"
-                      value={customMonthlyPremiumInput}
-                      onChange={(event) => setCustomMonthlyPremiumInput(event.target.value)}
-                      className="h-11 border-border bg-card text-foreground"
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="leaderboard-monthly-premium"
+                        type="number"
+                        inputMode="decimal"
+                        min="1"
+                        step="1"
+                        value={customMonthlyPremiumInput}
+                        onChange={(event) => setCustomMonthlyPremiumInput(event.target.value)}
+                        onKeyDown={(event) => { if (event.key === 'Enter' && parsedInput != null) setConfirmedPremium(parsedInput) }}
+                        className="h-10 border-border bg-card text-foreground"
+                      />
+                      <Button
+                        onClick={() => { if (parsedInput != null) setConfirmedPremium(parsedInput) }}
+                        disabled={parsedInput == null || !inputDirty}
+                        className="h-10 shrink-0"
+                      >
+                        {confirmedPremium == null ? 'Apply' : 'Rerank'}
+                      </Button>
+                    </div>
                     <p className="text-sm leading-6 text-muted-foreground">
                       This reranks regular-premium products only. The same numeric premium is applied in each product&apos;s own policy currency.
                     </p>
-                    {customMonthlyPremium == null && (
+                    {parsedInput == null && (
                       <p className="text-sm leading-6 text-rose-700 dark:text-rose-400">Enter a monthly premium above 0 to rerank this section.</p>
                     )}
                   </div>
