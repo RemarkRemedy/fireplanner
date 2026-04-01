@@ -56,7 +56,7 @@ export function ProductPickerDialog({ open, onOpenChange, onSelect }: ProductPic
     () => groupedProducts.map(([insurer]) => insurer),
     [groupedProducts],
   )
-  const [openGroups, setOpenGroups] = useState<string[]>(allInsurerKeys)
+  const [openGroups, setOpenGroups] = useState<string[]>([])
 
   // Auto-expand all matching groups when search query changes
   // eslint-disable-next-line react-hooks/exhaustive-deps
