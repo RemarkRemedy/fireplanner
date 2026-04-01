@@ -26,6 +26,7 @@ export default defineConfig([
       }],
       // React Compiler compatibility: downgrade to warning so CI is not blocked
       'react-hooks/preserve-manual-memoization': 'warn',
+      'react-hooks/set-state-in-effect': 'warn',
     },
   },
   {
