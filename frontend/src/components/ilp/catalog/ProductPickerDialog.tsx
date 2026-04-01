@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Badge } from '@/components/ui/badge'
@@ -50,10 +50,16 @@ export function ProductPickerDialog({ open, onOpenChange, onSelect }: ProductPic
     return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b))
   }, [supportedProducts, normalizedQuery])
 
-  const accordionValue = useMemo(
+  const allInsurerKeys = useMemo(
     () => groupedProducts.map(([insurer]) => insurer),
     [groupedProducts],
   )
+  const [openGroups, setOpenGroups] = useState<string[]>(allInsurerKeys)
+
+  // Auto-expand all matching groups when search query changes
+  useEffect(() => {
+    setOpenGroups(allInsurerKeys)
+  }, [allInsurerKeys])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -83,7 +89,7 @@ export function ProductPickerDialog({ open, onOpenChange, onSelect }: ProductPic
               </CardContent>
             </Card>
           ) : (
-            <Accordion type="multiple" value={accordionValue} className="space-y-3">
+            <Accordion type="multiple" value={openGroups} onValueChange={setOpenGroups} className="space-y-3">
               {groupedProducts.map(([insurer, insurerProducts]) => (
                 <AccordionItem key={insurer} value={insurer} className="rounded-lg border px-4">
                   <AccordionTrigger className="py-4 text-left hover:no-underline">
