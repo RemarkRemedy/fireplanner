@@ -76,4 +76,24 @@ describe('exitReinvestmentBenchmark', () => {
 
     expect(holdAt10).toBeGreaterThan(holdAt2)
   })
+
+  it('reduces outside benchmark horizon values when an external TER is applied', () => {
+    const { products, manifest } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'aia-elite-secure-income-5-pay')
+    expect(product).toBeTruthy()
+
+    const seed = templateVariantToPolicySeed(product!, product!.variants[0], manifest)
+    const policy = mergePolicySeed(seed)
+    const analysis = analyzeIlpPolicy(policy)
+    expect(analysis.mode).toBe('projected')
+
+    const baseBenchmark = buildExitReinvestmentBenchmark(policy, analysis, 0)
+    const terBenchmark = buildExitReinvestmentBenchmark(policy, analysis, 0.003)
+    const exitYearSixBase = baseBenchmark.options.find((option) => option.exitYear === 6)
+    const exitYearSixWithTer = terBenchmark.options.find((option) => option.exitYear === 6)
+
+    expect(exitYearSixBase).toBeTruthy()
+    expect(exitYearSixWithTer).toBeTruthy()
+    expect(exitYearSixWithTer!.horizonValues['7']).toBeLessThan(exitYearSixBase!.horizonValues['7'])
+  })
 })

@@ -420,7 +420,7 @@ export function FeeBreakdownSection({
                   <td className={cn('sticky left-0 z-10 border-r px-3 py-2 font-medium', stickyRowBackground)}>
                     <div className="flex items-center gap-2">
                       <span>{row.policyYear}</span>
-                      {isBestExit && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">Lowest Fee Year</span>}
+                      {isBestExit && <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">Lowest fee year</span>}
                     </div>
                   </td>
                   <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(displayMoney(row.contribution, row.year), policy.currency)}</td>

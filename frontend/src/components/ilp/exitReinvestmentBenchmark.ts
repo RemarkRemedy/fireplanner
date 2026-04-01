@@ -50,25 +50,46 @@ function buildHorizonValues(
   netExitValue: number,
   contributionRows: IlpYearRow[],
   horizonYear: number,
+  externalTer: number,
 ): HorizonValueMap {
   return Object.fromEntries(
     EXIT_BENCHMARK_RATES.map((rate) => {
       const rateKey = String(rate) as ExitBenchmarkRateKey
-      return [rateKey, compoundFromExit(exitYear, netExitValue, contributionRows, horizonYear, rate / 100)]
+      return [rateKey, compoundFromExit(exitYear, netExitValue, contributionRows, horizonYear, Math.max((rate / 100) - externalTer, -0.99))]
     }),
   ) as HorizonValueMap
 }
 
+export function computeBlendedOcf(policy: IlpPolicyInput): number {
+  return policy.funds.reduce((sum, fund) => sum + fund.allocation * fund.ocf, 0)
+}
+
+function applyBlendedOcf(policy: IlpPolicyInput, blendedOcf: number): IlpPolicyInput {
+  const currentBlendedOcf = computeBlendedOcf(policy)
+  const scaleFactor = currentBlendedOcf > 0 ? blendedOcf / currentBlendedOcf : 1
+
+  return {
+    ...policy,
+    funds: policy.funds.map((fund) => ({
+      ...fund,
+      ocf: currentBlendedOcf > 0 ? Math.max(fund.ocf * scaleFactor, 0) : blendedOcf,
+    })),
+  }
+}
+
 export function buildIlpScenarioAnalyses(
   policy: IlpPolicyInput,
+  blendedOcf = computeBlendedOcf(policy),
 ): Record<ExitBenchmarkRateKey, IlpProjectedPolicyAnalysis> {
+  const policyWithOcf = applyBlendedOcf(policy, blendedOcf)
+
   return Object.fromEntries(
     EXIT_BENCHMARK_RATES.map((rate) => {
       const annualRate = rate / 100
       const rateKey = String(rate) as ExitBenchmarkRateKey
       const scenarioPolicy: IlpPolicyInput = {
-        ...policy,
-        funds: policy.funds.map((fund) => ({
+        ...policyWithOcf,
+        funds: policyWithOcf.funds.map((fund) => ({
           ...fund,
           grossReturnLow: annualRate,
           grossReturnMid: annualRate,
@@ -83,6 +104,7 @@ export function buildIlpScenarioAnalyses(
 export function buildExitReinvestmentBenchmark(
   _policy: IlpPolicyInput,
   analysis: IlpProjectedPolicyAnalysis,
+  externalTer = 0,
 ): ExitReinvestmentBenchmarkData {
   const projectionRows = analysis.projections.mid.rows
   const horizonRow = projectionRows.at(-1)
@@ -103,7 +125,7 @@ export function buildExitReinvestmentBenchmark(
       netExitValue: analysis.npvAnalysis.surrenderNow.netSurrenderValue,
       eecCharge: analysis.npvAnalysis.surrenderNow.eecCharge,
       isPenaltyFree: Math.abs(analysis.npvAnalysis.surrenderNow.eecCharge) <= 0.005,
-      horizonValues: buildHorizonValues(0, analysis.npvAnalysis.surrenderNow.netSurrenderValue, contributionRows, horizonRow.year),
+      horizonValues: buildHorizonValues(0, analysis.npvAnalysis.surrenderNow.netSurrenderValue, contributionRows, horizonRow.year, externalTer),
     },
     ...analysis.npvAnalysis.futureExitOptions.map((option) => ({
       exitYear: option.exitYear,
@@ -111,7 +133,7 @@ export function buildExitReinvestmentBenchmark(
       netExitValue: option.netSurrenderValue,
       eecCharge: option.eecCharge,
       isPenaltyFree: Math.abs(option.eecCharge) <= 0.005,
-      horizonValues: buildHorizonValues(option.exitYear, option.netSurrenderValue, contributionRows, horizonRow.year),
+      horizonValues: buildHorizonValues(option.exitYear, option.netSurrenderValue, contributionRows, horizonRow.year, externalTer),
     })),
   ]
 

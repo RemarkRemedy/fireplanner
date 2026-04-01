@@ -70,5 +70,16 @@ describe('ExitReinvestmentBenchmarkSection', () => {
     await user.click(within(ilpTabs).getByRole('tab', { name: '10%' }))
 
     expect(screen.getByText(formatIlpCurrency(keepAt10, policy.currency))).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /adjust ocf \/ ter/i }))
+    await user.clear(screen.getByRole('spinbutton', { name: /External TER/i }))
+    await user.type(screen.getByRole('spinbutton', { name: /External TER/i }), '0.5')
+    await user.tab()
+    await user.clear(screen.getByRole('spinbutton', { name: /ILP blended OCF/i }))
+    await user.type(screen.getByRole('spinbutton', { name: /ILP blended OCF/i }), '1.0')
+    await user.tab()
+
+    expect(screen.getAllByText(/6\.5% net after TER/i).length).toBeGreaterThan(0)
+    expect(screen.getByText(/9\.0% net before other policy effects/i)).toBeInTheDocument()
   })
 })
