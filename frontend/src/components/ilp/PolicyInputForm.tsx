@@ -49,6 +49,23 @@ interface ManualInputGuide {
   matchText: string
 }
 
+function splitSupportNote(note: string): { title: string; detail: string | null } {
+  const trimmed = note.trim()
+  const firstSentenceEnd = trimmed.indexOf('. ')
+
+  if (firstSentenceEnd === -1) {
+    return { title: trimmed, detail: null }
+  }
+
+  const title = trimmed.slice(0, firstSentenceEnd + 1).trim()
+  const detail = trimmed.slice(firstSentenceEnd + 2).trim()
+
+  return {
+    title,
+    detail: detail.length > 0 ? detail : null,
+  }
+}
+
 function NullableCurrencyField({
   label,
   value,
@@ -1639,13 +1656,29 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
             {policy.catalogWarnings && policy.catalogWarnings.length > 0 && (
               <details className="space-y-1">
                 <summary className="cursor-pointer text-sm font-medium">
-                  Modeled support notes
+                  Modeled support notes ({policy.catalogWarnings.slice(0, 4).length})
                 </summary>
-                <ul className="list-disc pl-5 pt-2">
-                  {policy.catalogWarnings.slice(0, 4).map((warning, index) => (
-                    <li key={`${index}-${warning}`}>{warning}</li>
-                  ))}
-                </ul>
+                <div className="space-y-3 pt-2">
+                  {policy.catalogWarnings.slice(0, 4).map((warning, index) => {
+                    const { title, detail } = splitSupportNote(warning)
+
+                    return (
+                      <div key={`${index}-${warning}`} className="rounded-md border bg-background/70 p-3">
+                        <p className="text-sm font-medium text-foreground">{title}</p>
+                        {detail && (
+                          <details className="mt-2">
+                            <summary className="cursor-pointer text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                              What is modeled
+                            </summary>
+                            <p className="pt-2 text-sm leading-6 text-muted-foreground">
+                              {detail}
+                            </p>
+                          </details>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
               </details>
             )}
             {manualChargeWarnings.length > 0 && (
