@@ -321,8 +321,13 @@ export function ExitReinvestmentBenchmarkSection({
                 <Tooltip
                   content={({ active, payload, label }) => {
                     if (!active || !payload?.length) return null
+                    const selectedKey = `exitPath_${selectedOption?.exitYear ?? ''}`
                     const rows = payload
-                      .filter((entry) => entry.value != null)
+                      .filter((entry) => {
+                        if (entry.value == null) return false
+                        const key = String(entry.dataKey ?? '')
+                        return key === 'holdIlpValue' || key === 'exitPath_0' || key === selectedKey
+                      })
                       .map((entry) => {
                         const name = String(entry.dataKey ?? '')
                         const isHold = name === 'holdIlpValue'
