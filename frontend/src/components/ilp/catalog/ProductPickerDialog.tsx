@@ -58,9 +58,9 @@ export function ProductPickerDialog({ open, onOpenChange, onSelect }: ProductPic
   )
   const [openGroups, setOpenGroups] = useState<string[]>([])
 
-  // Auto-expand all matching groups when search query changes
+  // Auto-expand matching groups when user types a search query
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { setOpenGroups(allInsurerKeys) }, [normalizedQuery])
+  useEffect(() => { if (normalizedQuery) setOpenGroups(allInsurerKeys) }, [normalizedQuery])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
