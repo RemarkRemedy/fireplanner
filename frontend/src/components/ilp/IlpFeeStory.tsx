@@ -601,7 +601,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
 
       {currentIndex < totalCards - 1 && currentIndex > 0 && (
         <button
-          className="absolute bottom-8 right-4 z-10 text-xs text-white/60 transition-colors hover:text-white"
+          className="absolute bottom-8 right-4 z-10 text-sm text-white/70 transition-colors hover:text-white"
           onClick={(e) => {
             e.stopPropagation()
             if (isTransitioning.current) return
