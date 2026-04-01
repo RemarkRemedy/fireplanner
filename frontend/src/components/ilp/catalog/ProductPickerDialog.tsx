@@ -37,13 +37,15 @@ export function ProductPickerDialog({ open, onOpenChange, onSelect }: ProductPic
       return `${product.insurer} ${product.productName}`.toLowerCase().includes(normalizedQuery)
     })
 
+    const INSURER_ALIASES: Record<string, string> = { 'FWD': 'FWD Singapore' }
     const groups = new Map<string, IlpCatalogProduct[]>()
     filtered.forEach((product) => {
-      const insurerProducts = groups.get(product.insurer)
+      const groupName = INSURER_ALIASES[product.insurer] ?? product.insurer
+      const insurerProducts = groups.get(groupName)
       if (insurerProducts) {
         insurerProducts.push(product)
       } else {
-        groups.set(product.insurer, [product])
+        groups.set(groupName, [product])
       }
     })
 
