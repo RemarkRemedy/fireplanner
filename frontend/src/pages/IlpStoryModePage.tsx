@@ -554,11 +554,13 @@ function PlannerHandoffCard({
             label="Monthly take-home income (SGD)"
             value={quickEntry.monthlyIncome}
             onChange={onMonthlyIncomeChange}
+            placeholder="e.g. 5,000"
           />
           <CurrencyInput
             label="Monthly expenses (SGD)"
             value={quickEntry.monthlyExpenses}
             onChange={onMonthlyExpensesChange}
+            placeholder="e.g. 3,000"
           />
         </div>
 

@@ -8,6 +8,7 @@ interface CurrencyInputProps {
   label: string
   value: number
   onChange: (value: number) => void
+  placeholder?: string
   currency?: 'SGD' | 'USD'
   error?: string
   tooltip?: string
@@ -19,6 +20,7 @@ export function CurrencyInput({
   label,
   value,
   onChange,
+  placeholder,
   currency = 'SGD',
   error,
   tooltip,
@@ -42,6 +44,7 @@ export function CurrencyInput({
           id={inputId}
           value={value}
           onChange={onChange}
+          placeholder={placeholder}
           integer
           formatWithCommas
           className={cn(

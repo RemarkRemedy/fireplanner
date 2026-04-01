@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 interface NumberInputProps {
   value: number
   onChange: (value: number) => void
+  placeholder?: string
   /** If true, parse as integer. Default: false (float). */
   integer?: boolean
   /** If true, display with commas on blur, strip on focus. Uses type="text" + inputMode="numeric". */
@@ -32,6 +33,7 @@ interface NumberInputProps {
 export function NumberInput({
   value,
   onChange,
+  placeholder,
   integer = false,
   formatWithCommas = false,
   min,
@@ -52,8 +54,12 @@ export function NumberInput({
     if (formatWithCommas) return Math.round(v).toLocaleString('en-SG')
     return effectiveInteger ? String(Math.round(v)) : String(v)
   }, [formatWithCommas, effectiveInteger])
+  const displayFromValue = useCallback(
+    (nextValue: number) => (placeholder && nextValue === 0 ? '' : format(nextValue)),
+    [placeholder, format],
+  )
 
-  const [localValue, setLocalValue] = useState(() => format(value))
+  const [localValue, setLocalValue] = useState(() => displayFromValue(value))
   const [prevValue, setPrevValue] = useState(value)
   const [isFocused, setIsFocused] = useState(false)
   const [touched, setTouched] = useState(false)
@@ -63,7 +69,7 @@ export function NumberInput({
   if (value !== prevValue) {
     setPrevValue(value)
     if (!isFocused) {
-      setLocalValue(format(value))
+      setLocalValue(displayFromValue(value))
       setTouched(false)
     }
   }
@@ -102,15 +108,15 @@ export function NumberInput({
     const stripped = formatWithCommas ? localValue.replace(/,/g, '') : localValue
     const parsed = effectiveInteger ? parseInt(stripped, 10) : parseFloat(stripped)
     if (isNaN(parsed) || stripped.trim() === '') {
-      setLocalValue(format(value))
+      setLocalValue(displayFromValue(value))
     } else {
       const clamped = clamp(parsed)
       if (clamped !== parsed) {
         onChange(clamped)
       }
-      setLocalValue(format(clamped))
+      setLocalValue(displayFromValue(clamped))
     }
-  }, [localValue, value, effectiveInteger, formatWithCommas, format, clamp, onChange])
+  }, [localValue, value, effectiveInteger, formatWithCommas, clamp, onChange, displayFromValue])
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -134,6 +140,7 @@ export function NumberInput({
       min={formatWithCommas ? undefined : min}
       max={formatWithCommas ? undefined : max}
       step={formatWithCommas ? undefined : step}
+      placeholder={placeholder}
       className={cn(
         'border-blue-300',
         suffix && 'pr-12',
