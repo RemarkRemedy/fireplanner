@@ -244,68 +244,12 @@ export function ExitReinvestmentBenchmarkSection({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-8">
-        <div className="space-y-3">
+      <CardContent className=”space-y-8”>
+        <div className=”space-y-3”>
           <div>
-            <p className="text-sm font-semibold">Path after the selected exit year</p>
-            <p className="text-sm text-muted-foreground">
-              The purple line keeps the ILP all the way to year {benchmark.horizonYear} under the {ilpRateKey}% gross ILP assumption. One faint line shows the never-enter path, and the other faint lines show exit-and-invest alternatives at {outsideRateKey}% gross outside return less TER. The highlighted teal line is the currently selected path.
-            </p>
-          </div>
-          <div className="h-72 rounded-lg border border-border/60 p-4" role="img" aria-label="Line chart showing ILP hold value and selected exit-and-invest-outside path">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={combinedPathData} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
-                <XAxis dataKey="policyYear" tickLine={false} axisLine={false} />
-                <YAxis
-                  width={90}
-                  domain={horizonValueDomain}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(value: number) => formatIlpCurrency(value, policy.currency)}
-                />
-                <Tooltip
-                  labelFormatter={(value: number) => `Year ${value}`}
-                  formatter={(value: number, name: string) => [
-                    formatIlpCurrency(value, policy.currency),
-                    name === 'holdIlpValue'
-                      ? 'Keep ILP'
-                      : name === 'exitPath_0'
-                        ? 'Never enter ILP'
-                      : name === `exitPath_${selectedOption?.exitYear ?? ''}`
-                        ? selectedOption?.exitYear === 0
-                          ? 'Selected path (Never enter ILP)'
-                          : `Selected exit path (Year ${selectedOption?.policyYear ?? 'n/a'})`
-                        : 'Other exit path',
-                  ]}
-                />
-                <Line type="monotone" dataKey="holdIlpValue" stroke={colors.primary} strokeWidth={3} dot={false} />
-                {exitPathSeries.map((series) => {
-                  const isSelected = String(series.option.exitYear) === selectedExitYear
-                  const isNeverEnter = series.option.exitYear === 0
-                  return (
-                    <Line
-                      key={series.dataKey}
-                      type="monotone"
-                      dataKey={series.dataKey}
-                      stroke={isNeverEnter ? colors.warning : colors.success}
-                      strokeOpacity={isSelected ? 1 : isNeverEnter ? 0.55 : 0.18}
-                      strokeWidth={isSelected ? 3.5 : isNeverEnter ? 2 : 1.5}
-                      strokeDasharray={isNeverEnter && !isSelected ? '6 4' : undefined}
-                      dot={false}
-                    />
-                  )
-                })}
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <div>
-            <p className="text-sm font-semibold">Horizon value for every exit option</p>
-            <p className="text-sm text-muted-foreground">
-              The first bar is the clean “never enter ILP” baseline. The rest show what the portfolio could be worth by year {benchmark.horizonYear} if you entered the ILP under the {ilpRateKey}% gross case, then exited in that year and invested outside at {outsideRateKey}% gross less TER. Click a bar to inspect that path above.
+            <p className=”text-sm font-semibold”>Horizon value for every exit option</p>
+            <p className=”text-sm text-muted-foreground”>
+              The first bar is the clean “never enter ILP” baseline. The rest show what the portfolio could be worth by year {benchmark.horizonYear} if you entered the ILP under the {ilpRateKey}% gross case, then exited in that year and invested outside at {outsideRateKey}% gross less TER. Click a bar to inspect that path below.
             </p>
           </div>
           <div className="h-80 rounded-lg border border-border/60 p-4" role="img" aria-label="Bar chart showing horizon value for each exit year">
@@ -344,6 +288,60 @@ export function ExitReinvestmentBenchmarkSection({
                   ))}
                 </Bar>
               </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <p className="text-sm font-semibold">Path after the selected exit year</p>
+            <p className="text-sm text-muted-foreground">
+              The purple line keeps the ILP all the way to year {benchmark.horizonYear} under the {ilpRateKey}% gross ILP assumption. One faint line shows the never-enter path, and the other faint lines show exit-and-invest alternatives at {outsideRateKey}% gross outside return less TER. The highlighted teal line is the currently selected path.
+            </p>
+          </div>
+          <div className="h-72 rounded-lg border border-border/60 p-4" role="img" aria-label="Line chart showing ILP hold value and selected exit-and-invest-outside path">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={combinedPathData} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
+                <XAxis dataKey="policyYear" tickLine={false} axisLine={false} />
+                <YAxis
+                  width={90}
+                  domain={horizonValueDomain}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value: number) => formatIlpCurrency(value, policy.currency)}
+                />
+                <Tooltip
+                  labelFormatter={(value: number) => `Year ${value}`}
+                  formatter={(value: number, name: string) => [
+                    formatIlpCurrency(value, policy.currency),
+                    name === 'holdIlpValue'
+                      ? 'Keep ILP'
+                      : name === 'exitPath_0'
+                        ? 'Never enter ILP'
+                        : `Exit in Year ${selectedOption?.policyYear ?? 'n/a'}`,
+                  ]}
+                />
+                <Line type="monotone" dataKey="holdIlpValue" stroke={colors.primary} strokeWidth={3} dot={false} />
+                {exitPathSeries.map((series) => {
+                  const isSelected = String(series.option.exitYear) === selectedExitYear
+                  const isNeverEnter = series.option.exitYear === 0
+                  const showInTooltip = isSelected || isNeverEnter
+                  return (
+                    <Line
+                      key={series.dataKey}
+                      type="monotone"
+                      dataKey={series.dataKey}
+                      stroke={isNeverEnter ? colors.warning : colors.success}
+                      strokeOpacity={isSelected ? 1 : isNeverEnter ? 0.55 : 0.18}
+                      strokeWidth={isSelected ? 3.5 : isNeverEnter ? 2 : 1.5}
+                      strokeDasharray={isNeverEnter && !isSelected ? '6 4' : undefined}
+                      dot={false}
+                      tooltipType={showInTooltip ? undefined : 'none'}
+                    />
+                  )
+                })}
+              </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
