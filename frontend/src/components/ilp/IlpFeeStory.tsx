@@ -270,7 +270,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                               ? 0
                               : (index + 1) % relatableCostExamples.length
                           ))}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/[0.06] text-white/70 transition hover:bg-white/[0.12] hover:text-white"
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/[0.06] text-white/70 transition hover:bg-white/[0.12] hover:text-white"
                         >
                           <RefreshCw className="h-3.5 w-3.5" />
                         </button>
@@ -592,7 +592,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
       </div>
 
       <button
-        className="absolute right-4 top-6 z-20 p-2 text-white/90 transition-colors hover:text-white"
+        className="absolute right-4 top-6 z-20 p-3 text-white/90 transition-colors hover:text-white"
         onClick={(e) => { e.stopPropagation(); onClose() }}
         aria-label="Close"
       >

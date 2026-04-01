@@ -94,7 +94,7 @@ export function PolicyTabs() {
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-9 w-9"
                           onClick={(event) => {
                             event.stopPropagation()
                             openRename(policy.id)
@@ -107,7 +107,7 @@ export function PolicyTabs() {
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-9 w-9"
                           onClick={(event) => {
                             event.stopPropagation()
                             duplicatePolicy(policy.id)
@@ -120,7 +120,7 @@ export function PolicyTabs() {
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          className="h-9 w-9 text-destructive hover:text-destructive"
                           onClick={(event) => {
                             event.stopPropagation()
                             removePolicy(policy.id)
