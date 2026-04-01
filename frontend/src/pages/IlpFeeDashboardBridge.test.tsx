@@ -233,6 +233,35 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(onSelect.mock.calls[0]?.[1].id).toBe('sgd-mip-30')
   })
 
+  it('promotes FWD Invest First Max premium-payment-term corridors into executable templates', async () => {
+    const user = userEvent.setup()
+    const onSelect = vi.fn()
+
+    render(
+      <MemoryRouter>
+        <ProductPickerDialog open onOpenChange={() => {}} onSelect={onSelect} />
+      </MemoryRouter>,
+    )
+
+    await user.type(screen.getByPlaceholderText(/search insurer or product name/i), 'FWD Invest First Max')
+
+    const card = getProductCard('FWD Invest First Max')
+
+    expect(within(card).queryByText(/published corridors not modeled/i)).not.toBeInTheDocument()
+
+    const mip11Template = within(card).getByRole('button', { name: /SGD \/ MIP 11/i })
+    const mip30Template = within(card).getByRole('button', { name: /SGD \/ MIP 30/i })
+
+    expect(mip11Template).toBeEnabled()
+    expect(mip30Template).toBeEnabled()
+
+    await user.click(mip30Template)
+
+    expect(onSelect).toHaveBeenCalledTimes(1)
+    expect(onSelect.mock.calls[0]?.[0].id).toBe('fwd-invest-first-max')
+    expect(onSelect.mock.calls[0]?.[1].id).toBe('sgd-mip-30')
+  })
+
   it('promotes Invest flex wealth II 3-year and 5-year corridors into executable templates', async () => {
     const user = userEvent.setup()
     const onSelect = vi.fn()

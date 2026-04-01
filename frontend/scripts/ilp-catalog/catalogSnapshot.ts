@@ -307,15 +307,6 @@ function buildPhase0PublishedUnmodeledRegistry(): Record<string, IlpCatalogPubli
     'aia-platinum-wealth-legacy': [
       corridor({ id: 'sgd-single-pay', label: 'SGD / Single Pay', paymentStructure: 'single-pay', currency: 'SGD', contributionMode: 'single-pay', sourceRefs: aiaPwlRefs }),
     ],
-    'fwd-invest-first-max': range(11, 30).map((term) => corridor({
-      id: `sgd-mip-${term}`,
-      label: `SGD / Premium Payment Term ${term} years`,
-      paymentStructure: 'ppt',
-      currency: 'SGD',
-      premiumPaymentTermYears: term,
-      contributionMode: 'regular-pay',
-      sourceRefs: fwdMaxRefs,
-    })),
     'income-legacy-flex-solitaire': [
       corridor({
         id: 'sgd-mip-5-single-premium',
