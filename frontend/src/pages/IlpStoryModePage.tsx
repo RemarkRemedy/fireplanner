@@ -1178,7 +1178,7 @@ function StoryDetailView({
                   </Tabs>
                   <Button variant="outline" onClick={onReplayStory} className="h-12 px-5">
                     <Play className="mr-2 h-4 w-4" />
-                    Replay walkthrough
+                    Replay Story
                   </Button>
                 </div>
               </div>
