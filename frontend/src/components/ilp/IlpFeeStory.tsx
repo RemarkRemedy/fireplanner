@@ -427,29 +427,29 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                               axisLine={false}
                             />
                             <Tooltip
-                              contentStyle={{
-                                background: 'rgba(11, 14, 28, 0.94)',
-                                border: '1px solid rgba(255,255,255,0.12)',
-                                borderRadius: 12,
-                                color: 'white',
-                              }}
-                              labelFormatter={(value: number) => `Exit in Year ${value}`}
-                              formatter={(value: number, name: string, item) => {
-                                const point = item.payload
-                                if (name !== 'totalDiscountedCharges') {
-                                  return [formatIlpCurrency(value, policy.currency), name]
-                                }
-                                return [
-                                  [
-                                    `Total ${formatIlpCurrency(value, policy.currency)}`,
-                                    `Policy ${formatIlpCurrency(point.discountedPolicyCharges, policy.currency)}`,
-                                    ...(!excludeStoryFundFees ? [`Fund ${formatIlpCurrency(point.discountedFundCharges, policy.currency)}`] : []),
-                                    `Bonuses -${formatIlpCurrency(point.discountedBonuses, policy.currency)}`,
-                                    `Initial ${formatIlpCurrency(point.discountedInceptionCharges, policy.currency)}`,
-                                    `EEC ${formatIlpCurrency(point.discountedEec, policy.currency)}`,
-                                  ].join(' | '),
-                                  'Today-dollar total to exit',
+                              content={({ active, payload, label }) => {
+                                if (!active || !payload?.length) return null
+                                const point = payload[0]?.payload
+                                if (!point) return null
+                                const rows = [
+                                  { label: 'Total', value: formatIlpCurrency(point.totalDiscountedCharges, policy.currency), bold: true },
+                                  { label: 'Policy charges', value: formatIlpCurrency(point.discountedPolicyCharges, policy.currency) },
+                                  ...(!excludeStoryFundFees ? [{ label: 'Fund charges', value: formatIlpCurrency(point.discountedFundCharges, policy.currency) }] : []),
+                                  { label: 'Bonuses offset', value: `-${formatIlpCurrency(point.discountedBonuses, policy.currency)}` },
+                                  { label: 'Initial charges', value: formatIlpCurrency(point.discountedInceptionCharges, policy.currency) },
+                                  { label: 'Early-exit charge', value: formatIlpCurrency(point.discountedEec, policy.currency) },
                                 ]
+                                return (
+                                  <div style={{ background: 'rgba(11, 14, 28, 0.94)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '10px 14px', color: 'white', fontSize: 13 }}>
+                                    <div style={{ fontWeight: 600, marginBottom: 6 }}>Exit in Year {label}</div>
+                                    {rows.map((row) => (
+                                      <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, opacity: row.bold ? 1 : 0.7, fontWeight: row.bold ? 600 : 400 }}>
+                                        <span>{row.label}</span>
+                                        <span style={{ fontVariantNumeric: 'tabular-nums' }}>{row.value}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )
                               }}
                             />
                             <Line
