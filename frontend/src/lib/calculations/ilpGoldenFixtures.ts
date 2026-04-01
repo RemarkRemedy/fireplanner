@@ -6835,29 +6835,57 @@ function aiaPlatinumWealthLegacyStressPolicy(
 
 function aiaProAchiever3BasePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-iip-10' | 'sgd-iip-15' | 'sgd-iip-20',
   id: string,
   funds: IlpFund[],
   overrides: Partial<IlpPolicyInput> = {},
 ): IlpPolicyInput {
-  const base = seedPolicy(snapshot, 'aia-pro-achiever-3', 'sgd-iip-10', id, {
+  const variantConfig = {
+    'sgd-iip-10': {
+      mipLength: 10,
+      currentPolicyYear: 8,
+      monthsAlreadyPaid: 84,
+      currentValue: 26_000,
+      currentNetProtectedPremiumBase: 92_000,
+      displayLabel: 'SGD / IIP 10',
+    },
+    'sgd-iip-15': {
+      mipLength: 15,
+      currentPolicyYear: 13,
+      monthsAlreadyPaid: 144,
+      currentValue: 38_000,
+      currentNetProtectedPremiumBase: 128_000,
+      displayLabel: 'SGD / IIP 15',
+    },
+    'sgd-iip-20': {
+      mipLength: 20,
+      currentPolicyYear: 18,
+      monthsAlreadyPaid: 204,
+      currentValue: 52_000,
+      currentNetProtectedPremiumBase: 164_000,
+      displayLabel: 'SGD / IIP 20',
+    },
+  }[variantId]
+
+  const base = seedPolicy(snapshot, 'aia-pro-achiever-3', variantId, id, {
     monthlyContribution: 900,
-    currentPolicyYear: 8,
-    monthsAlreadyPaid: 84,
+    currentPolicyYear: variantConfig.currentPolicyYear,
+    monthsAlreadyPaid: variantConfig.monthsAlreadyPaid,
   })
 
   return withFunds(
     withResolvedManualInputs(ilpPolicySchema.parse({
       ...base,
-      name: 'Golden AIA Pro Achiever 3.0 (SGD / IIP 10)',
+      name: `Golden AIA Pro Achiever 3.0 (${variantConfig.displayLabel})`,
       accounts: base.accounts.map((account) => ({
         ...account,
-        currentValue: 26_000,
+        currentValue: variantConfig.currentValue,
       })),
       assuranceProfile: {
         currentAgeNextBirthday: 45,
         sex: 'female',
         smokerStatus: 'non-smoker',
-        currentNetProtectedPremiumBase: 92_000,
+        currentNetProtectedPremiumBase: variantConfig.currentNetProtectedPremiumBase,
       },
       policyEvents: [],
       ...overrides,
@@ -6868,12 +6896,29 @@ function aiaProAchiever3BasePolicy(
 
 function aiaProAchiever3BaselinePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-iip-10' | 'sgd-iip-15' | 'sgd-iip-20',
   id: string,
 ): IlpPolicyInput {
-  return aiaProAchiever3BasePolicy(snapshot, id, AIA_BALANCED_FUNDS, {
-    name: 'Golden AIA Pro Achiever 3.0 (SGD / IIP 10 Baseline)',
-    currentPolicyYear: 9,
-    monthsAlreadyPaid: 96,
+  const baselineOverrides = {
+    'sgd-iip-10': {
+      name: 'Golden AIA Pro Achiever 3.0 (SGD / IIP 10 Baseline)',
+      currentPolicyYear: 9,
+      monthsAlreadyPaid: 96,
+    },
+    'sgd-iip-15': {
+      name: 'Golden AIA Pro Achiever 3.0 (SGD / IIP 15 Baseline)',
+      currentPolicyYear: 14,
+      monthsAlreadyPaid: 156,
+    },
+    'sgd-iip-20': {
+      name: 'Golden AIA Pro Achiever 3.0 (SGD / IIP 20 Baseline)',
+      currentPolicyYear: 19,
+      monthsAlreadyPaid: 216,
+    },
+  }[variantId]
+
+  return aiaProAchiever3BasePolicy(snapshot, variantId, id, AIA_BALANCED_FUNDS, {
+    ...baselineOverrides,
     postMipYears: 5,
     distributionAssumption: {
       mode: 'cash-payout',
@@ -6887,7 +6932,7 @@ function aiaProAchiever3EventHeavyPolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
 ): IlpPolicyInput {
-  return aiaProAchiever3BasePolicy(snapshot, id, AIA_BALANCED_FUNDS, {
+  return aiaProAchiever3BasePolicy(snapshot, 'sgd-iip-10', id, AIA_BALANCED_FUNDS, {
     name: 'Golden AIA Pro Achiever 3.0 (SGD / IIP 10 Event Heavy)',
     policyEvents: [
       {
@@ -6913,7 +6958,7 @@ function aiaProAchiever3StressPolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
 ): IlpPolicyInput {
-  return aiaProAchiever3BasePolicy(snapshot, id, AIA_STRESS_FUNDS, {
+  return aiaProAchiever3BasePolicy(snapshot, 'sgd-iip-10', id, AIA_STRESS_FUNDS, {
     name: 'Golden AIA Pro Achiever 3.0 (SGD / IIP 10 OCF Stress)',
     currentPolicyYear: 9,
     monthsAlreadyPaid: 96,
@@ -10695,6 +10740,50 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'kernel:distribution-mode-assumption',
     ],
     description: 'AIA Pro Achiever 3.0 baseline scenario proving the supported regular-pay corridor and post-IIP manual cash-payout distribution assumption.',
+    integrityChecks: [
+      {
+        description: 'manual cash-payout distribution assumption produces annual withdrawals after the IIP',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'aia-pro-achiever-3',
+    variantId: 'sgd-iip-15',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:aia-pro-achiever-3-welcome-bonus',
+      'branch:aia-pro-achiever-3-special-bonus',
+      'branch:aia-pro-achiever-3-premium-holiday-charge',
+      'branch:aia-pro-achiever-3-partial-withdrawal-charge',
+      'branch:aia-pro-achiever-3-full-surrender-charge',
+      'kernel:distribution-mode-assumption',
+    ],
+    description: 'AIA Pro Achiever 3.0 15-year IIP baseline scenario proving the newly executable corridor and post-IIP manual cash-payout distribution assumption.',
+    integrityChecks: [
+      {
+        description: 'manual cash-payout distribution assumption produces annual withdrawals after the IIP',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+    ],
+  },
+  {
+    productId: 'aia-pro-achiever-3',
+    variantId: 'sgd-iip-20',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:aia-pro-achiever-3-welcome-bonus',
+      'branch:aia-pro-achiever-3-special-bonus',
+      'branch:aia-pro-achiever-3-premium-holiday-charge',
+      'branch:aia-pro-achiever-3-partial-withdrawal-charge',
+      'branch:aia-pro-achiever-3-full-surrender-charge',
+      'kernel:distribution-mode-assumption',
+    ],
+    description: 'AIA Pro Achiever 3.0 20-year IIP baseline scenario proving the newly executable corridor and post-IIP manual cash-payout distribution assumption.',
     integrityChecks: [
       {
         description: 'manual cash-payout distribution assumption produces annual withdrawals after the IIP',
@@ -17814,8 +17903,14 @@ function buildPolicyForDefinition(
   if (definition.productId === 'aia-platinum-wealth-legacy' && definition.scenarioId === 'ocf-stress') {
     return aiaPlatinumWealthLegacyStressPolicy(snapshot, id)
   }
-  if (definition.productId === 'aia-pro-achiever-3' && definition.scenarioId === 'baseline') {
-    return aiaProAchiever3BaselinePolicy(snapshot, id)
+  if (definition.productId === 'aia-pro-achiever-3' && definition.scenarioId === 'baseline' && definition.variantId === 'sgd-iip-10') {
+    return aiaProAchiever3BaselinePolicy(snapshot, 'sgd-iip-10', id)
+  }
+  if (definition.productId === 'aia-pro-achiever-3' && definition.scenarioId === 'baseline' && definition.variantId === 'sgd-iip-15') {
+    return aiaProAchiever3BaselinePolicy(snapshot, 'sgd-iip-15', id)
+  }
+  if (definition.productId === 'aia-pro-achiever-3' && definition.scenarioId === 'baseline' && definition.variantId === 'sgd-iip-20') {
+    return aiaProAchiever3BaselinePolicy(snapshot, 'sgd-iip-20', id)
   }
   if (definition.productId === 'aia-pro-achiever-3' && definition.scenarioId === 'event-heavy') {
     return aiaProAchiever3EventHeavyPolicy(snapshot, id)

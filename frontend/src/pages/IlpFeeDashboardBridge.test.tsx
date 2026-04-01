@@ -155,13 +155,13 @@ describe('ILP fee dashboard blog bridge', () => {
       </MemoryRouter>,
     )
 
-    await user.type(screen.getByPlaceholderText(/search insurer or product name/i), 'AIA Pro Achiever 3.0')
+    await user.type(screen.getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Wealth Elite 2.0')
 
-    const card = getProductCard('AIA Pro Achiever 3.0')
+    const card = getProductCard('AIA Platinum Wealth Elite 2.0')
 
-    expect(within(card).getByText('2 published corridors not modeled')).toBeInTheDocument()
+    expect(within(card).getByText('6 published corridors not modeled')).toBeInTheDocument()
 
-    const disabledCorridor = within(card).getByRole('button', { name: /SGD \/ IIP 15 years/i })
+    const disabledCorridor = within(card).getByRole('button', { name: /SGD \/ Single Pay/i })
     expect(disabledCorridor).toBeDisabled()
 
     await user.click(disabledCorridor)
@@ -171,8 +171,37 @@ describe('ILP fee dashboard blog bridge', () => {
     await user.click(enabledTemplateButton)
 
     expect(onSelect).toHaveBeenCalledTimes(1)
+    expect(onSelect.mock.calls[0]?.[0].id).toBe('aia-platinum-wealth-elite-2')
+    expect(onSelect.mock.calls[0]?.[1].id).toBe('sgd-mip-5')
+  })
+
+  it('promotes AIA Pro Achiever 3.0 IIP 15-year and 20-year corridors into executable templates', async () => {
+    const user = userEvent.setup()
+    const onSelect = vi.fn()
+
+    render(
+      <MemoryRouter>
+        <ProductPickerDialog open onOpenChange={() => {}} onSelect={onSelect} />
+      </MemoryRouter>,
+    )
+
+    await user.type(screen.getByPlaceholderText(/search insurer or product name/i), 'AIA Pro Achiever 3.0')
+
+    const card = getProductCard('AIA Pro Achiever 3.0')
+
+    expect(within(card).queryByText(/published corridors not modeled/i)).not.toBeInTheDocument()
+
+    const iip15Template = within(card).getByRole('button', { name: /SGD \/ IIP 15 years/i })
+    const iip20Template = within(card).getByRole('button', { name: /SGD \/ IIP 20 years/i })
+
+    expect(iip15Template).toBeEnabled()
+    expect(iip20Template).toBeEnabled()
+
+    await user.click(iip15Template)
+
+    expect(onSelect).toHaveBeenCalledTimes(1)
     expect(onSelect.mock.calls[0]?.[0].id).toBe('aia-pro-achiever-3')
-    expect(onSelect.mock.calls[0]?.[1].id).toBe('sgd-iip-10')
+    expect(onSelect.mock.calls[0]?.[1].id).toBe('sgd-iip-15')
   })
 
   it('promotes Invest flex wealth II 3-year and 5-year corridors into executable templates', async () => {

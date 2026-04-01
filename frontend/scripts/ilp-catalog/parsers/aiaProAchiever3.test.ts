@@ -19,16 +19,31 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
   return {
     filePath: '/synthetic/WA_Sum_201106386R_APA3.0_Oct2024.pdf',
     pageCount: 22,
-    totalCharacters: 3_100,
+    totalCharacters: 4_800,
     pages: [
       { pageNumber: 1, characterCount: 260, text: 'AIA Pro Achiever 3.0 overview', lines: [{ y: 700, text: 'AIA Pro Achiever 3.0' }, { y: 680, text: 'AIA Pro Achiever 3.0 is a regular premium investment-linked insurance policy.' }] },
-      { pageNumber: 2, characterCount: 260, text: 'Welcome Bonus', lines: [{ y: 700, text: 'Welcome Bonus rates will be based on the applicable table as follows:' }, { y: 680, text: 'IIP 10 1st policy year 5% 5% 10% 15%' }] },
+      { pageNumber: 2, characterCount: 620, text: 'Welcome Bonus', lines: [
+        { y: 700, text: 'Welcome Bonus rates will be based on the applicable table as follows:' },
+        { y: 680, text: 'IIP 10:' },
+        { y: 660, text: '1st policy year 5% 5% 10% 15%' },
+        { y: 640, text: '2nd policy year - 8% 13% 18%' },
+        { y: 620, text: '3rd policy year - 10% 15% 20%' },
+        { y: 600, text: 'IIP 15:' },
+        { y: 580, text: '1st policy year 8% 8% 13% 18%' },
+        { y: 560, text: '2nd policy year - 11% 16% 21%' },
+        { y: 540, text: '3rd policy year - 14% 19% 24%' },
+        { y: 520, text: 'IIP 20:' },
+        { y: 500, text: '1st policy year 10% 10% 15% 20%' },
+        { y: 480, text: '2nd policy year - 15% 20% 25%' },
+        { y: 460, text: '3rd policy year - 20% 25% 30%' },
+      ] },
       { pageNumber: 3, characterCount: 240, text: 'Special Bonus', lines: [{ y: 700, text: 'Special Bonus will be paid from the 10th annual premium onwards.' }, { y: 680, text: '10th to 20th annual regular premium paid onwards 5%' }] },
-      { pageNumber: 5, characterCount: 520, text: 'Premium and top-up charges', lines: [{ y: 700, text: 'Premium charge for basic regular premium' }, { y: 680, text: '1st policy year 76.00% 2nd policy year 51.00% 3rd policy year 26.00% 4th to 6th policy years 4.00% 7th and subsequent policy years 0.00%' }, { y: 660, text: 'Every month, a Supplementary Charge equivalent to (3.90% / 12) of the Regular Premium Policy Value will be deducted from your policy.' }, { y: 640, text: 'The Supplementary Charge will not be imposed during the Premium Pass Period or if the Premium Holiday Charge is payable.' }, { y: 620, text: 'Benefit Charge will be deducted on a monthly basis to provide for insurance cover.' }, { y: 600, text: 'Benefit Charge = Annual Benefit Charge Rate/12 x Sum-at-Risk' }, { y: 580, text: 'Sum-at-Risk = 100% of total regular premiums paid + total top-ups + total premium reduction top-up amount – total withdrawals – policy value' }, { y: 560, text: 'Premium Charge = 5% of each Top-Up Premium.' }] },
-      { pageNumber: 6, characterCount: 500, text: 'Premium Holiday Charge', lines: [{ y: 700, text: 'Premium Holiday Charge = Premium Holiday Charge Annual Rate/12 x Annualised Regular Premium' }, { y: 680, text: 'IIP 10 1 100% 2 30% 3 20% 4 20% 5 10% 6 10% 7 5% 8 5% 9 2.5% 10 2.5% 11 onwards 0%' }, { y: 660, text: 'Such charge will only cease to apply once the relevant regular premium has been paid.' }] },
-      { pageNumber: 8, characterCount: 260, text: 'Full surrender charge', lines: [{ y: 700, text: 'Full Surrender Charge = Full Surrender Charge Rate x Regular Premium Policy Value' }, { y: 680, text: 'IIP 10 100% 100% 80% 70% 60% 50% 45% 35% 20% 5% 0%' }] },
-      { pageNumber: 10, characterCount: 260, text: 'Partial withdrawal charge', lines: [{ y: 700, text: 'Partial Withdrawal Charge = Partial Withdrawal Charge Factor x Regular Premium Policy Value Withdrawn' }, { y: 680, text: 'IIP 10 4.000 2.333 1.500 1.000 0.818 0.539 0.250 0.053 0' }] },
-      { pageNumber: 11, characterCount: 220, text: 'Top-up option', lines: [{ y: 700, text: 'Top-Up' }, { y: 680, text: 'Premium charge is 5% of the top-up premium.' }] },
+      { pageNumber: 5, characterCount: 520, text: 'Premium and top-up charges', lines: [{ y: 700, text: '5.2. Supplementary Charge' }, { y: 680, text: 'Every month, a Supplementary Charge equivalent to (3.90% / 12) of the Regular Premium Policy Value will be deducted from your policy.' }, { y: 660, text: 'Such charge will only cease upon the payment of 11th annual / 21st semi-annual / 41st quarterly / 121st monthly regular premium.' }, { y: 640, text: 'Benefit Charge will be deducted on a monthly basis to provide for insurance cover.' }, { y: 620, text: 'Benefit Charge = Annual Benefit Charge Rate/12 x Sum-at-Risk' }, { y: 600, text: 'Sum-at-Risk = 100% of total regular premiums paid + total top-ups + total premium reduction top-up amount – total withdrawals – policy value' }, { y: 580, text: 'Premium Charge = 5% of each Top-Up Premium.' }] },
+      { pageNumber: 6, characterCount: 700, text: 'Premium Holiday Charge', lines: [{ y: 700, text: 'Premium Holiday Charge = Premium Holiday Charge Annual Rate/12 x Annualised Regular Premium' }, { y: 680, text: 'IIP 10 1 100% 2 30% 3 20% 4 20% 5 10% 6 10% 7 5% 8 5% 9 2.5% 10 2.5% 11 onwards 0%' }, { y: 660, text: 'IIP 15 1 100% 2 30% 3 20% 4 20% 5 10% 6 10% 7 5% 8 5% 9 2.5% 10 2.5% 11 2.5% 12 2.5%' }, { y: 640, text: 'Such charge will only cease to apply once the relevant regular premium has been paid.' }] },
+      { pageNumber: 7, characterCount: 520, text: 'Premium Holiday Charge continuation', lines: [{ y: 700, text: '13th 2.5% 14th 2.5% 15th 2.5% 16th 2.5% 17th 2.5% 18th 2.5% 19th 2.5% 20th 2.5% 21st onwards* 0%' }] },
+      { pageNumber: 9, characterCount: 600, text: 'Full surrender charge', lines: [{ y: 700, text: 'Full Surrender Charge = Full Surrender Charge Rate x Regular Premium Policy Value' }, { y: 680, text: 'IIP 10 100% 100% 80% 70% 60% 50% 45% 35% 20% 5% 0%' }, { y: 660, text: 'IIP 15 100% 100% 80% 70% 60% 50% 45% 35% 20% 5% 5% 5% 5% 5% 5% 0%' }, { y: 640, text: 'IIP 20 100% 100% 80% 70% 60% 50% 45% 35% 20% 5% 5% 5% 5% 5% 5%' }] },
+      { pageNumber: 10, characterCount: 640, text: 'Partial withdrawal charge', lines: [{ y: 700, text: 'Partial Withdrawal Charge = Partial Withdrawal Charge Factor x Regular Premium Policy Value Withdrawn' }, { y: 680, text: 'IIP 10 year 3 4.000 year 4 2.333 year 5 1.500 year 6 1.000 year 7 0.818 year 8 0.539 year 9 0.250 year 10 0.053 year 11 onwards 0' }, { y: 660, text: 'IIP 15 year 3 4.000 year 4 2.333 year 5 1.500 year 6 1.000 year 7 0.818 year 8 0.539 year 9 0.250' }] },
+      { pageNumber: 11, characterCount: 420, text: 'Top-up option', lines: [{ y: 700, text: 'IIP 20:' }, { y: 680, text: '10th 0.053 11th 0.053 12th 0.053 13th 0.053 14th 0.053 15th 0.053 16th 0.053 17th 0.053 18th 0.053 19th 0.053 20th 0.053 21st onwards 0' }, { y: 660, text: '6.2. Top-Up' }, { y: 640, text: 'Premium charge is 5% of the top-up premium.' }] },
       { pageNumber: 14, characterCount: 200, text: 'Premium Pass', lines: [{ y: 700, text: 'During the Premium Pass Period, Premium Holiday Charge and Supplementary Charge will not be applicable.' }] },
       { pageNumber: 17, characterCount: 200, text: 'Distribution of dividends', lines: [{ y: 700, text: 'Distribution of Dividends' }, { y: 680, text: 'Cash dividend payout is only allowed after the end of the relevant IIP and amounts below S$50 remain reinvested.' }] },
       { pageNumber: 22, characterCount: 260, text: 'Appendix A', lines: [{ y: 700, text: 'Current annual Benefit Charge per S$1,000 Sum-at-Risk' }, { y: 680, text: 'Attained Age Male Female' }, { y: 660, text: '40 1.33 0.98' }] },
@@ -59,6 +74,7 @@ describe('parseAiaProAchiever3', () => {
       'branch:aia-pro-achiever-3-top-up-premium-charge',
       'branch:aia-pro-achiever-3-partial-withdrawal-charge',
       'branch:aia-pro-achiever-3-full-surrender-charge',
+      'kernel:partial-withdrawal-start-policy-month-block',
       'kernel:top-up-paid-up-to-date-block',
       'kernel:top-up-amount-gate-block',
       'kernel:current-death-benefit-estimate',
@@ -71,11 +87,17 @@ describe('parseAiaProAchiever3', () => {
     expect(product.metadataOnlyBehaviors).not.toContain('aia-pro-achiever-3-welcome-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-pro-achiever-3-special-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-pro-achiever-3-dividend-cashout-threshold')
-    expect(product.variants[0]?.warnings[0]).toContain('current ordinary death-benefit estimate as the higher of policy value or a manual current net protected premium base')
-    expect(product.variants[0]?.unsupportedItems[0]).toContain('Appendix A Benefit Charge corridor')
+    expect(product.warnings[0]).toContain('published SGD IIP 10, IIP 15, and IIP 20 corridors')
+    expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-iip-10', 'sgd-iip-15', 'sgd-iip-20'])
 
-    const variant = product.variants[0]
-    expect(variant).toMatchObject({
+    const variant10 = product.variants.find((variant) => variant.id === 'sgd-iip-10')
+    const variant15 = product.variants.find((variant) => variant.id === 'sgd-iip-15')
+    const variant20 = product.variants.find((variant) => variant.id === 'sgd-iip-20')
+
+    expect(variant10?.warnings[0]).toContain('10-year IIP corridor')
+    expect(variant10?.unsupportedItems[0]).toContain('Appendix A Benefit Charge corridor')
+
+    expect(variant10).toMatchObject({
       id: 'sgd-iip-10',
       currency: 'SGD',
       mipLength: 10,
@@ -83,9 +105,12 @@ describe('parseAiaProAchiever3', () => {
         automaticLapseOnAccountValueDepletion: false,
         blockTopUpsWhenPremiumsNotPaidUpToDate: true,
         minimumTopUpAmount: 1_000,
+        minimumPartialWithdrawalStartPolicyMonthByAccount: [
+          { accountId: 'policy', startPolicyMonth: 25 },
+        ],
       },
     })
-    expect(variant.feeRules).toEqual([
+    expect(variant10?.feeRules).toEqual([
       expect.objectContaining({
         id: 'regular-premium-charge',
         basis: 'annual-contribution',
@@ -114,7 +139,7 @@ describe('parseAiaProAchiever3', () => {
         ],
       }),
     ])
-    expect(variant.bonuses).toEqual([
+    expect(variant10?.bonuses).toEqual([
       expect.objectContaining({
         id: 'welcome-bonus-premium-year-1',
         mode: 'premium-allocation',
@@ -149,7 +174,7 @@ describe('parseAiaProAchiever3', () => {
         rate: 0.08,
       }),
     ])
-    expect(variant.eventChargeRules).toEqual([
+    expect(variant10?.eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'top-up-premium-charge',
         trigger: 'top-up',
@@ -179,9 +204,20 @@ describe('parseAiaProAchiever3', () => {
         trigger: 'partial-withdrawal',
         basis: 'event-amount',
         yearBasis: 'premium-year',
+        rateSchedule: [
+          { startPolicyYear: 3, endPolicyYear: 3, rate: 4 },
+          { startPolicyYear: 4, endPolicyYear: 4, rate: 2.333 },
+          { startPolicyYear: 5, endPolicyYear: 5, rate: 1.5 },
+          { startPolicyYear: 6, endPolicyYear: 6, rate: 1 },
+          { startPolicyYear: 7, endPolicyYear: 7, rate: 0.818 },
+          { startPolicyYear: 8, endPolicyYear: 8, rate: 0.539 },
+          { startPolicyYear: 9, endPolicyYear: 9, rate: 0.25 },
+          { startPolicyYear: 10, endPolicyYear: 10, rate: 0.053 },
+          { startPolicyYear: 11, endPolicyYear: null, rate: 0 },
+        ],
       }),
     ])
-    expect(variant.distributionSupport).toEqual({
+    expect(variant10?.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['policy'],
       defaultMode: 'reinvest',
@@ -200,7 +236,50 @@ describe('parseAiaProAchiever3', () => {
         }),
       ],
     })
-    expect(variant.eecTable).toEqual([1, 1, 0.8, 0.7, 0.6, 0.5, 0.45, 0.35, 0.2, 0.05, 0])
+    expect(variant10?.eecTable).toEqual([1, 1, 0.8, 0.7, 0.6, 0.5, 0.45, 0.35, 0.2, 0.05, 0])
+    expect(variant15?.bonuses[0]?.tieredRates).toEqual([
+      { currency: 'SGD', minAnnualPremium: 2_400, maxAnnualPremium: 4_799.99, rate: 0.08 },
+      { currency: 'SGD', minAnnualPremium: 4_800, maxAnnualPremium: 7_199.99, rate: 0.08 },
+      { currency: 'SGD', minAnnualPremium: 7_200, maxAnnualPremium: 11_999.99, rate: 0.13 },
+      { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: null, rate: 0.18 },
+    ])
+    expect(variant15?.eventChargeRules.find((rule) => rule.id === 'premium-holiday-charge')?.rateSchedule).toEqual([
+      { startPolicyYear: 1, endPolicyYear: 1, rate: 1 },
+      { startPolicyYear: 2, endPolicyYear: 2, rate: 0.3 },
+      { startPolicyYear: 3, endPolicyYear: 3, rate: 0.2 },
+      { startPolicyYear: 4, endPolicyYear: 4, rate: 0.2 },
+      { startPolicyYear: 5, endPolicyYear: 5, rate: 0.1 },
+      { startPolicyYear: 6, endPolicyYear: 6, rate: 0.1 },
+      { startPolicyYear: 7, endPolicyYear: 7, rate: 0.05 },
+      { startPolicyYear: 8, endPolicyYear: 8, rate: 0.05 },
+      { startPolicyYear: 9, endPolicyYear: 9, rate: 0.025 },
+      { startPolicyYear: 10, endPolicyYear: 10, rate: 0.025 },
+      { startPolicyYear: 11, endPolicyYear: 11, rate: 0.025 },
+      { startPolicyYear: 12, endPolicyYear: 12, rate: 0.025 },
+      { startPolicyYear: 13, endPolicyYear: 13, rate: 0.025 },
+      { startPolicyYear: 14, endPolicyYear: 14, rate: 0.025 },
+      { startPolicyYear: 15, endPolicyYear: 15, rate: 0.025 },
+      { startPolicyYear: 16, endPolicyYear: null, rate: 0 },
+    ])
+    expect(variant15?.eecTable).toEqual([1, 1, 0.8, 0.7, 0.6, 0.5, 0.45, 0.35, 0.2, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0])
+    expect(variant20?.bonuses[2]?.tieredRates).toEqual([
+      { currency: 'SGD', minAnnualPremium: 2_400, maxAnnualPremium: 4_799.99, rate: 0 },
+      { currency: 'SGD', minAnnualPremium: 4_800, maxAnnualPremium: 7_199.99, rate: 0.2 },
+      { currency: 'SGD', minAnnualPremium: 7_200, maxAnnualPremium: 11_999.99, rate: 0.25 },
+      { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: null, rate: 0.3 },
+    ])
+    expect(variant20?.eventChargeRules.find((rule) => rule.id === 'partial-withdrawal-charge')?.rateSchedule).toEqual([
+      { startPolicyYear: 3, endPolicyYear: 3, rate: 4 },
+      { startPolicyYear: 4, endPolicyYear: 4, rate: 2.333 },
+      { startPolicyYear: 5, endPolicyYear: 5, rate: 1.5 },
+      { startPolicyYear: 6, endPolicyYear: 6, rate: 1 },
+      { startPolicyYear: 7, endPolicyYear: 7, rate: 0.818 },
+      { startPolicyYear: 8, endPolicyYear: 8, rate: 0.539 },
+      { startPolicyYear: 9, endPolicyYear: 9, rate: 0.25 },
+      { startPolicyYear: 10, endPolicyYear: 20, rate: 0.053 },
+      { startPolicyYear: 21, endPolicyYear: null, rate: 0 },
+    ])
+    expect(variant20?.eecTable).toEqual([1, 1, 0.8, 0.7, 0.6, 0.5, 0.45, 0.35, 0.2, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0])
   })
 
   it.skipIf(!existsSync(SOURCE_PATH))('matches the live source PDF when the local corpus is available', async () => {

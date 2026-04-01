@@ -14,6 +14,23 @@ interface ParseContext {
   sourceChecksumSha256: string
 }
 
+const TERM_OPTIONS = [10, 15, 20] as const
+type IipTerm = (typeof TERM_OPTIONS)[number]
+
+interface VariantConfig {
+  mipLength: IipTerm
+  welcomeBonusYear1Rates: readonly number[]
+  welcomeBonusYear2Rates: readonly number[]
+  welcomeBonusYear3Rates: readonly number[]
+  premiumHolidayChargeRates: readonly number[]
+  fullSurrenderChargeRates: readonly number[]
+  partialWithdrawalChargeSchedule: Array<{
+    startPolicyYear: number
+    endPolicyYear: number | null
+    rate: number
+  }>
+}
+
 const REGULAR_PREMIUM_CHARGE_SCHEDULE = [
   { startPolicyYear: 1, endPolicyYear: 1, rate: 0.76 },
   { startPolicyYear: 2, endPolicyYear: 2, rate: 0.51 },
@@ -22,30 +39,72 @@ const REGULAR_PREMIUM_CHARGE_SCHEDULE = [
   { startPolicyYear: 7, endPolicyYear: null, rate: 0 },
 ] as const
 
-const FULL_SURRENDER_CHARGE_SCHEDULE = [1, 1, 0.8, 0.7, 0.6, 0.5, 0.45, 0.35, 0.2, 0.05, 0] as const
-const PARTIAL_WITHDRAWAL_CHARGE_SCHEDULE = [4, 2.333, 1.5, 1, 0.818, 0.539, 0.25, 0.053, 0] as const
-const PREMIUM_HOLIDAY_CHARGE_SCHEDULE = [
-  { startPolicyYear: 1, endPolicyYear: 1, rate: 1 },
-  { startPolicyYear: 2, endPolicyYear: 2, rate: 0.3 },
-  { startPolicyYear: 3, endPolicyYear: 3, rate: 0.2 },
-  { startPolicyYear: 4, endPolicyYear: 4, rate: 0.2 },
-  { startPolicyYear: 5, endPolicyYear: 5, rate: 0.1 },
-  { startPolicyYear: 6, endPolicyYear: 6, rate: 0.1 },
-  { startPolicyYear: 7, endPolicyYear: 7, rate: 0.05 },
-  { startPolicyYear: 8, endPolicyYear: 8, rate: 0.05 },
-  { startPolicyYear: 9, endPolicyYear: 9, rate: 0.025 },
-  { startPolicyYear: 10, endPolicyYear: 10, rate: 0.025 },
-  { startPolicyYear: 11, endPolicyYear: null, rate: 0 },
-] as const
 const ANNUAL_PREMIUM_TIERS = [
   { minAnnualPremium: 2_400, maxAnnualPremium: 4_799.99 },
   { minAnnualPremium: 4_800, maxAnnualPremium: 7_199.99 },
   { minAnnualPremium: 7_200, maxAnnualPremium: 11_999.99 },
   { minAnnualPremium: 12_000, maxAnnualPremium: null },
 ] as const
-const WELCOME_BONUS_YEAR_1_RATES = [0.05, 0.05, 0.1, 0.15] as const
-const WELCOME_BONUS_YEAR_2_RATES = [0, 0.08, 0.13, 0.18] as const
-const WELCOME_BONUS_YEAR_3_RATES = [0, 0.1, 0.15, 0.2] as const
+
+const VARIANT_CONFIGS: Record<IipTerm, VariantConfig> = {
+  10: {
+    mipLength: 10,
+    welcomeBonusYear1Rates: [0.05, 0.05, 0.1, 0.15],
+    welcomeBonusYear2Rates: [0, 0.08, 0.13, 0.18],
+    welcomeBonusYear3Rates: [0, 0.1, 0.15, 0.2],
+    premiumHolidayChargeRates: [1, 0.3, 0.2, 0.2, 0.1, 0.1, 0.05, 0.05, 0.025, 0.025, 0],
+    fullSurrenderChargeRates: [1, 1, 0.8, 0.7, 0.6, 0.5, 0.45, 0.35, 0.2, 0.05, 0],
+    partialWithdrawalChargeSchedule: [
+      { startPolicyYear: 3, endPolicyYear: 3, rate: 4 },
+      { startPolicyYear: 4, endPolicyYear: 4, rate: 2.333 },
+      { startPolicyYear: 5, endPolicyYear: 5, rate: 1.5 },
+      { startPolicyYear: 6, endPolicyYear: 6, rate: 1 },
+      { startPolicyYear: 7, endPolicyYear: 7, rate: 0.818 },
+      { startPolicyYear: 8, endPolicyYear: 8, rate: 0.539 },
+      { startPolicyYear: 9, endPolicyYear: 9, rate: 0.25 },
+      { startPolicyYear: 10, endPolicyYear: 10, rate: 0.053 },
+      { startPolicyYear: 11, endPolicyYear: null, rate: 0 },
+    ],
+  },
+  15: {
+    mipLength: 15,
+    welcomeBonusYear1Rates: [0.08, 0.08, 0.13, 0.18],
+    welcomeBonusYear2Rates: [0, 0.11, 0.16, 0.21],
+    welcomeBonusYear3Rates: [0, 0.14, 0.19, 0.24],
+    premiumHolidayChargeRates: [1, 0.3, 0.2, 0.2, 0.1, 0.1, 0.05, 0.05, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0],
+    fullSurrenderChargeRates: [1, 1, 0.8, 0.7, 0.6, 0.5, 0.45, 0.35, 0.2, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0],
+    partialWithdrawalChargeSchedule: [
+      { startPolicyYear: 3, endPolicyYear: 3, rate: 4 },
+      { startPolicyYear: 4, endPolicyYear: 4, rate: 2.333 },
+      { startPolicyYear: 5, endPolicyYear: 5, rate: 1.5 },
+      { startPolicyYear: 6, endPolicyYear: 6, rate: 1 },
+      { startPolicyYear: 7, endPolicyYear: 7, rate: 0.818 },
+      { startPolicyYear: 8, endPolicyYear: 8, rate: 0.539 },
+      { startPolicyYear: 9, endPolicyYear: 9, rate: 0.25 },
+      { startPolicyYear: 10, endPolicyYear: 15, rate: 0.053 },
+      { startPolicyYear: 16, endPolicyYear: null, rate: 0 },
+    ],
+  },
+  20: {
+    mipLength: 20,
+    welcomeBonusYear1Rates: [0.1, 0.1, 0.15, 0.2],
+    welcomeBonusYear2Rates: [0, 0.15, 0.2, 0.25],
+    welcomeBonusYear3Rates: [0, 0.2, 0.25, 0.3],
+    premiumHolidayChargeRates: [1, 0.3, 0.2, 0.2, 0.1, 0.1, 0.05, 0.05, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0],
+    fullSurrenderChargeRates: [1, 1, 0.8, 0.7, 0.6, 0.5, 0.45, 0.35, 0.2, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0],
+    partialWithdrawalChargeSchedule: [
+      { startPolicyYear: 3, endPolicyYear: 3, rate: 4 },
+      { startPolicyYear: 4, endPolicyYear: 4, rate: 2.333 },
+      { startPolicyYear: 5, endPolicyYear: 5, rate: 1.5 },
+      { startPolicyYear: 6, endPolicyYear: 6, rate: 1 },
+      { startPolicyYear: 7, endPolicyYear: 7, rate: 0.818 },
+      { startPolicyYear: 8, endPolicyYear: 8, rate: 0.539 },
+      { startPolicyYear: 9, endPolicyYear: 9, rate: 0.25 },
+      { startPolicyYear: 10, endPolicyYear: 20, rate: 0.053 },
+      { startPolicyYear: 21, endPolicyYear: null, rate: 0 },
+    ],
+  },
+}
 
 function normalizeWhitespace(text: string): string {
   return text.replace(/\s+/g, ' ').trim()
@@ -79,7 +138,7 @@ function snippetNear(document: ExtractedPdfDocument, pageNumber: number, keyword
 function buildRateSchedule(values: readonly number[]): Array<{ startPolicyYear: number, endPolicyYear: number | null, rate: number }> {
   return values.map((rate, index) => ({
     startPolicyYear: index + 1,
-    endPolicyYear: index + 1,
+    endPolicyYear: index === values.length - 1 ? null : index + 1,
     rate: roundRate(rate),
   }))
 }
@@ -93,7 +152,7 @@ function buildTieredBonusRates(rates: readonly number[]) {
   }))
 }
 
-function buildBonuses(page2: IlpCatalogSourceRef, page3: IlpCatalogSourceRef): IlpTemplateBonus[] {
+function buildBonuses(config: VariantConfig, page2: IlpCatalogSourceRef, page3: IlpCatalogSourceRef): IlpTemplateBonus[] {
   return [
     {
       id: 'welcome-bonus-premium-year-1',
@@ -106,9 +165,9 @@ function buildBonuses(page2: IlpCatalogSourceRef, page3: IlpCatalogSourceRef): I
       yearBasis: 'premium-year',
       rate: null,
       amount: null,
-      tieredRates: buildTieredBonusRates(WELCOME_BONUS_YEAR_1_RATES),
+      tieredRates: buildTieredBonusRates(config.welcomeBonusYear1Rates),
       notes: [
-        'Applied on each regular premium received during premium year 1 for the published IIP 10 corridor.',
+        `Applied on each regular premium received during premium year 1 for the published IIP ${config.mipLength} corridor.`,
         'Rates vary by annualised regular premium, and top-up premiums do not qualify.',
       ],
       sourceRefs: [page2],
@@ -124,9 +183,9 @@ function buildBonuses(page2: IlpCatalogSourceRef, page3: IlpCatalogSourceRef): I
       yearBasis: 'premium-year',
       rate: null,
       amount: null,
-      tieredRates: buildTieredBonusRates(WELCOME_BONUS_YEAR_2_RATES),
+      tieredRates: buildTieredBonusRates(config.welcomeBonusYear2Rates),
       notes: [
-        'Applied on each regular premium received during premium year 2 for the published IIP 10 corridor.',
+        `Applied on each regular premium received during premium year 2 for the published IIP ${config.mipLength} corridor.`,
         'The lowest annualised-premium tier does not receive a premium-year-2 Welcome Bonus.',
       ],
       sourceRefs: [page2],
@@ -142,9 +201,9 @@ function buildBonuses(page2: IlpCatalogSourceRef, page3: IlpCatalogSourceRef): I
       yearBasis: 'premium-year',
       rate: null,
       amount: null,
-      tieredRates: buildTieredBonusRates(WELCOME_BONUS_YEAR_3_RATES),
+      tieredRates: buildTieredBonusRates(config.welcomeBonusYear3Rates),
       notes: [
-        'Applied on each regular premium received during premium year 3 for the published IIP 10 corridor.',
+        `Applied on each regular premium received during premium year 3 for the published IIP ${config.mipLength} corridor.`,
         'The lowest annualised-premium tier does not receive a premium-year-3 Welcome Bonus.',
       ],
       sourceRefs: [page2],
@@ -162,7 +221,7 @@ function buildBonuses(page2: IlpCatalogSourceRef, page3: IlpCatalogSourceRef): I
       amount: null,
       tieredRates: [],
       notes: [
-        'Applied on each regular premium received from premium years 10 to 20 in the published IIP 10 corridor.',
+        `Applied on each regular premium received from premium years 10 to 20 in the published IIP ${config.mipLength} corridor.`,
       ],
       sourceRefs: [page3],
     },
@@ -179,23 +238,25 @@ function buildBonuses(page2: IlpCatalogSourceRef, page3: IlpCatalogSourceRef): I
       amount: null,
       tieredRates: [],
       notes: [
-        'Applied on each regular premium received from premium year 21 onward in the published IIP 10 corridor.',
+        `Applied on each regular premium received from premium year 21 onward in the published IIP ${config.mipLength} corridor.`,
       ],
       sourceRefs: [page3],
     },
   ]
 }
 
-function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
+function buildVariant(document: ExtractedPdfDocument, term: IipTerm): IlpTemplateVariant {
+  const config = VARIANT_CONFIGS[term]
   const page1 = sourceRef(1, 'Plan overview and death benefit', snippetNear(document, 1, 'AIA Pro Achiever 3.0', 22))
-  const page2 = sourceRef(2, 'Welcome and Special Bonus', snippetNear(document, 2, 'Special Bonus', 18))
+  const page2 = sourceRef(2, 'Welcome Bonus', snippetNear(document, 2, `IIP ${term}:`, 28))
   const page3 = sourceRef(3, 'Special Bonus and maturity benefit', snippetNear(document, 3, 'Special Bonus', 18))
-  const page5 = sourceRef(5, 'Regular premium charge and benefit charge', snippetNear(document, 5, 'Premium charge for basic regular premium', 24))
+  const page5 = sourceRef(5, 'Top-up premium charge, supplementary charge, and benefit charge', snippetNear(document, 5, '5.2. Supplementary Charge', 26))
   const page5BenefitCharge = sourceRef(5, 'Benefit Charge', snippetNear(document, 5, 'Benefit Charge', 22))
   const page6 = sourceRef(6, 'Premium Holiday Charge', snippetNear(document, 6, 'Premium Holiday Charge = Premium Holiday Charge Annual Rate/12 x Annualised Regular Premium', 26))
-  const page8 = sourceRef(8, 'Full surrender charge', snippetNear(document, 8, 'Full Surrender Charge', 22))
+  const page7 = sourceRef(7, 'Premium Holiday Charge continuation', snippetNear(document, 7, '21st onwards*', 18))
+  const page9 = sourceRef(9, 'Full surrender charge', snippetNear(document, 9, 'Full Surrender Charge', 26))
   const page10 = sourceRef(10, 'Partial withdrawal charge', snippetNear(document, 10, 'Partial Withdrawal Charge', 22))
-  const page11 = sourceRef(11, 'Top-up and withdrawal options', snippetNear(document, 11, 'Top-Up', 18))
+  const page11 = sourceRef(11, 'Partial withdrawal continuation and top-up options', snippetNear(document, 11, '6.2. Top-Up', 22))
   const page14 = sourceRef(14, 'Premium Pass and premium holiday interactions', snippetNear(document, 14, 'Premium Pass', 18))
   const page17 = sourceRef(17, 'Distribution of dividends', snippetNear(document, 17, 'Distribution of Dividends', 24))
   const page22 = sourceRef(22, 'Appendix A annual benefit charge schedule', snippetNear(document, 22, 'Current annual Benefit Charge per S$1,000 Sum-at-Risk', 22))
@@ -212,10 +273,10 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       rateSchedule: REGULAR_PREMIUM_CHARGE_SCHEDULE.map((tier) => ({ ...tier })),
       activeWindow: 'policy-term',
       notes: [
-        'Models the published basic regular premium charge schedule for the 10-year IIP corridor.',
+        'Models the published basic regular premium charge schedule shared across the AIA Pro Achiever 3.0 IIP family.',
         'Premium Reward and Premium Pass interactions remain informational only.',
       ],
-      sourceRefs: [page2, page5],
+      sourceRefs: [page5],
     },
     {
       id: 'benefit-charge',
@@ -255,7 +316,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
         },
       ],
       notes: [
-        'Models the published 3.90% p.a. charge on Regular Premium Policy Value for the 10-year IIP corridor, including proration off during explicit premium-holiday overlap months.',
+        'Models the published 3.90% p.a. Supplementary Charge on Regular Premium Policy Value, which ceases once the 11th annual equivalent regular premium is accepted, including proration off during explicit premium-holiday overlap months.',
         'Premium Pass activation remains informational only in V1.',
       ],
       sourceRefs: [page5, page14],
@@ -287,16 +348,16 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       yearBasis: 'premium-year',
       appliesTo: ['policy'],
       rate: 0,
-      rateSchedule: PREMIUM_HOLIDAY_CHARGE_SCHEDULE.map((tier) => ({ ...tier })),
+      rateSchedule: buildRateSchedule(config.premiumHolidayChargeRates),
       amount: 0,
       activeWindow: 'policy-term',
       allocation: 'equal-split',
       notes: [
-        'Models the published monthly Premium Holiday Charge as the annualised regular premium multiplied by the premium-year charge rate for the active premium-holiday months.',
-        'Because back payments are not allowed and the published charge schedule is tied to accepted premium count, the charge can still apply beyond policy year 10 until the 11th annual regular premium is accepted.',
+        `Models the published monthly Premium Holiday Charge schedule for the IIP ${config.mipLength} corridor as the annualised regular premium multiplied by the premium-year charge rate for the active premium-holiday months.`,
+        `Because back payments are not allowed and the published charge schedule is tied to accepted premium count, the charge can still apply beyond policy year ${config.mipLength} until the relevant IIP-equivalent regular premium is accepted.`,
         'Premium Pass entitlement and waiver logic remain informational only in V1.',
       ],
-      sourceRefs: [page6, page14],
+      sourceRefs: [page6, page7, page14],
     },
     {
       id: 'partial-withdrawal-charge',
@@ -306,12 +367,12 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       yearBasis: 'premium-year',
       appliesTo: ['policy'],
       rate: 0,
-      rateSchedule: buildRateSchedule(PARTIAL_WITHDRAWAL_CHARGE_SCHEDULE),
+      rateSchedule: config.partialWithdrawalChargeSchedule.map((tier) => ({ ...tier })),
       amount: 0,
       activeWindow: 'policy-term',
       allocation: 'equal-split',
       notes: [
-        'Models the published partial withdrawal charge factor on withdrawn Regular Premium Policy Value for the 10-year IIP corridor.',
+        `Models the published partial withdrawal charge factor on withdrawn Regular Premium Policy Value for the IIP ${config.mipLength} corridor.`,
         'Premium Reduction Policy Value and Premium Reduction Top-Up units remain outside the current executable slice.',
       ],
       sourceRefs: [page10, page11],
@@ -319,9 +380,9 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
   ]
 
   return {
-    id: 'sgd-iip-10',
+    id: `sgd-iip-${term}`,
     currency: 'SGD',
-    mipLength: 10,
+    mipLength: term,
     icpMonths: 1,
     accounts: [
       {
@@ -338,13 +399,16 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
         sourceRefs: [page1, page5, page11],
       },
     ],
-    bonuses: buildBonuses(page2, page3),
+    bonuses: buildBonuses(config, page2, page3),
     feeRules,
     eventChargeRules,
     policyStateSupport: {
       automaticLapseOnAccountValueDepletion: false,
       blockTopUpsWhenPremiumsNotPaidUpToDate: true,
       minimumTopUpAmount: 1_000,
+      minimumPartialWithdrawalStartPolicyMonthByAccount: [
+        { accountId: 'policy', startPolicyMonth: 25 },
+      ],
     },
     distributionSupport: {
       mode: 'manual-assumption',
@@ -360,9 +424,9 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       ],
       sourceRefs: [page17],
     },
-    eecTable: [...FULL_SURRENDER_CHARGE_SCHEDULE],
+    eecTable: [...config.fullSurrenderChargeRates],
     warnings: [
-      'AIA Pro Achiever 3.0 is cataloged as a supported V1 product for the regular-pay corridor. The parser models the 10-year IIP corridor: the premium-year Welcome Bonus tiers for premium years 1 to 3, the Special Bonus ladder from premium year 10 onward, the premium-year regular premium charge schedule, the published Appendix A Benefit Charge corridor, the 3.90% Supplementary Charge corridor including explicit premium-holiday overlap proration, the premium-year Premium Holiday Charge schedule during active premium-holiday months, the 5% top-up premium charge with blocking in months where regular premiums are not paid up to date and the published S$1,000 minimum on explicit ad-hoc top-ups, the regular-premium full-surrender / partial-withdrawal charge schedules, the current ordinary death-benefit estimate as the higher of policy value or a manual current net protected premium base, and the reinvest-default distribution-mode assumption surface; seeded premium-holiday months that would have qualified for Premium Pass may still show false-positive Premium Holiday Charges because Premium Pass state is not modeled in V1.',
+      `AIA Pro Achiever 3.0 is cataloged as a supported V1 product for the regular-pay corridor. The parser models the ${config.mipLength}-year IIP corridor: the premium-year Welcome Bonus tiers for premium years 1 to 3, the Special Bonus ladder from premium year 10 onward, the premium-year regular premium charge schedule, the published Appendix A Benefit Charge corridor, the 3.90% Supplementary Charge corridor including explicit premium-holiday overlap proration, the premium-year Premium Holiday Charge schedule during active premium-holiday months, the 5% top-up premium charge with blocking in months where regular premiums are not paid up to date and the published S$1,000 minimum on explicit ad-hoc top-ups, the regular-premium full-surrender / partial-withdrawal charge schedules with withdrawals blocked until policy month 25, the current ordinary death-benefit estimate as the higher of policy value or a manual current net protected premium base, and the reinvest-default distribution-mode assumption surface; seeded premium-holiday months that would have qualified for Premium Pass may still show false-positive Premium Holiday Charges because Premium Pass state is not modeled in V1.`,
       'Premium Pass, Premium Reduction, Premium Reward, and protection-side options remain outside the current engine.',
       'Secondary Insured handling and fund-level charges remain informational only in V1.',
     ],
@@ -374,7 +438,7 @@ function buildVariant(document: ExtractedPdfDocument): IlpTemplateVariant {
       'Post-IIP cash-election operations and fund-level management charges remain informational only because they depend on the selected ILP sub-fund.',
       'Fund switching, automatic fund switching, automatic fund re-balancing, and secondary insured handling remain informational only.',
     ],
-    sourceRefs: [page1, page2, page3, page5, page8, page10, page11, page14, page17, page22],
+    sourceRefs: [page1, page2, page3, page5, page6, page7, page9, page10, page11, page14, page17, page22],
   }
 }
 
@@ -400,6 +464,7 @@ export function parseAiaProAchiever3({ document, sourceChecksumSha256 }: ParseCo
       'branch:aia-pro-achiever-3-top-up-premium-charge',
       'branch:aia-pro-achiever-3-partial-withdrawal-charge',
       'branch:aia-pro-achiever-3-full-surrender-charge',
+      'kernel:partial-withdrawal-start-policy-month-block',
       'kernel:top-up-paid-up-to-date-block',
       'kernel:top-up-amount-gate-block',
       'kernel:current-death-benefit-estimate',
@@ -414,9 +479,9 @@ export function parseAiaProAchiever3({ document, sourceChecksumSha256 }: ParseCo
       'aia-pro-achiever-3-secondary-insured-option',
     ],
     warnings: [
-      'AIA Pro Achiever 3.0 is cataloged as a supported V1 product for the regular-pay corridor. The parser models the 10-year IIP Welcome Bonus tiers for premium years 1 to 3, the Special Bonus ladder from premium year 10 onward, the premium-charge corridor, the published Appendix A Benefit Charge corridor, the Supplementary Charge corridor including explicit premium-holiday overlap suppression, the Premium Holiday Charge schedule during active premium-holiday months, the 5% top-up premium charge, the regular-premium withdrawal / surrender charge schedules, the current accidental-death uplift as 100% of cumulative paid regular premiums during the first 2 policy years, and reinvest-default dividend support with cash payout allowed only after IIP, while Premium Pass entitlement/activation, premium-reduction mechanics, premium rewards, and protection-side claim handling beyond the modeled current ordinary death, accidental-death, Benefit Charge, Supplementary Charge, and Premium Holiday Charge estimates remain outside the current engine; seeded premium-holiday months that would have qualified for Premium Pass may still show false-positive Premium Holiday Charges because Premium Pass state is not modeled in V1.',
+      'AIA Pro Achiever 3.0 is cataloged as a supported V1 product for the regular-pay corridor. The parser now models the published SGD IIP 10, IIP 15, and IIP 20 corridors, including corridor-specific Welcome Bonus, Premium Holiday Charge, full-surrender, and partial-withdrawal schedules, plus the family-shared Special Bonus ladder from premium year 10 onward, premium-charge corridor, published Appendix A Benefit Charge corridor, Supplementary Charge corridor including explicit premium-holiday overlap suppression, the 5% top-up premium charge, the post-second-policy-year withdrawal start gate, the current accidental-death uplift as 100% of cumulative paid regular premiums during the first 2 policy years, and reinvest-default dividend support with cash payout allowed only after IIP, while Premium Pass entitlement/activation, premium-reduction mechanics, premium rewards, and protection-side claim handling beyond the modeled current ordinary death, accidental-death, Benefit Charge, Supplementary Charge, and Premium Holiday Charge estimates remain outside the current engine; seeded premium-holiday months that would have qualified for Premium Pass may still show false-positive Premium Holiday Charges because Premium Pass state is not modeled in V1.',
     ],
     archived: false,
-    variants: [buildVariant(document)],
+    variants: TERM_OPTIONS.map((term) => buildVariant(document, term)),
   }
 }

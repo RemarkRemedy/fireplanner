@@ -280,7 +280,6 @@ function attachPublishedUnmodeledCorridors(
 function buildPhase0PublishedUnmodeledRegistry(): Record<string, IlpCatalogPublishedCorridor[]> {
   const aiaPwe2Refs = [sourceRef('Published corridor family', 'Single-pay and regular-pay 6 to 10 year corridors are published, while only the SGD 5-year corridor is executable today.')]
   const aiaPwlRefs = [sourceRef('Published corridor family', 'Single Pay is published alongside the modeled SGD 5-year regular-pay corridor.')]
-  const aiaProAchieverRefs = [sourceRef('Published corridor family', 'Published IIP choices span 10, 15, and 20 years; only 10 years is executable today.')]
   const fwdSummitRefs = [sourceRef('Published corridor family', 'Premium payment term ranges from 10 to 30 years; only the 10-year corridor is executable today.')]
   const fwdMaxRefs = [sourceRef('Published corridor family', 'Premium payment term ranges from 10 to 30 years; only the 10-year corridor is executable today.')]
   const legacyFlexRefs = [sourceRef('Published corridor family', 'The family includes a single-premium MIP 5 corridor in addition to the executable regular-pay corridors.')]
@@ -308,10 +307,6 @@ function buildPhase0PublishedUnmodeledRegistry(): Record<string, IlpCatalogPubli
     ],
     'aia-platinum-wealth-legacy': [
       corridor({ id: 'sgd-single-pay', label: 'SGD / Single Pay', paymentStructure: 'single-pay', currency: 'SGD', contributionMode: 'single-pay', sourceRefs: aiaPwlRefs }),
-    ],
-    'aia-pro-achiever-3': [
-      corridor({ id: 'sgd-iip-15', label: 'SGD / IIP 15 years', paymentStructure: 'iip', currency: 'SGD', premiumPaymentTermYears: 15, contributionMode: 'regular-pay', sourceRefs: aiaProAchieverRefs }),
-      corridor({ id: 'sgd-iip-20', label: 'SGD / IIP 20 years', paymentStructure: 'iip', currency: 'SGD', premiumPaymentTermYears: 20, contributionMode: 'regular-pay', sourceRefs: aiaProAchieverRefs }),
     ],
     'fwd-invest-first-summit': range(11, 30).map((term) => corridor({
       id: `sgd-mip-${term}`,

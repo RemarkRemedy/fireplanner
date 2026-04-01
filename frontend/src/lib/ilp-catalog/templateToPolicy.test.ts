@@ -10769,16 +10769,14 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-pro-achiever-3-benefit-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-pro-achiever-3-regular-supplementary-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-pro-achiever-3-premium-holiday-charge')
-    expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-pro-achiever-3-premium-reduction')
-    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:regular-premium-variation-start-gate')
-    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:regular-premium-variation-minimum-floor')
+    expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-start-policy-month-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-paid-up-to-date-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:top-up-amount-gate-block')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:current-accidental-death-benefit-estimate')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:distribution-mode-assumption')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-pro-achiever-3-premium-reduction')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-pro-achiever-3-premium-pass')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-pro-achiever-3-premium-reduction')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-pro-achiever-3-premium-pass')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-pro-achiever-3-premium-holiday-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-pro-achiever-3-benefit-charge')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-pro-achiever-3-supplementary-charge')
@@ -10791,15 +10789,11 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.mipLength).toBe(10)
     expect(seed.policyStateSupport).toEqual({
       automaticLapseOnAccountValueDepletion: false,
-      minimumRegularPremiumVariationStartPolicyMonth: 48,
-      minimumRegularPremiumAmountByFrequency: {
-        annual: 2_400,
-        'semi-annual': 1_200,
-        quarterly: 600,
-        monthly: 200,
-      },
       blockTopUpsWhenPremiumsNotPaidUpToDate: true,
       minimumTopUpAmount: 1_000,
+      minimumPartialWithdrawalStartPolicyMonthByAccount: [
+        { accountId: 'policy', startPolicyMonth: 25 },
+      ],
     })
     expect(seed.accounts).toEqual([
       expect.objectContaining({
@@ -10888,6 +10882,17 @@ describe('templateVariantToPolicySeed', () => {
         trigger: 'partial-withdrawal',
         basis: 'event-amount',
         yearBasis: 'premium-year',
+        rateSchedule: [
+          { startPolicyYear: 3, endPolicyYear: 3, rate: 4 },
+          { startPolicyYear: 4, endPolicyYear: 4, rate: 2.333 },
+          { startPolicyYear: 5, endPolicyYear: 5, rate: 1.5 },
+          { startPolicyYear: 6, endPolicyYear: 6, rate: 1 },
+          { startPolicyYear: 7, endPolicyYear: 7, rate: 0.818 },
+          { startPolicyYear: 8, endPolicyYear: 8, rate: 0.539 },
+          { startPolicyYear: 9, endPolicyYear: 9, rate: 0.25 },
+          { startPolicyYear: 10, endPolicyYear: 10, rate: 0.053 },
+          { startPolicyYear: 11, endPolicyYear: null, rate: 0 },
+        ],
       }),
     ])
     expect(seed.distributionSupport).toEqual({

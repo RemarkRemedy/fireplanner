@@ -7280,10 +7280,10 @@ describe('IlpReviewPage', () => {
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Pro Achiever 3.0')
 
     expect(within(dialog).getByText('AIA Pro Achiever 3.0')).toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ iip 10 yearsuse template$/i }))
     await confirmSeededPolicy(user)
 
-    expect(screen.getAllByText('AIA Pro Achiever 3.0 (SGD / MIP 10)').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('AIA Pro Achiever 3.0 (SGD / IIP 10 years)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
@@ -7312,7 +7312,7 @@ describe('IlpReviewPage', () => {
     await user.click(screen.getByRole('button', { name: /choose product/i }))
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Pro Achiever 3.0')
-    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 10use template$/i }))
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ iip 10 yearsuse template$/i }))
     await confirmSeededPolicy(user)
 
     expect(screen.queryByText('Accidental Death Benefit Today')).not.toBeInTheDocument()
