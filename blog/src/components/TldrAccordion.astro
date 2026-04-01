@@ -1,0 +1,111 @@
+---
+interface Props {
+  badge: string;
+  title: string;
+  tone?: 'orange' | 'green';
+}
+
+const { badge, title, tone = 'orange' } = Astro.props;
+
+const toneClasses = {
+  orange: 'bg-[#e06235] text-white',
+  green: 'bg-[#21a67a] text-white',
+};
+---
+
+<details class:list={['tldr-accordion not-prose font-ui', tone === 'green' && 'tldr-gen-z']}>
+  <summary class="tldr-summary">
+    <span class:list={['inline-flex rounded-[4px] px-2 py-[3px] text-[11px] font-medium uppercase tracking-[0.06em]', toneClasses[tone]]}>
+      {badge}
+    </span>
+    <span class="tldr-title">
+      {title}
+    </span>
+    <span class="tldr-chevron" aria-hidden="true"></span>
+  </summary>
+
+  <div class="tldr-body px-[1.15rem] pb-4 text-sm leading-[1.65] text-muted-foreground">
+    <div>
+      <slot />
+    </div>
+  </div>
+</details>
+
+<style>
+  .tldr-accordion {
+    border: 0.5px solid hsl(var(--border));
+    border-radius: 10px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    background: hsl(var(--background));
+    transition: border-color 0.2s;
+  }
+
+  .tldr-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .tldr-summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.85rem 1.15rem;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+  }
+
+  .tldr-accordion[open] {
+    border-color: hsl(var(--primary));
+  }
+
+  .tldr-accordion.tldr-gen-z[open] {
+    border-color: hsl(var(--success));
+  }
+
+  .tldr-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: hsl(var(--foreground));
+    min-width: 0;
+    flex: 1;
+  }
+
+  .tldr-chevron {
+    margin-left: auto;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .tldr-chevron::before {
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: 4px;
+    width: 8px;
+    height: 8px;
+    border-right: 1.5px solid hsl(var(--muted-foreground));
+    border-bottom: 1.5px solid hsl(var(--muted-foreground));
+    transform: rotate(45deg);
+    transition: transform 0.2s;
+  }
+
+  .tldr-accordion[open] .tldr-chevron::before {
+    transform: rotate(-135deg);
+    top: 7px;
+  }
+
+  .tldr-body :global(p) {
+    margin-bottom: 0.75rem;
+  }
+
+  .tldr-body :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .tldr-body :global(strong) {
+    color: hsl(var(--foreground));
+  }
+</style>

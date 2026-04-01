@@ -1,0 +1,2709 @@
+---
+interface SourceRef {
+  url: string;
+  pageLabel?: number | null;
+  pageTarget?: number | null;
+}
+
+interface ReturnStats {
+  label: string;
+  fundDisplay: string;
+  fundPct?: number | null;
+  benchmarkDisplay: string;
+  benchmarkPct?: number | null;
+  gapDisplay: string;
+  gapPct?: number | null;
+  hasData: boolean;
+}
+
+interface ComparisonRow {
+  id: string;
+  insurer: string;
+  fundFamily: string;
+  groupingKey: string;
+  subFund: string;
+  shareClass: string;
+  inceptionDate: string;
+  inceptionDateIso?: string | null;
+  annualFeeLabel: string;
+  annualFeeDisplay: string;
+  annualFeePct?: number | null;
+  benchmark: string;
+  benchmarkType: string;
+  equityPct?: number | null;
+  fixedIncomePct?: number | null;
+  assetMixLabel: string;
+  assetMixSource: string;
+  fundReturnDisplay: string;
+  fundReturnPct?: number | null;
+  benchmarkReturnDisplay: string;
+  benchmarkReturnPct?: number | null;
+  excessReturnDisplay: string;
+  excessReturnPct?: number | null;
+  returns: Record<string, ReturnStats>;
+  returnWindowLabel: string;
+  asOfDate: string;
+  returnSource: SourceRef;
+  feeSource: SourceRef;
+  etfProxy: string;
+  proxyConfidence: string;
+  comparisonQuality: string;
+  confidenceLabel: string;
+  comparisonNote: string;
+  availableWindowCount: number;
+  totalWindowCount: number;
+  coverageLabel: string;
+  missingWindows: string[];
+  hasEtfProxy: boolean;
+}
+
+interface ExplorerData {
+  coverage: {
+    rowCount: number;
+    insurers: Record<string, number>;
+    asOfDates: string[];
+    returnWindowLabel: string;
+    availableReturnWindows: Array<{ slug: string; label: string }>;
+  };
+  rows: ComparisonRow[];
+}
+
+interface MasterSourceRef {
+  url?: string;
+  page?: string;
+  locator?: string;
+}
+
+interface MasterReturnStats {
+  label: string;
+  fundDisplay: string;
+  fundPct?: number | null;
+  benchmarkDisplay: string;
+  benchmarkPct?: number | null;
+  gapDisplay: string;
+  gapPct?: number | null;
+  hasData: boolean;
+}
+
+interface MasterRow {
+  id: string;
+  insurer: string;
+  subFund: string;
+  benchmark: string;
+  etfProxy: string;
+  etfProxyConfidence: string;
+  annualFeeLabel: string;
+  annualFeeDisplay: string;
+  annualFeePct?: number | null;
+  feeSource?: MasterSourceRef;
+  returns: {
+    hasComparisonData: boolean;
+    fundFamily?: string;
+    groupingKey?: string;
+    shareClassOrCurrency?: string;
+    inceptionDate?: string;
+    inceptionDateIso?: string | null;
+    asOfDate?: string;
+    comparisonQuality?: string;
+    comparisonNote?: string;
+    returnSourceUrl?: string;
+    returnSourcePage?: string;
+    availableWindowCount?: number;
+    windowCount?: number;
+    windows?: Record<string, MasterReturnStats>;
+  };
+}
+
+interface MasterData {
+  coverage: {
+    rowCount: number;
+    insurers: Record<string, number>;
+    returnComparisonRows: number;
+  };
+  rows: MasterRow[];
+}
+
+interface Props {
+  data: ExplorerData | MasterData;
+}
+
+interface CoverageGapRow {
+  insurer: string;
+  totalRows: number;
+  comparedRows: number;
+  missingRows: number;
+  coveragePct: number;
+}
+
+interface CoverageGapSummary {
+  totalRows: number;
+  comparedRows: number;
+  missingRows: number;
+  coveragePct: number;
+  insurers: CoverageGapRow[];
+  topMissing: CoverageGapRow[];
+}
+
+const RETURN_WINDOWS = [
+  ['3_month', '3-month'],
+  ['6_month', '6-month'],
+  ['1_year', '1-year'],
+  ['3_year', '3-year'],
+  ['5_year', '5-year'],
+  ['10_year', '10-year'],
+  ['since_inception', 'Since inception'],
+] as const;
+
+function classifyAssetComponent(value: string): 'equity' | 'fixed_income' | null {
+  const text = (value || '').toLowerCase();
+  if (!text) return null;
+  if (
+    ['bond', 'government', 'iboxx', 'aggregate', 'sora', 'credit', 'income', 'treasury'].some((token) =>
+      text.includes(token)
+    )
+  ) {
+    return 'fixed_income';
+  }
+  if (
+    [
+      'msci',
+      'ftse',
+      's&p',
+      'sti',
+      'index',
+      'world',
+      'equity',
+      'india',
+      'asean',
+      'topix',
+      'nikkei',
+      'hang seng',
+      'golden dragon',
+      'dividend',
+      'asia',
+      'japan',
+      'china',
+      'europe',
+      'emerging',
+      'pacific',
+      'stock',
+    ].some((token) => text.includes(token))
+  ) {
+    return 'equity';
+  }
+  return null;
+}
+
+function inferBenchmarkType(value: string): string {
+  const text = (value || '').toLowerCase();
+  if (!text) return 'Unknown';
+  const matches = Array.from(text.matchAll(/(\d+(?:\.\d+)?)\s*%/g));
+  if (matches.length) {
+    const components = new Set<string>();
+    for (let index = 0; index < matches.length; index += 1) {
+      const current = matches[index];
+      const start = (current.index ?? 0) + current[0].length;
+      const end = index + 1 < matches.length ? matches[index + 1].index ?? text.length : text.length;
+      const component = classifyAssetComponent(text.slice(start, end));
+      if (component) components.add(component);
+    }
+    if (components.size > 1) return 'Multi-asset';
+    if (components.has('equity')) return 'Equity';
+    if (components.has('fixed_income')) return 'Bond';
+  }
+  if (['blended', 'customised blended'].some((token) => text.includes(token))) return 'Multi-asset';
+  if (['bond', 'government', 'iboxx', 'aggregate', 'sora', 'credit'].some((token) => text.includes(token))) return 'Bond';
+  if (['msci', 'ftse', 's&p', 'sti', 'index', 'world', 'equity', 'india', 'asean'].some((token) => text.includes(token))) return 'Equity';
+  return 'Custom';
+}
+
+function formatMixPct(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, '');
+}
+
+function deriveAssetMix(benchmark: string, benchmarkType: string) {
+  const text = (benchmark || '').replace(/\s+/g, ' ').trim();
+  const matches = Array.from(text.matchAll(/(\d+(?:\.\d+)?)\s*%/g));
+  let equityPct = 0;
+  let fixedIncomePct = 0;
+
+  if (matches.length) {
+    for (let index = 0; index < matches.length; index += 1) {
+      const pct = Number(matches[index][1]);
+      const start = (matches[index].index ?? 0) + matches[index][0].length;
+      const end = index + 1 < matches.length ? matches[index + 1].index ?? text.length : text.length;
+      const component = classifyAssetComponent(text.slice(start, end));
+      if (component === 'equity') equityPct += pct;
+      if (component === 'fixed_income') fixedIncomePct += pct;
+    }
+    if (equityPct || fixedIncomePct) {
+      return {
+        equityPct,
+        fixedIncomePct,
+        assetMixLabel: `E ${formatMixPct(equityPct)}% / FI ${formatMixPct(fixedIncomePct)}%`,
+        assetMixSource: 'Benchmark mix',
+      };
+    }
+  }
+
+  if (benchmarkType === 'Equity') {
+    return { equityPct: 100, fixedIncomePct: 0, assetMixLabel: 'E 100% / FI 0%', assetMixSource: 'Benchmark type' };
+  }
+  if (benchmarkType === 'Bond') {
+    return { equityPct: 0, fixedIncomePct: 100, assetMixLabel: 'E 0% / FI 100%', assetMixSource: 'Benchmark type' };
+  }
+  return { equityPct: null, fixedIncomePct: null, assetMixLabel: 'N/A', assetMixSource: 'No clean mix' };
+}
+
+function confidenceLabel(comparisonQuality: string, availableCount: number, totalCount: number): string {
+  const quality = (comparisonQuality || '').trim().toLowerCase();
+  if (quality === 'high' && availableCount === totalCount) return 'High confidence';
+  if (quality === 'high') return 'High confidence, partial windows';
+  if (quality) return `${comparisonQuality[0].toUpperCase()}${comparisonQuality.slice(1)} confidence`;
+  return 'Needs review';
+}
+
+function isMasterData(value: ExplorerData | MasterData): value is MasterData {
+  return typeof (value as MasterData)?.coverage?.returnComparisonRows === 'number';
+}
+
+function pdfPageTarget(insurer: string, pageLabel?: number | null): number | null {
+  if (pageLabel == null) return null;
+  if (insurer === 'Great Eastern') return pageLabel + 2;
+  return pageLabel;
+}
+
+function buildCoverageGapSummary(input: ExplorerData | MasterData): CoverageGapSummary | null {
+  if (!isMasterData(input)) return null;
+  const byInsurer = new Map<string, CoverageGapRow>();
+
+  for (const row of input.rows) {
+    const current = byInsurer.get(row.insurer) ?? {
+      insurer: row.insurer,
+      totalRows: 0,
+      comparedRows: 0,
+      missingRows: 0,
+      coveragePct: 0,
+    };
+    current.totalRows += 1;
+    if (row.returns?.hasComparisonData) {
+      current.comparedRows += 1;
+    } else {
+      current.missingRows += 1;
+    }
+    byInsurer.set(row.insurer, current);
+  }
+
+  const insurers = Array.from(byInsurer.values())
+    .map((row) => ({
+      ...row,
+      coveragePct: row.totalRows ? (row.comparedRows / row.totalRows) * 100 : 0,
+    }))
+    .sort((left, right) => right.missingRows - left.missingRows || left.insurer.localeCompare(right.insurer));
+
+  const totalRows = input.coverage.rowCount;
+  const comparedRows = input.coverage.returnComparisonRows;
+  const missingRows = Math.max(totalRows - comparedRows, 0);
+
+  return {
+    totalRows,
+    comparedRows,
+    missingRows,
+    coveragePct: totalRows ? (comparedRows / totalRows) * 100 : 0,
+    insurers,
+    topMissing: insurers.filter((row) => row.missingRows > 0).slice(0, 4),
+  };
+}
+
+function toExplorerData(input: ExplorerData | MasterData): ExplorerData {
+  if (!isMasterData(input)) return input;
+
+  const sourceRows = input.rows.filter((row) => row.returns?.hasComparisonData);
+  const rows: ComparisonRow[] = sourceRows.map((row) => {
+    const benchmarkType = inferBenchmarkType(row.benchmark || '');
+    const assetMix = deriveAssetMix(row.benchmark || '', benchmarkType);
+    const windows: Record<string, ReturnStats> = {};
+    const missingWindows: string[] = [];
+
+    for (const [slug, label] of RETURN_WINDOWS) {
+      const stat = row.returns.windows?.[slug] ?? {
+        label,
+        fundDisplay: '',
+        fundPct: null,
+        benchmarkDisplay: '',
+        benchmarkPct: null,
+        gapDisplay: '',
+        gapPct: null,
+        hasData: false,
+      };
+      windows[slug] = stat;
+      if (!stat.hasData) missingWindows.push(label);
+    }
+
+    const availableWindowCount = row.returns.availableWindowCount ?? 7 - missingWindows.length;
+    const returnPageLabel = row.returns.returnSourcePage ? Number(row.returns.returnSourcePage) : null;
+    const feePageLabel = row.feeSource?.page ? Number(row.feeSource.page) : null;
+    const since = windows['since_inception'];
+
+    return {
+      id: row.id,
+      insurer: row.insurer,
+      fundFamily: row.returns.fundFamily || row.subFund,
+      groupingKey: row.returns.groupingKey || row.id,
+      subFund: row.subFund,
+      shareClass: row.returns.shareClassOrCurrency || 'SGD',
+      inceptionDate: row.returns.inceptionDate || '',
+      inceptionDateIso: row.returns.inceptionDateIso,
+      annualFeeLabel: row.annualFeeLabel || '',
+      annualFeeDisplay: row.annualFeeDisplay || '',
+      annualFeePct: row.annualFeePct,
+      benchmark: row.benchmark || '',
+      benchmarkType,
+      equityPct: assetMix.equityPct,
+      fixedIncomePct: assetMix.fixedIncomePct,
+      assetMixLabel: assetMix.assetMixLabel,
+      assetMixSource: assetMix.assetMixSource,
+      fundReturnDisplay: since.fundDisplay,
+      fundReturnPct: since.fundPct,
+      benchmarkReturnDisplay: since.benchmarkDisplay,
+      benchmarkReturnPct: since.benchmarkPct,
+      excessReturnDisplay: since.gapDisplay,
+      excessReturnPct: since.gapPct,
+      returns: windows,
+      returnWindowLabel: 'Since inception (annualised)',
+      asOfDate: row.returns.asOfDate || '',
+      returnSource: {
+        url: row.returns.returnSourceUrl || '',
+        pageLabel: returnPageLabel,
+        pageTarget: pdfPageTarget(row.insurer, returnPageLabel),
+      },
+      feeSource: {
+        url: row.feeSource?.url || '',
+        pageLabel: feePageLabel,
+        pageTarget: pdfPageTarget(row.insurer, feePageLabel),
+      },
+      etfProxy: row.etfProxy || '',
+      proxyConfidence: row.etfProxyConfidence || '',
+      comparisonQuality: row.returns.comparisonQuality || '',
+      confidenceLabel: confidenceLabel(row.returns.comparisonQuality || '', availableWindowCount, 7),
+      comparisonNote: row.returns.comparisonNote || '',
+      availableWindowCount,
+      totalWindowCount: 7,
+      coverageLabel: `${availableWindowCount}/7 windows`,
+      missingWindows,
+      hasEtfProxy: Boolean(row.etfProxy),
+    };
+  });
+
+  const insurers = Object.fromEntries(
+    Object.entries(
+      sourceRows.reduce<Record<string, number>>((acc, row) => {
+        acc[row.insurer] = (acc[row.insurer] || 0) + 1;
+        return acc;
+      }, {})
+    ).sort(([a], [b]) => a.localeCompare(b))
+  );
+
+  const availableReturnWindows = RETURN_WINDOWS.filter(([slug]) =>
+    rows.some((row) => row.returns[slug].hasData)
+  ).map(([slug, label]) => ({ slug, label }));
+
+  return {
+    coverage: {
+      rowCount: rows.length,
+      insurers,
+      asOfDates: Array.from(new Set(sourceRows.map((row) => row.returns.asOfDate).filter(Boolean) as string[])).sort(),
+      returnWindowLabel: 'Since inception (annualised)',
+      availableReturnWindows,
+    },
+    rows,
+  };
+}
+
+const { data: rawData } = Astro.props;
+const data = toExplorerData(rawData);
+const coverageGap = buildCoverageGapSummary(rawData);
+const widgetId = `ilp-compare-${Math.random().toString(36).slice(2, 8)}`;
+const datasetJson = JSON.stringify(data);
+const insurerOptions = Object.keys(data.coverage.insurers).sort();
+const returnWindowOptions = data.coverage.availableReturnWindows ?? [];
+const asOfDateOptions = data.coverage.asOfDates ?? [];
+const recentReportDates = ['30 Nov 2025', '31 December 2025', '31 January 2026'];
+const recentReportDateSet = new Set(recentReportDates);
+const recentReportRowCount = data.rows.filter((row) => recentReportDateSet.has(row.asOfDate)).length;
+const numericFees = data.rows
+  .map((row) => row.annualFeePct)
+  .filter((value): value is number => Number.isFinite(value));
+const numericExcess = data.rows
+  .map((row) => row.excessReturnPct)
+  .filter((value): value is number => Number.isFinite(value));
+const median = (values: number[]) => {
+  if (!values.length) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? (sorted[middle - 1] + sorted[middle]) / 2
+    : sorted[middle];
+};
+const outperformCount = data.rows.filter((row) => (row.excessReturnPct ?? Number.NEGATIVE_INFINITY) >= 0).length;
+const proxyCount = data.rows.filter((row) => row.hasEtfProxy).length;
+const medianFee = median(numericFees);
+const medianExcess = median(numericExcess);
+const pdfPageExplanation = {
+  adobe: "https://helpx.adobe.com/acrobat/kb/link-html-pdf-page-acrobat.html",
+  mdn: "https://developer.mozilla.org/en-US/docs/Web/URI/Reference/Fragment",
+  geExample:
+    "https://www.greateasternlife.com/content/dam/corp-site/great-eastern/sg/gels-ftrp-funds/annual-report/2025-greatlink-annual-report.pdf#page=37",
+};
+---
+
+<section id={widgetId} class="ilp-explorer not-prose">
+  <div class="explorer-header">
+    <div>
+      <div class="section-kicker">Interactive dataset</div>
+      <h3 class="section-title">Search ILP sub-funds by fee, asset mix, benchmark, and return gap</h3>
+      <p class="section-copy">
+        This version uses <strong>{data.coverage.rowCount}</strong> high-confidence rows from official insurer PDFs. Use the as-of-date filter to keep comparisons within one reporting date or a recent-report cohort before you rank funds by return gap.
+      </p>
+    </div>
+    <div class="coverage-card">
+      <div class="coverage-label">Coverage</div>
+      <div class="coverage-grid">
+        {Object.entries(data.coverage.insurers).map(([insurer, count]) => (
+          <div class="coverage-item">
+            <span>{insurer}</span>
+            <strong>{count}</strong>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <div class="snapshot-grid" aria-label="Dataset summary">
+    <div class="snapshot-card">
+      <div class="snapshot-label">Rows screened</div>
+      <div class="snapshot-value">{data.coverage.rowCount}</div>
+      <p>Only rows with fee, benchmark, inception, and at least one official return window from the source PDF.</p>
+    </div>
+    <div class="snapshot-card">
+      <div class="snapshot-label">Beat benchmark</div>
+      <div class="snapshot-value">{outperformCount}</div>
+      <p>{Math.round((outperformCount / data.coverage.rowCount) * 100)}% of the current subset have non-negative excess return since inception.</p>
+    </div>
+    <div class="snapshot-card">
+      <div class="snapshot-label">Median fee</div>
+      <div class="snapshot-value">{medianFee ? `${medianFee.toFixed(2)}%` : 'N/A'}</div>
+      <p>Shown exactly as the insurer reports it, so compare labels as well as the number.</p>
+    </div>
+    <div class="snapshot-card">
+      <div class="snapshot-label">ETF proxy mapped</div>
+      <div class="snapshot-value">{proxyCount}</div>
+      <p>{medianExcess ? `Median excess return is ${medianExcess > 0 ? '+' : ''}${medianExcess.toFixed(1)} pp.` : 'Proxy coverage varies most on multi-asset funds.'}</p>
+    </div>
+  </div>
+
+  {coverageGap && (
+    <details class="gap-disclosure" aria-label="Return coverage gap">
+      <summary class="gap-summary-card">
+        <div class="section-kicker">Coverage note</div>
+        <div class="gap-summary-head">
+          <div>
+            <h4>Return coverage is still a work in progress</h4>
+            <p>
+              This explorer currently covers <strong>{coverageGap.comparedRows}</strong> of
+              <strong> {coverageGap.totalRows}</strong> top-level ILP sub-funds with a clean
+              return-versus-benchmark comparison.
+            </p>
+          </div>
+          <span class="gap-toggle-copy">Show research coverage</span>
+        </div>
+        <div class="gap-progress-block">
+          <div class="gap-progress-head">
+            <span>Current return coverage</span>
+            <strong>{coverageGap.coveragePct.toFixed(1)}%</strong>
+          </div>
+          <div class="gap-progress-track" aria-hidden="true">
+            <span class="gap-progress-fill" style={`width: ${coverageGap.coveragePct.toFixed(2)}%`}></span>
+          </div>
+          <div class="gap-progress-meta">
+            <span>{coverageGap.comparedRows} with return comparison</span>
+            <span>{coverageGap.missingRows} still missing</span>
+          </div>
+        </div>
+      </summary>
+
+      <div class="gap-section">
+        {coverageGap.topMissing.length > 0 && (
+          <div class="gap-summary-card gap-detail-card">
+            <div class="gap-top-label">Biggest remaining gaps</div>
+            <div class="gap-chip-row">
+              {coverageGap.topMissing.map((row) => (
+                <span class="gap-chip">{row.insurer}: {row.missingRows} missing</span>
+              ))}
+            </div>
+            <p class="gap-detail-copy">
+              This breakdown is mainly for research tracking. Most readers can ignore it and use the current subset as a screening tool.
+            </p>
+          </div>
+        )}
+
+        <div class="gap-insurer-card">
+          <div class="gap-insurer-head">
+            <div class="coverage-label">By insurer</div>
+            <span>Compared / total</span>
+          </div>
+          <div class="gap-insurer-list">
+            {coverageGap.insurers.map((row) => (
+              <div class="gap-insurer-row">
+                <div class="gap-insurer-meta">
+                  <strong>{row.insurer}</strong>
+                  <span>{row.comparedRows}/{row.totalRows} covered</span>
+                </div>
+                <div class="gap-bar-row">
+                  <div class="gap-bar-track" aria-hidden="true">
+                    <span class="gap-bar-fill" style={`width: ${row.coveragePct.toFixed(2)}%`}></span>
+                  </div>
+                  <span class="gap-bar-label">{row.missingRows} missing</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </details>
+  )}
+
+  <div class="controls">
+    <div class="field field-search">
+      <label for={`${widgetId}-search`}>Search</label>
+      <input id={`${widgetId}-search`} data-field="search" type="search" placeholder="e.g. Global Technology, S&P 500, AIA" />
+    </div>
+
+    <div class="field">
+      <label for={`${widgetId}-insurer`}>Insurer</label>
+      <select id={`${widgetId}-insurer`} data-field="insurer">
+        <option value="all">All insurers</option>
+        {insurerOptions.map((insurer) => (
+          <option value={insurer}>{insurer}</option>
+        ))}
+      </select>
+    </div>
+
+    <div class="field">
+      <label for={`${widgetId}-as-of-date`}>As of date</label>
+      <select id={`${widgetId}-as-of-date`} data-field="asOfDate">
+        <option value="recent_reports" selected>Recent reports (30 Nov 2025 to 31 Jan 2026)</option>
+        <option value="all">Mixed dates (research mode)</option>
+        {asOfDateOptions.map((date) => (
+          <option value={date}>{date}</option>
+        ))}
+      </select>
+    </div>
+
+    <div class="field">
+      <label for={`${widgetId}-return-window`}>Return window</label>
+      <select id={`${widgetId}-return-window`} data-field="returnWindow">
+        {returnWindowOptions.map((item) => (
+          <option value={item.slug} selected={item.slug === "since_inception"}>{item.label}</option>
+        ))}
+      </select>
+    </div>
+
+    <div class="field">
+      <label for={`${widgetId}-sort`}>Sort</label>
+      <select id={`${widgetId}-sort`} data-field="sort">
+        <option value="gap-desc">Highest return gap</option>
+        <option value="gap-asc">Lowest return gap</option>
+        <option value="fund-desc">Highest fund return</option>
+        <option value="fund-asc">Lowest fund return</option>
+        <option value="fee-asc">Lowest fee</option>
+        <option value="fee-desc">Highest fee</option>
+        <option value="alpha">A to Z</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="quick-filters" role="group" aria-label="Quick filters">
+    <button type="button" class="quick-filter is-active" data-filter="all">All rows</button>
+    <button type="button" class="quick-filter" data-filter="outperform">Beating benchmark</button>
+    <button type="button" class="quick-filter" data-filter="proxy">Has ETF proxy</button>
+    <button type="button" class="quick-filter" data-filter="low-fee">Fee at or below 1.00%</button>
+  </div>
+
+  <div class="results-meta">
+    <span data-output="resultCount">{recentReportRowCount} funds</span>
+    <span data-output="windowLabel">Window: {returnWindowOptions.find((item) => item.slug === "since_inception")?.label ?? data.coverage.returnWindowLabel}</span>
+    <span data-output="asOfSummary">As of: recent reports cohort (30 Nov 2025, 31 December 2025, 31 January 2026)</span>
+    <span>3-month, 6-month, and 1-year are point-to-point returns; 3-year and longer are annualised where the source marks them that way</span>
+    <span>Return gap = fund return minus benchmark return, in percentage points</span>
+    <span>Mixed as-of dates are not perfectly apples-to-apples; use the date filter for a cleaner comparison set</span>
+    <span>Mix is benchmark-based when explicit; it is not the fund's live holdings split</span>
+    <span>Rows with no value for the selected window sort to the bottom</span>
+  </div>
+
+  <div class="table-shell">
+    <table class="result-table">
+      <thead>
+        <tr>
+          <th>Sub-fund</th>
+          <th>Fee</th>
+          <th>
+            <span class="th-with-help">
+              Asset mix
+              <details class="info-tooltip">
+                <summary aria-label="How asset mix is derived">?</summary>
+                <div class="info-tooltip-card">
+                  <p>Asset mix shows the rough split between equity and fixed income when the benchmark makes that clear.</p>
+                  <p>For example, a pure stock benchmark becomes 100% equity, while a 60/40 benchmark becomes 60% equity and 40% fixed income.</p>
+                  <p>It is a benchmark-based description, not the fund's live portfolio weights.</p>
+                </div>
+              </details>
+            </span>
+          </th>
+          <th>Benchmark</th>
+          <th>Fund</th>
+          <th>Benchmark</th>
+          <th>Gap</th>
+          <th>As of</th>
+          <th>
+            <span class="th-with-help">
+              Sources
+              <details class="info-tooltip">
+                <summary aria-label="Why page numbers can differ">?</summary>
+                <div class="info-tooltip-card">
+                  <p>We show the printed page number from the PDF itself, but the link jumps using the PDF viewer's internal page target.</p>
+                  <p>Those can differ when a document has front matter before the printed folio starts. Great Eastern's 2025 annual report is one example: printed page 35 opens with `#page=37`.</p>
+                  <p class="tooltip-sources">
+                    <a href={pdfPageExplanation.adobe} target="_blank" rel="noreferrer noopener">Adobe: PDF page links</a>
+                    <a href={pdfPageExplanation.mdn} target="_blank" rel="noreferrer noopener">MDN: URL fragments</a>
+                    <a href={pdfPageExplanation.geExample} target="_blank" rel="noreferrer noopener">Great Eastern example</a>
+                  </p>
+                </div>
+              </details>
+            </span>
+          </th>
+        </tr>
+      </thead>
+      <tbody data-output="rows"></tbody>
+    </table>
+  </div>
+  <button type="button" class="table-toggle-button" data-output="tableToggleButton" hidden>Expand table</button>
+
+  <div class="mobile-results" data-output="mobileResults"></div>
+  <button type="button" class="show-more-button" data-output="showMoreButton" hidden>Show more</button>
+
+  <div class="detail-panel" data-output="detailPanel">
+    <div class="detail-head">
+      <div>
+        <div class="detail-eyebrow" data-output="detailInsurer">Insurer</div>
+        <h4 class="detail-title" data-output="detailName">Select a sub-fund</h4>
+        <p class="detail-copy" data-output="detailBenchmark">Benchmark</p>
+      </div>
+      <div class="pill-row">
+        <span class="pill" data-output="detailFee">Fee</span>
+        <span class="pill" data-output="detailAssetMix">Asset mix</span>
+        <span class="pill" data-output="detailBenchmarkType">Benchmark type</span>
+        <span class="pill" data-output="detailCoverage">Coverage</span>
+        <span class="pill" data-output="detailConfidence">Confidence</span>
+        <span class="pill" data-output="detailProxy">ETF proxy</span>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <svg data-output="chart" viewBox="0 0 640 260" class="chart-svg" role="img" aria-label="Fund versus benchmark since inception">
+        <rect x="0" y="0" width="640" height="260" fill="transparent"></rect>
+        <line x1="64" y1="30" x2="64" y2="210" stroke="hsl(var(--border))" stroke-width="1"></line>
+        <line x1="64" y1="210" x2="608" y2="210" stroke="hsl(var(--border))" stroke-width="1"></line>
+        <line data-output="zeroLine" x1="336" y1="30" x2="336" y2="210" stroke="hsl(var(--border))" stroke-width="1" stroke-dasharray="4 4"></line>
+        <rect data-output="fundBar" x="0" y="72" width="0" height="42" rx="8" fill="#D85A30"></rect>
+        <rect data-output="benchmarkBar" x="0" y="146" width="0" height="42" rx="8" fill="#1D9E75"></rect>
+        <text x="12" y="98" class="chart-label">Fund</text>
+        <text x="12" y="172" class="chart-label">Benchmark</text>
+        <text x="336" y="226" text-anchor="middle" class="chart-axis">0%</text>
+        <text data-output="fundValue" x="0" y="98" class="chart-value">0%</text>
+        <text data-output="benchmarkValue" x="0" y="172" class="chart-value">0%</text>
+      </svg>
+    </div>
+
+    <div class="detail-metrics">
+      <div class="metric">
+        <div class="metric-label" data-output="detailWindowLabel">Selected window</div>
+        <div class="metric-value" data-output="detailFundReturn">0%</div>
+        <div class="metric-sub" data-output="detailFundSub">Official fund return</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Benchmark</div>
+        <div class="metric-value" data-output="detailBenchmarkReturn">0%</div>
+        <div class="metric-sub" data-output="detailBenchmarkSub">Official benchmark return</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Return gap</div>
+        <div class="metric-value accent" data-output="detailExcessReturn">0 pp</div>
+        <div class="metric-sub" data-output="detailInceptionDate">Since inception</div>
+      </div>
+    </div>
+
+    <div class="detail-footer">
+      <p class="source-note" data-output="detailNote"></p>
+      <div class="source-links">
+        <a data-output="returnSourceLink" href="#" target="_blank" rel="noreferrer noopener">Return source</a>
+        <a data-output="feeSourceLink" href="#" target="_blank" rel="noreferrer noopener">Fee source</a>
+      </div>
+    </div>
+
+    <details class="evidence-panel">
+      <summary>Show evidence for this row</summary>
+      <div class="evidence-grid">
+        <div class="evidence-card">
+          <div class="evidence-label">Formula used</div>
+          <div class="evidence-formula" data-output="detailFormula">Fund return - Benchmark return = Return gap</div>
+          <p>The gap is computed from the parsed fund and benchmark values shown for the selected return window in the source PDF.</p>
+        </div>
+
+        <div class="evidence-card">
+          <div class="evidence-label">Raw extracted values</div>
+          <dl class="evidence-list">
+            <div>
+              <dt>Fund return</dt>
+              <dd data-output="detailEvidenceFund">N/A</dd>
+            </div>
+            <div>
+              <dt>Benchmark return</dt>
+              <dd data-output="detailEvidenceBenchmark">N/A</dd>
+            </div>
+            <div>
+              <dt>Return gap</dt>
+              <dd data-output="detailEvidenceGap">N/A</dd>
+            </div>
+            <div>
+              <dt>Fee as displayed</dt>
+              <dd data-output="detailEvidenceFee">N/A</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="evidence-card">
+          <div class="evidence-label">Source trail</div>
+          <dl class="evidence-list">
+            <div>
+              <dt>
+                <span class="term-with-help">
+                  Return page
+                  <details class="info-tooltip">
+                    <summary aria-label="Why printed page and link target can differ">?</summary>
+                    <div class="info-tooltip-card">
+                      <p>The page shown here is the printed page label on the document. The link target may use a different internal PDF page index so the browser opens the right sheet.</p>
+                      <p class="tooltip-sources">
+                        <a href={pdfPageExplanation.adobe} target="_blank" rel="noreferrer noopener">Adobe: PDF page links</a>
+                        <a href={pdfPageExplanation.mdn} target="_blank" rel="noreferrer noopener">MDN: URL fragments</a>
+                      </p>
+                    </div>
+                  </details>
+                </span>
+              </dt>
+              <dd data-output="detailReturnCitation">N/A</dd>
+            </div>
+            <div>
+              <dt>
+                <span class="term-with-help">
+                  Fee page
+                  <details class="info-tooltip">
+                    <summary aria-label="Why printed page and link target can differ">?</summary>
+                    <div class="info-tooltip-card">
+                      <p>The printed citation page is shown for readability. The link uses the browser PDF viewer's page target, which can differ when the PDF includes unnumbered front matter.</p>
+                      <p class="tooltip-sources">
+                        <a href={pdfPageExplanation.adobe} target="_blank" rel="noreferrer noopener">Adobe: PDF page links</a>
+                        <a href={pdfPageExplanation.mdn} target="_blank" rel="noreferrer noopener">MDN: URL fragments</a>
+                      </p>
+                    </div>
+                  </details>
+                </span>
+              </dt>
+              <dd data-output="detailFeeCitation">N/A</dd>
+            </div>
+            <div>
+              <dt>Comparison quality</dt>
+              <dd data-output="detailQuality">N/A</dd>
+            </div>
+            <div>
+              <dt>As of date</dt>
+              <dd data-output="detailAsOf">N/A</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    </details>
+  </div>
+</section>
+
+<script is:inline define:vars={{ widgetId, datasetJson }}>
+  (() => {
+    const root = document.getElementById(widgetId);
+    if (!root) return;
+
+    const data = JSON.parse(datasetJson);
+    const recentReportDates = new Set(['30 Nov 2025', '31 December 2025', '31 January 2026']);
+    const rows = data.rows ?? [];
+    const returnWindowOptions = data.coverage?.availableReturnWindows ?? [];
+    const defaultReturnWindow = returnWindowOptions.find((item) => item.slug === 'since_inception')?.slug
+      ?? returnWindowOptions[0]?.slug
+      ?? 'since_inception';
+    const controls = {
+      search: root.querySelector('[data-field="search"]'),
+      insurer: root.querySelector('[data-field="insurer"]'),
+      asOfDate: root.querySelector('[data-field="asOfDate"]'),
+      returnWindow: root.querySelector('[data-field="returnWindow"]'),
+      sort: root.querySelector('[data-field="sort"]'),
+    };
+    const outputs = {
+      rows: root.querySelector('[data-output="rows"]'),
+      tableShell: root.querySelector('.table-shell'),
+      tableToggleButton: root.querySelector('[data-output="tableToggleButton"]'),
+      mobileResults: root.querySelector('[data-output="mobileResults"]'),
+      showMoreButton: root.querySelector('[data-output="showMoreButton"]'),
+      resultCount: root.querySelector('[data-output="resultCount"]'),
+      windowLabel: root.querySelector('[data-output="windowLabel"]'),
+      asOfSummary: root.querySelector('[data-output="asOfSummary"]'),
+      detailInsurer: root.querySelector('[data-output="detailInsurer"]'),
+      detailName: root.querySelector('[data-output="detailName"]'),
+      detailBenchmark: root.querySelector('[data-output="detailBenchmark"]'),
+      detailFee: root.querySelector('[data-output="detailFee"]'),
+      detailAssetMix: root.querySelector('[data-output="detailAssetMix"]'),
+      detailBenchmarkType: root.querySelector('[data-output="detailBenchmarkType"]'),
+      detailCoverage: root.querySelector('[data-output="detailCoverage"]'),
+      detailConfidence: root.querySelector('[data-output="detailConfidence"]'),
+      detailProxy: root.querySelector('[data-output="detailProxy"]'),
+      detailWindowLabel: root.querySelector('[data-output="detailWindowLabel"]'),
+      detailFundSub: root.querySelector('[data-output="detailFundSub"]'),
+      detailBenchmarkSub: root.querySelector('[data-output="detailBenchmarkSub"]'),
+      detailFundReturn: root.querySelector('[data-output="detailFundReturn"]'),
+      detailBenchmarkReturn: root.querySelector('[data-output="detailBenchmarkReturn"]'),
+      detailExcessReturn: root.querySelector('[data-output="detailExcessReturn"]'),
+      detailInceptionDate: root.querySelector('[data-output="detailInceptionDate"]'),
+      detailNote: root.querySelector('[data-output="detailNote"]'),
+      detailFormula: root.querySelector('[data-output="detailFormula"]'),
+      detailEvidenceFund: root.querySelector('[data-output="detailEvidenceFund"]'),
+      detailEvidenceBenchmark: root.querySelector('[data-output="detailEvidenceBenchmark"]'),
+      detailEvidenceGap: root.querySelector('[data-output="detailEvidenceGap"]'),
+      detailEvidenceFee: root.querySelector('[data-output="detailEvidenceFee"]'),
+      detailReturnCitation: root.querySelector('[data-output="detailReturnCitation"]'),
+      detailFeeCitation: root.querySelector('[data-output="detailFeeCitation"]'),
+      detailQuality: root.querySelector('[data-output="detailQuality"]'),
+      detailAsOf: root.querySelector('[data-output="detailAsOf"]'),
+      returnSourceLink: root.querySelector('[data-output="returnSourceLink"]'),
+      feeSourceLink: root.querySelector('[data-output="feeSourceLink"]'),
+      chart: root.querySelector('[data-output="chart"]'),
+      fundBar: root.querySelector('[data-output="fundBar"]'),
+      benchmarkBar: root.querySelector('[data-output="benchmarkBar"]'),
+      fundValue: root.querySelector('[data-output="fundValue"]'),
+      benchmarkValue: root.querySelector('[data-output="benchmarkValue"]'),
+      zeroLine: root.querySelector('[data-output="zeroLine"]'),
+    };
+    const quickFilters = Array.from(root.querySelectorAll('[data-filter]'));
+
+    let selectedId = rows[0]?.id ?? null;
+    let quickFilter = 'all';
+    let visibleLimit = 10;
+    let tableExpanded = false;
+    const expandedGroups = new Set();
+
+    const formatPct = (value) => Number.isFinite(value) ? `${value.toFixed(2)}%` : 'N/A';
+    const formatSignedPp = (value) => Number.isFinite(value)
+      ? `${value > 0 ? '+' : ''}${value.toFixed(1)} pp`
+      : 'N/A';
+    const formatWholePct = (value) => Number.isFinite(value)
+      ? `${Number.isInteger(value) ? value.toFixed(0) : value.toFixed(1).replace(/\\.0$/, '')}%`
+      : 'N/A';
+    const ellipsis = (value, limit = 110) => value.length > limit ? `${value.slice(0, limit - 1)}…` : value;
+    const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    }[char] ?? char));
+    const sourceHref = (source) => {
+      if (!source?.url) return '#';
+      if (source.pageTarget && /\.pdf($|\?)/i.test(source.url)) {
+        return `${source.url}#page=${source.pageTarget}`;
+      }
+      return source.url;
+    };
+    const isCompleteRow = (row) => row.availableWindowCount >= row.totalWindowCount;
+    const getAssetMix = (row) => {
+      const equity = Number.isFinite(row.equityPct) ? row.equityPct : null;
+      const fixedIncome = Number.isFinite(row.fixedIncomePct) ? row.fixedIncomePct : null;
+
+      if (equity === 100 && fixedIncome === 0) {
+        return {
+          hasBreakdown: true,
+          equityDisplay: '100%',
+          fixedIncomeDisplay: '0%',
+          primary: '100% equity',
+          secondary: 'Based on the benchmark',
+          mobile: '100% equity / 0% fixed income',
+          detail: 'Asset mix: 100% equity',
+        };
+      }
+      if (equity === 0 && fixedIncome === 100) {
+        return {
+          hasBreakdown: true,
+          equityDisplay: '0%',
+          fixedIncomeDisplay: '100%',
+          primary: '100% fixed income',
+          secondary: 'Based on the benchmark',
+          mobile: '0% equity / 100% fixed income',
+          detail: 'Asset mix: 100% fixed income',
+        };
+      }
+      if (equity !== null && fixedIncome !== null) {
+        return {
+          hasBreakdown: true,
+          equityDisplay: formatWholePct(equity),
+          fixedIncomeDisplay: formatWholePct(fixedIncome),
+          primary: `${formatWholePct(equity)} equity`,
+          secondary: `${formatWholePct(fixedIncome)} fixed income`,
+          mobile: `${formatWholePct(equity)} equity / ${formatWholePct(fixedIncome)} fixed income`,
+          detail: `Asset mix: ${formatWholePct(equity)} equity / ${formatWholePct(fixedIncome)} fixed income`,
+        };
+      }
+      return {
+        hasBreakdown: false,
+        equityDisplay: null,
+        fixedIncomeDisplay: null,
+        primary: 'Not clear',
+        secondary: 'Benchmark mix not explicit',
+        mobile: 'Not clear',
+        detail: 'Asset mix: not clear from the benchmark',
+      };
+    };
+    const getActiveWindow = () => controls.returnWindow?.value ?? defaultReturnWindow;
+    const getWindowMeta = () => returnWindowOptions.find((item) => item.slug === getActiveWindow())
+      ?? { slug: defaultReturnWindow, label: data.coverage?.returnWindowLabel ?? 'Since inception' };
+    const getReturnStats = (row) => {
+      const activeWindow = getActiveWindow();
+      const stats = row.returns?.[activeWindow];
+      if (stats) {
+        return {
+          label: stats.label ?? getWindowMeta().label,
+          fundDisplay: stats.fundDisplay || '',
+          fundPct: Number.isFinite(stats.fundPct) ? stats.fundPct : null,
+          benchmarkDisplay: stats.benchmarkDisplay || '',
+          benchmarkPct: Number.isFinite(stats.benchmarkPct) ? stats.benchmarkPct : null,
+          gapDisplay: stats.gapDisplay || '',
+          gapPct: Number.isFinite(stats.gapPct) ? stats.gapPct : null,
+          hasData: Boolean(stats.hasData || (stats.fundDisplay && stats.benchmarkDisplay)),
+        };
+      }
+      if (activeWindow === 'since_inception') {
+        return {
+          label: row.returnWindowLabel || getWindowMeta().label,
+          fundDisplay: row.fundReturnDisplay || '',
+          fundPct: Number.isFinite(row.fundReturnPct) ? row.fundReturnPct : null,
+          benchmarkDisplay: row.benchmarkReturnDisplay || '',
+          benchmarkPct: Number.isFinite(row.benchmarkReturnPct) ? row.benchmarkReturnPct : null,
+          gapDisplay: row.excessReturnDisplay || '',
+          gapPct: Number.isFinite(row.excessReturnPct) ? row.excessReturnPct : null,
+          hasData: Boolean(row.fundReturnDisplay && row.benchmarkReturnDisplay),
+        };
+      }
+      return {
+        label: getWindowMeta().label,
+        fundDisplay: '',
+        fundPct: null,
+        benchmarkDisplay: '',
+        benchmarkPct: null,
+        gapDisplay: '',
+        gapPct: null,
+        hasData: false,
+      };
+    };
+    const compareNullable = (left, right, direction = 'desc') => {
+      const leftValid = Number.isFinite(left);
+      const rightValid = Number.isFinite(right);
+      if (leftValid && rightValid) {
+        return direction === 'asc' ? left - right : right - left;
+      }
+      if (leftValid) return -1;
+      if (rightValid) return 1;
+      return 0;
+    };
+    const getSorter = (sortKey) => {
+      if (sortKey === 'gap-desc') {
+        return (a, b) => compareNullable(getReturnStats(a).gapPct, getReturnStats(b).gapPct, 'desc');
+      }
+      if (sortKey === 'gap-asc') {
+        return (a, b) => compareNullable(getReturnStats(a).gapPct, getReturnStats(b).gapPct, 'asc');
+      }
+      if (sortKey === 'fund-desc') {
+        return (a, b) => compareNullable(getReturnStats(a).fundPct, getReturnStats(b).fundPct, 'desc');
+      }
+      if (sortKey === 'fund-asc') {
+        return (a, b) => compareNullable(getReturnStats(a).fundPct, getReturnStats(b).fundPct, 'asc');
+      }
+      if (sortKey === 'fee-asc') {
+        return (a, b) => compareNullable(a.annualFeePct, b.annualFeePct, 'asc');
+      }
+      if (sortKey === 'fee-desc') {
+        return (a, b) => compareNullable(a.annualFeePct, b.annualFeePct, 'desc');
+      }
+      return (a, b) => a.subFund.localeCompare(b.subFund);
+    };
+    const buildDisplayItems = (visible) => {
+      const map = new Map();
+      const items = [];
+      visible.forEach((row) => {
+        const key = row.groupingKey || row.id;
+        if (!map.has(key)) {
+          const entry = {
+            type: 'group',
+            key,
+            label: row.fundFamily || row.subFund,
+            insurer: row.insurer,
+            benchmarkType: row.benchmarkType,
+            rows: [],
+          };
+          map.set(key, entry);
+          items.push(entry);
+        }
+        map.get(key).rows.push(row);
+      });
+      return items.map((item) => (
+        item.rows.length === 1
+          ? { type: 'row', row: item.rows[0] }
+          : item
+      ));
+    };
+    const toggleGroup = (key) => {
+      if (expandedGroups.has(key)) {
+        expandedGroups.delete(key);
+      } else {
+        expandedGroups.add(key);
+      }
+    };
+    const missingStateHtml = (row, stats) => {
+      if (stats.hasData) return escapeHtml(stats.fundDisplay || 'N/A');
+      const missing = row.missingWindows?.join(', ') || 'selected window';
+      return `<span class="missing-data" title="Missing windows: ${escapeHtml(missing)}">N/A</span>`;
+    };
+    const coverageBadgeClass = (row) => isCompleteRow(row) ? 'good' : 'muted';
+    const confidenceBadgeClass = (row) => row.confidenceLabel?.toLowerCase().includes('partial') ? 'muted' : 'good';
+    const renderRowMarkup = (row, options = {}) => {
+      const stats = getReturnStats(row);
+      const assetMix = getAssetMix(row);
+      const gapClass = Number.isFinite(stats.gapPct) ? (stats.gapPct >= 0 ? 'good' : 'bad') : 'muted';
+      const childClass = options.child ? ' is-child' : '';
+      const assetMixHtml = assetMix.hasBreakdown
+        ? `
+          <div class="asset-mix-lines" aria-label="${escapeHtml(assetMix.detail)}">
+            <div class="asset-mix-line"><span class="asset-mix-key">Equity</span> <strong>${escapeHtml(assetMix.equityDisplay)}</strong></div>
+            <div class="asset-mix-line"><span class="asset-mix-key">Fixed income</span> <strong>${escapeHtml(assetMix.fixedIncomeDisplay)}</strong></div>
+          </div>
+        `
+        : `<span class="cell-primary">${escapeHtml(assetMix.primary)}</span><span class="cell-sub">${escapeHtml(assetMix.secondary)}</span>`;
+      return `
+        <tr class="${row.id === selectedId ? 'is-active' : ''}${childClass}">
+          <td>
+            <button type="button" class="row-button" data-row-id="${row.id}">
+              <strong>${escapeHtml(row.subFund)}</strong>
+              <span>${escapeHtml(row.insurer)} • ${escapeHtml(row.shareClass)}</span>
+              <span class="row-badges">
+                <span class="mini-badge">${escapeHtml(row.benchmarkType)}</span>
+                <span class="mini-badge ${coverageBadgeClass(row)}">${escapeHtml(row.coverageLabel)}</span>
+                <span class="mini-badge ${confidenceBadgeClass(row)}">${escapeHtml(row.confidenceLabel)}</span>
+              </span>
+            </button>
+          </td>
+          <td><span class="cell-primary">${escapeHtml(row.annualFeeDisplay)}</span><span class="cell-sub">${escapeHtml(row.annualFeeLabel)}</span></td>
+          <td>${assetMixHtml}</td>
+          <td><div class="benchmark-copy" title="${escapeHtml(row.benchmark)}">${escapeHtml(row.benchmark)}</div><div class="cell-sub">${escapeHtml(row.benchmarkType)}</div></td>
+          <td>${missingStateHtml(row, stats)}</td>
+          <td>${stats.hasData ? escapeHtml(stats.benchmarkDisplay || 'N/A') : `<span class="missing-data">N/A</span>`}</td>
+          <td><span class="excess-chip ${gapClass}">${escapeHtml(stats.gapDisplay || 'N/A')}</span></td>
+          <td><span class="cell-primary">${escapeHtml(row.asOfDate || 'N/A')}</span></td>
+          <td>
+            <div class="row-source-links">
+              <a href="${escapeHtml(sourceHref(row.returnSource))}" target="_blank" rel="noreferrer noopener">${row.returnSource.pageLabel ? `Return p. ${row.returnSource.pageLabel}` : 'Return source'}</a>
+              <a href="${escapeHtml(sourceHref(row.feeSource))}" target="_blank" rel="noreferrer noopener">${row.feeSource.pageLabel ? `Fee p. ${row.feeSource.pageLabel}` : 'Fee source'}</a>
+            </div>
+          </td>
+        </tr>
+      `;
+    };
+
+    const getVisibleRows = () => {
+      const query = (controls.search?.value ?? '').trim().toLowerCase();
+      const insurer = controls.insurer?.value ?? 'all';
+      const asOfDate = controls.asOfDate?.value ?? 'all';
+      const sortKey = controls.sort?.value ?? 'gap-desc';
+
+      const filtered = rows.filter((row) => {
+        const stats = getReturnStats(row);
+        if (insurer !== 'all' && row.insurer !== insurer) return false;
+        if (asOfDate === 'recent_reports' && !recentReportDates.has(row.asOfDate)) return false;
+        if (asOfDate !== 'all' && asOfDate !== 'recent_reports' && row.asOfDate !== asOfDate) return false;
+        if (quickFilter === 'outperform' && (stats.gapPct ?? Number.NEGATIVE_INFINITY) < 0) return false;
+        if (quickFilter === 'proxy' && !row.hasEtfProxy) return false;
+        if (quickFilter === 'low-fee' && ((row.annualFeePct ?? Number.POSITIVE_INFINITY) > 1)) return false;
+        if (!query) return true;
+        const haystack = [
+          row.insurer,
+          row.subFund,
+          row.benchmark,
+          row.etfProxy,
+          row.annualFeeLabel,
+          row.asOfDate,
+        ].join(' ').toLowerCase();
+        return haystack.includes(query);
+      });
+
+      return filtered.sort(getSorter(sortKey));
+    };
+
+    const syncTableState = (itemCount) => {
+      const needsClamp = itemCount > 10;
+      outputs.tableToggleButton.hidden = !needsClamp;
+      outputs.tableShell.classList.toggle('is-collapsed', needsClamp && !tableExpanded);
+      outputs.tableToggleButton.textContent = tableExpanded ? 'Collapse table' : 'Expand table';
+    };
+
+    const renderTable = (visible, displayItems) => {
+      outputs.rows.innerHTML = '';
+
+      if (!visible.length) {
+        outputs.rows.innerHTML = `
+          <tr>
+            <td colspan="9" class="empty-cell">No matching sub-funds in the current high-confidence dataset.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      const activeId = visible.some((row) => row.id === selectedId) ? selectedId : visible[0].id;
+      selectedId = activeId;
+
+      displayItems.forEach((item) => {
+        if (item.type === 'row') {
+          outputs.rows.insertAdjacentHTML('beforeend', renderRowMarkup(item.row));
+          return;
+        }
+        const expanded = expandedGroups.has(item.key);
+        const completeCount = item.rows.filter((row) => isCompleteRow(row)).length;
+        outputs.rows.insertAdjacentHTML('beforeend', `
+          <tr class="family-row">
+            <td colspan="9">
+              <div class="family-summary">
+                <div>
+                  <button type="button" class="family-select-button" data-family-select="${item.rows[0].id}">
+                    ${escapeHtml(item.label)}
+                  </button>
+                  <p>${escapeHtml(item.insurer)} • ${item.rows.length} share classes</p>
+                </div>
+                <div class="family-badges">
+                  <span class="mini-badge">${escapeHtml(item.benchmarkType)}</span>
+                  <span class="mini-badge ${completeCount === item.rows.length ? 'good' : 'muted'}">${completeCount}/${item.rows.length} complete</span>
+                  <button type="button" class="family-toggle" data-group-key="${item.key}">${expanded ? 'Hide share classes' : 'Show share classes'}</button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `);
+        if (expanded) {
+          item.rows.forEach((row) => {
+            outputs.rows.insertAdjacentHTML('beforeend', renderRowMarkup(row, { child: true }));
+          });
+        }
+      });
+
+      outputs.rows.querySelectorAll('[data-row-id]').forEach((button) => {
+        button.addEventListener('click', () => {
+          selectedId = button.getAttribute('data-row-id');
+          render();
+        });
+      });
+      outputs.rows.querySelectorAll('[data-group-key]').forEach((button) => {
+        button.addEventListener('click', () => {
+          toggleGroup(button.getAttribute('data-group-key'));
+          render();
+        });
+      });
+      outputs.rows.querySelectorAll('[data-family-select]').forEach((button) => {
+        button.addEventListener('click', () => {
+          selectedId = button.getAttribute('data-family-select');
+          render();
+        });
+      });
+    };
+
+    const renderCards = (visible, displayItems) => {
+      outputs.mobileResults.innerHTML = '';
+
+      const mobileItems = displayItems.slice(0, visibleLimit);
+      mobileItems.forEach((item) => {
+        if (item.type === 'group') {
+          const expanded = expandedGroups.has(item.key);
+          const summaryRow = item.rows[0];
+          outputs.mobileResults.insertAdjacentHTML('beforeend', `
+            <article class="mobile-family-card">
+              <div class="mobile-family-head">
+                <button type="button" class="mobile-family-select" data-family-select="${summaryRow.id}">
+                  <strong>${escapeHtml(item.label)}</strong>
+                  <span>${escapeHtml(item.insurer)} • ${item.rows.length} share classes</span>
+                </button>
+                <button type="button" class="family-toggle" data-group-key="${item.key}">${expanded ? 'Hide' : 'Show'}</button>
+              </div>
+              <div class="mobile-family-badges">
+                <span class="mini-badge">${escapeHtml(item.benchmarkType)}</span>
+                <span class="mini-badge muted">Grouped family</span>
+              </div>
+              ${expanded ? `<div class="mobile-family-rows">${item.rows.map((row) => {
+                const stats = getReturnStats(row);
+                const gapClass = Number.isFinite(stats.gapPct) ? (stats.gapPct >= 0 ? 'good' : 'bad') : 'muted';
+                return `
+                  <button type="button" class="mobile-family-row" data-row-id="${row.id}">
+                    <div>
+                      <strong>${escapeHtml(row.shareClass)}</strong>
+                      <span>${escapeHtml(row.coverageLabel)} • ${escapeHtml(row.confidenceLabel)}</span>
+                    </div>
+                    <span class="excess-chip ${gapClass}">${escapeHtml(stats.gapDisplay || 'N/A')}</span>
+                  </button>
+                `;
+              }).join('')}</div>` : ''}
+            </article>
+          `);
+          return;
+        }
+        const row = item.row;
+        const stats = getReturnStats(row);
+        const assetMix = getAssetMix(row);
+        const gapClass = Number.isFinite(stats.gapPct) ? (stats.gapPct >= 0 ? 'good' : 'bad') : '';
+        const article = document.createElement('article');
+        article.className = `mobile-card ${row.id === selectedId ? 'is-active' : ''}`;
+        article.innerHTML = `
+          <button type="button" class="mobile-card-button" data-row-id="${row.id}">
+            <div class="mobile-card-head">
+              <div>
+                <h5>${escapeHtml(row.subFund)}</h5>
+                <p>${escapeHtml(row.insurer)} • ${escapeHtml(row.shareClass)}</p>
+                <div class="row-badges">
+                  <span class="mini-badge">${escapeHtml(row.benchmarkType)}</span>
+                  <span class="mini-badge ${coverageBadgeClass(row)}">${escapeHtml(row.coverageLabel)}</span>
+                </div>
+              </div>
+              <span class="excess-chip ${gapClass}">${escapeHtml(stats.gapDisplay || 'N/A')}</span>
+            </div>
+
+            <dl class="mobile-card-grid">
+              <div>
+                <dt>Fee</dt>
+                <dd>${escapeHtml(row.annualFeeDisplay)}</dd>
+              </div>
+              <div>
+                <dt>Asset mix</dt>
+                <dd>${escapeHtml(assetMix.mobile)}</dd>
+              </div>
+              <div>
+                <dt>Fund</dt>
+                <dd>${escapeHtml(stats.fundDisplay || 'N/A')}</dd>
+              </div>
+              <div>
+                <dt>Benchmark</dt>
+                <dd>${escapeHtml(stats.benchmarkDisplay || 'N/A')}</dd>
+              </div>
+              <div>
+                <dt>ETF proxy</dt>
+                <dd>${escapeHtml(row.etfProxy || 'None mapped')}</dd>
+              </div>
+              <div>
+                <dt>As of</dt>
+                <dd>${escapeHtml(row.asOfDate || 'N/A')}</dd>
+              </div>
+            </dl>
+
+            <div class="mobile-card-benchmark">
+              <span>Benchmark</span>
+              <strong>${escapeHtml(ellipsis(row.benchmark, 120))}</strong>
+            </div>
+          </button>
+          <div class="mobile-card-sources">
+            <a href="${escapeHtml(sourceHref(row.returnSource))}" target="_blank" rel="noreferrer noopener">${row.returnSource.pageLabel ? `Return p. ${row.returnSource.pageLabel}` : 'Return source'}</a>
+            <a href="${escapeHtml(sourceHref(row.feeSource))}" target="_blank" rel="noreferrer noopener">${row.feeSource.pageLabel ? `Fee p. ${row.feeSource.pageLabel}` : 'Fee source'}</a>
+          </div>
+        `;
+        outputs.mobileResults.appendChild(article);
+      });
+
+      outputs.mobileResults.querySelectorAll('[data-row-id]').forEach((button) => {
+        button.addEventListener('click', () => {
+          selectedId = button.getAttribute('data-row-id');
+          render();
+        });
+      });
+      outputs.mobileResults.querySelectorAll('[data-group-key]').forEach((button) => {
+        button.addEventListener('click', () => {
+          toggleGroup(button.getAttribute('data-group-key'));
+          render();
+        });
+      });
+      outputs.mobileResults.querySelectorAll('[data-family-select]').forEach((button) => {
+        button.addEventListener('click', () => {
+          selectedId = button.getAttribute('data-family-select');
+          render();
+        });
+      });
+
+      const canExpand = displayItems.length > visibleLimit;
+      const expanded = visibleLimit >= displayItems.length;
+      outputs.showMoreButton.hidden = !canExpand && !expanded;
+      if (!displayItems.length || displayItems.length <= 10) {
+        outputs.showMoreButton.hidden = true;
+      }
+      outputs.showMoreButton.textContent = expanded ? 'Show fewer' : `Show ${Math.min(displayItems.length - visibleLimit, 10)} more`;
+    };
+
+    const renderDetail = (row) => {
+      const setBar = (el, value, y, zeroX = 336, scale = (input) => input) => {
+        const start = Math.min(zeroX, scale(value));
+        const width = Math.abs(scale(value) - zeroX);
+        el.setAttribute('x', start.toFixed(1));
+        el.setAttribute('y', String(y));
+        el.setAttribute('width', Math.max(width, 2).toFixed(1));
+      };
+
+      if (!row) {
+        const windowMeta = getWindowMeta();
+        outputs.detailInsurer.textContent = 'No selection';
+        outputs.detailName.textContent = 'No matching sub-fund';
+        outputs.detailBenchmark.textContent = 'Adjust the search or quick filter to bring rows back into scope.';
+        outputs.detailFee.textContent = 'Fee';
+        outputs.detailAssetMix.textContent = 'Asset mix';
+        outputs.detailBenchmarkType.textContent = 'Benchmark type';
+        outputs.detailCoverage.textContent = 'Coverage';
+        outputs.detailConfidence.textContent = 'Confidence';
+        outputs.detailProxy.textContent = 'ETF proxy';
+        outputs.detailWindowLabel.textContent = windowMeta.label;
+        outputs.detailFundSub.textContent = 'Official fund return';
+        outputs.detailBenchmarkSub.textContent = 'Official benchmark return';
+        outputs.detailFundReturn.textContent = 'N/A';
+        outputs.detailBenchmarkReturn.textContent = 'N/A';
+        outputs.detailExcessReturn.textContent = 'N/A';
+        outputs.detailInceptionDate.textContent = 'No comparison available for the current filter';
+        outputs.detailNote.textContent = 'The current filter returned zero high-confidence rows.';
+        outputs.detailFormula.textContent = 'Fund return - Benchmark return = Return gap';
+        outputs.detailEvidenceFund.textContent = 'N/A';
+        outputs.detailEvidenceBenchmark.textContent = 'N/A';
+        outputs.detailEvidenceGap.textContent = 'N/A';
+        outputs.detailEvidenceFee.textContent = 'N/A';
+        outputs.detailReturnCitation.textContent = 'N/A';
+        outputs.detailFeeCitation.textContent = 'N/A';
+        outputs.detailQuality.textContent = 'N/A';
+        outputs.detailAsOf.textContent = 'N/A';
+        outputs.returnSourceLink.href = '#';
+        outputs.returnSourceLink.textContent = 'Return source';
+        outputs.feeSourceLink.href = '#';
+        outputs.feeSourceLink.textContent = 'Fee source';
+        outputs.windowLabel.textContent = `Window: ${windowMeta.label}`;
+        outputs.chart?.setAttribute('aria-label', `${windowMeta.label} fund versus benchmark comparison`);
+        setBar(outputs.fundBar, 0, 72);
+        setBar(outputs.benchmarkBar, 0, 146);
+        outputs.zeroLine.setAttribute('x1', '336');
+        outputs.zeroLine.setAttribute('x2', '336');
+        outputs.fundValue.textContent = 'N/A';
+        outputs.benchmarkValue.textContent = 'N/A';
+        outputs.detailExcessReturn.classList.remove('accent-negative');
+        return;
+      }
+
+      const stats = getReturnStats(row);
+      const assetMix = getAssetMix(row);
+      const windowMeta = getWindowMeta();
+      outputs.detailInsurer.textContent = `${row.insurer} • ${row.shareClass}`;
+      outputs.detailName.textContent = row.subFund;
+      outputs.detailBenchmark.textContent = row.benchmark;
+      outputs.detailFee.textContent = `${row.annualFeeLabel}: ${row.annualFeeDisplay}`;
+      outputs.detailAssetMix.textContent = assetMix.detail;
+      outputs.detailBenchmarkType.textContent = `Benchmark type: ${row.benchmarkType}`;
+      outputs.detailCoverage.textContent = `Coverage: ${row.coverageLabel}`;
+      outputs.detailConfidence.textContent = row.confidenceLabel;
+      outputs.detailProxy.textContent = row.etfProxy
+        ? `ETF proxy: ${row.etfProxy} (${row.proxyConfidence})`
+        : 'ETF proxy: none mapped';
+      outputs.detailWindowLabel.textContent = stats.label || windowMeta.label;
+      outputs.detailFundSub.textContent = 'Official fund return';
+      outputs.detailBenchmarkSub.textContent = 'Official benchmark return';
+      outputs.detailFundReturn.textContent = stats.fundDisplay || 'N/A';
+      outputs.detailBenchmarkReturn.textContent = stats.benchmarkDisplay || 'N/A';
+      outputs.detailExcessReturn.textContent = stats.gapDisplay || 'N/A';
+      outputs.detailInceptionDate.textContent = `Inception: ${row.inceptionDate} • ${stats.label || windowMeta.label} • As of ${row.asOfDate}`;
+      outputs.detailNote.textContent = stats.hasData
+        ? row.comparisonNote
+        : `${row.comparisonNote} Missing windows in the current source set: ${row.missingWindows.join(', ') || 'selected window'}.`;
+      outputs.detailFormula.textContent = stats.hasData
+        ? `${stats.fundDisplay} - ${stats.benchmarkDisplay} = ${formatSignedPp(stats.gapPct)}`
+        : 'No comparable fund and benchmark pair was captured for this return window.';
+      outputs.detailEvidenceFund.textContent = stats.fundDisplay || 'N/A';
+      outputs.detailEvidenceBenchmark.textContent = stats.benchmarkDisplay || 'N/A';
+      outputs.detailEvidenceGap.textContent = stats.gapDisplay || 'N/A';
+      outputs.detailEvidenceFee.textContent = `${row.annualFeeDisplay} (${row.annualFeeLabel})`;
+      outputs.detailReturnCitation.textContent = row.returnSource.pageLabel
+        ? `Official PDF, printed p. ${row.returnSource.pageLabel}`
+        : 'Official source link';
+      outputs.detailFeeCitation.textContent = row.feeSource.pageLabel
+        ? `Official PDF, printed p. ${row.feeSource.pageLabel}`
+        : 'Official source link';
+      outputs.detailQuality.textContent = row.comparisonQuality;
+      outputs.detailAsOf.textContent = row.asOfDate;
+      outputs.returnSourceLink.href = sourceHref(row.returnSource);
+      outputs.returnSourceLink.textContent = row.returnSource.pageLabel
+        ? `Return source (p. ${row.returnSource.pageLabel})`
+        : 'Return source';
+      outputs.feeSourceLink.href = sourceHref(row.feeSource);
+      outputs.feeSourceLink.textContent = row.feeSource.pageLabel
+        ? `Fee source (p. ${row.feeSource.pageLabel})`
+        : 'Fee source';
+      outputs.windowLabel.textContent = `Window: ${stats.label || windowMeta.label}`;
+      outputs.chart?.setAttribute('aria-label', `${stats.label || windowMeta.label} fund versus benchmark comparison`);
+
+      const values = [stats.fundPct ?? 0, stats.benchmarkPct ?? 0, 0];
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const domainPad = Math.max(Math.abs(min), Math.abs(max), 1) * 0.15;
+      const domainMin = min - domainPad;
+      const domainMax = max + domainPad;
+      const chartLeft = 64;
+      const chartWidth = 544;
+      const scale = (value) => chartLeft + ((value - domainMin) / (domainMax - domainMin || 1)) * chartWidth;
+      const zeroX = scale(0);
+      outputs.zeroLine.setAttribute('x1', zeroX.toFixed(1));
+      outputs.zeroLine.setAttribute('x2', zeroX.toFixed(1));
+
+      setBar(outputs.fundBar, stats.fundPct ?? 0, 72, zeroX, scale);
+      setBar(outputs.benchmarkBar, stats.benchmarkPct ?? 0, 146, zeroX, scale);
+
+      const setValueLabel = (el, value, y) => {
+        const x = scale(value) + (value >= 0 ? 8 : -8);
+        el.setAttribute('x', x.toFixed(1));
+        el.setAttribute('y', String(y));
+        el.setAttribute('text-anchor', value >= 0 ? 'start' : 'end');
+        el.textContent = formatPct(value);
+      };
+
+      setValueLabel(outputs.fundValue, stats.fundPct ?? 0, 98);
+      setValueLabel(outputs.benchmarkValue, stats.benchmarkPct ?? 0, 172);
+      outputs.detailExcessReturn.classList.toggle('accent-negative', (stats.gapPct ?? 0) < 0);
+      outputs.detailExcessReturn.textContent = stats.gapDisplay || formatSignedPp(stats.gapPct);
+    };
+
+    const render = () => {
+      const visible = getVisibleRows();
+      const displayItems = buildDisplayItems(visible);
+      const selectedAsOf = controls.asOfDate?.value ?? 'all';
+      syncTableState(displayItems.length);
+      outputs.resultCount.textContent = `${visible.length} ${visible.length === 1 ? 'fund' : 'funds'}`;
+      outputs.asOfSummary.textContent = selectedAsOf === 'recent_reports'
+        ? 'As of: recent reports cohort (30 Nov 2025, 31 December 2025, 31 January 2026)'
+        : selectedAsOf === 'all'
+          ? `As of: mixed source dates (${(data.coverage?.asOfDates ?? []).join(', ')})`
+          : `As of: ${selectedAsOf}`;
+      renderTable(visible, displayItems);
+      renderCards(visible, displayItems);
+      renderDetail(visible.find((row) => row.id === selectedId) ?? visible[0]);
+    };
+
+    Object.values(controls).forEach((control) => {
+      control?.addEventListener('input', () => {
+        visibleLimit = 10;
+        tableExpanded = false;
+        render();
+      });
+      control?.addEventListener('change', () => {
+        visibleLimit = 10;
+        tableExpanded = false;
+        render();
+      });
+    });
+
+    quickFilters.forEach((button) => {
+      button.addEventListener('click', () => {
+        quickFilter = button.getAttribute('data-filter') ?? 'all';
+        quickFilters.forEach((item) => item.classList.toggle('is-active', item === button));
+        visibleLimit = 10;
+        tableExpanded = false;
+        render();
+      });
+    });
+
+    outputs.tableToggleButton?.addEventListener('click', () => {
+      tableExpanded = !tableExpanded;
+      render();
+    });
+
+    outputs.showMoreButton?.addEventListener('click', () => {
+      const displayItems = buildDisplayItems(getVisibleRows());
+      visibleLimit = visibleLimit >= displayItems.length ? 10 : visibleLimit + 10;
+      render();
+    });
+
+    render();
+  })();
+</script>
+
+<style>
+  .ilp-explorer {
+    background: hsl(var(--muted) / 0.85);
+    border-radius: 12px;
+    padding: 1.4rem;
+    margin: 2rem 0;
+    font-family: var(--font-sans);
+  }
+
+  .explorer-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
+    gap: 16px;
+    margin-bottom: 1rem;
+  }
+
+  .snapshot-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 1rem;
+  }
+
+  .snapshot-card {
+    background: hsl(var(--background));
+    border: 1px solid hsl(var(--border) / 0.7);
+    border-radius: 10px;
+    padding: 0.95rem;
+  }
+
+  .snapshot-label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .snapshot-value {
+    margin-top: 0.3rem;
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: hsl(var(--foreground));
+  }
+
+  .snapshot-card p {
+    margin: 0.4rem 0 0;
+    font-size: 12px;
+    line-height: 1.55;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .gap-disclosure {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 1rem;
+  }
+
+  .gap-disclosure summary {
+    list-style: none;
+    cursor: pointer;
+  }
+
+  .gap-disclosure summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .gap-summary-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .gap-toggle-copy {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    border-radius: 999px;
+    padding: 0.35rem 0.7rem;
+    background: hsl(var(--muted));
+    color: hsl(var(--foreground));
+    font-size: 12px;
+    line-height: 1.2;
+  }
+
+  .gap-disclosure[open] .gap-toggle-copy::after {
+    content: " ▲";
+    font-size: 10px;
+  }
+
+  .gap-disclosure:not([open]) .gap-toggle-copy::after {
+    content: " ▼";
+    font-size: 10px;
+  }
+
+  .gap-section {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(300px, 1fr);
+    gap: 12px;
+  }
+
+  .gap-summary-card,
+  .gap-insurer-card {
+    background: hsl(var(--background));
+    border: 1px solid hsl(var(--border) / 0.7);
+    border-radius: 10px;
+    padding: 1rem;
+  }
+
+  .gap-summary-card h4 {
+    margin: 0 0 0.45rem;
+    font-size: 1.05rem;
+    line-height: 1.35;
+    color: hsl(var(--foreground));
+  }
+
+  .gap-summary-card p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.65;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .gap-detail-card {
+    align-self: start;
+  }
+
+  .gap-detail-copy {
+    margin-top: 0.85rem;
+  }
+
+  .gap-progress-block {
+    margin-top: 0.95rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid hsl(var(--border) / 0.7);
+  }
+
+  .gap-progress-head,
+  .gap-progress-meta,
+  .gap-insurer-head,
+  .gap-insurer-meta,
+  .gap-bar-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .gap-progress-head span,
+  .gap-progress-meta,
+  .gap-insurer-head span,
+  .gap-insurer-meta span,
+  .gap-bar-label {
+    font-size: 12px;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .gap-progress-head strong,
+  .gap-insurer-meta strong {
+    color: hsl(var(--foreground));
+  }
+
+  .gap-progress-track,
+  .gap-bar-track {
+    position: relative;
+    overflow: hidden;
+    background: hsl(var(--muted));
+    border-radius: 999px;
+  }
+
+  .gap-progress-track {
+    height: 10px;
+    margin: 0.55rem 0 0.45rem;
+  }
+
+  .gap-bar-track {
+    flex: 1;
+    min-width: 0;
+    height: 8px;
+  }
+
+  .gap-progress-fill,
+  .gap-bar-fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgba(216, 90, 48, 0.95), rgba(29, 158, 117, 0.88));
+  }
+
+  .gap-top-missing {
+    margin-top: 0.95rem;
+  }
+
+  .gap-top-label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 0.5rem;
+  }
+
+  .gap-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .gap-chip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    background: hsl(var(--muted));
+    color: hsl(var(--foreground));
+    padding: 0.34rem 0.65rem;
+    font-size: 12px;
+  }
+
+  .gap-insurer-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .gap-insurer-row {
+    display: grid;
+    gap: 6px;
+  }
+
+  .section-kicker {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 4px;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+    line-height: 1.3;
+    margin: 0 0 0.45rem;
+    color: hsl(var(--foreground));
+  }
+
+  .section-copy {
+    margin: 0;
+    color: hsl(var(--muted-foreground));
+    max-width: 64ch;
+    line-height: 1.6;
+  }
+
+  .coverage-card {
+    background: hsl(var(--background));
+    border-radius: 10px;
+    padding: 1rem;
+  }
+
+  .coverage-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 0.7rem;
+  }
+
+  .coverage-grid {
+    display: grid;
+    gap: 10px;
+  }
+
+  .coverage-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 14px;
+    color: hsl(var(--foreground));
+  }
+
+  .controls {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    align-items: end;
+    margin-bottom: 0.9rem;
+  }
+
+  .field {
+    display: grid;
+    align-content: start;
+  }
+
+  .field-search {
+    grid-column: 1 / -1;
+  }
+
+  .quick-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 0.85rem;
+  }
+
+  .quick-filter {
+    border: 1px solid hsl(var(--border));
+    border-radius: 999px;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    padding: 0.45rem 0.8rem;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .quick-filter.is-active {
+    background: rgba(216, 90, 48, 0.12);
+    border-color: rgba(216, 90, 48, 0.3);
+  }
+
+  .field label {
+    display: flex;
+    align-items: flex-end;
+    min-height: 1.2rem;
+    font-size: 12px;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 0.35rem;
+  }
+
+  .field input,
+  .field select {
+    width: 100%;
+    border: 1px solid hsl(var(--border));
+    border-radius: 8px;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    padding: 0.7rem 0.85rem;
+    font: inherit;
+  }
+
+  .results-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 12px;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 0.75rem;
+  }
+
+  .table-shell {
+    overflow-x: auto;
+    background: hsl(var(--background));
+    border-radius: 10px;
+    margin-bottom: 1rem;
+  }
+
+  .table-shell.is-collapsed {
+    max-height: 38rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border: 1px solid hsl(var(--border) / 0.7);
+    box-shadow: inset 0 -24px 24px -24px rgba(15, 23, 42, 0.22);
+  }
+
+  .table-toggle-button {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid hsl(var(--border));
+    border-radius: 999px;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    padding: 0.55rem 0.95rem;
+    margin: 0 0 1rem;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .mobile-results {
+    display: none;
+  }
+
+  .show-more-button {
+    display: none;
+  }
+
+  .result-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  .result-table th,
+  .result-table td {
+    padding: 0.85rem 0.9rem;
+    border-bottom: 1px solid hsl(var(--border));
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .result-table th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: hsl(var(--muted-foreground));
+    position: sticky;
+    top: 0;
+    background: hsl(var(--background));
+    z-index: 1;
+  }
+
+  .th-with-help,
+  .term-with-help {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .info-tooltip {
+    position: relative;
+    display: inline-flex;
+  }
+
+  .info-tooltip summary {
+    list-style: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--background));
+    color: hsl(var(--muted-foreground));
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .info-tooltip summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .info-tooltip-card {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: min(320px, 72vw);
+    background: hsl(var(--background));
+    border: 1px solid hsl(var(--border));
+    border-radius: 10px;
+    box-shadow: 0 16px 48px rgba(15, 23, 42, 0.16);
+    padding: 0.85rem 0.9rem;
+    z-index: 6;
+  }
+
+  .info-tooltip-card p {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.55;
+    color: hsl(var(--foreground));
+  }
+
+  .info-tooltip-card p + p {
+    margin-top: 0.55rem;
+  }
+
+  .tooltip-sources {
+    display: grid;
+    gap: 4px;
+  }
+
+  .tooltip-sources a {
+    color: hsl(var(--foreground));
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .row-button {
+    display: grid;
+    gap: 4px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .row-button span,
+  .cell-primary,
+  .cell-sub {
+    display: block;
+    margin-top: 4px;
+  }
+
+  .asset-mix-lines {
+    display: grid;
+    gap: 6px;
+    min-width: 10.5rem;
+  }
+
+  .asset-mix-line {
+    display: block;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .asset-mix-key {
+    color: hsl(var(--muted-foreground));
+  }
+
+  .asset-mix-line strong {
+    color: hsl(var(--foreground));
+    font-weight: 600;
+  }
+
+  .result-table th:nth-child(3),
+  .result-table td:nth-child(3) {
+    min-width: 11rem;
+  }
+
+  .result-table th:nth-child(8),
+  .result-table td:nth-child(8) {
+    min-width: 8.5rem;
+    white-space: nowrap;
+  }
+
+  .row-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .mini-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.18rem 0.5rem;
+    background: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  .mini-badge.good {
+    background: rgba(29, 158, 117, 0.14);
+    color: #136e52;
+  }
+
+  .mini-badge.muted {
+    background: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
+  }
+
+  .cell-primary {
+    margin-top: 0;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+
+  .row-button span,
+  .cell-sub {
+    font-size: 12px;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .benchmark-copy {
+    min-width: 18rem;
+    max-width: 28rem;
+    line-height: 1.55;
+  }
+
+  .result-table tbody tr:hover {
+    background: hsl(var(--muted) / 0.55);
+  }
+
+  .row-source-links {
+    display: grid;
+    gap: 6px;
+    min-width: 8.5rem;
+  }
+
+  .row-source-links a {
+    font-size: 12px;
+    line-height: 1.45;
+    color: hsl(var(--foreground));
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .is-active {
+    background: hsl(var(--accent) / 0.12);
+  }
+
+  .family-row td {
+    padding: 0.8rem 0.9rem;
+    background: hsl(var(--muted) / 0.5);
+  }
+
+  .family-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .family-summary p {
+    margin: 0.3rem 0 0;
+    font-size: 12px;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .family-select-button,
+  .family-toggle {
+    border: 0;
+    background: transparent;
+    color: hsl(var(--foreground));
+    font: inherit;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  .family-select-button {
+    font-weight: 700;
+    text-align: left;
+  }
+
+  .family-toggle {
+    border: 1px solid hsl(var(--border));
+    border-radius: 999px;
+    padding: 0.42rem 0.75rem;
+    background: hsl(var(--background));
+    font-size: 12px;
+  }
+
+  .family-badges {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .result-table tr.is-child td:first-child {
+    padding-left: 1.7rem;
+  }
+
+  .excess-chip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.2rem 0.55rem;
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  .excess-chip.good {
+    background: rgba(29, 158, 117, 0.14);
+    color: #136e52;
+  }
+
+  .excess-chip.bad {
+    background: rgba(216, 90, 48, 0.14);
+    color: #9f3414;
+  }
+
+  .excess-chip.muted {
+    background: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
+  }
+
+  .missing-data {
+    color: hsl(var(--muted-foreground));
+    font-size: 12px;
+  }
+
+  .empty-cell {
+    color: hsl(var(--muted-foreground));
+    text-align: center;
+  }
+
+  .detail-panel {
+    background: hsl(var(--background));
+    border-radius: 10px;
+    padding: 1rem;
+  }
+
+  .detail-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 0.9rem;
+  }
+
+  .detail-eyebrow {
+    font-size: 12px;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 4px;
+  }
+
+  .detail-title {
+    margin: 0;
+    font-size: 1.1rem;
+    color: hsl(var(--foreground));
+  }
+
+  .detail-copy {
+    margin: 0.4rem 0 0;
+    color: hsl(var(--muted-foreground));
+    max-width: 64ch;
+  }
+
+  .pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    background: hsl(var(--muted) / 0.9);
+    color: hsl(var(--foreground));
+    border-radius: 999px;
+    padding: 0.4rem 0.7rem;
+    font-size: 12px;
+  }
+
+  .chart-card {
+    background: hsl(var(--muted) / 0.65);
+    border-radius: 10px;
+    padding: 0.8rem;
+  }
+
+  .chart-svg {
+    width: 100%;
+    height: auto;
+  }
+
+  .chart-label,
+  .chart-axis,
+  .chart-value {
+    fill: hsl(var(--muted-foreground));
+    font-size: 12px;
+    font-family: var(--font-sans);
+  }
+
+  .chart-value {
+    fill: hsl(var(--foreground));
+    font-weight: 600;
+  }
+
+  .detail-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 0.9rem;
+  }
+
+  .metric {
+    background: hsl(var(--muted) / 0.65);
+    border-radius: 8px;
+    padding: 0.8rem 0.9rem;
+  }
+
+  .metric-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .metric-value {
+    margin-top: 4px;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+
+  .metric-value.accent {
+    color: #1d9e75;
+  }
+
+  .metric-value.accent.accent-negative {
+    color: #d85a30;
+  }
+
+  .metric-sub {
+    margin-top: 4px;
+    font-size: 12px;
+    color: hsl(var(--muted-foreground));
+    line-height: 1.5;
+  }
+
+  .detail-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    margin-top: 0.95rem;
+  }
+
+  .source-note {
+    margin: 0;
+    color: hsl(var(--muted-foreground));
+    font-size: 13px;
+    line-height: 1.6;
+    max-width: 60ch;
+  }
+
+  .source-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .source-links a {
+    font-size: 13px;
+    color: hsl(var(--foreground));
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .evidence-panel {
+    margin-top: 0.95rem;
+    border-top: 1px solid hsl(var(--border));
+    padding-top: 0.95rem;
+  }
+
+  .evidence-panel summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+
+  .evidence-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 0.9rem;
+  }
+
+  .evidence-card {
+    background: hsl(var(--muted) / 0.55);
+    border-radius: 10px;
+    padding: 0.85rem 0.9rem;
+  }
+
+  .evidence-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .evidence-formula {
+    margin-top: 0.35rem;
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+    line-height: 1.5;
+  }
+
+  .evidence-card p {
+    margin: 0.45rem 0 0;
+    font-size: 12px;
+    line-height: 1.55;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .evidence-list {
+    display: grid;
+    gap: 10px;
+    margin: 0.7rem 0 0;
+  }
+
+  .evidence-list div {
+    display: grid;
+    gap: 3px;
+  }
+
+  .evidence-list dt {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .evidence-list dd {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: hsl(var(--foreground));
+  }
+
+  @media (max-width: 900px) {
+    .gap-section,
+    .snapshot-grid,
+    .explorer-header,
+    .controls,
+    .detail-head,
+    .detail-footer,
+    .detail-metrics,
+    .evidence-grid {
+      grid-template-columns: 1fr;
+      display: grid;
+    }
+
+    .pill-row {
+      justify-content: flex-start;
+    }
+
+    .field label {
+      min-height: 0;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .ilp-explorer {
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+    }
+
+    .table-shell {
+      display: none;
+    }
+
+    .table-toggle-button {
+      display: none;
+    }
+
+    .detail-panel {
+      order: 1;
+      margin-bottom: 0.75rem;
+    }
+
+    .gap-summary-card,
+    .gap-insurer-card {
+      padding: 0.9rem;
+    }
+
+    .gap-summary-head {
+      display: grid;
+      gap: 10px;
+    }
+
+    .gap-progress-head,
+    .gap-progress-meta,
+    .gap-bar-row {
+      align-items: flex-start;
+    }
+
+    .mobile-results {
+      display: grid;
+      gap: 12px;
+      order: 2;
+    }
+
+    .show-more-button {
+      display: inline-flex;
+      align-self: flex-start;
+      order: 3;
+      border: 1px solid hsl(var(--border));
+      border-radius: 999px;
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      padding: 0.55rem 0.95rem;
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .mobile-card {
+      background: hsl(var(--background));
+      border: 1px solid hsl(var(--border) / 0.8);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .mobile-family-card {
+      background: hsl(var(--background));
+      border: 1px solid hsl(var(--border) / 0.8);
+      border-radius: 12px;
+      padding: 0.9rem;
+      display: grid;
+      gap: 10px;
+    }
+
+    .mobile-family-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .mobile-family-select {
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      padding: 0;
+      text-align: left;
+    }
+
+    .mobile-family-select strong,
+    .mobile-family-select span {
+      display: block;
+    }
+
+    .mobile-family-select span {
+      margin-top: 4px;
+      font-size: 12px;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .mobile-family-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .mobile-family-rows {
+      display: grid;
+      gap: 8px;
+    }
+
+    .mobile-family-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid hsl(var(--border) / 0.7);
+      border-radius: 10px;
+      padding: 0.75rem;
+      background: hsl(var(--muted) / 0.45);
+      color: inherit;
+      font: inherit;
+      text-align: left;
+    }
+
+    .mobile-family-row strong,
+    .mobile-family-row span {
+      display: block;
+    }
+
+    .mobile-family-row span {
+      margin-top: 4px;
+      font-size: 12px;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .mobile-card.is-active {
+      border-color: rgba(216, 90, 48, 0.35);
+      box-shadow: 0 0 0 1px rgba(216, 90, 48, 0.1);
+    }
+
+    .mobile-card-button {
+      width: 100%;
+      padding: 0.95rem;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      text-align: left;
+      font: inherit;
+    }
+
+    .mobile-card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .mobile-card-head h5 {
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1.4;
+      color: hsl(var(--foreground));
+    }
+
+    .mobile-card-head p {
+      margin: 0.35rem 0 0;
+      font-size: 12px;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .mobile-card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 0.9rem 0 0;
+    }
+
+    .mobile-card-grid div {
+      background: hsl(var(--muted) / 0.55);
+      border-radius: 8px;
+      padding: 0.65rem 0.75rem;
+    }
+
+    .mobile-card-grid dt {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .mobile-card-grid dd {
+      margin: 0.3rem 0 0;
+      font-size: 14px;
+      line-height: 1.45;
+      color: hsl(var(--foreground));
+    }
+
+    .mobile-card-benchmark {
+      margin-top: 0.85rem;
+      display: grid;
+      gap: 4px;
+    }
+
+    .mobile-card-benchmark span {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .mobile-card-benchmark strong {
+      font-size: 14px;
+      line-height: 1.55;
+      color: hsl(var(--foreground));
+    }
+
+    .mobile-card-sources {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 0 0.95rem 0.95rem;
+    }
+
+    .mobile-card-sources a {
+      font-size: 12px;
+      color: hsl(var(--foreground));
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .info-tooltip-card {
+      right: auto;
+      left: 0;
+      width: min(280px, calc(100vw - 3rem));
+    }
+
+    .results-meta {
+      margin-bottom: 0.9rem;
+    }
+  }
+</style>

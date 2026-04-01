@@ -1,0 +1,779 @@
+---
+interface MasterSourceRef {
+  url?: string;
+  page?: string;
+  locator?: string;
+  note?: string;
+}
+
+interface MasterLookthrough {
+  structureType?: string;
+  underlyingFund?: string;
+  externalManager?: string;
+  officialSourceUrl?: string;
+  sourceEvidence?: string;
+}
+
+interface MasterRow {
+  id: string;
+  insurer: string;
+  subFund: string;
+  benchmark?: string;
+  etfProxy?: string;
+  annualFeeLabel?: string;
+  annualFeeDisplay?: string;
+  annualFeePct?: number | null;
+  feeMetric?: string;
+  feeAsOfDate?: string;
+  feeSource?: MasterSourceRef;
+  feeVerificationStatus?: string;
+  lookthrough?: MasterLookthrough;
+}
+
+interface MasterData {
+  coverage: {
+    rowCount: number;
+    insurers: Record<string, number>;
+    feeVerifiedRows: number;
+  };
+  rows: MasterRow[];
+}
+
+interface Props {
+  data: MasterData;
+}
+
+interface FeeRow {
+  id: string;
+  insurer: string;
+  subFund: string;
+  annualFeeLabel: string;
+  annualFeeDisplay: string;
+  annualFeePct: number | null;
+  feeAsOfDate: string;
+  benchmark: string;
+  etfProxy: string;
+  structureType: string;
+  structureLabel: string;
+  externalManager: string;
+  sourceUrl: string;
+  sourcePage: number | null;
+  sourceNote: string;
+}
+
+const { data } = Astro.props;
+
+const formatIsoDate = (value: string) => {
+  const [year, month, day] = value.split('-').map((part) => Number(part));
+  if (!year || !month || !day) return value;
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return new Intl.DateTimeFormat('en-SG', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(date);
+};
+
+const normalizeDate = (value?: string | null) => {
+  const raw = (value ?? '').trim();
+  if (!raw) return 'Date not stated';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return formatIsoDate(raw);
+  const shortMonths: Record<string, string> = {
+    Jan: 'January',
+    Feb: 'February',
+    Mar: 'March',
+    Apr: 'April',
+    May: 'May',
+    Jun: 'June',
+    Jul: 'July',
+    Aug: 'August',
+    Sep: 'September',
+    Oct: 'October',
+    Nov: 'November',
+    Dec: 'December',
+  };
+  const match = raw.match(/^(\d{1,2})\s([A-Z][a-z]{2})\s(\d{4})$/);
+  if (match) {
+    return `${Number(match[1])} ${shortMonths[match[2]]} ${match[3]}`;
+  }
+  return raw;
+};
+
+const structureLabel = (value?: string | null) => {
+  const text = (value ?? '').trim();
+  if (!text) return 'Not stated';
+  const map: Record<string, string> = {
+    direct: 'Direct fund',
+    feeder: 'Feeder fund',
+    fund_of_funds: 'Fund of funds',
+    direct_external_manager: 'Direct external manager',
+    direct_internal: 'Direct internal',
+    feeder_via_underlying_subfund: 'Feeder via underlying sub-fund',
+    feeder_multi: 'Multi-feeder',
+    feeder_of_feeder: 'Feeder of feeder',
+    multi_manager_direct: 'Multi-manager direct',
+    multi_manager: 'Multi-manager',
+    'feeder via underlying entity': 'Feeder via underlying entity',
+  };
+  return map[text] ?? text.replace(/_/g, ' ');
+};
+
+const verifiedRows: FeeRow[] = data.rows
+  .filter((row) => row.annualFeePct != null && row.feeVerificationStatus === 'verified_exact')
+  .map((row) => ({
+    id: row.id,
+    insurer: row.insurer,
+    subFund: row.subFund,
+    annualFeeLabel: row.annualFeeLabel || row.feeMetric || 'Fee metric',
+    annualFeeDisplay: row.annualFeeDisplay || 'N/A',
+    annualFeePct: typeof row.annualFeePct === 'number' ? row.annualFeePct : null,
+    feeAsOfDate: normalizeDate(row.feeAsOfDate),
+    benchmark: row.benchmark || 'Not stated',
+    etfProxy: row.etfProxy || '',
+    structureType: row.lookthrough?.structureType || '',
+    structureLabel: structureLabel(row.lookthrough?.structureType),
+    externalManager: row.lookthrough?.externalManager || 'Not stated',
+    sourceUrl: row.feeSource?.url || '#',
+    sourcePage: row.feeSource?.page ? Number(row.feeSource.page) : null,
+    sourceNote: row.feeSource?.note || '',
+  }));
+
+const numericFees = verifiedRows
+  .map((row) => row.annualFeePct)
+  .filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
+  .sort((a, b) => a - b);
+
+const medianFee = numericFees.length
+  ? (numericFees.length % 2 === 0
+    ? (numericFees[numericFees.length / 2 - 1] + numericFees[numericFees.length / 2]) / 2
+    : numericFees[Math.floor(numericFees.length / 2)])
+  : null;
+
+const lowFeeCount = verifiedRows.filter((row) => (row.annualFeePct ?? Infinity) <= 1).length;
+const etfProxyCount = verifiedRows.filter((row) => Boolean(row.etfProxy)).length;
+const insurers = Array.from(new Set(verifiedRows.map((row) => row.insurer))).sort();
+const feeLabels = Array.from(new Set(verifiedRows.map((row) => row.annualFeeLabel))).sort();
+const structures = Array.from(new Set(verifiedRows.map((row) => row.structureLabel))).sort();
+const asOfDates = Array.from(new Set(verifiedRows.map((row) => row.feeAsOfDate))).sort((a, b) => a.localeCompare(b));
+const widgetId = `ilp-fees-${Math.random().toString(36).slice(2, 8)}`;
+const datasetJson = JSON.stringify(verifiedRows);
+---
+
+<section id={widgetId} class="fee-explorer not-prose">
+  <div class="fee-header">
+    <div>
+      <div class="section-kicker">ILP fee dashboard</div>
+      <h1 class="section-title">Search verified ILP sub-fund fees</h1>
+      <p class="section-copy">
+        This dashboard focuses on the fee side only. It uses the verified fee rows from the shared ILP dataset and keeps the official fee label visible, because <strong>Expense Ratio</strong>, <strong>Continuing Investment Charge</strong>, and <strong>Ongoing Cost</strong> are not perfectly interchangeable.
+      </p>
+    </div>
+    <div class="trust-card">
+      <div class="coverage-label">Method note</div>
+      <p>Use this as a screening layer, not a perfect apples-to-apples ranking. Compare rows within the same fee label and as-of date where possible.</p>
+    </div>
+  </div>
+
+  <div class="snapshot-grid" aria-label="Fee dataset summary">
+    <div class="snapshot-card">
+      <div class="snapshot-label">Verified fee rows</div>
+      <div class="snapshot-value">{verifiedRows.length}</div>
+      <p>Only rows with a populated fee number and exact source verification.</p>
+    </div>
+    <div class="snapshot-card">
+      <div class="snapshot-label">Insurers covered</div>
+      <div class="snapshot-value">{insurers.length}</div>
+      <p>The dashboard spans the current top-level ILP roster where fee verification is complete.</p>
+    </div>
+    <div class="snapshot-card">
+      <div class="snapshot-label">Median fee</div>
+      <div class="snapshot-value">{medianFee == null ? 'N/A' : `${medianFee.toFixed(2)}%`}</div>
+      <p>Median across the verified fee rows, without normalising fee metric definitions.</p>
+    </div>
+    <div class="snapshot-card">
+      <div class="snapshot-label">Fee at or below 1.00%</div>
+      <div class="snapshot-value">{lowFeeCount}</div>
+      <p>{etfProxyCount} of these fee rows also have an ETF proxy mapped in the shared dataset.</p>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="field field-search">
+      <label for={`${widgetId}-search`}>Search</label>
+      <input id={`${widgetId}-search`} data-field="search" type="search" placeholder="e.g. AIA, Global Bond, Fidelity, Expense Ratio" />
+    </div>
+
+    <div class="field">
+      <label for={`${widgetId}-insurer`}>Insurer</label>
+      <select id={`${widgetId}-insurer`} data-field="insurer">
+        <option value="all">All insurers</option>
+        {insurers.map((insurer) => (
+          <option value={insurer}>{insurer}</option>
+        ))}
+      </select>
+    </div>
+
+    <div class="field">
+      <label for={`${widgetId}-fee-label`}>Fee label</label>
+      <select id={`${widgetId}-fee-label`} data-field="feeLabel">
+        <option value="all">All fee labels</option>
+        {feeLabels.map((label) => (
+          <option value={label}>{label}</option>
+        ))}
+      </select>
+    </div>
+
+    <div class="field">
+      <label for={`${widgetId}-as-of-date`}>As of date</label>
+      <select id={`${widgetId}-as-of-date`} data-field="asOfDate">
+        <option value="all">All dates</option>
+        {asOfDates.map((date) => (
+          <option value={date}>{date}</option>
+        ))}
+      </select>
+    </div>
+
+    <div class="field">
+      <label for={`${widgetId}-structure`}>Structure</label>
+      <select id={`${widgetId}-structure`} data-field="structure">
+        <option value="all">All structures</option>
+        {structures.map((item) => (
+          <option value={item}>{item}</option>
+        ))}
+      </select>
+    </div>
+
+    <div class="field">
+      <label for={`${widgetId}-sort`}>Sort</label>
+      <select id={`${widgetId}-sort`} data-field="sort">
+        <option value="fee-asc">Lowest fee</option>
+        <option value="fee-desc">Highest fee</option>
+        <option value="alpha">A to Z</option>
+        <option value="insurer">Insurer</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="quick-filters" role="group" aria-label="Quick filters">
+    <button type="button" class="quick-filter is-active" data-filter="all">All verified fees</button>
+    <button type="button" class="quick-filter" data-filter="low-fee">Fee at or below 1.00%</button>
+    <button type="button" class="quick-filter" data-filter="high-fee">Fee above 2.00%</button>
+    <button type="button" class="quick-filter" data-filter="proxy">Has ETF proxy</button>
+    <button type="button" class="quick-filter" data-filter="external-manager">External manager stated</button>
+  </div>
+
+  <div class="results-meta">
+    <span data-output="resultCount">{verifiedRows.length} rows</span>
+    <span>Fee metrics are shown exactly as disclosed by the insurer</span>
+    <span>Source links open the cited insurer document or page directly</span>
+    <span>Benchmark and ETF proxy are shown as context, not as a fee-adjusted recommendation</span>
+  </div>
+
+  <div class="table-shell">
+    <table class="result-table">
+      <thead>
+        <tr>
+          <th>Sub-fund</th>
+          <th>Fee</th>
+          <th>Fee label</th>
+          <th>As of</th>
+          <th>Structure</th>
+          <th>Manager</th>
+          <th>ETF proxy</th>
+          <th>Source</th>
+        </tr>
+      </thead>
+      <tbody data-output="rows"></tbody>
+    </table>
+  </div>
+
+  <div class="mobile-results" data-output="mobileResults"></div>
+</section>
+
+<script is:inline define:vars={{ widgetId, datasetJson }}>
+  (() => {
+    const root = document.getElementById(widgetId);
+    if (!root) return;
+
+    const rows = JSON.parse(datasetJson);
+    const controls = {
+      search: root.querySelector('[data-field="search"]'),
+      insurer: root.querySelector('[data-field="insurer"]'),
+      feeLabel: root.querySelector('[data-field="feeLabel"]'),
+      asOfDate: root.querySelector('[data-field="asOfDate"]'),
+      structure: root.querySelector('[data-field="structure"]'),
+      sort: root.querySelector('[data-field="sort"]'),
+    };
+    const outputs = {
+      rows: root.querySelector('[data-output="rows"]'),
+      mobileResults: root.querySelector('[data-output="mobileResults"]'),
+      resultCount: root.querySelector('[data-output="resultCount"]'),
+    };
+    const quickFilters = Array.from(root.querySelectorAll('[data-filter]'));
+    let quickFilter = 'all';
+
+    const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    }[char] ?? char));
+
+    const sourceHref = (row) => {
+      if (!row.sourceUrl || row.sourceUrl === '#') return '#';
+      if (row.sourcePage && /\.pdf($|\?)/i.test(row.sourceUrl)) return `${row.sourceUrl}#page=${row.sourcePage}`;
+      return row.sourceUrl;
+    };
+
+    const compareNullable = (left, right, direction = 'asc') => {
+      const leftValid = Number.isFinite(left);
+      const rightValid = Number.isFinite(right);
+      if (leftValid && rightValid) return direction === 'asc' ? left - right : right - left;
+      if (leftValid) return -1;
+      if (rightValid) return 1;
+      return 0;
+    };
+
+    const getSorter = (sortKey) => {
+      if (sortKey === 'fee-desc') return (a, b) => compareNullable(a.annualFeePct, b.annualFeePct, 'desc');
+      if (sortKey === 'alpha') return (a, b) => a.subFund.localeCompare(b.subFund);
+      if (sortKey === 'insurer') return (a, b) => a.insurer.localeCompare(b.insurer) || a.subFund.localeCompare(b.subFund);
+      return (a, b) => compareNullable(a.annualFeePct, b.annualFeePct, 'asc');
+    };
+
+    const getVisibleRows = () => {
+      const query = (controls.search?.value ?? '').trim().toLowerCase();
+      const insurer = controls.insurer?.value ?? 'all';
+      const feeLabel = controls.feeLabel?.value ?? 'all';
+      const asOfDate = controls.asOfDate?.value ?? 'all';
+      const structure = controls.structure?.value ?? 'all';
+      const sortKey = controls.sort?.value ?? 'fee-asc';
+
+      return rows.filter((row) => {
+        if (insurer !== 'all' && row.insurer !== insurer) return false;
+        if (feeLabel !== 'all' && row.annualFeeLabel !== feeLabel) return false;
+        if (asOfDate !== 'all' && row.feeAsOfDate !== asOfDate) return false;
+        if (structure !== 'all' && row.structureLabel !== structure) return false;
+        if (quickFilter === 'low-fee' && ((row.annualFeePct ?? Infinity) > 1)) return false;
+        if (quickFilter === 'high-fee' && ((row.annualFeePct ?? -Infinity) <= 2)) return false;
+        if (quickFilter === 'proxy' && !row.etfProxy) return false;
+        if (quickFilter === 'external-manager' && (!row.externalManager || row.externalManager === 'Not stated')) return false;
+        if (!query) return true;
+        const haystack = [
+          row.insurer,
+          row.subFund,
+          row.annualFeeLabel,
+          row.feeAsOfDate,
+          row.benchmark,
+          row.etfProxy,
+          row.structureLabel,
+          row.externalManager,
+        ].join(' ').toLowerCase();
+        return haystack.includes(query);
+      }).sort(getSorter(sortKey));
+    };
+
+    const renderTable = (visible) => {
+      if (!outputs.rows) return;
+      if (!visible.length) {
+        outputs.rows.innerHTML = '<tr><td colspan="8" class="empty-cell">No verified fee rows match the current filters.</td></tr>';
+        return;
+      }
+
+      outputs.rows.innerHTML = visible.map((row) => `
+        <tr>
+          <td>
+            <div class="cell-primary">${escapeHtml(row.subFund)}</div>
+            <div class="cell-sub">${escapeHtml(row.insurer)}</div>
+          </td>
+          <td><div class="cell-primary">${escapeHtml(row.annualFeeDisplay)}</div></td>
+          <td>
+            <div class="cell-primary">${escapeHtml(row.annualFeeLabel)}</div>
+          </td>
+          <td><div class="cell-primary">${escapeHtml(row.feeAsOfDate)}</div></td>
+          <td>
+            <div class="cell-primary">${escapeHtml(row.structureLabel)}</div>
+            <div class="cell-sub">${escapeHtml(row.benchmark)}</div>
+          </td>
+          <td><div class="cell-primary">${escapeHtml(row.externalManager)}</div></td>
+          <td><div class="cell-primary">${escapeHtml(row.etfProxy || 'None mapped')}</div></td>
+          <td>
+            <a href="${escapeHtml(sourceHref(row))}" target="_blank" rel="noreferrer noopener">${row.sourcePage ? `Fee p. ${row.sourcePage}` : 'Source'}</a>
+          </td>
+        </tr>
+      `).join('');
+    };
+
+    const renderCards = (visible) => {
+      if (!outputs.mobileResults) return;
+      outputs.mobileResults.innerHTML = visible.map((row) => `
+        <article class="mobile-card">
+          <div class="mobile-card-head">
+            <div>
+              <h3>${escapeHtml(row.subFund)}</h3>
+              <p>${escapeHtml(row.insurer)}</p>
+            </div>
+            <span class="fee-chip">${escapeHtml(row.annualFeeDisplay)}</span>
+          </div>
+
+          <dl class="mobile-grid">
+            <div><dt>Fee label</dt><dd>${escapeHtml(row.annualFeeLabel)}</dd></div>
+            <div><dt>As of</dt><dd>${escapeHtml(row.feeAsOfDate)}</dd></div>
+            <div><dt>Structure</dt><dd>${escapeHtml(row.structureLabel)}</dd></div>
+            <div><dt>Manager</dt><dd>${escapeHtml(row.externalManager)}</dd></div>
+            <div><dt>ETF proxy</dt><dd>${escapeHtml(row.etfProxy || 'None mapped')}</dd></div>
+          </dl>
+
+          <div class="mobile-benchmark">
+            <span>Benchmark</span>
+            <strong>${escapeHtml(row.benchmark)}</strong>
+          </div>
+
+          <a class="mobile-source" href="${escapeHtml(sourceHref(row))}" target="_blank" rel="noreferrer noopener">${row.sourcePage ? `Open fee source (p. ${row.sourcePage})` : 'Open fee source'}</a>
+        </article>
+      `).join('');
+    };
+
+    const render = () => {
+      const visible = getVisibleRows();
+      if (outputs.resultCount) outputs.resultCount.textContent = `${visible.length} ${visible.length === 1 ? 'row' : 'rows'}`;
+      renderTable(visible);
+      renderCards(visible);
+    };
+
+    Object.values(controls).forEach((control) => {
+      control?.addEventListener('input', render);
+      control?.addEventListener('change', render);
+    });
+
+    quickFilters.forEach((button) => {
+      button.addEventListener('click', () => {
+        quickFilter = button.getAttribute('data-filter') ?? 'all';
+        quickFilters.forEach((item) => item.classList.toggle('is-active', item === button));
+        render();
+      });
+    });
+
+    render();
+  })();
+</script>
+
+<style>
+  .fee-explorer {
+    background: hsl(var(--muted) / 0.82);
+    border-radius: 14px;
+    padding: 1.35rem;
+    margin: 2rem 0;
+    font-family: var(--font-sans);
+  }
+
+  .fee-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
+    gap: 16px;
+    margin-bottom: 1rem;
+  }
+
+  .section-kicker {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 4px;
+  }
+
+  .section-title {
+    margin: 0 0 0.45rem;
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    line-height: 1.15;
+    color: hsl(var(--foreground));
+  }
+
+  .section-copy {
+    margin: 0;
+    color: hsl(var(--muted-foreground));
+    max-width: 70ch;
+    line-height: 1.65;
+  }
+
+  .trust-card,
+  .snapshot-card {
+    background: hsl(var(--background));
+    border: 1px solid hsl(var(--border) / 0.7);
+    border-radius: 12px;
+    padding: 1rem;
+  }
+
+  .coverage-label,
+  .snapshot-label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .trust-card p {
+    margin: 0.55rem 0 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: hsl(var(--foreground));
+  }
+
+  .snapshot-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 1rem;
+  }
+
+  .snapshot-value {
+    margin-top: 0.35rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: hsl(var(--foreground));
+  }
+
+  .snapshot-card p {
+    margin: 0.45rem 0 0;
+    font-size: 12px;
+    line-height: 1.55;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .controls {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    align-items: end;
+    margin-bottom: 0.9rem;
+  }
+
+  .field {
+    display: grid;
+    align-content: start;
+  }
+
+  .field-search {
+    grid-column: 1 / -1;
+  }
+
+  .field label {
+    display: flex;
+    align-items: flex-end;
+    min-height: 1.2rem;
+    font-size: 12px;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 0.35rem;
+  }
+
+  .field input,
+  .field select {
+    width: 100%;
+    border: 1px solid hsl(var(--border));
+    border-radius: 10px;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    padding: 0.72rem 0.9rem;
+    font: inherit;
+  }
+
+  .quick-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 0.85rem;
+  }
+
+  .quick-filter {
+    border: 1px solid hsl(var(--border));
+    border-radius: 999px;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    padding: 0.45rem 0.8rem;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .quick-filter.is-active {
+    background: rgba(216, 90, 48, 0.12);
+    border-color: rgba(216, 90, 48, 0.32);
+  }
+
+  .results-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 12px;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 0.75rem;
+  }
+
+  .table-shell {
+    overflow-x: auto;
+    background: hsl(var(--background));
+    border-radius: 12px;
+    border: 1px solid hsl(var(--border) / 0.7);
+  }
+
+  .result-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  .result-table th,
+  .result-table td {
+    padding: 0.85rem 0.9rem;
+    border-bottom: 1px solid hsl(var(--border));
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .result-table th {
+    position: sticky;
+    top: 0;
+    background: hsl(var(--background));
+    z-index: 1;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .result-table tbody tr:hover {
+    background: hsl(var(--muted) / 0.5);
+  }
+
+  .cell-primary {
+    display: block;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+
+  .cell-sub {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .result-table a,
+  .mobile-source {
+    color: hsl(var(--foreground));
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .empty-cell {
+    text-align: center;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .mobile-results {
+    display: none;
+  }
+
+  .fee-chip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.28rem 0.65rem;
+    background: rgba(216, 90, 48, 0.12);
+    color: #9f3414;
+    font-weight: 700;
+    font-size: 13px;
+  }
+
+  @media (max-width: 1000px) {
+    .fee-header,
+    .snapshot-grid,
+    .controls {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .fee-explorer {
+      padding: 1rem;
+    }
+
+    .table-shell {
+      display: none;
+    }
+
+    .mobile-results {
+      display: grid;
+      gap: 12px;
+    }
+
+    .mobile-card {
+      background: hsl(var(--background));
+      border: 1px solid hsl(var(--border) / 0.8);
+      border-radius: 12px;
+      padding: 0.95rem;
+      display: grid;
+      gap: 12px;
+    }
+
+    .mobile-card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .mobile-card-head h3 {
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1.35;
+      color: hsl(var(--foreground));
+    }
+
+    .mobile-card-head p {
+      margin: 0.35rem 0 0;
+      font-size: 12px;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .mobile-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .mobile-grid dt {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .mobile-grid dd {
+      margin: 4px 0 0;
+      font-size: 14px;
+      line-height: 1.45;
+      color: hsl(var(--foreground));
+    }
+
+    .mobile-benchmark {
+      display: grid;
+      gap: 4px;
+    }
+
+    .mobile-benchmark span {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .mobile-benchmark strong {
+      color: hsl(var(--foreground));
+      line-height: 1.5;
+    }
+  }
+</style>

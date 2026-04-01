@@ -1,0 +1,82 @@
+---
+import EditorialChartCard from './EditorialChartCard.astro';
+
+const width = 640;
+const height = 280;
+const frame = { left: 54, right: 54, top: 18, bottom: 34 };
+const plotWidth = width - frame.left - frame.right;
+const plotHeight = height - frame.top - frame.bottom;
+const baselineY = frame.top + plotHeight;
+
+const labels = ['20', '30', '40', '50', '56', '60', '65', '72', '83', '94'];
+const wealth = [0.01, 0.02, 0.05, 0.38, 3.8, 15, 36, 67, 118, 157];
+const coverageNeed = [90, 100, 95, 80, 60, 40, 20, 8, 2, 0];
+const wealthTicks = [0, 50, 100, 150];
+const coverageTicks = [0, 50, 100];
+const wealthMax = 160;
+const coverageMax = 120;
+
+const xAt = (index: number) => frame.left + (plotWidth * index) / (labels.length - 1);
+const yAtWealth = (value: number) => frame.top + plotHeight - (plotHeight * value) / wealthMax;
+const yAtCoverage = (value: number) => frame.top + plotHeight - (plotHeight * value) / coverageMax;
+
+const pathFor = (values: number[], yScale: (value: number) => number) =>
+  values
+    .map((value, index) => `${index === 0 ? 'M' : 'L'} ${xAt(index).toFixed(2)} ${yScale(value).toFixed(2)}`)
+    .join(' ');
+
+const areaFor = (values: number[], yScale: (value: number) => number) =>
+  `${pathFor(values, yScale)} L ${xAt(values.length - 1).toFixed(2)} ${baselineY.toFixed(2)} L ${xAt(0).toFixed(2)} ${baselineY.toFixed(2)} Z`;
+
+const wealthPath = pathFor(wealth, yAtWealth);
+const wealthArea = areaFor(wealth, yAtWealth);
+const coveragePath = pathFor(coverageNeed, yAtCoverage);
+---
+
+<EditorialChartCard
+  title="Buffett's wealth trajectory vs insurance coverage need"
+  subtitle="Two curves, one insight: compounding takes time to build protection"
+  legend={[
+    { label: 'Wealth accumulation (compounding)', color: '#1D9E75' },
+    { label: 'Life insurance coverage need', color: '#D85A30' },
+  ]}
+>
+  <svg viewBox={`0 0 ${width} ${height}`} class="h-auto w-full" role="img" aria-label="Wealth accumulation compared with insurance coverage need">
+    {wealthTicks.map((tick) => (
+      <>
+        <line x1={frame.left} y1={yAtWealth(tick)} x2={width - frame.right} y2={yAtWealth(tick)} stroke="rgba(0,0,0,0.05)" stroke-width="1" />
+        <text x={frame.left - 10} y={yAtWealth(tick) + 4} text-anchor="end" fill="#1D9E75" font-size="11" font-family="DM Sans, sans-serif">
+          {tick === 0 ? '$0B' : `$${tick}B`}
+        </text>
+      </>
+    ))}
+    {coverageTicks.map((tick) => (
+      <text x={width - frame.right + 10} y={yAtCoverage(tick) + 4} fill="#D85A30" font-size="11" font-family="DM Sans, sans-serif">
+        {tick}%
+      </text>
+    ))}
+
+    <line x1={frame.left} y1={frame.top} x2={frame.left} y2={baselineY} stroke="rgba(0,0,0,0.08)" stroke-width="1" />
+    <line x1={width - frame.right} y1={frame.top} x2={width - frame.right} y2={baselineY} stroke="rgba(0,0,0,0.08)" stroke-width="1" />
+    <line x1={frame.left} y1={baselineY} x2={width - frame.right} y2={baselineY} stroke="rgba(0,0,0,0.08)" stroke-width="1" />
+
+    <path d={wealthArea} fill="rgba(29,158,117,0.06)" />
+    <path d={wealthPath} fill="none" stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+    <path d={coveragePath} fill="none" stroke="#D85A30" stroke-width="2.5" stroke-dasharray="6 3" stroke-linecap="round" stroke-linejoin="round" />
+
+    {wealth.map((value, index) => (
+      <circle cx={xAt(index)} cy={yAtWealth(value)} r="2.8" fill="#1D9E75" />
+    ))}
+    {coverageNeed.map((value, index) => (
+      <circle cx={xAt(index)} cy={yAtCoverage(value)} r="2.8" fill="#D85A30" />
+    ))}
+
+    {labels.map((label, index) => (
+      <text x={xAt(index)} y={height - 10} text-anchor="middle" fill="#73726c" font-size="11" font-family="DM Sans, sans-serif">
+        {label}
+      </text>
+    ))}
+    <text x={frame.left} y={12} fill="#1D9E75" font-size="11" font-family="DM Sans, sans-serif">Wealth ($B)</text>
+    <text x={width - frame.right} y={12} text-anchor="end" fill="#D85A30" font-size="11" font-family="DM Sans, sans-serif">Coverage need</text>
+  </svg>
+</EditorialChartCard>

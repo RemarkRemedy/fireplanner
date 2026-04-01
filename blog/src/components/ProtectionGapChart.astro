@@ -1,0 +1,85 @@
+---
+import EditorialChartCard from './EditorialChartCard.astro';
+
+const width = 640;
+const height = 300;
+const frame = { left: 54, right: 18, top: 18, bottom: 52 };
+const plotWidth = width - frame.left - frame.right;
+const plotHeight = height - frame.top - frame.bottom;
+
+const rows = [
+  { age: '28', mortgage: 0, children: 0, spouse: 0, assets: 0 },
+  { age: '32', mortgage: 450, children: 150, spouse: 300, assets: -50 },
+  { age: '38', mortgage: 400, children: 400, spouse: 350, assets: -120 },
+  { age: '45', mortgage: 330, children: 350, spouse: 300, assets: -250 },
+  { age: '52', mortgage: 220, children: 250, spouse: 200, assets: -450 },
+  { age: '58', mortgage: 100, children: 50, spouse: 100, assets: -700 },
+  { age: '65', mortgage: 0, children: 0, spouse: 0, assets: -1100 },
+];
+
+const yMin = -1200;
+const yMax = 1200;
+const range = yMax - yMin;
+const baselineY = frame.top + (plotHeight * yMax) / range;
+const columnWidth = plotWidth / rows.length;
+const barWidth = columnWidth * 0.58;
+const yAt = (value: number) => frame.top + ((yMax - value) * plotHeight) / range;
+const yTicks = [-1000, -500, 0, 500, 1000];
+---
+
+<EditorialChartCard
+  title="Protection gap breakdown by life stage"
+  subtitle="Obligations stack up early, then shrink as assets accumulate"
+  legend={[
+    { label: 'Mortgage', color: '#378ADD' },
+    { label: "Children's expenses", color: '#D85A30' },
+    { label: 'Spouse income gap', color: '#7F77DD' },
+    { label: 'Existing assets (offset)', color: '#1D9E75' },
+  ]}
+>
+  <svg viewBox={`0 0 ${width} ${height}`} class="h-auto w-full" role="img" aria-label="Protection gap breakdown by life stage">
+    {yTicks.map((tick) => (
+      <>
+        <line x1={frame.left} y1={yAt(tick)} x2={width - frame.right} y2={yAt(tick)} stroke="rgba(0,0,0,0.05)" stroke-width="1" />
+        <text x={frame.left - 10} y={yAt(tick) + 4} text-anchor="end" fill="#73726c" font-size="11" font-family="DM Sans, sans-serif">
+          {tick === 0 ? '$0' : `${tick < 0 ? '-' : ''}$${Math.abs(tick)}k`}
+        </text>
+      </>
+    ))}
+
+    {rows.map((row, index) => {
+      const x = frame.left + columnWidth * index + (columnWidth - barWidth) / 2;
+      const segments = [
+        { value: row.mortgage, color: '#378ADD' },
+        { value: row.children, color: '#D85A30' },
+        { value: row.spouse, color: '#7F77DD' },
+      ];
+      let positiveBase = 0;
+      const positiveRects = segments.map((segment) => {
+        const top = yAt(positiveBase + segment.value);
+        const bottom = yAt(positiveBase);
+        positiveBase += segment.value;
+        return { x, y: top, width: barWidth, height: bottom - top, color: segment.color };
+      });
+      const assetTop = yAt(0);
+      const assetBottom = yAt(row.assets);
+
+      return (
+        <>
+          {positiveRects.map((rect) => (
+            <rect x={rect.x} y={rect.y} width={rect.width} height={rect.height} rx="3" fill={rect.color} />
+          ))}
+          <rect x={x} y={assetTop} width={barWidth} height={assetBottom - assetTop} rx="3" fill="#1D9E75" />
+          <text x={x + barWidth / 2} y={height - 22} text-anchor="middle" fill="#73726c" font-size="11" font-family="DM Sans, sans-serif">
+            {row.age}
+          </text>
+        </>
+      );
+    })}
+
+    <line x1={frame.left} y1={baselineY} x2={width - frame.right} y2={baselineY} stroke="rgba(0,0,0,0.12)" stroke-width="1.25" />
+    <text x={width / 2} y={height - 4} text-anchor="middle" fill="#73726c" font-size="12" font-family="DM Sans, sans-serif">
+      Age
+    </text>
+  </svg>
+</EditorialChartCard>

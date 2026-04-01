@@ -1,0 +1,87 @@
+---
+import EditorialChartCard from './EditorialChartCard.astro';
+
+const width = 640;
+const height = 280;
+const frame = { left: 48, right: 16, top: 18, bottom: 34 };
+const plotWidth = width - frame.left - frame.right;
+const plotHeight = height - frame.top - frame.bottom;
+const baselineY = frame.top + plotHeight;
+
+const labels = ['25', '30', '35', '40', '45', '50', '55', '60', '65', '70'];
+const coverageNeed = [600, 1400, 1500, 1300, 1000, 700, 400, 150, 50, 0];
+const accumulatedWealth = [20, 80, 180, 350, 550, 800, 1100, 1400, 1700, 2000];
+const mortgage = [0, 450, 420, 380, 320, 240, 150, 60, 0, 0];
+const yTicks = [0, 500, 1000, 1500, 2000];
+const yMax = 2200;
+
+const xAt = (index: number) => frame.left + (plotWidth * index) / (labels.length - 1);
+const yAt = (value: number) => frame.top + plotHeight - (plotHeight * value) / yMax;
+
+const pathFor = (values: number[]) =>
+  values
+    .map((value, index) => `${index === 0 ? 'M' : 'L'} ${xAt(index).toFixed(2)} ${yAt(value).toFixed(2)}`)
+    .join(' ');
+
+const areaFor = (values: number[]) =>
+  `${pathFor(values)} L ${xAt(values.length - 1).toFixed(2)} ${baselineY.toFixed(2)} L ${xAt(0).toFixed(2)} ${baselineY.toFixed(2)} Z`;
+
+const coveragePath = pathFor(coverageNeed);
+const coverageArea = areaFor(coverageNeed);
+const wealthPath = pathFor(accumulatedWealth);
+const wealthArea = areaFor(accumulatedWealth);
+const mortgagePath = pathFor(mortgage);
+---
+
+<EditorialChartCard
+  title="Coverage need vs accumulated wealth over time"
+  subtitle="Illustrative scenario: the protection gap narrows as assets grow"
+  legend={[
+    { label: 'Coverage need', color: '#D85A30' },
+    { label: 'Accumulated wealth', color: '#1D9E75' },
+    { label: 'Outstanding mortgage', color: '#378ADD' },
+  ]}
+  metrics={[
+    { label: 'Peak need', value: 'Age 30-40' },
+    { label: 'Declining by', value: 'Age 50+' },
+    { label: 'Self-insured', value: 'Age 60-65' },
+  ]}
+>
+  <svg viewBox={`0 0 ${width} ${height}`} class="h-auto w-full" role="img" aria-label="Coverage need versus accumulated wealth over time">
+    {yTicks.map((tick) => (
+      <>
+        <line x1={frame.left} y1={yAt(tick)} x2={width - frame.right} y2={yAt(tick)} stroke="rgba(0,0,0,0.05)" stroke-width="1" />
+        <text x={frame.left - 8} y={yAt(tick) + 4} text-anchor="end" fill="#73726c" font-size="11" font-family="DM Sans, sans-serif">
+          {tick === 0 ? '$0' : `$${tick}k`}
+        </text>
+      </>
+    ))}
+    <line x1={frame.left} y1={frame.top} x2={frame.left} y2={baselineY} stroke="rgba(0,0,0,0.08)" stroke-width="1" />
+    <line x1={frame.left} y1={baselineY} x2={width - frame.right} y2={baselineY} stroke="rgba(0,0,0,0.08)" stroke-width="1" />
+
+    <path d={coverageArea} fill="rgba(216,90,48,0.06)" />
+    <path d={wealthArea} fill="rgba(29,158,117,0.05)" />
+    <path d={coveragePath} fill="none" stroke="#D85A30" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+    <path d={wealthPath} fill="none" stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+    <path d={mortgagePath} fill="none" stroke="#378ADD" stroke-width="1.5" stroke-dasharray="6 4" stroke-linecap="round" stroke-linejoin="round" />
+
+    {coverageNeed.map((value, index) => (
+      <circle cx={xAt(index)} cy={yAt(value)} r="2.8" fill="#D85A30" />
+    ))}
+    {accumulatedWealth.map((value, index) => (
+      <circle cx={xAt(index)} cy={yAt(value)} r="2.8" fill="#1D9E75" />
+    ))}
+    {mortgage.map((value, index) => (
+      <circle cx={xAt(index)} cy={yAt(value)} r="2.2" fill="#378ADD" />
+    ))}
+
+    {labels.map((label, index) => (
+      <text x={xAt(index)} y={height - 10} text-anchor="middle" fill="#73726c" font-size="11" font-family="DM Sans, sans-serif">
+        {label}
+      </text>
+    ))}
+    <text x={width / 2} y={height - 2} text-anchor="middle" fill="#73726c" font-size="12" font-family="DM Sans, sans-serif">
+      Age
+    </text>
+  </svg>
+</EditorialChartCard>

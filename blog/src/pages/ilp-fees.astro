@@ -1,0 +1,99 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE_NAME } from '../lib/config';
+import IlpFeeDashboard from '../components/IlpFeeDashboard.astro';
+import ilpMasterData from '../data/ilp-master-v1.json';
+---
+
+<BaseLayout title="ILP Fee Dashboard">
+  <Fragment slot="head">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ILP Fee Dashboard | {SITE_NAME}</title>
+    <meta
+      name="description"
+      content="Search verified Singapore ILP sub-fund fees by insurer, fee label, as-of date, structure, and ETF proxy context."
+    />
+    <link rel="canonical" href={Astro.url.href} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={`ILP Fee Dashboard | ${SITE_NAME}`} />
+    <meta
+      property="og:description"
+      content="Search verified Singapore ILP sub-fund fees by insurer, fee label, as-of date, structure, and ETF proxy context."
+    />
+    <meta property="og:url" content={Astro.url.href} />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={`ILP Fee Dashboard | ${SITE_NAME}`} />
+    <meta
+      name="twitter:description"
+      content="Search verified Singapore ILP sub-fund fees by insurer, fee label, as-of date, structure, and ETF proxy context."
+    />
+  </Fragment>
+
+  <div class="page-shell">
+    <header class="page-header">
+      <p class="page-kicker">SG FIRE Planner tools</p>
+      <h1>ILP fee dashboard</h1>
+      <p class="page-copy">
+        This page isolates the fee layer from the wider ILP dataset. It keeps the insurer’s disclosed fee metric visible, cites the official source, and lets you filter by insurer, date, and structure before you compare rows.
+      </p>
+      <div class="page-note">
+        <strong>Important:</strong> do not treat <em>Expense Ratio</em>, <em>Continuing Investment Charge</em>, <em>Ongoing Cost</em>, and <em>Fund Management Fee</em> as automatically identical. Use this dashboard to narrow the field, then verify like-for-like labels.
+      </div>
+    </header>
+
+    <IlpFeeDashboard data={ilpMasterData} />
+  </div>
+</BaseLayout>
+
+<style>
+  .page-shell {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .page-header {
+    display: grid;
+    gap: 0.85rem;
+    max-width: 78ch;
+  }
+
+  .page-kicker {
+    margin: 0;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .page-header h1 {
+    margin: 0;
+    font-family: var(--font-reading);
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    color: hsl(var(--foreground));
+  }
+
+  .page-copy {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.7;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .page-note {
+    border-left: 4px solid rgba(216, 90, 48, 0.55);
+    background: hsl(var(--muted) / 0.65);
+    border-radius: 0 12px 12px 0;
+    padding: 0.95rem 1rem;
+    color: hsl(var(--foreground));
+    line-height: 1.6;
+  }
+
+  .page-note strong {
+    color: hsl(var(--foreground));
+  }
+  </style>

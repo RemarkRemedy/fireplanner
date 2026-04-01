@@ -1,0 +1,423 @@
+---
+const widgetId = `fee-compare-${Math.random().toString(36).slice(2, 8)}`;
+---
+
+<section id={widgetId} class="calc-container not-prose">
+  <div class="chart-title" style="margin-bottom:16px">Fee comparison calculator</div>
+  <p class="calc-copy">
+      Enter each product's annual fee and expected return, choose a time frame, and see how the gap compounds over time.
+      This is a simplified calculator: it assumes a starting amount, annual compounding, and one fee deduction per year.
+  </p>
+
+  <div class="calc-top-grid">
+    <div class="calc-panel">
+      <p class="panel-title">Product 1</p>
+      <div class="panel-fields">
+        <div>
+          <label for={`${widgetId}-fee-a`}>Annual fee (%)</label>
+          <input id={`${widgetId}-fee-a`} data-field="feeA" type="number" step="0.01" min="0" value="0.5" />
+        </div>
+        <div>
+          <label for={`${widgetId}-return-a`}>Expected return (%)</label>
+          <input id={`${widgetId}-return-a`} data-field="returnA" type="number" step="0.1" value="7" />
+        </div>
+      </div>
+    </div>
+
+    <div class="calc-panel">
+      <p class="panel-title">Product 2</p>
+      <div class="panel-fields">
+        <div>
+          <label for={`${widgetId}-fee-b`}>Annual fee (%)</label>
+          <input id={`${widgetId}-fee-b`} data-field="feeB" type="number" step="0.01" min="0" value="1.5" />
+        </div>
+        <div>
+          <label for={`${widgetId}-return-b`}>Expected return (%)</label>
+          <input id={`${widgetId}-return-b`} data-field="returnB" type="number" step="0.1" value="7" />
+        </div>
+      </div>
+    </div>
+
+    <div class="calc-panel">
+      <p class="panel-title">Settings</p>
+      <div>
+        <label for={`${widgetId}-principal`}>Starting amount</label>
+        <input id={`${widgetId}-principal`} data-field="principal" type="number" step="1000" min="0" value="10000" />
+      </div>
+      <div class="slider-wrap">
+        <label for={`${widgetId}-years`}>Time frame (years)</label>
+        <input id={`${widgetId}-years`} data-field="years" class="range-input" type="range" min="1" max="40" step="1" value="30" />
+        <div class="range-labels">
+          <span>1 year</span>
+          <strong data-output="yearsLabel">30 years</strong>
+          <span>40 years</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-label" data-output="labelA">Product 1</div>
+      <div class="metric-value" data-output="valueA">S$0</div>
+      <div class="metric-sub">Ending value after fees</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label" data-output="labelB">Product 2</div>
+      <div class="metric-value" data-output="valueB">S$0</div>
+      <div class="metric-sub">Ending value after fees</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Difference</div>
+      <div class="metric-value text-accent" data-output="difference">S$0</div>
+      <div class="metric-sub" data-output="differenceLabel">After 30 years</div>
+    </div>
+  </div>
+
+  <div class="chart-container">
+    <div class="chart-header">
+      <div>
+        <h3 class="chart-title">Projected value over time</h3>
+        <p class="chart-subtitle">Assumes the entered return and fee stay the same each year.</p>
+      </div>
+      <div class="legend-row">
+        <span><span class="legend-dot" style="background:#D85A30"></span><span data-output="legendA">Product 1</span></span>
+        <span><span class="legend-dot" style="background:#1D9E75"></span><span data-output="legendB">Product 2</span></span>
+      </div>
+    </div>
+
+    <div class="canvas-shell">
+      <svg data-output="chart" viewBox="0 0 640 280" class="h-auto w-full" role="img" aria-label="Projected value comparison chart">
+        <rect x="0" y="0" width="640" height="280" fill="transparent"></rect>
+        <line x1="44" y1="28" x2="44" y2="236" stroke="hsl(var(--border))" stroke-width="1"></line>
+        <line x1="44" y1="236" x2="612" y2="236" stroke="hsl(var(--border))" stroke-width="1"></line>
+        <path data-output="pathA" d="" fill="none" stroke="#D85A30" stroke-width="4" stroke-linecap="round"></path>
+        <path data-output="pathB" d="" fill="none" stroke="#1D9E75" stroke-width="4" stroke-linecap="round"></path>
+        <text x="44" y="258" class="fill-[hsl(var(--muted-foreground))]" style="font-size: 12px;">Today</text>
+        <text x="612" y="258" text-anchor="end" class="fill-[hsl(var(--muted-foreground))]" style="font-size: 12px;" data-output="chartEndLabel">30 years</text>
+        <text x="44" y="18" class="fill-[hsl(var(--muted-foreground))]" style="font-size: 12px;" data-output="chartMaxLabel">S$0</text>
+      </svg>
+    </div>
+
+    <p class="calc-note">
+      Simplified assumption set: one starting investment, annual compounding, no new contributions, no taxes, no spreads, and no separate policy charges beyond the fee you enter.
+    </p>
+  </div>
+</section>
+
+<script is:inline define:vars={{ widgetId }}>
+  (() => {
+    const root = document.getElementById(widgetId);
+    if (!root) return;
+
+    const fields = {
+      feeA: root.querySelector('[data-field="feeA"]'),
+      returnA: root.querySelector('[data-field="returnA"]'),
+      feeB: root.querySelector('[data-field="feeB"]'),
+      returnB: root.querySelector('[data-field="returnB"]'),
+      principal: root.querySelector('[data-field="principal"]'),
+      years: root.querySelector('[data-field="years"]'),
+    };
+
+    const outputs = {
+      yearsLabel: root.querySelector('[data-output="yearsLabel"]'),
+      labelA: root.querySelector('[data-output="labelA"]'),
+      labelB: root.querySelector('[data-output="labelB"]'),
+      valueA: root.querySelector('[data-output="valueA"]'),
+      valueB: root.querySelector('[data-output="valueB"]'),
+      difference: root.querySelector('[data-output="difference"]'),
+      differenceLabel: root.querySelector('[data-output="differenceLabel"]'),
+      legendA: root.querySelector('[data-output="legendA"]'),
+      legendB: root.querySelector('[data-output="legendB"]'),
+      pathA: root.querySelector('[data-output="pathA"]'),
+      pathB: root.querySelector('[data-output="pathB"]'),
+      chartEndLabel: root.querySelector('[data-output="chartEndLabel"]'),
+      chartMaxLabel: root.querySelector('[data-output="chartMaxLabel"]'),
+    };
+
+    const currency = new Intl.NumberFormat('en-SG', {
+      style: 'currency',
+      currency: 'SGD',
+      maximumFractionDigits: 0,
+    });
+
+    const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+    const asNumber = (element, fallback) => {
+      const value = Number.parseFloat(element?.value ?? '');
+      return Number.isFinite(value) ? value : fallback;
+    };
+
+    const buildSeries = (principal, grossReturnPct, feePct, years) => {
+      const values = [principal];
+      let current = principal;
+      const gross = grossReturnPct / 100;
+      const fee = feePct / 100;
+
+      for (let year = 1; year <= years; year += 1) {
+        current *= (1 + gross) * (1 - fee);
+        values.push(current);
+      }
+
+      return values;
+    };
+
+    const linePath = (series, maxValue) => {
+      const left = 44;
+      const top = 28;
+      const width = 568;
+      const height = 208;
+
+      return series.map((value, index) => {
+        const x = left + (width * index) / Math.max(series.length - 1, 1);
+        const y = top + height - (height * value) / Math.max(maxValue, 1);
+        return `${index === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`;
+      }).join(' ');
+    };
+
+    const render = () => {
+      const principal = Math.max(asNumber(fields.principal, 10000), 0);
+      const years = clamp(Math.round(asNumber(fields.years, 30)), 1, 40);
+      const feeA = Math.max(asNumber(fields.feeA, 0.5), 0);
+      const feeB = Math.max(asNumber(fields.feeB, 1.5), 0);
+      const returnA = asNumber(fields.returnA, 7);
+      const returnB = asNumber(fields.returnB, 7);
+      const nameA = 'Product 1';
+      const nameB = 'Product 2';
+
+      const seriesA = buildSeries(principal, returnA, feeA, years);
+      const seriesB = buildSeries(principal, returnB, feeB, years);
+      const endA = seriesA.at(-1) ?? principal;
+      const endB = seriesB.at(-1) ?? principal;
+      const difference = Math.abs(endA - endB);
+      const leadingName = endA >= endB ? nameA : nameB;
+      const maxValue = Math.max(...seriesA, ...seriesB);
+
+      outputs.yearsLabel.textContent = `${years} ${years === 1 ? 'year' : 'years'}`;
+      outputs.labelA.textContent = nameA;
+      outputs.labelB.textContent = nameB;
+      outputs.legendA.textContent = nameA;
+      outputs.legendB.textContent = nameB;
+      outputs.valueA.textContent = currency.format(endA);
+      outputs.valueB.textContent = currency.format(endB);
+      outputs.difference.textContent = currency.format(difference);
+      outputs.differenceLabel.textContent = difference === 0
+        ? `Same ending value after ${years} ${years === 1 ? 'year' : 'years'}`
+        : `${leadingName} ends ahead after ${years} ${years === 1 ? 'year' : 'years'}`;
+      outputs.chartEndLabel.textContent = `${years} ${years === 1 ? 'year' : 'years'}`;
+      outputs.chartMaxLabel.textContent = currency.format(maxValue);
+      outputs.pathA.setAttribute('d', linePath(seriesA, maxValue));
+      outputs.pathB.setAttribute('d', linePath(seriesB, maxValue));
+    };
+
+    Object.values(fields).forEach((field) => {
+      field?.addEventListener('input', render);
+      field?.addEventListener('change', render);
+    });
+
+    render();
+  })();
+</script>
+
+<style>
+  .calc-container {
+    background: hsl(var(--muted) / 0.8);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    font-family: var(--font-sans);
+  }
+
+  .calc-copy {
+    font-size: 15px;
+    line-height: 1.6;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 1rem;
+    max-width: 62ch;
+  }
+
+  .calc-top-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+
+  .calc-panel {
+    background: hsl(var(--background));
+    border-radius: 10px;
+    padding: 1rem;
+  }
+
+  .panel-title {
+    font-family: var(--font-serif);
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: hsl(var(--foreground));
+  }
+
+  .panel-fields {
+    display: grid;
+    gap: 12px;
+  }
+
+  .calc-container label {
+    display: block;
+    font-size: 13px;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 4px;
+  }
+
+  .calc-container input[type='number'] {
+    width: 100%;
+    max-width: 10.5rem;
+    padding: 8px 12px;
+    border: 0.5px solid hsl(var(--border));
+    border-radius: 6px;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
+  .range-input {
+    width: 100%;
+    accent-color: #d85a30;
+    margin-top: 10px;
+  }
+
+  .slider-wrap {
+    margin-top: 1rem;
+  }
+
+  .range-labels {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .range-labels strong {
+    font-size: 14px;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .metric {
+    background: hsl(var(--background));
+    border-radius: 8px;
+    padding: 0.7rem 0.85rem;
+  }
+
+  .metric-label {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    color: hsl(var(--muted-foreground));
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .metric-value {
+    font-family: var(--font-sans);
+    font-size: 17px;
+    font-weight: 500;
+    margin-top: 2px;
+    color: hsl(var(--foreground));
+  }
+
+  .metric-value.text-accent {
+    color: #d85a30;
+  }
+
+  .metric-sub {
+    margin-top: 2px;
+    font-size: 13px;
+    color: hsl(var(--muted-foreground));
+    line-height: 1.45;
+  }
+
+  .chart-container {
+    border-radius: 10px;
+    margin-top: 1.5rem;
+  }
+
+  .chart-header {
+    margin-bottom: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .chart-title {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    color: hsl(var(--foreground));
+    margin-bottom: 2px;
+  }
+
+  .chart-subtitle {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .legend-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .legend-row span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .canvas-shell {
+    overflow: hidden;
+    padding-top: 0.25rem;
+  }
+
+  .calc-note {
+    margin-top: 12px;
+    font-size: 12px;
+    color: hsl(var(--muted-foreground));
+    line-height: 1.5;
+  }
+
+  @media (max-width: 1023px) {
+    .calc-top-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .calc-panel:last-child {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .metrics {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

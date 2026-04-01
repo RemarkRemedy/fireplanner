@@ -1,0 +1,291 @@
+---
+const widgetId = `life-gap-${Math.random().toString(36).slice(2, 8)}`;
+---
+
+<section id={widgetId} class="calc-container not-prose">
+  <div class="chart-title" style="margin-bottom:16px">Life insurance coverage gap calculator</div>
+  <p class="calc-copy">
+      This uses a simplified income replacement approach and accounts for existing coverage you may already have.
+      It is a rough starting point, not a definitive recommendation.
+  </p>
+
+  <div class="calc-grid">
+    <div>
+      <label for={`${widgetId}-age`}>Your current age</label>
+      <input id={`${widgetId}-age`} data-field="age" type="number" min="20" max="65" step="1" value="30" />
+    </div>
+    <div>
+      <label for={`${widgetId}-income`}>Annual income (S$)</label>
+      <input id={`${widgetId}-income`} data-field="income" type="number" min="0" step="1000" value="60000" />
+    </div>
+    <div>
+      <label for={`${widgetId}-depend-years`}>Years dependants need support</label>
+      <input id={`${widgetId}-depend-years`} data-field="dependYears" type="number" min="0" max="50" step="1" value="20" />
+    </div>
+    <div>
+      <label for={`${widgetId}-mortgage`}>Outstanding mortgage (S$)</label>
+      <input id={`${widgetId}-mortgage`} data-field="mortgage" type="number" min="0" step="10000" value="400000" />
+    </div>
+    <div>
+      <label for={`${widgetId}-savings`}>Existing savings and investments (S$)</label>
+      <input id={`${widgetId}-savings`} data-field="savings" type="number" min="0" step="10000" value="50000" />
+    </div>
+    <div>
+      <label for={`${widgetId}-existing`}>Existing life coverage (S$)</label>
+      <input id={`${widgetId}-existing`} data-field="existing" type="number" min="0" step="10000" value="0" />
+    </div>
+  </div>
+
+  <div class="calc-checks">
+    <label class="check-row">
+      <input data-field="hasHps" type="checkbox" checked />
+      <span>HDB Home Protection Scheme covers my mortgage</span>
+    </label>
+    <label class="check-row">
+      <input data-field="hasMindef" type="checkbox" />
+      <span>MINDEF/MHA group insurance core coverage (S$350k)</span>
+    </label>
+  </div>
+
+  <div class="calc-result">
+    <div class="calc-result-label">Estimated coverage gap</div>
+    <div data-output="gap" class="calc-result-value">S$0</div>
+    <div data-output="gapSub" class="calc-result-sub">Additional term life coverage to consider</div>
+  </div>
+
+  <div class="calc-breakdown">
+    <div class="calc-breakdown-item">
+      <div class="lbl">Total need</div>
+      <div data-output="need" class="val red">S$0</div>
+    </div>
+    <div class="calc-breakdown-item">
+      <div class="lbl">Income replacement</div>
+      <div data-output="incomeReplacement" class="val">S$0</div>
+    </div>
+    <div class="calc-breakdown-item">
+      <div class="lbl">Mortgage (if not HPS)</div>
+      <div data-output="mortgageNeed" class="val">S$0</div>
+    </div>
+    <div class="calc-breakdown-item">
+      <div class="lbl">Total offsets</div>
+      <div data-output="offsets" class="val green">S$0</div>
+    </div>
+  </div>
+
+  <p class="calc-note">
+    This calculator is for educational purposes only. It does not account for inflation, investment returns, CPF balances,
+    specific household spending, or underwriting outcomes. Actual coverage needs vary based on individual circumstances.
+  </p>
+</section>
+
+<script is:inline define:vars={{ widgetId }}>
+  (() => {
+    const root = document.getElementById(widgetId);
+    if (!root) return;
+
+    const fields = {
+      age: root.querySelector('[data-field="age"]'),
+      income: root.querySelector('[data-field="income"]'),
+      dependYears: root.querySelector('[data-field="dependYears"]'),
+      mortgage: root.querySelector('[data-field="mortgage"]'),
+      savings: root.querySelector('[data-field="savings"]'),
+      existing: root.querySelector('[data-field="existing"]'),
+      hasHps: root.querySelector('[data-field="hasHps"]'),
+      hasMindef: root.querySelector('[data-field="hasMindef"]'),
+    };
+
+    const outputs = {
+      gap: root.querySelector('[data-output="gap"]'),
+      gapSub: root.querySelector('[data-output="gapSub"]'),
+      need: root.querySelector('[data-output="need"]'),
+      incomeReplacement: root.querySelector('[data-output="incomeReplacement"]'),
+      mortgageNeed: root.querySelector('[data-output="mortgageNeed"]'),
+      offsets: root.querySelector('[data-output="offsets"]'),
+    };
+
+    const currency = new Intl.NumberFormat('en-SG', {
+      style: 'currency',
+      currency: 'SGD',
+      maximumFractionDigits: 0,
+    });
+
+    const asNumber = (element, fallback) => {
+      const value = Number.parseFloat(element?.value ?? '');
+      return Number.isFinite(value) ? value : fallback;
+    };
+
+    const render = () => {
+      const income = Math.max(asNumber(fields.income, 60000), 0);
+      const dependYears = Math.max(asNumber(fields.dependYears, 20), 0);
+      const mortgage = Math.max(asNumber(fields.mortgage, 400000), 0);
+      const savings = Math.max(asNumber(fields.savings, 50000), 0);
+      const existing = Math.max(asNumber(fields.existing, 0), 0);
+      const hasHps = Boolean(fields.hasHps?.checked);
+      const hasMindef = Boolean(fields.hasMindef?.checked);
+
+      const incomeReplacement = income * dependYears;
+      const mortgageNeed = hasHps ? 0 : mortgage;
+      const totalNeed = incomeReplacement + mortgageNeed;
+      const totalOffsets = savings + existing + (hasMindef ? 350000 : 0);
+      const gap = Math.max(0, totalNeed - totalOffsets);
+
+      outputs.gap.textContent = currency.format(gap);
+      outputs.need.textContent = currency.format(totalNeed);
+      outputs.incomeReplacement.textContent = currency.format(incomeReplacement);
+      outputs.mortgageNeed.textContent = hasHps ? 'S$0 (HPS covered)' : currency.format(mortgageNeed);
+      outputs.offsets.textContent = currency.format(totalOffsets);
+
+      if (gap === 0) {
+        outputs.gap.textContent = currency.format(gap);
+        outputs.gap.style.color = '#1D9E75';
+        outputs.gapSub.textContent = 'Existing coverage and assets may already cover the simplified estimate';
+      } else {
+        outputs.gap.style.color = '#D85A30';
+        outputs.gapSub.textContent = 'Additional term life coverage to consider';
+      }
+    };
+
+    Object.values(fields).forEach((field) => {
+      field?.addEventListener('input', render);
+      field?.addEventListener('change', render);
+    });
+
+    render();
+  })();
+</script>
+
+<style>
+  .calc-container {
+    background: hsl(var(--muted) / 0.8);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    font-family: var(--font-sans);
+  }
+
+  .calc-copy {
+    font-size: 15px;
+    line-height: 1.6;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 1rem;
+  }
+
+  .calc-container label {
+    display: block;
+    font-size: 13px;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 4px;
+  }
+
+  .calc-container input[type='number'] {
+    width: 100%;
+    padding: 8px 12px;
+    border: 0.5px solid hsl(var(--border));
+    border-radius: 6px;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    margin-bottom: 12px;
+  }
+
+  .calc-container input[type='checkbox'] {
+    margin-right: 6px;
+    accent-color: #1d9e75;
+  }
+
+  .calc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .calc-checks {
+    margin-top: 12px;
+    font-size: 14px;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .check-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-right: 16px;
+    margin-bottom: 6px;
+    cursor: pointer;
+  }
+
+  .calc-result {
+    background: hsl(var(--background));
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-top: 16px;
+    text-align: center;
+  }
+
+  .calc-result-label {
+    font-size: 12px;
+    color: hsl(var(--muted-foreground));
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .calc-result-value {
+    font-size: 28px;
+    font-weight: 500;
+    color: #d85a30;
+    margin: 4px 0;
+  }
+
+  .calc-result-sub {
+    font-size: 13px;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .calc-breakdown {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .calc-breakdown-item {
+    background: hsl(var(--background));
+    border-radius: 6px;
+    padding: 0.6rem 0.85rem;
+  }
+
+  .calc-breakdown-item .lbl {
+    font-size: 11px;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .calc-breakdown-item .val {
+    font-size: 15px;
+    font-weight: 500;
+    margin-top: 2px;
+    color: hsl(var(--foreground));
+  }
+
+  .calc-breakdown-item .val.green {
+    color: #1d9e75;
+  }
+
+  .calc-breakdown-item .val.red {
+    color: #d85a30;
+  }
+
+  .calc-note {
+    margin-top: 12px;
+    font-size: 12px;
+    color: hsl(var(--muted-foreground));
+    line-height: 1.5;
+  }
+
+  @media (max-width: 500px) {
+    .calc-grid,
+    .calc-breakdown {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

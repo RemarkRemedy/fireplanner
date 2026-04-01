@@ -1,0 +1,135 @@
+---
+interface LegendItem {
+  label: string;
+  color: string;
+}
+
+interface MetricItem {
+  label: string;
+  value: string;
+}
+
+interface Props {
+  title: string;
+  subtitle?: string;
+  legend?: LegendItem[];
+  metrics?: MetricItem[];
+}
+
+const { title, subtitle, legend = [], metrics = [] } = Astro.props;
+---
+
+<section class="chart-container not-prose">
+  <div class="chart-title">{title}</div>
+  {subtitle && <div class="chart-subtitle">{subtitle}</div>}
+
+  {legend.length > 0 && (
+    <div class="legend-row">
+      {legend.map((item) => (
+        <span><span class="legend-dot" style={`background:${item.color}`}></span>{item.label}</span>
+      ))}
+    </div>
+  )}
+
+  <div class="canvas-shell">
+    <slot />
+  </div>
+
+  {metrics.length > 0 && (
+    <div class="metrics">
+      {metrics.map((metric) => (
+        <div class="metric">
+          <div class="metric-label">{metric.label}</div>
+          <div class="metric-value">{metric.value}</div>
+        </div>
+      ))}
+    </div>
+  )}
+</section>
+
+<style>
+  .chart-container {
+    background: hsl(var(--muted) / 0.8);
+    border-radius: 10px;
+    padding: 1.25rem 1.25rem 1rem;
+    margin: 2rem 0;
+  }
+
+  .chart-title {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    color: hsl(var(--foreground));
+    margin-bottom: 2px;
+  }
+
+  .chart-subtitle {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 12px;
+  }
+
+  .legend-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 10px;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .legend-row span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .canvas-shell {
+    overflow: hidden;
+    padding-top: 0.25rem;
+  }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .metric {
+    background: hsl(var(--background));
+    border-radius: 8px;
+    padding: 0.7rem 0.85rem;
+  }
+
+  .metric-label {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    color: hsl(var(--muted-foreground));
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .metric-value {
+    font-family: var(--font-sans);
+    font-size: 17px;
+    font-weight: 500;
+    margin-top: 2px;
+    color: hsl(var(--foreground));
+  }
+
+  @media (max-width: 500px) {
+    .metrics {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

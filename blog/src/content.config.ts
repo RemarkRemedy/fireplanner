@@ -36,6 +36,7 @@ const blog = defineCollection({
     keyword: z.string(),
     author: z.string().default('SG FIRE Planner'),
     readingTime: z.number().optional(),
+    tocLabels: z.record(z.string()).optional(),
     draft: z.boolean().default(false),
     noindex: z.boolean().default(false),
   }),
