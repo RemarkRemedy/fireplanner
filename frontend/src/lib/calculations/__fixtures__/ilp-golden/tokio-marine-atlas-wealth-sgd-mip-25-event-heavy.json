@@ -181,7 +181,23 @@
             "rate": 0.195
           }
         ],
-        "suspensionRules": []
+        "suspensionRules": [],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Initial Bonus",
+            "excerpt": "Initial Bonus While the policy is in force, an initial bonus will be paid in the first five (5) policy years upon receipt of each regular premium. Initial bonus = Applicable initial bonus rate (based on annualised regula"
+          },
+          {
+            "page": 2,
+            "section": "Initial Bonus Rates",
+            "excerpt": "Initial bonus rates on a per annum basis are set out below: Annualised Regular Premium Payment Term (Years) Premium Band 5-9 10-14 15-19 20-24 25 1 0.90% 2.50% 5.00% 6.00% 7.50% 2 1.50% 4.50% 6.50% 8.00% 10.00% 3 2.50% 6"
+          }
+        ],
+        "notes": [
+          "Tier is based on the published SGD annualised regular premium band for the 25-year premium payment term.",
+          "Allocated to the Initial Units Account upon each regular premium received in the first five policy years."
+        ]
       },
       {
         "id": "loyalty-bonus-during-mip",
@@ -202,7 +218,18 @@
             "accumulation"
           ]
         },
-        "suspensionRules": []
+        "suspensionRules": [],
+        "sourceRefs": [
+          {
+            "page": 2,
+            "section": "Loyalty Bonus",
+            "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the sixth policy anniversary. During premium payment term, loyalty bonus will be paid in accor"
+          }
+        ],
+        "notes": [
+          "Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 6 to the end of the premium payment term.",
+          "During the premium payment term, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus withdrawals, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1."
+        ]
       },
       {
         "id": "loyalty-bonus-after-mip",
@@ -217,7 +244,17 @@
         "startPolicyYear": 26,
         "endPolicyYear": null,
         "tieredRates": [],
-        "suspensionRules": []
+        "suspensionRules": [],
+        "sourceRefs": [
+          {
+            "page": 2,
+            "section": "Loyalty Bonus",
+            "excerpt": "Loyalty Bonus While the policy is in-force, we will pay an annual loyalty bonus at the end of each policy year, starting from the sixth policy anniversary. During premium payment term, loyalty bonus will be paid in accor"
+          }
+        ],
+        "notes": [
+          "Models the published annual loyalty bonus on the Accumulation Units Account value after the premium payment term without the adjustment-factor multiplier."
+        ]
       }
     ],
     "chargeRules": [],
@@ -309,21 +346,21 @@
       ]
     },
     "catalogWarnings": [
-      "TM Atlas Wealth is cataloged as a supported V1 product. The parser captures split SGD / premium-payment-term-25 Basic Death and Advanced Death corridors with executable regular-premium routing, published initial bonus tiers, annual loyalty bonus with the published bounded adjustment-factor formula during the premium payment term and the flat post-term rate thereafter, account-fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the after-first-policy-year regular-premium variation start gate with the published SGD minimum regular-premium table, the commencement-date recurring-single-premium resumption gate after premium holiday, the 25-year surrender charge on the Initial Units Account, the nil-charge one-off partial-withdrawal path with the published second-policy-year accumulation-account gate, post-term Initial Units Account access, S$500 minimum withdrawal amount, and S$3,000 minimum account value, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.",
+      "TM Atlas Wealth is cataloged as a supported V1 product. The parser captures the published SGD premium-payment-term family from 5 to 25 years across Basic Death and Advanced Death corridors with executable regular-premium routing, grouped published initial bonus tiers by premium-payment-term band, annual loyalty bonus with the published bounded adjustment-factor formula during the premium payment term and the flat post-term rate thereafter, account-fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the after-first-policy-year regular-premium variation start gate with the published SGD minimum regular-premium table, the commencement-date recurring-single-premium resumption gate after premium holiday, the published surrender charge on the Initial Units Account, the nil-charge one-off partial-withdrawal path with the published second-policy-year accumulation-account gate, post-term Initial Units Account access, S$500 minimum withdrawal amount, and S$3,000 minimum account value, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.",
       "Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.",
       "Recurring single premium stays blocked after a premium-holiday event until an explicit recurring-single-premium resumption is entered and the regular premium amount is restored to the commencement-date amount.",
       "Minimum regular-premium increase / reduction amounts remain informational only because the summary leaves those insurer-defined.",
       "Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published current death-benefit estimate, first-policy-year accrual, policy-year-2 settlement, policy-value valuation basis, irreversible downgrade after failed deduction, and static current multi-life last-life handling.",
-      "Premium-holiday lapse behavior, change-of-life-assured administration, regular withdrawal, selected-fund residual-value conditions, credit-card charge, and other corridors remain informational only.",
+      "Premium-holiday lapse behavior, change-of-life-assured administration, regular withdrawal, selected-fund residual-value conditions, credit-card charge, and non-SGD corridors remain informational only.",
       "Structured extraction validated against the TM Atlas Wealth product summary text layer.",
-      "This partial template models the SGD / premium-payment-term-25 (Basic Death) corridor only.",
-      "This partial template models 12-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, the after-first-policy-year regular-premium variation start gate with the published SGD minimum regular-premium table, the published 25-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.",
+      "This supported template models the SGD / premium-payment-term-25 (Basic Death) corridor.",
+      "This supported template models 12-month initial-versus-accumulation routing, the published 25-year premium payment term initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, the after-first-policy-year regular-premium variation start gate with the published SGD minimum regular-premium table, the published surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.",
       "Recurring single premium events before policy month 13 or below the published monthly-equivalent minimum of S$50 are blocked; insurer-defined increase / reduction minimums remain informational only.",
       "Recurring single premium stays blocked during premium holiday until an explicit recurring-single-premium resumption is entered and the regular premium amount is restored to the committed commencement-date amount.",
       "Minimum regular-premium increase / reduction amounts remain informational only because the summary leaves those insurer-defined.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption, and payouts below the published minimum annual cash-payout amount of S$50 remain reinvested.",
       "Cash payout elections for dividend-paying funds should be submitted at least 30 days before the record date.",
-      "Advanced Death selection, Monthly Protection Charge, change-of-life-assured administration, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only."
+      "Advanced Death selection, Monthly Protection Charge, change-of-life-assured administration, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD corridors remain metadata-only."
     ]
   },
   "expected": {
@@ -332,6 +369,12 @@
       "totalFeesCharged": 284513.59,
       "totalBonusesReceived": 56353.3,
       "netFeeDrag": 228160.29,
+      "realGrossFees": 292604.92,
+      "realBonuses": 32411.28,
+      "realNetFeeDrag": 260193.64,
+      "inceptionCharges": 0,
+      "realFundCharges": 128343.68,
+      "realWrapperFees": 164261.24,
       "currentSurrenderValue": 8210,
       "cancelNowPenalty": 1290
     },

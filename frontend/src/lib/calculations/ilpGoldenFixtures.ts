@@ -8802,34 +8802,53 @@ function tokioAtlasEventHeavyPolicy(
   )
 }
 
-function tokioAtlasAdvancedDeathBaselinePolicy(
+const TOKIO_ATLAS_MIP_LENGTHS = [
+  5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+] as const
+
+type TokioAtlasMipLength = (typeof TOKIO_ATLAS_MIP_LENGTHS)[number]
+type TokioAtlasVariantId = `sgd-mip-${TokioAtlasMipLength}` | `sgd-mip-${TokioAtlasMipLength}-advanced-death`
+
+const TOKIO_ATLAS_VARIANT_IDS: TokioAtlasVariantId[] = TOKIO_ATLAS_MIP_LENGTHS.flatMap((mipLength) => ([
+  `sgd-mip-${mipLength}` as TokioAtlasVariantId,
+  `sgd-mip-${mipLength}-advanced-death` as TokioAtlasVariantId,
+]))
+
+function tokioAtlasBaselinePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: TokioAtlasVariantId,
   id: string,
 ): IlpPolicyInput {
-  const base = seedPolicy(snapshot, 'tokio-marine-atlas-wealth', 'sgd-mip-25-advanced-death', id)
-  return withResolvedManualInputs(withTokioBalances(
-    withFunds(
-      ilpPolicySchema.parse({
-        ...base,
-        name: 'Golden Tokio Marine TM Atlas Wealth (SGD / MIP 25 Advanced Death Baseline)',
-        monthlyContribution: 2_000,
-        currentPolicyYear: 4,
-        monthsAlreadyPaid: 36,
-        assuranceProfile: {
-          currentAgeNextBirthday: 45,
-          sex: 'male',
-          smokerStatus: 'non-smoker',
-          currentNetRegularPremiumBase: 72_000,
-        },
-        postMipYears: 15,
-        policyEvents: [],
-      }),
-      TOKIO_BALANCED_FUNDS,
-    ),
-    1_500,
-    8_000,
-    0,
-  ))
+  const base = seedPolicy(snapshot, 'tokio-marine-atlas-wealth', variantId, id)
+  const catalogVariantLabel = base.catalogSource?.variantLabel ?? variantId.toUpperCase()
+  const mipLength = Number(variantId.match(/sgd-mip-(\d+)/)?.[1] ?? 25)
+  const currentPolicyYear = Math.max(1, Math.min(4, mipLength - 1))
+  const monthsAlreadyPaid = (currentPolicyYear - 1) * 12
+
+  const policyInput = withTokioBalances(withFunds(
+    ilpPolicySchema.parse({
+      ...base,
+      name: `Golden Tokio Marine TM Atlas Wealth (${catalogVariantLabel})`,
+      monthlyContribution: 2_000,
+      currentPolicyYear,
+      monthsAlreadyPaid,
+      postMipYears: 15,
+      policyEvents: [],
+      ...(variantId.includes('advanced-death')
+        ? {
+            assuranceProfile: {
+              currentAgeNextBirthday: 45,
+              sex: 'male',
+              smokerStatus: 'non-smoker',
+              currentNetRegularPremiumBase: 72_000,
+            },
+          }
+        : {}),
+    }),
+    TOKIO_BALANCED_FUNDS,
+  ), 1_500, 8_000, 0)
+
+  return variantId.includes('advanced-death') ? withResolvedManualInputs(policyInput) : policyInput
 }
 
 function tokioAtlasStressPolicy(
@@ -16306,36 +16325,31 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: ['ocf-stress'],
     description: 'PRUActive LinkGuard alternate-fund high-OCF stress scenario through the supported core corridor.',
   },
-  {
-    productId: 'tokio-marine-atlas-wealth',
-    variantId: 'sgd-mip-25',
-    scenarioId: 'baseline',
-    fixtureClass: 'supported',
+  ...TOKIO_ATLAS_VARIANT_IDS.map((variantId) => ({
+    productId: 'tokio-marine-atlas-wealth' as const,
+    variantId,
+    scenarioId: 'baseline' as const,
+    fixtureClass: 'supported' as const,
     coverageTags: [
       'baseline',
-      'branch:tokio-current-only-multi-life-life-state',
-      'branch:tokio-loyalty-bonus-adjustment-factor',
-      'tokio-initial-vs-accumulation-regular-premium-routing',
-      'tokio-initial-bonus-tiered-premium-allocation',
-      'tokio-initial-charge-on-initial-account',
-      'tokio-policy-charge-on-policy-value',
-      'tokio-initial-account-surrender-charge',
-      'kernel:distribution-mode-assumption',
+      ...(variantId.includes('advanced-death')
+        ? [
+            'branch:tokio-atlas-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction',
+            'kernel:current-death-benefit-estimate',
+          ]
+        : [
+            'branch:tokio-current-only-multi-life-life-state',
+            'branch:tokio-loyalty-bonus-adjustment-factor',
+            'tokio-initial-vs-accumulation-regular-premium-routing',
+            'tokio-initial-bonus-tiered-premium-allocation',
+            'tokio-initial-charge-on-initial-account',
+            'tokio-policy-charge-on-policy-value',
+            'tokio-initial-account-surrender-charge',
+            'kernel:distribution-mode-assumption',
+          ]),
     ],
-    description: 'TM Atlas Wealth basic-death supported baseline proving initial routing, bonus tiers, policy-value charge basis, and dividend distribution support through the SGD / MIP 25 corridor.',
-  },
-  {
-    productId: 'tokio-marine-atlas-wealth',
-    variantId: 'sgd-mip-25-advanced-death',
-    scenarioId: 'baseline',
-    fixtureClass: 'supported',
-    coverageTags: [
-      'baseline',
-      'branch:tokio-atlas-advanced-death-monthly-protection-charge-disable-on-insufficient-deduction',
-      'kernel:current-death-benefit-estimate',
-    ],
-    description: 'TM Atlas Wealth advanced-death supported baseline proving published MPC accrual, settlement, and disable-on-failure behavior.',
-  },
+    description: `TM Atlas Wealth ${variantId.includes('advanced-death') ? 'advanced-death' : 'basic-death'} supported baseline through the ${variantId.replace('sgd-mip-', '').replace('-advanced-death', '')}-year corridor.`,
+  })),
   {
     productId: 'tokio-marine-atlas-wealth',
     variantId: 'sgd-mip-25',
@@ -18477,15 +18491,10 @@ function buildPolicyForDefinition(
     return pruActiveLinkGuardStressPolicy(snapshot, id)
   }
   if (definition.productId === 'tokio-marine-atlas-wealth' && definition.scenarioId === 'baseline') {
-    if (definition.variantId === 'sgd-mip-25-advanced-death') {
-      return tokioAtlasAdvancedDeathBaselinePolicy(snapshot, id)
-    }
-    return tokioBaselinePolicy(
+    return tokioAtlasBaselinePolicy(
       snapshot,
-      'tokio-marine-atlas-wealth',
-      'sgd-mip-25',
+      definition.variantId as TokioAtlasVariantId,
       id,
-      'Golden Tokio Marine TM Atlas Wealth (SGD / MIP 25 Baseline)',
     )
   }
   if (definition.productId === 'tokio-marine-atlas-wealth' && definition.scenarioId === 'event-heavy') {

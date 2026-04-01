@@ -262,6 +262,41 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(onSelect.mock.calls[0]?.[1].id).toBe('sgd-mip-30')
   })
 
+  it('promotes Tokio Marine TM Atlas Wealth premium-payment-term corridors into executable templates', async () => {
+    const user = userEvent.setup()
+    const onSelect = vi.fn()
+
+    render(
+      <MemoryRouter>
+        <ProductPickerDialog open onOpenChange={() => {}} onSelect={onSelect} />
+      </MemoryRouter>,
+    )
+
+    await user.type(screen.getByPlaceholderText(/search insurer or product name/i), 'TM Atlas Wealth')
+
+    const card = getProductCard('TM Atlas Wealth')
+
+    expect(within(card).queryByText(/published corridors not modeled/i)).not.toBeInTheDocument()
+
+    const mip5Template = within(card)
+      .getAllByRole('button')
+      .find((button) => button.textContent?.includes('SGD / MIP 5') && !button.textContent.includes('Advanced Death'))
+    const mip25AdvancedDeathTemplate = within(card)
+      .getAllByRole('button')
+      .find((button) => button.textContent?.includes('SGD / MIP 25 (Advanced Death)'))
+
+    expect(mip5Template).toBeDefined()
+    expect(mip25AdvancedDeathTemplate).toBeDefined()
+    expect(mip5Template).toBeEnabled()
+    expect(mip25AdvancedDeathTemplate).toBeEnabled()
+
+    await user.click(mip25AdvancedDeathTemplate!)
+
+    expect(onSelect).toHaveBeenCalledTimes(1)
+    expect(onSelect.mock.calls[0]?.[0].id).toBe('tokio-marine-atlas-wealth')
+    expect(onSelect.mock.calls[0]?.[1].id).toBe('sgd-mip-25-advanced-death')
+  })
+
   it('promotes Tokio Marine #goAssure premium-payment-term corridors into executable templates', async () => {
     const user = userEvent.setup()
     const onSelect = vi.fn()
@@ -368,12 +403,13 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(within(card).getByRole('button', { name: /USD \/ MIP 10 years/i })).toBeDisabled()
   })
 
-  it('collapses large disabled corridor families until expanded', async () => {
+  it('keeps large TM Atlas Wealth corridor families directly selectable without disabled expansion affordances', async () => {
     const user = userEvent.setup()
+    const onSelect = vi.fn()
 
     render(
       <MemoryRouter>
-        <ProductPickerDialog open onOpenChange={() => {}} onSelect={() => {}} />
+        <ProductPickerDialog open onOpenChange={() => {}} onSelect={onSelect} />
       </MemoryRouter>,
     )
 
@@ -381,11 +417,28 @@ describe('ILP fee dashboard blog bridge', () => {
 
     const card = getProductCard('TM Atlas Wealth')
 
-    expect(within(card).queryByRole('button', { name: /SGD \/ Premium Payment Term 24 years \/ Advanced Death/i })).not.toBeInTheDocument()
+    expect(within(card).queryByText(/published corridors not modeled/i)).not.toBeInTheDocument()
 
-    await user.click(within(card).getByRole('button', { name: /Show 34 more corridors/i }))
+    const mip5Template = within(card)
+      .getAllByRole('button')
+      .find((button) => (
+        button.textContent?.includes('SGD / MIP 5')
+        && !button.textContent.includes('Advanced Death')
+      ))
+    const mip24AdvancedTemplate = within(card)
+      .getAllByRole('button')
+      .find((button) => button.textContent?.includes('SGD / MIP 24 (Advanced Death)'))
 
-    expect(within(card).getByRole('button', { name: /SGD \/ Premium Payment Term 24 years \/ Advanced Death/i })).toBeDisabled()
+    expect(mip5Template).toBeDefined()
+    expect(mip5Template).toBeEnabled()
+    expect(mip24AdvancedTemplate).toBeDefined()
+    expect(mip24AdvancedTemplate).toBeEnabled()
+
+    await user.click(mip24AdvancedTemplate)
+
+    expect(onSelect).toHaveBeenCalledTimes(1)
+    expect(onSelect.mock.calls[0]?.[0].id).toBe('tokio-marine-atlas-wealth')
+    expect(onSelect.mock.calls[0]?.[1].id).toBe('sgd-mip-24-advanced-death')
   })
 
   it('shows the adviser-question callout inside the fee breakdown section', () => {

@@ -46,10 +46,16 @@ describe('parseTokioMarineAtlasWealth', () => {
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-atlas-change-of-life-assured-option')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-atlas-dividend-payout-threshold-and-record-date-instructions')
 
+    const term5BasicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-5')
+    const term20BasicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-20')
     const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-25')
+    const term5AdvancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-5-advanced-death')
     const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-25-advanced-death')
 
-    expect(product.variants).toHaveLength(2)
+    expect(product.variants).toHaveLength(42)
+    expect(product.variants.filter((variant) => !variant.id.includes('advanced-death'))).toHaveLength(21)
+    expect(product.variants.filter((variant) => variant.id.includes('advanced-death'))).toHaveLength(21)
+    expect(term5BasicVariant?.mipLength).toBe(5)
     expect(basicVariant?.icpMonths).toBe(12)
     expect(basicVariant?.policyStateSupport).toEqual({
       automaticLapseOnAccountValueDepletion: false,
@@ -73,6 +79,10 @@ describe('parseTokioMarineAtlasWealth', () => {
       ],
       requiresCommencementPremiumForRecurringSinglePremiumResumption: true,
     })
+    expect(term5BasicVariant?.policyStateSupport?.minimumPartialWithdrawalStartPolicyMonthByAccount).toEqual([
+      { accountId: 'accumulation', startPolicyMonth: 13 },
+      { accountId: 'initial', startPolicyMonth: 61 },
+    ])
     expect(basicVariant?.warnings.some((warning) => warning.includes('monthly-equivalent minimum of S$50'))).toBe(true)
     expect(basicVariant?.accounts).toEqual([
       expect.objectContaining({
@@ -94,6 +104,20 @@ describe('parseTokioMarineAtlasWealth', () => {
         ],
       }),
     ])
+    expect(term5BasicVariant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
+      { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.009 },
+      { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.015 },
+      { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.025 },
+      { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.03 },
+      { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.035 },
+    ])
+    expect(term20BasicVariant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
+      { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.06 },
+      { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.08 },
+      { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.11 },
+      { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.13 },
+      { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.17 },
+    ])
     expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
       { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.075 },
       { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.1 },
@@ -101,6 +125,7 @@ describe('parseTokioMarineAtlasWealth', () => {
       { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.14 },
       { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.195 },
     ])
+    expect(term5BasicVariant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus-during-mip')).toBeUndefined()
     expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus-during-mip')).toEqual(
       expect.objectContaining({
         rate: 0.003,
@@ -134,12 +159,35 @@ describe('parseTokioMarineAtlasWealth', () => {
       ]),
       sourceRefs: expect.any(Array),
     })
+    expect(term5BasicVariant?.distributionSupport).toEqual({
+      mode: 'manual-assumption',
+      accountIds: ['initial', 'accumulation'],
+      cashPayoutWindows: [
+        { startPolicyYear: 1, endPolicyYear: 5, accountIds: ['accumulation'] },
+        { startPolicyYear: 6, endPolicyYear: null, accountIds: ['initial', 'accumulation'] },
+      ],
+      minimumAnnualPayoutAmount: 50,
+      minimumAnnualPayoutCurrency: 'SGD',
+      recordDateInstructionLeadDays: 30,
+      defaultMode: 'reinvest',
+      cashPayoutAllowedDuringMip: true,
+      cashPayoutAllowedAfterMip: true,
+      source: 'distribution-paying-funds',
+      notes: expect.arrayContaining([
+        expect.stringContaining('During the 5-year premium payment term'),
+      ]),
+      sourceRefs: expect.any(Array),
+    })
+    expect(term5BasicVariant?.warnings).toContain(
+      'This supported template models the SGD / premium-payment-term-5 (Basic Death) corridor.',
+    )
     expect(basicVariant?.warnings).toContain(
-      'This partial template models the SGD / premium-payment-term-25 (Basic Death) corridor only.',
+      'This supported template models the SGD / premium-payment-term-25 (Basic Death) corridor.',
     )
     expect(product.warnings).toContain(
       'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
     )
+    expect(product.warnings[0]).toContain('published SGD premium-payment-term family from 5 to 25 years')
     expect(product.warnings.some((warning) => warning.includes('explicit recurring-single-premium resumption'))).toBe(true)
     expect(product.warnings.some((warning) => warning.includes('minimum regular-premium table'))).toBe(true)
     expect(product.warnings.some((warning) => warning.includes('S$500 minimum withdrawal amount'))).toBe(true)
@@ -163,12 +211,18 @@ describe('parseTokioMarineAtlasWealth', () => {
         requiresManualInput: true,
       }),
     ])
+    expect(term5AdvancedVariant?.warnings).toContain(
+      'The Advanced Death variant also models the published current death-benefit estimate, first-policy-year Monthly Protection Charge accrual, policy-year-2 settlement, policy-value valuation basis, and irreversible downgrade to Basic Death after failed Accumulation Units Account deduction during the 5-year premium payment term.',
+    )
     expect(advancedVariant?.warnings).toContain(
-      'The Advanced Death variant also models the published current death-benefit estimate, first-policy-year Monthly Protection Charge accrual, policy-year-2 settlement, policy-value valuation basis, and irreversible downgrade to Basic Death after failed Accumulation Units Account deduction.',
+      'The Advanced Death variant also models the published current death-benefit estimate, first-policy-year Monthly Protection Charge accrual, policy-year-2 settlement, policy-value valuation basis, and irreversible downgrade to Basic Death after failed Accumulation Units Account deduction during the 25-year premium payment term.',
     )
     expect(advancedVariant?.unsupportedItems).toContain(
-      'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, change-of-life-assured administration, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.',
+      'Advanced Death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, change-of-life-assured administration, premium-holiday lapse behavior, regular withdrawal, credit-card charge, and non-SGD corridors remain metadata-only.',
     )
+    expect(term5BasicVariant?.eecTable).toEqual([
+      1, 1, 0.2, 0.15, 0.1,
+    ])
     expect(basicVariant?.eecTable).toEqual([
       1, 1, 0.88, 0.86, 0.84, 0.82, 0.8, 0.78, 0.76, 0.73,
       0.7, 0.67, 0.64, 0.61, 0.58, 0.54, 0.5, 0.45, 0.4, 0.35,

@@ -995,7 +995,7 @@ export const ilpCatalogProductSchema = z.object({
   metadataOnlyBehaviors: z.array(z.string().min(1)).max(40),
   warnings: z.array(z.string()),
   archived: z.boolean(),
-  variants: z.array(ilpTemplateVariantSchema).max(40),
+  variants: z.array(ilpTemplateVariantSchema).max(60),
   publishedUnmodeledCorridors: z.array(ilpCatalogPublishedCorridorSchema).max(80).optional(),
 }).superRefine((product, ctx) => {
   const executableIds = new Set(product.variants.map((variant) => variant.id))

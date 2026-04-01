@@ -283,7 +283,6 @@ function buildPhase0PublishedUnmodeledRegistry(): Record<string, IlpCatalogPubli
   const fwdMaxRefs = [sourceRef('Published corridor family', 'Premium payment term ranges from 10 to 30 years; only the 10-year corridor is executable today.')]
   const legacyFlexRefs = [sourceRef('Published corridor family', 'The family includes a single-premium MIP 5 corridor in addition to the executable regular-pay corridors.')]
   const singlifeRefs = [sourceRef('Published corridor family', 'Published Singlife Legacy Invest corridors vary by both premium payment term and policy term; only the SGD 10-year / term-15 corridor is executable today.')]
-  const tokioAtlasRefs = [sourceRef('Published corridor family', 'TM Atlas Wealth publishes premium payment terms from 5 to 25 years across base and Advanced Death variants; only the 25-year corridors are executable today.')]
   const tokioAffluenceRefs = [sourceRef('Published corridor family', 'Affluence@Future publishes premium payment terms from 15 to 30 years across base, Advanced Death, and Advanced Death + Life Benefit Rider corridors; only 15-year corridors are executable today.')]
   const tokioGoClassicRefs = [sourceRef('Published corridor family', '#goClassic publishes premium payment terms from 5 to 25 years across base and Advanced Death corridors; only the 25-year corridors are executable today.')]
   const tokioGoClassicSecureRefs = [sourceRef('Published corridor family', '#goClassic Secure publishes premium payment terms from 5 to 25 years across base and Advanced Death corridors; only the 25-year corridors are executable today.')]
@@ -329,10 +328,6 @@ function buildPhase0PublishedUnmodeledRegistry(): Record<string, IlpCatalogPubli
       corridor({ id: 'sgd-mip-10-term-20', label: 'SGD / Premium Payment Term 10 years / Policy Term 20 years', paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: 10, contributionMode: 'regular-pay', policyTermYears: 20, sourceRefs: singlifeRefs }),
       corridor({ id: 'sgd-mip-10-term-25', label: 'SGD / Premium Payment Term 10 years / Policy Term 25 years', paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: 10, contributionMode: 'regular-pay', policyTermYears: 25, sourceRefs: singlifeRefs }),
     ],
-    'tokio-marine-atlas-wealth': range(5, 24).flatMap((term) => [
-      corridor({ id: `sgd-mip-${term}`, label: `SGD / Premium Payment Term ${term} years`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioAtlasRefs }),
-      corridor({ id: `sgd-mip-${term}-advanced-death`, label: `SGD / Premium Payment Term ${term} years / Advanced Death`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioAtlasRefs }),
-    ]),
     'tokio-marine-affluence-atfuture': range(16, 30).flatMap((term) => [
       corridor({ id: `sgd-mip-${term}`, label: `SGD / Premium Payment Term ${term} years`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioAffluenceRefs }),
       corridor({ id: `sgd-mip-${term}-advanced-death`, label: `SGD / Premium Payment Term ${term} years / Advanced Death`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioAffluenceRefs }),
