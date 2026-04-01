@@ -485,15 +485,15 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                   <>
                     <motion.div variants={staggerChild} className="grid w-full max-w-3xl grid-cols-1 gap-3 text-left sm:grid-cols-2">
                       <div className="flex min-h-[12.5rem] flex-col rounded-md border border-white/10 bg-white/[0.05] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-                        <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-white/45">Exit now</div>
+                        <div className="text-[11px] font-medium uppercase tracking-wide text-white/45">Cancel immediately</div>
                         <div className="mt-3 text-3xl font-semibold leading-none tracking-tight">
                           {formatIlpCurrency(projectedAnalysis.npvAnalysis.surrenderNow.netSurrenderValue, policy.currency)}
                         </div>
                         <div className="mt-2 text-sm text-white/70">
-                          What you could withdraw today
+                          Surrender value if you cancel in year 0
                         </div>
                         <div className="mt-auto border-t border-white/10 pt-3 text-sm text-white/60">
-                          Current early-exit charge {formatIlpCurrency(projectedAnalysis.npvAnalysis.surrenderNow.eecCharge, policy.currency)}
+                          Early-exit charge {formatIlpCurrency(projectedAnalysis.npvAnalysis.surrenderNow.eecCharge, policy.currency)}
                         </div>
                       </div>
                       <div className="flex min-h-[12.5rem] flex-col rounded-md border border-white/10 bg-white/[0.05] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
