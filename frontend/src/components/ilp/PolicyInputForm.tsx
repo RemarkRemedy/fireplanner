@@ -1613,6 +1613,8 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
   }
   const updatePolicyEvents = (policyEvents: IlpPolicyEvent[]) => updatePolicy(policy.id, { policyEvents })
   const updateEventChargeRules = (eventChargeRules: IlpEventChargeRule[]) => updatePolicy(policy.id, { eventChargeRules })
+  const formSectionClass = 'rounded-xl border bg-card px-5 shadow-sm'
+  const formGridGapClass = 'gap-x-5 gap-y-5'
 
   return (
     <div ref={formRef} className="space-y-4">
@@ -1783,11 +1785,11 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
         type="multiple"
         value={openSections as string[]}
         onValueChange={(value) => setOpenSections(value as PolicyInputSection[])}
-        className="rounded-lg border bg-card px-4"
+        className="space-y-4 [&_button[role=combobox]]:border-blue-300 [&_button[role=combobox]]:bg-background [&_button[role=combobox]]:shadow-none"
       >
-        <AccordionItem value="policy">
+        <AccordionItem value="policy" className={formSectionClass}>
           <AccordionTrigger>Policy Details</AccordionTrigger>
-        <AccordionContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 [&_label]:flex [&_label]:min-h-[3rem] [&_label]:items-start [&_label]:gap-1 [&_label]:leading-snug">
+        <AccordionContent className={`grid md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 ${formGridGapClass} [&_label]:flex [&_label]:min-h-[3rem] [&_label]:items-start [&_label]:gap-1 [&_label]:leading-snug`}>
             <div className="space-y-1">
               <Label htmlFor="ilp-name">Policy Name</Label>
               <Input
@@ -2897,9 +2899,9 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="accounts">
+        <AccordionItem value="accounts" className={formSectionClass}>
           <AccordionTrigger>Accounts</AccordionTrigger>
-          <AccordionContent className="space-y-4">
+          <AccordionContent className="space-y-5">
             <div className="flex items-center justify-between rounded-md border bg-muted/30 px-3 py-2 text-sm">
               <span>
                 Contribution share total: <span className={cn('font-semibold', contributionShareValid ? 'text-emerald-700 dark:text-emerald-400' : 'text-destructive')}>
@@ -2913,7 +2915,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
 
             {policy.accounts.map((account, index) => (
               <Card key={account.id}>
-                <CardContent className="grid gap-4 pt-6 md:grid-cols-2 xl:grid-cols-4">
+                <CardContent className={`grid pt-6 md:grid-cols-2 xl:grid-cols-4 ${formGridGapClass}`}>
                   <div className="space-y-1">
                     <Label>Account ID</Label>
                     <Input
@@ -2999,9 +3001,9 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="eec">
+        <AccordionItem value="eec" className={formSectionClass}>
           <AccordionTrigger>EEC Table</AccordionTrigger>
-          <AccordionContent className="space-y-4">
+          <AccordionContent className="space-y-5">
             {isCatalogSeeded ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -3049,7 +3051,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
               </div>
             ) : (
             <>
-            <div className="grid gap-4 lg:grid-cols-[260px,1fr]">
+            <div className={`grid lg:grid-cols-[260px,1fr] ${formGridGapClass}`}>
               <div className="space-y-2">
                 <Label>Load Preset</Label>
                 <Select
@@ -3121,9 +3123,9 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="funds">
+        <AccordionItem value="funds" className={formSectionClass}>
           <AccordionTrigger>Fund Allocations</AccordionTrigger>
-          <AccordionContent className="space-y-4">
+          <AccordionContent className="space-y-5">
             <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm">
               <div className="flex flex-wrap items-center gap-4">
                 <span className={cn('font-medium', fundAllocationValid ? 'text-emerald-700 dark:text-emerald-400' : 'text-destructive')}>
@@ -3137,7 +3139,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
 
             {policy.funds.map((fund, index) => (
               <Card key={`${fund.name}-${index}`}>
-                <CardContent className="grid gap-4 pt-6 md:grid-cols-2 xl:grid-cols-4">
+                <CardContent className={`grid pt-6 md:grid-cols-2 xl:grid-cols-4 ${formGridGapClass}`}>
                   <div className="space-y-1">
                     <Label>Fund Name</Label>
                     <Input
@@ -3193,9 +3195,9 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="bonuses">
+        <AccordionItem value="bonuses" className={formSectionClass}>
           <AccordionTrigger>Bonus Rules</AccordionTrigger>
-          <AccordionContent className="space-y-4">
+          <AccordionContent className="space-y-5">
             {isCatalogSeeded ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -3235,7 +3237,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
             {policy.bonuses.map((bonus, index) => (
               <Card key={`${bonus.label}-${index}`}>
                 <CardContent className="space-y-4 pt-6">
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <div className={`grid md:grid-cols-2 xl:grid-cols-4 ${formGridGapClass}`}>
                     <div className="space-y-1">
                       <Label>Label</Label>
                       <Input
@@ -3389,9 +3391,9 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="charges">
+        <AccordionItem value="charges" className={formSectionClass}>
           <AccordionTrigger>Charge Rules</AccordionTrigger>
-          <AccordionContent className="space-y-4">
+          <AccordionContent className="space-y-5">
             {isCatalogSeeded ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -3483,7 +3485,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
             ) : (policy.chargeRules ?? []).map((rule, index) => (
               <Card key={rule.id}>
                 <CardContent className="space-y-4 pt-6">
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <div className={`grid md:grid-cols-2 xl:grid-cols-4 ${formGridGapClass}`}>
                     <div className="space-y-1">
                       <Label>Label</Label>
                       <Input
@@ -4195,9 +4197,9 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="events">
+        <AccordionItem value="events" className={formSectionClass}>
           <AccordionTrigger>Policy Events & Event Charges</AccordionTrigger>
-          <AccordionContent className="space-y-4">
+          <AccordionContent className="space-y-5">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -4232,7 +4234,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                 </Card>
               ) : (policy.policyEvents ?? []).map((event, index) => (
                 <Card key={event.id}>
-                  <CardContent className="grid gap-4 pt-6 md:grid-cols-2 xl:grid-cols-4">
+                  <CardContent className={`grid pt-6 md:grid-cols-2 xl:grid-cols-4 ${formGridGapClass}`}>
                     <div className="space-y-1">
                       <Label>Event Type</Label>
                       <Select
@@ -4889,7 +4891,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
               ) : (policy.eventChargeRules ?? []).map((rule, index) => (
                 <Card key={rule.id}>
                   <CardContent className="space-y-4 pt-6">
-                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <div className={`grid md:grid-cols-2 xl:grid-cols-4 ${formGridGapClass}`}>
                       <div className="space-y-1">
                         <Label>Label</Label>
                         <Input
@@ -5062,7 +5064,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                         <div className="space-y-3">
                           {(rule.rateSchedule ?? []).map((tier, tierIndex) => (
                             <Card key={`${rule.id}-tier-${tierIndex}`}>
-                              <CardContent className="grid gap-4 pt-6 md:grid-cols-4">
+                              <CardContent className={`grid pt-6 md:grid-cols-4 ${formGridGapClass}`}>
                                 <NumberInput
                                   label="Start Policy Year"
                                   value={tier.startPolicyYear}
@@ -5169,9 +5171,9 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="settings">
+        <AccordionItem value="settings" className={formSectionClass}>
           <AccordionTrigger>Analysis Settings</AccordionTrigger>
-          <AccordionContent className="grid gap-4 md:grid-cols-3">
+          <AccordionContent className={`grid md:grid-cols-3 ${formGridGapClass}`}>
             <PercentInput
               label="Discount Rate"
               value={policy.discountRate}
