@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -30,10 +31,29 @@ export function ProductPickerDialog({ open, onOpenChange, onSelect }: ProductPic
   const [expandedProductId, setExpandedProductId] = useState<string | null>(null)
 
   const normalizedQuery = query.trim().toLowerCase()
-  const visibleProducts = supportedProducts.filter((product) => {
-    if (normalizedQuery.length === 0) return true
-    return `${product.insurer} ${product.productName}`.toLowerCase().includes(normalizedQuery)
-  })
+  const groupedProducts = useMemo(() => {
+    const filtered = supportedProducts.filter((product) => {
+      if (normalizedQuery.length === 0) return true
+      return `${product.insurer} ${product.productName}`.toLowerCase().includes(normalizedQuery)
+    })
+
+    const groups = new Map<string, IlpCatalogProduct[]>()
+    filtered.forEach((product) => {
+      const insurerProducts = groups.get(product.insurer)
+      if (insurerProducts) {
+        insurerProducts.push(product)
+      } else {
+        groups.set(product.insurer, [product])
+      }
+    })
+
+    return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b))
+  }, [supportedProducts, normalizedQuery])
+
+  const accordionValue = useMemo(
+    () => groupedProducts.map(([insurer]) => insurer),
+    [groupedProducts],
+  )
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -56,68 +76,84 @@ export function ProductPickerDialog({ open, onOpenChange, onSelect }: ProductPic
         </div>
 
         <div className="space-y-3">
-          {visibleProducts.length === 0 ? (
+          {groupedProducts.length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center text-sm text-muted-foreground">
                 No catalog products matched this search.
               </CardContent>
             </Card>
-          ) : visibleProducts.map((product) => (
-            <Card key={product.id}>
-              <CardContent className="space-y-4 pt-6">
-                <div className="space-y-1">
-                  <div className="text-sm text-muted-foreground">{product.insurer}</div>
-                  <div className="font-semibold">{product.productName}</div>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant={product.supportStatus === 'supported' ? 'default' : 'secondary'}>
-                      {product.supportStatus === 'supported' ? 'Supported' : 'Needs review'}
-                    </Badge>
-                    <Badge variant="outline">
-                      {product.economicsStatus === 'supported' ? 'Modeled economics' : 'Narrower modeled scope'}
-                    </Badge>
-                  </div>
-                  {(supportCopy(product) || product.warnings.length > 0) && (
-                    <div className="pt-1">
-                      <button
-                        type="button"
-                        className="text-xs font-medium text-muted-foreground hover:text-foreground"
-                        onClick={() => setExpandedProductId((current) => (current === product.id ? null : product.id))}
-                      >
-                        {expandedProductId === product.id ? 'Hide model notes' : 'Show model notes'}
-                      </button>
+          ) : (
+            <Accordion type="multiple" value={accordionValue} className="space-y-3">
+              {groupedProducts.map(([insurer, insurerProducts]) => (
+                <AccordionItem key={insurer} value={insurer} className="rounded-lg border px-4">
+                  <AccordionTrigger className="py-4 text-left hover:no-underline">
+                    <div className="flex flex-1 items-center justify-between gap-3 pr-4">
+                      <span className="font-semibold">{insurer}</span>
+                      <Badge variant="outline">{insurerProducts.length} products</Badge>
                     </div>
-                  )}
-                  {expandedProductId === product.id && (
-                    <div className="space-y-2 pt-1">
-                      <div className="text-xs text-muted-foreground">
-                        {supportCopy(product)}
-                      </div>
-                      {product.warnings.length > 0 && (
-                        <div className="text-xs text-muted-foreground">
-                          {product.warnings[0]}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-3 pt-1">
+                    {insurerProducts.map((product) => (
+                      <Card key={product.id}>
+                        <CardContent className="space-y-4 pt-6">
+                          <div className="space-y-1">
+                            <div className="text-sm text-muted-foreground">{product.insurer}</div>
+                            <div className="font-semibold">{product.productName}</div>
+                            <div className="flex flex-wrap gap-2">
+                              <Badge variant={product.supportStatus === 'supported' ? 'default' : 'secondary'}>
+                                {product.supportStatus === 'supported' ? 'Supported' : 'Needs review'}
+                              </Badge>
+                              <Badge variant="outline">
+                                {product.economicsStatus === 'supported' ? 'Modeled economics' : 'Narrower modeled scope'}
+                              </Badge>
+                            </div>
+                            {(supportCopy(product) || product.warnings.length > 0) && (
+                              <div className="pt-1">
+                                <button
+                                  type="button"
+                                  className="text-xs font-medium text-muted-foreground hover:text-foreground"
+                                  onClick={() => setExpandedProductId((current) => (current === product.id ? null : product.id))}
+                                >
+                                  {expandedProductId === product.id ? 'Hide model notes' : 'Show model notes'}
+                                </button>
+                              </div>
+                            )}
+                            {expandedProductId === product.id && (
+                              <div className="space-y-2 pt-1">
+                                <div className="text-xs text-muted-foreground">
+                                  {supportCopy(product)}
+                                </div>
+                                {product.warnings.length > 0 && (
+                                  <div className="text-xs text-muted-foreground">
+                                    {product.warnings[0]}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
 
-                <div className="grid gap-2 md:grid-cols-2">
-                  {product.variants.map((variant) => (
-                    <Button
-                      key={variant.id}
-                      type="button"
-                      variant="outline"
-                      className="justify-between"
-                      onClick={() => onSelect(product, variant)}
-                    >
-                      <span>{formatCatalogVariantLabel(variant)}</span>
-                      <span className="text-xs text-muted-foreground">Use template</span>
-                    </Button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                          <div className="grid gap-2 md:grid-cols-2">
+                            {product.variants.map((variant) => (
+                              <Button
+                                key={variant.id}
+                                type="button"
+                                variant="outline"
+                                className="justify-between"
+                                onClick={() => onSelect(product, variant)}
+                              >
+                                <span>{formatCatalogVariantLabel(variant)}</span>
+                                <span className="text-xs text-muted-foreground">Use template</span>
+                              </Button>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          )}
         </div>
       </DialogContent>
     </Dialog>
