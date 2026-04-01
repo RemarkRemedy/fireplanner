@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowRight, BadgeDollarSign, ChartColumnBig, Clock3, Play, Receipt, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -9,7 +9,10 @@ import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { IlpFeeStory } from '@/components/ilp/IlpFeeStory'
 import { FeeBreakdownSection } from '@/components/ilp/FeeBreakdownSection'
 import { FeeImpactChart } from '@/components/ilp/FeeImpactChart'
+import { DiscountedChargeTimelineSection } from '@/components/ilp/DiscountedChargeTimelineSection'
+import { ExitReinvestmentBenchmarkSection } from '@/components/ilp/ExitReinvestmentBenchmarkSection'
 import { useFeeImpact } from '@/hooks/useFeeImpact'
+import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { DecisionPanel } from '@/components/ilp/DecisionPanel'
 import { OpportunityCostCard } from '@/components/ilp/OpportunityCostCard'
 import { ExitTimingExplorer } from '@/components/ilp/ExitTimingExplorer'
@@ -26,11 +29,85 @@ import { templateVariantToPolicySeed } from '@/lib/ilp-catalog/templateToPolicy'
 import type { IlpCatalogProduct, IlpTemplateVariant } from '@/lib/ilp-catalog/types'
 import { formatIlpCurrency, formatIlpPercent } from '@/components/ilp/formatters'
 import { mergePolicySeed } from '@/stores/useIlpStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 
 type StoryDetailMode = 'walkthrough' | 'detailed'
 type CashFlowQuickEntry = {
   monthlyIncome: number
   monthlyExpenses: number
+}
+
+type LiquidityStatus = 'comfortable' | 'tight' | 'strained'
+
+function derivePlannerCashFlowQuickEntry({
+  adults,
+  annualExpenses,
+  householdPlanRevision,
+  incomeByAdultId,
+}: {
+  adults: Array<{ id: string; annualIncome: number }>
+  annualExpenses: number
+  householdPlanRevision: number
+  incomeByAdultId: Record<string, Array<{ totalNet: number }>> | undefined
+}): CashFlowQuickEntry | null {
+  if (householdPlanRevision <= 0) {
+    return null
+  }
+
+  const monthlyIncome = adults.reduce((sum, adult) => {
+    const row0 = incomeByAdultId?.[adult.id]?.[0]
+    const netMonthlyIncome = row0
+      ? row0.totalNet / 12
+      : adult.annualIncome * 0.8 / 12
+    return sum + netMonthlyIncome
+  }, 0)
+  const monthlyExpenses = annualExpenses / 12
+
+  if (monthlyIncome <= 0 && monthlyExpenses <= 0) {
+    return null
+  }
+
+  return {
+    monthlyIncome: Math.max(0, Math.round(monthlyIncome)),
+    monthlyExpenses: Math.max(0, Math.round(monthlyExpenses)),
+  }
+}
+
+function classifyLiquidityStatus({
+  liquidMarginAfterPremium,
+  premiumShareOfSurplus,
+}: {
+  liquidMarginAfterPremium: number | null
+  premiumShareOfSurplus: number | null
+}): LiquidityStatus {
+  if (liquidMarginAfterPremium == null) {
+    return 'tight'
+  }
+  if (liquidMarginAfterPremium < 0.10 || (premiumShareOfSurplus != null && premiumShareOfSurplus >= 0.5)) {
+    return 'strained'
+  }
+  if (liquidMarginAfterPremium < 0.20 || (premiumShareOfSurplus != null && premiumShareOfSurplus >= 0.33)) {
+    return 'tight'
+  }
+  return 'comfortable'
+}
+
+function liquidityTone(status: LiquidityStatus): string {
+  if (status === 'comfortable') return 'text-emerald-700 dark:text-emerald-400'
+  if (status === 'tight') return 'text-amber-700 dark:text-amber-400'
+  return 'text-rose-700 dark:text-rose-400'
+}
+
+function liquidityBorder(status: LiquidityStatus): string {
+  if (status === 'comfortable') return 'border-emerald-200 bg-emerald-50/60'
+  if (status === 'tight') return 'border-amber-200 bg-amber-50/60'
+  return 'border-rose-200 bg-rose-50/60'
+}
+
+function liquidityLabel(status: LiquidityStatus): string {
+  if (status === 'comfortable') return 'Comfortable liquid margin'
+  if (status === 'tight') return 'Tighter liquid margin'
+  return 'Thin liquid margin'
 }
 
 // --- Hydration: resolve productId to catalog product ---
@@ -331,7 +408,7 @@ function GuideNote() {
   return (
     <div className="rounded-md border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-900 dark:bg-amber-950/20">
       <div className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-900 dark:text-amber-200">
-        Use this as a guide, not a quote
+        Use this estimate as a guide
       </div>
       <ul className="mt-2 space-y-2 text-sm leading-6 text-amber-900/90 dark:text-amber-100/90">
         <li>
@@ -341,12 +418,38 @@ function GuideNote() {
           The fund-fee impact shown here depends on the market-return assumptions you use. You can use past returns as a reference point, but past performance does not guarantee future performance.
         </li>
         <li>
-          One purpose of this page is to make the fee load visible. If the charges feel high or unclear, do not be shy about asking for a full explanation before you sign.
+          This walkthrough is meant to make charges, projected values, and tradeoffs easier to read. It does not confirm the exact figures that apply to your policy.
         </li>
         <li>
-          Check your policy documents and confirm the actual numbers with your adviser before relying on them for a decision.
+          Confirm the applicable charges, surrender values, bonuses, and fund details in your policy documents and illustration before relying on these figures.
         </li>
       </ul>
+    </div>
+  )
+}
+
+function SectionLead({
+  eyebrow,
+  title,
+  summary,
+}: {
+  eyebrow: string
+  title: string
+  summary?: string
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+        {eyebrow}
+      </div>
+      <div className="max-w-3xl space-y-1">
+        <h2 className="text-2xl font-bold tracking-tight text-slate-950">{title}</h2>
+        {summary ? (
+          <p className="text-sm leading-6 text-muted-foreground">
+            {summary}
+          </p>
+        ) : null}
+      </div>
     </div>
   )
 }
@@ -354,11 +457,13 @@ function GuideNote() {
 function PlannerHandoffCard({
   policy,
   quickEntry,
+  prefilledFromPlanner,
   onMonthlyIncomeChange,
   onMonthlyExpensesChange,
 }: {
   policy: IlpPolicyInput
   quickEntry: CashFlowQuickEntry
+  prefilledFromPlanner: boolean
   onMonthlyIncomeChange: (value: number) => void
   onMonthlyExpensesChange: (value: number) => void
 }) {
@@ -370,6 +475,16 @@ function PlannerHandoffCard({
   const premiumShareOfSurplus = canCompareMonthlyPremium && monthlySurplus > 0
     ? policy.monthlyContribution / monthlySurplus
     : null
+  const premiumShareOfTakeHome = canCompareMonthlyPremium && quickEntry.monthlyIncome > 0
+    ? policy.monthlyContribution / quickEntry.monthlyIncome
+    : null
+  const liquidMarginAfterPremium = canCompareMonthlyPremium && remainingAfterPremium != null && quickEntry.monthlyIncome > 0
+    ? remainingAfterPremium / quickEntry.monthlyIncome
+    : null
+  const liquidityStatus = classifyLiquidityStatus({
+    liquidMarginAfterPremium,
+    premiumShareOfSurplus,
+  })
 
   let quickEntryCallout: ReactNode = null
   if (hasQuickEntry) {
@@ -388,24 +503,33 @@ function PlannerHandoffCard({
         />
       )
     } else if (canCompareMonthlyPremium && remainingAfterPremium != null && premiumShareOfSurplus != null) {
-      quickEntryCallout = (
-        <InterpretationCallout
-          level="success"
-          message={`At this quick-entry level, the monthly premium uses ${formatIlpPercent(premiumShareOfSurplus)} of your entered monthly surplus and leaves about ${formatIlpCurrency(remainingAfterPremium, 'SGD')} after the premium.`}
-        />
-      )
+      if (liquidityStatus === 'comfortable') {
+        quickEntryCallout = (
+          <InterpretationCallout
+            level="success"
+            message={`At this quick-entry level, the monthly premium uses ${formatIlpPercent(premiumShareOfSurplus)} of your entered monthly surplus and leaves about ${formatIlpCurrency(remainingAfterPremium, 'SGD')} after the premium. That remaining cash flow still matters because this premium is less liquid than cash savings or a sellable investment position.`}
+          />
+        )
+      } else {
+        quickEntryCallout = (
+          <InterpretationCallout
+            level="warning"
+            message={`At this quick-entry level, the monthly premium uses ${formatIlpPercent(premiumShareOfSurplus)} of your entered monthly surplus and leaves about ${formatIlpCurrency(remainingAfterPremium, 'SGD')} after the premium. That is still a thin liquid buffer for a commitment that is less liquid than cash savings or a sellable investment position.`}
+          />
+        )
+      }
     } else if (policy.monthlyContribution > 0 && policy.currency !== 'SGD') {
       quickEntryCallout = (
         <InterpretationCallout
           level="warning"
-          message="This quick entry is in SGD, so it does not directly compare against this USD premium. Use planner inputs or your own FX assumption if you want a cleaner comparison."
+          message="This quick entry is in SGD, so it does not directly compare against this USD premium. Use your own FX assumption if you want a cleaner comparison."
         />
       )
     } else if ((policy.initialSinglePremium ?? 0) > 0) {
       quickEntryCallout = (
         <InterpretationCallout
           level="warning"
-          message="This quick entry helps you judge monthly cash flow only. For a one-off premium, use planner inputs if you want to compare the upfront amount against your broader finances."
+          message="This quick entry helps you judge monthly cash flow only. For a one-off premium, compare the upfront amount against your broader finances separately."
         />
       )
     }
@@ -418,15 +542,11 @@ function PlannerHandoffCard({
           <div className="space-y-1">
             <h2 className="text-lg font-semibold">Want to compare this against your own cash flow?</h2>
             <p className="text-sm leading-6 text-muted-foreground">
-              If you do not use the planner, enter a quick monthly estimate here. This stays on this page only and gives you a rough cash-flow check before you decide whether to open the full app.
+              {prefilledFromPlanner
+                ? 'These fields start with your saved planner income and spending. Adjust them here if you want a quick local affordability check without leaving this page.'
+                : 'Enter a quick monthly estimate here if you want a rough affordability check on this page. This local check does not change your planner.'}
             </p>
           </div>
-          <Link to="/inputs#section-income" className="shrink-0">
-            <Button variant="outline">
-              Open planner inputs
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
@@ -444,35 +564,63 @@ function PlannerHandoffCard({
 
         {hasQuickEntry ? (
           <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-md border p-4">
-                <div className="text-sm text-muted-foreground">Estimated monthly surplus</div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="flex h-full flex-col rounded-md border p-4">
+                <div className="min-h-[3rem] text-sm text-muted-foreground">Estimated monthly surplus</div>
                 <div className="mt-1 text-2xl font-bold">{formatIlpCurrency(monthlySurplus, 'SGD')}</div>
               </div>
-              <div className="rounded-md border p-4">
-                <div className="text-sm text-muted-foreground">Estimated annual surplus</div>
+              <div className="flex h-full flex-col rounded-md border p-4">
+                <div className="min-h-[3rem] text-sm text-muted-foreground">Estimated annual surplus</div>
                 <div className="mt-1 text-2xl font-bold">{formatIlpCurrency(annualSurplus, 'SGD')}</div>
               </div>
               {canCompareMonthlyPremium ? (
                 <>
-                  <div className="rounded-md border p-4">
-                    <div className="text-sm text-muted-foreground">This policy&apos;s monthly premium</div>
+                  <div className="flex h-full flex-col rounded-md border p-4">
+                    <div className="min-h-[3rem] text-sm text-muted-foreground">This policy&apos;s monthly premium</div>
                     <div className="mt-1 text-2xl font-bold">{formatIlpCurrency(policy.monthlyContribution, 'SGD')}</div>
                   </div>
-                  <div className="rounded-md border p-4">
-                    <div className="text-sm text-muted-foreground">Surplus left after premium</div>
+                  <div className="flex h-full flex-col rounded-md border p-4">
+                    <div className="min-h-[3rem] text-sm text-muted-foreground">Surplus left after premium</div>
                     <div className="mt-1 text-2xl font-bold">{formatIlpCurrency(remainingAfterPremium ?? 0, 'SGD')}</div>
                   </div>
                 </>
               ) : (
-                <div className="rounded-md border p-4 sm:col-span-2">
-                  <div className="text-sm text-muted-foreground">How to use this quick check</div>
+                <div className="flex h-full flex-col rounded-md border p-4 sm:col-span-2">
+                  <div className="min-h-[3rem] text-sm text-muted-foreground">How to use this quick check</div>
                   <div className="mt-1 text-sm leading-6 text-muted-foreground">
-                    Use this to judge your own monthly breathing room. For one-off premiums or non-SGD premiums, open planner inputs if you want deeper context.
+                    Use this to judge your own monthly breathing room. For one-off premiums or non-SGD premiums, treat this as a local monthly check rather than a full policy-affordability answer.
                   </div>
                 </div>
               )}
             </div>
+            {canCompareMonthlyPremium && premiumShareOfTakeHome != null && liquidMarginAfterPremium != null ? (
+              <div className="rounded-md border bg-slate-50/70 p-4">
+                <div className="space-y-1">
+                  <div className="text-sm font-semibold text-slate-950">Liquidity lens</div>
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    This premium may contribute to long-term saving, but it does not behave like cash savings or a liquid ETF position you can usually access more easily.
+                  </p>
+                </div>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-md border bg-white p-4">
+                    <div className="text-sm text-muted-foreground">Premium as share of take-home pay</div>
+                    <div className="mt-1 text-xl font-bold text-slate-950">
+                      {formatIlpPercent(premiumShareOfTakeHome)}
+                    </div>
+                    <div className="mt-1 text-xs text-muted-foreground">How much of monthly take-home this policy asks you to commit.</div>
+                  </div>
+                  <div className={`rounded-md border p-4 ${liquidityBorder(liquidityStatus)}`}>
+                    <div className="text-sm text-muted-foreground">Liquid cash-flow margin after premium</div>
+                    <div className={`mt-1 text-xl font-bold ${liquidityTone(liquidityStatus)}`}>
+                      {formatIlpPercent(liquidMarginAfterPremium)}
+                    </div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      {liquidityLabel(liquidityStatus)}. Share of take-home pay left as immediate monthly breathing room after the premium.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
             {quickEntryCallout}
           </div>
         ) : (
@@ -485,15 +633,32 @@ function PlannerHandoffCard({
   )
 }
 
-function BonusSection({ policy, analysis }: { policy: IlpPolicyInput; analysis: IlpProjectedPolicyAnalysis }) {
-  const bonusSupport = formatIlpBonusSupport(
-    analysis.summary.realBonuses,
-    analysis.summary.realWrapperFees + analysis.summary.inceptionCharges,
-  )
+function BonusSection({
+  policy,
+  analysis,
+  useReal,
+  eyebrow = 'Bonus support',
+  className,
+}: {
+  policy: IlpPolicyInput
+  analysis: IlpProjectedPolicyAnalysis
+  useReal: boolean
+  eyebrow?: string
+  className?: string
+}) {
+  const bonuses = useReal ? analysis.summary.realBonuses : analysis.summary.totalBonusesReceived
+  const grossPolicyFees = useReal
+    ? (analysis.summary.realWrapperFees + analysis.summary.inceptionCharges)
+    : analysis.summary.totalFeesCharged
+  const bonusSupport = formatIlpBonusSupport(bonuses, grossPolicyFees)
 
   return (
-    <section className="space-y-4">
-      <h2 className="text-2xl font-bold">How bonuses affect your fees</h2>
+    <section className={className ?? 'space-y-4'}>
+      <SectionLead
+        eyebrow={eyebrow}
+        title="How much bonuses may offset"
+        summary="Separate bonus support from gross charges so you can see how much of the modeled fee load is being offset, and on what assumptions."
+      />
       {analysis.summary.totalBonusesReceived > 0 ? (
         <Card>
           <CardContent className="space-y-4 p-6">
@@ -501,9 +666,9 @@ function BonusSection({ policy, analysis }: { policy: IlpPolicyInput; analysis: 
               <div className="rounded-md border p-4">
                 <div className="text-sm text-muted-foreground">Total bonuses received</div>
                 <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
-                  {formatIlpCurrency(analysis.summary.realBonuses, policy.currency)}
+                  {formatIlpCurrency(bonuses, policy.currency)}
                 </div>
-                <div className="mt-1 text-xs text-muted-foreground">In today&apos;s dollars</div>
+                <div className="mt-1 text-xs text-muted-foreground">{useReal ? "In today's dollars" : 'Nominal dollars'}</div>
               </div>
               <div className="rounded-md border p-4">
                 <div className="text-sm text-muted-foreground">How much bonuses cover gross policy fees</div>
@@ -513,7 +678,7 @@ function BonusSection({ policy, analysis }: { policy: IlpPolicyInput; analysis: 
             </div>
             <InterpretationCallout
               level="success"
-              message="Bonuses can reduce your net cost, but they are separate from the policy's gross fees. Some products credit premium bonuses that may be large relative to fees over the modeled horizon. Check your policy document for suspension, clawback, vesting, and payout conditions."
+              message="Bonuses may reduce part of the net cost shown here, but they do not replace the gross fee picture. Check the product documents for suspension, clawback, vesting, and payout conditions before treating bonus support as certain."
             />
           </CardContent>
         </Card>
@@ -522,7 +687,7 @@ function BonusSection({ policy, analysis }: { policy: IlpPolicyInput; analysis: 
           <CardContent className="p-6">
             <InterpretationCallout
               level="warning"
-              message="This product does not have modeled bonuses. All fee figures shown are gross fees with no modeled bonus support. Actual net fees may be lower if the product offers bonuses that are not yet captured in the catalog."
+              message="No modeled bonus support appears in this estimate. Fee figures shown here therefore reflect the product charges without any bonus offset that may exist outside the current catalog model."
             />
           </CardContent>
         </Card>
@@ -535,25 +700,38 @@ function WalkthroughSummarySection({
   policy,
   analysis,
   feeImpact,
+  useReal,
   onOpenDetailed,
 }: {
   policy: IlpPolicyInput
   analysis: IlpProjectedPolicyAnalysis
   feeImpact: ReturnType<typeof useFeeImpact>
+  useReal: boolean
   onOpenDetailed: () => void
 }) {
   const [showCalculation, setShowCalculation] = useState(false)
-  const netPolicyFees = analysis.summary.realWrapperFees + analysis.summary.inceptionCharges - analysis.summary.realBonuses
-  const totalEstimatedFees = netPolicyFees + analysis.summary.realFundCharges
+  const nominalFundCharges = useMemo(() => {
+    const ocf = policy.funds.reduce((sum, fund) => sum + fund.allocation * fund.ocf, 0)
+    return analysis.projections.mid.rows.reduce((sum, row) => {
+      const openingValue = row.accounts.reduce((subtotal, account) => subtotal + account.open, 0)
+      return sum + openingValue * ocf
+    }, 0)
+  }, [analysis.projections.mid.rows, policy.funds])
+  const grossPolicyFees = useReal
+    ? (analysis.summary.realWrapperFees + analysis.summary.inceptionCharges)
+    : analysis.summary.totalFeesCharged
+  const bonuses = useReal ? analysis.summary.realBonuses : analysis.summary.totalBonusesReceived
+  const fundCharges = useReal ? analysis.summary.realFundCharges : nominalFundCharges
+  const netPolicyFees = grossPolicyFees - bonuses
+  const totalEstimatedFees = netPolicyFees + fundCharges
 
   return (
     <section className="space-y-4">
-      <div className="space-y-1">
-        <h2 className="text-2xl font-bold">What this product is likely costing you</h2>
-        <p className="text-sm text-muted-foreground">
-          Start with the big picture before opening the charts and full year-by-year table.
-        </p>
-      </div>
+      <SectionLead
+        eyebrow="Start here"
+        title="The fee picture"
+        summary="Start with the headline figures. This section summarizes the modeled fee load before you open the full chart set."
+      />
       <Card>
         <CardContent className="space-y-5 p-6">
           <div className="grid gap-4 sm:grid-cols-3">
@@ -566,17 +744,17 @@ function WalkthroughSummarySection({
               <div className="mt-1 text-2xl font-bold">{formatIlpCurrency(netPolicyFees, policy.currency)}</div>
             </div>
             <div className="rounded-md border p-4">
-              <div className="text-sm text-muted-foreground">Estimated annual cost on your portfolio</div>
-              <div className="mt-1 text-2xl font-bold">{formatIlpPercent(feeImpact.annualDragPct)} p.a.</div>
-            </div>
+                <div className="text-sm text-muted-foreground">Estimated annual cost on your portfolio</div>
+                <div className="mt-1 text-2xl font-bold">{formatIlpPercent(feeImpact.annualDragPct)} p.a.</div>
+              </div>
           </div>
           <InterpretationCallout
             level="warning"
-            message="Under these assumptions, most of the cost comes from policy-layer charges first, with fund charges building in the background over time."
+            message="Under these assumptions, policy-layer charges account for most of the modeled fee load early on, while fund charges build more gradually in the background over time."
           />
           <div className="flex flex-wrap gap-3">
             <Button variant="outline" onClick={() => setShowCalculation((value) => !value)}>
-              {showCalculation ? 'Hide fee calculation' : 'See fee calculation'}
+              {showCalculation ? 'Hide estimate build' : 'See how this estimate is built'}
             </Button>
             <Button variant="ghost" onClick={onOpenDetailed}>
               Open detailed view
@@ -588,11 +766,11 @@ function WalkthroughSummarySection({
               <div className="space-y-2">
                 <div className="flex justify-between gap-4">
                   <span>Gross policy fees</span>
-                  <span className="tabular-nums">{formatIlpCurrency(analysis.summary.totalFeesCharged, policy.currency)}</span>
+                  <span className="tabular-nums">{formatIlpCurrency(grossPolicyFees, policy.currency)}</span>
                 </div>
                 <div className="flex justify-between gap-4 text-emerald-700 dark:text-emerald-400">
                   <span>Bonuses returned</span>
-                  <span className="tabular-nums">-{formatIlpCurrency(analysis.summary.totalBonusesReceived, policy.currency)}</span>
+                  <span className="tabular-nums">-{formatIlpCurrency(bonuses, policy.currency)}</span>
                 </div>
                 <div className="flex justify-between gap-4">
                   <span>Net policy fees</span>
@@ -600,7 +778,7 @@ function WalkthroughSummarySection({
                 </div>
                 <div className="flex justify-between gap-4">
                   <span>Fund charges</span>
-                  <span className="tabular-nums">{formatIlpCurrency(analysis.summary.realFundCharges, policy.currency)}</span>
+                  <span className="tabular-nums">{formatIlpCurrency(fundCharges, policy.currency)}</span>
                 </div>
                 <div className="flex justify-between gap-4 border-t pt-2 font-semibold">
                   <span>Estimated total fees</span>
@@ -618,21 +796,27 @@ function WalkthroughSummarySection({
 function WalkthroughExitSection({
   policy,
   analysis,
+  useReal,
   onOpenDetailed,
 }: {
   policy: IlpPolicyInput
   analysis: IlpProjectedPolicyAnalysis
+  useReal: boolean
   onOpenDetailed: () => void
 }) {
   const [showExitDetails, setShowExitDetails] = useState(false)
 
   return (
     <section className="space-y-4">
-      <h2 className="text-2xl font-bold">What happens if you stop early</h2>
+      <SectionLead
+        eyebrow="Exit lens"
+        title="The early-exit tradeoff"
+        summary="Compare the projected value available against the contributions and charges that still sit ahead from this point."
+      />
       <DecisionPanel policy={policy} analysis={analysis} />
       <InterpretationCallout
         level="warning"
-        message="These path comparisons are scenario estimates based on your current inputs. Use them to compare tradeoffs, then confirm the actual exit values and charges with your adviser or policy documents."
+        message="These path comparisons use the current policy inputs and published rules in the model. Use them to compare projected tradeoffs, then confirm the actual exit values and charges in your policy documents."
       />
       <div className="flex flex-wrap gap-3">
         <Button variant="outline" onClick={() => setShowExitDetails((value) => !value)}>
@@ -643,41 +827,36 @@ function WalkthroughExitSection({
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
-      {showExitDetails && <ExitTimingExplorer policy={policy} analysis={analysis} />}
+      {showExitDetails && (
+        <div className="space-y-4">
+          <ExitReinvestmentBenchmarkSection policy={policy} analysis={analysis} />
+          <ExitTimingExplorer policy={policy} analysis={analysis} useReal={useReal} />
+        </div>
+      )}
     </section>
   )
 }
 
 function VerificationSection({
-  policy,
-  quickEntry,
-  onMonthlyIncomeChange,
-  onMonthlyExpensesChange,
   onOpenDetailed,
 }: {
-  policy: IlpPolicyInput
-  quickEntry: CashFlowQuickEntry
-  onMonthlyIncomeChange: (value: number) => void
-  onMonthlyExpensesChange: (value: number) => void
   onOpenDetailed: () => void
 }) {
   return (
     <section className="space-y-4">
-      <h2 className="text-2xl font-bold">What should you verify before deciding?</h2>
+      <SectionLead
+        eyebrow="Document check"
+        title="What this estimate does not confirm"
+        summary="Use the items below as a document check before relying on any modeled figure shown here."
+      />
       <Card>
         <CardContent className="space-y-5 p-6">
           <ul className="space-y-3 text-sm leading-6 text-muted-foreground">
             <li>Check the exact surrender value or exit value on the latest insurer statement.</li>
             <li>Confirm whether bonuses are vested, conditional, or clawed back on exit.</li>
             <li>Verify the actual fund fees on the funds chosen inside the policy.</li>
-            <li>Ask your adviser or insurer illustration to confirm the exact numbers before acting.</li>
+            <li>Use the current policy illustration or statement to confirm the exact numbers if you need them for a real decision.</li>
           </ul>
-          <PlannerHandoffCard
-            policy={policy}
-            quickEntry={quickEntry}
-            onMonthlyIncomeChange={onMonthlyIncomeChange}
-            onMonthlyExpensesChange={onMonthlyExpensesChange}
-          />
           <div className="flex flex-wrap gap-3">
             <Button onClick={onOpenDetailed}>
               Open detailed view
@@ -690,11 +869,44 @@ function VerificationSection({
   )
 }
 
+function WalkthroughCashFlowSection({
+  policy,
+  quickEntry,
+  prefilledFromPlanner,
+  onMonthlyIncomeChange,
+  onMonthlyExpensesChange,
+}: {
+  policy: IlpPolicyInput
+  quickEntry: CashFlowQuickEntry
+  prefilledFromPlanner: boolean
+  onMonthlyIncomeChange: (value: number) => void
+  onMonthlyExpensesChange: (value: number) => void
+}) {
+  return (
+    <section className="space-y-4">
+      <SectionLead
+        eyebrow="Cash-flow check"
+        title="How this compares against your own cash flow"
+        summary="This is separate from the document check. Use it if you want a quick monthly affordability check without opening the full planner."
+      />
+      <PlannerHandoffCard
+        policy={policy}
+        quickEntry={quickEntry}
+        prefilledFromPlanner={prefilledFromPlanner}
+        onMonthlyIncomeChange={onMonthlyIncomeChange}
+        onMonthlyExpensesChange={onMonthlyExpensesChange}
+      />
+    </section>
+  )
+}
+
 function WalkthroughDetailView({
   policy,
   analysis,
   feeImpact,
+  useReal,
   quickEntry,
+  prefilledFromPlanner,
   onMonthlyIncomeChange,
   onMonthlyExpensesChange,
   onOpenDetailed,
@@ -703,24 +915,35 @@ function WalkthroughDetailView({
   policy: IlpPolicyInput
   analysis: IlpProjectedPolicyAnalysis
   feeImpact: ReturnType<typeof useFeeImpact>
+  useReal: boolean
   quickEntry: CashFlowQuickEntry
+  prefilledFromPlanner: boolean
   onMonthlyIncomeChange: (value: number) => void
   onMonthlyExpensesChange: (value: number) => void
   onOpenDetailed: () => void
   onOpenReceipt: () => void
 }) {
   return (
-    <>
-      <WalkthroughSummarySection policy={policy} analysis={analysis} feeImpact={feeImpact} onOpenDetailed={onOpenDetailed} />
-      <BonusSection policy={policy} analysis={analysis} />
-      <WalkthroughExitSection policy={policy} analysis={analysis} onOpenDetailed={onOpenDetailed} />
-      <VerificationSection
-        policy={policy}
-        quickEntry={quickEntry}
-        onMonthlyIncomeChange={onMonthlyIncomeChange}
-        onMonthlyExpensesChange={onMonthlyExpensesChange}
-        onOpenDetailed={onOpenDetailed}
-      />
+    <div className="space-y-10">
+      <WalkthroughSummarySection policy={policy} analysis={analysis} feeImpact={feeImpact} useReal={useReal} onOpenDetailed={onOpenDetailed} />
+      <BonusSection policy={policy} analysis={analysis} useReal={useReal} className="space-y-4 border-t border-slate-200/80 pt-10" />
+      <div className="border-t border-slate-200/80 pt-10">
+        <WalkthroughExitSection policy={policy} analysis={analysis} useReal={useReal} onOpenDetailed={onOpenDetailed} />
+      </div>
+      <div className="border-t border-slate-200/80 pt-10">
+        <WalkthroughCashFlowSection
+          policy={policy}
+          quickEntry={quickEntry}
+          prefilledFromPlanner={prefilledFromPlanner}
+          onMonthlyIncomeChange={onMonthlyIncomeChange}
+          onMonthlyExpensesChange={onMonthlyExpensesChange}
+        />
+      </div>
+      <div className="border-t border-slate-200/80 pt-10">
+        <VerificationSection
+          onOpenDetailed={onOpenDetailed}
+        />
+      </div>
       {analysis.summary.totalPremiumsPaid > 0 && (
         <div className="flex justify-center pt-2">
           <Button variant="outline" size="lg" onClick={onOpenReceipt}>
@@ -729,7 +952,7 @@ function WalkthroughDetailView({
           </Button>
         </div>
       )}
-    </>
+    </div>
   )
 }
 
@@ -737,7 +960,10 @@ function DetailedAnalysisView({
   policy,
   analysis,
   feeImpact,
+  useReal,
+  onUseRealChange,
   quickEntry,
+  prefilledFromPlanner,
   onMonthlyIncomeChange,
   onMonthlyExpensesChange,
   onOpenReceipt,
@@ -745,68 +971,116 @@ function DetailedAnalysisView({
   policy: IlpPolicyInput
   analysis: IlpProjectedPolicyAnalysis
   feeImpact: ReturnType<typeof useFeeImpact>
+  useReal: boolean
+  onUseRealChange: (value: boolean) => void
   quickEntry: CashFlowQuickEntry
+  prefilledFromPlanner: boolean
   onMonthlyIncomeChange: (value: number) => void
   onMonthlyExpensesChange: (value: number) => void
   onOpenReceipt: () => void
 }) {
   return (
-    <>
-      <PlannerHandoffCard
-        policy={policy}
-        quickEntry={quickEntry}
-        onMonthlyIncomeChange={onMonthlyIncomeChange}
-        onMonthlyExpensesChange={onMonthlyExpensesChange}
-      />
-      <FeeImpactChart
-        tiers={feeImpact.tiers}
-        timeSeries={feeImpact.timeSeries}
-        tierDefs={feeImpact.tierDefs}
-        horizonYears={feeImpact.horizonYears}
-        currency={policy.currency}
-        monthlyContribution={policy.monthlyContribution}
-        initialSinglePremium={policy.initialSinglePremium}
-        useReal
-      />
-      <FeeBreakdownSection policy={policy} analysis={analysis} />
-      {analysis.summary.totalPremiumsPaid > 0 && (
-        <div className="flex justify-center pt-2">
-          <Button variant="outline" size="lg" onClick={onOpenReceipt}>
-            <Receipt className="mr-2 h-4 w-4" />
-            Generate Your ILP Receipt
-          </Button>
-        </div>
-      )}
-      <BonusSection policy={policy} analysis={analysis} />
+    <div className="space-y-10">
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold">Your possible path and the opportunity cost</h2>
+        <SectionLead
+          eyebrow="Cash-flow context"
+          title="How this fits your own cash flow"
+          summary={prefilledFromPlanner
+            ? 'These fields start with your saved planner numbers. Adjust them here if you want a quick local affordability check in the same view.'
+            : 'Use a quick local entry if you want a rough affordability check in the same view.'}
+        />
+        <PlannerHandoffCard
+          policy={policy}
+          quickEntry={quickEntry}
+          prefilledFromPlanner={prefilledFromPlanner}
+          onMonthlyIncomeChange={onMonthlyIncomeChange}
+          onMonthlyExpensesChange={onMonthlyExpensesChange}
+        />
+      </section>
+      <section className="space-y-4 border-t border-slate-200/80 pt-10">
+        <SectionLead
+          eyebrow="Charge path"
+          title="How charges compound over time"
+          summary="Read this first if you want the high-level path before opening the detailed fee evidence below."
+        />
+        <FeeImpactChart
+          tiers={feeImpact.tiers}
+          timeSeries={feeImpact.timeSeries}
+          tierDefs={feeImpact.tierDefs}
+          horizonYears={feeImpact.horizonYears}
+          currency={policy.currency}
+          monthlyContribution={policy.monthlyContribution}
+          initialSinglePremium={policy.initialSinglePremium}
+          useReal={useReal}
+        />
+      </section>
+      <section className="space-y-4 border-t border-slate-200/80 pt-10">
+        <SectionLead
+          eyebrow="Evidence table"
+          title="Where each fee line shows up"
+          summary="Open the charts and table in this section if you want to inspect the annual and cumulative charge build in more detail."
+        />
+        <FeeBreakdownSection
+          policy={policy}
+          analysis={analysis}
+          useRealValues={useReal}
+          onUseRealValuesChange={onUseRealChange}
+          showDollarBasisToggle={false}
+        />
+        {analysis.summary.totalPremiumsPaid > 0 && (
+          <div className="flex justify-center pt-2">
+            <Button variant="outline" size="lg" onClick={onOpenReceipt}>
+              <Receipt className="mr-2 h-4 w-4" />
+              Generate Your ILP Receipt
+            </Button>
+          </div>
+        )}
+      </section>
+      <BonusSection
+        policy={policy}
+        analysis={analysis}
+        useReal={useReal}
+        eyebrow="Bonus support"
+        className="space-y-4 border-t border-slate-200/80 pt-10"
+      />
+      <section className="space-y-4 border-t border-slate-200/80 pt-10">
+        <SectionLead
+          eyebrow="Exit lens"
+          title="Projected path comparison"
+          summary="Review how projected value available, remaining contributions, out-of-pocket fees, and the benchmark lens change across the modeled path."
+        />
         <DecisionPanel policy={policy} analysis={analysis} />
-        <ExitTimingExplorer policy={policy} analysis={analysis} />
+        <ExitReinvestmentBenchmarkSection policy={policy} analysis={analysis} />
+        <DiscountedChargeTimelineSection
+          policy={policy}
+          analysis={analysis}
+        />
+        <ExitTimingExplorer policy={policy} analysis={analysis} useReal={useReal} />
         <InterpretationCallout
           level="warning"
-          message="These path comparisons are scenario estimates based on your current inputs. Use them to compare tradeoffs, then confirm the actual exit values and charges with your adviser or policy documents."
+          message="These path comparisons use the current policy inputs and published rules in the model. Use them to compare projected tradeoffs, then confirm the applicable values in your policy documents."
         />
         <OpportunityCostCard policy={policy} analysis={analysis} />
         <Card>
           <CardContent className="p-6">
-            <p className="text-xs text-muted-foreground">
-              Not financial advice. These calculations are based on your inputs and standardized assumptions. Consult a licensed financial adviser before making policy decisions.
-            </p>
-          </CardContent>
-        </Card>
-        <div className="flex flex-col items-center gap-3 pt-4">
-          <Link to="/ilp-review">
-            <Button size="lg">
-              See full details
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
           <p className="text-xs text-muted-foreground">
-            View the complete projection table, fee waterfall, and NPV timeline.
+            Illustrative only. These calculations use your current inputs and standardized assumptions. Confirm the applicable values in your policy documents and illustration before relying on them.
           </p>
-        </div>
+        </CardContent>
+      </Card>
       </section>
-    </>
+      <div className="flex flex-col items-center gap-3 pt-2">
+        <Link to="/ilp-review">
+          <Button size="lg">
+            See full details
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </Link>
+        <p className="text-xs text-muted-foreground">
+          View the complete projection table, fee waterfall, and NPV timeline.
+        </p>
+      </div>
+    </div>
   )
 }
 
@@ -825,13 +1099,39 @@ function StoryDetailView({
   onModeChange: (mode: StoryDetailMode) => void
   onReplayStory: () => void
 }) {
-  const feeImpact = useFeeImpact(policy, analysis, true)
+  const [useReal, setUseReal] = useState(false)
+  const feeImpact = useFeeImpact(policy, analysis, useReal)
   const [receiptOpen, setReceiptOpen] = useState(false)
-  const [quickEntry, setQuickEntry] = useState<CashFlowQuickEntry>({ monthlyIncome: 0, monthlyExpenses: 0 })
+  const householdPlan = useHouseholdPlanStore((state) => state.plan)
+  const householdRuntime = useHouseholdRuntimeInputs()
+  const plannerQuickEntry = useMemo(() => derivePlannerCashFlowQuickEntry({
+    adults: householdPlan.adults.map((adult) => ({
+      id: adult.id,
+      annualIncome: adult.annualIncome,
+    })),
+    annualExpenses: householdRuntime.profile.annualExpenses,
+    householdPlanRevision: householdRuntime.householdPlanRevision,
+    incomeByAdultId: householdRuntime.normalized.compiledPlan.incomeByAdultId,
+  }), [
+    householdPlan.adults,
+    householdRuntime.householdPlanRevision,
+    householdRuntime.normalized.compiledPlan.incomeByAdultId,
+    householdRuntime.profile.annualExpenses,
+  ])
+  const [quickEntry, setQuickEntry] = useState<CashFlowQuickEntry>(() => (
+    plannerQuickEntry ?? { monthlyIncome: 0, monthlyExpenses: 0 }
+  ))
+  const [quickEntryTouched, setQuickEntryTouched] = useState(false)
   const receiptFeeBreakdown = useMemo(
     () => buildFeeBreakdown(analysis.projections.mid, policy.funds, policy),
     [analysis, policy],
   )
+
+  useEffect(() => {
+    if (!quickEntryTouched && plannerQuickEntry) {
+      setQuickEntry(plannerQuickEntry)
+    }
+  }, [plannerQuickEntry, quickEntryTouched])
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
@@ -844,24 +1144,44 @@ function StoryDetailView({
             <h1 className="text-2xl font-bold">{catalogProduct.productName}</h1>
           </div>
           <div className="space-y-2 lg:min-w-[32rem]">
-            <div className="text-right text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              View mode
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-end">
-              <Tabs value={mode} onValueChange={(value) => onModeChange(value as StoryDetailMode)} className="sm:flex-1">
-                <TabsList className="grid h-12 w-full grid-cols-2 rounded-2xl border-[#d9e4f2] bg-[#f3f7fd] p-1">
-                  <TabsTrigger value="walkthrough" className="rounded-xl px-5 py-2.5">
-                    Walkthrough
-                  </TabsTrigger>
-                  <TabsTrigger value="detailed" className="rounded-xl px-5 py-2.5">
-                    Detailed view
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-              <Button variant="outline" onClick={onReplayStory} className="h-12 px-5">
-                <Play className="mr-2 h-4 w-4" />
-                Replay walkthrough
-              </Button>
+            <div className="flex flex-wrap items-end justify-end gap-6">
+              <div className="space-y-2">
+                <div className="text-right text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                  Dollar basis
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <Tabs value={useReal ? 'real' : 'nominal'} onValueChange={(value) => setUseReal(value === 'real')}>
+                    <TabsList className="h-12 rounded-2xl border-[#d9e4f2] bg-[#f3f7fd] p-1">
+                      <TabsTrigger value="nominal" className="rounded-xl px-4 py-2.5">Nominal</TabsTrigger>
+                      <TabsTrigger value="real" className="rounded-xl px-4 py-2.5">Today&apos;s dollars</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                  <p className="text-right text-xs text-muted-foreground">
+                    Nominal matches most product illustrations. Today&apos;s dollars adjusts for inflation.
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="text-right text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                  View mode
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-end">
+                  <Tabs value={mode} onValueChange={(value) => onModeChange(value as StoryDetailMode)} className="sm:flex-1">
+                    <TabsList className="grid h-12 w-full grid-cols-2 rounded-2xl border-[#d9e4f2] bg-[#f3f7fd] p-1">
+                      <TabsTrigger value="walkthrough" className="rounded-xl px-5 py-2.5">
+                        Walkthrough
+                      </TabsTrigger>
+                      <TabsTrigger value="detailed" className="rounded-xl px-5 py-2.5">
+                        Detailed view
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                  <Button variant="outline" onClick={onReplayStory} className="h-12 px-5">
+                    <Play className="mr-2 h-4 w-4" />
+                    Replay walkthrough
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -873,9 +1193,17 @@ function StoryDetailView({
           policy={policy}
           analysis={analysis}
           feeImpact={feeImpact}
+          useReal={useReal}
           quickEntry={quickEntry}
-          onMonthlyIncomeChange={(value) => setQuickEntry((current) => ({ ...current, monthlyIncome: value }))}
-          onMonthlyExpensesChange={(value) => setQuickEntry((current) => ({ ...current, monthlyExpenses: value }))}
+          prefilledFromPlanner={plannerQuickEntry != null}
+          onMonthlyIncomeChange={(value) => {
+            setQuickEntryTouched(true)
+            setQuickEntry((current) => ({ ...current, monthlyIncome: value }))
+          }}
+          onMonthlyExpensesChange={(value) => {
+            setQuickEntryTouched(true)
+            setQuickEntry((current) => ({ ...current, monthlyExpenses: value }))
+          }}
           onOpenDetailed={() => onModeChange('detailed')}
           onOpenReceipt={() => setReceiptOpen(true)}
         />
@@ -884,9 +1212,18 @@ function StoryDetailView({
           policy={policy}
           analysis={analysis}
           feeImpact={feeImpact}
+          useReal={useReal}
+          onUseRealChange={setUseReal}
           quickEntry={quickEntry}
-          onMonthlyIncomeChange={(value) => setQuickEntry((current) => ({ ...current, monthlyIncome: value }))}
-          onMonthlyExpensesChange={(value) => setQuickEntry((current) => ({ ...current, monthlyExpenses: value }))}
+          prefilledFromPlanner={plannerQuickEntry != null}
+          onMonthlyIncomeChange={(value) => {
+            setQuickEntryTouched(true)
+            setQuickEntry((current) => ({ ...current, monthlyIncome: value }))
+          }}
+          onMonthlyExpensesChange={(value) => {
+            setQuickEntryTouched(true)
+            setQuickEntry((current) => ({ ...current, monthlyExpenses: value }))
+          }}
           onOpenReceipt={() => setReceiptOpen(true)}
         />
       )}
@@ -898,7 +1235,7 @@ function StoryDetailView({
         analysis={analysis}
         feeBreakdown={receiptFeeBreakdown}
         includeOcf
-        defaultUseReal
+        defaultUseReal={useReal}
       />
     </div>
   )

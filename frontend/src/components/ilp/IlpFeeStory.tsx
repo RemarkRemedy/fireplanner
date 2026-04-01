@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { RefreshCw, X } from 'lucide-react'
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Checkbox } from '@/components/ui/checkbox'
 import { WrappedCard } from '@/components/wrapped/WrappedCard'
 import { WrappedProgressBar } from '@/components/wrapped/WrappedProgressBar'
 import { AnimatedNumber } from '@/components/wrapped/AnimatedNumber'
@@ -27,7 +28,7 @@ interface IlpFeeStoryProps {
   onClose: () => void
 }
 
-const BASE_CARDS = ['cost', 'sources', 'bonuses', 'drag', 'exit', 'verify'] as const
+const BASE_CARDS = ['cost', 'sources', 'bonuses', 'exit', 'drag', 'verify'] as const
 
 function countMetadataOnlyBonuses(policy: IlpPolicyInput): string[] {
   if (!policy.catalogSource?.metadataOnlyBehaviors) return []
@@ -51,6 +52,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [direction, setDirection] = useState(1)
   const [yardstickIndex, setYardstickIndex] = useState(0)
+  const [excludeStoryFundFees, setExcludeStoryFundFees] = useState(false)
   const isTransitioning = useRef(false)
   const pointerStart = useRef<{ x: number; y: number; time: number } | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -106,7 +108,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
   const horizonProjectedValue = horizonProjectionRow?.combinedValue ?? projectedAnalysis?.npvAnalysis.holdToMip.finalValue ?? 0
   const horizonProjectedContributions = horizonProjectionRow?.cumulativePremiums ?? projectedAnalysis?.npvAnalysis.holdToMip.totalContributions ?? 0
   const discountedChargeTimeline = projectedAnalysis
-    ? buildDiscountedChargeTimeline(policy, projectedAnalysis)
+    ? buildDiscountedChargeTimeline(policy, projectedAnalysis, { includeFundFees: !excludeStoryFundFees })
     : []
 
   const goForward = useCallback(() => {
@@ -150,15 +152,28 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
     setYardstickIndex(0)
   }, [realTotalEstimatedFees, horizonYears, policy.currency])
 
-  const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    pointerStart.current = { x: e.clientX, y: e.clientY, time: Date.now() }
+  const isInteractiveTarget = useCallback((target: EventTarget | null) => {
+    return target instanceof Element
+      && target.closest('button, label, a, input, select, textarea, [role="checkbox"], [data-story-interactive]') != null
   }, [])
+
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    if (isInteractiveTarget(e.target)) {
+      pointerStart.current = null
+      return
+    }
+    pointerStart.current = { x: e.clientX, y: e.clientY, time: Date.now() }
+  }, [isInteractiveTarget])
 
   const handlePointerCancel = useCallback(() => {
     pointerStart.current = null
   }, [])
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    if (isInteractiveTarget(e.target)) {
+      pointerStart.current = null
+      return
+    }
     if (!pointerStart.current) return
     const dx = e.clientX - pointerStart.current.x
     const dy = e.clientY - pointerStart.current.y
@@ -179,7 +194,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
     const ratio = x / rect.width
     if (ratio < 0.3) goBack()
     else goForward()
-  }, [currentIndex, goBack, goForward, totalCards])
+  }, [currentIndex, goBack, goForward, isInteractiveTarget, totalCards])
 
   const gradientMap: Record<(typeof BASE_CARDS)[number], string> = {
     cost: ILP_GRADIENTS.cost,
@@ -370,15 +385,31 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
             {activeCards[currentIndex] === 'drag' && (
               <WrappedCard gradient={currentGradient} direction={direction}>
                 <motion.p variants={staggerChild} className="text-xs font-medium uppercase tracking-widest text-white/60">
-                  Discounted charge burden over time
+                  Total out-of-pocket fees by exit year
                 </motion.p>
                 {isProjected ? (
                   <>
                     <motion.p variants={staggerChild} className="max-w-2xl text-base text-white/78 md:text-lg">
-                      This line adds policy charges, implicit fund charges, bonus offsets, inception charges, and the surrender charge that still applies at each exit year, all discounted to today&apos;s dollars.
+                      For each possible exit year, this shows the total out-of-pocket fees you would have paid by then in today&apos;s dollars, {excludeStoryFundFees ? 'excluding' : 'including'} fund fees, after bonus offsets and any surrender charge still applying at that point.
                     </motion.p>
+                    <motion.div
+                      variants={staggerChild}
+                      className="flex w-full max-w-4xl items-center gap-2 text-sm text-white/80"
+                      onPointerDown={(event) => event.stopPropagation()}
+                      onPointerUp={(event) => event.stopPropagation()}
+                    >
+                      <Checkbox
+                        id="exclude-story-fund-fees"
+                        checked={excludeStoryFundFees}
+                        onCheckedChange={(value) => setExcludeStoryFundFees(value === true)}
+                        className="border-white/35 data-[state=checked]:border-white/15 data-[state=checked]:bg-white data-[state=checked]:text-[#4A1060]"
+                      />
+                      <label htmlFor="exclude-story-fund-fees" className="cursor-pointer">
+                        Exclude fund fees (OCF) from this view
+                      </label>
+                    </motion.div>
                     <motion.div variants={staggerChild} className="w-full max-w-4xl rounded-xl border border-white/10 bg-white/[0.04] p-4">
-                      <div className="h-72 w-full" role="img" aria-label="Line chart showing discounted charges by exit year">
+                      <div className="h-72 w-full" role="img" aria-label="Line chart showing total out-of-pocket fees by exit year">
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={discountedChargeTimeline} margin={{ top: 8, right: 20, bottom: 8, left: 12 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
@@ -412,12 +443,12 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                                   [
                                     `Total ${formatIlpCurrency(value, policy.currency)}`,
                                     `Policy ${formatIlpCurrency(point.discountedPolicyCharges, policy.currency)}`,
-                                    `Fund ${formatIlpCurrency(point.discountedFundCharges, policy.currency)}`,
+                                    ...(!excludeStoryFundFees ? [`Fund ${formatIlpCurrency(point.discountedFundCharges, policy.currency)}`] : []),
                                     `Bonuses -${formatIlpCurrency(point.discountedBonuses, policy.currency)}`,
                                     `Initial ${formatIlpCurrency(point.discountedInceptionCharges, policy.currency)}`,
                                     `EEC ${formatIlpCurrency(point.discountedEec, policy.currency)}`,
                                   ].join(' | '),
-                                  'Today-dollar charge burden',
+                                  'Today-dollar total to exit',
                                 ]
                               }}
                             />
@@ -434,7 +465,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                       </div>
                     </motion.div>
                     <motion.p variants={staggerChild} className="max-w-2xl text-sm text-white/62">
-                      At the horizon, this converges to the same today-dollar fee burden used for the yardstick comparison, but here you can see how much of it is still being shaped by surrender charges earlier on.
+                      Lower points can highlight potentially better exit windows, but this is only one lens. You still need to weigh the value available, what you would keep contributing, and the role this policy plays in your plan.
                     </motion.p>
                   </>
                 ) : (

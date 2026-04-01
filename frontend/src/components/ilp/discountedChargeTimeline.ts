@@ -12,9 +12,14 @@ export interface DiscountedChargeTimelinePoint {
   totalDiscountedCharges: number
 }
 
+interface BuildDiscountedChargeTimelineOptions {
+  includeFundFees?: boolean
+}
+
 export function buildDiscountedChargeTimeline(
   policy: IlpPolicyInput,
   analysis: IlpProjectedPolicyAnalysis,
+  { includeFundFees = true }: BuildDiscountedChargeTimelineOptions = {},
 ): DiscountedChargeTimelinePoint[] {
   const feeBreakdown = buildFeeBreakdown(analysis.projections.mid, policy.funds, policy)
   const inceptionCharges = feeBreakdown.inceptionCharges.reduce((sum, charge) => sum + charge.amount, 0)
@@ -41,7 +46,7 @@ export function buildDiscountedChargeTimeline(
     const discountFactor = Math.pow(1 + policy.inflationRate, row.year)
 
     discountedPolicyCharges += feeRow.grossFee / discountFactor
-    discountedFundCharges += feeRow.implicitFundFee / discountFactor
+    discountedFundCharges += includeFundFees ? feeRow.implicitFundFee / discountFactor : 0
     discountedBonuses += feeRow.bonusCredits / discountFactor
 
     const discountedEec = row.eecCharge / discountFactor

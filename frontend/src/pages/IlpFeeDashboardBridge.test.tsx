@@ -10,6 +10,7 @@ import { IlpFeeStory } from '@/components/ilp/IlpFeeStory'
 import { ProductPickerDialog } from '@/components/ilp/catalog/ProductPickerDialog'
 import { analyzeIlpPolicy } from '@/lib/calculations/ilp'
 import { createDefaultPolicy, useIlpStore } from '@/stores/useIlpStore'
+import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 import { IlpLandingPage } from './IlpLandingPage'
 import { IlpExitCalculatorPage } from './IlpExitCalculatorPage'
 import { IlpLeaderboardPage } from './IlpLeaderboardPage'
@@ -66,6 +67,7 @@ beforeEach(() => {
   localStorage.clear()
   act(() => {
     useIlpStore.getState().reset()
+    useHouseholdPlanStore.getState().reset()
   })
 })
 
@@ -246,7 +248,7 @@ describe('ILP fee dashboard blog bridge', () => {
 
     render(<IlpFeeStory policy={policy} analysis={analysis} onClose={vi.fn()} />)
 
-    expect(screen.getByText(/what this product may cost you/i)).toBeInTheDocument()
+    expect(screen.getByText(/what this product may cost/i)).toBeInTheDocument()
     expect(screen.getByText(/estimated total fees over/i)).toBeInTheDocument()
 
     await user.keyboard(' ')
@@ -266,8 +268,24 @@ describe('ILP fee dashboard blog bridge', () => {
 
     await user.keyboard(' ')
     await waitForStoryAdvance()
+    await waitFor(() => expect(screen.getByText(/total out-of-pocket fees by exit year/i)).toBeInTheDocument())
+    expect(screen.getByText(/exclude fund fees \(ocf\) from this view/i)).toBeInTheDocument()
+
+    await user.keyboard(' ')
+    await waitForStoryAdvance()
     await waitFor(() => expect(screen.getByText(/what to verify before deciding/i)).toBeInTheDocument())
     expect(screen.getByRole('button', { name: /continue walkthrough/i })).toBeInTheDocument()
+  })
+
+  it('defaults the wrapped story to nominal values so it matches the detail-view handoff', () => {
+    const policy = createDefaultPolicy()
+    const analysis = analyzeIlpPolicy(policy)
+
+    render(<IlpFeeStory policy={policy} analysis={analysis} onClose={vi.fn()} />)
+
+    expect(screen.getByText(/nominal\)\./i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^nominal$/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /today'?s \$/i })).not.toBeInTheDocument()
   })
 
   it('shows surrender-fee and withdrawable-value columns in the detailed fee table', () => {
@@ -503,7 +521,7 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(screen.getByRole('heading', { level: 3, name: /detailed fee table/i })).toBeInTheDocument()
   })
 
-  it('shows guidance that the story detail page is an estimate to confirm with an adviser', async () => {
+  it('shows guidance that the story detail page is an estimate to confirm in policy documents', async () => {
     const user = userEvent.setup()
 
     render(
@@ -515,30 +533,41 @@ describe('ILP fee dashboard blog bridge', () => {
     )
 
     expect(screen.getByText(/confirm your details/i)).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /show me the fees/i }))
+    await user.click(screen.getByRole('button', { name: /load this product/i }))
     await user.click(await screen.findByRole('button', { name: /close/i }))
 
-    expect(await screen.findByText(/use this as a guide, not a quote/i)).toBeInTheDocument()
+    expect(await screen.findByText(/use this estimate as a guide/i)).toBeInTheDocument()
+    expect(screen.getByText('Dollar basis')).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /^nominal$/i })).toHaveAttribute('data-state', 'active')
     expect(screen.getByRole('tab', { name: /walkthrough/i })).toHaveAttribute('data-state', 'active')
     expect(screen.getByRole('tab', { name: /detailed view/i })).toBeInTheDocument()
     expect(screen.getByText(/it is still a useful guide to help you visualize the fees this product could incur/i)).toBeInTheDocument()
     expect(screen.getByText(/past performance does not guarantee future performance/i)).toBeInTheDocument()
-    expect(screen.getByText(/confirm the actual numbers with your adviser/i)).toBeInTheDocument()
+    expect(screen.getByText(/confirm the applicable charges, surrender values, bonuses, and fund details/i)).toBeInTheDocument()
     expect(screen.getByText(/want to compare this against your own cash flow/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/monthly take-home income \(sgd\)/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/monthly expenses \(sgd\)/i)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /open planner inputs/i })).toHaveAttribute('href', '/inputs#section-income')
-    expect(screen.getByText(/what this product is likely costing you/i)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /open planner inputs/i })).not.toBeInTheDocument()
+    expect(screen.getByText(/the fee picture/i)).toBeInTheDocument()
     expect(screen.getByText(/how much bonuses cover/i)).toBeInTheDocument()
+    expect(screen.getByText('S$1,050')).toBeInTheDocument()
+    expect(screen.getByText(/lowest-fee exit year \(year 1\)/i)).toBeInTheDocument()
+    expect(screen.getByText(/if contributions continue to year 15/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/total fee cost/i).length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: /generate your ilp receipt/i })).toBeInTheDocument()
+    expect(screen.queryByText(/^fee breakdown$/i)).not.toBeInTheDocument()
+
+    const cashFlowHeading = screen.getByText(/how this compares against your own cash flow/i)
+    const documentCheckHeading = screen.getByText(/what this estimate does not confirm/i)
+    expect(cashFlowHeading.compareDocumentPosition(documentCheckHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+
+    await user.click(screen.getByRole('tab', { name: /today's dollars/i }))
+
+    expect(screen.getByRole('tab', { name: /today's dollars/i })).toHaveAttribute('data-state', 'active')
     expect(screen.getByText('S$773')).toBeInTheDocument()
     expect(screen.getByText('31.9%')).toBeInTheDocument()
     expect(screen.queryByText('S$1,050')).not.toBeInTheDocument()
     expect(screen.queryByText('41.7%')).not.toBeInTheDocument()
-    expect(screen.getByText(/best exit point \(year 1\)/i)).toBeInTheDocument()
-    expect(screen.getByText(/keep policy for 15 years/i)).toBeInTheDocument()
-    expect(screen.getAllByText(/total fee cost/i).length).toBeGreaterThan(0)
-    expect(screen.getByRole('button', { name: /generate your ilp receipt/i })).toBeInTheDocument()
-    expect(screen.queryByText(/^fee breakdown$/i)).not.toBeInTheDocument()
   })
 
   it('switches the story detail route from walkthrough to detailed view', async () => {
@@ -552,7 +581,7 @@ describe('ILP fee dashboard blog bridge', () => {
       </MemoryRouter>,
     )
 
-    await user.click(screen.getByRole('button', { name: /show me the fees/i }))
+    await user.click(screen.getByRole('button', { name: /load this product/i }))
     await user.click(await screen.findByRole('button', { name: /close/i }))
 
     await user.click(screen.getByRole('tab', { name: /detailed view/i }))
@@ -573,14 +602,14 @@ describe('ILP fee dashboard blog bridge', () => {
       </MemoryRouter>,
     )
 
-    await user.click(screen.getByRole('button', { name: /show me the fees/i }))
+    await user.click(screen.getByRole('button', { name: /load this product/i }))
     await user.click(await screen.findByRole('button', { name: /close/i }))
 
     expect(await screen.findByRole('button', { name: /replay walkthrough/i })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /replay walkthrough/i }))
 
-    expect(await screen.findByText(/what this product may cost you/i)).toBeInTheDocument()
+    expect(await screen.findByText(/what this product may cost/i)).toBeInTheDocument()
     expect(screen.getByText(/estimated total fees over/i)).toBeInTheDocument()
   })
 
@@ -595,7 +624,7 @@ describe('ILP fee dashboard blog bridge', () => {
       </MemoryRouter>,
     )
 
-    await user.click(screen.getByRole('button', { name: /show me the fees/i }))
+    await user.click(screen.getByRole('button', { name: /load this product/i }))
     await user.click(await screen.findByRole('button', { name: /close/i }))
 
     await user.clear(screen.getByLabelText(/monthly take-home income \(sgd\)/i))
@@ -607,6 +636,96 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(screen.getByText('S$1,800')).toBeInTheDocument()
     expect(screen.getByText(/this policy's monthly premium/i)).toBeInTheDocument()
     expect(screen.getByText(/surplus left after premium/i)).toBeInTheDocument()
+    expect(screen.getByText(/liquidity lens/i)).toBeInTheDocument()
+    expect(screen.getByText(/premium as share of take-home pay/i)).toBeInTheDocument()
+    expect(screen.getByText(/liquid cash-flow margin after premium/i)).toBeInTheDocument()
     expect(screen.getByText(/monthly premium uses 19.4% of your entered monthly surplus/i)).toBeInTheDocument()
+  })
+
+  it('treats a thin positive liquid margin after premium as caution rather than success', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter initialEntries={['/ilp-fees/story/aia-elite-secure-income-5-pay']}>
+        <Routes>
+          <Route path="/ilp-fees/story/:productId" element={<IlpStoryModePage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole('button', { name: /load this product/i }))
+    await user.click(await screen.findByRole('button', { name: /close/i }))
+
+    await user.clear(screen.getByLabelText(/monthly take-home income \(sgd\)/i))
+    await user.type(screen.getByLabelText(/monthly take-home income \(sgd\)/i), '4000')
+    await user.clear(screen.getByLabelText(/monthly expenses \(sgd\)/i))
+    await user.type(screen.getByLabelText(/monthly expenses \(sgd\)/i), '3300')
+
+    expect(screen.getByText(/thin liquid margin/i)).toBeInTheDocument()
+    expect(screen.getByText(/that is still a thin liquid buffer/i)).toBeInTheDocument()
+    expect(screen.queryByText(/remaining cash flow still matters because this premium is less liquid/i)).not.toBeInTheDocument()
+  })
+
+  it('prefills the story cash-flow check from saved planner values when they exist', async () => {
+    const user = userEvent.setup()
+
+    act(() => {
+      const householdStore = useHouseholdPlanStore.getState()
+      householdStore.initializeManualPlan('individual')
+
+      const selfAdult = useHouseholdPlanStore.getState().plan.adults.find((adult) => adult.owner === 'self')
+      if (!selfAdult) {
+        throw new Error('Expected a self adult in the household plan.')
+      }
+
+      householdStore.updateAdult(selfAdult.id, {
+        currentAge: 35,
+        annualIncome: 96_000,
+        annualExpenses: 36_000,
+      })
+
+      const salaryModel = useHouseholdPlanStore.getState().plan.income.find((entry) => (
+        entry.kind === 'salary-model'
+        && entry.owner === 'self'
+        && entry.timing.kind === 'age-range'
+      ))
+      if (!salaryModel || salaryModel.timing.kind !== 'age-range') {
+        throw new Error('Expected a seeded self salary model entry.')
+      }
+      householdStore.updateIncome(salaryModel.id, {
+        annualAmount: 96_000,
+      })
+
+      const baseExpense = useHouseholdPlanStore.getState().plan.expenses.find((entry) => (
+        entry.kind === 'base-living'
+        && entry.owner === 'self'
+        && entry.timing.kind === 'age-range'
+      ))
+      if (!baseExpense || baseExpense.timing.kind !== 'age-range') {
+        throw new Error('Expected a seeded self base-living expense entry.')
+      }
+      householdStore.updateExpense(baseExpense.id, {
+        amount: 36_000,
+        periodicity: 'annual',
+      })
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/ilp-fees/story/aia-elite-secure-income-5-pay']}>
+        <Routes>
+          <Route path="/ilp-fees/story/:productId" element={<IlpStoryModePage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole('button', { name: /load this product/i }))
+    await user.click(await screen.findByRole('button', { name: /close/i }))
+
+    const expensesInput = screen.getByLabelText(/monthly expenses \(sgd\)/i) as HTMLInputElement
+
+    expect(screen.getByText(/these fields start with your saved planner income and spending/i)).toBeInTheDocument()
+    expect(screen.getByText(/estimated monthly surplus/i)).toBeInTheDocument()
+    expect(expensesInput.value).not.toBe('S$0')
+    expect(screen.queryByRole('link', { name: /open planner inputs/i })).not.toBeInTheDocument()
   })
 })

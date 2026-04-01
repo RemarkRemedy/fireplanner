@@ -29,6 +29,9 @@ import { formatIlpCurrency, formatIlpPercent } from './formatters'
 interface FeeBreakdownSectionProps {
   policy: IlpPolicyInput
   analysis: IlpProjectedPolicyAnalysis
+  useRealValues?: boolean
+  onUseRealValuesChange?: (value: boolean) => void
+  showDollarBasisToggle?: boolean
 }
 
 const DEFAULT_FEE_CATEGORIES = [
@@ -103,12 +106,20 @@ export function getVisibleAnnualFeeCategoryKeys(
     .map((category) => category.key)
 }
 
-export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionProps) {
+export function FeeBreakdownSection({
+  policy,
+  analysis,
+  useRealValues: controlledUseRealValues,
+  onUseRealValuesChange,
+  showDollarBasisToggle = true,
+}: FeeBreakdownSectionProps) {
   const [scenario, setScenario] = useState<ReturnScenario>('mid')
   const [includeOcf, setIncludeOcf] = useState(true)
-  const [useRealValues, setUseRealValues] = useState(false)
+  const [internalUseRealValues, setInternalUseRealValues] = useState(false)
   const [tableExpanded, setTableExpanded] = useState(false)
   const [expandedPanel, setExpandedPanel] = useState<ExpandedFeePanel>(null)
+  const useRealValues = controlledUseRealValues ?? internalUseRealValues
+  const setUseRealValues = onUseRealValuesChange ?? setInternalUseRealValues
   const colors = useChartColors()
   const feeColumnInfo = deriveFeeColumnInfo(policy)
   const projection = analysis.projections[scenario]
@@ -130,6 +141,7 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
   const hasHiddenTableRows = breakdown.rows.length > previewRowCount
   const visibleBreakdownRows = tableExpanded ? breakdown.rows : breakdown.rows.slice(0, previewRowCount)
   const hiddenRowCount = Math.max(0, breakdown.rows.length - previewRowCount)
+  const displayMoney = (value: number, year: number) => useRealValues ? value / Math.pow(1 + inflationRate, year) : value
 
   const stackedBarData = useMemo(() => {
     const discount = (value: number, year: number) => useRealValues ? value / Math.pow(1 + inflationRate, year) : value
@@ -301,6 +313,15 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
 
   const renderFeeTable = (showAllRows = false) => {
     const rows = showAllRows ? breakdown.rows : visibleBreakdownRows
+    const displayedTotalContribution = breakdown.rows.reduce((sum, row) => sum + displayMoney(row.contribution, row.year), 0)
+    const displayedTotalAccountFee = breakdown.rows.reduce((sum, row) => sum + displayMoney(row.accountFee, row.year), 0)
+    const displayedTotalAdditionalCharges = breakdown.rows.reduce((sum, row) => sum + displayMoney(row.additionalCharges, row.year), 0)
+    const displayedTotalAssuranceCharges = breakdown.rows.reduce((sum, row) => sum + displayMoney(row.assuranceCharges, row.year), 0)
+    const displayedTotalEventCharges = breakdown.rows.reduce((sum, row) => sum + displayMoney(row.eventCharges, row.year), 0)
+    const displayedTotalImplicitFundFee = breakdown.rows.reduce((sum, row) => sum + displayMoney(row.implicitFundFee, row.year), 0)
+    const displayedTotalGrossFee = breakdown.rows.reduce((sum, row) => sum + displayMoney(includeOcf ? row.totalGrossFee : row.grossFee, row.year), 0)
+    const displayedTotalBonusCredits = breakdown.rows.reduce((sum, row) => sum + displayMoney(row.bonusCredits, row.year), 0)
+    const displayedTotalWithdrawals = breakdown.rows.reduce((sum, row) => sum + displayMoney(row.withdrawals, row.year), 0)
 
     return (
       <div className={cn('overflow-auto rounded-md border', showAllRows && 'max-h-[70vh]')}>
@@ -402,34 +423,34 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
                       {isBestExit && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">Lowest Fee Year</span>}
                     </div>
                   </td>
-                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.contribution, policy.currency)}</td>
-                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.accountFee, policy.currency)}</td>
-                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.additionalCharges, policy.currency)}</td>
-                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.assuranceCharges, policy.currency)}</td>
-                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.eventCharges, policy.currency)}</td>
-                  {includeOcf && <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.implicitFundFee, policy.currency)}</td>}
-                  <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(includeOcf ? row.totalGrossFee : row.grossFee, policy.currency)}</td>
-                  <td className="px-2 py-2 text-right tabular-nums text-emerald-700 dark:text-emerald-400">{formatIlpCurrency(row.bonusCredits, policy.currency)}</td>
-                  <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency((includeOcf ? row.totalGrossFee : row.grossFee) - row.bonusCredits, policy.currency)}</td>
-                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.withdrawals, policy.currency)}</td>
-                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.closingValue, policy.currency)}</td>
-                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.eecCharge, policy.currency)}</td>
-                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(row.surrenderValue, policy.currency)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(displayMoney(row.contribution, row.year), policy.currency)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(displayMoney(row.accountFee, row.year), policy.currency)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(displayMoney(row.additionalCharges, row.year), policy.currency)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(displayMoney(row.assuranceCharges, row.year), policy.currency)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(displayMoney(row.eventCharges, row.year), policy.currency)}</td>
+                  {includeOcf && <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(displayMoney(row.implicitFundFee, row.year), policy.currency)}</td>}
+                  <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(displayMoney(includeOcf ? row.totalGrossFee : row.grossFee, row.year), policy.currency)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums text-emerald-700 dark:text-emerald-400">{formatIlpCurrency(displayMoney(row.bonusCredits, row.year), policy.currency)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums font-medium">{formatIlpCurrency(displayMoney((includeOcf ? row.totalGrossFee : row.grossFee) - row.bonusCredits, row.year), policy.currency)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(displayMoney(row.withdrawals, row.year), policy.currency)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(displayMoney(row.closingValue, row.year), policy.currency)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(displayMoney(row.eecCharge, row.year), policy.currency)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{formatIlpCurrency(displayMoney(row.surrenderValue, row.year), policy.currency)}</td>
                 </tr>
               )
             })}
             <tr className="border-t-2 bg-slate-100/80 font-semibold dark:bg-slate-800/70">
               <td className="sticky left-0 z-10 border-r bg-slate-100/80 px-3 py-2 dark:bg-slate-800/70">Total</td>
-              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.rows.reduce((s, r) => s + r.contribution, 0), policy.currency)}</td>
-              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.totals.accountFee, policy.currency)}</td>
-              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.totals.additionalCharges, policy.currency)}</td>
-              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.totals.assuranceCharges, policy.currency)}</td>
-              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.totals.eventCharges, policy.currency)}</td>
-              {includeOcf && <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.totals.implicitFundFee, policy.currency)}</td>}
-              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(includeOcf ? breakdown.totals.totalGrossFee : breakdown.totals.grossFee, policy.currency)}</td>
-              <td className="px-2 py-2 text-right tabular-nums font-semibold text-emerald-700 dark:text-emerald-400">{formatIlpCurrency(breakdown.totals.bonusCredits, policy.currency)}</td>
-              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency((includeOcf ? breakdown.totals.totalGrossFee : breakdown.totals.grossFee) - breakdown.totals.bonusCredits, policy.currency)}</td>
-              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(breakdown.rows.reduce((s, r) => s + r.withdrawals, 0), policy.currency)}</td>
+              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(displayedTotalContribution, policy.currency)}</td>
+              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(displayedTotalAccountFee, policy.currency)}</td>
+              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(displayedTotalAdditionalCharges, policy.currency)}</td>
+              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(displayedTotalAssuranceCharges, policy.currency)}</td>
+              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(displayedTotalEventCharges, policy.currency)}</td>
+              {includeOcf && <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(displayedTotalImplicitFundFee, policy.currency)}</td>}
+              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(displayedTotalGrossFee, policy.currency)}</td>
+              <td className="px-2 py-2 text-right tabular-nums font-semibold text-emerald-700 dark:text-emerald-400">{formatIlpCurrency(displayedTotalBonusCredits, policy.currency)}</td>
+              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(displayedTotalGrossFee - displayedTotalBonusCredits, policy.currency)}</td>
+              <td className="px-2 py-2 text-right tabular-nums font-semibold">{formatIlpCurrency(displayedTotalWithdrawals, policy.currency)}</td>
               <td className="px-2 py-2" />
               <td className="px-2 py-2 text-right text-muted-foreground">n/a</td>
               <td className="px-2 py-2" />
@@ -463,18 +484,20 @@ export function FeeBreakdownSection({ policy, analysis }: FeeBreakdownSectionPro
             </Tabs>
             <div className="flex flex-wrap items-center gap-3 sm:justify-end">
               <div className="flex items-center gap-1.5 text-xs">
-                <Checkbox id="include-ocf" checked={includeOcf} onCheckedChange={(v) => setIncludeOcf(v === true)} />
-                <label htmlFor="include-ocf" className="cursor-pointer">Include fund fees (OCF)</label>
+                <Checkbox id="exclude-ocf" checked={!includeOcf} onCheckedChange={(v) => setIncludeOcf(v !== true)} />
+                <label htmlFor="exclude-ocf" className="cursor-pointer">Exclude fund fees (OCF) from this view</label>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-muted-foreground">Dollar basis</span>
-                <Tabs value={useRealValues ? 'real' : 'nominal'} onValueChange={(value) => setUseRealValues(value === 'real')}>
-                  <TabsList>
-                    <TabsTrigger value="nominal">Nominal</TabsTrigger>
-                    <TabsTrigger value="real">Today's dollars</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
+              {showDollarBasisToggle ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-muted-foreground">Dollar basis</span>
+                  <Tabs value={useRealValues ? 'real' : 'nominal'} onValueChange={(value) => setUseRealValues(value === 'real')}>
+                    <TabsList>
+                      <TabsTrigger value="nominal">Nominal</TabsTrigger>
+                      <TabsTrigger value="real">Today's dollars</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
+              ) : null}
             </div>
           </div>
         </CardHeader>

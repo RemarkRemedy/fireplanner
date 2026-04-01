@@ -33,4 +33,24 @@ describe('buildDiscountedChargeTimeline', () => {
       6,
     )
   })
+
+  it('can exclude fund fees from the discounted exit-year total', () => {
+    const { products, manifest } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'aia-elite-secure-income-5-pay')
+    expect(product).toBeTruthy()
+
+    const seed = templateVariantToPolicySeed(product!, product!.variants[0], manifest)
+    const policy = mergePolicySeed(seed)
+    const analysis = analyzeIlpPolicy(policy)
+    expect(analysis.mode).toBe('projected')
+
+    const points = buildDiscountedChargeTimeline(policy, analysis, { includeFundFees: false })
+    const horizonPoint = points.at(-1)
+
+    expect(horizonPoint?.discountedFundCharges).toBe(0)
+    expect(horizonPoint?.totalDiscountedCharges).toBeCloseTo(
+      analysis.summary.realWrapperFees + analysis.summary.inceptionCharges - analysis.summary.realBonuses,
+      6,
+    )
+  })
 })
