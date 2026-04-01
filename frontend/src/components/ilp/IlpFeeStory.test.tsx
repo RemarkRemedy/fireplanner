@@ -50,6 +50,8 @@ describe('IlpFeeStory', () => {
     await advanceStory(user)
     expect(await screen.findByText('How much bonuses really help')).toBeInTheDocument()
     await advanceStory(user)
+    expect(await screen.findByText('Discounted charge burden over time')).toBeInTheDocument()
+    await advanceStory(user)
 
     expect(await screen.findByText('First penalty-free exit')).toBeInTheDocument()
     expect(screen.getByText('Lowest fee-burden exit')).toBeInTheDocument()

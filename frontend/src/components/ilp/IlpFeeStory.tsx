@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { RefreshCw, X } from 'lucide-react'
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { WrappedCard } from '@/components/wrapped/WrappedCard'
 import { WrappedProgressBar } from '@/components/wrapped/WrappedProgressBar'
 import { AnimatedNumber } from '@/components/wrapped/AnimatedNumber'
@@ -9,11 +10,13 @@ import type { IlpPolicyAnalysis, IlpPolicyInput } from '@/lib/calculations/ilp'
 import { useFeeImpact } from '@/hooks/useFeeImpact'
 import { formatIlpCurrency, formatIlpPercent } from './formatters'
 import { buildIlpFeeYardstickMatches } from './ilpFeeYardsticks'
+import { buildDiscountedChargeTimeline } from './discountedChargeTimeline'
 
 const ILP_GRADIENTS = {
   cost: 'linear-gradient(to bottom right, #0F1729, #1A1040)',
   sources: 'linear-gradient(to bottom right, #1A1040, #2D1B69)',
   bonuses: 'linear-gradient(to bottom right, #2D1B69, #4A1060)',
+  drag: 'linear-gradient(to bottom right, #341453, #53126B)',
   exit: 'linear-gradient(to bottom right, #4A1060, #6B1030)',
   verify: 'linear-gradient(to bottom right, #0F1729, #0A0F1E)',
 }
@@ -24,7 +27,7 @@ interface IlpFeeStoryProps {
   onClose: () => void
 }
 
-const BASE_CARDS = ['cost', 'sources', 'bonuses', 'exit', 'verify'] as const
+const BASE_CARDS = ['cost', 'sources', 'bonuses', 'drag', 'exit', 'verify'] as const
 
 function countMetadataOnlyBonuses(policy: IlpPolicyInput): string[] {
   if (!policy.catalogSource?.metadataOnlyBehaviors) return []
@@ -102,6 +105,9 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
     : horizonYears
   const horizonProjectedValue = horizonProjectionRow?.combinedValue ?? projectedAnalysis?.npvAnalysis.holdToMip.finalValue ?? 0
   const horizonProjectedContributions = horizonProjectionRow?.cumulativePremiums ?? projectedAnalysis?.npvAnalysis.holdToMip.totalContributions ?? 0
+  const discountedChargeTimeline = projectedAnalysis
+    ? buildDiscountedChargeTimeline(policy, projectedAnalysis)
+    : []
 
   const goForward = useCallback(() => {
     if (isTransitioning.current) return
@@ -179,6 +185,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
     cost: ILP_GRADIENTS.cost,
     sources: ILP_GRADIENTS.sources,
     bonuses: ILP_GRADIENTS.bonuses,
+    drag: ILP_GRADIENTS.drag,
     exit: ILP_GRADIENTS.exit,
     verify: ILP_GRADIENTS.verify,
   }
@@ -355,6 +362,84 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                 {unmodeledBonuses.length > 0 && (
                   <motion.p variants={staggerChild} className="max-w-sm text-xs text-amber-300/80">
                     {unmodeledBonuses.length} bonus {unmodeledBonuses.length === 1 ? 'type' : 'types'} not yet modeled ({unmodeledBonuses.map(humanizeBonusTag).join(', ')}). Actual net fees may be lower.
+                  </motion.p>
+                )}
+              </WrappedCard>
+            )}
+
+            {activeCards[currentIndex] === 'drag' && (
+              <WrappedCard gradient={currentGradient} direction={direction}>
+                <motion.p variants={staggerChild} className="text-xs font-medium uppercase tracking-widest text-white/60">
+                  Discounted charge burden over time
+                </motion.p>
+                {isProjected ? (
+                  <>
+                    <motion.p variants={staggerChild} className="max-w-2xl text-base text-white/78 md:text-lg">
+                      This line adds policy charges, implicit fund charges, bonus offsets, inception charges, and the surrender charge that still applies at each exit year, all discounted to today&apos;s dollars.
+                    </motion.p>
+                    <motion.div variants={staggerChild} className="w-full max-w-4xl rounded-xl border border-white/10 bg-white/[0.04] p-4">
+                      <div className="h-72 w-full" role="img" aria-label="Line chart showing discounted charges by exit year">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={discountedChargeTimeline} margin={{ top: 8, right: 20, bottom: 8, left: 12 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
+                            <XAxis
+                              dataKey="exitYear"
+                              tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.55)' }}
+                              tickLine={false}
+                              axisLine={false}
+                            />
+                            <YAxis
+                              width={80}
+                              tickFormatter={(value: number) => `${Math.round(value / 1000)}K`}
+                              tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.55)' }}
+                              tickLine={false}
+                              axisLine={false}
+                            />
+                            <Tooltip
+                              contentStyle={{
+                                background: 'rgba(11, 14, 28, 0.94)',
+                                border: '1px solid rgba(255,255,255,0.12)',
+                                borderRadius: 12,
+                                color: 'white',
+                              }}
+                              labelFormatter={(value: number) => `Exit in Year ${value}`}
+                              formatter={(value: number, name: string, item) => {
+                                const point = item.payload
+                                if (name !== 'totalDiscountedCharges') {
+                                  return [formatIlpCurrency(value, policy.currency), name]
+                                }
+                                return [
+                                  [
+                                    `Total ${formatIlpCurrency(value, policy.currency)}`,
+                                    `Policy ${formatIlpCurrency(point.discountedPolicyCharges, policy.currency)}`,
+                                    `Fund ${formatIlpCurrency(point.discountedFundCharges, policy.currency)}`,
+                                    `Bonuses -${formatIlpCurrency(point.discountedBonuses, policy.currency)}`,
+                                    `Initial ${formatIlpCurrency(point.discountedInceptionCharges, policy.currency)}`,
+                                    `EEC ${formatIlpCurrency(point.discountedEec, policy.currency)}`,
+                                  ].join(' | '),
+                                  'Today-dollar charge burden',
+                                ]
+                              }}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="totalDiscountedCharges"
+                              stroke="#F9A8D4"
+                              strokeWidth={3}
+                              dot={false}
+                              activeDot={{ r: 5, fill: '#F9A8D4', stroke: '#FFFFFF', strokeWidth: 1.5 }}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </motion.div>
+                    <motion.p variants={staggerChild} className="max-w-2xl text-sm text-white/62">
+                      At the horizon, this converges to the same today-dollar fee burden used for the yardstick comparison, but here you can see how much of it is still being shaped by surrender charges earlier on.
+                    </motion.p>
+                  </>
+                ) : (
+                  <motion.p variants={staggerChild} className="max-w-md text-lg text-white/90 md:text-xl">
+                    This chart appears once a projected timeline is available.
                   </motion.p>
                 )}
               </WrappedCard>
