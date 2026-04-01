@@ -367,8 +367,8 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                 </motion.p>
                 {isProjected && bestExitOption ? (
                   <>
-                    <motion.div variants={staggerChild} className="grid w-full max-w-5xl grid-cols-1 gap-3 text-left sm:grid-cols-2 xl:grid-cols-4">
-                      <div className="rounded-md border border-white/10 bg-white/[0.05] p-4">
+                    <motion.div variants={staggerChild} className="grid w-full max-w-3xl grid-cols-1 gap-3 text-left sm:grid-cols-2 sm:auto-rows-fr">
+                      <div className="rounded-md border border-white/10 bg-white/[0.05] p-4 sm:aspect-square">
                         <div className="text-xs uppercase tracking-wide text-white/50">Exit now</div>
                         <div className="mt-1 text-2xl font-semibold">
                           {formatIlpCurrency(projectedAnalysis.npvAnalysis.surrenderNow.netSurrenderValue, policy.currency)}
@@ -377,7 +377,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                           Current early-exit charge: {formatIlpCurrency(projectedAnalysis.npvAnalysis.surrenderNow.eecCharge, policy.currency)}
                         </div>
                       </div>
-                      <div className="rounded-md border border-white/10 bg-white/[0.05] p-4">
+                      <div className="rounded-md border border-white/10 bg-white/[0.05] p-4 sm:aspect-square">
                         <div className="text-xs uppercase tracking-wide text-white/50">First penalty-free exit</div>
                         {firstPenaltyFreeExitOption ? (
                           <>
@@ -395,14 +395,14 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                           </>
                         )}
                       </div>
-                      <div className="rounded-md border border-white/10 bg-white/[0.05] p-4">
+                      <div className="rounded-md border border-white/10 bg-white/[0.05] p-4 sm:aspect-square">
                         <div className="text-xs uppercase tracking-wide text-white/50">Lowest fee-burden exit</div>
                         <div className="mt-1 text-2xl font-semibold">Year {projectedAnalysis.npvAnalysis.bestExitYear}</div>
                         <div className="mt-1 text-xs text-white/55">
                           Value available {formatIlpCurrency(bestExitOption.netSurrenderValue, policy.currency)}
                         </div>
                       </div>
-                      <div className="rounded-md border border-white/10 bg-white/[0.05] p-4">
+                      <div className="rounded-md border border-white/10 bg-white/[0.05] p-4 sm:aspect-square">
                         <div className="text-xs uppercase tracking-wide text-white/50">If you keep the policy</div>
                         <div className="mt-1 text-2xl font-semibold">
                           {formatIlpCurrency(horizonProjectedValue, policy.currency)}
