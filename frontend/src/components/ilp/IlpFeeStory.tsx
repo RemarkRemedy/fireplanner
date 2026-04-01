@@ -47,12 +47,11 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
   const unmodeledBonuses = countMetadataOnlyBonuses(policy)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [direction, setDirection] = useState(1)
-  const [useReal, setUseReal] = useState(true)
   const [yardstickIndex, setYardstickIndex] = useState(0)
   const isTransitioning = useRef(false)
   const pointerStart = useRef<{ x: number; y: number; time: number } | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const feeImpact = useFeeImpact(policy, analysis, useReal)
+  const feeImpact = useFeeImpact(policy, analysis, false)
 
   const activeCards = BASE_CARDS
   const totalCards = activeCards.length
@@ -67,10 +66,10 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
     }, 0)
   }, [analysis, policy.funds])
 
-  const wrapperFees = useReal ? summary.realWrapperFees : (summary.totalFeesCharged - summary.inceptionCharges)
+  const wrapperFees = summary.totalFeesCharged - summary.inceptionCharges
   const inceptionCharges = summary.inceptionCharges
-  const bonuses = useReal ? summary.realBonuses : summary.totalBonusesReceived
-  const fundCharges = useReal ? summary.realFundCharges : nominalFundCharges
+  const bonuses = summary.totalBonusesReceived
+  const fundCharges = nominalFundCharges
 
   const grossWrapperFees = wrapperFees + inceptionCharges
   const netWrapperCost = grossWrapperFees - bonuses
@@ -175,7 +174,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
     verify: ILP_GRADIENTS.verify,
   }
   const currentGradient = gradientMap[activeCards[currentIndex]]
-  const basisLabel = useReal ? "in today's dollars" : 'nominal'
+  const basisLabel = 'nominal'
 
   return (
     <div
@@ -384,12 +383,12 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                         <div className="mt-1 text-xs text-white/55">Projected value after {horizonYear} years</div>
                         <div className="mt-3 space-y-1 text-xs text-white/60">
                           <div>Total contributions {formatIlpCurrency(analysis.npvAnalysis.holdToMip.totalContributions, policy.currency)}</div>
-                          <div>Total fee cost {formatIlpCurrency(analysis.npvAnalysis.holdToMip.totalNpvFees, policy.currency)}</div>
+                          <div>Total fee cost {formatIlpCurrency(totalEstimatedFees, policy.currency)}</div>
                         </div>
                       </div>
                     </motion.div>
                     <motion.p variants={staggerChild} className="max-w-lg text-base text-white/70">
-                      Early exit can still leave a meaningful surrender deduction. Holding to {horizonYear} years is not a free upside path either: it also means contributing {formatIlpCurrency(analysis.npvAnalysis.holdToMip.totalContributions, policy.currency)} and carrying the highest total fee cost in this estimate.
+                      Early exit can still leave a meaningful surrender deduction. Holding to {horizonYear} years is not a free upside path either: it also means contributing {formatIlpCurrency(analysis.npvAnalysis.holdToMip.totalContributions, policy.currency)} and carrying {formatIlpCurrency(totalEstimatedFees, policy.currency)} of nominal fee cost in this estimate.
                     </motion.p>
                   </>
                 ) : (
@@ -441,25 +440,6 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
       >
         <X className="h-6 w-6" />
       </button>
-
-      <div className="absolute right-4 top-14 z-20">
-        <div className="inline-flex rounded-full bg-white/10 p-0.5 text-xs font-medium">
-          <button
-            type="button"
-            className={`rounded-full px-3 py-1 transition-colors ${useReal ? 'bg-white/20 text-white' : 'text-white/60'}`}
-            onClick={(e) => { e.stopPropagation(); setUseReal(true) }}
-          >
-            Today's $
-          </button>
-          <button
-            type="button"
-            className={`rounded-full px-3 py-1 transition-colors ${!useReal ? 'bg-white/20 text-white' : 'text-white/60'}`}
-            onClick={(e) => { e.stopPropagation(); setUseReal(false) }}
-          >
-            Nominal
-          </button>
-        </div>
-      </div>
 
       {currentIndex < totalCards - 1 && currentIndex > 0 && (
         <button
