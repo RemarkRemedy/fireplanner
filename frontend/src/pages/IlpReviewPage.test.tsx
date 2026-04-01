@@ -6815,6 +6815,25 @@ describe('IlpReviewPage', () => {
     expect(screen.getByLabelText('Current Accepted Regular Premium Months')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('jumps from seeded manual-input guidance to the matching field', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Elite Secure Income - 5 Pay')
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
+
+    await user.click(screen.getByRole('button', { name: /^policy details$/i }))
+    expect(screen.queryByLabelText('Current Net Protected Premium Base (SGD)')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /policy details: current net protected premium base/i }))
+
+    const protectedBaseInput = await screen.findByLabelText('Current Net Protected Premium Base (SGD)')
+    await waitFor(() => expect(protectedBaseInput).toHaveFocus())
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds AIA Platinum Retirement Elite as a supported catalog product with payout-state and supplementary-charge warnings', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()

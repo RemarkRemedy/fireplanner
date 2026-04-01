@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { AlertTriangle, ChevronDown, ChevronRight, Lock, Plus, Trash2 } from 'lucide-react'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -33,6 +33,17 @@ const USE_TOP_UP_ROUTING_VALUE = '__top-up-routing__'
 interface PolicyInputFormProps {
   policy: IlpPolicyInput | null
   issues: string[]
+}
+
+const DEFAULT_OPEN_SECTIONS = ['policy', 'accounts', 'eec', 'funds', 'bonuses', 'charges', 'events', 'settings'] as const
+
+type PolicyInputSection = typeof DEFAULT_OPEN_SECTIONS[number]
+
+interface ManualInputGuide {
+  label: string
+  section: PolicyInputSection
+  sectionLabel: string
+  matchText: string
 }
 
 function createDraftId(prefix: string): string {
@@ -572,6 +583,8 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
   const [showCatalogEventChargeRules, setShowCatalogEventChargeRules] = useState(false)
   const [showCatalogEec, setShowCatalogEec] = useState(false)
   const [showCatalogBonuses, setShowCatalogBonuses] = useState(false)
+  const [openSections, setOpenSections] = useState<PolicyInputSection[]>([...DEFAULT_OPEN_SECTIONS])
+  const formRef = useRef<HTMLDivElement | null>(null)
 
   if (!policy) return null
 
@@ -1138,6 +1151,167 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
       : []),
     ...assuranceAgeBoundaryWarning,
   ]
+  const baselineSetupGuides: ManualInputGuide[] = [
+    {
+      label: `Monthly Contribution (${policy.currency})`,
+      section: 'policy',
+      sectionLabel: 'Policy Details',
+      matchText: 'Monthly Contribution',
+    },
+    {
+      label: 'Months Already Paid',
+      section: 'policy',
+      sectionLabel: 'Policy Details',
+      matchText: 'Months Already Paid',
+    },
+    {
+      label: 'Current Policy Year',
+      section: 'policy',
+      sectionLabel: 'Policy Details',
+      matchText: 'Current Policy Year',
+    },
+    {
+      label: `Current Value (${policy.currency})`,
+      section: 'accounts',
+      sectionLabel: 'Accounts',
+      matchText: 'Current Value',
+    },
+  ]
+  const manualInputGuides: ManualInputGuide[] = [
+    ...(missingCurrentNetProtectedPremiumBase
+      ? [{
+          label: `Current Net Protected Premium Base (${policy.currency})`,
+          section: 'policy' as const,
+          sectionLabel: 'Policy Details',
+          matchText: 'Current Net Protected Premium Base',
+        }]
+      : []),
+    ...(missingCurrentAmountOwing
+      ? [{
+          label: `Current Amount Owing (${policy.currency})`,
+          section: 'policy' as const,
+          sectionLabel: 'Policy Details',
+          matchText: 'Current Amount Owing',
+        }]
+      : []),
+    ...(missingCurrentTiClaimStatus
+      ? [{
+          label: 'Current TI Claim Status',
+          section: 'policy' as const,
+          sectionLabel: 'Policy Details',
+          matchText: 'Current TI Claim Status',
+        }]
+      : []),
+    ...(missingCurrentTiClaimBenefitAmount
+      ? [{
+          label: `Current Admitted TI Claim Benefit Amount (${policy.currency})`,
+          section: 'policy' as const,
+          sectionLabel: 'Policy Details',
+          matchText: 'Current Admitted TI Claim Benefit Amount',
+        }]
+      : []),
+    ...(missingCurrentResidualDeathBenefitAfterTiClaim
+      ? [{
+          label: `Current Residual Death Benefit After TI Claim (${policy.currency})`,
+          section: 'policy' as const,
+          sectionLabel: 'Policy Details',
+          matchText: 'Current Residual Death Benefit After TI Claim',
+        }]
+      : []),
+    ...(missingCurrentTpdClaimStatus
+      ? [{
+          label: 'Current TPD Claim Status',
+          section: 'policy' as const,
+          sectionLabel: 'Policy Details',
+          matchText: 'Current TPD Claim Status',
+        }]
+      : []),
+    ...(missingCurrentTpdClaimBenefitAmount
+      ? [{
+          label: `Current Admitted TPD Claim Benefit Amount (${policy.currency})`,
+          section: 'policy' as const,
+          sectionLabel: 'Policy Details',
+          matchText: 'Current Admitted TPD Claim Benefit Amount',
+        }]
+      : []),
+    ...(missingCurrentAccidentalDeathClaimStatus
+      ? [{
+          label: 'Current Accidental-Death Claim Status',
+          section: 'policy' as const,
+          sectionLabel: 'Policy Details',
+          matchText: 'Current Accidental-Death Claim Status',
+        }]
+      : []),
+    ...(missingCurrentAccidentalDeathClaimBenefitAmount
+      ? [{
+          label: `Current Admitted Accidental-Death Claim Benefit Amount (${policy.currency})`,
+          section: 'policy' as const,
+          sectionLabel: 'Policy Details',
+          matchText: 'Current Admitted Accidental-Death Claim Benefit Amount',
+        }]
+      : []),
+    ...(missingCurrentIndebtedness
+      ? [{
+          label: `Current Indebtedness / Outstanding Charges (${policy.currency})`,
+          section: 'policy' as const,
+          sectionLabel: 'Policy Details',
+          matchText: 'Current Indebtedness / Outstanding Charges',
+        }]
+      : []),
+    ...(missingRemainingAggregateTiCap
+      ? [{
+          label: `Remaining Aggregate TI Cap (${policy.currency})`,
+          section: 'policy' as const,
+          sectionLabel: 'Policy Details',
+          matchText: 'Remaining Aggregate TI Cap',
+        }]
+      : []),
+    ...(missingCurrentWopOnTpdClaimStatus
+      ? [{
+          label: 'Current SmartRetire Claim Family',
+          section: 'policy' as const,
+          sectionLabel: 'Policy Details',
+          matchText: 'Current SmartRetire Claim Family',
+        }]
+      : []),
+    ...(missingCurrentSmartRetireClaimAdmissionStatus
+      ? [{
+          label: 'Current SmartRetire Claim Admission Status',
+          section: 'policy' as const,
+          sectionLabel: 'Policy Details',
+          matchText: 'Current SmartRetire Claim Admission Status',
+        }]
+      : []),
+  ]
+  const revealManualInputGuide = useCallback((guide: ManualInputGuide) => {
+    setOpenSections((sections) => (
+      sections.includes(guide.section)
+        ? sections
+        : [...sections, guide.section]
+    ))
+
+    window.setTimeout(() => {
+      const root = formRef.current
+      if (!root) return
+
+      const matchingLabel = Array.from(root.querySelectorAll('label')).find((label) => (
+        label.textContent?.toLowerCase().includes(guide.matchText.toLowerCase())
+      ))
+
+      if (!matchingLabel) return
+
+      const labelElement = matchingLabel as HTMLLabelElement
+      const targetById = labelElement.htmlFor ? document.getElementById(labelElement.htmlFor) : null
+      const siblingTarget = labelElement.parentElement?.querySelector<HTMLElement>('input, button, [role="combobox"]')
+        ?? labelElement.parentElement?.nextElementSibling?.querySelector<HTMLElement>('input, button, [role="combobox"]')
+      const target = targetById instanceof HTMLElement ? targetById : siblingTarget
+
+      if (typeof matchingLabel.scrollIntoView === 'function') {
+        matchingLabel.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+      target?.focus()
+    }, 180)
+  }, [])
   const eecChartData = policy.eecTable.map((rate, index) => ({ year: index + 1, rate: rate * 100 }))
   const updateChargeRules = (chargeRules: IlpChargeRule[]) => updatePolicy(policy.id, { chargeRules })
   const applyVitalityStatus = (vitalityStatus: NonNullable<IlpPolicyInput['vitalityStatus']>) => updatePolicy(policy.id, {
@@ -1282,7 +1456,7 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
   const updateEventChargeRules = (eventChargeRules: IlpEventChargeRule[]) => updatePolicy(policy.id, { eventChargeRules })
 
   return (
-    <div className="space-y-4">
+    <div ref={formRef} className="space-y-4">
       {policy.catalogSource && (
         <Alert>
           <AlertTriangle className="h-4 w-4" />
@@ -1321,8 +1495,46 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
               <div className="space-y-1 text-amber-700 dark:text-amber-300">
                 <p className="text-sm font-medium">Manual inputs required for trusted current snapshot</p>
                 <p className="text-xs">
-                  Review the current-state/manual notes below before trusting the seeded snapshot.
+                  Use the quick jumps below to open the right section and land on the field that still needs current input.
                 </p>
+                <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 space-y-3">
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium uppercase tracking-wide">Baseline setup to review first</p>
+                    <div className="flex flex-wrap gap-2">
+                      {baselineSetupGuides.map((guide) => (
+                        <Button
+                          key={`baseline-${guide.matchText}`}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-auto border-amber-500/40 px-2 py-1 text-xs text-amber-700 dark:text-amber-300"
+                          onClick={() => revealManualInputGuide(guide)}
+                        >
+                          {guide.sectionLabel}: {guide.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  {manualInputGuides.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium uppercase tracking-wide">Supported-manual fields still needed</p>
+                      <div className="flex flex-wrap gap-2">
+                        {manualInputGuides.map((guide) => (
+                          <Button
+                            key={`manual-${guide.matchText}`}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-auto border-amber-500/40 px-2 py-1 text-xs text-amber-700 dark:text-amber-300"
+                            onClick={() => revealManualInputGuide(guide)}
+                          >
+                            {guide.sectionLabel}: {guide.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <details className="space-y-1">
                   <summary className="cursor-pointer text-sm font-medium">
                     Current input notes
@@ -1367,7 +1579,12 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
         </Alert>
       )}
 
-      <Accordion type="multiple" defaultValue={['policy', 'accounts', 'eec', 'funds', 'bonuses', 'charges', 'events', 'settings']} className="rounded-lg border bg-card px-4">
+      <Accordion
+        type="multiple"
+        value={openSections as string[]}
+        onValueChange={(value) => setOpenSections(value as PolicyInputSection[])}
+        className="rounded-lg border bg-card px-4"
+      >
         <AccordionItem value="policy">
           <AccordionTrigger>Policy Details</AccordionTrigger>
           <AccordionContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
