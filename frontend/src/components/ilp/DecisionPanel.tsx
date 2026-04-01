@@ -46,7 +46,7 @@ export function DecisionPanel({ policy, analysis }: DecisionPanelProps) {
   return (
     <div className="space-y-3">
       <div>
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Path comparison</h3>
+        <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Path comparison</p>
         <p className="text-sm text-muted-foreground">
           Three modeled paths using the current policy rules and assumptions. Use them to compare fee load and value available at different points in time.
         </p>

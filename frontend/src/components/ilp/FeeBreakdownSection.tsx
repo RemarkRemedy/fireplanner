@@ -506,7 +506,7 @@ export function FeeBreakdownSection({
           <div>
             <div className="mb-2 flex items-start justify-between gap-3">
               <div>
-                <h3 className="text-sm font-medium">Annual Fees by Category</h3>
+                <p className="text-sm font-medium">Annual Fees by Category</p>
                 <p className="mt-2 text-xs text-muted-foreground">
                   Positive bars are fees charged. Negative bars (below zero) are bonus credits returned.
                 </p>
@@ -529,7 +529,7 @@ export function FeeBreakdownSection({
           <div>
             <div className="mb-2 flex items-start justify-between gap-3">
               <div>
-                <h3 className="text-sm font-medium">Cumulative Fees Over Time</h3>
+                <p className="text-sm font-medium">Cumulative Fees Over Time</p>
                 <p className="mt-2 text-xs text-muted-foreground">
                   Shows whether bonus credits meaningfully offset gross fees over the policy term.
                 </p>
@@ -551,7 +551,7 @@ export function FeeBreakdownSection({
           {/* Fee Breakdown Table */}
           <div>
             <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
-              <h3 className="text-sm font-medium">Detailed Fee Table</h3>
+              <p className="text-sm font-medium">Detailed Fee Table</p>
               <div className="flex flex-wrap items-center gap-2">
                 {hasHiddenTableRows && (
                   <Button
@@ -587,7 +587,7 @@ export function FeeBreakdownSection({
 
           {/* Fee Category Explanations */}
           <div className="space-y-3">
-            <h3 className="text-sm font-medium">Fee Categories Explained</h3>
+            <p className="text-sm font-medium">Fee Categories Explained</p>
             <div className="grid gap-3 sm:grid-cols-2">
               {visibleExplanationCategories.map((category) => {
                 const label = category.key === 'additionalCharges' ? feeColumnInfo.additional.label : category.label
@@ -629,7 +629,7 @@ export function FeeBreakdownSection({
 
           {/* Honest Limits Disclosure */}
           <div className="rounded-md border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900 dark:bg-amber-950/20">
-            <h3 className="text-sm font-medium text-amber-900 dark:text-amber-200">Charges not yet modeled</h3>
+            <p className="text-sm font-medium text-amber-900 dark:text-amber-200">Charges not yet modeled</p>
             <ul className="mt-2 space-y-1">
               {UNMODELED_FEES.map((fee) => (
                 <li key={fee} className="text-xs text-amber-800 dark:text-amber-300">
@@ -644,9 +644,9 @@ export function FeeBreakdownSection({
               <div className="flex items-start gap-3">
                 <MessageCircle className="mt-0.5 h-5 w-5 text-blue-700 dark:text-blue-300" />
               <div>
-                <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-200">
+                <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">
                   Questions to ask your financial adviser about these fees
-                </h3>
+                </p>
                 <p className="mt-1 text-xs text-blue-800 dark:text-blue-300">
                   7 questions with plain-English explanations of common answers.
                 </p>

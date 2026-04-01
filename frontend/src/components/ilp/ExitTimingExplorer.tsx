@@ -167,7 +167,7 @@ export function ExitTimingExplorer({ policy, analysis, useReal = false }: ExitTi
       <CardContent className="space-y-4">
         <div className="space-y-3">
           <div>
-            <h3 className="text-sm font-semibold">Net gap by exit year</h3>
+            <p className="text-sm font-semibold">Net gap by exit year</p>
             <p className="text-sm text-muted-foreground">
               Positive bars mean the exit value is higher than the additional contributions you would make from now to that year.
             </p>
@@ -239,7 +239,7 @@ export function ExitTimingExplorer({ policy, analysis, useReal = false }: ExitTi
 
         <div className="space-y-3">
           <div>
-            <h3 className="text-sm font-semibold">Withdrawable value vs added from now vs ETF benchmark</h3>
+            <p className="text-sm font-semibold">Withdrawable value vs added from now vs ETF benchmark</p>
             <p className="text-sm text-muted-foreground">
               Compare how much you could withdraw, how much more you would still add from today, and what the same money could look like in a low-cost ETF benchmark.
             </p>

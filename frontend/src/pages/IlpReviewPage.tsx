@@ -294,7 +294,7 @@ function CurrentSnapshotRail({
           ) : (
             <div className="space-y-3">
               <div className="space-y-1">
-                <h3 className="text-sm font-semibold">Key current metrics</h3>
+                <p className="text-sm font-semibold">Key current metrics</p>
                 <p className="text-xs text-muted-foreground">
                   This rail stays compact on purpose. Use the advanced review section for the full summary grid and projected analysis.
                 </p>
@@ -650,9 +650,9 @@ export function IlpReviewPage() {
 
       {/* "Still not sure?" footer CTA */}
       <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-5 text-center dark:border-amber-900 dark:bg-amber-950/20">
-        <h3 className="text-base font-semibold text-amber-900 dark:text-amber-200">
+        <p className="text-base font-semibold text-amber-900 dark:text-amber-200">
           ILPs aren&apos;t always a bad deal
-        </h3>
+        </p>
         <p className="mx-auto mt-2 max-w-md text-sm text-amber-800 dark:text-amber-300">
           The numbers above show the cost. But cost isn&apos;t the only factor. Discipline, convenience, and your personal situation all matter.
         </p>

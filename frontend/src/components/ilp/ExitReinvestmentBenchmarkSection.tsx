@@ -247,7 +247,7 @@ export function ExitReinvestmentBenchmarkSection({
       <CardContent className="space-y-8">
         <div className="space-y-3">
           <div>
-            <h3 className="text-sm font-semibold">Path after the selected exit year</h3>
+            <p className="text-sm font-semibold">Path after the selected exit year</p>
             <p className="text-sm text-muted-foreground">
               The purple line keeps the ILP all the way to year {benchmark.horizonYear} under the {ilpRateKey}% gross ILP assumption. One faint line shows the never-enter path, and the other faint lines show exit-and-invest alternatives at {outsideRateKey}% gross outside return less TER. The highlighted teal line is the currently selected path.
             </p>
@@ -303,7 +303,7 @@ export function ExitReinvestmentBenchmarkSection({
 
         <div className="space-y-3">
           <div>
-            <h3 className="text-sm font-semibold">Horizon value for every exit option</h3>
+            <p className="text-sm font-semibold">Horizon value for every exit option</p>
             <p className="text-sm text-muted-foreground">
               The first bar is the clean “never enter ILP” baseline. The rest show what the portfolio could be worth by year {benchmark.horizonYear} if you entered the ILP under the {ilpRateKey}% gross case, then exited in that year and invested outside at {outsideRateKey}% gross less TER. Click a bar to inspect that path above.
             </p>
