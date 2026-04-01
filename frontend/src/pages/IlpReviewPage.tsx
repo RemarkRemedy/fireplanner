@@ -330,7 +330,7 @@ function CurrentSnapshotRail({
 
 export function IlpReviewPage() {
   usePageMeta({
-    title: 'ILP Review — SG FIRE Planner',
+    title: 'ILP Review - SG FIRE Planner',
     description: 'Compare ILP fee drag, surrender penalties, and exit options across multiple policies in one place.',
     path: '/ilp-review',
   })
@@ -658,7 +658,7 @@ export function IlpReviewPage() {
         </p>
         <a
           href="/blog/ilp-questions?utm_source=dashboard&utm_content=footer_card#when-ilp-makes-sense"
-          className="mt-3 inline-block rounded-md border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:bg-transparent dark:text-blue-400 dark:hover:bg-blue-950"
+          className="mt-3 inline-block rounded-md border border-blue-600 bg-card px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:bg-transparent dark:text-blue-400 dark:hover:bg-blue-950"
           target="_blank"
           rel="noopener noreferrer"
         >

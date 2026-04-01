@@ -604,7 +604,7 @@ function PlannerHandoffCard({
                   </p>
                 </div>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-md border bg-white p-4">
+                  <div className="rounded-md border bg-card p-4">
                     <div className="text-sm text-muted-foreground">Premium as share of take-home pay</div>
                     <div className="mt-1 text-xl font-bold text-slate-950">
                       {formatIlpPercent(premiumShareOfTakeHome)}
@@ -755,7 +755,7 @@ function WalkthroughSummarySection({
             message="Under these assumptions, policy-layer charges account for most of the modeled fee load early on, while fund charges build more gradually in the background over time."
           />
           <div className="flex flex-wrap gap-3">
-            <Button variant="outline" onClick={() => setShowCalculation((value) => !value)}>
+            <Button variant="default" onClick={() => setShowCalculation((value) => !value)}>
               {showCalculation ? 'Hide estimate build' : 'See how this estimate is built'}
             </Button>
             <Button variant="ghost" onClick={onOpenDetailed}>
@@ -821,7 +821,7 @@ function WalkthroughExitSection({
         message="These path comparisons use the current policy inputs and published rules in the model. Use them to compare projected tradeoffs, then confirm the actual exit values and charges in your policy documents."
       />
       <div className="flex flex-wrap gap-3">
-        <Button variant="outline" onClick={() => setShowExitDetails((value) => !value)}>
+        <Button variant="default" onClick={() => setShowExitDetails((value) => !value)}>
           {showExitDetails ? 'Hide exit details' : 'See exit details'}
         </Button>
         <Button variant="ghost" onClick={onOpenDetailed}>
@@ -1124,16 +1124,16 @@ function StoryDetailView({
     plannerQuickEntry ?? { monthlyIncome: 0, monthlyExpenses: 0 }
   ))
   const [quickEntryTouched, setQuickEntryTouched] = useState(false)
-  const receiptFeeBreakdown = useMemo(
-    () => buildFeeBreakdown(analysis.projections.mid, policy.funds, policy),
-    [analysis, policy],
-  )
-
+  // Sync planner store values into local state until user touches the form
   useEffect(() => {
     if (!quickEntryTouched && plannerQuickEntry) {
       setQuickEntry(plannerQuickEntry)
     }
   }, [plannerQuickEntry, quickEntryTouched])
+  const receiptFeeBreakdown = useMemo(
+    () => buildFeeBreakdown(analysis.projections.mid, policy.funds, policy),
+    [analysis, policy],
+  )
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
