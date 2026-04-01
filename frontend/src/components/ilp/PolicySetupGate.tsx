@@ -51,7 +51,7 @@ export function PolicySetupGate({ seed, onConfirm, onCancel, prospect }: PolicyS
   }
 
   return (
-    <Card className="rounded-md border-primary/30">
+    <Card variant="accent" className="rounded-md">
       <CardContent className="space-y-6 p-6">
         <div className="space-y-2">
           <h2 className="text-xl font-semibold">{seed.name}</h2>

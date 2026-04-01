@@ -117,7 +117,7 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
   }, [horizonYears, policy.monthlyContribution, policy.initialSinglePremium, policy.inflationRate, useReal, tierDefs])
 
   return (
-    <Card className="border-primary/20 bg-primary/5">
+    <Card variant="accent">
       <CardContent className="space-y-5 pt-6">
         {/* Header row: tagline + basis toggle */}
         <div className="flex items-center justify-between">

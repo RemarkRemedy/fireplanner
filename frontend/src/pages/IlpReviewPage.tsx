@@ -155,7 +155,7 @@ function ReviewWorkspaceOverview({
   policyCount: number
 }) {
   return (
-    <Card className="border-primary/20 bg-primary/[0.03]">
+    <Card variant="accent">
       <CardContent className="space-y-3 pt-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-2">
