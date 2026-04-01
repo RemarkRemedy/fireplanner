@@ -253,7 +253,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-white/45">
-                        Everyday yardsticks
+                        Everyday comparisons
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="text-[11px] text-white/45">

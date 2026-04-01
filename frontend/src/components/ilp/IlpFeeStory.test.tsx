@@ -23,7 +23,7 @@ describe('IlpFeeStory', () => {
 
     render(<IlpFeeStory policy={policy} analysis={analysis} onClose={vi.fn()} />)
 
-    expect(screen.getByText('Everyday yardsticks')).toBeInTheDocument()
+    expect(screen.getByText('Everyday comparisons')).toBeInTheDocument()
     expect(screen.getByText(/in today's dollars, that is/i)).toBeInTheDocument()
     expect(screen.getByText('1 of 20')).toBeInTheDocument()
     const firstExample = screen.getByText(/in today's dollars, that is/i).textContent
