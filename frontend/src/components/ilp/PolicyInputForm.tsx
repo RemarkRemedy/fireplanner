@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { AlertTriangle, ChevronDown, ChevronRight, Lock, Plus, Trash2 } from 'lucide-react'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -56,12 +56,14 @@ function NullableCurrencyField({
   onChange,
   currency,
   tooltip,
+  className,
 }: {
   label: string
   value?: number
   onChange: (value: number | undefined) => void
   currency: 'SGD' | 'USD'
   tooltip?: string
+  className?: string
 }) {
   const inputId = useId()
   const [localValue, setLocalValue] = useState(() => (
@@ -78,8 +80,8 @@ function NullableCurrencyField({
   }
 
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex min-h-[3rem] items-start gap-1">
+    <div className={cn('flex flex-col gap-1', className)}>
+      <div className="flex min-h-[4.5rem] items-start gap-1">
         <Label htmlFor={inputId} className="text-sm">
           {label}
         </Label>
@@ -678,7 +680,6 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
   const [showCatalogEec, setShowCatalogEec] = useState(false)
   const [showCatalogBonuses, setShowCatalogBonuses] = useState(false)
   const [openSections, setOpenSections] = useState<PolicyInputSection[]>([...DEFAULT_OPEN_SECTIONS])
-  const formRef = useRef<HTMLDivElement | null>(null)
 
   if (!policy) return null
 
@@ -1272,12 +1273,84 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
     },
   ]
   const manualInputGuides: ManualInputGuide[] = [
+    ...(missingAssuranceProfile && !supportsTokioLifeState
+      ? [{
+          label: 'Age Next Birthday',
+          section: 'policy' as const,
+          sectionLabel: 'Policy Details',
+          matchText: 'Age Next Birthday',
+        }]
+      : []),
+    ...(missingAssuranceProfile && !supportsTokioLifeState
+      ? [{
+          label: 'Life Assured Sex',
+          section: 'policy' as const,
+          sectionLabel: 'Policy Details',
+          matchText: 'Life Assured Sex',
+        }]
+      : []),
+    ...(missingAssuranceProfile
+      ? [{
+          label: 'Smoker Status',
+          section: 'policy' as const,
+          sectionLabel: 'Policy Details',
+          matchText: 'Smoker Status',
+        }]
+      : []),
     ...(missingCurrentNetProtectedPremiumBase
       ? [{
           label: `Current Net Protected Premium Base (${policy.currency})`,
           section: 'policy' as const,
           sectionLabel: 'Policy Details',
           matchText: 'Current Net Protected Premium Base',
+        }]
+      : []),
+    ...(missingCurrentAgeAccidentalDeathBenefit
+      ? [{
+          label: 'Age Next Birthday',
+          section: 'policy' as const,
+          sectionLabel: 'Policy Details',
+          matchText: 'Age Next Birthday',
+        }]
+      : []),
+    ...(missingCurrentProtectionAge
+      ? [{
+          label: 'Current Protection Age',
+          section: 'policy' as const,
+          sectionLabel: 'Policy Details',
+          matchText: 'Current Protection Age',
+        }]
+      : []),
+    ...(missingCurrentOldestLifeAgeNextBirthday
+      ? [{
+          label: 'Current Oldest Life Age Next Birthday',
+          section: 'policy' as const,
+          sectionLabel: 'Policy Details',
+          matchText: 'Current Oldest Life Age Next Birthday',
+        }]
+      : []),
+    ...(missingCurrentOldestLifeSex
+      ? [{
+          label: 'Current Oldest Life Sex',
+          section: 'policy' as const,
+          sectionLabel: 'Policy Details',
+          matchText: 'Current Oldest Life Sex',
+        }]
+      : []),
+    ...(missingCurrentYoungestLifeAgeNextBirthday
+      ? [{
+          label: 'Current Youngest Life Age Next Birthday',
+          section: 'policy' as const,
+          sectionLabel: 'Policy Details',
+          matchText: 'Current Youngest Life Age Next Birthday',
+        }]
+      : []),
+    ...(missingTargetRetirementAge
+      ? [{
+          label: 'Target Retirement Age',
+          section: 'policy' as const,
+          sectionLabel: 'Policy Details',
+          matchText: 'Target Retirement Age',
         }]
       : []),
     ...(missingCurrentAmountOwing
@@ -1377,6 +1450,24 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
         }]
       : []),
   ]
+  const requiredNowMatchTexts = new Set(manualInputGuides.map((guide) => guide.matchText))
+  const policyDetailFieldClass = (
+    section: 'setup' | 'current' | 'analysis',
+    matchTexts: string[] = [],
+  ) => {
+    const isRequiredNow = matchTexts.some((matchText) => requiredNowMatchTexts.has(matchText))
+
+    return cn(
+      isRequiredNow
+        ? 'order-[10] rounded-lg border border-amber-300/60 bg-amber-50/40 p-3'
+        : section === 'setup'
+          ? 'order-[30]'
+          : section === 'current'
+            ? 'order-[50]'
+            : 'order-[70]',
+    )
+  }
+  const policySubsectionClass = (orderClass: string) => cn(policyDetailSubsectionClass, orderClass)
   const currentInputRequirementCount = [
     missingAssuranceProfile,
     missingRegularPremiumBase,
@@ -1442,35 +1533,6 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
   useEffect(() => {
     onManualRequirementCountChange?.(currentInputRequirementCount)
   }, [currentInputRequirementCount, onManualRequirementCountChange])
-  const revealManualInputGuide = useCallback((guide: ManualInputGuide) => {
-    setOpenSections((sections) => (
-      sections.includes(guide.section)
-        ? sections
-        : [...sections, guide.section]
-    ))
-
-    window.setTimeout(() => {
-      const root = formRef.current
-      if (!root) return
-
-      const matchingLabel = Array.from(root.querySelectorAll('label')).find((label) => (
-        label.textContent?.toLowerCase().includes(guide.matchText.toLowerCase())
-      ))
-
-      if (!matchingLabel) return
-
-      const labelElement = matchingLabel as HTMLLabelElement
-      const targetById = labelElement.htmlFor ? document.getElementById(labelElement.htmlFor) : null
-      const siblingTarget = labelElement.parentElement?.querySelector<HTMLElement>('input, button, [role="combobox"]')
-        ?? labelElement.parentElement?.nextElementSibling?.querySelector<HTMLElement>('input, button, [role="combobox"]')
-      const target = targetById instanceof HTMLElement ? targetById : siblingTarget
-
-      if (typeof matchingLabel.scrollIntoView === 'function') {
-        matchingLabel.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }
-      target?.focus()
-    }, 180)
-  }, [])
   const eecChartData = policy.eecTable.map((rate, index) => ({ year: index + 1, rate: rate * 100 }))
   const updateChargeRules = (chargeRules: IlpChargeRule[]) => updatePolicy(policy.id, { chargeRules })
   const applyVitalityStatus = (vitalityStatus: NonNullable<IlpPolicyInput['vitalityStatus']>) => updatePolicy(policy.id, {
@@ -1618,7 +1680,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
   const policyDetailSubsectionClass = 'col-span-full rounded-lg border bg-muted/25 px-4 py-3'
 
   return (
-    <div ref={formRef} className="space-y-4">
+    <div className="space-y-4">
       {policy.catalogSource && (
         <Alert>
           <AlertTriangle className="h-4 w-4" />
@@ -1698,43 +1760,25 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
               <div className="space-y-1 text-amber-700 dark:text-amber-300">
                 <p className="text-sm font-medium">Manual inputs required for trusted current snapshot</p>
                 <p className="text-xs">
-                  Use the quick jumps below to open the right section and land on the field that still needs current input.
+                  Review the seeded setup values, then complete the highlighted fields at the top of Policy Details before trusting the current snapshot.
                 </p>
                 <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 space-y-3">
                   <div className="space-y-2">
                     <p className="text-xs font-medium uppercase tracking-wide">Baseline setup to review first</p>
-                    <div className="flex flex-wrap gap-2">
+                    <ul className="space-y-1 text-sm">
                       {baselineSetupGuides.map((guide) => (
-                        <Button
-                          key={`baseline-${guide.matchText}`}
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="h-auto border-amber-500/40 px-2 py-1 text-xs text-amber-700 dark:text-amber-300"
-                          onClick={() => revealManualInputGuide(guide)}
-                        >
-                          {guide.sectionLabel}: {guide.label}
-                        </Button>
+                        <li key={`baseline-${guide.matchText}`}>• {guide.label}</li>
                       ))}
-                    </div>
+                    </ul>
                   </div>
                   {manualInputGuides.length > 0 && (
                     <div className="space-y-2">
-                      <p className="text-xs font-medium uppercase tracking-wide">Supported-manual fields still needed</p>
-                      <div className="flex flex-wrap gap-2">
+                      <p className="text-xs font-medium uppercase tracking-wide">Current fields surfaced first in the form</p>
+                      <ul className="space-y-1 text-sm">
                         {manualInputGuides.map((guide) => (
-                          <Button
-                            key={`manual-${guide.matchText}`}
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="h-auto border-amber-500/40 px-2 py-1 text-xs text-amber-700 dark:text-amber-300"
-                            onClick={() => revealManualInputGuide(guide)}
-                          >
-                            {guide.sectionLabel}: {guide.label}
-                          </Button>
+                          <li key={`manual-${guide.matchText}`}>• {guide.label}</li>
                         ))}
-                      </div>
+                      </ul>
                     </div>
                   )}
                 </div>
@@ -1790,14 +1834,22 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
       >
         <AccordionItem value="policy" className={formSectionClass}>
           <AccordionTrigger>Policy Details</AccordionTrigger>
-        <AccordionContent className={`grid md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 ${formGridGapClass} [&_label]:flex [&_label]:min-h-[4.5rem] [&_label]:items-start [&_label]:gap-1 [&_label]:leading-snug`}>
-            <div className={policyDetailSubsectionClass}>
+        <AccordionContent className={`grid md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 ${formGridGapClass} [&>*]:order-[50] [&_label]:flex [&_label]:min-h-[4.5rem] [&_label]:items-start [&_label]:gap-1 [&_label]:leading-snug`}>
+            {currentInputRequirementCount > 0 && (
+              <div className={policySubsectionClass('order-[1] border-amber-300/60 bg-amber-50/50')}>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-800">Required now</p>
+                <p className="mt-1 text-sm text-amber-900/80">
+                  Complete these current-state fields first so the seeded snapshot reflects the real case before you move deeper into the workspace.
+                </p>
+              </div>
+            )}
+            <div className={policySubsectionClass('order-[20]')}>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Setup & timeline</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 Seed identity, contribution rhythm, and where the policy sits in its premium schedule today.
               </p>
             </div>
-            <div className="space-y-2">
+            <div className={cn('space-y-2', policyDetailFieldClass('setup'))}>
               <Label htmlFor="ilp-name">Policy Name</Label>
               <Input
                 id="ilp-name"
@@ -1806,7 +1858,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                 onChange={(event) => updatePolicy(policy.id, { name: event.target.value })}
               />
             </div>
-            <div className="space-y-2">
+            <div className={cn('space-y-2', policyDetailFieldClass('setup'))}>
               <Label htmlFor="ilp-insurer">Insurer</Label>
               <Input
                 id="ilp-insurer"
@@ -1815,7 +1867,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                 onChange={(event) => updatePolicy(policy.id, { insurer: event.target.value })}
               />
             </div>
-            <div className="space-y-2">
+            <div className={cn('space-y-2', policyDetailFieldClass('setup'))}>
               <Label>Currency</Label>
               <Select
                 value={policy.currency}
@@ -1834,8 +1886,9 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
               label={`Monthly Contribution (${policy.currency})`}
               value={policy.monthlyContribution}
               onChange={(value) => updatePolicy(policy.id, { monthlyContribution: value })}
+              className={policyDetailFieldClass('setup')}
             />
-            <div className="space-y-2">
+            <div className={cn('space-y-2', policyDetailFieldClass('setup'))}>
               <Label>Regular Premium Payment Frequency</Label>
               <Select
                 value={policy.regularPremiumPaymentFrequency ?? 'monthly'}
@@ -1859,6 +1912,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                 label={`Initial Single Premium (Gross Lump Sum, ${policy.currency})`}
                 value={policy.initialSinglePremium ?? 0}
                 onChange={(value) => updatePolicy(policy.id, { initialSinglePremium: value })}
+                className={policyDetailFieldClass('setup')}
               />
             )}
             <NumberInput
@@ -1867,6 +1921,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
               onChange={(value) => updatePolicy(policy.id, { monthsAlreadyPaid: value })}
               integer
               min={0}
+              className={policyDetailFieldClass('setup')}
             />
             {supportsCurrentAcceptedRegularPremiumMonths(policy) && (
               <NumberInput
@@ -1876,6 +1931,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                 integer
                 min={0}
                 max={policy.monthsAlreadyPaid}
+                className={policyDetailFieldClass('setup')}
               />
             )}
             <NumberInput
@@ -1884,9 +1940,10 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
               onChange={(value) => updatePolicy(policy.id, { currentPolicyYear: value })}
               integer
               min={1}
+              className={policyDetailFieldClass('setup')}
             />
             {supportsVitalityStatusInput(policy) && (
-              <div className="space-y-1">
+              <div className={cn('space-y-1', policyDetailFieldClass('setup'))}>
                 <Label>Vitality Status</Label>
                 <Select
                   value={policy.vitalityStatus ?? 'silver'}
@@ -1909,14 +1966,14 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
             )}
             {needsAssuranceInputs && (
               <>
-                <div className={policyDetailSubsectionClass}>
+                <div className={policySubsectionClass('order-[40]')}>
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Life assured & current state</p>
                   <p className="mt-1 text-sm text-muted-foreground">
                     Capture the insured profile and the current manual facts that anchor today&apos;s benefit and payout surface.
                   </p>
                 </div>
                 {supportsTokioLifeState && (
-                  <div className="space-y-2">
+                  <div className={cn('space-y-2', policyDetailFieldClass('current'))}>
                     <Label>Life Assured Mode</Label>
                     <Select
                       value={tokioLifeAssuredMode}
@@ -1940,8 +1997,9 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                       onChange={(value) => upsertAssuranceProfile({ currentOldestLifeAgeNextBirthday: value })}
                       integer
                       min={1}
+                      className={policyDetailFieldClass('current', ['Current Oldest Life Age Next Birthday'])}
                     />
-                    <div className="space-y-2">
+                    <div className={cn('space-y-2', policyDetailFieldClass('current', ['Current Oldest Life Sex']))}>
                       <Label>Current Oldest Life Sex</Label>
                       <Select
                         value={assuranceProfile?.currentOldestLifeSex ?? assuranceProfile?.sex ?? 'male'}
@@ -1962,6 +2020,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                       onChange={(value) => upsertAssuranceProfile({ currentYoungestLifeAgeNextBirthday: value })}
                       integer
                       min={1}
+                      className={policyDetailFieldClass('current', ['Current Youngest Life Age Next Birthday'])}
                     />
                   </>
                 ) : (
@@ -1972,8 +2031,9 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                       onChange={(value) => upsertAssuranceProfile({ currentAgeNextBirthday: value })}
                       integer
                       min={1}
+                      className={policyDetailFieldClass('current', ['Age Next Birthday'])}
                     />
-                    <div className="space-y-2">
+                    <div className={cn('space-y-2', policyDetailFieldClass('current', ['Life Assured Sex']))}>
                       <Label>Life Assured Sex</Label>
                       <Select
                         value={assuranceProfile?.sex ?? 'male'}
@@ -1990,7 +2050,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                     </div>
                   </>
                 )}
-                <div className="space-y-2">
+                <div className={cn('space-y-2', policyDetailFieldClass('current', ['Smoker Status']))}>
                   <Label>Smoker Status</Label>
                   <Select
                     value={assuranceProfile?.smokerStatus ?? 'non-smoker'}
@@ -2082,6 +2142,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                     currency={policy.currency}
                     tooltip="The current protected premium floor or protected principal base used by the product's current death/TI estimate. Leave this blank until you know the insurer's current protected base figure."
                     onChange={(value) => upsertAssuranceProfile({ currentNetProtectedPremiumBase: value })}
+                    className={policyDetailFieldClass('current', ['Current Net Protected Premium Base'])}
                   />
                 )}
                 {supportsCurrentAccidentalDeathFloorAmountInput && (
@@ -2119,6 +2180,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                     onChange={(value) => upsertAssuranceProfile({ targetRetirementAge: value })}
                     integer
                     min={1}
+                    className={policyDetailFieldClass('current', ['Target Retirement Age'])}
                   />
                 )}
                 {supportsCurrentProtectionAge && (
@@ -2128,6 +2190,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                     onChange={(value) => upsertAssuranceProfile({ currentProtectionAge: value })}
                     integer
                     min={65}
+                    className={policyDetailFieldClass('current', ['Current Protection Age'])}
                   />
                 )}
                 {supportsCurrentTpdAccelerationRatioInput
@@ -2147,6 +2210,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                     label={`Current Amount Owing (${policy.currency})`}
                     value={assuranceProfile?.currentAmountOwing ?? 0}
                     onChange={(value) => upsertAssuranceProfile({ currentAmountOwing: value })}
+                    className={policyDetailFieldClass('current', ['Current Amount Owing'])}
                   />
                 )}
                 {supportsCurrentDeathBenefitRateTier && assuranceProfile?.currentAgeNextBirthday === 66 && (
@@ -2658,7 +2722,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                   </div>
                 )}
                 {supportsSmartRetireWopClaimState && (
-                  <div className="space-y-1">
+                  <div className={cn('space-y-1', policyDetailFieldClass('current', ['Current SmartRetire Claim Family']))}>
                     <Label>Current SmartRetire Claim Family</Label>
                     <Select
                       value={smartRetireClaimFamily ?? 'none'}
@@ -2683,7 +2747,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                   </div>
                 )}
                 {supportsSmartRetireClaimAdmissionStatus && (
-                  <div className="space-y-1">
+                  <div className={cn('space-y-1', policyDetailFieldClass('current', ['Current SmartRetire Claim Admission Status']))}>
                     <Label>Current SmartRetire Claim Admission Status</Label>
                     <Select
                       value={smartRetireClaimAdmissionStatus ?? 'not-admitted'}
@@ -2757,10 +2821,11 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                       : `Current Claim-Time Amount Owing / Outstanding Charges (${policy.currency})`}
                     value={claimProfile?.currentIndebtedness ?? 0}
                     onChange={(value) => upsertClaimProfile({ currentIndebtedness: value })}
+                    className={policyDetailFieldClass('current', ['Current Indebtedness / Outstanding Charges'])}
                   />
                 )}
                 {supportsCurrentTiClaimStatusInput && (
-                  <div className="space-y-2">
+                  <div className={cn('space-y-2', policyDetailFieldClass('current', ['Current TI Claim Status']))}>
                     <div className="flex min-h-[4.5rem] items-start gap-1">
                       <Label>Current TI Claim Status</Label>
                       <InfoTooltip text="Choose the policy's terminal-illness claim state today. Pick 'No Admitted TI Claim' only if you are explicitly confirming there is no admitted TI claim in force." />
@@ -2792,6 +2857,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                     label={`Current Admitted TI Claim Benefit Amount (${policy.currency})`}
                     value={claimProfile?.currentTiClaimBenefitAmount ?? 0}
                     onChange={(value) => upsertClaimProfile({ currentTiClaimBenefitAmount: value })}
+                    className={policyDetailFieldClass('current', ['Current Admitted TI Claim Benefit Amount'])}
                   />
                 )}
                 {supportsCurrentClaimHistoryProtectedDeathCoverBaseInput && (
@@ -2810,10 +2876,11 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                     label={`Current Residual Death Benefit After TI Claim (${policy.currency})`}
                     value={claimProfile?.currentResidualDeathBenefitAfterTiClaim ?? 0}
                     onChange={(value) => upsertClaimProfile({ currentResidualDeathBenefitAfterTiClaim: value })}
+                    className={policyDetailFieldClass('current', ['Current Residual Death Benefit After TI Claim'])}
                   />
                 )}
                 {supportsCurrentTpdClaimStatusInput && (
-                  <div className="space-y-1">
+                  <div className={cn('space-y-1', policyDetailFieldClass('current', ['Current TPD Claim Status']))}>
                     <Label>Current TPD Claim Status</Label>
                     <Select
                       value={claimProfile?.currentTpdClaimStatus === 'triggered'
@@ -2839,10 +2906,11 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                     label={`Current Admitted TPD Claim Benefit Amount (${policy.currency})`}
                     value={claimProfile?.currentTpdClaimBenefitAmount ?? 0}
                     onChange={(value) => upsertClaimProfile({ currentTpdClaimBenefitAmount: value })}
+                    className={policyDetailFieldClass('current', ['Current Admitted TPD Claim Benefit Amount'])}
                   />
                 )}
                 {supportsCurrentAccidentalDeathClaimStatusInput && (
-                  <div className="space-y-1">
+                  <div className={cn('space-y-1', policyDetailFieldClass('current', ['Current Accidental-Death Claim Status']))}>
                     <Label>Current Accidental-Death Claim Status</Label>
                     <Select
                       value={claimProfile?.currentAccidentalDeathClaimStatus ?? 'not-triggered'}
@@ -2866,6 +2934,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                     label={`Current Admitted Accidental-Death Claim Benefit Amount (${policy.currency})`}
                     value={claimProfile?.currentAccidentalDeathClaimBenefitAmount ?? 0}
                     onChange={(value) => upsertClaimProfile({ currentAccidentalDeathClaimBenefitAmount: value })}
+                    className={policyDetailFieldClass('current', ['Current Admitted Accidental-Death Claim Benefit Amount'])}
                   />
                 )}
                 {supportsTiClaimSnapshot && (
@@ -2873,6 +2942,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                     label={`Remaining Aggregate TI Cap (${policy.currency})`}
                     value={claimProfile?.remainingAggregateTiCap ?? 0}
                     onChange={(value) => upsertClaimProfile({ remainingAggregateTiCap: value })}
+                    className={policyDetailFieldClass('current', ['Remaining Aggregate TI Cap'])}
                   />
                 )}
                 {supportsRemainingAggregateTiCiCapInput && (
@@ -2893,7 +2963,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                 )}
               </>
             )}
-            <div className={policyDetailSubsectionClass}>
+            <div className={policySubsectionClass('order-[60]')}>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Analysis horizon</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 Set the projection window after the current state is coherent.
@@ -2905,6 +2975,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
               onChange={(value) => updatePolicy(policy.id, { postMipYears: value })}
               integer
               min={policy.mipBasis === 'open-ended' ? 1 : 0}
+              className={policyDetailFieldClass('analysis')}
             />
             {policy.mipBasis !== 'open-ended' && (
               <NumberInput
@@ -2913,6 +2984,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                 onChange={(value) => updatePolicy(policy.id, { mipLength: value })}
                 integer
                 min={1}
+                className={policyDetailFieldClass('analysis')}
               />
             )}
           </AccordionContent>

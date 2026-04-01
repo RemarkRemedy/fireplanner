@@ -6867,7 +6867,7 @@ describe('IlpReviewPage', () => {
     expect(screen.getByText('Current inputs complete')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
-  it('jumps from seeded manual-input guidance to the matching field', async () => {
+  it('surfaces required current inputs inside Policy Details instead of navigation jumps', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
 
@@ -6877,13 +6877,10 @@ describe('IlpReviewPage', () => {
     await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
     await confirmSeededPolicy(user)
 
-    await user.click(screen.getByRole('button', { name: /^policy details$/i }))
-    expect(screen.queryByLabelText('Current Net Protected Premium Base (SGD)')).not.toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: /policy details: current net protected premium base/i }))
-
-    const protectedBaseInput = await screen.findByLabelText('Current Net Protected Premium Base (SGD)')
-    await waitFor(() => expect(protectedBaseInput).toHaveFocus())
+    expect(screen.getByText('Required now')).toBeInTheDocument()
+    expect(screen.getByText('Current fields surfaced first in the form')).toBeInTheDocument()
+    expect(screen.getByText('Current Net Protected Premium Base (SGD)')).toBeInTheDocument()
+    expect(screen.getByText('Current TI Claim Status')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds AIA Platinum Retirement Elite as a supported catalog product with payout-state and supplementary-charge warnings', async () => {
