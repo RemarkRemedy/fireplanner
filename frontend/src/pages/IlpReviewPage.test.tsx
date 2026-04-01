@@ -2473,7 +2473,7 @@ describe('IlpReviewPage', () => {
     expect(analyzeIlpPolicy(updatedPolicy).summary.currentAccidentalDeathBenefitEstimate).toBe(155_000)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
-  it('seeds Tokio Marine Affluence@Future as a supported catalog product with capped initial and deferred policy charges', async () => {
+  it('seeds Tokio Marine Affluence@Future 30-year corridor as a supported catalog product with split initial-bonus and loyalty windows', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
 
@@ -2482,20 +2482,26 @@ describe('IlpReviewPage', () => {
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Affluence@Future')
 
     expect(within(dialog).getByText('Affluence@Future')).toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 15use template$/i }))
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 30use template$/i }))
     await confirmSeededPolicy(user)
 
-    expect(screen.getAllByText('Affluence@Future (SGD / MIP 15)').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Affluence@Future (SGD / MIP 30)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
+    expect(seededAlert?.textContent).toContain('premium-payment-term family from 15 to 30 years')
     expect(getCatalogValue('Initial Charge')).toBeInTheDocument()
     expect(getCatalogValues('Policy Charge').length).toBeGreaterThan(0)
+    expect(getCatalogValue('Initial Bonus (Policy Year 1)')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Bonus (Policy Year 1 Excess Rate Layer)')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Bonus (Policy Year 2)')).toBeInTheDocument()
+    expect(getCatalogValue('Initial Bonus (Policy Year 2 Excess Rate Layer)')).toBeInTheDocument()
+    expect(getCatalogValue('Loyalty Bonus (Period B: Policy Years 11-25)')).toBeInTheDocument()
+    expect(getCatalogValue('Loyalty Bonus (Period C: Policy Years 26-30)')).toBeInTheDocument()
     expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
-    expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
-  it('seeds Tokio Marine Affluence@Future advanced-death as a supported catalog product with accrued Tokio MPC inputs', async () => {
+  it('seeds Tokio Marine Affluence@Future 25-year advanced-death corridor as a supported catalog product with accrued Tokio MPC inputs', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
 
@@ -2504,18 +2510,20 @@ describe('IlpReviewPage', () => {
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Affluence@Future')
 
     expect(within(dialog).getByText('Affluence@Future')).toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 15 \(advanced death\)/i }))
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 25 \(advanced death\)/i }))
+    await confirmSeededPolicy(user)
 
-    expect(screen.getAllByText('Affluence@Future (SGD / MIP 15 (Advanced Death))').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Affluence@Future (SGD / MIP 25 (Advanced Death))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
+    expect(seededAlert?.textContent).toContain('premium-payment-term family from 15 to 30 years')
     expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
     expect(screen.getByText('Life Assured Mode')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
-  it('seeds Tokio Marine Affluence@Future advanced-death-life-benefit-rider as a supported catalog product with policy-term Tokio MPC inputs', async () => {
+  it('seeds Tokio Marine Affluence@Future 30-year advanced-death-life-benefit-rider corridor as a supported catalog product with policy-term Tokio MPC inputs', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
 
@@ -2524,12 +2532,14 @@ describe('IlpReviewPage', () => {
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Affluence@Future')
 
     expect(within(dialog).getByText('Affluence@Future')).toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 15 \(advanced death life benefit rider\)/i }))
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 30 \(advanced death life benefit rider\)/i }))
+    await confirmSeededPolicy(user)
 
-    expect(screen.getAllByText('Affluence@Future (SGD / MIP 15 (Advanced Death Life Benefit Rider))').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Affluence@Future (SGD / MIP 30 (Advanced Death Life Benefit Rider))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
+    expect(seededAlert?.textContent).toContain('premium-payment-term family from 15 to 30 years')
     expect(seededAlert?.textContent).toContain('policy anniversary immediately after age 99')
     expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()

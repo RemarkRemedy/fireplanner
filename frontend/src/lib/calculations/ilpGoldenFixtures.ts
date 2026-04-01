@@ -8474,16 +8474,74 @@ function tokioGoLuxeStressPolicy(
   )
 }
 
+const TOKIO_AFFLUENCE_AT_FUTURE_MIP_LENGTHS = [
+  15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+] as const
+
+type TokioAffluenceAtFutureMipLength = (typeof TOKIO_AFFLUENCE_AT_FUTURE_MIP_LENGTHS)[number]
+type TokioAffluenceAtFutureVariantId =
+  `sgd-mip-${TokioAffluenceAtFutureMipLength}`
+  | `sgd-mip-${TokioAffluenceAtFutureMipLength}-advanced-death`
+  | `sgd-mip-${TokioAffluenceAtFutureMipLength}-advanced-death-life-benefit-rider`
+
+const TOKIO_AFFLUENCE_AT_FUTURE_VARIANT_IDS: TokioAffluenceAtFutureVariantId[] = TOKIO_AFFLUENCE_AT_FUTURE_MIP_LENGTHS.flatMap((mipLength) => ([
+  `sgd-mip-${mipLength}` as TokioAffluenceAtFutureVariantId,
+  `sgd-mip-${mipLength}-advanced-death` as TokioAffluenceAtFutureVariantId,
+  `sgd-mip-${mipLength}-advanced-death-life-benefit-rider` as TokioAffluenceAtFutureVariantId,
+]))
+
+function tokioAffluenceAtFutureBaselinePolicy(
+  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: TokioAffluenceAtFutureVariantId,
+  id: string,
+): IlpPolicyInput {
+  const base = seedPolicy(snapshot, 'tokio-marine-affluence-atfuture', variantId, id)
+  const catalogVariantLabel = base.catalogSource?.variantLabel ?? variantId.toUpperCase()
+  const mipLength = Number(variantId.match(/sgd-mip-(\d+)/)?.[1] ?? 30)
+  const currentPolicyYear = Math.max(1, Math.min(4, mipLength - 1))
+  const monthsAlreadyPaid = (currentPolicyYear - 1) * 12
+
+  const policyInput = withTokioBalances(
+    withFunds(
+      ilpPolicySchema.parse({
+        ...base,
+        name: `Golden Tokio Marine Affluence@Future (${catalogVariantLabel})`,
+        monthlyContribution: 2_000,
+        currentPolicyYear,
+        monthsAlreadyPaid,
+        postMipYears: 15,
+        policyEvents: [],
+        ...(variantId.includes('advanced-death')
+          ? {
+              assuranceProfile: {
+                currentAgeNextBirthday: 45,
+                sex: 'male',
+                smokerStatus: 'non-smoker',
+                currentNetRegularPremiumBase: 72_000,
+              },
+            }
+          : {}),
+      }),
+      TOKIO_BALANCED_FUNDS,
+    ),
+    1_500,
+    8_000,
+    0,
+  )
+
+  return variantId.includes('advanced-death') ? withResolvedManualInputs(policyInput) : policyInput
+}
+
 function tokioAffluenceAtFutureEventHeavyPolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
 ): IlpPolicyInput {
-  const base = seedPolicy(snapshot, 'tokio-marine-affluence-atfuture', 'sgd-mip-15', id)
+  const base = seedPolicy(snapshot, 'tokio-marine-affluence-atfuture', 'sgd-mip-30', id)
   return withTokioBalances(
     withFunds(
       ilpPolicySchema.parse({
         ...base,
-        name: 'Golden Tokio Marine Affluence@Future (SGD / MIP 15 Event Heavy)',
+        name: 'Golden Tokio Marine Affluence@Future (SGD / MIP 30 Event Heavy)',
         monthlyContribution: 350,
         currentPolicyYear: 3,
         monthsAlreadyPaid: 36,
@@ -8539,76 +8597,16 @@ function tokioAffluenceAtFutureEventHeavyPolicy(
   )
 }
 
-function tokioAffluenceAtFutureAdvancedDeathBaselinePolicy(
-  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
-  id: string,
-): IlpPolicyInput {
-  const base = seedPolicy(snapshot, 'tokio-marine-affluence-atfuture', 'sgd-mip-15-advanced-death', id)
-  return withResolvedManualInputs(withTokioBalances(
-    withFunds(
-      ilpPolicySchema.parse({
-        ...base,
-        name: 'Golden Tokio Marine Affluence@Future (SGD / MIP 15 Advanced Death Baseline)',
-        monthlyContribution: 2_000,
-        currentPolicyYear: 3,
-        monthsAlreadyPaid: 24,
-        assuranceProfile: {
-          currentAgeNextBirthday: 45,
-          sex: 'male',
-          smokerStatus: 'non-smoker',
-          currentNetRegularPremiumBase: 72_000,
-        },
-        postMipYears: 15,
-        policyEvents: [],
-      }),
-      TOKIO_BALANCED_FUNDS,
-    ),
-    1_500,
-    8_000,
-    0,
-  ))
-}
-
-function tokioAffluenceAtFutureAdvancedDeathLifeBenefitRiderBaselinePolicy(
-  snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
-  id: string,
-): IlpPolicyInput {
-  const base = seedPolicy(snapshot, 'tokio-marine-affluence-atfuture', 'sgd-mip-15-advanced-death-life-benefit-rider', id)
-  return withResolvedManualInputs(withTokioBalances(
-    withFunds(
-      ilpPolicySchema.parse({
-        ...base,
-        name: 'Golden Tokio Marine Affluence@Future (SGD / MIP 15 Advanced Death Life Benefit Rider Baseline)',
-        monthlyContribution: 2_000,
-        currentPolicyYear: 14,
-        monthsAlreadyPaid: 156,
-        assuranceProfile: {
-          currentAgeNextBirthday: 57,
-          sex: 'male',
-          smokerStatus: 'non-smoker',
-          currentNetRegularPremiumBase: 72_000,
-        },
-        postMipYears: 15,
-        policyEvents: [],
-      }),
-      TOKIO_BALANCED_FUNDS,
-    ),
-    10_000,
-    20_000,
-    0,
-  ))
-}
-
 function tokioAffluenceAtFutureStressPolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
 ): IlpPolicyInput {
-  const base = seedPolicy(snapshot, 'tokio-marine-affluence-atfuture', 'sgd-mip-15', id)
+  const base = seedPolicy(snapshot, 'tokio-marine-affluence-atfuture', 'sgd-mip-30', id)
   return withTokioBalances(
     withFunds(
       ilpPolicySchema.parse({
         ...base,
-        name: 'Golden Tokio Marine Affluence@Future (SGD / MIP 15 OCF Stress)',
+        name: 'Golden Tokio Marine Affluence@Future (SGD / MIP 30 OCF Stress)',
         monthlyContribution: 2_000,
         currentPolicyYear: 8,
         monthsAlreadyPaid: 84,
@@ -17075,50 +17073,39 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: ['ocf-stress'],
     description: 'Tokio Marine Harvest Max supported OCF stress scenario through the same SGD / MIP 15 corridor.',
   },
-  {
-    productId: 'tokio-marine-affluence-atfuture',
-    variantId: 'sgd-mip-15',
-    scenarioId: 'baseline',
-    fixtureClass: 'supported',
+  ...TOKIO_AFFLUENCE_AT_FUTURE_VARIANT_IDS.map((variantId) => ({
+    productId: 'tokio-marine-affluence-atfuture' as const,
+    variantId,
+    scenarioId: 'baseline' as const,
+    fixtureClass: 'supported' as const,
     coverageTags: [
       'baseline',
-      'tokio-initial-vs-accumulation-regular-premium-routing',
-      'tokio-initial-bonus-tiered-premium-allocation',
-      'tokio-initial-charge-on-initial-account',
-      'tokio-policy-charge-on-accumulation-account',
-      'tokio-initial-account-surrender-charge',
-      'kernel:distribution-mode-assumption',
+      ...(variantId.includes('advanced-death-life-benefit-rider')
+        ? [
+            'branch:tokio-marine-affluence-atfuture-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts',
+            'kernel:current-death-benefit-estimate',
+            'branch:tokio-current-only-multi-life-life-state',
+          ]
+        : variantId.includes('advanced-death')
+          ? [
+              'branch:tokio-marine-affluence-atfuture-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts',
+              'kernel:current-death-benefit-estimate',
+            ]
+          : [
+              'branch:tokio-loyalty-bonus-adjustment-factor',
+              'tokio-initial-vs-accumulation-regular-premium-routing',
+              'tokio-initial-bonus-tiered-premium-allocation',
+              'tokio-initial-charge-on-initial-account',
+              'tokio-policy-charge-on-accumulation-account',
+              'tokio-initial-account-surrender-charge',
+              'kernel:distribution-mode-assumption',
+            ]),
     ],
-    description: 'Tokio Marine Affluence@Future supported baseline proving initial routing, charge basis, and surrender mechanics through the SGD / MIP 15 corridor.',
-  },
+    description: `Tokio Marine Affluence@Future ${variantId.includes('advanced-death-life-benefit-rider') ? 'advanced-death-life-benefit-rider' : variantId.includes('advanced-death') ? 'advanced-death' : 'basic-death'} supported baseline through the ${variantId.replace('sgd-mip-', '').replace('-advanced-death-life-benefit-rider', '').replace('-advanced-death', '')}-year corridor.`,
+  })),
   {
     productId: 'tokio-marine-affluence-atfuture',
-    variantId: 'sgd-mip-15-advanced-death',
-    scenarioId: 'baseline',
-    fixtureClass: 'supported',
-    coverageTags: [
-      'baseline',
-      'branch:tokio-marine-affluence-atfuture-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts',
-      'kernel:current-death-benefit-estimate',
-    ],
-    description: 'Tokio Marine Affluence@Future advanced-death supported baseline proving accrued Monthly Protection Charge handling across the Initial and Accumulation Units Accounts.',
-  },
-  {
-    productId: 'tokio-marine-affluence-atfuture',
-    variantId: 'sgd-mip-15-advanced-death-life-benefit-rider',
-    scenarioId: 'baseline',
-    fixtureClass: 'supported',
-    coverageTags: [
-      'baseline',
-      'branch:tokio-marine-affluence-atfuture-advanced-death-monthly-protection-charge-accrual-and-valuation-accounts',
-      'kernel:current-death-benefit-estimate',
-      'branch:tokio-current-only-multi-life-life-state',
-    ],
-    description: 'Tokio Marine Affluence@Future advanced-death with Life Benefit Rider baseline proving the rider corridor seeds the same accrued Monthly Protection Charge inputs under the supported V1 policy window.',
-  },
-  {
-    productId: 'tokio-marine-affluence-atfuture',
-    variantId: 'sgd-mip-15',
+    variantId: 'sgd-mip-30',
     scenarioId: 'event-heavy',
     fixtureClass: 'supported',
     coverageTags: [
@@ -17134,15 +17121,15 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'tokio-recurring-single-premium-charge',
       'branch:tokio-marine-affluence-atfuture-zero-partial-withdrawal-charge',
     ],
-    description: 'Tokio Marine Affluence@Future supported scenario covering recurring-single-premium resumption, reduction ordering, and the published zero-charge withdrawal corridor.',
+    description: 'Tokio Marine Affluence@Future supported scenario covering recurring-single-premium resumption, reduction ordering, and the published zero-charge withdrawal corridor through the SGD / MIP 30 corridor.',
   },
   {
     productId: 'tokio-marine-affluence-atfuture',
-    variantId: 'sgd-mip-15',
+    variantId: 'sgd-mip-30',
     scenarioId: 'ocf-stress',
     fixtureClass: 'supported',
     coverageTags: ['ocf-stress'],
-    description: 'Tokio Marine Affluence@Future supported OCF stress scenario through the same SGD / MIP 15 corridor.',
+    description: 'Tokio Marine Affluence@Future supported OCF stress scenario through the same SGD / MIP 30 corridor.',
   },
   {
     productId: 'tokio-marine-goluxe',
@@ -18723,18 +18710,10 @@ function buildPolicyForDefinition(
     return tokioHarvestMaxStressPolicy(snapshot, id)
   }
   if (definition.productId === 'tokio-marine-affluence-atfuture' && definition.scenarioId === 'baseline') {
-    if (definition.variantId === 'sgd-mip-15-advanced-death') {
-      return tokioAffluenceAtFutureAdvancedDeathBaselinePolicy(snapshot, id)
-    }
-    if (definition.variantId === 'sgd-mip-15-advanced-death-life-benefit-rider') {
-      return tokioAffluenceAtFutureAdvancedDeathLifeBenefitRiderBaselinePolicy(snapshot, id)
-    }
-    return tokioBaselinePolicy(
+    return tokioAffluenceAtFutureBaselinePolicy(
       snapshot,
-      'tokio-marine-affluence-atfuture',
-      'sgd-mip-15',
+      definition.variantId as TokioAffluenceAtFutureVariantId,
       id,
-      'Golden Tokio Marine Affluence@Future (SGD / MIP 15 Baseline)',
     )
   }
   if (definition.productId === 'tokio-marine-affluence-atfuture' && definition.scenarioId === 'event-heavy') {
