@@ -86,13 +86,22 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
   const activeYardstickExample = relatableCostExamples?.[yardstickIndex % (relatableCostExamples.length || 1)] ?? null
 
   const { annualDragPct } = feeImpact
-  const isProjected = analysis.mode === 'projected'
-  const bestExitOption = isProjected
-    ? analysis.npvAnalysis.futureExitOptions.find((option) => option.exitYear === analysis.npvAnalysis.bestExitYear)
+  const projectedAnalysis = analysis.mode === 'projected' ? analysis : null
+  const isProjected = projectedAnalysis != null
+  const bestExitOption = projectedAnalysis
+    ? projectedAnalysis.npvAnalysis.futureExitOptions.find((option) => option.exitYear === projectedAnalysis.npvAnalysis.bestExitYear)
+    : null
+  const firstPenaltyFreeExitOption = projectedAnalysis
+    ? (projectedAnalysis.npvAnalysis.futureExitOptions.find((option) => Math.abs(option.eecCharge) <= 0.005) ?? null)
+    : null
+  const horizonProjectionRow = projectedAnalysis
+    ? (projectedAnalysis.projections.mid.rows.at(-1) ?? null)
     : null
   const horizonYear = isProjected
-    ? (analysis.projections.mid.rows.at(-1)?.policyYear ?? analysis.npvAnalysis.bestExitYear)
+    ? (horizonProjectionRow?.policyYear ?? projectedAnalysis.npvAnalysis.bestExitYear)
     : horizonYears
+  const horizonProjectedValue = horizonProjectionRow?.combinedValue ?? projectedAnalysis?.npvAnalysis.holdToMip.finalValue ?? 0
+  const horizonProjectedContributions = horizonProjectionRow?.cumulativePremiums ?? projectedAnalysis?.npvAnalysis.holdToMip.totalContributions ?? 0
 
   const goForward = useCallback(() => {
     if (isTransitioning.current) return
@@ -358,19 +367,37 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                 </motion.p>
                 {isProjected && bestExitOption ? (
                   <>
-                    <motion.div variants={staggerChild} className="grid w-full max-w-3xl grid-cols-1 gap-3 text-left sm:grid-cols-3">
+                    <motion.div variants={staggerChild} className="grid w-full max-w-5xl grid-cols-1 gap-3 text-left sm:grid-cols-2 xl:grid-cols-4">
                       <div className="rounded-md border border-white/10 bg-white/[0.05] p-4">
-                        <div className="text-xs uppercase tracking-wide text-white/50">If you did not start</div>
+                        <div className="text-xs uppercase tracking-wide text-white/50">Exit now</div>
                         <div className="mt-1 text-2xl font-semibold">
-                          {formatIlpCurrency(analysis.npvAnalysis.surrenderNow.netSurrenderValue, policy.currency)}
+                          {formatIlpCurrency(projectedAnalysis.npvAnalysis.surrenderNow.netSurrenderValue, policy.currency)}
                         </div>
                         <div className="mt-1 text-xs text-white/55">
-                          Early-exit charge in year 0: {formatIlpCurrency(analysis.npvAnalysis.surrenderNow.eecCharge, policy.currency)}
+                          Current early-exit charge: {formatIlpCurrency(projectedAnalysis.npvAnalysis.surrenderNow.eecCharge, policy.currency)}
                         </div>
                       </div>
                       <div className="rounded-md border border-white/10 bg-white/[0.05] p-4">
-                        <div className="text-xs uppercase tracking-wide text-white/50">Best exit point</div>
-                        <div className="mt-1 text-2xl font-semibold">Year {analysis.npvAnalysis.bestExitYear}</div>
+                        <div className="text-xs uppercase tracking-wide text-white/50">First penalty-free exit</div>
+                        {firstPenaltyFreeExitOption ? (
+                          <>
+                            <div className="mt-1 text-2xl font-semibold">Year {firstPenaltyFreeExitOption.policyYear}</div>
+                            <div className="mt-1 text-xs text-white/55">
+                              Value available {formatIlpCurrency(firstPenaltyFreeExitOption.netSurrenderValue, policy.currency)}
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="mt-1 text-2xl font-semibold">Not within horizon</div>
+                            <div className="mt-1 text-xs text-white/55">
+                              A surrender charge still applies through Year {horizonYear}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      <div className="rounded-md border border-white/10 bg-white/[0.05] p-4">
+                        <div className="text-xs uppercase tracking-wide text-white/50">Lowest fee-burden exit</div>
+                        <div className="mt-1 text-2xl font-semibold">Year {projectedAnalysis.npvAnalysis.bestExitYear}</div>
                         <div className="mt-1 text-xs text-white/55">
                           Value available {formatIlpCurrency(bestExitOption.netSurrenderValue, policy.currency)}
                         </div>
@@ -378,17 +405,17 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                       <div className="rounded-md border border-white/10 bg-white/[0.05] p-4">
                         <div className="text-xs uppercase tracking-wide text-white/50">If you keep the policy</div>
                         <div className="mt-1 text-2xl font-semibold">
-                          {formatIlpCurrency(analysis.npvAnalysis.holdToMip.finalValue, policy.currency)}
+                          {formatIlpCurrency(horizonProjectedValue, policy.currency)}
                         </div>
                         <div className="mt-1 text-xs text-white/55">Projected value after {horizonYear} years</div>
                         <div className="mt-3 space-y-1 text-xs text-white/60">
-                          <div>Total contributions {formatIlpCurrency(analysis.npvAnalysis.holdToMip.totalContributions, policy.currency)}</div>
+                          <div>Total contributions {formatIlpCurrency(horizonProjectedContributions, policy.currency)}</div>
                           <div>Total fee cost {formatIlpCurrency(totalEstimatedFees, policy.currency)}</div>
                         </div>
                       </div>
                     </motion.div>
                     <motion.p variants={staggerChild} className="max-w-lg text-base text-white/70">
-                      Early exit can still leave a meaningful surrender deduction. Holding to {horizonYear} years is not a free upside path either: it also means contributing {formatIlpCurrency(analysis.npvAnalysis.holdToMip.totalContributions, policy.currency)} and carrying {formatIlpCurrency(totalEstimatedFees, policy.currency)} of nominal fee cost in this estimate.
+                      Early exit can still leave a meaningful surrender deduction. The first penalty-free exit and the lowest fee-burden exit are not always the same choice, and holding to {horizonYear} years still means contributing {formatIlpCurrency(horizonProjectedContributions, policy.currency)} and carrying {formatIlpCurrency(totalEstimatedFees, policy.currency)} of nominal fee cost in this estimate.
                     </motion.p>
                   </>
                 ) : (
