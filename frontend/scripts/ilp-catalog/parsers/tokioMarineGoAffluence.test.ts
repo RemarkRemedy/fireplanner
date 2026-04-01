@@ -39,17 +39,23 @@ describe('parseTokioMarineGoAffluence', () => {
     expect(product.modeledEconomics).toContain('kernel:minimum-recurring-single-premium-start-month')
     expect(product.modeledEconomics).toContain('kernel:minimum-recurring-single-premium-amount')
     expect(product.metadataOnlyBehaviors).toContain('tokio-goaffluence-accidental-death-claim-gates-and-premium-change-history')
-    expect(product.metadataOnlyBehaviors).not.toContain('tokio-goaffluence-achievement-bonus-qualification')
     expect(product.metadataOnlyBehaviors).toContain('tokio-goaffluence-regular-withdrawal-and-partial-withdrawal-constraints')
+    expect(product.metadataOnlyBehaviors).toContain('tokio-goaffluence-premium-holiday-and-non-sgd-variants')
+    expect(product.metadataOnlyBehaviors).not.toContain('tokio-goaffluence-achievement-bonus-qualification')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-goaffluence-dividend-payout-threshold-record-date-regular-withdrawal-and-partial-withdrawal-constraints')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-goaffluence-loyalty-and-achievement-bonuses')
 
     const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15')
-    const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15-advanced-death')
-    const riderVariant = product.variants.find((variant) => variant.id === 'sgd-mip-15-advanced-death-life-benefit-rider')
+    const basicTerm20Variant = product.variants.find((variant) => variant.id === 'sgd-mip-20')
+    const basicTerm30Variant = product.variants.find((variant) => variant.id === 'sgd-mip-30')
+    const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-25-advanced-death')
+    const riderVariant = product.variants.find((variant) => variant.id === 'sgd-mip-30-advanced-death-life-benefit-rider')
 
-    expect(product.variants).toHaveLength(3)
+    expect(product.variants).toHaveLength(48)
     expect(basicVariant?.icpMonths).toBe(24)
+    expect(basicTerm20Variant).toBeDefined()
+    expect(basicTerm30Variant).toBeDefined()
+    expect(advancedVariant).toBeDefined()
     expect(riderVariant).toBeDefined()
     expect(basicVariant?.policyStateSupport).toEqual({
       automaticLapseOnAccountValueDepletion: false,
@@ -86,10 +92,9 @@ describe('parseTokioMarineGoAffluence', () => {
       expect.objectContaining({
         mode: 'one-time',
         oneTimePayoutBasis: 'committed-annual-premium-at-issue',
-        rate: 0.25,
-        startPolicyYear: 20,
-        endPolicyYear: 25,
-        cadenceYears: 5,
+        rate: 0.3,
+        startPolicyYear: 15,
+        endPolicyYear: 15,
         qualificationRules: [
           { trigger: 'premium-holiday', disqualifyThroughReferenceYear: true },
           { trigger: 'regular-premium-reduction', disqualifyThroughReferenceYear: true },
@@ -97,6 +102,37 @@ describe('parseTokioMarineGoAffluence', () => {
         ],
       }),
     )
+    expect(basicTerm20Variant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
+      { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.6 },
+      { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.79 },
+      { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.9 },
+      { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.93 },
+      { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.95 },
+    ])
+    expect(basicTerm30Variant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
+      { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 1 },
+      { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 1 },
+      { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 1 },
+      { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 1 },
+      { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 1 },
+    ])
+    expect(basicTerm30Variant?.bonuses.find((bonus) => bonus.id === 'initial-bonus-excess')?.tieredRates).toEqual([
+      { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0 },
+      { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.2 },
+      { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.35 },
+      { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.4 },
+      { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.48 },
+    ])
+    expect(basicTerm30Variant?.bonuses.filter((bonus) => bonus.id.startsWith('achievement-bonus')).map((bonus) => ({
+      id: bonus.id,
+      startPolicyYear: bonus.startPolicyYear,
+      endPolicyYear: bonus.endPolicyYear,
+      rate: bonus.rate,
+    }))).toEqual([
+      { id: 'achievement-bonus-policy-year-20', startPolicyYear: 20, endPolicyYear: 20, rate: 0.1 },
+      { id: 'achievement-bonus-policy-year-25', startPolicyYear: 25, endPolicyYear: 25, rate: 0.25 },
+      { id: 'achievement-bonus-end-of-mip', startPolicyYear: 30, endPolicyYear: 30, rate: 0.5 },
+    ])
     expect(basicVariant?.feeRules).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -134,6 +170,27 @@ describe('parseTokioMarineGoAffluence', () => {
         }),
       ]),
     )
+    expect(basicTerm30Variant?.feeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'initial-charge',
+          rateSchedule: expect.arrayContaining([
+            { startPolicyYear: 1, endPolicyYear: 1, rate: 0.0035 },
+            { startPolicyYear: 30, endPolicyYear: 30, rate: 0.105 },
+          ]),
+        }),
+        expect.objectContaining({
+          id: 'policy-charge-after-mip',
+          premiumBaseConfig: {
+            useHigherOfCommencementAndPrevailing: false,
+            multiplierYearBasis: 'policy-year',
+            multiplierSchedule: [
+              { startPolicyYear: 31, endPolicyYear: null, mode: 'fixed', multiplier: 30 },
+            ],
+          },
+        }),
+      ]),
+    )
     expect(basicVariant?.eventChargeRules).toEqual([
       expect.objectContaining({ id: 'top-up-premium-charge', rate: 0.05 }),
       expect.objectContaining({ id: 'recurring-single-premium-charge', rate: 0.05 }),
@@ -158,10 +215,18 @@ describe('parseTokioMarineGoAffluence', () => {
       ]),
       sourceRefs: expect.any(Array),
     })
+    expect(basicTerm30Variant?.distributionSupport).toEqual(expect.objectContaining({
+      cashPayoutWindows: [
+        { startPolicyYear: 1, endPolicyYear: 30, accountIds: ['accumulation', 'topup'] },
+        { startPolicyYear: 31, endPolicyYear: null, accountIds: ['initial', 'accumulation', 'topup'] },
+      ],
+    }))
     expect(basicVariant?.distributionSupport?.notes).not.toContain(
       'The published $50 minimum dividend amount and 30-day instruction window remain informational only in V1.',
     )
     expect(basicVariant?.eecTable).toEqual([1, 1, 0.99, 0.99, 0.99, 0.91, 0.84, 0.76, 0.68, 0.6, 0.5, 0.43, 0.34, 0.26, 0.15])
+    expect(basicTerm30Variant?.eecTable).toHaveLength(30)
+    expect(basicTerm30Variant?.eecTable.slice(-3)).toEqual([0.31, 0.24, 0.15])
     expect(basicVariant?.warnings).toContain(
       'The resident-corridor current accidental-death estimate before age 75 is also modeled on the published annualised regular premium band after you enter current age; premium-holiday and regular-premium-reduction history, 180-day timing, residency / Singapore-location claim gates, double-indemnity payout, and accidental-death last-life settlement remain informational only.',
     )
@@ -169,11 +234,15 @@ describe('parseTokioMarineGoAffluence', () => {
       'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
     )
     expect(product.warnings).toContain(
-      'Advanced-death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, accidental-death claim gating beyond the resident premium-band current-state shortcut, regular-withdrawal administration, partial-withdrawal limit and minimum-account-value constraints, and premium-holiday / non-SGD / non-15-year variants remain informational only.',
+      'Advanced-death payout handling beyond the modeled current death-benefit estimate and Monthly Protection Charge, accidental-death claim gating beyond the resident premium-band current-state shortcut, regular-withdrawal administration, partial-withdrawal limit and minimum-account-value constraints, and premium-holiday / non-SGD variants remain informational only.',
     )
     expect(product.warnings.some((warning) => warning.includes('explicit recurring-single-premium resumption'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('published SGD premium-payment-term family from 15 to 30 years'))).toBe(true)
     expect(basicVariant?.unsupportedItems).toContain(
       'The resident current accidental-death estimate before age 75 is modeled on the published annualised regular premium band, while double indemnity, 180-day timing, residency / Singapore-location claim gates, accidental-death last-life settlement, and premium-holiday / regular-premium-reduction history remain metadata-only for this product.',
+    )
+    expect(basicTerm30Variant?.unsupportedItems).toContain(
+      'Regular withdrawal, partial-withdrawal limit and minimum-account-value constraints, premium holiday state handling, and non-SGD variants remain metadata-only for this product.',
     )
     expect(advancedVariant?.feeRules).toEqual(
       expect.arrayContaining([

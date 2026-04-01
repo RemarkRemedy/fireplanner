@@ -286,7 +286,6 @@ function buildPhase0PublishedUnmodeledRegistry(): Record<string, IlpCatalogPubli
   const tokioAffluenceRefs = [sourceRef('Published corridor family', 'Affluence@Future publishes premium payment terms from 15 to 30 years across base, Advanced Death, and Advanced Death + Life Benefit Rider corridors; only 15-year corridors are executable today.')]
   const tokioGoClassicRefs = [sourceRef('Published corridor family', '#goClassic publishes premium payment terms from 5 to 25 years across base and Advanced Death corridors; only the 25-year corridors are executable today.')]
   const tokioGoClassicSecureRefs = [sourceRef('Published corridor family', '#goClassic Secure publishes premium payment terms from 5 to 25 years across base and Advanced Death corridors; only the 25-year corridors are executable today.')]
-  const tokioGoAffluenceRefs = [sourceRef('Published corridor family', '#goAffluence publishes premium payment terms from 15 to 30 years across base, Advanced Death, and Advanced Death + Life Benefit Rider corridors; only 15-year corridors are executable today.')]
   const hsbcWealthFocusRefs = [sourceRef('Published corridor family', 'Wealth Focus is published as flexi-term product cards including Flexi 2 and Flexi 4, each with SGD and USD 10-year corridors.')]
 
   return {
@@ -332,11 +331,6 @@ function buildPhase0PublishedUnmodeledRegistry(): Record<string, IlpCatalogPubli
       corridor({ id: `sgd-mip-${term}`, label: `SGD / Premium Payment Term ${term} years`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioAffluenceRefs }),
       corridor({ id: `sgd-mip-${term}-advanced-death`, label: `SGD / Premium Payment Term ${term} years / Advanced Death`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioAffluenceRefs }),
       corridor({ id: `sgd-mip-${term}-advanced-death-life-benefit-rider`, label: `SGD / Premium Payment Term ${term} years / Advanced Death + Life Benefit Rider`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioAffluenceRefs }),
-    ]),
-    'tokio-marine-goaffluence': range(16, 30).flatMap((term) => [
-      corridor({ id: `sgd-mip-${term}`, label: `SGD / Premium Payment Term ${term} years`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioGoAffluenceRefs }),
-      corridor({ id: `sgd-mip-${term}-advanced-death`, label: `SGD / Premium Payment Term ${term} years / Advanced Death`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioGoAffluenceRefs }),
-      corridor({ id: `sgd-mip-${term}-advanced-death-life-benefit-rider`, label: `SGD / Premium Payment Term ${term} years / Advanced Death + Life Benefit Rider`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioGoAffluenceRefs }),
     ]),
     'hsbc-life-wealth-focus-flexi-2': [
       corridor({ id: 'sgd-mip-10', label: 'SGD / MIP 10 years', paymentStructure: 'flexi', currency: 'SGD', mipLength: 10, flexiTerm: 2, contributionMode: 'regular-pay', sourceRefs: hsbcWealthFocusRefs }),

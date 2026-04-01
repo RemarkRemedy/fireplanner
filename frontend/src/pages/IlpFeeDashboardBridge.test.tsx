@@ -367,6 +367,41 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(onSelect.mock.calls[0]?.[1].id).toBe('sgd-mip-25-advanced-death')
   })
 
+  it('promotes Tokio Marine #goAffluence premium-payment-term corridors into executable templates', async () => {
+    const user = userEvent.setup()
+    const onSelect = vi.fn()
+
+    render(
+      <MemoryRouter>
+        <ProductPickerDialog open onOpenChange={() => {}} onSelect={onSelect} />
+      </MemoryRouter>,
+    )
+
+    await user.type(screen.getByPlaceholderText(/search insurer or product name/i), 'goAffluence')
+
+    const card = getProductCard('#goAffluence')
+
+    expect(within(card).queryByText(/published corridors not modeled/i)).not.toBeInTheDocument()
+
+    const mip15Template = within(card)
+      .getAllByRole('button')
+      .find((button) => button.textContent?.includes('SGD / MIP 15') && !button.textContent.includes('Advanced Death'))
+    const mip30AdvancedDeathRiderTemplate = within(card)
+      .getAllByRole('button')
+      .find((button) => button.textContent?.includes('SGD / MIP 30 (Advanced Death Life Benefit Rider)'))
+
+    expect(mip15Template).toBeDefined()
+    expect(mip30AdvancedDeathRiderTemplate).toBeDefined()
+    expect(mip15Template).toBeEnabled()
+    expect(mip30AdvancedDeathRiderTemplate).toBeEnabled()
+
+    await user.click(mip30AdvancedDeathRiderTemplate!)
+
+    expect(onSelect).toHaveBeenCalledTimes(1)
+    expect(onSelect.mock.calls[0]?.[0].id).toBe('tokio-marine-goaffluence')
+    expect(onSelect.mock.calls[0]?.[1].id).toBe('sgd-mip-30-advanced-death-life-benefit-rider')
+  })
+
   it('promotes Tokio Marine #goAssure premium-payment-term corridors into executable templates', async () => {
     const user = userEvent.setup()
     const onSelect = vi.fn()
