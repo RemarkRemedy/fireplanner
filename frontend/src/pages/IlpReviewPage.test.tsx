@@ -36,7 +36,7 @@ function renderIlpReviewPage() {
 }
 
 async function confirmSeededPolicy(user: ReturnType<typeof userEvent.setup>) {
-  const confirmButton = await screen.findByRole('button', { name: /show me the fees/i })
+  const confirmButton = await screen.findByRole('button', { name: /load this product/i })
 
   if (confirmButton.hasAttribute('disabled')) {
     const initialSinglePremiumInput = screen.queryByLabelText(/initial single premium/i)
@@ -98,16 +98,16 @@ describe('IlpReviewPage', () => {
     renderIlpReviewPage()
 
     expect(screen.getByText('ILP Review')).toBeInTheDocument()
-    expect(screen.getByText('Available Templates')).toBeInTheDocument()
-    expect(screen.getByText('Supported templates')).toBeInTheDocument()
-    expect(screen.getByText('Templates Needing Review')).toBeInTheDocument()
-    expect(screen.getByText('Wealth Accelerate')).toBeInTheDocument()
-    expect(screen.getByText('PRUVantage Wealth II')).toBeInTheDocument()
-    expect(screen.getByText('Wealth Abundance')).toBeInTheDocument()
-    expect(screen.getByText('Wealth Pro (II)')).toBeInTheDocument()
+    expect(screen.queryByText('Available Templates')).not.toBeInTheDocument()
+    expect(screen.queryByText('Templates Needing Review')).not.toBeInTheDocument()
+    expect(screen.getByText('Selected Policy Workspace')).toBeInTheDocument()
     expect(screen.getByText('Policy Details')).toBeInTheDocument()
-    expect(screen.getByText('Exit Scenarios')).toBeInTheDocument()
-    expect(screen.getByText('Opportunity Cost')).toBeInTheDocument()
+    expect(screen.getByText('Policy Configuration')).toBeInTheDocument()
+    expect(screen.getByText('Current Snapshot')).toBeInTheDocument()
+    expect(screen.getByText('Comparison & Analysis Set')).toBeInTheDocument()
+    expect(screen.getByText('Advanced Review')).toBeInTheDocument()
+    expect(screen.getByText('Path comparison')).toBeInTheDocument()
+    expect(screen.getByText('Illustrative benchmark comparison')).toBeInTheDocument()
     expect(screen.getByText('Total Premiums Paid')).toBeInTheDocument()
     expect(screen.getByText('Support boundary')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
@@ -116,7 +116,7 @@ describe('IlpReviewPage', () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
 
-    await user.click(screen.getByRole('button', { name: /add policy/i }))
+    await user.click(screen.getByRole('button', { name: /add blank policy/i }))
 
     expect(screen.getByText('Policy Comparison')).toBeInTheDocument()
     expect(screen.getAllByLabelText(/rename new ilp policy/i)).toHaveLength(2)
@@ -136,13 +136,35 @@ describe('IlpReviewPage', () => {
     const seededAlert = (await screen.findByText('Seeded from catalog template')).closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
-    expect(seededAlert?.textContent).toContain('premium holiday delayed or partial repayment')
+    expect(seededAlert?.textContent).toContain('Premium-holiday repayment is modeled for full back-pay immediately after the latest holiday period')
     expect(seededAlert?.textContent).toContain('current-state death-benefit estimate after the first 18 policy months')
     expect(seededAlert?.textContent).toContain('current terminal-illness snapshot is modeled after the same first-18-month gate')
     expect(seededAlert?.textContent).toContain('admitted-state TI payable amount plus current residual death-benefit snapshot after a TI claim today are supported through manual claim-amount and residual-death inputs')
-    expect(seededAlert?.textContent).toContain('hsbc accelerate dividend bank routing')
+    expect(seededAlert?.textContent).toContain('Wealth Accelerate keeps reinvestment as the default for dividend-paying funds')
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
     expect(screen.queryByLabelText('Remaining Aggregate TI Cap (SGD)')).not.toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('applies a chosen product to the selected blank comparison slot instead of adding another policy', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /add blank policy/i }))
+    expect(screen.getAllByLabelText(/rename new ilp policy/i)).toHaveLength(2)
+
+    const secondPolicyTab = screen.getAllByRole('button', { name: /select new ilp policy/i })[1]
+    await user.click(secondPolicyTab)
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Wealth Accelerate')
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 25use template$/i }))
+    await confirmSeededPolicy(user)
+
+    expect(screen.getAllByText('Wealth Accelerate (SGD / MIP 25)').length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('button', { name: /select /i })).toHaveLength(2)
+    expect(screen.getAllByLabelText(/rename /i)).toHaveLength(2)
+    expect(screen.getAllByLabelText(/rename new ilp policy/i)).toHaveLength(1)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows Wealth Accelerate TI Benefit Today once current amount owing and the remaining aggregate TI cap are filled after the first 18 policy months', async () => {

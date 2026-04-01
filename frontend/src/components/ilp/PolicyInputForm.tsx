@@ -1305,24 +1305,49 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                 ? 'This template is release-gated only for the summary-described economics modeled in the catalog. Anything outside that boundary still requires document review.'
                 : 'This template still needs source review for some summary-described behaviors. Use the analysis as a narrow modeled view, not a claim that every catalog note belongs to the product scope.'}
             </p>
-            {policy.catalogSource.metadataOnlyBehaviors.length > 0 && (
-              <p>
-                Additional catalog notes remain informational only in this dashboard and should be checked against the product summary before treating them as in-scope product behavior.
-              </p>
-            )}
             {policy.catalogWarnings && policy.catalogWarnings.length > 0 && (
-              <ul className="list-disc pl-5">
-                {policy.catalogWarnings.slice(0, 4).map((warning, index) => (
-                  <li key={`${index}-${warning}`}>{warning}</li>
-                ))}
-              </ul>
+              <details className="space-y-1">
+                <summary className="cursor-pointer text-sm font-medium">
+                  Modeled support notes
+                </summary>
+                <ul className="list-disc pl-5 pt-2">
+                  {policy.catalogWarnings.slice(0, 4).map((warning, index) => (
+                    <li key={`${index}-${warning}`}>{warning}</li>
+                  ))}
+                </ul>
+              </details>
             )}
             {manualChargeWarnings.length > 0 && (
-              <ul className="list-disc pl-5 text-amber-700 dark:text-amber-300">
-                {manualChargeWarnings.map((warning, index) => (
-                  <li key={`${index}-${warning}`}>{warning}</li>
-                ))}
-              </ul>
+              <div className="space-y-1 text-amber-700 dark:text-amber-300">
+                <p className="text-sm font-medium">Manual inputs required for trusted current snapshot</p>
+                <p className="text-xs">
+                  Review the current-state/manual notes below before trusting the seeded snapshot.
+                </p>
+                <details className="space-y-1">
+                  <summary className="cursor-pointer text-sm font-medium">
+                    Current input notes
+                  </summary>
+                  <ul className="list-disc pl-5 pt-2">
+                    {manualChargeWarnings.map((warning, index) => (
+                      <li key={`${index}-${warning}`}>{warning}</li>
+                    ))}
+                  </ul>
+                </details>
+              </div>
+            )}
+            {policy.catalogSource.metadataOnlyBehaviors.length > 0 && (
+              <details className="space-y-1">
+                <summary className="cursor-pointer text-sm font-medium">
+                  Informational only / outside this estimate
+                </summary>
+                <ul className="list-disc pl-5 pt-2">
+                  {policy.catalogSource.metadataOnlyBehaviors.length > 0 && (
+                    <li>
+                      {policy.catalogSource.metadataOnlyBehaviors.length} product-summary {policy.catalogSource.metadataOnlyBehaviors.length === 1 ? 'behavior remains' : 'behaviors remain'} informational only and outside this estimate.
+                    </li>
+                  )}
+                </ul>
+              </details>
             )}
           </AlertDescription>
         </Alert>

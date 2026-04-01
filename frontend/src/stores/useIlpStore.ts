@@ -28,6 +28,7 @@ interface IlpStoreState extends IlpStoreData {
   hasHydrated: boolean
   addPolicy: () => void
   addPolicyFromSeed: (seed: IlpPolicySeed) => { success: true, policyId: string } | { success: false, errors: string[] }
+  replacePolicyFromSeed: (policyId: string, seed: IlpPolicySeed) => { success: true, policyId: string } | { success: false, errors: string[] }
   removePolicy: (id: string) => void
   duplicatePolicy: (id: string) => void
   selectPolicy: (id: string) => void
@@ -306,6 +307,30 @@ export const useIlpStore = create<IlpStoreState>()(
 
         set((state) => ({
           policies: [...state.policies, parsed.data],
+          selectedPolicyId: parsed.data.id,
+        }))
+
+        return {
+          success: true,
+          policyId: parsed.data.id,
+        }
+      },
+
+      replacePolicyFromSeed: (policyId, seed) => {
+        const candidate = {
+          ...mergePolicySeed(seed),
+          id: policyId,
+        }
+        const parsed = ilpPolicySchema.safeParse(candidate)
+        if (!parsed.success) {
+          return {
+            success: false,
+            errors: parsed.error.issues.map((issue) => issue.message),
+          }
+        }
+
+        set((state) => ({
+          policies: updatePolicyList(state.policies, policyId, () => parsed.data),
           selectedPolicyId: parsed.data.id,
         }))
 

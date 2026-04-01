@@ -134,7 +134,7 @@ export function PolicySetupGate({ seed, onConfirm, onCancel, prospect }: PolicyS
 
         <div className="flex items-center gap-3">
           <Button onClick={handleConfirm} disabled={!isValid} className="gap-2">
-            Show me the fees
+            Load this product
             <ArrowRight className="h-4 w-4" />
           </Button>
           <Button variant="ghost" onClick={onCancel}>

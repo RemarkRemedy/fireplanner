@@ -15,9 +15,14 @@ import { PolicyInputForm } from '@/components/ilp/PolicyInputForm'
 import { PolicyTabs } from '@/components/ilp/PolicyTabs'
 import { ProjectionTable } from '@/components/ilp/ProjectionTable'
 import { SummaryCards } from '@/components/ilp/SummaryCards'
+import { formatIlpCurrency } from '@/components/ilp/formatters'
 import { ReceiptPreviewModal } from '@/components/ilp/receipt/ReceiptPreviewModal'
 import { usePageMeta } from '@/hooks/usePageMeta'
-import type { IlpProjectedPolicyAnalysis } from '@/lib/calculations/ilp'
+import type {
+  IlpPolicyAnalysis,
+  IlpPolicyInput,
+  IlpProjectedPolicyAnalysis,
+} from '@/lib/calculations/ilp'
 import { analyzeAllPolicies, isProjectedAnalysisEligible } from '@/lib/calculations/ilp'
 import { buildFeeBreakdown } from '@/lib/calculations/ilpFeeBreakdown'
 import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
@@ -32,57 +37,406 @@ function issueMessagesFromPolicy(policy: unknown): string[] {
   return parsed.error.issues.map((issue) => issue.message)
 }
 
-function TemplateCatalogSummary() {
-  const { products, manifest } = getIlpCatalog()
-  const supportedProducts = products.filter((product) => product.supportStatus === 'supported')
-  const reviewProducts = products.filter((product) => product.supportStatus === 'partial')
+function estimateCurrentInputSignalCount(policy: IlpPolicyInput | null): number {
+  if (policy == null) {
+    return 0
+  }
 
+  const warningSignals = (policy.catalogWarnings ?? []).filter((warning) => {
+    const normalized = warning.toLowerCase()
+    return normalized.includes('manual')
+      || normalized.includes('current ')
+      || normalized.includes('remaining ')
+      || normalized.includes('amount owing')
+  }).length
+
+  return warningSignals
+}
+
+type CompactMetricTone = 'default' | 'warning' | 'destructive'
+
+interface CompactMetricItem {
+  label: string
+  value: string
+  detail: string
+  tone?: CompactMetricTone
+}
+
+function buildCurrentValueMetric({
+  label,
+  currency,
+  fallbackValue,
+  detail,
+  tone = 'default',
+}: {
+  label: string
+  currency: IlpPolicyInput['currency']
+  fallbackValue: number | undefined
+  detail: string
+  tone?: CompactMetricTone
+}): CompactMetricItem | null {
+  if (fallbackValue != null) {
+    return {
+      label,
+      value: formatIlpCurrency(fallbackValue, currency),
+      detail,
+      tone,
+    }
+  }
+
+  return null
+}
+
+function buildCurrentMetricValue({
+  label,
+  currency,
+  fallbackValue,
+  detail,
+}: {
+  label: string
+  currency: IlpPolicyInput['currency']
+  fallbackValue: number | undefined
+  detail: string
+}): CompactMetricItem | null {
+  if (fallbackValue != null) {
+    return {
+      label,
+      value: formatIlpCurrency(fallbackValue, currency),
+      detail,
+      tone: 'default',
+    }
+  }
+
+  return null
+}
+
+function buildCompactSnapshotMetrics(policy: IlpPolicyInput, analysis: IlpPolicyAnalysis): CompactMetricItem[] {
+  const { summary } = analysis
+  const metrics: CompactMetricItem[] = []
+
+  const surrenderMetric = buildCurrentValueMetric({
+    label: 'Surrender Value Today',
+    currency: policy.currency,
+    fallbackValue: summary.currentSurrenderValue,
+    detail: 'Current balances minus exit charge today.',
+  })
+
+  if (surrenderMetric) metrics.push(surrenderMetric)
+
+  const penaltyMetric = buildCurrentValueMetric({
+    label: 'Cancel-Now Penalty',
+    currency: policy.currency,
+    fallbackValue: summary.cancelNowPenalty,
+    detail: 'Early exit charge on EEC-subject accounts.',
+    tone: 'destructive',
+  })
+
+  if (penaltyMetric) metrics.push(penaltyMetric)
+
+  const optionalMetrics = [
+    buildCurrentMetricValue({
+      label: 'Death Benefit Today',
+      currency: policy.currency,
+      fallbackValue: summary.currentDeathBenefitEstimate,
+      detail: 'Current supported death-benefit estimate.',
+    }),
+    buildCurrentMetricValue({
+      label: 'TI Benefit Today',
+      currency: policy.currency,
+      fallbackValue: summary.currentTiBenefitEstimate,
+      detail: 'Current supported terminal-illness estimate.',
+    }),
+    buildCurrentMetricValue({
+      label: 'TPD Benefit Today',
+      currency: policy.currency,
+      fallbackValue: summary.currentTpdBenefitEstimate,
+      detail: 'Current supported TPD estimate.',
+    }),
+    buildCurrentMetricValue({
+      label: 'Death Benefit After TI Claim Today',
+      currency: policy.currency,
+      fallbackValue: summary.currentResidualDeathBenefitAfterTiEstimate,
+      detail: 'Residual death cover if a TI claim were admitted today.',
+    }),
+  ].filter((metric): metric is CompactMetricItem => metric != null)
+
+  return [...metrics, ...optionalMetrics].slice(0, 4)
+}
+
+function ReviewWorkspaceOverview({
+  selectedPolicy,
+  policyCount,
+  displayAnalysis,
+  manualRequirementCount,
+}: {
+  selectedPolicy: IlpPolicyInput | null
+  policyCount: number
+  displayAnalysis: IlpPolicyAnalysis | null
+  manualRequirementCount: number
+}) {
   return (
-    <Card>
+    <Card className="border-primary/20 bg-primary/[0.03]">
       <CardContent className="space-y-4 pt-6">
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-semibold">Available Templates</h2>
-            <Badge variant="outline">Catalog {manifest.catalogVersion}</Badge>
-            <Badge>{supportedProducts.length} supported</Badge>
-            <Badge variant="secondary">{reviewProducts.length} need review</Badge>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-lg font-semibold">Selected Policy Workspace</h2>
+              {selectedPolicy && <Badge variant="outline">{selectedPolicy.name}</Badge>}
+              <Badge variant="secondary">{policyCount} {policyCount === 1 ? 'policy' : 'policies'} loaded</Badge>
+            </div>
+            <p className="max-w-3xl text-sm text-muted-foreground">
+              Use this page as the advanced working bench: configure the real policy, unlock today&apos;s supported snapshot, then move into comparison and deeper projection review once the current state is coherent.
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Supported templates are gated to the summary-described economics modeled here. Templates needing review stay selectable, but the dashboard keeps claims narrow to the slice it can justify today.
-          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild size="sm" variant="outline">
+              <a href="#policy-configuration">Policy configuration</a>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <a href="#current-snapshot">Current snapshot</a>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <a href="#comparison-analysis">Compare</a>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <a href="#advanced-review">Advanced review</a>
+            </Button>
+          </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="space-y-2">
-            <div className="text-sm font-medium">Supported templates</div>
-            <div className="space-y-2">
-              {supportedProducts.map((product) => (
-                <div key={product.id} className="rounded-md border px-3 py-2">
-                  <div className="font-medium">{product.productName}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {product.insurer} · {product.variants.length} {product.variants.length === 1 ? 'variant' : 'variants'}
-                  </div>
-                </div>
-              ))}
-            </div>
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="rounded-lg border bg-background/80 p-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Support status</p>
+            <p className="mt-1 text-sm font-semibold">
+              {selectedPolicy?.catalogSource == null
+                ? 'Manual draft'
+                : selectedPolicy.catalogSource.supportStatus === 'supported'
+                  ? 'Supported'
+                  : 'Template needing review'}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {selectedPolicy?.catalogSource == null
+                ? 'Not seeded from the catalog.'
+                : 'Use the seeded support notes as the honest runtime boundary.'}
+            </p>
           </div>
-
-          <div className="space-y-2">
-            <div className="text-sm font-medium">Templates Needing Review</div>
-            <div className="space-y-2">
-              {reviewProducts.map((product) => (
-                <div key={product.id} className="rounded-md border px-3 py-2">
-                  <div className="font-medium">{product.productName}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {product.insurer} · {product.variants.length} {product.variants.length === 1 ? 'variant' : 'variants'}
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="rounded-lg border bg-background/80 p-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Current-state readiness</p>
+            <p className="mt-1 text-sm font-semibold">
+              {manualRequirementCount === 0
+                ? 'Ready for current snapshot'
+                : `Needs ${manualRequirementCount} current input${manualRequirementCount === 1 ? '' : 's'}`}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Supported manual inputs belong in this workspace. They do not mean the page is unsupported.
+            </p>
+          </div>
+          <div className="rounded-lg border bg-background/80 p-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Review mode</p>
+            <p className="mt-1 text-sm font-semibold">
+              {displayAnalysis == null
+                ? 'Fix the selected policy to unlock review'
+                : displayAnalysis.mode === 'current-only'
+                  ? 'Current snapshot first'
+                  : 'Projected review available'}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Comparison and deeper charts live below the working row so the form and snapshot stay readable.
+            </p>
           </div>
         </div>
       </CardContent>
     </Card>
+  )
+}
+
+function CurrentSnapshotRail({
+  selectedPolicy,
+  displayPolicy,
+  displayAnalysis,
+  selectedProjectedAnalysis,
+  selectedCurrentOnlyAnalysis,
+  manualRequirementCount,
+}: {
+  selectedPolicy: IlpPolicyInput | null
+  displayPolicy: IlpPolicyInput | null
+  displayAnalysis: IlpPolicyAnalysis | null
+  selectedProjectedAnalysis: IlpPolicyAnalysis | null
+  selectedCurrentOnlyAnalysis: IlpPolicyAnalysis | null
+  manualRequirementCount: number
+}) {
+  if (selectedPolicy == null) {
+    return null
+  }
+
+  const informationalResidualCount = (selectedPolicy.catalogSource?.metadataOnlyBehaviors.length ?? 0)
+    + (selectedPolicy.catalogWarnings ?? []).filter((warning) => {
+      const normalized = warning.toLowerCase()
+      return normalized.includes('informational only')
+        || normalized.includes('outside this estimate')
+        || normalized.includes('outside this snapshot')
+    }).length
+
+  const snapshotMetrics = displayPolicy && displayAnalysis
+    ? buildCompactSnapshotMetrics(displayPolicy, displayAnalysis)
+    : []
+
+  return (
+    <div className="space-y-4 xl:sticky xl:top-4">
+      <Card id="current-snapshot">
+        <CardContent className="space-y-4 pt-6">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold">Current Snapshot</h2>
+            <p className="text-sm text-muted-foreground">
+              High-signal current metrics stay visible beside the form. Deeper projection charts move below this working row.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <div className="rounded-lg border bg-muted/20 p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Template</p>
+                  <p className="text-sm font-semibold">
+                    {selectedPolicy.catalogSource == null
+                      ? 'Manual draft'
+                      : selectedPolicy.catalogSource.supportStatus === 'supported'
+                        ? 'Supported template'
+                        : 'Template needing review'}
+                  </p>
+                </div>
+                <Badge variant={selectedPolicy.catalogSource?.supportStatus === 'supported' ? 'outline' : 'secondary'}>
+                  {selectedPolicy.catalogSource == null
+                    ? 'Manual draft'
+                    : selectedPolicy.catalogSource.supportStatus === 'supported'
+                      ? 'Supported'
+                      : 'Review'}
+                </Badge>
+              </div>
+            </div>
+
+            <div className="rounded-lg border bg-muted/20 p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Current inputs</p>
+                  <p className="text-sm font-semibold">
+                    {manualRequirementCount === 0 ? 'Ready' : `${manualRequirementCount} still needed`}
+                  </p>
+                </div>
+                <Badge variant={manualRequirementCount === 0 ? 'outline' : 'secondary'}>
+                  {manualRequirementCount === 0 ? 'Ready' : 'Needs input'}
+                </Badge>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {manualRequirementCount === 0
+                  ? 'No unfilled supported manual inputs remain on this seeded policy.'
+                  : 'Fill the remaining supported current-state fields in the working column to unlock the full current snapshot.'}
+              </p>
+            </div>
+
+            <div className="rounded-lg border bg-muted/20 p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Review scope</p>
+                  <p className="text-sm font-semibold">
+                    {displayAnalysis == null
+                      ? 'No review yet'
+                      : displayAnalysis.mode === 'current-only'
+                        ? 'Current snapshot only'
+                        : 'Projected review available'}
+                  </p>
+                </div>
+                <Badge variant={displayAnalysis == null ? 'secondary' : displayAnalysis.mode === 'projected' ? 'outline' : 'secondary'}>
+                  {displayAnalysis == null ? 'Pending' : displayAnalysis.mode === 'projected' ? 'Projected' : 'Current'}
+                </Badge>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {displayAnalysis == null
+                  ? 'Fix the selected policy before relying on the review stack.'
+                  : displayAnalysis.mode === 'current-only'
+                    ? 'Today&apos;s state is supported, but projection, NPV, and opportunity-cost panels stay intentionally unavailable.'
+                    : 'Current snapshot is stable enough to use the deeper review stack below.'}
+              </p>
+            </div>
+
+            <div className="rounded-lg border bg-muted/20 p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Residual notes</p>
+                  <p className="text-sm font-semibold">
+                    {informationalResidualCount === 0
+                      ? 'Contained'
+                      : `${informationalResidualCount} informational residual${informationalResidualCount === 1 ? '' : 's'}`}
+                  </p>
+                </div>
+                <Badge variant={informationalResidualCount === 0 ? 'outline' : 'secondary'}>
+                  {informationalResidualCount === 0 ? 'Contained' : 'Review notes'}
+                </Badge>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Product-summary behaviors outside the modeled estimate remain visible in the support notes and seeded warnings.
+              </p>
+            </div>
+          </div>
+
+          {selectedProjectedAnalysis == null && selectedCurrentOnlyAnalysis == null && (
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Showing another policy&apos;s output temporarily</AlertTitle>
+              <AlertDescription>
+                The selected policy is invalid right now, so this rail is using the nearest valid policy output until the form is fixed.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {displayAnalysis == null || displayPolicy == null ? (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Fix this policy to unlock review</AlertTitle>
+              <AlertDescription>
+                {issueMessagesFromPolicy(selectedPolicy)[0] ?? 'This policy has validation issues that block analysis right now.'}
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <h3 className="text-sm font-semibold">Key current metrics</h3>
+                <p className="text-xs text-muted-foreground">
+                  This rail stays intentionally compact. Use the advanced review section for the full summary grid and projected analysis.
+                </p>
+              </div>
+              <div className="space-y-2">
+                {snapshotMetrics.map((metric) => (
+                  <div key={metric.label} className="rounded-lg border px-3 py-3">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">{metric.label}</p>
+                        <p className="text-xs text-muted-foreground">{metric.detail}</p>
+                      </div>
+                      <p className={
+                        metric.tone === 'destructive'
+                          ? 'text-right text-sm font-semibold text-destructive'
+                          : metric.tone === 'warning'
+                            ? 'text-right text-sm font-semibold text-amber-700'
+                            : 'text-right text-sm font-semibold'
+                      }>
+                        {metric.value}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {manualRequirementCount > 0 && (
+                <Button asChild size="sm" variant="outline">
+                  <a href="#policy-configuration">Finish current inputs in the working column</a>
+                </Button>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   )
 }
 
@@ -97,6 +451,7 @@ export function IlpReviewPage() {
   const selectedPolicyId = useIlpStore((state) => state.selectedPolicyId)
   const addPolicy = useIlpStore((state) => state.addPolicy)
   const addPolicyFromSeed = useIlpStore((state) => state.addPolicyFromSeed)
+  const replacePolicyFromSeed = useIlpStore((state) => state.replacePolicyFromSeed)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pendingSeed, setPendingSeed] = useState<IlpPolicySeed | null>(null)
   const [catalogError, setCatalogError] = useState<string | null>(null)
@@ -110,7 +465,9 @@ export function IlpReviewPage() {
   }
 
   function handleSetupConfirm(adjustedSeed: IlpPolicySeed) {
-    const result = addPolicyFromSeed(adjustedSeed)
+    const result = selectedPolicyId
+      ? replacePolicyFromSeed(selectedPolicyId, adjustedSeed)
+      : addPolicyFromSeed(adjustedSeed)
     if (!result.success) {
       setCatalogError(result.errors[0] ?? 'Unable to seed policy from the selected catalog template.')
       return
@@ -166,6 +523,7 @@ export function IlpReviewPage() {
       : null)
   const excludedCount = policyEntries.filter((entry) => !entry.valid).length
   const currentOnlyCount = policyEntries.filter((entry) => entry.valid && !entry.projectedEligible).length
+  const manualRequirementCount = estimateCurrentInputSignalCount(selectedPolicy)
 
   const receiptFeeBreakdown = useMemo(() => {
     if (displayAnalysis?.mode !== 'projected' || !displayPolicy) return null
@@ -191,13 +549,13 @@ export function IlpReviewPage() {
             </div>
             <div className="flex justify-center">
               <div className="flex flex-wrap justify-center gap-3">
-                <Button onClick={() => setPickerOpen(true)} variant="outline">
+                <Button onClick={() => setPickerOpen(true)}>
                   <FolderOpen className="h-4 w-4" />
                   Choose Product
                 </Button>
-                <Button onClick={addPolicy}>
+                <Button onClick={addPolicy} variant="outline">
                   <Plus className="h-4 w-4" />
-                  Add Policy
+                  Add Blank Policy
                 </Button>
               </div>
             </div>
@@ -218,7 +576,6 @@ export function IlpReviewPage() {
             </CardContent>
           </Card>
         )}
-        {!pendingSeed && <TemplateCatalogSummary />}
         <ProductPickerDialog open={pickerOpen} onOpenChange={setPickerOpen} onSelect={handleCatalogPick} />
       </div>
     )
@@ -234,10 +591,16 @@ export function IlpReviewPage() {
               Model generic ILP fee drag, compare surrender options with NPV analysis, and see the opportunity cost of staying invested inside the policy.
             </p>
           </div>
-          <Button variant="outline" onClick={() => setPickerOpen(true)}>
-            <FolderOpen className="h-4 w-4" />
-            Choose Product
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            <Button onClick={() => setPickerOpen(true)}>
+              <FolderOpen className="h-4 w-4" />
+              Choose Product
+            </Button>
+            <Button variant="outline" onClick={addPolicy}>
+              <Plus className="h-4 w-4" />
+              Add Blank Policy
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -248,9 +611,6 @@ export function IlpReviewPage() {
           Supported catalog templates are gated only within the summary-described economics modeled here. Templates needing review remain useful for structured comparison, but the dashboard should not be read as a statement that every unmodeled catalog note is part of the product scope.
         </AlertDescription>
       </Alert>
-
-      <TemplateCatalogSummary />
-
       <PolicyTabs />
 
       <ProductPickerDialog open={pickerOpen} onOpenChange={setPickerOpen} onSelect={handleCatalogPick} />
@@ -299,35 +659,57 @@ export function IlpReviewPage() {
         </Alert>
       )}
 
-      <PolicyInputForm policy={selectedPolicy} issues={selectedEntry?.issues ?? []} />
+      <ReviewWorkspaceOverview
+        selectedPolicy={selectedPolicy}
+        policyCount={policies.length}
+        displayAnalysis={displayAnalysis}
+        manualRequirementCount={manualRequirementCount}
+      />
+
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_22rem]">
+        <div className="space-y-3" id="policy-configuration">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold">Policy Configuration</h2>
+            <p className="text-sm text-muted-foreground">
+              Keep baseline setup, current-state support inputs, and claim-state support inputs aligned before relying on the review rail.
+            </p>
+          </div>
+          <PolicyInputForm policy={selectedPolicy} issues={selectedEntry?.issues ?? []} />
+        </div>
+
+        <CurrentSnapshotRail
+          selectedPolicy={selectedPolicy}
+          displayPolicy={displayPolicy}
+          displayAnalysis={displayAnalysis}
+          selectedProjectedAnalysis={selectedProjectedAnalysis}
+          selectedCurrentOnlyAnalysis={selectedCurrentOnlyAnalysis}
+          manualRequirementCount={manualRequirementCount}
+        />
+      </section>
 
       {analysisResult.analysis && (
-        <ComparisonTable
-          analyses={analysisResult.analysis.policies}
-          comparison={analysisResult.analysis.comparison}
-        />
+        <section className="space-y-3" id="comparison-analysis">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold">Comparison &amp; Analysis Set</h2>
+            <p className="text-sm text-muted-foreground">
+              Compare the policies that currently pass validation, then drop into the deeper review stack for the selected policy.
+            </p>
+          </div>
+          <ComparisonTable
+            analyses={analysisResult.analysis.policies}
+            comparison={analysisResult.analysis.comparison}
+          />
+        </section>
       )}
 
       {selectedPolicy && displayAnalysis && displayPolicy ? (
-        <>
-          {selectedProjectedAnalysis == null && selectedCurrentOnlyAnalysis == null && (
-            <Alert>
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Showing analysis for another valid policy</AlertTitle>
-              <AlertDescription>
-                The selected policy is invalid right now, so the analysis panels below are temporarily using {displayPolicy.name}.
-              </AlertDescription>
-            </Alert>
-          )}
-          {displayAnalysis.mode === 'current-only' && (
-            <Alert>
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Current snapshot only</AlertTitle>
-              <AlertDescription>
-                This mature finite-MIP policy currently supports today&apos;s value and benefit metrics plus comparison rows only. Projection, NPV, and opportunity-cost panels remain intentionally unavailable in V1.
-              </AlertDescription>
-            </Alert>
-          )}
+        <section className="space-y-4" id="advanced-review">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold">Advanced Review</h2>
+            <p className="text-sm text-muted-foreground">
+              Full summary cards, fee breakdowns, NPV, exit analysis, and receipt generation live here once the current state is coherent.
+            </p>
+          </div>
           <SummaryCards policy={displayPolicy} analysis={displayAnalysis} />
           <a
             href="/blog/ilp-questions?utm_source=dashboard&utm_content=fee_summary"
@@ -354,7 +736,7 @@ export function IlpReviewPage() {
               <OpportunityCostCard policy={displayPolicy} analysis={displayAnalysis} />
             </>
           )}
-        </>
+        </section>
       ) : selectedPolicy ? (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />

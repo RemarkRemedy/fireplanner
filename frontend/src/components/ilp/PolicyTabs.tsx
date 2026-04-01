@@ -51,7 +51,7 @@ export function PolicyTabs() {
           </div>
           <Button onClick={addPolicy}>
             <Plus className="h-4 w-4" />
-            Add Policy
+            Add Blank Policy
           </Button>
         </div>
       </div>
@@ -136,11 +136,6 @@ export function PolicyTabs() {
               })}
             </div>
           </div>
-
-          <Button onClick={addPolicy}>
-            <Plus className="h-4 w-4" />
-            Add Policy
-          </Button>
         </div>
       </div>
 
