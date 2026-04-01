@@ -27,7 +27,12 @@ import { ExpenseTrackerModal } from '@/components/email/ExpenseTrackerModal'
 const STATS_ROUTES = ['/inputs', '/projection', '/withdrawal', '/stress-test', '/dashboard', '/planner', '/health-check']
 
 function isIlpFeeDashboardRoute(pathname: string) {
-  return pathname === '/ilp-review' || pathname.startsWith('/ilp-fees')
+  return (
+    pathname === '/ilp-review'
+    || pathname === '/ilp-ocf'
+    || pathname === '/ilp-returns'
+    || pathname.startsWith('/ilp-fees')
+  )
 }
 
 function AppLayoutBannerArea() {

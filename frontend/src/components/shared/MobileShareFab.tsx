@@ -15,7 +15,12 @@ export function MobileShareFab() {
 
   const nudgeId = 'share-fab-tooltip'
   const alreadyDismissed = dismissedNudges.includes(nudgeId)
-  const isIlpPage = pathname.startsWith('/ilp-fees')
+  const isIlpPage = (
+    pathname.startsWith('/ilp-fees')
+    || pathname.startsWith('/ilp-review')
+    || pathname.startsWith('/ilp-ocf')
+    || pathname.startsWith('/ilp-returns')
+  )
   const [tooltipOpen, setTooltipOpen] = useState(!alreadyDismissed && !isIlpPage)
 
   const handleDismiss = () => {

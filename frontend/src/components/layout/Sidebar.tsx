@@ -116,7 +116,10 @@ const AFTER_INPUTS_GROUPS: { title: string; items: NavItem[] }[] = [
     title: 'ANALYSIS',
     items: [
       { label: 'Stress Test', path: '/stress-test', icon: <ShieldAlert className="h-4 w-4" /> },
+      { label: 'ILP Fees', path: '/ilp-fees', icon: <FileSpreadsheet className="h-4 w-4" /> },
       { label: 'ILP Review', path: '/ilp-review', icon: <FileSpreadsheet className="h-4 w-4" /> },
+      { label: 'ILP OCF', path: '/ilp-ocf', icon: <FileSpreadsheet className="h-4 w-4" /> },
+      { label: 'ILP Returns', path: '/ilp-returns', icon: <FileSpreadsheet className="h-4 w-4" /> },
     ],
   },
   {
@@ -200,6 +203,13 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
     }
   })
 
+  const isActiveNavItem = useCallback((item: NavItem) => {
+    if (item.path === '/ilp-fees') {
+      return location.pathname.startsWith('/ilp-fees')
+    }
+    return location.pathname === item.path
+  }, [location.pathname])
+
   const expandSection = useUIStore((s) => s.expandSection)
 
   const handleSectionClick = useCallback(
@@ -240,7 +250,7 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
                 onClick={onNavigate}
                 className={cn(
                   'flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-colors',
-                  location.pathname === item.path
+                  isActiveNavItem(item)
                     ? 'bg-primary text-primary-foreground'
                     : 'hover:bg-accent'
                 )}
@@ -295,7 +305,7 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
                 onClick={onNavigate}
                 className={cn(
                   'flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-colors',
-                  location.pathname === item.path
+                  isActiveNavItem(item)
                     ? 'bg-primary text-primary-foreground'
                     : 'hover:bg-accent'
                 )}
@@ -451,7 +461,12 @@ export function Sidebar() {
   const location = useLocation()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const companionMode = isCompanionMode()
-  const isIlpRoute = location.pathname.startsWith('/ilp-fees') || location.pathname.startsWith('/ilp-review')
+  const isIlpRoute = (
+    location.pathname.startsWith('/ilp-fees')
+    || location.pathname.startsWith('/ilp-review')
+    || location.pathname.startsWith('/ilp-ocf')
+    || location.pathname.startsWith('/ilp-returns')
+  )
   const isActiveMobileItem = (item: NavItem) => {
     if (item.path === '/ilp-fees') {
       return isIlpRoute

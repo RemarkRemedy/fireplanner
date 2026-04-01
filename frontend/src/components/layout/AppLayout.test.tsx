@@ -79,6 +79,9 @@ function renderLayout(initialEntry: string) {
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/ilp-fees" element={<div>ILP Fees</div>} />
+          <Route path="/ilp-ocf" element={<div>ILP OCF</div>} />
+          <Route path="/ilp-returns" element={<div>ILP Returns</div>} />
+          <Route path="/compare" element={<div>Compare</div>} />
           <Route path="/dashboard" element={<div>Dashboard</div>} />
         </Route>
       </Routes>
@@ -121,8 +124,35 @@ describe('AppLayout help panel behavior', () => {
     expect(useUIStore.getState().helpPanelOpen).toBe(false)
   })
 
+  it('closes the persisted help panel when entering ILP OCF routes', async () => {
+    renderLayout('/ilp-ocf')
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('help-panel')).not.toBeInTheDocument()
+    })
+
+    expect(useUIStore.getState().helpPanelOpen).toBe(false)
+  })
+
+  it('closes the persisted help panel when entering ILP returns routes', async () => {
+    renderLayout('/ilp-returns')
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('help-panel')).not.toBeInTheDocument()
+    })
+
+    expect(useUIStore.getState().helpPanelOpen).toBe(false)
+  })
+
   it('keeps the help panel visible on non-ILP routes', () => {
     renderLayout('/dashboard')
+
+    expect(screen.getByTestId('help-panel')).toBeInTheDocument()
+    expect(useUIStore.getState().helpPanelOpen).toBe(true)
+  })
+
+  it('keeps the help panel visible on /compare because it is not part of the ILP route family', () => {
+    renderLayout('/compare')
 
     expect(screen.getByTestId('help-panel')).toBeInTheDocument()
     expect(useUIStore.getState().helpPanelOpen).toBe(true)

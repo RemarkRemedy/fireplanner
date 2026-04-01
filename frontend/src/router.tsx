@@ -25,6 +25,8 @@ const IlpStoryModePage = lazy(() => import('@/pages/IlpStoryModePage').then(m =>
 const IlpExitCalculatorPage = lazy(() => import('@/pages/IlpExitCalculatorPage').then(m => ({ default: m.IlpExitCalculatorPage })))
 const IlpLeaderboardPage = lazy(() => import('@/pages/IlpLeaderboardPage').then(m => ({ default: m.IlpLeaderboardPage })))
 const IlpLandingPage = lazy(() => import('@/pages/IlpLandingPage').then(m => ({ default: m.IlpLandingPage })))
+const IlpOcfPage = lazy(() => import('@/pages/IlpOcfPage').then(m => ({ default: m.IlpOcfPage })))
+const IlpReturnsPage = lazy(() => import('@/pages/IlpReturnsPage').then(m => ({ default: m.IlpReturnsPage })))
 
 function PageLoader() {
   return (
@@ -104,6 +106,8 @@ export const router = createBrowserRouter([
       { path: '/ilp-fees/story/:productId', element: page(IlpStoryModePage) },
       { path: '/ilp-fees/exit', element: page(IlpExitCalculatorPage) },
       { path: '/ilp-fees/compare', element: page(IlpLeaderboardPage) },
+      { path: '/ilp-ocf', element: page(IlpOcfPage) },
+      { path: '/ilp-returns', element: page(IlpReturnsPage) },
       { path: '/dashboard', element: page(DashboardPage) },
       { path: '/reference', element: page(ReferencePage) },
       { path: '/checklist', element: page(ChecklistPage) },

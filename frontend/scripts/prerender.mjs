@@ -111,6 +111,34 @@ const routes = [
       </ul>
     `,
   },
+  {
+    path: '/ilp-ocf',
+    title: 'ILP OCF Dashboard \u2014 SG FIRE Planner',
+    heading: 'ILP OCF Dashboard',
+    description: 'Screen source-cited Singapore ILP sub-fund fees by insurer, fee label, structure, and as-of date.',
+    bodyHtml: `
+      <p>Review the sub-fund fee layer separately from wrapper-level ILP product charges. Filter by insurer, reported fee label, and source date before comparing rows.</p>
+      <p>Use this page for sub-fund fee screening, then verify the cited insurer source before making like-for-like comparisons.</p>
+      <ul>
+        <li><a href="/ilp-ocf">Open ILP OCF Dashboard</a></li>
+        <li><a href="/ilp-fees">Open ILP fee product tools</a></li>
+      </ul>
+    `,
+  },
+  {
+    path: '/ilp-returns',
+    title: 'ILP Returns Dashboard \u2014 SG FIRE Planner',
+    heading: 'ILP Returns Dashboard',
+    description: 'Compare Singapore ILP sub-funds against their stated benchmark across official reporting windows and dates.',
+    bodyHtml: `
+      <p>Screen ILP sub-funds by benchmark-relative returns, reporting date, and insurer. This route is designed for sub-fund return research, not wrapper-level policy charges.</p>
+      <p>Use the date filters carefully: rows are most comparable within the same reporting cohort.</p>
+      <ul>
+        <li><a href="/ilp-returns">Open ILP Returns Dashboard</a></li>
+        <li><a href="/ilp-fees">Return to ILP fee product tools</a></li>
+      </ul>
+    `,
+  },
 ]
 
 const template = readFileSync(join(distDir, 'index.html'), 'utf-8')
