@@ -76,6 +76,16 @@ function LocationProbe() {
   return <div data-testid="location">{`${location.pathname}${location.search}`}</div>
 }
 
+function getProductCard(productName: string): HTMLElement {
+  const card = screen.getByText(productName).closest('div.rounded-lg.border')
+
+  if (card == null) {
+    throw new Error(`Unable to locate product card for ${productName}`)
+  }
+
+  return card
+}
+
 describe('ILP fee dashboard blog bridge', () => {
   it('shows blog CTA entry points on the ILP fee landing page', () => {
     render(
@@ -133,6 +143,75 @@ describe('ILP fee dashboard blog bridge', () => {
     await user.click(screen.getAllByRole('button', { name: /show model notes/i })[0]!)
 
     expect(screen.getByText(/aia elite secure income - 5 pay is cataloged as supported in v1/i)).toBeInTheDocument()
+  })
+
+  it('renders disabled corridor rows under supported cards and keeps them non-selectable', async () => {
+    const user = userEvent.setup()
+    const onSelect = vi.fn()
+
+    render(
+      <MemoryRouter>
+        <ProductPickerDialog open onOpenChange={() => {}} onSelect={onSelect} />
+      </MemoryRouter>,
+    )
+
+    await user.type(screen.getByPlaceholderText(/search insurer or product name/i), 'AIA Pro Achiever 3.0')
+
+    const card = getProductCard('AIA Pro Achiever 3.0')
+
+    expect(within(card).getByText('2 published corridors not modeled')).toBeInTheDocument()
+
+    const disabledCorridor = within(card).getByRole('button', { name: /SGD \/ IIP 15 years/i })
+    expect(disabledCorridor).toBeDisabled()
+
+    await user.click(disabledCorridor)
+    expect(onSelect).not.toHaveBeenCalled()
+
+    const enabledTemplateButton = within(card).getAllByRole('button', { name: /Use template/i })[0]
+    await user.click(enabledTemplateButton)
+
+    expect(onSelect).toHaveBeenCalledTimes(1)
+    expect(onSelect.mock.calls[0]?.[0].id).toBe('aia-pro-achiever-3')
+    expect(onSelect.mock.calls[0]?.[1].id).toBe('sgd-iip-10')
+  })
+
+  it('renders Wealth Focus flexi gaps as disabled product cards', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter>
+        <ProductPickerDialog open onOpenChange={() => {}} onSelect={() => {}} />
+      </MemoryRouter>,
+    )
+
+    await user.type(screen.getByPlaceholderText(/search insurer or product name/i), 'Wealth Focus (Flexi 4)')
+
+    const card = getProductCard('Wealth Focus (Flexi 4)')
+
+    expect(within(card).getByText('Published only')).toBeInTheDocument()
+    expect(within(card).queryByRole('button', { name: /Use template/i })).not.toBeInTheDocument()
+    expect(within(card).getByRole('button', { name: /SGD \/ MIP 10 years/i })).toBeDisabled()
+    expect(within(card).getByRole('button', { name: /USD \/ MIP 10 years/i })).toBeDisabled()
+  })
+
+  it('collapses large disabled corridor families until expanded', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter>
+        <ProductPickerDialog open onOpenChange={() => {}} onSelect={() => {}} />
+      </MemoryRouter>,
+    )
+
+    await user.type(screen.getByPlaceholderText(/search insurer or product name/i), 'TM Atlas Wealth')
+
+    const card = getProductCard('TM Atlas Wealth')
+
+    expect(within(card).queryByRole('button', { name: /SGD \/ Premium Payment Term 24 years \/ Advanced Death/i })).not.toBeInTheDocument()
+
+    await user.click(within(card).getByRole('button', { name: /Show 34 more corridors/i }))
+
+    expect(within(card).getByRole('button', { name: /SGD \/ Premium Payment Term 24 years \/ Advanced Death/i })).toBeDisabled()
   })
 
   it('shows the adviser-question callout inside the fee breakdown section', () => {

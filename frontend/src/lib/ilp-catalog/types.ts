@@ -461,6 +461,22 @@ export interface IlpTemplateVariant {
   sourceRefs: IlpCatalogSourceRef[]
 }
 
+export interface IlpCatalogPublishedCorridor {
+  id: string
+  label: string
+  paymentStructure: 'mip' | 'ppt' | 'single-pay' | 'flexi' | 'iip'
+  behavioralConstraint?: 'lock-in'
+  currency?: IlpCatalogCurrency
+  mipLength?: number | null
+  premiumPaymentTermYears?: number | null
+  policyTermYears?: number | null
+  flexiTerm?: number | null
+  contributionMode?: 'regular-pay' | 'single-pay'
+  status: 'not-modeled-yet'
+  reason: string
+  sourceRefs: IlpCatalogSourceRef[]
+}
+
 export interface IlpCatalogProduct {
   id: string
   insurer: string
@@ -478,6 +494,11 @@ export interface IlpCatalogProduct {
   warnings: string[]
   archived: boolean
   variants: IlpTemplateVariant[]
+  publishedUnmodeledCorridors?: IlpCatalogPublishedCorridor[]
+}
+
+export type IlpCatalogResolvedProduct = Omit<IlpCatalogProduct, 'publishedUnmodeledCorridors'> & {
+  publishedUnmodeledCorridors: IlpCatalogPublishedCorridor[]
 }
 
 export interface IlpCatalogManifest {

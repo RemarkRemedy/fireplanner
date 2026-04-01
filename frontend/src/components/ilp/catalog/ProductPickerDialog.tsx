@@ -7,16 +7,27 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
-import { formatCatalogVariantLabel } from '@/lib/ilp-catalog/labels'
-import type { IlpCatalogProduct, IlpTemplateVariant } from '@/lib/ilp-catalog/types'
+import { formatCatalogPublishedCorridorLabel, formatCatalogVariantLabel } from '@/lib/ilp-catalog/labels'
+import type { IlpCatalogResolvedProduct, IlpTemplateVariant } from '@/lib/ilp-catalog/types'
+import { cn } from '@/lib/utils'
+
+const INITIAL_VISIBLE_DISABLED_CORRIDORS = 6
+
+function isPublishedOnlyProduct(product: IlpCatalogResolvedProduct): boolean {
+  return product.variants.length === 0 && product.publishedUnmodeledCorridors.length > 0
+}
 
 interface ProductPickerDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSelect: (product: IlpCatalogProduct, variant: IlpTemplateVariant) => void
+  onSelect: (product: IlpCatalogResolvedProduct, variant: IlpTemplateVariant) => void
 }
 
-function supportCopy(product: IlpCatalogProduct): string {
+function supportCopy(product: IlpCatalogResolvedProduct): string {
+  if (isPublishedOnlyProduct(product)) {
+    return 'This published corridor family is visible in the catalog, but no executable template is modeled yet in this dashboard.'
+  }
+
   if (product.supportStatus === 'supported') {
     return 'Models the summary-described economics currently justified in this dashboard.'
   }
@@ -26,9 +37,10 @@ function supportCopy(product: IlpCatalogProduct): string {
 
 export function ProductPickerDialog({ open, onOpenChange, onSelect }: ProductPickerDialogProps) {
   const { products, manifest } = getIlpCatalog()
-  const supportedProducts = products.filter((product) => product.supportStatus !== 'parser-error')
+  const supportedProducts = products.filter((product) => product.supportStatus !== 'parser-error') as IlpCatalogResolvedProduct[]
   const [query, setQuery] = useState('')
   const [expandedProductId, setExpandedProductId] = useState<string | null>(null)
+  const [expandedDisabledProductIds, setExpandedDisabledProductIds] = useState<string[]>([])
 
   const normalizedQuery = query.trim().toLowerCase()
   const groupedProducts = useMemo(() => {
@@ -38,7 +50,7 @@ export function ProductPickerDialog({ open, onOpenChange, onSelect }: ProductPic
     })
 
     const INSURER_ALIASES: Record<string, string> = { 'FWD': 'FWD Singapore' }
-    const groups = new Map<string, IlpCatalogProduct[]>()
+    const groups = new Map<string, IlpCatalogResolvedProduct[]>()
     filtered.forEach((product) => {
       const groupName = INSURER_ALIASES[product.insurer] ?? product.insurer
       const insurerProducts = groups.get(groupName)
@@ -49,7 +61,12 @@ export function ProductPickerDialog({ open, onOpenChange, onSelect }: ProductPic
       }
     })
 
-    return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b))
+    return Array.from(groups.entries())
+      .map(([insurer, insurerProducts]) => [
+        insurer,
+        insurerProducts.sort((a, b) => a.productName.localeCompare(b.productName, undefined, { numeric: true })),
+      ] satisfies [string, IlpCatalogResolvedProduct[]])
+      .sort(([a], [b]) => a.localeCompare(b))
   }, [supportedProducts, normalizedQuery])
 
   const allInsurerKeys = useMemo(
@@ -58,9 +75,25 @@ export function ProductPickerDialog({ open, onOpenChange, onSelect }: ProductPic
   )
   const [openGroups, setOpenGroups] = useState<string[]>([])
 
-  // Auto-expand matching groups when user types a search query
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (normalizedQuery) setOpenGroups(allInsurerKeys) }, [normalizedQuery])
+  useEffect(() => {
+    const desiredOpenGroups = normalizedQuery
+      ? allInsurerKeys
+      : open && openGroups.length === 0 && allInsurerKeys.length > 0
+        ? allInsurerKeys
+        : null
+
+    if (desiredOpenGroups == null) {
+      return
+    }
+
+    const matchesDesiredGroups =
+      desiredOpenGroups.length === openGroups.length
+      && desiredOpenGroups.every((group, index) => openGroups[index] === group)
+
+    if (!matchesDesiredGroups) {
+      setOpenGroups(desiredOpenGroups)
+    }
+  }, [allInsurerKeys, normalizedQuery, open, openGroups])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -103,16 +136,35 @@ export function ProductPickerDialog({ open, onOpenChange, onSelect }: ProductPic
                     {insurerProducts.map((product) => (
                       <Card key={product.id}>
                         <CardContent className="space-y-4 pt-6">
+                          {(() => {
+                            const publishedCorridors = product.publishedUnmodeledCorridors
+                            const disabledExpanded = expandedDisabledProductIds.includes(product.id)
+                            const visiblePublishedCorridors = disabledExpanded
+                              ? publishedCorridors
+                              : publishedCorridors.slice(0, INITIAL_VISIBLE_DISABLED_CORRIDORS)
+                            const publishedOnly = isPublishedOnlyProduct(product)
+
+                            return (
+                              <>
                           <div className="space-y-1">
                             <div className="text-sm text-muted-foreground">{product.insurer}</div>
                             <div className="font-semibold">{product.productName}</div>
                             <div className="flex flex-wrap gap-2">
-                              <Badge variant={product.supportStatus === 'supported' ? 'default' : 'secondary'}>
-                                {product.supportStatus === 'supported' ? 'Supported' : 'Needs review'}
+                              <Badge variant={publishedOnly ? 'secondary' : product.supportStatus === 'supported' ? 'default' : 'secondary'}>
+                                {publishedOnly ? 'Published only' : product.supportStatus === 'supported' ? 'Supported' : 'Needs review'}
                               </Badge>
                               <Badge variant="outline">
-                                {product.economicsStatus === 'supported' ? 'Modeled economics' : 'Narrower modeled scope'}
+                                {publishedOnly
+                                  ? 'Disabled corridors only'
+                                  : product.economicsStatus === 'supported'
+                                    ? 'Modeled economics'
+                                    : 'Narrower modeled scope'}
                               </Badge>
+                              {publishedCorridors.length > 0 && !publishedOnly && (
+                                <Badge variant="outline">
+                                  {publishedCorridors.length} published corridors not modeled
+                                </Badge>
+                              )}
                             </div>
                             {(supportCopy(product) || product.warnings.length > 0) && (
                               <div className="pt-1">
@@ -139,20 +191,76 @@ export function ProductPickerDialog({ open, onOpenChange, onSelect }: ProductPic
                             )}
                           </div>
 
-                          <div className="grid gap-2 md:grid-cols-2">
-                            {product.variants.map((variant) => (
-                              <Button
-                                key={variant.id}
-                                type="button"
-                                variant="outline"
-                                className="justify-between"
-                                onClick={() => onSelect(product, variant)}
-                              >
-                                <span>{formatCatalogVariantLabel(variant)}</span>
-                                <span className="text-xs text-muted-foreground">Use template</span>
-                              </Button>
-                            ))}
-                          </div>
+                          {product.variants.length > 0 && (
+                            <div className="space-y-2">
+                              <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                Executable templates
+                              </div>
+                              <div className="grid gap-2 md:grid-cols-2">
+                                {product.variants.map((variant) => (
+                                  <Button
+                                    key={variant.id}
+                                    type="button"
+                                    variant="outline"
+                                    className="h-auto justify-between whitespace-normal text-left"
+                                    onClick={() => onSelect(product, variant)}
+                                  >
+                                    <span>{formatCatalogVariantLabel(variant)}</span>
+                                    <span className="text-xs text-muted-foreground">Use template</span>
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {publishedCorridors.length > 0 && (
+                            <div className={cn('space-y-2 border-t pt-4', product.variants.length === 0 && 'border-dashed')}>
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                  Published in source, not modeled yet
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {publishedCorridors.length} corridors
+                                </div>
+                              </div>
+                              <div className="grid gap-2 md:grid-cols-2">
+                                {visiblePublishedCorridors.map((corridor) => (
+                                  <Button
+                                    key={corridor.id}
+                                    type="button"
+                                    variant="outline"
+                                    disabled
+                                    className="h-auto justify-between whitespace-normal border-dashed text-left text-muted-foreground disabled:opacity-100"
+                                  >
+                                    <span className="flex flex-col items-start gap-1">
+                                      <span>{formatCatalogPublishedCorridorLabel(corridor)}</span>
+                                      <span className="text-xs text-muted-foreground">{corridor.reason}</span>
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">Unavailable</span>
+                                  </Button>
+                                ))}
+                              </div>
+                              {publishedCorridors.length > INITIAL_VISIBLE_DISABLED_CORRIDORS && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  className="px-0 text-xs text-muted-foreground hover:text-foreground"
+                                  onClick={() => setExpandedDisabledProductIds((current) => (
+                                    current.includes(product.id)
+                                      ? current.filter((productId) => productId !== product.id)
+                                      : [...current, product.id]
+                                  ))}
+                                >
+                                  {disabledExpanded
+                                    ? 'Show fewer corridors'
+                                    : `Show ${publishedCorridors.length - INITIAL_VISIBLE_DISABLED_CORRIDORS} more corridors`}
+                                </Button>
+                              )}
+                            </div>
+                          )}
+                              </>
+                            )
+                          })()}
                         </CardContent>
                       </Card>
                     ))}

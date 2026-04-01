@@ -963,6 +963,22 @@ export const ilpTemplateVariantSchema = z.object({
   })
 })
 
+export const ilpCatalogPublishedCorridorSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  paymentStructure: z.enum(['mip', 'ppt', 'single-pay', 'flexi', 'iip']),
+  behavioralConstraint: z.enum(['lock-in']).optional(),
+  currency: z.enum(['SGD', 'USD']).optional(),
+  mipLength: z.number().int().min(0).nullable().optional(),
+  premiumPaymentTermYears: z.number().int().min(0).nullable().optional(),
+  policyTermYears: z.number().int().min(0).nullable().optional(),
+  flexiTerm: z.number().int().min(0).nullable().optional(),
+  contributionMode: z.enum(['regular-pay', 'single-pay']).optional(),
+  status: z.literal('not-modeled-yet'),
+  reason: z.string().min(1),
+  sourceRefs: z.array(ilpCatalogSourceRefSchema).min(1).max(10),
+})
+
 export const ilpCatalogProductSchema = z.object({
   id: z.string().min(1),
   insurer: z.string().min(1),
@@ -980,6 +996,31 @@ export const ilpCatalogProductSchema = z.object({
   warnings: z.array(z.string()),
   archived: z.boolean(),
   variants: z.array(ilpTemplateVariantSchema).max(20),
+  publishedUnmodeledCorridors: z.array(ilpCatalogPublishedCorridorSchema).max(80).optional(),
+}).superRefine((product, ctx) => {
+  const executableIds = new Set(product.variants.map((variant) => variant.id))
+  const publishedUnmodeledCorridors = product.publishedUnmodeledCorridors ?? []
+  const publishedIds = new Set<string>()
+
+  publishedUnmodeledCorridors.forEach((corridor, index) => {
+    if (publishedIds.has(corridor.id)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Duplicate published corridor id "${corridor.id}"`,
+        path: ['publishedUnmodeledCorridors', index, 'id'],
+      })
+    }
+
+    publishedIds.add(corridor.id)
+
+    if (executableIds.has(corridor.id)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Corridor "${corridor.id}" cannot be both executable and published-unmodeled`,
+        path: ['publishedUnmodeledCorridors', index, 'id'],
+      })
+    }
+  })
 })
 
 export const ilpCatalogProductsSchema = z.array(ilpCatalogProductSchema)

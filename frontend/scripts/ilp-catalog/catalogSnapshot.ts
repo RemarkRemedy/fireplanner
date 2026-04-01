@@ -2,7 +2,12 @@ import { createHash } from 'node:crypto'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { ilpCatalogManifestSchema, ilpCatalogProductsSchema } from '../../src/lib/ilp-catalog/schema.js'
-import type { IlpCatalogManifest, IlpCatalogProduct } from '../../src/lib/ilp-catalog/types.js'
+import type {
+  IlpCatalogManifest,
+  IlpCatalogProduct,
+  IlpCatalogPublishedCorridor,
+  IlpCatalogSourceRef,
+} from '../../src/lib/ilp-catalog/types.js'
 import { analyzeStructuredEconomics, discoverManualCatalogSources } from './discovery.js'
 import { parseAiaEliteSecureIncome5Pay } from './parsers/aiaEliteSecureIncome5Pay.js'
 import { parseAiaEliteSecureIncomeSp } from './parsers/aiaEliteSecureIncomeSp.js'
@@ -142,6 +147,7 @@ const HSBC_WEALTH_ABUNDANCE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life We
 const HSBC_WEALTH_FOCUS_FLEXI_1_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WF PS v1.51_MIP10Flexi1.pdf'
 const HSBC_WEALTH_FOCUS_FLEXI_3_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WF PS v1.51_MIP10Flexi3.pdf'
 const HSBC_WEALTH_FOCUS_FLEXI_5_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WF PS v1.51_MIP10Flexi5.pdf'
+const HSBC_WEALTH_FOCUS_BROCHURE_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WF brochure.pdf'
 const HSBC_LIFE_FLEXI_PROTECTOR_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Flexi Protector Product Summary.pdf'
 const HSBC_WEALTH_HARVEST_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Harvest Product Summary.pdf'
 const HSBC_WEALTH_INVEST_CPF_SOURCE_PATH = '/Users/tj/Downloads/pdfs/HSBC Life Wealth Invest (CPF) Product Summary.pdf'
@@ -195,9 +201,219 @@ const FWD_INVEST_FIRST_MAX_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_Sum_200501
 const FWD_INVEST_FIRST_SUMMIT_SOURCE_PATH = '/Users/tj/Downloads/pdfs/FWD_Invest First Summit_Summary.pdf'
 const FWD_INVEST_GOAL_1_SOURCE_PATH = '/Users/tj/Downloads/pdfs/WA_Sum_200501737H_ILP01_SP_May2023.pdf'
 
+const NOT_MODELED_REASON = 'Published in product summary, not modeled yet'
+
 export interface IlpCatalogSnapshot {
   manifest: IlpCatalogManifest
   products: IlpCatalogProduct[]
+}
+
+function sourceRef(section: string, excerpt: string): IlpCatalogSourceRef {
+  return { page: 1, section, excerpt }
+}
+
+function corridor(
+  seed: Omit<IlpCatalogPublishedCorridor, 'status' | 'reason'> & { reason?: string },
+): IlpCatalogPublishedCorridor {
+  return {
+    ...seed,
+    status: 'not-modeled-yet',
+    reason: seed.reason ?? NOT_MODELED_REASON,
+  }
+}
+
+function range(start: number, end: number): number[] {
+  return Array.from({ length: end - start + 1 }, (_, index) => start + index)
+}
+
+function buildDisabledOnlyPublishedProductCard(seed: {
+  id: string
+  insurer: string
+  productName: string
+  sourceFileName: string
+  sourceChecksumSha256: string
+}): IlpCatalogProduct {
+  return {
+    id: seed.id,
+    insurer: seed.insurer,
+    productName: seed.productName,
+    sourceFileName: seed.sourceFileName,
+    sourceChecksumSha256: seed.sourceChecksumSha256,
+    sourceDocumentType: 'brochure',
+    sourceClass: 'brochure-only',
+    supportStatus: 'partial',
+    structureStatus: 'brochure-partial',
+    economicsStatus: 'metadata-only',
+    modeledEconomics: [],
+    coveredElsewhereBehaviors: [],
+    metadataOnlyBehaviors: ['published-corridor-card-not-modeled-yet'],
+    warnings: [
+      NOT_MODELED_REASON,
+      'This disabled-only card surfaces a confirmed published Wealth Focus corridor until executable modeling lands.',
+    ],
+    archived: false,
+    variants: [],
+  }
+}
+
+function attachPublishedUnmodeledCorridors(
+  products: IlpCatalogProduct[],
+  registry: Record<string, IlpCatalogPublishedCorridor[]>,
+): IlpCatalogProduct[] {
+  return products.map((product) => {
+    const publishedUnmodeledCorridors = [
+      ...(product.publishedUnmodeledCorridors ?? []),
+      ...(registry[product.id] ?? []),
+    ]
+
+    if (publishedUnmodeledCorridors.length === 0) {
+      return product
+    }
+
+    return {
+      ...product,
+      publishedUnmodeledCorridors,
+    }
+  })
+}
+
+function buildPhase0PublishedUnmodeledRegistry(): Record<string, IlpCatalogPublishedCorridor[]> {
+  const aiaPwe2Refs = [sourceRef('Published corridor family', 'Single-pay and regular-pay 6 to 10 year corridors are published, while only the SGD 5-year corridor is executable today.')]
+  const aiaPwlRefs = [sourceRef('Published corridor family', 'Single Pay is published alongside the modeled SGD 5-year regular-pay corridor.')]
+  const aiaProAchieverRefs = [sourceRef('Published corridor family', 'Published IIP choices span 10, 15, and 20 years; only 10 years is executable today.')]
+  const fwdSummitRefs = [sourceRef('Published corridor family', 'Premium payment term ranges from 10 to 30 years; only the 10-year corridor is executable today.')]
+  const fwdMaxRefs = [sourceRef('Published corridor family', 'Premium payment term ranges from 10 to 30 years; only the 10-year corridor is executable today.')]
+  const legacyFlexRefs = [sourceRef('Published corridor family', 'The family includes a single-premium MIP 5 corridor in addition to the executable regular-pay corridors.')]
+  const etiqaFlexWealthRefs = [sourceRef('Published corridor family', 'Published MIP corridors include 3, 5, 10, 15, and 20 years; only 10, 15, and 20 years are executable today.')]
+  const etiqaWealthPurposeRefs = [sourceRef('Published corridor family', 'Published MIP corridors include 3, 5, 10, 15, and 20 years; only 10, 15, and 20 years are executable today.')]
+  const singlifeRefs = [sourceRef('Published corridor family', 'Published Singlife Legacy Invest corridors vary by both premium payment term and policy term; only the SGD 10-year / term-15 corridor is executable today.')]
+  const tokioAtlasRefs = [sourceRef('Published corridor family', 'TM Atlas Wealth publishes premium payment terms from 5 to 25 years across base and Advanced Death variants; only the 25-year corridors are executable today.')]
+  const tokioAffluenceRefs = [sourceRef('Published corridor family', 'Affluence@Future publishes premium payment terms from 15 to 30 years across base, Advanced Death, and Advanced Death + Life Benefit Rider corridors; only 15-year corridors are executable today.')]
+  const tokioGoClassicRefs = [sourceRef('Published corridor family', '#goClassic publishes premium payment terms from 5 to 25 years across base and Advanced Death corridors; only the 25-year corridors are executable today.')]
+  const tokioGoClassicSecureRefs = [sourceRef('Published corridor family', '#goClassic Secure publishes premium payment terms from 5 to 25 years across base and Advanced Death corridors; only the 25-year corridors are executable today.')]
+  const tokioGoAssureRefs = [sourceRef('Published corridor family', '#goAssure publishes 5, 10, 15, 20, and 25 year premium payment choices; only the 10-year corridor is executable today.')]
+  const tokioGoAffluenceRefs = [sourceRef('Published corridor family', '#goAffluence publishes premium payment terms from 15 to 30 years across base, Advanced Death, and Advanced Death + Life Benefit Rider corridors; only 15-year corridors are executable today.')]
+  const hsbcWealthFocusRefs = [sourceRef('Published corridor family', 'Wealth Focus is published as flexi-term product cards including Flexi 2 and Flexi 4, each with SGD and USD 10-year corridors.')]
+
+  return {
+    'aia-platinum-wealth-elite-2': [
+      corridor({ id: 'sgd-single-pay', label: 'SGD / Single Pay', paymentStructure: 'single-pay', currency: 'SGD', contributionMode: 'single-pay', sourceRefs: aiaPwe2Refs }),
+      ...range(6, 10).map((term) => corridor({
+        id: `sgd-mip-${term}`,
+        label: `SGD / Regular Pay ${term} years`,
+        paymentStructure: 'ppt',
+        currency: 'SGD',
+        premiumPaymentTermYears: term,
+        contributionMode: 'regular-pay',
+        sourceRefs: aiaPwe2Refs,
+      })),
+    ],
+    'aia-platinum-wealth-legacy': [
+      corridor({ id: 'sgd-single-pay', label: 'SGD / Single Pay', paymentStructure: 'single-pay', currency: 'SGD', contributionMode: 'single-pay', sourceRefs: aiaPwlRefs }),
+    ],
+    'aia-pro-achiever-3': [
+      corridor({ id: 'sgd-iip-15', label: 'SGD / IIP 15 years', paymentStructure: 'iip', currency: 'SGD', premiumPaymentTermYears: 15, contributionMode: 'regular-pay', sourceRefs: aiaProAchieverRefs }),
+      corridor({ id: 'sgd-iip-20', label: 'SGD / IIP 20 years', paymentStructure: 'iip', currency: 'SGD', premiumPaymentTermYears: 20, contributionMode: 'regular-pay', sourceRefs: aiaProAchieverRefs }),
+    ],
+    'fwd-invest-first-summit': range(11, 30).map((term) => corridor({
+      id: `sgd-mip-${term}`,
+      label: `SGD / Premium Payment Term ${term} years`,
+      paymentStructure: 'ppt',
+      currency: 'SGD',
+      premiumPaymentTermYears: term,
+      contributionMode: 'regular-pay',
+      sourceRefs: fwdSummitRefs,
+    })),
+    'fwd-invest-first-max': range(11, 30).map((term) => corridor({
+      id: `sgd-mip-${term}`,
+      label: `SGD / Premium Payment Term ${term} years`,
+      paymentStructure: 'ppt',
+      currency: 'SGD',
+      premiumPaymentTermYears: term,
+      contributionMode: 'regular-pay',
+      sourceRefs: fwdMaxRefs,
+    })),
+    'income-legacy-flex-solitaire': [
+      corridor({
+        id: 'sgd-mip-5-single-premium',
+        label: 'SGD / Single Premium / MIP 5 years',
+        paymentStructure: 'single-pay',
+        currency: 'SGD',
+        mipLength: 5,
+        contributionMode: 'single-pay',
+        sourceRefs: legacyFlexRefs,
+      }),
+    ],
+    'etiqa-invest-flex-wealth-ii': [3, 5].map((term) => corridor({
+      id: `sgd-mip-${term}`,
+      label: `SGD / MIP ${term} years`,
+      paymentStructure: 'mip',
+      currency: 'SGD',
+      mipLength: term,
+      contributionMode: 'regular-pay',
+      sourceRefs: etiqaFlexWealthRefs,
+    })),
+    'etiqa-invest-wealth-purpose': [3, 5].map((term) => corridor({
+      id: `sgd-mip-${term}`,
+      label: `SGD / MIP ${term} years`,
+      paymentStructure: 'mip',
+      currency: 'SGD',
+      mipLength: term,
+      contributionMode: 'regular-pay',
+      sourceRefs: etiqaWealthPurposeRefs,
+    })),
+    'singlife-legacy-invest': [
+      corridor({ id: 'sgd-single-premium-term-10', label: 'SGD / Single Premium / Policy Term 10 years', paymentStructure: 'single-pay', currency: 'SGD', contributionMode: 'single-pay', policyTermYears: 10, sourceRefs: singlifeRefs }),
+      corridor({ id: 'sgd-single-premium-term-15', label: 'SGD / Single Premium / Policy Term 15 years', paymentStructure: 'single-pay', currency: 'SGD', contributionMode: 'single-pay', policyTermYears: 15, sourceRefs: singlifeRefs }),
+      corridor({ id: 'sgd-mip-3-term-10', label: 'SGD / Premium Payment Term 3 years / Policy Term 10 years', paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: 3, contributionMode: 'regular-pay', policyTermYears: 10, sourceRefs: singlifeRefs }),
+      corridor({ id: 'sgd-mip-3-term-15', label: 'SGD / Premium Payment Term 3 years / Policy Term 15 years', paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: 3, contributionMode: 'regular-pay', policyTermYears: 15, sourceRefs: singlifeRefs }),
+      corridor({ id: 'sgd-mip-3-term-20', label: 'SGD / Premium Payment Term 3 years / Policy Term 20 years', paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: 3, contributionMode: 'regular-pay', policyTermYears: 20, sourceRefs: singlifeRefs }),
+      corridor({ id: 'sgd-mip-5-term-10', label: 'SGD / Premium Payment Term 5 years / Policy Term 10 years', paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: 5, contributionMode: 'regular-pay', policyTermYears: 10, sourceRefs: singlifeRefs }),
+      corridor({ id: 'sgd-mip-5-term-15', label: 'SGD / Premium Payment Term 5 years / Policy Term 15 years', paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: 5, contributionMode: 'regular-pay', policyTermYears: 15, sourceRefs: singlifeRefs }),
+      corridor({ id: 'sgd-mip-5-term-20', label: 'SGD / Premium Payment Term 5 years / Policy Term 20 years', paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: 5, contributionMode: 'regular-pay', policyTermYears: 20, sourceRefs: singlifeRefs }),
+      corridor({ id: 'sgd-mip-10-term-20', label: 'SGD / Premium Payment Term 10 years / Policy Term 20 years', paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: 10, contributionMode: 'regular-pay', policyTermYears: 20, sourceRefs: singlifeRefs }),
+      corridor({ id: 'sgd-mip-10-term-25', label: 'SGD / Premium Payment Term 10 years / Policy Term 25 years', paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: 10, contributionMode: 'regular-pay', policyTermYears: 25, sourceRefs: singlifeRefs }),
+    ],
+    'tokio-marine-atlas-wealth': range(5, 24).flatMap((term) => [
+      corridor({ id: `sgd-mip-${term}`, label: `SGD / Premium Payment Term ${term} years`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioAtlasRefs }),
+      corridor({ id: `sgd-mip-${term}-advanced-death`, label: `SGD / Premium Payment Term ${term} years / Advanced Death`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioAtlasRefs }),
+    ]),
+    'tokio-marine-affluence-atfuture': range(16, 30).flatMap((term) => [
+      corridor({ id: `sgd-mip-${term}`, label: `SGD / Premium Payment Term ${term} years`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioAffluenceRefs }),
+      corridor({ id: `sgd-mip-${term}-advanced-death`, label: `SGD / Premium Payment Term ${term} years / Advanced Death`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioAffluenceRefs }),
+      corridor({ id: `sgd-mip-${term}-advanced-death-life-benefit-rider`, label: `SGD / Premium Payment Term ${term} years / Advanced Death + Life Benefit Rider`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioAffluenceRefs }),
+    ]),
+    'tokio-marine-goclassic': range(5, 24).flatMap((term) => [
+      corridor({ id: `sgd-mip-${term}`, label: `SGD / Premium Payment Term ${term} years`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioGoClassicRefs }),
+      corridor({ id: `sgd-mip-${term}-advanced-death`, label: `SGD / Premium Payment Term ${term} years / Advanced Death`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioGoClassicRefs }),
+    ]),
+    'tokio-marine-goclassic-secure': range(5, 24).flatMap((term) => [
+      corridor({ id: `sgd-mip-${term}`, label: `SGD / Premium Payment Term ${term} years`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioGoClassicSecureRefs }),
+      corridor({ id: `sgd-mip-${term}-advanced-death`, label: `SGD / Premium Payment Term ${term} years / Advanced Death`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioGoClassicSecureRefs }),
+    ]),
+    'tokio-marine-goassure': [5, 15, 20, 25].map((term) => corridor({
+      id: `sgd-mip-${term}`,
+      label: `SGD / Premium Payment Term ${term} years`,
+      paymentStructure: 'ppt',
+      currency: 'SGD',
+      premiumPaymentTermYears: term,
+      contributionMode: 'regular-pay',
+      sourceRefs: tokioGoAssureRefs,
+    })),
+    'tokio-marine-goaffluence': range(16, 30).flatMap((term) => [
+      corridor({ id: `sgd-mip-${term}`, label: `SGD / Premium Payment Term ${term} years`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioGoAffluenceRefs }),
+      corridor({ id: `sgd-mip-${term}-advanced-death`, label: `SGD / Premium Payment Term ${term} years / Advanced Death`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioGoAffluenceRefs }),
+      corridor({ id: `sgd-mip-${term}-advanced-death-life-benefit-rider`, label: `SGD / Premium Payment Term ${term} years / Advanced Death + Life Benefit Rider`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioGoAffluenceRefs }),
+    ]),
+    'hsbc-life-wealth-focus-flexi-2': [
+      corridor({ id: 'sgd-mip-10', label: 'SGD / MIP 10 years', paymentStructure: 'flexi', currency: 'SGD', mipLength: 10, flexiTerm: 2, contributionMode: 'regular-pay', sourceRefs: hsbcWealthFocusRefs }),
+      corridor({ id: 'usd-mip-10', label: 'USD / MIP 10 years', paymentStructure: 'flexi', currency: 'USD', mipLength: 10, flexiTerm: 2, contributionMode: 'regular-pay', sourceRefs: hsbcWealthFocusRefs }),
+    ],
+    'hsbc-life-wealth-focus-flexi-4': [
+      corridor({ id: 'sgd-mip-10', label: 'SGD / MIP 10 years', paymentStructure: 'flexi', currency: 'SGD', mipLength: 10, flexiTerm: 4, contributionMode: 'regular-pay', sourceRefs: hsbcWealthFocusRefs }),
+      corridor({ id: 'usd-mip-10', label: 'USD / MIP 10 years', paymentStructure: 'flexi', currency: 'USD', mipLength: 10, flexiTerm: 4, contributionMode: 'regular-pay', sourceRefs: hsbcWealthFocusRefs }),
+    ],
+  }
 }
 
 async function sha256(filePath: string): Promise<string> {
@@ -371,6 +587,7 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const hsbcWealthFocusFlexi3Checksum = await sha256(HSBC_WEALTH_FOCUS_FLEXI_3_SOURCE_PATH)
   const hsbcWealthFocusFlexi5Extracted = await extractPdfText(HSBC_WEALTH_FOCUS_FLEXI_5_SOURCE_PATH)
   const hsbcWealthFocusFlexi5Checksum = await sha256(HSBC_WEALTH_FOCUS_FLEXI_5_SOURCE_PATH)
+  const hsbcWealthFocusBrochureChecksum = await sha256(HSBC_WEALTH_FOCUS_BROCHURE_SOURCE_PATH)
   const hsbcLifeFlexiProtectorExtracted = await extractPdfText(HSBC_LIFE_FLEXI_PROTECTOR_SOURCE_PATH)
   const hsbcLifeFlexiProtectorChecksum = await sha256(HSBC_LIFE_FLEXI_PROTECTOR_SOURCE_PATH)
   const hsbcHarvestExtracted = await extractPdfText(HSBC_WEALTH_HARVEST_SOURCE_PATH)
@@ -444,8 +661,9 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
   const aiaProAchiever3Extracted = await extractPdfText(AIA_PRO_ACHIEVER_3_SOURCE_PATH)
   const aiaProAchiever3Checksum = await sha256(AIA_PRO_ACHIEVER_3_SOURCE_PATH)
   const brochurePartialProducts = await buildBrochurePartialProducts(discovery.brochureOnlySources)
+  const phase0PublishedUnmodeledRegistry = buildPhase0PublishedUnmodeledRegistry()
 
-  const products = [
+  const baseProducts = [
     parseAiaEliteSecureIncome5Pay({
       document: aiaEliteSecureIncome5PayExtracted,
       sourceChecksumSha256: aiaEliteSecureIncome5PayChecksum,
@@ -816,6 +1034,27 @@ export async function buildCatalogSnapshot(): Promise<IlpCatalogSnapshot> {
     }),
     ...brochurePartialProducts,
   ]
+
+  const products = attachPublishedUnmodeledCorridors(
+    [
+      ...baseProducts,
+      buildDisabledOnlyPublishedProductCard({
+        id: 'hsbc-life-wealth-focus-flexi-2',
+        insurer: 'HSBC Life',
+        productName: 'Wealth Focus (Flexi 2)',
+        sourceFileName: 'WF brochure.pdf',
+        sourceChecksumSha256: hsbcWealthFocusBrochureChecksum,
+      }),
+      buildDisabledOnlyPublishedProductCard({
+        id: 'hsbc-life-wealth-focus-flexi-4',
+        insurer: 'HSBC Life',
+        productName: 'Wealth Focus (Flexi 4)',
+        sourceFileName: 'WF brochure.pdf',
+        sourceChecksumSha256: hsbcWealthFocusBrochureChecksum,
+      }),
+    ],
+    phase0PublishedUnmodeledRegistry,
+  )
 
   const manifest: IlpCatalogManifest = {
     catalogVersion: CATALOG_VERSION,
