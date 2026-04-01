@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { IlpPolicyInput, IlpProjectedPolicyAnalysis } from '@/lib/calculations/ilp'
+import { useChartColors } from '@/lib/chartTheme'
 import { formatIlpCurrency } from './formatters'
 import { buildDiscountedChargeTimeline } from './discountedChargeTimeline'
 
@@ -16,6 +17,7 @@ export function DiscountedChargeTimelineSection({
   policy,
   analysis,
 }: DiscountedChargeTimelineSectionProps) {
+  const colors = useChartColors()
   const [excludeFundFees, setExcludeFundFees] = useState(false)
   const [tableExpanded, setTableExpanded] = useState(false)
   const timeline = useMemo(
@@ -85,7 +87,7 @@ export function DiscountedChargeTimelineSection({
               <Line
                 type="monotone"
                 dataKey="totalDiscountedCharges"
-                stroke="#A855F7"
+                stroke={colors.primary}
                 strokeWidth={3}
                 dot={false}
                 activeDot={{ r: 5 }}

@@ -379,7 +379,7 @@ export function ExitTimingExplorer({ policy, analysis, useReal = false }: ExitTi
                   type="monotone"
                   dataKey="etfAlternativeValue"
                   name="ETF benchmark"
-                  stroke="#f59e0b"
+                  stroke={colors.warning}
                   strokeWidth={3}
                   strokeDasharray="7 5"
                   dot={false}
@@ -410,7 +410,7 @@ export function ExitTimingExplorer({ policy, analysis, useReal = false }: ExitTi
                     x={selectedProjectedChartPoint.label}
                     y={selectedProjectedChartPoint.etfAlternativeValue}
                     r={6}
-                    fill="#f59e0b"
+                    fill={colors.warning}
                     stroke="white"
                     strokeWidth={2}
                   />

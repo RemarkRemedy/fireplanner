@@ -132,7 +132,7 @@ export function FeeBreakdownSection({
     additionalCharges: colors.warning,
     assuranceCharges: colors.danger,
     eventCharges: colors.muted,
-    implicitFundFee: colors.info ?? '#8b5cf6',
+    implicitFundFee: colors.info,
   }
 
   const inceptionTotal = breakdown.inceptionCharges.reduce((s, c) => s + c.amount, 0)
