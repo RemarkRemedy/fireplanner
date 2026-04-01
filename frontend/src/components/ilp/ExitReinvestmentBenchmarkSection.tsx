@@ -24,6 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PercentInput } from '@/components/shared/PercentInput'
 import { useChartColors } from '@/lib/chartTheme'
 import type { IlpProjectedPolicyAnalysis, IlpPolicyInput } from '@/lib/calculations/ilp'
+import { ChartTooltipContent } from './ChartTooltip'
 import { formatIlpCurrency, formatIlpPercent } from './formatters'
 import {
   buildExitReinvestmentBenchmark,
@@ -265,11 +266,17 @@ export function ExitReinvestmentBenchmarkSection({
                   tickFormatter={(value: number) => formatIlpCurrency(value, policy.currency)}
                 />
                 <Tooltip
-                  labelFormatter={(_value, payload) => {
+                  content={({ active, payload }) => {
                     const point = payload?.[0]?.payload
-                    return point ? `Exit in Year ${point.policyYear}` : ''
+                    return (
+                      <ChartTooltipContent
+                        active={active}
+                        label={point?.policyYear}
+                        formatLabel={(v) => `Exit in Year ${v}`}
+                        rows={point ? [{ label: `Value by year ${benchmark.horizonYear}`, value: formatIlpCurrency(point.horizonValue, policy.currency), bold: true }] : []}
+                      />
+                    )
                   }}
-                  formatter={(value: number) => [formatIlpCurrency(value, policy.currency), `Value by year ${benchmark.horizonYear}`]}
                 />
                 <ReferenceLine
                   y={benchmark.holdValueAtHorizon}
@@ -312,15 +319,23 @@ export function ExitReinvestmentBenchmarkSection({
                   tickFormatter={(value: number) => formatIlpCurrency(value, policy.currency)}
                 />
                 <Tooltip
-                  labelFormatter={(value: number) => `Year ${value}`}
-                  formatter={(value: number, name: string) => [
-                    formatIlpCurrency(value, policy.currency),
-                    name === 'holdIlpValue'
-                      ? 'Keep ILP'
-                      : name === 'exitPath_0'
-                        ? 'Never enter ILP'
-                        : `Exit in Year ${selectedOption?.policyYear ?? 'n/a'}`,
-                  ]}
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload?.length) return null
+                    const rows = payload
+                      .filter((entry) => entry.value != null)
+                      .map((entry) => {
+                        const name = String(entry.dataKey ?? '')
+                        const isHold = name === 'holdIlpValue'
+                        const isNeverEnter = name === 'exitPath_0'
+                        return {
+                          label: isHold ? 'Keep ILP' : isNeverEnter ? 'Never enter ILP' : `Exit in Year ${selectedOption?.policyYear ?? 'n/a'}`,
+                          value: formatIlpCurrency(Number(entry.value), policy.currency),
+                          color: String(entry.color),
+                          bold: isHold,
+                        }
+                      })
+                    return <ChartTooltipContent active={active} label={label} formatLabel={(v) => `Year ${v}`} rows={rows} />
+                  }}
                 />
                 <Line type="monotone" dataKey="holdIlpValue" stroke={colors.primary} strokeWidth={3} dot={false} />
                 {exitPathSeries.map((series) => {

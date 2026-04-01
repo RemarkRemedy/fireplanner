@@ -24,6 +24,7 @@ import { getMipEndProjectionIndex } from '@/lib/calculations/ilp'
 import { buildFeeBreakdown } from '@/lib/calculations/ilpFeeBreakdown'
 import { useChartColors } from '@/lib/chartTheme'
 import { FeeRuleTooltip, BonusRuleTooltip, EventRuleTooltip, FundFeeTooltip } from './FeeRuleTooltip'
+import { ChartTooltipContent } from './ChartTooltip'
 import { formatIlpCurrency, formatIlpPercent } from './formatters'
 
 interface FeeBreakdownSectionProps {
@@ -239,11 +240,15 @@ export function FeeBreakdownSection({
           <XAxis dataKey="policyYear" label={{ value: 'Policy Year', position: 'insideBottom', offset: -5, className: 'fill-muted-foreground text-xs' }} />
           <YAxis tickFormatter={(value: number) => formatIlpCurrency(value, policy.currency)} />
           <Tooltip
-            formatter={(value: number, name: string) => [
-              formatIlpCurrency(Math.abs(value), policy.currency),
-              name === 'bonusCredits' ? 'Bonus Credits' : name === 'additionalCharges' ? feeColumnInfo.additional.label : DEFAULT_FEE_CATEGORIES.find((c) => c.key === name)?.label ?? name,
-            ]}
-            labelFormatter={(label: number) => `Policy Year ${label}`}
+            content={({ active, payload, label }) => {
+              if (!active || !payload?.length) return null
+              const rows = payload.map((entry) => {
+                const name = String(entry.dataKey ?? '')
+                const label2 = name === 'bonusCredits' ? 'Bonus Credits' : name === 'additionalCharges' ? feeColumnInfo.additional.label : DEFAULT_FEE_CATEGORIES.find((c) => c.key === name)?.label ?? name
+                return { label: label2, value: formatIlpCurrency(Math.abs(Number(entry.value)), policy.currency), color: String(entry.color) }
+              })
+              return <ChartTooltipContent active={active} label={label} formatLabel={(v) => `Policy Year ${v}`} rows={rows} />
+            }}
           />
           <Legend
             formatter={(value: string) =>
@@ -283,15 +288,17 @@ export function FeeBreakdownSection({
           <XAxis dataKey="policyYear" label={{ value: 'Policy Year', position: 'insideBottom', offset: -5, className: 'fill-muted-foreground text-xs' }} />
           <YAxis tickFormatter={(value: number) => formatIlpCurrency(value, policy.currency)} />
           <Tooltip
-            formatter={(value: number, name: string) => {
-              const labels: Record<string, string> = {
-                grossFees: 'Cumulative Gross Fees',
-                bonuses: 'Cumulative Bonuses',
-                netFees: 'Cumulative Net Fees',
-              }
-              return [formatIlpCurrency(value, policy.currency), labels[name] ?? name]
+            content={({ active, payload, label }) => {
+              if (!active || !payload?.length) return null
+              const labelMap: Record<string, string> = { grossFees: 'Gross Fees', bonuses: 'Bonuses', netFees: 'Net Fees' }
+              const rows = payload.map((entry) => ({
+                label: labelMap[String(entry.dataKey)] ?? String(entry.name),
+                value: formatIlpCurrency(Number(entry.value), policy.currency),
+                color: String(entry.color),
+                bold: String(entry.dataKey) === 'netFees',
+              }))
+              return <ChartTooltipContent active={active} label={label} formatLabel={(v) => `Policy Year ${v}`} rows={rows} />
             }}
-            labelFormatter={(label: number) => `Policy Year ${label}`}
           />
           <Legend
             formatter={(value: string) => {

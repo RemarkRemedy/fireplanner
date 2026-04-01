@@ -23,6 +23,7 @@ import {
   YAxis,
 } from 'recharts'
 import type { IlpPolicyInput, IlpProjectedPolicyAnalysis } from '@/lib/calculations/ilp'
+import { ChartTooltipContent } from './ChartTooltip'
 import { formatIlpCurrency, formatIlpPercent } from './formatters'
 
 interface ExitTimingExplorerProps {
@@ -205,14 +206,21 @@ export function ExitTimingExplorer({ policy, analysis, useReal = false }: ExitTi
                 />
                 <ReferenceLine y={0} stroke={colors.muted} strokeWidth={1.5} />
                 <Tooltip
-                  formatter={(value: number, _name, item) => [
-                    formatIlpCurrency(value, policy.currency),
-                    item.payload.netGap >= 0 ? 'Net value above added contributions' : 'Net value below added contributions',
-                  ]}
-                  labelFormatter={(_label, payload) => {
+                  content={({ active, payload }) => {
                     const point = payload?.[0]?.payload
-                    if (!point) return ''
-                    return `${point.label} · Withdrawable ${formatIlpCurrency(point.netSurrenderValue, policy.currency)} · Added ${formatIlpCurrency(point.addedFromNowToExit, policy.currency)} · Exit charge ${formatIlpCurrency(point.eecCharge, policy.currency)}`
+                    if (!point) return null
+                    return (
+                      <ChartTooltipContent
+                        active={active}
+                        label={point.label}
+                        rows={[
+                          { label: 'Withdrawable value', value: formatIlpCurrency(point.netSurrenderValue, policy.currency), bold: true },
+                          { label: 'Added from now', value: formatIlpCurrency(point.addedFromNowToExit, policy.currency) },
+                          { label: 'Net gap', value: formatIlpCurrency(point.netGap, policy.currency), bold: true },
+                          { label: 'Early-exit charge', value: formatIlpCurrency(point.eecCharge, policy.currency) },
+                        ]}
+                      />
+                    )
                   }}
                 />
                 <Bar
@@ -337,21 +345,17 @@ export function ExitTimingExplorer({ policy, analysis, useReal = false }: ExitTi
                 />
                 <Tooltip
                   cursor={{ stroke: colors.muted, strokeDasharray: '4 4' }}
-                  contentStyle={{
-                    borderRadius: 10,
-                    borderColor: 'hsl(var(--border))',
-                    boxShadow: '0 10px 24px rgba(15, 23, 42, 0.08)',
-                  }}
-                  itemStyle={{ paddingTop: 2, paddingBottom: 2 }}
-                  formatter={(value, name) => {
-                    const numericValue = typeof value === 'number' ? value : Number(value)
-                    if (!Number.isFinite(numericValue)) return ['n/a', name]
-                    return [formatIlpCurrency(numericValue, policy.currency), name]
-                  }}
-                  labelFormatter={(_label, payload) => {
-                    const point = payload?.[0]?.payload
-                    if (!point) return ''
-                    return `${point.label}`
+                  content={({ active, payload, label: tooltipLabel }) => {
+                    if (!active || !payload?.length) return null
+                    const point = payload[0]?.payload
+                    const rows = payload
+                      .filter((entry) => entry.value != null && Number.isFinite(Number(entry.value)))
+                      .map((entry) => ({
+                        label: String(entry.name ?? entry.dataKey ?? ''),
+                        value: formatIlpCurrency(Number(entry.value), policy.currency),
+                        color: String(entry.color),
+                      }))
+                    return <ChartTooltipContent active={active} label={point?.label ?? tooltipLabel} rows={rows} />
                   }}
                 />
                 {selectedProjectedChartPoint?.exitYear != null ? (
