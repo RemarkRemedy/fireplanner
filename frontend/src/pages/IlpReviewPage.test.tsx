@@ -7507,7 +7507,7 @@ describe('IlpReviewPage', () => {
     expect(screen.getAllByText('TI Benefit Today').length).toBeGreaterThan(0)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
-  it('seeds Tokio Marine #goClassic basic-death as a supported catalog product with combined account-fee modeling', async () => {
+  it('seeds Tokio Marine #goClassic 5-year basic-death corridor as a supported catalog product with combined account-fee modeling', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
 
@@ -7517,18 +7517,24 @@ describe('IlpReviewPage', () => {
 
     const goClassicCard = within(dialog).getByText('#goClassic').closest('.rounded-lg') as HTMLElement | null
     expect(goClassicCard).not.toBeNull()
-    await user.click(within(goClassicCard!).getByRole('button', { name: /^sgd \/ mip 25use template$/i }))
+    const basicVariantButton = within(goClassicCard!)
+      .getAllByRole('button')
+      .find((button) => button.textContent?.includes('SGD / MIP 5') && !button.textContent.includes('Advanced Death'))
+    expect(basicVariantButton).toBeDefined()
+    await user.click(basicVariantButton!)
+    await confirmSeededPolicy(user)
 
-    expect(screen.getAllByText('#goClassic (SGD / MIP 25)').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('#goClassic (SGD / MIP 5)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
+    expect(seededAlert?.textContent).toContain('published SGD premium-payment-term family from 5 to 25 years')
     expect(seededAlert?.textContent).toContain('Basic Death keeps Monthly Protection Charge metadata-only')
     expect(getCatalogValue('Initial Bonus')).toBeInTheDocument()
     expect(getCatalogValue('Additional Bonus')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
-  it('seeds Tokio Marine #goClassic advanced-death as a supported catalog product with disable-on-failure Tokio MPC inputs', async () => {
+  it('seeds Tokio Marine #goClassic 24-year advanced-death corridor as a supported catalog product with disable-on-failure Tokio MPC inputs', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
 
@@ -7538,16 +7544,37 @@ describe('IlpReviewPage', () => {
 
     const goClassicCard = within(dialog).getByText('#goClassic').closest('.rounded-lg') as HTMLElement | null
     expect(goClassicCard).not.toBeNull()
-    await user.click(within(goClassicCard!).getByRole('button', { name: /sgd \/ mip 25 \(advanced death\)/i }))
+    await user.click(within(goClassicCard!).getByRole('button', { name: /sgd \/ mip 24 \(advanced death\)/i }))
+    await confirmSeededPolicy(user)
 
-    expect(screen.getAllByText('#goClassic (SGD / MIP 25 (Advanced Death))').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('#goClassic (SGD / MIP 24 (Advanced Death))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
+    expect(seededAlert?.textContent).toContain('published SGD premium-payment-term family from 5 to 25 years')
     expect(seededAlert?.textContent).toContain('Monthly Protection Charge')
     expect(seededAlert?.textContent).toContain('irreversible downgrade after failed deduction')
     expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getByText(/assurance-charge modeling still needs life-assured inputs/i)).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('seeds Tokio Marine #goClassic 5-year basic-death corridor with post-mip initial-account access', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'goClassic')
+
+    const goClassicCard = within(dialog).getByText('#goClassic').closest('.rounded-lg') as HTMLElement | null
+    expect(goClassicCard).not.toBeNull()
+    const basicVariantButton = within(goClassicCard!)
+      .getAllByRole('button')
+      .find((button) => button.textContent?.includes('SGD / MIP 5') && !button.textContent.includes('Advanced Death'))
+    expect(basicVariantButton).toBeDefined()
+    await user.click(basicVariantButton!)
+
+    expect(screen.getAllByText('#goClassic (SGD / MIP 5)').length).toBeGreaterThan(0)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds Tokio Marine #goClassic Secure as a supported catalog product with combined account-fee modeling', async () => {
