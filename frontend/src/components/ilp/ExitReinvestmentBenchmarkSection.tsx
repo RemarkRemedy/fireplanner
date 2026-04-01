@@ -244,12 +244,12 @@ export function ExitReinvestmentBenchmarkSection({
           </div>
         </div>
       </CardHeader>
-      <CardContent className=”space-y-8”>
-        <div className=”space-y-3”>
+      <CardContent className="space-y-8">
+        <div className="space-y-3">
           <div>
-            <p className=”text-sm font-semibold”>Horizon value for every exit option</p>
-            <p className=”text-sm text-muted-foreground”>
-              The first bar is the clean “never enter ILP” baseline. The rest show what the portfolio could be worth by year {benchmark.horizonYear} if you entered the ILP under the {ilpRateKey}% gross case, then exited in that year and invested outside at {outsideRateKey}% gross less TER. Click a bar to inspect that path below.
+            <p className="text-sm font-semibold">Horizon value for every exit option</p>
+            <p className="text-sm text-muted-foreground">
+              The first bar is the clean "never enter ILP" baseline. The rest show what the portfolio could be worth by year {benchmark.horizonYear} if you entered the ILP under the {ilpRateKey}% gross case, then exited in that year and invested outside at {outsideRateKey}% gross less TER. Click a bar to inspect that path below.
             </p>
           </div>
           <div className="h-80 rounded-lg border border-border/60 p-4" role="img" aria-label="Bar chart showing horizon value for each exit year">
