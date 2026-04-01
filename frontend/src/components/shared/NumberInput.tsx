@@ -158,7 +158,7 @@ export function NumberInput({
 
   return (
     <div className="flex flex-col gap-1">
-      <Label htmlFor={inputId} className="text-sm flex items-center gap-1">
+      <Label htmlFor={inputId} className="flex items-start gap-1 text-sm leading-snug">
         {label}
         {tooltip && <InfoTooltip text={tooltip} />}
       </Label>

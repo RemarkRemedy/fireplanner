@@ -79,7 +79,7 @@ function NullableCurrencyField({
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-1">
+      <div className="flex min-h-[3rem] items-start gap-1">
         <Label htmlFor={inputId} className="text-sm">
           {label}
         </Label>
@@ -1787,7 +1787,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
       >
         <AccordionItem value="policy">
           <AccordionTrigger>Policy Details</AccordionTrigger>
-          <AccordionContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <AccordionContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 [&_label]:flex [&_label]:min-h-[3rem] [&_label]:items-start [&_label]:gap-1 [&_label]:leading-snug">
             <div className="space-y-1">
               <Label htmlFor="ilp-name">Policy Name</Label>
               <Input
@@ -2746,7 +2746,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                 )}
                 {supportsCurrentTiClaimStatusInput && (
                   <div className="space-y-1">
-                    <div className="flex items-center gap-1">
+                    <div className="flex min-h-[3rem] items-start gap-1">
                       <Label>Current TI Claim Status</Label>
                       <InfoTooltip text="Choose the policy's terminal-illness claim state today. Pick 'No Admitted TI Claim' only if you are explicitly confirming there is no admitted TI claim in force." />
                     </div>
