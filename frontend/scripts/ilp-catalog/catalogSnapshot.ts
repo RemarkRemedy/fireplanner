@@ -287,7 +287,6 @@ function buildPhase0PublishedUnmodeledRegistry(): Record<string, IlpCatalogPubli
   const tokioAffluenceRefs = [sourceRef('Published corridor family', 'Affluence@Future publishes premium payment terms from 15 to 30 years across base, Advanced Death, and Advanced Death + Life Benefit Rider corridors; only 15-year corridors are executable today.')]
   const tokioGoClassicRefs = [sourceRef('Published corridor family', '#goClassic publishes premium payment terms from 5 to 25 years across base and Advanced Death corridors; only the 25-year corridors are executable today.')]
   const tokioGoClassicSecureRefs = [sourceRef('Published corridor family', '#goClassic Secure publishes premium payment terms from 5 to 25 years across base and Advanced Death corridors; only the 25-year corridors are executable today.')]
-  const tokioGoAssureRefs = [sourceRef('Published corridor family', '#goAssure publishes 5, 10, 15, 20, and 25 year premium payment choices; only the 10-year corridor is executable today.')]
   const tokioGoAffluenceRefs = [sourceRef('Published corridor family', '#goAffluence publishes premium payment terms from 15 to 30 years across base, Advanced Death, and Advanced Death + Life Benefit Rider corridors; only 15-year corridors are executable today.')]
   const hsbcWealthFocusRefs = [sourceRef('Published corridor family', 'Wealth Focus is published as flexi-term product cards including Flexi 2 and Flexi 4, each with SGD and USD 10-year corridors.')]
 
@@ -347,15 +346,6 @@ function buildPhase0PublishedUnmodeledRegistry(): Record<string, IlpCatalogPubli
       corridor({ id: `sgd-mip-${term}`, label: `SGD / Premium Payment Term ${term} years`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioGoClassicSecureRefs }),
       corridor({ id: `sgd-mip-${term}-advanced-death`, label: `SGD / Premium Payment Term ${term} years / Advanced Death`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioGoClassicSecureRefs }),
     ]),
-    'tokio-marine-goassure': [5, 15, 20, 25].map((term) => corridor({
-      id: `sgd-mip-${term}`,
-      label: `SGD / Premium Payment Term ${term} years`,
-      paymentStructure: 'ppt',
-      currency: 'SGD',
-      premiumPaymentTermYears: term,
-      contributionMode: 'regular-pay',
-      sourceRefs: tokioGoAssureRefs,
-    })),
     'tokio-marine-goaffluence': range(16, 30).flatMap((term) => [
       corridor({ id: `sgd-mip-${term}`, label: `SGD / Premium Payment Term ${term} years`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioGoAffluenceRefs }),
       corridor({ id: `sgd-mip-${term}-advanced-death`, label: `SGD / Premium Payment Term ${term} years / Advanced Death`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioGoAffluenceRefs }),

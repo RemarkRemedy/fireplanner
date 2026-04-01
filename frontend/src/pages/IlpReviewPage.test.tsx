@@ -2512,7 +2512,7 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current-state death-benefit estimate before and after Protection Age')
     expect(seededAlert?.textContent).toContain('current terminal-illness snapshot as the lower of that current death corridor and a manual remaining aggregate TI cap')
     expect(seededAlert?.textContent).toContain('current TPD benefit estimate before Protection Age')
-    expect(seededAlert?.textContent).toContain('policy-year-1-to-4 Initial Bonus corridor via manual initial basic sum assured at issue bands')
+    expect(seededAlert?.textContent).toContain('published Initial Bonus corridor for policy years 1 to 4 via manual initial basic sum assured at issue bands')
     expect(seededAlert?.textContent?.toLowerCase()).toContain('guaranteed extra protection')
     expect(seededAlert?.textContent).toContain('distribution-mode assumption support')
     expect(getCatalogValue('Initial Charge')).toBeInTheDocument()
@@ -2523,7 +2523,30 @@ describe('IlpReviewPage', () => {
     expect(screen.getByLabelText('Initial Basic Sum Assured At Issue (SGD)')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Protection Age')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
-    expect(screen.getByLabelText('Current Basic Sum Assured (SGD)')).toBeInTheDocument()
+    expect(screen.getAllByLabelText('Current Basic Sum Assured (SGD)').length).toBeGreaterThan(0)
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('seeds Tokio Marine #goAssure 25-year corridor with loyalty, achievement, and wellness bonus support', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'goAssure')
+
+    expect(within(dialog).getByText('#goAssure')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 25use template$/i }))
+    await confirmSeededPolicy(user)
+
+    expect(screen.getAllByText('#goAssure (SGD / MIP 25)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('published 1.20% Loyalty Bonus from policy years 11 to 25')
+    expect(seededAlert?.textContent).toContain('policy-year-25 Achievement Bonus credit')
+    expect(seededAlert?.textContent).toContain('policy-year-30 Wellness Bonus credit')
+    expect(getCatalogValue('Loyalty Bonus (Policy Years 11-25)')).toBeInTheDocument()
+    expect(getCatalogValue('Achievement Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Wellness Bonus')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows #goAssure TI Benefit Today once the remaining aggregate TI cap is filled', async () => {

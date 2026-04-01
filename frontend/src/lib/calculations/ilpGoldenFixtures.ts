@@ -4239,19 +4239,54 @@ function tokioMarineGoWealthEnrichStressPolicy(
 
 function tokioMarineGoAssureBasePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-mip-5' | 'sgd-mip-10' | 'sgd-mip-15' | 'sgd-mip-20' | 'sgd-mip-25',
   id: string,
   funds: IlpFund[],
   overrides: Partial<IlpPolicyInput> = {},
 ): IlpPolicyInput {
-  const base = seedPolicy(snapshot, 'tokio-marine-goassure', 'sgd-mip-10', id)
+  const baseConfigByVariant = {
+    'sgd-mip-5': {
+      name: 'Golden #goAssure (SGD / MIP 5)',
+      monthlyContribution: 600,
+      currentPolicyYear: 4,
+      monthsAlreadyPaid: 48,
+    },
+    'sgd-mip-10': {
+      name: 'Golden #goAssure (SGD / MIP 10)',
+      monthlyContribution: 600,
+      currentPolicyYear: 6,
+      monthsAlreadyPaid: 60,
+    },
+    'sgd-mip-15': {
+      name: 'Golden #goAssure (SGD / MIP 15)',
+      monthlyContribution: 600,
+      currentPolicyYear: 12,
+      monthsAlreadyPaid: 144,
+    },
+    'sgd-mip-20': {
+      name: 'Golden #goAssure (SGD / MIP 20)',
+      monthlyContribution: 600,
+      currentPolicyYear: 15,
+      monthsAlreadyPaid: 180,
+    },
+    'sgd-mip-25': {
+      name: 'Golden #goAssure (SGD / MIP 25)',
+      monthlyContribution: 600,
+      currentPolicyYear: 20,
+      monthsAlreadyPaid: 240,
+    },
+  } as const
+
+  const baseConfig = baseConfigByVariant[variantId]
+  const base = seedPolicy(snapshot, 'tokio-marine-goassure', variantId, id)
   return withFunds(
     withTokioBalances(
       ilpPolicySchema.parse({
         ...base,
-        name: 'Golden #goAssure (SGD / MIP 10)',
-        monthlyContribution: 350,
-        currentPolicyYear: 6,
-        monthsAlreadyPaid: 60,
+        name: baseConfig.name,
+        monthlyContribution: baseConfig.monthlyContribution,
+        currentPolicyYear: baseConfig.currentPolicyYear,
+        monthsAlreadyPaid: baseConfig.monthsAlreadyPaid,
         policyEvents: [],
         distributionAssumption: {
           mode: 'reinvest',
@@ -4276,16 +4311,17 @@ function tokioMarineGoAssureBasePolicy(
 
 function tokioMarineGoAssureBaselinePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-mip-5' | 'sgd-mip-10' | 'sgd-mip-15' | 'sgd-mip-20' | 'sgd-mip-25',
   id: string,
 ): IlpPolicyInput {
-  return tokioMarineGoAssureBasePolicy(snapshot, id, TOKIO_BALANCED_FUNDS)
+  return tokioMarineGoAssureBasePolicy(snapshot, variantId, id, TOKIO_BALANCED_FUNDS)
 }
 
 function tokioMarineGoAssureEventHeavyPolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
 ): IlpPolicyInput {
-  return tokioMarineGoAssureBasePolicy(snapshot, id, TOKIO_BALANCED_FUNDS, {
+  return tokioMarineGoAssureBasePolicy(snapshot, 'sgd-mip-10', id, TOKIO_BALANCED_FUNDS, {
     name: 'Golden #goAssure (SGD / MIP 10 Event Heavy)',
     currentPolicyYear: 7,
     monthsAlreadyPaid: 72,
@@ -4334,7 +4370,7 @@ function tokioMarineGoAssureStressPolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
 ): IlpPolicyInput {
-  return tokioMarineGoAssureBasePolicy(snapshot, id, HSBC_STRESS_FUNDS, {
+  return tokioMarineGoAssureBasePolicy(snapshot, 'sgd-mip-10', id, HSBC_STRESS_FUNDS, {
     name: 'Golden #goAssure (SGD / MIP 10 OCF Stress)',
     currentPolicyYear: 9,
     monthsAlreadyPaid: 96,
@@ -14459,6 +14495,20 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
   },
   {
     productId: 'tokio-marine-goassure',
+    variantId: 'sgd-mip-5',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:tokio-marine-goassure-initial-bonus',
+      'branch:tokio-marine-goassure-initial-charge',
+      'branch:tokio-marine-goassure-policy-charge',
+      'branch:tokio-marine-goassure-surrender-charge',
+    ],
+    description: '#goAssure baseline scenario proving supported initial-bonus, initial-charge, premium-base policy-charge, and surrender-charge support through the SGD / MIP 5 corridor.',
+  },
+  {
+    productId: 'tokio-marine-goassure',
     variantId: 'sgd-mip-10',
     scenarioId: 'baseline',
     fixtureClass: 'supported',
@@ -14480,6 +14530,35 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
         test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
       },
     ],
+  },
+  {
+    productId: 'tokio-marine-goassure',
+    variantId: 'sgd-mip-15',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'branch:tokio-marine-goassure-loyalty-bonus',
+      'branch:tokio-marine-goassure-achievement-bonus',
+      'branch:tokio-marine-goassure-wellness-bonus',
+    ],
+    description: '#goAssure baseline scenario proving published Loyalty / Achievement / Wellness bonus support through the SGD / MIP 15 corridor.',
+  },
+  {
+    productId: 'tokio-marine-goassure',
+    variantId: 'sgd-mip-20',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: '#goAssure baseline scenario through the SGD / MIP 20 corridor.',
+  },
+  {
+    productId: 'tokio-marine-goassure',
+    variantId: 'sgd-mip-25',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: '#goAssure baseline scenario through the SGD / MIP 25 corridor.',
   },
   {
     productId: 'tokio-marine-goassure',
@@ -18048,7 +18127,11 @@ function buildPolicyForDefinition(
     return tokioMarineGoWealthEnrichStressPolicy(snapshot, id)
   }
   if (definition.productId === 'tokio-marine-goassure' && definition.scenarioId === 'baseline') {
-    return tokioMarineGoAssureBaselinePolicy(snapshot, id)
+    return tokioMarineGoAssureBaselinePolicy(
+      snapshot,
+      definition.variantId as 'sgd-mip-5' | 'sgd-mip-10' | 'sgd-mip-15' | 'sgd-mip-20' | 'sgd-mip-25',
+      id,
+    )
   }
   if (definition.productId === 'tokio-marine-goassure' && definition.scenarioId === 'event-heavy') {
     return tokioMarineGoAssureEventHeavyPolicy(snapshot, id)

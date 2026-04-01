@@ -262,6 +262,35 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(onSelect.mock.calls[0]?.[1].id).toBe('sgd-mip-30')
   })
 
+  it('promotes Tokio Marine #goAssure premium-payment-term corridors into executable templates', async () => {
+    const user = userEvent.setup()
+    const onSelect = vi.fn()
+
+    render(
+      <MemoryRouter>
+        <ProductPickerDialog open onOpenChange={() => {}} onSelect={onSelect} />
+      </MemoryRouter>,
+    )
+
+    await user.type(screen.getByPlaceholderText(/search insurer or product name/i), 'goAssure')
+
+    const card = getProductCard('#goAssure')
+
+    expect(within(card).queryByText(/published corridors not modeled/i)).not.toBeInTheDocument()
+
+    const mip5Template = within(card).getByRole('button', { name: /SGD \/ MIP 5/i })
+    const mip25Template = within(card).getByRole('button', { name: /SGD \/ MIP 25/i })
+
+    expect(mip5Template).toBeEnabled()
+    expect(mip25Template).toBeEnabled()
+
+    await user.click(mip25Template)
+
+    expect(onSelect).toHaveBeenCalledTimes(1)
+    expect(onSelect.mock.calls[0]?.[0].id).toBe('tokio-marine-goassure')
+    expect(onSelect.mock.calls[0]?.[1].id).toBe('sgd-mip-25')
+  })
+
   it('promotes Invest flex wealth II 3-year and 5-year corridors into executable templates', async () => {
     const user = userEvent.setup()
     const onSelect = vi.fn()
