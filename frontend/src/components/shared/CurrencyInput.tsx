@@ -29,8 +29,8 @@ export function CurrencyInput({
   const [touched, setTouched] = useState(false)
   const errorId = `${inputId}-error`
   return (
-    <div className={cn('flex flex-col gap-1', className)}>
-      <Label htmlFor={inputId} className="flex items-start gap-1 text-sm leading-snug">
+    <div className={cn('flex flex-col gap-2', className)}>
+      <Label htmlFor={inputId} className="flex min-h-[4.5rem] items-start gap-1 text-sm leading-snug">
         {label}
         {tooltip && <InfoTooltip text={tooltip} />}
       </Label>

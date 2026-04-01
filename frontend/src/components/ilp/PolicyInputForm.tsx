@@ -1789,8 +1789,8 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
       >
         <AccordionItem value="policy" className={formSectionClass}>
           <AccordionTrigger>Policy Details</AccordionTrigger>
-        <AccordionContent className={`grid md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 ${formGridGapClass} [&_label]:flex [&_label]:min-h-[3rem] [&_label]:items-start [&_label]:gap-1 [&_label]:leading-snug`}>
-            <div className="space-y-1">
+        <AccordionContent className={`grid md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 ${formGridGapClass} [&_label]:flex [&_label]:min-h-[4.5rem] [&_label]:items-start [&_label]:gap-1 [&_label]:leading-snug`}>
+            <div className="space-y-2">
               <Label htmlFor="ilp-name">Policy Name</Label>
               <Input
                 id="ilp-name"
@@ -1799,7 +1799,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                 onChange={(event) => updatePolicy(policy.id, { name: event.target.value })}
               />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-2">
               <Label htmlFor="ilp-insurer">Insurer</Label>
               <Input
                 id="ilp-insurer"
@@ -1808,7 +1808,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                 onChange={(event) => updatePolicy(policy.id, { insurer: event.target.value })}
               />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-2">
               <Label>Currency</Label>
               <Select
                 value={policy.currency}
@@ -1828,7 +1828,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
               value={policy.monthlyContribution}
               onChange={(value) => updatePolicy(policy.id, { monthlyContribution: value })}
             />
-            <div className="space-y-1">
+            <div className="space-y-2">
               <Label>Regular Premium Payment Frequency</Label>
               <Select
                 value={policy.regularPremiumPaymentFrequency ?? 'monthly'}
@@ -1903,7 +1903,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
             {needsAssuranceInputs && (
               <>
                 {supportsTokioLifeState && (
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     <Label>Life Assured Mode</Label>
                     <Select
                       value={tokioLifeAssuredMode}
@@ -1928,7 +1928,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                       integer
                       min={1}
                     />
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       <Label>Current Oldest Life Sex</Label>
                       <Select
                         value={assuranceProfile?.currentOldestLifeSex ?? assuranceProfile?.sex ?? 'male'}
@@ -1960,7 +1960,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                       integer
                       min={1}
                     />
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       <Label>Life Assured Sex</Label>
                       <Select
                         value={assuranceProfile?.sex ?? 'male'}
@@ -1977,7 +1977,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                     </div>
                   </>
                 )}
-                <div className="space-y-1">
+                <div className="space-y-2">
                   <Label>Smoker Status</Label>
                   <Select
                     value={assuranceProfile?.smokerStatus ?? 'non-smoker'}
@@ -2747,8 +2747,8 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                   />
                 )}
                 {supportsCurrentTiClaimStatusInput && (
-                  <div className="space-y-1">
-                    <div className="flex min-h-[3rem] items-start gap-1">
+                  <div className="space-y-2">
+                    <div className="flex min-h-[4.5rem] items-start gap-1">
                       <Label>Current TI Claim Status</Label>
                       <InfoTooltip text="Choose the policy's terminal-illness claim state today. Pick 'No Admitted TI Claim' only if you are explicitly confirming there is no admitted TI claim in force." />
                     </div>

@@ -86,9 +86,9 @@ export function PercentInput({
   )
 
   return (
-    <div className={cn('flex flex-col gap-1', className)}>
+    <div className={cn('flex flex-col gap-2', className)}>
       {label && (
-        <Label htmlFor={inputId} className="flex items-start gap-1 text-sm leading-snug">
+        <Label htmlFor={inputId} className="flex min-h-[4.5rem] items-start gap-1 text-sm leading-snug">
           {label}
           {tooltip && <InfoTooltip text={tooltip} />}
         </Label>
