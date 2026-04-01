@@ -1182,6 +1182,13 @@ function StoryDetailView({
           </div>
         </div>
         <GuideNote />
+        {mode === 'walkthrough' && (
+          <div className="rounded-md border bg-muted/50 p-4">
+            <p className="text-sm text-muted-foreground">
+              You just reviewed the fee story for {catalogProduct.insurer} {catalogProduct.productName}. Below is the same data in a detailed, interactive walkthrough.
+            </p>
+          </div>
+        )}
       </section>
 
       {mode === 'walkthrough' ? (
