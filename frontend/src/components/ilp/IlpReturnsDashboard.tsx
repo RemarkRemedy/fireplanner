@@ -1,4 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { ExternalLink, Info, Search } from 'lucide-react'
 import { IlpSubfundDetailSheet } from '@/components/ilp/IlpSubfundDetailSheet'
 import { normalizeDate, sourceHref } from '@/components/ilp/ilpDetailUtils'
@@ -11,17 +12,31 @@ type Props = {
 
 type CohortMode = 'recent_reports' | 'all' | string
 
-const RECENT_REPORT_DATES = ['30 November 2025', '31 December 2025', '31 January 2026'] as const
-const RECENT_REPORT_SET = new Set<string>(RECENT_REPORT_DATES)
-
-function getUrlFundId(): string | null {
-  if (typeof window === 'undefined') return null
-  return new URLSearchParams(window.location.search).get('fund')
-}
-
 function normalizeAsOfDate(value?: string | null): string {
   const normalized = normalizeDate(value)
   return normalized === 'Not stated' ? '' : normalized
+}
+
+function parseDateLabel(value: string): number {
+  const match = value.match(/^(\d{1,2})\s([A-Za-z]+)\s(\d{4})$/)
+  if (!match) return Number.NEGATIVE_INFINITY
+  const monthMap: Record<string, number> = {
+    January: 0,
+    February: 1,
+    March: 2,
+    April: 3,
+    May: 4,
+    June: 5,
+    July: 6,
+    August: 7,
+    September: 8,
+    October: 9,
+    November: 10,
+    December: 11,
+  }
+  const monthIndex = monthMap[match[2]]
+  if (monthIndex == null) return Number.NEGATIVE_INFINITY
+  return Date.UTC(Number(match[3]), monthIndex, Number(match[1]))
 }
 
 function compareNullable(left: number | null | undefined, right: number | null | undefined, direction: 'asc' | 'desc') {
@@ -53,6 +68,7 @@ function getReturnStats(row: IlpMasterRow, activeWindow: ReturnWindowSlug): Retu
 }
 
 export function IlpReturnsDashboard({ data }: Props) {
+  const [searchParams, setSearchParams] = useSearchParams()
   const comparisonRows = useMemo(
     () => data.rows.filter((row) => row.returns?.hasComparisonData),
     [data.rows],
@@ -65,12 +81,14 @@ export function IlpReturnsDashboard({ data }: Props) {
           .map((row) => normalizeAsOfDate(row.returns?.asOfDate))
           .filter(Boolean),
       ),
-    ).sort(),
+    ).sort((left, right) => parseDateLabel(right) - parseDateLabel(left)),
     [comparisonRows],
   )
+  const recentReportDates = useMemo(() => asOfDates.slice(0, 3), [asOfDates])
+  const recentReportSet = useMemo(() => new Set(recentReportDates), [recentReportDates])
   const recentReportCount = useMemo(
-    () => comparisonRows.filter((row) => RECENT_REPORT_SET.has(normalizeAsOfDate(row.returns?.asOfDate))).length,
-    [comparisonRows],
+    () => comparisonRows.filter((row) => recentReportSet.has(normalizeAsOfDate(row.returns?.asOfDate))).length,
+    [comparisonRows, recentReportSet],
   )
   const returnComparisonRowCount = data.coverage.returnComparisonRows ?? comparisonRows.length
 
@@ -81,7 +99,7 @@ export function IlpReturnsDashboard({ data }: Props) {
   const [returnWindow, setReturnWindow] = useState<ReturnWindowSlug>('since_inception')
   const [sort, setSort] = useState<'gap-desc' | 'gap-asc' | 'fund-desc' | 'fund-asc' | 'alpha'>('gap-desc')
   const [quickFilter, setQuickFilter] = useState<'all' | 'outperform' | 'proxy' | 'low-fee'>('all')
-  const [selectedFundId, setSelectedFundId] = useState<string | null>(() => getUrlFundId())
+  const selectedFundId = searchParams.get('fund')
   const selectedRow = useMemo(
     () => comparisonRows.find((row) => row.id === selectedFundId) ?? null,
     [comparisonRows, selectedFundId],
@@ -89,28 +107,11 @@ export function IlpReturnsDashboard({ data }: Props) {
 
   useEffect(() => {
     if (selectedFundId && !comparisonRows.some((row) => row.id === selectedFundId)) {
-      setSelectedFundId(null)
+      const nextParams = new URLSearchParams(searchParams)
+      nextParams.delete('fund')
+      setSearchParams(nextParams, { replace: true })
     }
-  }, [comparisonRows, selectedFundId])
-
-  useEffect(() => {
-    const handlePopState = () => setSelectedFundId(getUrlFundId())
-    window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
-  }, [])
-
-  useEffect(() => {
-    const url = new URL(window.location.href)
-    const currentFundId = url.searchParams.get('fund')
-    if (selectedFundId) {
-      if (currentFundId === selectedFundId) return
-      url.searchParams.set('fund', selectedFundId)
-    } else {
-      if (!currentFundId) return
-      url.searchParams.delete('fund')
-    }
-    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
-  }, [selectedFundId])
+  }, [comparisonRows, searchParams, selectedFundId, setSearchParams])
 
   const visibleRows = useMemo(() => comparisonRows
     .filter((row) => {
@@ -119,7 +120,7 @@ export function IlpReturnsDashboard({ data }: Props) {
       const rowAsOf = normalizeAsOfDate(row.returns?.asOfDate)
 
       if (insurer !== 'all' && row.insurer !== insurer) return false
-      if (asOfDate === 'recent_reports' && !RECENT_REPORT_SET.has(rowAsOf)) return false
+      if (asOfDate === 'recent_reports' && !recentReportSet.has(rowAsOf)) return false
       if (asOfDate !== 'all' && asOfDate !== 'recent_reports' && rowAsOf !== asOfDate) return false
       if (quickFilter === 'outperform' && (stats.gapPct ?? Number.NEGATIVE_INFINITY) < 0) return false
       if (quickFilter === 'proxy' && !row.etfProxy) return false
@@ -146,7 +147,7 @@ export function IlpReturnsDashboard({ data }: Props) {
       if (sort === 'alpha') return left.subFund.localeCompare(right.subFund)
       return compareNullable(leftStats.gapPct, rightStats.gapPct, 'desc')
     }),
-  [asOfDate, comparisonRows, deferredSearch, insurer, quickFilter, returnWindow, sort])
+  [asOfDate, comparisonRows, deferredSearch, insurer, quickFilter, recentReportSet, returnWindow, sort])
 
   const currentWindowLabel = useMemo(
     () => RETURN_WINDOWS.find((item) => item.slug === returnWindow)?.label ?? 'Since inception',
@@ -154,13 +155,17 @@ export function IlpReturnsDashboard({ data }: Props) {
   )
   const asOfSummary = useMemo(
     () => (asOfDate === 'recent_reports'
-      ? 'Recent reports cohort: 30 November 2025, 31 December 2025, 31 January 2026'
+      ? `Recent reports cohort: ${recentReportDates.join(', ')}`
       : asOfDate === 'all'
         ? `Mixed dates: ${asOfDates.join(', ')}`
         : `As of: ${asOfDate}`),
-    [asOfDate, asOfDates],
+    [asOfDate, asOfDates, recentReportDates],
   )
-  const openRow = (row: IlpMasterRow) => setSelectedFundId(row.id)
+  const openRow = (row: IlpMasterRow) => {
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.set('fund', row.id)
+    setSearchParams(nextParams, { replace: true })
+  }
 
   return (
     <div className="space-y-6">
@@ -285,7 +290,7 @@ export function IlpReturnsDashboard({ data }: Props) {
         <div className="flex items-start gap-2">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
           <p className="leading-6">
-            Returns are only directly comparable within the same as-of date. The default cohort groups <strong className="text-foreground">30 Nov 2025</strong>, <strong className="text-foreground">31 December 2025</strong>, and <strong className="text-foreground">31 January 2026</strong> because that is a reasonably current cluster, but exact-date slices are still more rigorous.
+            Returns are only directly comparable within the same as-of date. The default cohort groups the latest published report dates in the dataset, but exact-date slices are still more rigorous.
           </p>
         </div>
       </div>
@@ -475,7 +480,11 @@ export function IlpReturnsDashboard({ data }: Props) {
         row={selectedRow}
         open={Boolean(selectedRow)}
         onOpenChange={(open) => {
-          if (!open) setSelectedFundId(null)
+          if (!open) {
+            const nextParams = new URLSearchParams(searchParams)
+            nextParams.delete('fund')
+            setSearchParams(nextParams, { replace: true })
+          }
         }}
       />
     </div>

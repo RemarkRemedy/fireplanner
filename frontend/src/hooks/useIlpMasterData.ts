@@ -24,6 +24,7 @@ function loadIlpMasterData(): Promise<IlpMasterData> {
     ilpMasterDataPromise = fetchIlpMasterData().then((payload) => {
       ilpMasterDataCache = payload
       ilpMasterDataCachedAt = Date.now()
+      ilpMasterDataPromise = null
       return payload
     }).catch((error) => {
       ilpMasterDataPromise = null

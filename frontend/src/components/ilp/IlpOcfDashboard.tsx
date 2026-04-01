@@ -1,4 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { ExternalLink, Info, Search } from 'lucide-react'
 import { IlpSubfundDetailSheet } from '@/components/ilp/IlpSubfundDetailSheet'
 import { normalizeDate, sourceHref, structureLabel } from '@/components/ilp/ilpDetailUtils'
@@ -30,11 +31,6 @@ type FeeRow = {
   sourceNote: string
 }
 
-function getUrlFundId(): string | null {
-  if (typeof window === 'undefined') return null
-  return new URLSearchParams(window.location.search).get('fund')
-}
-
 function compareNullable(left: number | null | undefined, right: number | null | undefined, direction: 'asc' | 'desc') {
   const leftValid = Number.isFinite(left)
   const rightValid = Number.isFinite(right)
@@ -49,6 +45,7 @@ function compareNullable(left: number | null | undefined, right: number | null |
 }
 
 export function IlpOcfDashboard({ data }: Props) {
+  const [searchParams, setSearchParams] = useSearchParams()
   const verifiedRows = useMemo<FeeRow[]>(
     () =>
       data.rows
@@ -105,7 +102,7 @@ export function IlpOcfDashboard({ data }: Props) {
   const [structure, setStructure] = useState('all')
   const [sort, setSort] = useState<SortMode>('fee-asc')
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('all')
-  const [selectedFundId, setSelectedFundId] = useState<string | null>(() => getUrlFundId())
+  const selectedFundId = searchParams.get('fund')
   const selectedRow = useMemo(
     () => verifiedRows.find((row) => row.id === selectedFundId)?.raw ?? null,
     [selectedFundId, verifiedRows],
@@ -113,28 +110,11 @@ export function IlpOcfDashboard({ data }: Props) {
 
   useEffect(() => {
     if (selectedFundId && !verifiedRows.some((row) => row.id === selectedFundId)) {
-      setSelectedFundId(null)
+      const nextParams = new URLSearchParams(searchParams)
+      nextParams.delete('fund')
+      setSearchParams(nextParams, { replace: true })
     }
-  }, [selectedFundId, verifiedRows])
-
-  useEffect(() => {
-    const handlePopState = () => setSelectedFundId(getUrlFundId())
-    window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
-  }, [])
-
-  useEffect(() => {
-    const url = new URL(window.location.href)
-    const currentFundId = url.searchParams.get('fund')
-    if (selectedFundId) {
-      if (currentFundId === selectedFundId) return
-      url.searchParams.set('fund', selectedFundId)
-    } else {
-      if (!currentFundId) return
-      url.searchParams.delete('fund')
-    }
-    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
-  }, [selectedFundId])
+  }, [searchParams, selectedFundId, setSearchParams, verifiedRows])
 
   const visibleRows = useMemo(() => verifiedRows
     .filter((row) => {
@@ -182,7 +162,11 @@ export function IlpOcfDashboard({ data }: Props) {
     [verifiedRows],
   )
 
-  const openRow = (row: FeeRow) => setSelectedFundId(row.id)
+  const openRow = (row: FeeRow) => {
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.set('fund', row.id)
+    setSearchParams(nextParams, { replace: true })
+  }
 
   return (
     <div className="space-y-6">
@@ -505,7 +489,11 @@ export function IlpOcfDashboard({ data }: Props) {
         row={selectedRow}
         open={Boolean(selectedRow)}
         onOpenChange={(open) => {
-          if (!open) setSelectedFundId(null)
+          if (!open) {
+            const nextParams = new URLSearchParams(searchParams)
+            nextParams.delete('fund')
+            setSearchParams(nextParams, { replace: true })
+          }
         }}
       />
     </div>
