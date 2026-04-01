@@ -367,54 +367,69 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                 </motion.p>
                 {isProjected && bestExitOption ? (
                   <>
-                    <motion.div variants={staggerChild} className="grid w-full max-w-3xl grid-cols-1 gap-3 text-left sm:grid-cols-2 sm:auto-rows-fr">
-                      <div className="rounded-md border border-white/10 bg-white/[0.05] p-4 sm:aspect-square">
-                        <div className="text-xs uppercase tracking-wide text-white/50">Exit now</div>
-                        <div className="mt-1 text-2xl font-semibold">
+                    <motion.div variants={staggerChild} className="grid w-full max-w-3xl grid-cols-1 gap-3 text-left sm:grid-cols-2">
+                      <div className="flex min-h-[12.5rem] flex-col rounded-md border border-white/10 bg-white/[0.05] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                        <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-white/45">Exit now</div>
+                        <div className="mt-3 text-3xl font-semibold leading-none tracking-tight">
                           {formatIlpCurrency(projectedAnalysis.npvAnalysis.surrenderNow.netSurrenderValue, policy.currency)}
                         </div>
-                        <div className="mt-1 text-xs text-white/55">
-                          Current early-exit charge: {formatIlpCurrency(projectedAnalysis.npvAnalysis.surrenderNow.eecCharge, policy.currency)}
+                        <div className="mt-2 text-sm text-white/70">
+                          What you could withdraw today
+                        </div>
+                        <div className="mt-auto border-t border-white/10 pt-3 text-sm text-white/60">
+                          Current early-exit charge {formatIlpCurrency(projectedAnalysis.npvAnalysis.surrenderNow.eecCharge, policy.currency)}
                         </div>
                       </div>
-                      <div className="rounded-md border border-white/10 bg-white/[0.05] p-4 sm:aspect-square">
-                        <div className="text-xs uppercase tracking-wide text-white/50">First penalty-free exit</div>
+                      <div className="flex min-h-[12.5rem] flex-col rounded-md border border-white/10 bg-white/[0.05] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                        <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-white/45">First penalty-free exit</div>
                         {firstPenaltyFreeExitOption ? (
                           <>
-                            <div className="mt-1 text-2xl font-semibold">Year {firstPenaltyFreeExitOption.policyYear}</div>
-                            <div className="mt-1 text-xs text-white/55">
+                            <div className="mt-3 text-3xl font-semibold leading-none tracking-tight">Year {firstPenaltyFreeExitOption.policyYear}</div>
+                            <div className="mt-2 text-sm text-white/70">
+                              First year the surrender penalty drops to zero
+                            </div>
+                            <div className="mt-auto border-t border-white/10 pt-3 text-sm text-white/60">
                               Value available {formatIlpCurrency(firstPenaltyFreeExitOption.netSurrenderValue, policy.currency)}
                             </div>
                           </>
                         ) : (
                           <>
-                            <div className="mt-1 text-2xl font-semibold">Not within horizon</div>
-                            <div className="mt-1 text-xs text-white/55">
+                            <div className="mt-3 text-2xl font-semibold leading-tight tracking-tight">Not within horizon</div>
+                            <div className="mt-auto border-t border-white/10 pt-3 text-sm text-white/60">
                               A surrender charge still applies through Year {horizonYear}
                             </div>
                           </>
                         )}
                       </div>
-                      <div className="rounded-md border border-white/10 bg-white/[0.05] p-4 sm:aspect-square">
-                        <div className="text-xs uppercase tracking-wide text-white/50">Lowest fee-burden exit</div>
-                        <div className="mt-1 text-2xl font-semibold">Year {projectedAnalysis.npvAnalysis.bestExitYear}</div>
-                        <div className="mt-1 text-xs text-white/55">
+                      <div className="flex min-h-[12.5rem] flex-col rounded-md border border-white/10 bg-white/[0.05] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                        <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-white/45">Lowest fee-burden exit</div>
+                        <div className="mt-3 text-3xl font-semibold leading-none tracking-tight">Year {projectedAnalysis.npvAnalysis.bestExitYear}</div>
+                        <div className="mt-2 text-sm text-white/70">
+                          Lowest modeled fee burden, not necessarily the best overall outcome
+                        </div>
+                        <div className="mt-auto border-t border-white/10 pt-3 text-sm text-white/60">
                           Value available {formatIlpCurrency(bestExitOption.netSurrenderValue, policy.currency)}
                         </div>
                       </div>
-                      <div className="rounded-md border border-white/10 bg-white/[0.05] p-4 sm:aspect-square">
-                        <div className="text-xs uppercase tracking-wide text-white/50">If you keep the policy</div>
-                        <div className="mt-1 text-2xl font-semibold">
+                      <div className="flex min-h-[12.5rem] flex-col rounded-md border border-white/10 bg-white/[0.05] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                        <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-white/45">If you keep the policy</div>
+                        <div className="mt-3 text-3xl font-semibold leading-none tracking-tight">
                           {formatIlpCurrency(horizonProjectedValue, policy.currency)}
                         </div>
-                        <div className="mt-1 text-xs text-white/55">Projected value after {horizonYear} years</div>
-                        <div className="mt-3 space-y-1 text-xs text-white/60">
-                          <div>Total contributions {formatIlpCurrency(horizonProjectedContributions, policy.currency)}</div>
-                          <div>Total fee cost {formatIlpCurrency(totalEstimatedFees, policy.currency)}</div>
+                        <div className="mt-2 text-sm text-white/70">Projected value after {horizonYear} years</div>
+                        <div className="mt-auto space-y-2 border-t border-white/10 pt-3 text-sm text-white/60">
+                          <div className="flex items-center justify-between gap-4">
+                            <span>Total contributions</span>
+                            <span className="font-medium text-white/80">{formatIlpCurrency(horizonProjectedContributions, policy.currency)}</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-4">
+                            <span>Total fee cost</span>
+                            <span className="font-medium text-white/80">{formatIlpCurrency(totalEstimatedFees, policy.currency)}</span>
+                          </div>
                         </div>
                       </div>
                     </motion.div>
-                    <motion.p variants={staggerChild} className="max-w-lg text-base text-white/70">
+                    <motion.p variants={staggerChild} className="max-w-2xl text-balance text-base text-white/70">
                       Early exit can still leave a meaningful surrender deduction. The first penalty-free exit and the lowest fee-burden exit are not always the same choice, and holding to {horizonYear} years still means contributing {formatIlpCurrency(horizonProjectedContributions, policy.currency)} and carrying {formatIlpCurrency(totalEstimatedFees, policy.currency)} of nominal fee cost in this estimate.
                     </motion.p>
                   </>
