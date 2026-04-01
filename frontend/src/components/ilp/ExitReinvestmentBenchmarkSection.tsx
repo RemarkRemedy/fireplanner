@@ -226,21 +226,23 @@ export function ExitReinvestmentBenchmarkSection({
             </p>
           </div>
           <div className="rounded-lg border p-4">
-            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Outside by year {benchmark.horizonYear}</div>
+            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Exit{selectedOption?.exitYear === 0 ? '' : ` at year ${selectedOption?.policyYear ?? 'n/a'}`}, invest outside to year {benchmark.horizonYear}
+            </div>
             <div className="mt-1 text-lg font-semibold tabular-nums">
               {formatIlpCurrency(selectedHorizonValue, policy.currency)}
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              With the {outsideRateKey}% gross outside assumption, about {formatIlpPercent(outsideNetReturn)} net after TER.
+              Reinvest proceeds at {outsideRateKey}% gross, about {formatIlpPercent(outsideNetReturn)} net after TER.
             </p>
           </div>
           <div className="rounded-lg border p-4">
-            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Keep ILP to year {benchmark.horizonYear}</div>
+            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Stay in ILP to year {benchmark.horizonYear}</div>
             <div className="mt-1 text-lg font-semibold tabular-nums">
               {formatIlpCurrency(benchmark.holdValueAtHorizon, policy.currency)}
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              Using the {ilpRateKey}% gross ILP assumption, about {formatIlpPercent((Number(ilpRateKey) / 100) - ilpOcf)} net before other policy effects. Difference {formatIlpCurrency(selectedHorizonValue - benchmark.holdValueAtHorizon, policy.currency)}
+              At {ilpRateKey}% gross ILP assumption, about {formatIlpPercent((Number(ilpRateKey) / 100) - ilpOcf)} net before other policy effects. Difference {formatIlpCurrency(selectedHorizonValue - benchmark.holdValueAtHorizon, policy.currency)}
             </p>
           </div>
         </div>
