@@ -4,57 +4,59 @@
 
 @layer base {
   :root {
-    --background: 210 20% 99%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 42 25% 97%;
+    --foreground: 48 6% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 48 6% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
+    --popover-foreground: 48 6% 10%;
+    --primary: 15 67% 52%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 42%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --secondary: 40 18% 92%;
+    --secondary-foreground: 48 6% 10%;
+    --muted: 40 18% 92%;
+    --muted-foreground: 48 4% 37%;
+    --accent: 40 18% 92%;
+    --accent-foreground: 48 6% 10%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --success: 142 71% 45%;
+    --success: 161 69% 37%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    --border: 0 0% 0% / 0.08;
+    --input: 0 0% 0% / 0.08;
+    --ring: 15 67% 52%;
+    --radius: 0.625rem;
     --shadow-elevated: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 4px 12px -2px rgb(0 0 0 / 0.08);
+    --font-serif: 'Source Serif 4', Georgia, serif;
+    --font-sans: 'DM Sans', system-ui, sans-serif;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 214 20% 86%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 214 20% 86%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 214 20% 86%;
-    --primary: 217.2 91.2% 59.8%;
+    --background: 48 6% 10%;
+    --foreground: 42 18% 89%;
+    --card: 48 6% 10%;
+    --card-foreground: 42 18% 89%;
+    --popover: 48 6% 10%;
+    --popover-foreground: 42 18% 89%;
+    --primary: 15 67% 52%;
     --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 214 20% 86%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 214 20% 86%;
+    --secondary: 48 5% 16%;
+    --secondary-foreground: 42 18% 89%;
+    --muted: 48 5% 16%;
+    --muted-foreground: 48 5% 69%;
+    --accent: 48 5% 16%;
+    --accent-foreground: 42 18% 89%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --success: 142 71% 45%;
+    --success: 161 69% 37%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --border: 0 0% 100% / 0.1;
+    --input: 0 0% 100% / 0.1;
+    --ring: 15 67% 52%;
     --shadow-elevated: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 4px 12px -2px rgb(0 0 0 / 0.16);
   }
 }
@@ -66,5 +68,244 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-serif);
+    font-size: 17px;
+    line-height: 1.78;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  .font-ui {
+    font-family: var(--font-sans);
+  }
+
+  .font-reading {
+    font-family: var(--font-serif);
+  }
+
+  .article-shell {
+    max-width: 720px;
+    margin-inline: auto;
+  }
+
+  @media (min-width: 1024px) {
+    .article-shell {
+      max-width: 1088px;
+    }
+  }
+
+  .list-shell {
+    max-width: 860px;
+    margin-inline: auto;
+  }
+
+  .editorial-panel {
+    background: hsl(var(--muted) / 0.72);
+    border: 1px solid hsl(var(--border));
+    border-radius: 10px;
+  }
+
+  .editorial-kicker {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    line-height: 1;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: hsl(var(--primary));
+  }
+
+  .editorial-title {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: hsl(var(--foreground));
+  }
+
+  .editorial-subtitle {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.7;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .editorial-meta {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.5;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .editorial-chip {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    line-height: 1;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    padding: 0.45rem 0.7rem;
+    background: hsl(var(--background));
+    color: hsl(var(--muted-foreground));
+    border: 1px solid hsl(var(--border));
+  }
+
+  .editorial-chip-active {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-color: transparent;
+  }
+
+  .editorial-card {
+    border: 1px solid hsl(var(--border));
+    border-radius: 10px;
+    background: hsl(var(--background));
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .editorial-card:hover {
+    border-color: hsl(var(--primary) / 0.35);
+    transform: translateY(-1px);
+  }
+
+  .article-prose {
+    @apply prose prose-neutral max-w-none dark:prose-invert;
+  }
+
+  .article-prose {
+    font-size: 17px;
+    line-height: 1.78;
+  }
+
+  .article-prose :where(h2, h3, h4) {
+    font-family: var(--font-serif);
+    letter-spacing: -0.01em;
+    color: hsl(var(--foreground));
+    scroll-margin-top: 11rem;
+  }
+
+  .article-prose :where(h2) {
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .article-prose :where(h3) {
+    font-family: var(--font-sans);
+    font-size: 1.05rem;
+    font-weight: 500;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .article-prose :where(p, li, blockquote) {
+    font-family: var(--font-serif);
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.78;
+    color: hsl(var(--foreground));
+  }
+
+  .article-prose :where(p) {
+    margin-top: 0;
+    margin-bottom: 1.25rem;
+  }
+
+  .article-prose :where(strong) {
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+
+  .article-prose :where(ul, ol) {
+    margin-top: 1.25rem;
+    margin-bottom: 1.25rem;
+    padding-left: 1.4em;
+  }
+
+  .article-prose :where(li) {
+    margin-top: 0.35rem;
+    margin-bottom: 0.35rem;
+    padding-left: 0.1rem;
+  }
+
+  .article-prose :where(ol > li)::marker {
+    color: hsl(var(--foreground) / 0.8);
+    font-weight: 600;
+  }
+
+  .article-prose :where(li)::marker {
+    color: hsl(var(--muted-foreground) / 0.85);
+  }
+
+  .article-prose :where(a) {
+    color: hsl(var(--primary));
+    text-decoration: none;
+  }
+
+  .article-prose :where(a:hover) {
+    text-decoration: underline;
+  }
+
+  .article-prose :where(hr) {
+    width: 40px;
+    height: 2px;
+    border: 0;
+    margin: 2.5rem 0;
+    background: hsl(var(--primary));
+  }
+
+  .article-prose :where(blockquote) {
+    border-left: 3px solid hsl(var(--primary));
+    padding: 0.75rem 0 0.75rem 1.25rem;
+    margin: 1.75rem 0;
+    font-style: italic;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .article-prose :where(table) {
+    font-family: var(--font-sans);
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin: 1.5rem 0;
+  }
+
+  .article-prose :where(th) {
+    text-align: left;
+    font-weight: 500;
+    padding: 10px 12px;
+    border-bottom: 1.5px solid hsl(var(--border));
+    color: hsl(var(--muted-foreground));
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .article-prose :where(td) {
+    padding: 10px 12px;
+    border-bottom: 0.5px solid hsl(var(--border));
+    color: hsl(var(--foreground));
+    vertical-align: top;
+  }
+
+  .article-prose :where(tbody tr:last-child td) {
+    border-bottom: 0;
+  }
+
+  .article-prose :where(table + p) {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: hsl(var(--muted-foreground));
+  }
+
+  @media (min-width: 1024px) {
+    .article-prose :where(h2, h3, h4) {
+      scroll-margin-top: 6rem;
+    }
   }
 }

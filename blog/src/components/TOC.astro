@@ -1,26 +1,505 @@
 ---
 interface Props {
   headings: { depth: number; slug: string; text: string }[];
+  variant?: 'desktop' | 'mobile';
 }
 
-const { headings } = Astro.props;
+const { headings, variant = 'desktop' } = Astro.props;
 const filteredHeadings = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
+const tocId = `toc-${Math.random().toString(36).slice(2, 8)}`;
 ---
 
 {filteredHeadings.length > 0 && (
-  <nav class="not-prose my-8 rounded-lg border border-border bg-card p-4">
-    <p class="mb-3 text-sm font-semibold text-foreground">In this article</p>
-    <ul class="space-y-1.5">
-      {filteredHeadings.map((heading) => (
-        <li class:list={[heading.depth === 3 && 'ml-4']}>
-          <a
-            href={`#${heading.slug}`}
-            class="text-sm text-muted-foreground transition-colors hover:text-primary"
-          >
-            {heading.text}
-          </a>
-        </li>
-      ))}
-    </ul>
-  </nav>
+  variant === 'mobile' ? (
+    <div id={tocId} class="mobile-toc-wrap font-ui not-prose my-6">
+      <details class="mobile-toc rounded-[14px] border border-border bg-background/90 shadow-[0_1px_4px_rgb(0_0_0_/_0.03)]" data-mobile-toc-inline open>
+        <summary class="mobile-toc-summary">
+          <span class="mobile-toc-summary-copy">
+            <span class="mobile-toc-summary-kicker">Sections</span>
+            <span class="mobile-toc-summary-title">Jump to section</span>
+          </span>
+          <span class="toc-chevron" aria-hidden="true"></span>
+        </summary>
+        <nav class="mobile-toc-body" data-toc-nav>
+          <ul class="space-y-1.5">
+            {filteredHeadings.map((heading) => (
+              <li class:list={[heading.depth === 3 && 'ml-3 border-l border-border/70 pl-3']}>
+                <a
+                  href={`#${heading.slug}`}
+                  data-toc-link
+                  class="mobile-toc-link block rounded-md border-l-2 border-transparent px-3 py-2 text-[13px] leading-[1.45] text-muted-foreground transition-colors hover:bg-background/75 hover:text-foreground"
+                >
+                  {heading.text}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </details>
+
+      <div class="mobile-toc-sticky" data-mobile-toc-sticky hidden>
+        <button type="button" class="mobile-toc-trigger" data-mobile-toc-trigger aria-expanded="false">
+          <span class="mobile-toc-trigger-label">Sections</span>
+          <span class="mobile-toc-trigger-current" data-mobile-toc-current>Jump to section</span>
+          <span class="toc-chevron" aria-hidden="true"></span>
+        </button>
+        <div class="mobile-toc-sheet" data-mobile-toc-sheet hidden>
+          <nav class="mobile-toc-sheet-nav" data-toc-nav>
+            <ul class="space-y-1.5">
+              {filteredHeadings.map((heading) => (
+                <li class:list={[heading.depth === 3 && 'ml-3 border-l border-border/70 pl-3']}>
+                  <a
+                    href={`#${heading.slug}`}
+                    data-toc-link
+                    class="mobile-toc-link block rounded-md border-l-2 border-transparent px-3 py-2 text-[13px] leading-[1.45] text-muted-foreground transition-colors hover:bg-background/75 hover:text-foreground"
+                  >
+                    {heading.text}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  ) : (
+    <nav id={tocId} class="toc-nav font-ui not-prose my-8 rounded-[10px] border border-border bg-muted/45 p-5 lg:my-0">
+      <p class="mb-3 text-sm font-medium text-foreground">In this article</p>
+      <ul class="space-y-1.5">
+        {filteredHeadings.map((heading) => (
+          <li class:list={[heading.depth === 3 && 'ml-3 border-l border-border/70 pl-3']}>
+            <a
+              href={`#${heading.slug}`}
+              data-toc-link
+              class="block rounded-md border-l-2 border-transparent px-3 py-2 text-[13px] leading-[1.45] text-muted-foreground transition-colors hover:bg-background/75 hover:text-foreground"
+            >
+              {heading.text}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
 )}
+
+<script is:inline define:vars={{ tocId }}>
+  (() => {
+    const init = () => {
+      const root = document.getElementById(tocId);
+      if (!root) return;
+
+      const allLinks = Array.from(root.querySelectorAll('[data-toc-link]'));
+      const grouped = new Map();
+
+      allLinks.forEach((link) => {
+        const href = link.getAttribute('href');
+        if (!href?.startsWith('#')) return;
+
+        const section = document.getElementById(href.slice(1));
+        if (!section) return;
+
+        const existing = grouped.get(href);
+        if (existing) {
+          existing.links.push(link);
+          return;
+        }
+
+        grouped.set(href, {
+          href,
+          text: link.textContent?.trim() ?? '',
+          section,
+          links: [link],
+        });
+      });
+
+      const sections = Array.from(grouped.values());
+      if (sections.length === 0) return;
+
+      const mobileInline = root.querySelector('[data-mobile-toc-inline]');
+      const mobileSticky = root.querySelector('[data-mobile-toc-sticky]');
+      const mobileTrigger = root.querySelector('[data-mobile-toc-trigger]');
+      const mobileCurrent = root.querySelector('[data-mobile-toc-current]');
+      const mobileSheet = root.querySelector('[data-mobile-toc-sheet]');
+
+      let lockedHref = null;
+      let unlockTimer = null;
+      let ticking = false;
+      let hasCollapsedToSticky = false;
+      let lastScrollY = window.scrollY;
+
+      const setSheetOpen = (isOpen) => {
+        if (!mobileTrigger || !mobileSheet) return;
+        mobileTrigger.setAttribute('aria-expanded', String(isOpen));
+        mobileSheet.hidden = !isOpen;
+        mobileTrigger.classList.toggle('is-open', isOpen);
+      };
+
+      const updateStickyVisibility = () => {
+        if (!mobileSticky || !mobileInline) return;
+        const inlineBottomY = mobileInline.offsetTop + mobileInline.offsetHeight;
+        const shouldShow =
+          window.innerWidth < 1024 &&
+          hasCollapsedToSticky &&
+          !mobileInline.open &&
+          window.scrollY > inlineBottomY - 24;
+        mobileSticky.hidden = !shouldShow;
+        if (!shouldShow) {
+          setSheetOpen(false);
+        }
+      };
+
+      const updateInlineState = () => {
+        if (!mobileInline) return;
+
+        const currentY = window.scrollY;
+        const scrolledDown = currentY > lastScrollY;
+        const passedInline = mobileInline.getBoundingClientRect().top < -24;
+
+        if (!hasCollapsedToSticky && scrolledDown && passedInline) {
+          hasCollapsedToSticky = true;
+          mobileInline.removeAttribute('open');
+        }
+
+        lastScrollY = currentY;
+      };
+
+      const setActive = (activeHref) => {
+        sections.forEach(({ href, links, text }) => {
+          const isActive = href === activeHref;
+          links.forEach((link) => {
+            link.classList.toggle('toc-link-active', isActive);
+            link.classList.toggle('bg-background/75', isActive);
+            link.classList.toggle('border-primary', isActive);
+            link.classList.toggle('shadow-sm', isActive);
+            link.classList.toggle('text-foreground', isActive);
+            link.classList.toggle('font-medium', isActive);
+            link.classList.toggle('text-muted-foreground', !isActive);
+            if (isActive) {
+              link.setAttribute('aria-current', 'true');
+            } else {
+              link.removeAttribute('aria-current');
+            }
+          });
+          if (isActive && mobileCurrent) {
+            mobileCurrent.textContent = text;
+          }
+        });
+      };
+
+      const releaseLock = () => {
+        lockedHref = null;
+        if (unlockTimer) {
+          window.clearTimeout(unlockTimer);
+          unlockTimer = null;
+        }
+      };
+
+      const updateFromScroll = () => {
+        if (lockedHref) return;
+
+        const threshold = 160;
+        const lastPassed = sections
+          .filter(({ section }) => section.getBoundingClientRect().top <= threshold)
+          .at(-1);
+
+        if (lastPassed) {
+          setActive(lastPassed.href);
+          return;
+        }
+
+        setActive(sections[0].href);
+      };
+
+      const settleNavigation = () => {
+        releaseLock();
+        updateFromScroll();
+      };
+
+      const scheduleUnlock = () => {
+        if (unlockTimer) {
+          window.clearTimeout(unlockTimer);
+        }
+        unlockTimer = window.setTimeout(() => {
+          settleNavigation();
+        }, 140);
+      };
+
+      const lockToHref = (href) => {
+        lockedHref = href;
+        setActive(href);
+        scheduleUnlock();
+      };
+
+      allLinks.forEach((link) => {
+        link.addEventListener('click', () => {
+          const href = link.getAttribute('href');
+          if (!href?.startsWith('#')) return;
+          if (!grouped.has(href)) return;
+
+          lockToHref(href);
+          setSheetOpen(false);
+
+          const details = link.closest('details');
+          if (details) {
+            details.removeAttribute('open');
+          }
+        });
+      });
+
+      if (mobileTrigger) {
+        mobileTrigger.addEventListener('click', () => {
+          const isOpen = mobileTrigger.getAttribute('aria-expanded') === 'true';
+          setSheetOpen(!isOpen);
+        });
+      }
+
+      const onScroll = () => {
+        if (ticking) return;
+        ticking = true;
+        window.requestAnimationFrame(() => {
+          updateInlineState();
+          updateStickyVisibility();
+          if (lockedHref) {
+            scheduleUnlock();
+          }
+          updateFromScroll();
+          ticking = false;
+        });
+      };
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll);
+      if ('onscrollend' in window) {
+        window.addEventListener('scrollend', () => {
+          if (lockedHref) {
+            settleNavigation();
+          }
+        });
+      }
+
+      setActive(sections[0].href);
+      updateInlineState();
+      updateStickyVisibility();
+      updateFromScroll();
+
+      window.addEventListener('hashchange', () => {
+        const target = sections.find(({ section }) => `#${section.id}` === window.location.hash);
+        if (target) {
+          lockToHref(target.href);
+        }
+      });
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init, { once: true });
+    } else {
+      init();
+    }
+  })();
+</script>
+
+<style>
+  .toc-nav {
+    backdrop-filter: blur(6px);
+  }
+
+  .mobile-toc-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    cursor: pointer;
+    list-style: none;
+    padding: 0.95rem 1rem;
+  }
+
+  .mobile-toc-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .mobile-toc-summary::marker {
+    display: none;
+    content: '';
+  }
+
+  .mobile-toc-summary-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .mobile-toc-summary-kicker {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: hsl(var(--primary));
+  }
+
+  .mobile-toc-summary-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+
+  .mobile-toc-body {
+    border-top: 1px solid hsl(var(--border));
+    padding: 0.75rem 0.8rem 0.8rem;
+  }
+
+  .mobile-toc-sticky {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 4.25rem);
+    left: 0;
+    right: 0;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 1rem;
+    pointer-events: none;
+  }
+
+  .mobile-toc-sticky[hidden],
+  .mobile-toc-sheet[hidden] {
+    display: none !important;
+  }
+
+  .mobile-toc-trigger,
+  .mobile-toc-sheet {
+    width: min(100%, 40rem);
+    pointer-events: auto;
+  }
+
+  .mobile-toc-trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid hsl(var(--border));
+    border-radius: 999px;
+    background: hsl(var(--background));
+    box-shadow: 0 8px 20px rgb(0 0 0 / 0.08);
+    padding: 0.75rem 0.95rem;
+  }
+
+  .mobile-toc-trigger-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: hsl(var(--primary));
+    flex-shrink: 0;
+  }
+
+  .mobile-toc-trigger-current {
+    min-width: 0;
+    flex: 1;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 500;
+    color: hsl(var(--foreground));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mobile-toc-sheet {
+    margin-top: 0.5rem;
+    border: 1px solid hsl(var(--border));
+    border-radius: 14px;
+    background: hsl(var(--background));
+    box-shadow: 0 18px 40px rgb(0 0 0 / 0.12);
+    padding: 0.8rem;
+  }
+
+  .mobile-toc-sheet-nav {
+    max-height: min(60vh, 26rem);
+    overflow: auto;
+  }
+
+  .mobile-toc-body ul,
+  .mobile-toc-sheet-nav ul {
+    display: grid;
+  }
+
+  .mobile-toc-body ul {
+    gap: 0.28rem;
+  }
+
+  .mobile-toc-sheet-nav ul {
+    gap: 0.42rem;
+  }
+
+  .mobile-toc-wrap :is(.mobile-toc-body, .mobile-toc-sheet-nav) li {
+    list-style: none;
+  }
+
+  .mobile-toc-body li.ml-3,
+  .mobile-toc-sheet-nav li.ml-3 {
+    margin-left: 0.9rem;
+    padding-left: 0.85rem;
+  }
+
+  .mobile-toc-link {
+    padding: 0.7rem 0.9rem;
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .mobile-toc-sheet .mobile-toc-link {
+    padding: 0.58rem 0.8rem;
+    border-radius: 9px;
+    line-height: 1.35;
+  }
+
+  .mobile-toc-sheet-nav li.ml-3 {
+    margin-top: -0.05rem;
+  }
+
+  .mobile-toc-link.toc-link-active {
+    background: transparent;
+    box-shadow: none;
+    border-left-color: hsl(var(--primary));
+  }
+
+  .toc-chevron {
+    position: relative;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+
+  .toc-chevron::before {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 4px;
+    width: 7px;
+    height: 7px;
+    border-right: 1.5px solid hsl(var(--muted-foreground));
+    border-bottom: 1.5px solid hsl(var(--muted-foreground));
+    transform: rotate(45deg);
+    transition: transform 0.2s ease;
+  }
+
+  .mobile-toc[open] .toc-chevron::before,
+  .mobile-toc-trigger.is-open .toc-chevron::before {
+    top: 6px;
+    transform: rotate(-135deg);
+  }
+
+  .toc-link-active {
+    border-left-color: hsl(var(--primary));
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+  }
+
+  @media (min-width: 1024px) {
+    .mobile-toc-sticky {
+      display: none;
+    }
+  }
+</style>

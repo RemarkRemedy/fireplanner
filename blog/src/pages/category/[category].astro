@@ -35,10 +35,13 @@ const categories = [...new Set(allPosts.map((p) => p.data.category))].sort();
 >
   <BreadcrumbNav crumbs={[{ label: displayName }]} />
 
-  <h1 class="mb-2 text-3xl font-bold tracking-tight text-foreground">{displayName}</h1>
-  <p class="mb-6 text-muted-foreground">
-    {filteredPosts.length} article{filteredPosts.length !== 1 ? 's' : ''} about {displayName.toLowerCase()}.
-  </p>
+  <header class="mb-10">
+    <p class="editorial-kicker mb-3">Category</p>
+    <h1 class="editorial-title mb-3 text-[clamp(1.9rem,4vw,2.7rem)] leading-[1.2]">{displayName}</h1>
+    <p class="editorial-subtitle">
+      {filteredPosts.length} article{filteredPosts.length !== 1 ? 's' : ''} about {displayName.toLowerCase()}.
+    </p>
+  </header>
 
   <CategoryFilter categories={categories} activeCategory={category} />
 

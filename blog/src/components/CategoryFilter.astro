@@ -7,14 +7,14 @@ interface Props {
 const { categories, activeCategory } = Astro.props;
 ---
 
-<nav aria-label="Category filter" class="mb-8 flex flex-wrap gap-2">
+<nav aria-label="Category filter" class="font-ui mb-8 flex flex-wrap gap-2">
   <a
     href="/blog"
     class:list={[
-      'rounded-full px-3 py-1.5 text-sm font-medium transition-colors',
+      'editorial-chip transition-colors',
       !activeCategory
-        ? 'bg-primary text-primary-foreground'
-        : 'bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary',
+        ? 'editorial-chip-active'
+        : 'hover:border-primary/30 hover:text-foreground',
     ]}
   >
     All
@@ -23,10 +23,10 @@ const { categories, activeCategory } = Astro.props;
     <a
       href={`/blog/category/${cat}`}
       class:list={[
-        'rounded-full px-3 py-1.5 text-sm font-medium capitalize transition-colors',
+        'editorial-chip capitalize transition-colors',
         activeCategory === cat
-          ? 'bg-primary text-primary-foreground'
-          : 'bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary',
+          ? 'editorial-chip-active'
+          : 'hover:border-primary/30 hover:text-foreground',
       ]}
     >
       {cat.replace('-', ' ')}

@@ -15,7 +15,7 @@ interface Props {
 }
 
 const { post, headings, allPosts } = Astro.props;
-const { title, description, pubDate, updatedDate, heroImage, author, category, tags, readingTime, noindex } = post.data;
+const { title, description, pubDate, updatedDate, heroImage, author, category, tags, readingTime, noindex, tocLabels } = post.data;
 const authorName = author || 'SG FIRE Planner';
 const slug = toPostSlug(post.id);
 const formattedDate = pubDate.toLocaleDateString('en-SG', {
@@ -23,6 +23,10 @@ const formattedDate = pubDate.toLocaleDateString('en-SG', {
   month: 'long',
   day: 'numeric',
 });
+const tocHeadings = headings.map((heading) => ({
+  ...heading,
+  text: tocLabels?.[heading.slug] ?? heading.text,
+}));
 ---
 
 <BaseLayout title={title}>
@@ -44,46 +48,52 @@ const formattedDate = pubDate.toLocaleDateString('en-SG', {
     { label: title },
   ]} />
 
-  <article>
-    <header class="mb-8">
-      <h1 class="mb-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+  <article class="article-shell lg:grid lg:grid-cols-[248px_minmax(0,1fr)] lg:gap-12">
+    <aside class="hidden lg:block lg:self-start lg:sticky lg:top-24">
+      <TOC headings={tocHeadings} />
+    </aside>
+
+    <div class="min-w-0">
+      <header class="mb-10">
+        <h1 class="font-reading mb-3 text-[clamp(1.8rem,4vw,2.4rem)] font-semibold leading-[1.25] tracking-[-0.02em] text-foreground">
         {title}
-      </h1>
-      <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-        <span>{authorName}</span>
-        <span>&middot;</span>
-        <time datetime={pubDate.toISOString()}>{formattedDate}</time>
-        {readingTime && (
-          <>
-            <span>&middot;</span>
-            <span>{readingTime} min read</span>
-          </>
-        )}
-        {updatedDate && (
-          <>
-            <span>&middot;</span>
-            <span>Updated {updatedDate.toLocaleDateString('en-SG', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
-          </>
-        )}
+        </h1>
+        <div class="font-ui flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+          <span>{authorName}</span>
+          <span>&middot;</span>
+          <time datetime={pubDate.toISOString()}>{formattedDate}</time>
+          {readingTime && (
+            <>
+              <span>&middot;</span>
+              <span>{readingTime} min read</span>
+            </>
+          )}
+          {updatedDate && (
+            <>
+              <span>&middot;</span>
+              <span>Updated {updatedDate.toLocaleDateString('en-SG', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+            </>
+          )}
+        </div>
+        <div class="font-ui mt-3 flex flex-wrap gap-1.5">
+          {tags.map((tag) => (
+            <span class="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
+              {tag}
+            </span>
+          ))}
+        </div>
+      </header>
+
+      <div class="lg:hidden">
+        <TOC headings={tocHeadings} variant="mobile" />
       </div>
-      <div class="mt-3 flex flex-wrap gap-1.5">
-        {tags.map((tag) => (
-          <span class="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
-            {tag}
-          </span>
-        ))}
+
+      <div class="article-prose prose-headings:scroll-mt-20">
+        <slot />
       </div>
-    </header>
 
-    <TOC headings={headings} />
-
-    <Disclaimer />
-
-    <div class="prose prose-slate max-w-none dark:prose-invert prose-headings:scroll-mt-20 prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
-      <slot />
+      <Disclaimer />
     </div>
-
-    <Disclaimer />
   </article>
 
   <RelatedPosts
