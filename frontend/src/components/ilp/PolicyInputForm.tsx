@@ -49,20 +49,19 @@ interface ManualInputGuide {
   matchText: string
 }
 
-function splitSupportNote(note: string): { title: string; detail: string | null } {
+function summarizeSupportNote(note: string): { preview: string; detail: string | null } {
   const trimmed = note.trim()
-  const firstSentenceEnd = trimmed.indexOf('. ')
+  const compact = trimmed.replace(/\s+/g, ' ')
 
-  if (firstSentenceEnd === -1) {
-    return { title: trimmed, detail: null }
+  if (compact.length <= 220) {
+    return { preview: compact, detail: null }
   }
 
-  const title = trimmed.slice(0, firstSentenceEnd + 1).trim()
-  const detail = trimmed.slice(firstSentenceEnd + 2).trim()
+  const preview = `${compact.slice(0, 220).trimEnd()}...`
 
   return {
-    title,
-    detail: detail.length > 0 ? detail : null,
+    preview,
+    detail: trimmed,
   }
 }
 
@@ -1660,15 +1659,18 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                 </summary>
                 <div className="space-y-3 pt-2">
                   {policy.catalogWarnings.slice(0, 4).map((warning, index) => {
-                    const { title, detail } = splitSupportNote(warning)
+                    const { preview, detail } = summarizeSupportNote(warning)
 
                     return (
                       <div key={`${index}-${warning}`} className="rounded-md border bg-background/70 p-3">
-                        <p className="text-sm font-medium text-foreground">{title}</p>
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          Modeled note {index + 1}
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-foreground">{preview}</p>
                         {detail && (
                           <details className="mt-2">
                             <summary className="cursor-pointer text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                              What is modeled
+                              Full modeled note
                             </summary>
                             <p className="pt-2 text-sm leading-6 text-muted-foreground">
                               {detail}
