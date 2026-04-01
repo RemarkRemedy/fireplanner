@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { HTMLAttributes, ReactNode } from 'react'
@@ -8,7 +8,7 @@ import { analyzeIlpPolicy } from '@/lib/calculations/ilp'
 import { mergePolicySeed } from '@/stores/useIlpStore'
 import { formatIlpCurrency } from './formatters'
 import { ExitReinvestmentBenchmarkSection } from './ExitReinvestmentBenchmarkSection'
-import { buildExitReinvestmentBenchmark } from './exitReinvestmentBenchmark'
+import { buildExitReinvestmentBenchmark, buildIlpScenarioAnalyses } from './exitReinvestmentBenchmark'
 
 vi.mock('recharts', () => {
   const Container = ({ children, ...props }: HTMLAttributes<HTMLDivElement> & { children?: ReactNode }) => (
@@ -30,7 +30,7 @@ vi.mock('recharts', () => {
 })
 
 describe('ExitReinvestmentBenchmarkSection', () => {
-  it('renders the switch-out benchmark charts and updates the benchmark return assumption', async () => {
+  it('renders the switch-out benchmark charts and updates both ILP and outside return assumptions', async () => {
     const user = userEvent.setup()
     const { products, manifest } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'aia-elite-secure-income-5-pay')
@@ -41,7 +41,8 @@ describe('ExitReinvestmentBenchmarkSection', () => {
     const analysis = analyzeIlpPolicy(policy)
     expect(analysis.mode).toBe('projected')
 
-    const benchmark = buildExitReinvestmentBenchmark(policy, analysis)
+    const scenarioAnalyses = buildIlpScenarioAnalyses(policy)
+    const benchmark = buildExitReinvestmentBenchmark(policy, scenarioAnalyses['8'])
     const firstPenaltyFree = benchmark.options.find((option) => option.exitYear > 0 && option.isPenaltyFree)
     expect(firstPenaltyFree).toBeTruthy()
 
@@ -56,10 +57,18 @@ describe('ExitReinvestmentBenchmarkSection', () => {
     expect(screen.getByRole('img', { name: /line chart showing ilp hold value and selected exit-and-invest-outside path/i })).toBeInTheDocument()
     expect(screen.getByRole('img', { name: /bar chart showing horizon value for each exit year/i })).toBeInTheDocument()
     expect(screen.getByRole('combobox')).toHaveTextContent('Year 6')
-    expect(screen.getByText(formatIlpCurrency(firstPenaltyFree!.horizonValueAt4, policy.currency))).toBeInTheDocument()
+    expect(screen.getByText(formatIlpCurrency(firstPenaltyFree!.horizonValues['4'], policy.currency))).toBeInTheDocument()
 
-    await user.click(screen.getByRole('tab', { name: '7% nominal' }))
+    const ilpTabs = screen.getByRole('tablist', { name: /ilp gross return assumption/i })
+    const outsideTabs = screen.getByRole('tablist', { name: /outside return assumption/i })
 
-    expect(screen.getByText(formatIlpCurrency(firstPenaltyFree!.horizonValueAt7, policy.currency))).toBeInTheDocument()
+    await user.click(within(outsideTabs).getByRole('tab', { name: '7%' }))
+
+    expect(screen.getByText(formatIlpCurrency(firstPenaltyFree!.horizonValues['7'], policy.currency))).toBeInTheDocument()
+
+    const keepAt10 = scenarioAnalyses['10'].projections.mid.rows.at(-1)?.combinedValue ?? 0
+    await user.click(within(ilpTabs).getByRole('tab', { name: '10%' }))
+
+    expect(screen.getByText(formatIlpCurrency(keepAt10, policy.currency))).toBeInTheDocument()
   })
 })

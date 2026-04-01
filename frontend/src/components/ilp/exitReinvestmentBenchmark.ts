@@ -1,4 +1,9 @@
-import type { IlpPolicyInput, IlpProjectedPolicyAnalysis, IlpYearRow } from '@/lib/calculations/ilp'
+import { analyzeIlpPolicy, type IlpPolicyInput, type IlpProjectedPolicyAnalysis, type IlpYearRow } from '@/lib/calculations/ilp'
+
+export const EXIT_BENCHMARK_RATES = [2, 4, 6, 7, 8, 10] as const
+export type ExitBenchmarkRateKey = `${(typeof EXIT_BENCHMARK_RATES)[number]}`
+
+type HorizonValueMap = Record<ExitBenchmarkRateKey, number>
 
 export interface ExitReinvestmentOption {
   exitYear: number
@@ -6,8 +11,7 @@ export interface ExitReinvestmentOption {
   netExitValue: number
   eecCharge: number
   isPenaltyFree: boolean
-  horizonValueAt4: number
-  horizonValueAt7: number
+  horizonValues: HorizonValueMap
 }
 
 export interface ExitReinvestmentPathPoint {
@@ -41,6 +45,41 @@ function compoundFromExit(
   return value
 }
 
+function buildHorizonValues(
+  exitYear: number,
+  netExitValue: number,
+  contributionRows: IlpYearRow[],
+  horizonYear: number,
+): HorizonValueMap {
+  return Object.fromEntries(
+    EXIT_BENCHMARK_RATES.map((rate) => {
+      const rateKey = String(rate) as ExitBenchmarkRateKey
+      return [rateKey, compoundFromExit(exitYear, netExitValue, contributionRows, horizonYear, rate / 100)]
+    }),
+  ) as HorizonValueMap
+}
+
+export function buildIlpScenarioAnalyses(
+  policy: IlpPolicyInput,
+): Record<ExitBenchmarkRateKey, IlpProjectedPolicyAnalysis> {
+  return Object.fromEntries(
+    EXIT_BENCHMARK_RATES.map((rate) => {
+      const annualRate = rate / 100
+      const rateKey = String(rate) as ExitBenchmarkRateKey
+      const scenarioPolicy: IlpPolicyInput = {
+        ...policy,
+        funds: policy.funds.map((fund) => ({
+          ...fund,
+          grossReturnLow: annualRate,
+          grossReturnMid: annualRate,
+          grossReturnHigh: annualRate,
+        })),
+      }
+      return [rateKey, analyzeIlpPolicy(scenarioPolicy)]
+    }),
+  ) as Record<ExitBenchmarkRateKey, IlpProjectedPolicyAnalysis>
+}
+
 export function buildExitReinvestmentBenchmark(
   _policy: IlpPolicyInput,
   analysis: IlpProjectedPolicyAnalysis,
@@ -64,8 +103,7 @@ export function buildExitReinvestmentBenchmark(
       netExitValue: analysis.npvAnalysis.surrenderNow.netSurrenderValue,
       eecCharge: analysis.npvAnalysis.surrenderNow.eecCharge,
       isPenaltyFree: Math.abs(analysis.npvAnalysis.surrenderNow.eecCharge) <= 0.005,
-      horizonValueAt4: compoundFromExit(0, analysis.npvAnalysis.surrenderNow.netSurrenderValue, contributionRows, horizonRow.year, 0.04),
-      horizonValueAt7: compoundFromExit(0, analysis.npvAnalysis.surrenderNow.netSurrenderValue, contributionRows, horizonRow.year, 0.07),
+      horizonValues: buildHorizonValues(0, analysis.npvAnalysis.surrenderNow.netSurrenderValue, contributionRows, horizonRow.year),
     },
     ...analysis.npvAnalysis.futureExitOptions.map((option) => ({
       exitYear: option.exitYear,
@@ -73,8 +111,7 @@ export function buildExitReinvestmentBenchmark(
       netExitValue: option.netSurrenderValue,
       eecCharge: option.eecCharge,
       isPenaltyFree: Math.abs(option.eecCharge) <= 0.005,
-      horizonValueAt4: compoundFromExit(option.exitYear, option.netSurrenderValue, contributionRows, horizonRow.year, 0.04),
-      horizonValueAt7: compoundFromExit(option.exitYear, option.netSurrenderValue, contributionRows, horizonRow.year, 0.07),
+      horizonValues: buildHorizonValues(option.exitYear, option.netSurrenderValue, contributionRows, horizonRow.year),
     })),
   ]
 

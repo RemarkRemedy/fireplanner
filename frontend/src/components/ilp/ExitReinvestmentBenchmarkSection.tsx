@@ -24,54 +24,58 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useChartColors } from '@/lib/chartTheme'
 import type { IlpProjectedPolicyAnalysis, IlpPolicyInput } from '@/lib/calculations/ilp'
 import { formatIlpCurrency } from './formatters'
-import { buildExitReinvestmentBenchmark, buildExitReinvestmentPath } from './exitReinvestmentBenchmark'
+import {
+  buildExitReinvestmentBenchmark,
+  buildExitReinvestmentPath,
+  buildIlpScenarioAnalyses,
+  EXIT_BENCHMARK_RATES,
+  type ExitBenchmarkRateKey,
+} from './exitReinvestmentBenchmark'
 
 interface ExitReinvestmentBenchmarkSectionProps {
   policy: IlpPolicyInput
   analysis: IlpProjectedPolicyAnalysis
 }
 
-type BenchmarkRateKey = '4' | '7'
-
 export function ExitReinvestmentBenchmarkSection({
   policy,
   analysis,
 }: ExitReinvestmentBenchmarkSectionProps) {
   const colors = useChartColors()
-  const [rateKey, setRateKey] = useState<BenchmarkRateKey>('4')
+  const [outsideRateKey, setOutsideRateKey] = useState<ExitBenchmarkRateKey>('4')
+  const [ilpRateKey, setIlpRateKey] = useState<ExitBenchmarkRateKey>('8')
+
+  const scenarioAnalyses = useMemo(() => buildIlpScenarioAnalyses(policy), [policy])
+  const scenarioAnalysis = scenarioAnalyses[ilpRateKey] ?? analysis
 
   const benchmark = useMemo(
-    () => buildExitReinvestmentBenchmark(policy, analysis),
-    [policy, analysis],
+    () => buildExitReinvestmentBenchmark(policy, scenarioAnalysis),
+    [policy, scenarioAnalysis],
   )
 
   const defaultExitYear = useMemo(() => {
     const firstPenaltyFree = benchmark.options.find((option) => option.exitYear > 0 && option.isPenaltyFree)
     return String(firstPenaltyFree?.exitYear ?? analysis.npvAnalysis.bestExitYear)
-  }, [analysis.npvAnalysis.bestExitYear, benchmark.options])
+  }, [benchmark.options, scenarioAnalysis.npvAnalysis.bestExitYear])
 
   const [selectedExitYear, setSelectedExitYear] = useState(defaultExitYear)
 
-  const annualReturn = rateKey === '4' ? 0.04 : 0.07
+  const annualReturn = Number(outsideRateKey) / 100
   const selectedOption = benchmark.options.find((option) => String(option.exitYear) === selectedExitYear) ?? benchmark.options[0]
   const neverEnterOption = benchmark.options.find((option) => option.exitYear === 0) ?? benchmark.options[0]
 
-  const selectedHorizonValue = rateKey === '4'
-    ? (selectedOption?.horizonValueAt4 ?? 0)
-    : (selectedOption?.horizonValueAt7 ?? 0)
-  const neverEnterHorizonValue = rateKey === '4'
-    ? (neverEnterOption?.horizonValueAt4 ?? 0)
-    : (neverEnterOption?.horizonValueAt7 ?? 0)
+  const selectedHorizonValue = selectedOption?.horizonValues[outsideRateKey] ?? 0
+  const neverEnterHorizonValue = neverEnterOption?.horizonValues[outsideRateKey] ?? 0
 
   const horizonBarData = benchmark.options.map((option) => ({
     exitYear: option.exitYear,
     policyYear: option.policyYear,
     label: option.exitYear === 0 ? 'Never enter' : `Year ${option.policyYear}`,
-    horizonValue: rateKey === '4' ? option.horizonValueAt4 : option.horizonValueAt7,
+    horizonValue: option.horizonValues[outsideRateKey],
   }))
 
   const pathData = selectedOption
-    ? buildExitReinvestmentPath(analysis, selectedOption.exitYear, selectedOption.netExitValue, annualReturn)
+    ? buildExitReinvestmentPath(scenarioAnalysis, selectedOption.exitYear, selectedOption.netExitValue, annualReturn)
     : []
 
   const exitPathSeries = useMemo(() => {
@@ -80,9 +84,9 @@ export function ExitReinvestmentBenchmarkSection({
     return visibleOptions.map((option) => ({
       option,
       dataKey: `exitPath_${option.exitYear}`,
-      points: buildExitReinvestmentPath(analysis, option.exitYear, option.netExitValue, annualReturn),
+      points: buildExitReinvestmentPath(scenarioAnalysis, option.exitYear, option.netExitValue, annualReturn),
     }))
-  }, [analysis, annualReturn, benchmark.options, selectedExitYear])
+  }, [annualReturn, benchmark.options, scenarioAnalysis, selectedExitYear])
 
   const combinedPathData = useMemo(() => {
     const rows = pathData.map((point) => ({
@@ -122,16 +126,31 @@ export function ExitReinvestmentBenchmarkSection({
           <div className="space-y-2">
             <CardTitle>If you exit and invest outside instead</CardTitle>
             <p className="max-w-3xl text-sm text-muted-foreground">
-              The charts below compare three real choices: never enter the ILP at all, enter first and exit in a chosen year, or keep the ILP all the way to year {benchmark.horizonYear}. When you switch out, the benchmark uses the net surrender value at that exit point plus any remaining planned contributions invested outside instead.
+              The charts below compare three real choices: never enter the ILP at all, enter first and exit in a chosen year, or keep the ILP all the way to year {benchmark.horizonYear}. The ILP path uses the selected gross-return assumption, while the outside path uses the selected benchmark return and starts from the net surrender value at that exit point plus any remaining planned contributions invested outside instead.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:items-end">
             <div>
+              <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">ILP gross return assumption</div>
+              <Tabs value={ilpRateKey} onValueChange={(value) => setIlpRateKey(value as ExitBenchmarkRateKey)}>
+                <TabsList aria-label="ILP gross return assumption">
+                  {EXIT_BENCHMARK_RATES.map((rate) => (
+                    <TabsTrigger key={rate} value={String(rate)}>
+                      {rate}%
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+            </div>
+            <div>
               <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Outside return assumption</div>
-              <Tabs value={rateKey} onValueChange={(value) => setRateKey(value as BenchmarkRateKey)}>
-                <TabsList>
-                  <TabsTrigger value="4">4% nominal</TabsTrigger>
-                  <TabsTrigger value="7">7% nominal</TabsTrigger>
+              <Tabs value={outsideRateKey} onValueChange={(value) => setOutsideRateKey(value as ExitBenchmarkRateKey)}>
+                <TabsList aria-label="Outside return assumption">
+                  {EXIT_BENCHMARK_RATES.map((rate) => (
+                    <TabsTrigger key={rate} value={String(rate)}>
+                      {rate}%
+                    </TabsTrigger>
+                  ))}
                 </TabsList>
               </Tabs>
             </div>
@@ -160,7 +179,7 @@ export function ExitReinvestmentBenchmarkSection({
               {formatIlpCurrency(neverEnterHorizonValue, policy.currency)}
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              Invest the same planned contributions outside from the start at {rateKey}% nominal.
+              Invest the same planned contributions outside from the start at {outsideRateKey}% nominal.
             </p>
           </div>
           <div className="rounded-lg border p-4">
@@ -171,7 +190,7 @@ export function ExitReinvestmentBenchmarkSection({
             <p className="mt-1 text-sm text-muted-foreground">
               {selectedOption?.exitYear === 0
                 ? `Start outside with no ILP lock-in.`
-                : `Net exit value ${formatIlpCurrency(selectedOption?.netExitValue ?? 0, policy.currency)}`}
+                : `Net exit value ${formatIlpCurrency(selectedOption?.netExitValue ?? 0, policy.currency)} under the ${ilpRateKey}% ILP case.`}
             </p>
           </div>
           <div className="rounded-lg border p-4">
@@ -180,7 +199,7 @@ export function ExitReinvestmentBenchmarkSection({
               {formatIlpCurrency(selectedHorizonValue, policy.currency)}
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              With the {rateKey}% nominal assumption and remaining planned contributions invested outside.
+              With the {outsideRateKey}% nominal assumption and remaining planned contributions invested outside.
             </p>
           </div>
           <div className="rounded-lg border p-4">
@@ -189,7 +208,7 @@ export function ExitReinvestmentBenchmarkSection({
               {formatIlpCurrency(benchmark.holdValueAtHorizon, policy.currency)}
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              Difference {formatIlpCurrency(selectedHorizonValue - benchmark.holdValueAtHorizon, policy.currency)}
+              Using the {ilpRateKey}% gross ILP assumption. Difference {formatIlpCurrency(selectedHorizonValue - benchmark.holdValueAtHorizon, policy.currency)}
             </p>
           </div>
         </div>
@@ -199,7 +218,7 @@ export function ExitReinvestmentBenchmarkSection({
           <div>
             <h3 className="text-sm font-semibold">Path after the selected exit year</h3>
             <p className="text-sm text-muted-foreground">
-              The purple line keeps the ILP all the way to year {benchmark.horizonYear}. One faint line shows the never-enter path, and the other faint lines show exit-and-invest alternatives. The highlighted teal line is the currently selected path.
+              The purple line keeps the ILP all the way to year {benchmark.horizonYear} under the {ilpRateKey}% gross ILP assumption. One faint line shows the never-enter path, and the other faint lines show exit-and-invest alternatives at {outsideRateKey}% nominal. The highlighted teal line is the currently selected path.
             </p>
           </div>
           <div className="h-72 rounded-lg border border-border/60 p-4" role="img" aria-label="Line chart showing ILP hold value and selected exit-and-invest-outside path">
@@ -255,7 +274,7 @@ export function ExitReinvestmentBenchmarkSection({
           <div>
             <h3 className="text-sm font-semibold">Horizon value for every exit option</h3>
             <p className="text-sm text-muted-foreground">
-              The first bar is the clean “never enter ILP” baseline. The rest show what the portfolio could be worth by year {benchmark.horizonYear} if you entered the ILP, then exited in that year and invested outside at {rateKey}% nominal. Click a bar to inspect that path above.
+              The first bar is the clean “never enter ILP” baseline. The rest show what the portfolio could be worth by year {benchmark.horizonYear} if you entered the ILP under the {ilpRateKey}% gross case, then exited in that year and invested outside at {outsideRateKey}% nominal. Click a bar to inspect that path above.
             </p>
           </div>
           <div className="h-80 rounded-lg border border-border/60 p-4" role="img" aria-label="Bar chart showing horizon value for each exit year">

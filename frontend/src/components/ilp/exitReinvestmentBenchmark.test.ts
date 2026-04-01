@@ -3,7 +3,11 @@ import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
 import { templateVariantToPolicySeed } from '@/lib/ilp-catalog/templateToPolicy'
 import { analyzeIlpPolicy } from '@/lib/calculations/ilp'
 import { mergePolicySeed } from '@/stores/useIlpStore'
-import { buildExitReinvestmentBenchmark, buildExitReinvestmentPath } from './exitReinvestmentBenchmark'
+import {
+  buildExitReinvestmentBenchmark,
+  buildExitReinvestmentPath,
+  buildIlpScenarioAnalyses,
+} from './exitReinvestmentBenchmark'
 
 describe('exitReinvestmentBenchmark', () => {
   it('builds horizon values for each exit year using net exit value plus remaining planned contributions', () => {
@@ -29,9 +33,9 @@ describe('exitReinvestmentBenchmark', () => {
     const expectedAt7 = exitYearThree!.netExitValue * Math.pow(1.07, horizonExitYear - 3)
       + contributionRows.reduce((sum, row) => sum + row.annualContribution * Math.pow(1.07, horizonExitYear - row.year), 0)
 
-    expect(exitYearThree!.horizonValueAt4).toBeCloseTo(expectedAt4, 6)
-    expect(exitYearThree!.horizonValueAt7).toBeCloseTo(expectedAt7, 6)
-    expect(exitYearThree!.horizonValueAt7).toBeGreaterThan(exitYearThree!.horizonValueAt4)
+    expect(exitYearThree!.horizonValues['4']).toBeCloseTo(expectedAt4, 6)
+    expect(exitYearThree!.horizonValues['7']).toBeCloseTo(expectedAt7, 6)
+    expect(exitYearThree!.horizonValues['7']).toBeGreaterThan(exitYearThree!.horizonValues['4'])
   })
 
   it('builds a selected path that stays in the ILP until exit and then grows outside', () => {
@@ -55,6 +59,21 @@ describe('exitReinvestmentBenchmark', () => {
       6,
     )
     expect(path.find((point) => point.year === 3)?.selectedPathValue).toBeCloseTo(exitYearThree!.netExitValue, 6)
-    expect(path.at(-1)?.selectedPathValue).toBeCloseTo(exitYearThree!.horizonValueAt4, 6)
+    expect(path.at(-1)?.selectedPathValue).toBeCloseTo(exitYearThree!.horizonValues['4'], 6)
+  })
+
+  it('builds separate ILP analyses for each selected gross return assumption', () => {
+    const { products, manifest } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'aia-elite-secure-income-5-pay')
+    expect(product).toBeTruthy()
+
+    const seed = templateVariantToPolicySeed(product!, product!.variants[0], manifest)
+    const policy = mergePolicySeed(seed)
+
+    const analyses = buildIlpScenarioAnalyses(policy)
+    const holdAt2 = analyses['2'].projections.mid.rows.at(-1)?.combinedValue ?? 0
+    const holdAt10 = analyses['10'].projections.mid.rows.at(-1)?.combinedValue ?? 0
+
+    expect(holdAt10).toBeGreaterThan(holdAt2)
   })
 })
