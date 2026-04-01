@@ -6851,6 +6851,7 @@ describe('IlpReviewPage', () => {
 
     const tiClaimStatusTrigger = screen.getByRole('combobox', { name: /current ti claim status/i })
     expect(tiClaimStatusTrigger).toHaveTextContent('Not keyed yet')
+    expect(screen.getByText('2 current inputs left')).toBeInTheDocument()
 
     await user.click(tiClaimStatusTrigger)
     await user.click(screen.getByRole('option', { name: 'No Admitted TI Claim' }))
@@ -6863,6 +6864,7 @@ describe('IlpReviewPage', () => {
       expect(seededAlert?.textContent).not.toContain('current net protected premium base before the current death-benefit estimate can be trusted')
       expect(seededAlert?.textContent).not.toContain('current TI claim status before the admitted-state post-TI snapshot can be trusted')
     })
+    expect(screen.getByText('Current inputs complete')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('jumps from seeded manual-input guidance to the matching field', async () => {

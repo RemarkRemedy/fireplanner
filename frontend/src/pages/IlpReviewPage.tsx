@@ -37,22 +37,6 @@ function issueMessagesFromPolicy(policy: unknown): string[] {
   return parsed.error.issues.map((issue) => issue.message)
 }
 
-function estimateCurrentInputSignalCount(policy: IlpPolicyInput | null): number {
-  if (policy == null) {
-    return 0
-  }
-
-  const warningSignals = (policy.catalogWarnings ?? []).filter((warning) => {
-    const normalized = warning.toLowerCase()
-    return normalized.includes('manual')
-      || normalized.includes('current ')
-      || normalized.includes('remaining ')
-      || normalized.includes('amount owing')
-  }).length
-
-  return warningSignals
-}
-
 type CompactMetricTone = 'default' | 'warning' | 'destructive'
 
 interface CompactMetricItem {
@@ -360,6 +344,7 @@ export function IlpReviewPage() {
   const [pendingSeed, setPendingSeed] = useState<IlpPolicySeed | null>(null)
   const [catalogError, setCatalogError] = useState<string | null>(null)
   const [receiptOpen, setReceiptOpen] = useState(false)
+  const [manualRequirementCount, setManualRequirementCount] = useState(0)
 
   function handleCatalogPick(product: ReturnType<typeof getIlpCatalog>['products'][number], variant: ReturnType<typeof getIlpCatalog>['products'][number]['variants'][number]) {
     const seed = templateVariantToPolicySeed(product, variant, getIlpCatalog().manifest)
@@ -427,8 +412,6 @@ export function IlpReviewPage() {
       : null)
   const excludedCount = policyEntries.filter((entry) => !entry.valid).length
   const currentOnlyCount = policyEntries.filter((entry) => entry.valid && !entry.projectedEligible).length
-  const manualRequirementCount = estimateCurrentInputSignalCount(selectedPolicy)
-
   const receiptFeeBreakdown = useMemo(() => {
     if (displayAnalysis?.mode !== 'projected' || !displayPolicy) return null
     return buildFeeBreakdown(displayAnalysis.projections.mid, displayPolicy.funds, displayPolicy)
@@ -576,7 +559,11 @@ export function IlpReviewPage() {
               Keep baseline setup, current-state support inputs, and claim-state support inputs aligned before relying on the review rail.
             </p>
           </div>
-          <PolicyInputForm policy={selectedPolicy} issues={selectedEntry?.issues ?? []} />
+          <PolicyInputForm
+            policy={selectedPolicy}
+            issues={selectedEntry?.issues ?? []}
+            onManualRequirementCountChange={setManualRequirementCount}
+          />
         </div>
 
         <CurrentSnapshotRail

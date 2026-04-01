@@ -1,4 +1,4 @@
-import { useCallback, useId, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { AlertTriangle, ChevronDown, ChevronRight, Lock, Plus, Trash2 } from 'lucide-react'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -34,6 +34,7 @@ const USE_TOP_UP_ROUTING_VALUE = '__top-up-routing__'
 interface PolicyInputFormProps {
   policy: IlpPolicyInput | null
   issues: string[]
+  onManualRequirementCountChange?: (count: number) => void
 }
 
 const DEFAULT_OPEN_SECTIONS = ['policy', 'accounts', 'eec', 'funds', 'bonuses', 'charges', 'events', 'settings'] as const
@@ -660,7 +661,7 @@ function currentSumAssuredLabel(policy: IlpPolicyInput): string {
     : `Current Sum Assured (${policy.currency})`
 }
 
-export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
+export function PolicyInputForm({ policy, issues, onManualRequirementCountChange }: PolicyInputFormProps) {
   const updatePolicy = useIlpStore((state) => state.updatePolicy)
   const setFund = useIlpStore((state) => state.setFund)
   const addFund = useIlpStore((state) => state.addFund)
@@ -1375,6 +1376,70 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
         }]
       : []),
   ]
+  const currentInputRequirementCount = [
+    missingAssuranceProfile,
+    missingRegularPremiumBase,
+    missingWealthAssureValue,
+    missingCurrentSumAssured,
+    missingCurrentSumAssuredDeathBenefit,
+    missingCurrentBasicSumAssured,
+    missingCurrentBasicSumAssuredDeathBenefit,
+    missingCurrentBasicSumAssuredAccidentalDeathBenefit,
+    missingCurrentNetSupplementaryPremiumBase,
+    missingCurrentNetProtectedPremiumBase,
+    missingCurrentAccidentalDeathFloorAmount,
+    missingCurrentNetRepaymentBase,
+    missingCurrentLockedInPolicyValue,
+    missingCurrentAdjustedSinglePremium,
+    missingCurrentOldestLifeAgeNextBirthday,
+    missingCurrentOldestLifeSex,
+    missingCurrentYoungestLifeAgeNextBirthday,
+    missingTargetRetirementAge,
+    missingCurrentAmountOwing,
+    missingCurrentProtectionAge,
+    missingCurrentTpdAccelerationRatio,
+    missingCurrentRetainedMultiplierStatus,
+    missingCurrentAcceleratedTiMode,
+    missingCurrentTpdSettlementMode,
+    missingCurrentTiClaimStatus,
+    missingCurrentTiClaimBenefitAmount,
+    missingCurrentClaimHistoryProtectedDeathCoverBase,
+    missingCurrentResidualDeathBenefitAfterTiClaim,
+    missingCurrentTpdClaimStatus,
+    missingCurrentTpdClaimBenefitAmount,
+    missingCurrentTpdContinuationStatus,
+    missingCurrentAccidentalDeathClaimStatus,
+    missingCurrentAccidentalDeathClaimBenefitAmount,
+    missingCurrentTpdPayoutStage,
+    missingCurrentTpdRemainingBalance,
+    missingCurrentAccidentalDisabilityPayoutStage,
+    missingCurrentAccidentalDisabilityRemainingBalance,
+    missingCurrentAccidentalDeathMode,
+    missingCurrentAgeAccidentalDeathBenefit,
+    missingCurrentExcludedClaimBonusValue,
+    missingCurrentInvestPlusSpPowerUpBonusStatus,
+    missingCurrentInvestPlusSpInitialPowerUpBonusAmount,
+    missingCurrentInvestPlusSpTopUpPowerUpBonusAmount,
+    missingCurrentInvestPlusSpObservedInitialAverage,
+    missingCurrentInvestStarterPolicyChargeRefundAverageAccountValue,
+    missingCurrentInvestStarterPolicyChargeRefundStatus,
+    missingCurrentRefundEligibleDeathCoiCollected,
+    missingCurrentSmartRetireRefundGateStatus,
+    missingCurrentWopOnTpdClaimStatus,
+    missingCurrentSmartRetireClaimAdmissionStatus,
+    missingCurrentRemainingWopPremiumWaiverMonths,
+    missingCurrentDeathCoiRefundStatus,
+    missingCurrentDeathBenefitRateTier,
+    missingCurrentNoLapsePrivilegeMode,
+    missingSmartRetireBasicSumAssured,
+    missingCurrentIndebtedness,
+    missingRemainingAggregateTiCap,
+    missingRemainingAggregateTiCiCap,
+    missingRemainingAggregateTpdCap,
+  ].filter(Boolean).length
+  useEffect(() => {
+    onManualRequirementCountChange?.(currentInputRequirementCount)
+  }, [currentInputRequirementCount, onManualRequirementCountChange])
   const revealManualInputGuide = useCallback((guide: ManualInputGuide) => {
     setOpenSections((sections) => (
       sections.includes(guide.section)
