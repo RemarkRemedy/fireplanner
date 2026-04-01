@@ -1,0 +1,48 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { toPostSlug } from '../lib/config';
+
+interface Props {
+  currentSlug: string;
+  category: string;
+  tags: string[];
+  allPosts: CollectionEntry<'blog'>[];
+}
+
+const { currentSlug, category, tags, allPosts } = Astro.props;
+
+const related = allPosts
+  .filter((post) => post.id !== currentSlug && !post.data.draft)
+  .map((post) => {
+    let score = 0;
+    if (post.data.category === category) score += 2;
+    const sharedTags = post.data.tags.filter((t) => tags.includes(t));
+    score += sharedTags.length;
+    return { post, score };
+  })
+  .filter(({ score }) => score > 0)
+  .sort((a, b) => b.score - a.score)
+  .slice(0, 3)
+  .map(({ post }) => post);
+---
+
+{related.length > 0 && (
+  <aside class="not-prose mt-12 border-t border-border pt-8">
+    <h2 class="mb-4 text-lg font-semibold text-foreground">Related Articles</h2>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {related.map((post) => (
+        <a
+          href={`/blog/${toPostSlug(post.id)}`}
+          class="group rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/50"
+        >
+          <p class="mb-1 text-xs font-medium uppercase tracking-wider text-primary">
+            {post.data.category.replace(/-/g, ' ')}
+          </p>
+          <p class="text-sm font-medium text-foreground group-hover:text-primary">
+            {post.data.title}
+          </p>
+        </a>
+      ))}
+    </div>
+  </aside>
+)}

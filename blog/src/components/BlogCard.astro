@@ -1,0 +1,41 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  pubDate: Date;
+  category: string;
+  slug: string;
+  readingTime?: number;
+}
+
+const { title, description, pubDate, category, slug, readingTime } = Astro.props;
+const formattedDate = pubDate.toLocaleDateString('en-SG', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+});
+---
+
+<article class="group rounded-lg border border-border bg-card p-5 transition-colors hover:border-primary/50">
+  <a href={`/blog/${slug}`} class="block">
+    <div class="mb-2 flex items-center gap-2 text-xs">
+      <span class="font-medium uppercase tracking-wider text-primary">
+        {category.replace(/-/g, ' ')}
+      </span>
+      <span class="text-muted-foreground">&middot;</span>
+      <time datetime={pubDate.toISOString()} class="text-muted-foreground">
+        {formattedDate}
+      </time>
+      {readingTime && (
+        <>
+          <span class="text-muted-foreground">&middot;</span>
+          <span class="text-muted-foreground">{readingTime} min read</span>
+        </>
+      )}
+    </div>
+    <h2 class="mb-2 text-lg font-semibold text-foreground group-hover:text-primary">
+      {title}
+    </h2>
+    <p class="text-sm text-muted-foreground">{description}</p>
+  </a>
+</article>
