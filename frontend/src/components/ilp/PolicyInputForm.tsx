@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useId, useRef, useState } from 'react'
 import { AlertTriangle, ChevronDown, ChevronRight, Lock, Plus, Trash2 } from 'lucide-react'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CurrencyInput } from '@/components/shared/CurrencyInput'
+import { InfoTooltip } from '@/components/shared/InfoTooltip'
 import { NumberInput } from '@/components/shared/NumberInput'
 import { PercentInput } from '@/components/shared/PercentInput'
 import {
@@ -36,6 +37,7 @@ interface PolicyInputFormProps {
 }
 
 const DEFAULT_OPEN_SECTIONS = ['policy', 'accounts', 'eec', 'funds', 'bonuses', 'charges', 'events', 'settings'] as const
+const UNSET_SELECT_VALUE = '__unset__'
 
 type PolicyInputSection = typeof DEFAULT_OPEN_SECTIONS[number]
 
@@ -44,6 +46,96 @@ interface ManualInputGuide {
   section: PolicyInputSection
   sectionLabel: string
   matchText: string
+}
+
+function NullableCurrencyField({
+  label,
+  value,
+  onChange,
+  currency,
+  tooltip,
+}: {
+  label: string
+  value?: number
+  onChange: (value: number | undefined) => void
+  currency: 'SGD' | 'USD'
+  tooltip?: string
+}) {
+  const inputId = useId()
+  const [localValue, setLocalValue] = useState(() => (
+    value != null ? Math.round(value).toLocaleString('en-SG') : ''
+  ))
+  const [prevValue, setPrevValue] = useState(value)
+  const [isFocused, setIsFocused] = useState(false)
+
+  if (value !== prevValue) {
+    setPrevValue(value)
+    if (!isFocused) {
+      setLocalValue(value != null ? Math.round(value).toLocaleString('en-SG') : '')
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-1">
+        <Label htmlFor={inputId} className="text-sm">
+          {label}
+        </Label>
+        {tooltip && <InfoTooltip text={tooltip} />}
+      </div>
+      <div className="relative">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+          {currency === 'USD' ? 'US$' : 'S$'}
+        </span>
+        <Input
+          id={inputId}
+          type="text"
+          inputMode="numeric"
+          value={localValue}
+          onChange={(event) => {
+            const raw = event.target.value
+            setLocalValue(raw)
+
+            const stripped = raw.replace(/,/g, '')
+            if (stripped.trim() === '') {
+              onChange(undefined)
+              return
+            }
+
+            const parsed = Number.parseInt(stripped, 10)
+            if (!Number.isNaN(parsed)) {
+              onChange(Math.max(0, parsed))
+            }
+          }}
+          onFocus={() => {
+            setIsFocused(true)
+            setLocalValue((current) => current.replace(/,/g, ''))
+          }}
+          onBlur={() => {
+            setIsFocused(false)
+            const stripped = localValue.replace(/,/g, '')
+            if (stripped.trim() === '') {
+              onChange(undefined)
+              setLocalValue('')
+              return
+            }
+
+            const parsed = Number.parseInt(stripped, 10)
+            if (Number.isNaN(parsed)) {
+              setLocalValue(value != null ? Math.round(value).toLocaleString('en-SG') : '')
+              return
+            }
+
+            const normalized = Math.max(0, parsed)
+            onChange(normalized)
+            setLocalValue(Math.round(normalized).toLocaleString('en-SG'))
+          }}
+          className="pl-7 border-blue-300"
+          placeholder="Not keyed yet"
+        />
+      </div>
+    </div>
+  )
 }
 
 function createDraftId(prefix: string): string {
@@ -1861,9 +1953,11 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                   />
                 )}
                 {supportsCurrentNetProtectedPremiumBase && (
-                  <CurrencyInput
+                  <NullableCurrencyField
                     label={`Current Net Protected Premium Base (${policy.currency})`}
-                    value={assuranceProfile?.currentNetProtectedPremiumBase ?? 0}
+                    value={assuranceProfile?.currentNetProtectedPremiumBase}
+                    currency={policy.currency}
+                    tooltip="The current protected premium floor or protected principal base used by the product's current death/TI estimate. Leave this blank until you know the insurer's current protected base figure."
                     onChange={(value) => upsertAssuranceProfile({ currentNetProtectedPremiumBase: value })}
                   />
                 )}
@@ -2544,19 +2638,25 @@ export function PolicyInputForm({ policy, issues }: PolicyInputFormProps) {
                 )}
                 {supportsCurrentTiClaimStatusInput && (
                   <div className="space-y-1">
-                    <Label>Current TI Claim Status</Label>
+                    <div className="flex items-center gap-1">
+                      <Label>Current TI Claim Status</Label>
+                      <InfoTooltip text="Choose the policy's terminal-illness claim state today. Pick 'No Admitted TI Claim' only if you are explicitly confirming there is no admitted TI claim in force." />
+                    </div>
                     <Select
                       value={claimProfile?.currentTiClaimStatus === 'triggered'
                         ? 'admitted'
-                        : (claimProfile?.currentTiClaimStatus ?? 'not-triggered')}
+                        : (claimProfile?.currentTiClaimStatus ?? UNSET_SELECT_VALUE)}
                       onValueChange={(value) => upsertClaimProfile({
-                        currentTiClaimStatus: value as 'not-triggered' | 'admitted' | 'admitted-and-settled',
+                        currentTiClaimStatus: value === UNSET_SELECT_VALUE
+                          ? undefined
+                          : value as 'not-triggered' | 'admitted' | 'admitted-and-settled',
                       })}
                     >
-                      <SelectTrigger>
-                        <SelectValue />
+                      <SelectTrigger aria-label="Current TI Claim Status">
+                        <SelectValue placeholder="Select TI claim status" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value={UNSET_SELECT_VALUE}>Not keyed yet</SelectItem>
                         <SelectItem value="not-triggered">No Admitted TI Claim</SelectItem>
                         <SelectItem value="admitted">Admitted TI Claim (Post-Claim State Active)</SelectItem>
                         <SelectItem value="admitted-and-settled">Admitted TI Claim Already Settled</SelectItem>

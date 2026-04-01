@@ -27,6 +27,22 @@ vi.mock('recharts', () => {
   }
 })
 
+if (!Element.prototype.hasPointerCapture) {
+  Element.prototype.hasPointerCapture = () => false
+}
+
+if (!Element.prototype.setPointerCapture) {
+  Element.prototype.setPointerCapture = () => {}
+}
+
+if (!Element.prototype.releasePointerCapture) {
+  Element.prototype.releasePointerCapture = () => {}
+}
+
+if (!Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = () => {}
+}
+
 function renderIlpReviewPage() {
   return render(
     <MemoryRouter>
@@ -6813,6 +6829,40 @@ describe('IlpReviewPage', () => {
     })
 
     expect(screen.getByLabelText('Current Accepted Regular Premium Months')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('keeps TI claim status and protected premium base empty until the user explicitly fills them', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Elite Secure Income - 5 Pay')
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await confirmSeededPolicy(user)
+
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('current net protected premium base before the current death-benefit estimate can be trusted')
+    expect(seededAlert?.textContent).toContain('current TI claim status before the admitted-state post-TI snapshot can be trusted')
+
+    const protectedBaseInput = screen.getByLabelText('Current Net Protected Premium Base (SGD)')
+    expect(protectedBaseInput).toHaveValue('')
+
+    const tiClaimStatusTrigger = screen.getByRole('combobox', { name: /current ti claim status/i })
+    expect(tiClaimStatusTrigger).toHaveTextContent('Not keyed yet')
+
+    await user.click(tiClaimStatusTrigger)
+    await user.click(screen.getByRole('option', { name: 'No Admitted TI Claim' }))
+
+    await user.click(protectedBaseInput)
+    await user.type(protectedBaseInput, '0')
+    await user.tab()
+
+    await waitFor(() => {
+      expect(seededAlert?.textContent).not.toContain('current net protected premium base before the current death-benefit estimate can be trusted')
+      expect(seededAlert?.textContent).not.toContain('current TI claim status before the admitted-state post-TI snapshot can be trusted')
+    })
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('jumps from seeded manual-input guidance to the matching field', async () => {
