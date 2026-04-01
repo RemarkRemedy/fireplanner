@@ -11,29 +11,30 @@ interface OpportunityCostCardProps {
 export function OpportunityCostCard({ policy, analysis }: OpportunityCostCardProps) {
   const { opportunityCost } = analysis
   const horizonYear = analysis.projections.mid.rows.at(-1)?.policyYear ?? analysis.opportunityCost.atBestExit.exitYear
+  const benchmarkReturn = formatIlpPercent(policy.alternativeReturn)
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Opportunity Cost</CardTitle>
+        <CardTitle>Illustrative benchmark comparison</CardTitle>
         <p className="text-sm text-muted-foreground">
-          If you redirected proceeds and future premiums into an alternative portfolio returning {formatIlpPercent(policy.alternativeReturn)}:
+          This benchmark applies the alternative-return assumption of {benchmarkReturn} to the same money flow used in the policy comparison. It is an illustration, not a recommendation.
         </p>
       </CardHeader>
       <CardContent className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-lg border p-4">
-          <div className="text-sm font-medium">Did not start. Invest outside the policy from year 0.</div>
+          <div className="text-sm font-medium">If the same money stayed outside the policy from year 0</div>
           <div className="mt-2 text-2xl font-semibold tabular-nums">
             {formatIlpCurrency(opportunityCost.alternativePortfolioValue, policy.currency)}
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
-            Versus your ILP&apos;s projected value of {formatIlpCurrency(opportunityCost.ilpValueAtHorizon, policy.currency)} at year {horizonYear}.
+            Compared with the ILP&apos;s projected value of {formatIlpCurrency(opportunityCost.ilpValueAtHorizon, policy.currency)} at year {horizonYear}.
             <DeltaBadge value={opportunityCost.difference} format={(value) => formatIlpCurrency(Math.abs(value), policy.currency)} />
           </p>
         </div>
 
         <div className="rounded-lg border p-4">
-          <div className="text-sm font-medium">Invest outside the policy at the best exit point</div>
+          <div className="text-sm font-medium">If the same money moved outside at the lowest-fee exit year</div>
           <div className="mt-2 text-2xl font-semibold tabular-nums">
             {formatIlpCurrency(opportunityCost.atBestExit.alternativeValue, policy.currency)}
           </div>

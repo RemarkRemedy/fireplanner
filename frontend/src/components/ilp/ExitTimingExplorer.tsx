@@ -28,12 +28,14 @@ import { formatIlpCurrency, formatIlpPercent } from './formatters'
 interface ExitTimingExplorerProps {
   policy: IlpPolicyInput
   analysis: IlpProjectedPolicyAnalysis
+  useReal?: boolean
 }
 
-export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps) {
+export function ExitTimingExplorer({ policy, analysis, useReal = false }: ExitTimingExplorerProps) {
   const colors = useChartColors()
   const horizonYear = analysis.projections.mid.rows.at(-1)?.policyYear ?? analysis.npvAnalysis.bestExitYear
   const paidSoFarEstimate = (policy.initialSinglePremium ?? 0) + (policy.monthlyContribution * policy.monthsAlreadyPaid)
+  const discountMoney = (value: number, year: number) => useReal ? value / Math.pow(1 + policy.inflationRate, year) : value
   const exitOptions = useMemo(
     () => [
       {
@@ -66,33 +68,31 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
 
   if (!selectedOption) return null
 
-  const addedContributionsUntilExit = Math.max(0, selectedOption.totalContributions - paidSoFarEstimate)
-  const contributionsAvoidedVsHold = Math.max(
-    0,
-    analysis.npvAnalysis.holdToMip.totalContributions - selectedOption.totalContributions,
-  )
-  const valueVsAddedContributions = selectedOption.netSurrenderValue - addedContributionsUntilExit
-
   const chartData = useMemo(
     () => exitOptions.map((option) => {
-      const addedFromNowToExit = Math.max(0, option.totalContributions - paidSoFarEstimate)
+      const addedFromNowToExit = analysis.projections.mid.rows
+        .filter((row) => row.year <= option.exitYear)
+        .reduce((sum, row) => sum + discountMoney(row.annualContribution, row.year), 0)
       let etfAlternativeValue = analysis.summary.currentSurrenderValue * Math.pow(1 + policy.alternativeReturn, option.exitYear)
       for (const row of analysis.projections.mid.rows.filter((row) => row.year <= option.exitYear)) {
         etfAlternativeValue += row.annualContribution * Math.pow(1 + policy.alternativeReturn, option.exitYear - row.year)
       }
+      const withdrawableValue = discountMoney(option.netSurrenderValue, option.exitYear)
+      const eecCharge = discountMoney(option.eecCharge, option.exitYear)
+      const benchmarkValue = discountMoney(etfAlternativeValue, option.exitYear)
 
       return {
         exitYear: option.exitYear,
         policyYear: option.policyYear,
         label: `Year ${option.policyYear}`,
-        netGap: option.netSurrenderValue - addedFromNowToExit,
+        netGap: withdrawableValue - addedFromNowToExit,
         addedFromNowToExit,
-        netSurrenderValue: option.netSurrenderValue,
-        eecCharge: option.eecCharge,
-        etfAlternativeValue,
+        netSurrenderValue: withdrawableValue,
+        eecCharge,
+        etfAlternativeValue: benchmarkValue,
       }
     }),
-    [analysis.projections.mid.rows, analysis.summary.currentSurrenderValue, exitOptions, paidSoFarEstimate, policy.alternativeReturn],
+    [analysis.projections.mid.rows, analysis.summary.currentSurrenderValue, discountMoney, exitOptions, policy.alternativeReturn],
   )
 
   const projectedChartData = useMemo(
@@ -116,8 +116,12 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
   }, [projectedChartData])
 
   const selectedChartPoint = chartData.find((entry) => String(entry.exitYear) === selectedExitYear) ?? chartData[0]
+  const holdChartPoint = chartData.find((entry) => entry.exitYear === horizonYear) ?? chartData.at(-1) ?? null
   const selectedProjectedChartPoint =
     projectedChartData.find((entry) => String(entry.exitYear) === selectedExitYear) ?? projectedChartData.at(-1) ?? null
+  const addedContributionsUntilExit = selectedChartPoint?.addedFromNowToExit ?? 0
+  const contributionsAvoidedVsHold = Math.max(0, (holdChartPoint?.addedFromNowToExit ?? 0) - addedContributionsUntilExit)
+  const valueVsAddedContributions = (selectedChartPoint?.netSurrenderValue ?? 0) - addedContributionsUntilExit
 
   const handleComparisonChartClick = (state?: {
     activePayload?: Array<{ payload?: { exitYear?: number } }>
@@ -139,6 +143,9 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             Includes year 0 if you want to compare against stopping before any further premiums are paid.
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Values shown here are in {useReal ? "today's dollars" : 'nominal dollars'}.
           </p>
         </div>
         <div className="w-full sm:w-56">
@@ -418,7 +425,7 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
           <div className="rounded-md border p-4">
             <div className="text-sm text-muted-foreground">Value available at exit</div>
             <div className="mt-2 text-2xl font-semibold tabular-nums">
-              {formatIlpCurrency(selectedOption.netSurrenderValue, policy.currency)}
+              {formatIlpCurrency(selectedChartPoint?.netSurrenderValue ?? 0, policy.currency)}
             </div>
           </div>
           <div className="rounded-md border p-4">
@@ -430,7 +437,7 @@ export function ExitTimingExplorer({ policy, analysis }: ExitTimingExplorerProps
           <div className="rounded-md border p-4">
             <div className="text-sm text-muted-foreground">Early-exit charge</div>
             <div className="mt-2 text-2xl font-semibold tabular-nums">
-              {formatIlpCurrency(selectedOption.eecCharge, policy.currency)}
+              {formatIlpCurrency(selectedChartPoint?.eecCharge ?? 0, policy.currency)}
             </div>
           </div>
           <div className="rounded-md border p-4">

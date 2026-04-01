@@ -19,23 +19,23 @@ export function DecisionPanel({ policy, analysis }: DecisionPanelProps) {
   const options = [
     {
       id: 'year-1-stop',
-      title: 'Did not start',
+      title: 'If the policy had not started',
       feeDrag: analysis.npvAnalysis.surrenderNow.npvFees,
       primaryValue: `Value available ${formatIlpCurrency(analysis.npvAnalysis.surrenderNow.netSurrenderValue, policy.currency)}`,
       detail: `Early-exit charge in year 0: ${formatIlpCurrency(analysis.npvAnalysis.surrenderNow.eecCharge, policy.currency)}.`,
     },
     {
       id: 'lowest-fee-year',
-      title: `Best exit point (Year ${analysis.npvAnalysis.bestExitYear})`,
+      title: `Lowest-fee exit year (Year ${analysis.npvAnalysis.bestExitYear})`,
       feeDrag: analysis.npvAnalysis.bestExitNpvFees,
       primaryValue: `Value available ${formatIlpCurrency(bestExitOption.netSurrenderValue, policy.currency)}`,
       detail: `Stop in policy year ${bestExitOption.policyYear}, assuming contributions continue until then.`,
     },
     {
       id: 'hold-to-mip',
-      title: `Keep policy for ${horizonYear} years`,
+      title: `If contributions continue to year ${horizonYear}`,
       feeDrag: analysis.npvAnalysis.holdToMip.totalNpvFees,
-      primaryValue: `Final value ${formatIlpCurrency(analysis.npvAnalysis.holdToMip.finalValue, policy.currency)}`,
+      primaryValue: `Projected value ${formatIlpCurrency(analysis.npvAnalysis.holdToMip.finalValue, policy.currency)}`,
       detail: `Total contributions ${formatIlpCurrency(analysis.npvAnalysis.holdToMip.totalContributions, policy.currency)} over ${horizonYear} years.`,
     },
   ]
@@ -46,9 +46,9 @@ export function DecisionPanel({ policy, analysis }: DecisionPanelProps) {
   return (
     <div className="space-y-3">
       <div>
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Scenario comparison</h3>
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Path comparison</h3>
         <p className="text-sm text-muted-foreground">
-          Three scenarios showing fee costs at different decision points. These are calculations based on your inputs, not financial advice. Consult a licensed financial adviser before making policy decisions.
+          Three modeled paths using the current policy rules and assumptions. Use them to compare fee load and value available at different points in time.
         </p>
       </div>
 
@@ -62,7 +62,7 @@ export function DecisionPanel({ policy, analysis }: DecisionPanelProps) {
               <CardHeader>
                 <div className="flex items-start justify-between gap-3">
                   <CardTitle className="text-base">{option.title}</CardTitle>
-                  {isLowestFeeDrag && <Badge variant="outline">Lowest total fee cost</Badge>}
+                  {isLowestFeeDrag && <Badge variant="outline">Lowest modeled fee cost</Badge>}
                 </div>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
@@ -79,8 +79,8 @@ export function DecisionPanel({ policy, analysis }: DecisionPanelProps) {
                 <p className="text-muted-foreground">{option.detail}</p>
                 <p className="text-xs text-muted-foreground">
                   {savingsVsWorst > 0
-                    ? `You would pay ${formatIlpCurrency(savingsVsWorst, policy.currency)} less in fees than the most expensive path.`
-                    : 'This is currently the highest-fee path.'}
+                    ? `Modeled fee cost is ${formatIlpCurrency(savingsVsWorst, policy.currency)} lower than the highest-fee path in this comparison.`
+                    : 'This is the highest-fee path in this comparison.'}
                 </p>
               </CardContent>
             </Card>
