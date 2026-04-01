@@ -175,6 +175,35 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(onSelect.mock.calls[0]?.[1].id).toBe('sgd-iip-10')
   })
 
+  it('promotes Invest flex wealth II 3-year and 5-year corridors into executable templates', async () => {
+    const user = userEvent.setup()
+    const onSelect = vi.fn()
+
+    render(
+      <MemoryRouter>
+        <ProductPickerDialog open onOpenChange={() => {}} onSelect={onSelect} />
+      </MemoryRouter>,
+    )
+
+    await user.type(screen.getByPlaceholderText(/search insurer or product name/i), 'Invest flex wealth II')
+
+    const card = getProductCard('Invest flex wealth II')
+
+    expect(within(card).queryByText(/published corridors not modeled/i)).not.toBeInTheDocument()
+
+    const threeYearTemplate = within(card).getByRole('button', { name: /SGD \/ MIP 3/i })
+    const fiveYearTemplate = within(card).getByRole('button', { name: /SGD \/ MIP 5/i })
+
+    expect(threeYearTemplate).toBeEnabled()
+    expect(fiveYearTemplate).toBeEnabled()
+
+    await user.click(threeYearTemplate)
+
+    expect(onSelect).toHaveBeenCalledTimes(1)
+    expect(onSelect.mock.calls[0]?.[0].id).toBe('etiqa-invest-flex-wealth-ii')
+    expect(onSelect.mock.calls[0]?.[1].id).toBe('sgd-mip-3')
+  })
+
   it('renders Wealth Focus flexi gaps as disabled product cards', async () => {
     const user = userEvent.setup()
 

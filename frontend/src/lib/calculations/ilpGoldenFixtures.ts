@@ -7293,14 +7293,14 @@ function etiqaFlexStressPolicy(
 function etiqaCumulativeSupportedBasePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   productId: 'etiqa-invest-flex-wealth-ii' | 'etiqa-invest-smart-flex-ii' | 'etiqa-invest-smart-vista' | 'etiqa-invest-wealth-purpose',
-  variantId: 'sgd-mip-10' | 'sgd-mip-15' | 'sgd-mip-20',
+  variantId: 'sgd-mip-3' | 'sgd-mip-5' | 'sgd-mip-10' | 'sgd-mip-15' | 'sgd-mip-20',
   id: string,
   funds: IlpFund[],
   overrides: Partial<IlpPolicyInput> = {},
 ): IlpPolicyInput {
   const term = Number(variantId.replace('sgd-mip-', ''))
-  const currentPolicyYear = term === 10 ? 6 : term === 15 ? 9 : 11
-  const monthlyContribution = term === 20 ? 450 : 750
+  const currentPolicyYear = term === 3 ? 2 : term === 5 ? 4 : term === 10 ? 6 : term === 15 ? 9 : 11
+  const monthlyContribution = term === 3 || term === 5 ? 1_000 : term === 20 ? 450 : 750
   const currentNetRegularPremiumBase = monthlyContribution * 12 * (currentPolicyYear - 1)
   const base = seedPolicy(snapshot, productId, variantId, id, {
     monthlyContribution,
@@ -7321,8 +7321,8 @@ function etiqaCumulativeSupportedBasePolicy(
       accounts: base.accounts.map((account) => ({
         ...account,
         currentValue: account.id === 'regular'
-          ? (term >= 20 ? 29_000 : term === 15 ? 24_000 : 18_000)
-          : (term >= 20 ? 7_000 : 4_500),
+          ? (term === 3 ? 12_500 : term === 5 ? 16_000 : term >= 20 ? 29_000 : term === 15 ? 24_000 : 18_000)
+          : (term === 3 ? 2_500 : term === 5 ? 4_000 : term >= 20 ? 7_000 : 4_500),
       })),
       policyEvents: [],
       ...overrides,
@@ -7334,7 +7334,7 @@ function etiqaCumulativeSupportedBasePolicy(
 function etiqaCumulativeBaselinePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   productId: 'etiqa-invest-flex-wealth-ii' | 'etiqa-invest-smart-flex-ii' | 'etiqa-invest-smart-vista' | 'etiqa-invest-wealth-purpose',
-  variantId: 'sgd-mip-10' | 'sgd-mip-15' | 'sgd-mip-20',
+  variantId: 'sgd-mip-3' | 'sgd-mip-5' | 'sgd-mip-10' | 'sgd-mip-15' | 'sgd-mip-20',
   id: string,
 ): IlpPolicyInput {
   return etiqaCumulativeSupportedBasePolicy(snapshot, productId, variantId, id, ETIQA_BALANCED_FUNDS)
@@ -14963,6 +14963,22 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     fixtureClass: 'supported',
     coverageTags: ['ocf-stress'],
     description: 'Etiqa Invest Vista alternate-fund stress scenario through the supported 20-year corridor.',
+  },
+  {
+    productId: 'etiqa-invest-flex-wealth-ii',
+    variantId: 'sgd-mip-3',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'Etiqa Invest Flex Wealth II baseline scenario for the SGD / MIP 3 corridor.',
+  },
+  {
+    productId: 'etiqa-invest-flex-wealth-ii',
+    variantId: 'sgd-mip-5',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'Etiqa Invest Flex Wealth II baseline scenario for the SGD / MIP 5 corridor.',
   },
   {
     productId: 'etiqa-invest-flex-wealth-ii',

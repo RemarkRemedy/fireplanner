@@ -51,7 +51,153 @@ describe('parseEtiqaInvestFlexWealthIi', () => {
     expect(product.metadataOnlyBehaviors).not.toContain('etiqa-flex-wealth-ii-premium-free-period-gated-shortfall-charge-after-policy-year-3')
     expect(product.metadataOnlyBehaviors).not.toContain('etiqa-flex-wealth-ii-insurance-charge')
     expect(product.metadataOnlyBehaviors).toContain('etiqa-flex-wealth-ii-free-partial-withdrawal-benefit-administration')
-    expect(product.variants).toHaveLength(3)
+    expect(product.variants.map((variant) => variant.id)).toEqual([
+      'sgd-mip-3',
+      'sgd-mip-5',
+      'sgd-mip-10',
+      'sgd-mip-15',
+      'sgd-mip-20',
+    ])
+
+    const term3 = product.variants.find((variant) => variant.id === 'sgd-mip-3')
+    expect(term3).toBeDefined()
+    expect(term3).toMatchObject({
+      currency: 'SGD',
+      mipLength: 3,
+      warnings: expect.arrayContaining([
+        'No Premium-Free Period entitlement is published for the 3-year premium payment term.',
+      ]),
+    })
+    expect(term3?.bonuses).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'startup-bonus',
+          tieredRates: [
+            { currency: 'SGD', minAnnualPremium: 10_000, maxAnnualPremium: 19_999.99, rate: 0 },
+            { currency: 'SGD', minAnnualPremium: 20_000, maxAnnualPremium: null, rate: 0.01 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'loyalty-bonus',
+          startPolicyYear: 4,
+        }),
+      ]),
+    )
+    expect(term3?.bonuses.find((bonus) => bonus.id === 'special-bonus')).toBeUndefined()
+    expect(term3?.feeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'policy-charge-during-premium-term',
+          rate: 0.026,
+          cumulativePaidPremiumConfig: {
+            annualisedPremiumAtIssue: 10_000,
+          },
+        }),
+        expect.objectContaining({
+          id: 'policy-charge-after-premium-term',
+          cumulativePaidPremiumConfig: {
+            annualisedPremiumAtIssue: 10_000,
+            countRateSchedule: [
+              { minAnnualisedPremiumsPaid: 0, maxAnnualisedPremiumsPaid: null, rate: 0.026 },
+            ],
+          },
+        }),
+      ]),
+    )
+    expect(term3?.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'partial-withdrawal-charge',
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 1, rate: 1 },
+            { startPolicyYear: 2, endPolicyYear: 2, rate: 0.7 },
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.6 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'premium-shortfall-charge',
+          freeLifetimeMonthsSchedule: [],
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 1, rate: 1 },
+            { startPolicyYear: 2, endPolicyYear: 2, rate: 1 },
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.75 },
+          ],
+        }),
+      ]),
+    )
+    expect(term3?.eecTable).toEqual([1, 1, 0.79])
+
+    const term5 = product.variants.find((variant) => variant.id === 'sgd-mip-5')
+    expect(term5).toBeDefined()
+    expect(term5).toMatchObject({
+      currency: 'SGD',
+      mipLength: 5,
+      warnings: expect.arrayContaining([
+        'No Premium-Free Period entitlement is published for the 5-year premium payment term.',
+      ]),
+    })
+    expect(term5?.bonuses).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'startup-bonus',
+          tieredRates: [
+            { currency: 'SGD', minAnnualPremium: 10_000, maxAnnualPremium: 19_999.99, rate: 0.04 },
+            { currency: 'SGD', minAnnualPremium: 20_000, maxAnnualPremium: null, rate: 0.07 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'loyalty-bonus',
+          startPolicyYear: 6,
+        }),
+      ]),
+    )
+    expect(term5?.bonuses.find((bonus) => bonus.id === 'special-bonus')).toBeUndefined()
+    expect(term5?.feeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'policy-charge-during-premium-term',
+          rate: 0.026,
+          cumulativePaidPremiumConfig: {
+            annualisedPremiumAtIssue: 10_000,
+          },
+        }),
+        expect.objectContaining({
+          id: 'policy-charge-after-premium-term',
+          cumulativePaidPremiumConfig: {
+            annualisedPremiumAtIssue: 10_000,
+            countRateSchedule: [
+              { minAnnualisedPremiumsPaid: 0, maxAnnualisedPremiumsPaid: null, rate: 0.026 },
+            ],
+          },
+        }),
+      ]),
+    )
+    expect(term5?.eventChargeRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'partial-withdrawal-charge',
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 1, rate: 1 },
+            { startPolicyYear: 2, endPolicyYear: 2, rate: 0.7 },
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.6 },
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.5 },
+            { startPolicyYear: 5, endPolicyYear: 5, rate: 0.4 },
+          ],
+        }),
+        expect.objectContaining({
+          id: 'premium-shortfall-charge',
+          freeLifetimeMonthsSchedule: [],
+          rateSchedule: [
+            { startPolicyYear: 1, endPolicyYear: 1, rate: 1 },
+            { startPolicyYear: 2, endPolicyYear: 2, rate: 1 },
+            { startPolicyYear: 3, endPolicyYear: 3, rate: 0.75 },
+            { startPolicyYear: 4, endPolicyYear: 4, rate: 0.4 },
+            { startPolicyYear: 5, endPolicyYear: 5, rate: 0.2 },
+          ],
+        }),
+      ]),
+    )
+    expect(term5?.eecTable).toEqual([1, 1, 0.79, 0.6, 0.5])
 
     const term10 = product.variants.find((variant) => variant.id === 'sgd-mip-10')
     expect(term10).toBeDefined()

@@ -39635,6 +39635,1144 @@
     "archived": false,
     "variants": [
       {
+        "id": "sgd-mip-3",
+        "currency": "SGD",
+        "mipLength": 3,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "regular",
+            "label": "Regular Premium Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "regular",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "regular",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan description and death benefit",
+                "excerpt": "PRODUCT SUMMARY: Invest flex wealth II Version 1.26 This Product Summary is for general information only. It is not a contract of insurance. It is a simplified description of the product features applicable to this plan "
+              },
+              {
+                "page": 6,
+                "section": "Premium Repayment and missed premiums",
+                "excerpt": "10. Premium Repayment You may request to repay all the missed regular Premium, subject to Our approval. You will be required to repay all the missed regular Premium under the Policy including the next regular Premium due"
+              },
+              {
+                "page": 7,
+                "section": "Change in Regular Premium and Top-up",
+                "excerpt": "12. Change in Regular Premium An increase in regular Premium is not allowed. While the Policy is in force, You may request for a decrease in regular Premium after 3 years of Premiums have been paid to Us i.e. 36 monthly,"
+              },
+              {
+                "page": 8,
+                "section": "Partial Withdrawal and Full Surrender",
+                "excerpt": "14. Partial Withdrawal While the Policy is in force, You may request for partial withdrawal(s) from Your Account value at any time, subject to the following conditions: • the minimum partial withdrawal amount is S$500 (“"
+              }
+            ]
+          },
+          {
+            "id": "topup",
+            "label": "Top-up Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "topup",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Change in Regular Premium and Top-up",
+                "excerpt": "12. Change in Regular Premium An increase in regular Premium is not allowed. While the Policy is in force, You may request for a decrease in regular Premium after 3 years of Premiums have been paid to Us i.e. 36 monthly,"
+              },
+              {
+                "page": 8,
+                "section": "Partial Withdrawal and Full Surrender",
+                "excerpt": "14. Partial Withdrawal While the Policy is in force, You may request for partial withdrawal(s) from Your Account value at any time, subject to the following conditions: • the minimum partial withdrawal amount is S$500 (“"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "startup-bonus",
+            "type": "sign-up",
+            "label": "Start-up Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "regular"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 10000,
+                "maxAnnualPremium": 19999.99,
+                "rate": 0
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 20000,
+                "maxAnnualPremium": null,
+                "rate": 0.01
+              }
+            ],
+            "restorationRules": [
+              {
+                "trigger": "premium-holiday-repayment",
+                "basis": "repaid-premium"
+              }
+            ],
+            "notes": [
+              "Credited on regular premium received during the first policy year only.",
+              "Full repayment of missed regular premiums restores the published missed Start-up Bonus into the Regular Premium Account.",
+              "Top-up premiums do not receive the Start-up Bonus."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Start-up Bonus and Special Bonus",
+                "excerpt": "3. Start-up Bonus While the Policy is in force, a one-time Start-up Bonus will be credited to the Regular Premium Account for the first Policy year upon receipt of the regular Premium You paid. The applicable Start-up Bo"
+              },
+              {
+                "page": 6,
+                "section": "Premium Repayment and missed premiums",
+                "excerpt": "10. Premium Repayment You may request to repay all the missed regular Premium, subject to Our approval. You will be required to repay all the missed regular Premium under the Policy including the next regular Premium due"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "monthly-rate",
+            "appliesTo": [
+              "regular"
+            ],
+            "startPolicyYear": 4,
+            "endPolicyYear": null,
+            "rate": 0.001,
+            "amount": null,
+            "tieredRates": [],
+            "suspensionRules": [
+              {
+                "trigger": "partial-withdrawal",
+                "suspensionMonths": 12,
+                "startOffsetMonths": 1
+              }
+            ],
+            "notes": [
+              "Applied monthly on the Regular Premium Account from the month after the premium payment term ends.",
+              "No Loyalty Bonus is paid on the Top-up Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Loyalty Bonus",
+                "excerpt": "5. Loyalty Bonus While the Policy is in force, a Loyalty Bonus will be credited to the Regular Premium Account on each Policy monthiversary starting from the Policy monthiversary immediately after the end of the premium "
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "policy-charge-during-premium-term",
+            "label": "Policy Charge",
+            "basis": "cumulative-paid-regular-premium",
+            "rate": 0.026,
+            "amount": null,
+            "cumulativePaidPremiumConfig": {
+              "annualisedPremiumAtIssue": 10000
+            },
+            "appliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": 3,
+            "notes": [
+              "Models the published monthly policy charge as a percentage of cumulative regular premiums actually paid during the premium payment term."
+            ],
+            "sourceRefs": [
+              {
+                "page": 18,
+                "section": "Policy Charge",
+                "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
+              }
+            ]
+          },
+          {
+            "id": "policy-charge-after-premium-term",
+            "label": "Policy Charge",
+            "basis": "cumulative-paid-regular-premium",
+            "rate": 0.026,
+            "amount": null,
+            "cumulativePaidPremiumConfig": {
+              "annualisedPremiumAtIssue": 10000,
+              "countRateSchedule": [
+                {
+                  "minAnnualisedPremiumsPaid": 0,
+                  "maxAnnualisedPremiumsPaid": null,
+                  "rate": 0.026
+                }
+              ]
+            },
+            "appliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 4,
+            "endPolicyYear": null,
+            "notes": [
+              "Models the published post-premium-term policy charge using the Number of Annualised Regular Premiums Paid tiers."
+            ],
+            "sourceRefs": [
+              {
+                "page": 18,
+                "section": "Policy Charge",
+                "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
+              }
+            ]
+          },
+          {
+            "id": "insurance-charge",
+            "label": "Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "regular"
+            ],
+            "assuranceValueAppliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 101% of total regular premium paid less regular-account withdrawals, less Regular Premium Account value net-sum-at-risk formula.",
+              "Enter the insured-life details and current net regular premiums paid base before trusting the monthly insurance-charge output.",
+              "If the net sum at risk is zero or negative, no insurance charge is due."
+            ],
+            "sourceRefs": [
+              {
+                "page": 23,
+                "section": "Start-up Bonus Recovery Charge and Insurance Charge",
+                "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+              },
+              {
+                "page": 27,
+                "section": "Appendix A insurance charge table",
+                "excerpt": "No guarantee is given, express or implied, that You will receive any amount invested. All investments involve risks and there can be no guarantee against loss resulting from an investment in any of the ILP Sub-Fund(s), n"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies a 3% upfront charge on recurring and ad-hoc top-up premiums."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Change in Regular Premium and Top-up",
+                "excerpt": "12. Change in Regular Premium An increase in regular Premium is not allowed. While the Policy is in force, You may request for a decrease in regular Premium after 3 years of Premiums have been paid to Us i.e. 36 monthly,"
+              },
+              {
+                "page": 18,
+                "section": "Policy Charge",
+                "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
+              }
+            ]
+          },
+          {
+            "id": "startup-bonus-recovery-charge",
+            "label": "Start-up Bonus Recovery Charge",
+            "trigger": "regular-premium-reduction",
+            "basis": "premium-reduction-tiered-startup-recovery",
+            "appliesTo": [
+              "regular"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "sourceBonusId": "startup-bonus",
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published Start-up Bonus recovery charge when regular premium is reduced."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Change in Regular Premium and Top-up",
+                "excerpt": "12. Change in Regular Premium An increase in regular Premium is not allowed. While the Policy is in force, You may request for a decrease in regular Premium after 3 years of Premiums have been paid to Us i.e. 36 monthly,"
+              },
+              {
+                "page": 23,
+                "section": "Start-up Bonus Recovery Charge and Insurance Charge",
+                "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "regular"
+            ],
+            "freeEventCount": 2,
+            "freeEventStartPolicyYear": 4,
+            "freeEventMaxAmountRate": 0.05,
+            "freeEventMaxAmountBasis": "cumulative-paid-regular-premium",
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.7
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.6
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies to withdrawals from the Regular Premium Account during the premium payment term.",
+              "The first two Regular Premium Account withdrawals from policy year 4 onward are free up to 5% of cumulative regular premiums actually paid at the withdrawal month; only any excess remains chargeable.",
+              "The broader Partial Withdrawal Limit, minimum holding amount, and broader withdrawal administration remain manual in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Partial Withdrawal and Full Surrender",
+                "excerpt": "14. Partial Withdrawal While the Policy is in force, You may request for partial withdrawal(s) from Your Account value at any time, subject to the following conditions: • the minimum partial withdrawal amount is S$500 (“"
+              },
+              {
+                "page": 21,
+                "section": "Partial Withdrawal Charge",
+                "excerpt": "33. Partial Withdrawal Charge Partial withdrawal charge is payable if You request for partial withdrawal(s) from the Regular Premium Account value during the premium payment term. The partial withdrawal charge is to be d"
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge",
+            "label": "Premium Shortfall Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "regular"
+            ],
+            "freeLifetimeMonthsSchedule": [],
+            "freeLifetimeMonthsResetOnRepayment": true,
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published premium-shortfall-charge corridor across the premium payment term, with the Premium-Free Period entitlement schedule suppressing charges while unused entitlement months remain."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Premium Repayment and missed premiums",
+                "excerpt": "10. Premium Repayment You may request to repay all the missed regular Premium, subject to Our approval. You will be required to repay all the missed regular Premium under the Policy including the next regular Premium due"
+              },
+              {
+                "page": 19,
+                "section": "Policy Charge example and Premium-Free Period freeze",
+                "excerpt": "Policyowner exercises Premium-Free Period between Policy Year 6 to 8, and subsequently resumes Premium payment. The table below shows the policy charge applicable for the respective periods: Policy Annual Total Premiums "
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge-refund",
+            "label": "Premium Shortfall Charge Refund",
+            "trigger": "premium-holiday-repayment",
+            "basis": "premium-holiday-charge-refund",
+            "appliesTo": [
+              "regular"
+            ],
+            "rate": 1,
+            "amount": 0,
+            "sourceChargeRuleId": "premium-shortfall-charge",
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Returns all previously imposed premium shortfall charges without interest after all missed regular premiums are paid back in full.",
+              "Repayment also resets the applicable Premium-Free Period entitlement schedule for later missed-premium events."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Premium Repayment and missed premiums",
+                "excerpt": "10. Premium Repayment You may request to repay all the missed regular Premium, subject to Our approval. You will be required to repay all the missed regular Premium under the Policy including the next regular Premium due"
+              },
+              {
+                "page": 19,
+                "section": "Policy Charge example and Premium-Free Period freeze",
+                "excerpt": "Policyowner exercises Premium-Free Period between Policy Year 6 to 8, and subsequently resumes Premium payment. The table below shows the policy charge applicable for the respective periods: Policy Annual Total Premiums "
+              }
+            ]
+          }
+        ],
+        "policyStateSupport": {
+          "automaticLapseOnAccountValueDepletion": false,
+          "blockTopUpsDuringPremiumHoliday": true,
+          "minimumTopUpAmount": 2500,
+          "topUpAmountIncrement": 100,
+          "minimumPartialWithdrawalAmount": 500,
+          "partialWithdrawalAmountIncrement": 100,
+          "partialWithdrawalMaximumAmountRules": [
+            {
+              "activeWindow": "during-mip",
+              "accountId": "regular",
+              "basis": "cumulative-paid-regular-premium-less-prior-gross-withdrawals",
+              "maximumValueRate": 0.5
+            }
+          ],
+          "partialWithdrawalMinimumRemainingValueRules": [
+            {
+              "activeWindow": "policy-term",
+              "basis": "account-value",
+              "accountId": "regular",
+              "minimumValue": 1000
+            }
+          ]
+        },
+        "eecTable": [
+          1,
+          1,
+          0.79
+        ],
+        "warnings": [
+          "Invest flex wealth II is modeled as a supported V1 corridor. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge with blocking during active Premium-Free Period windows, the current-state death benefit as the sum of the higher of the Regular Premium Account value or the 101%-of-paid-regular-premiums floor plus Top-up Account value after manual current amount owing, the current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap, the current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today through the published partial-TI continuation corridor after manual claim-amount and residual-death input, monthly insurance charge through manual insured-life inputs, Start-up Bonus recovery charge, and surrender-charge horizon.",
+          "No Premium-Free Period entitlement is published for the 3-year premium payment term.",
+          "Premium-Free-Period-gated premium shortfall charge, premium shortfall charge after entitlement exhaustion, full-repayment reset, ad-hoc top-up blocking during active Premium-Free Period windows, the published S$2,500 minimum ad-hoc top-up in S$100 increments, the published S$500 minimum one-off partial withdrawal amount with S$100 increments, the published 50%-of-cumulative-paid-regular-premiums less prior gross Regular Premium Account withdrawals limit during the premium payment term, the published S$1,000 Regular Premium Account minimum holding floor on explicit regular-account withdrawals, and the published two-count free partial withdrawal cap from policy year 4 are modeled. Account-routing administration remains informational only.",
+          "Change-of-life-insured effects remain informational only in V1."
+        ],
+        "unsupportedItems": [
+          "The current-state death and terminal-illness snapshot needs manual current amount owing and remaining aggregate TI cap inputs because debt and cross-policy TI cap usage are not reconstructed from history in V1.",
+          "The current admitted-state TI payable amount and residual death-benefit estimate after a TI claim today are supported through the published partial-TI continuation corridor after manual claim-amount and residual-death input, but claim exclusions and insurer-side settlement mechanics remain informational only.",
+          "Free partial withdrawal account-routing order and broader withdrawal administration remain informational only.",
+          "Change of Life Insured remains informational only.",
+          "Optional riders remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan description and death benefit",
+            "excerpt": "PRODUCT SUMMARY: Invest flex wealth II Version 1.26 This Product Summary is for general information only. It is not a contract of insurance. It is a simplified description of the product features applicable to this plan "
+          },
+          {
+            "page": 2,
+            "section": "Start-up Bonus and Special Bonus",
+            "excerpt": "3. Start-up Bonus While the Policy is in force, a one-time Start-up Bonus will be credited to the Regular Premium Account for the first Policy year upon receipt of the regular Premium You paid. The applicable Start-up Bo"
+          },
+          {
+            "page": 3,
+            "section": "Loyalty Bonus",
+            "excerpt": "5. Loyalty Bonus While the Policy is in force, a Loyalty Bonus will be credited to the Regular Premium Account on each Policy monthiversary starting from the Policy monthiversary immediately after the end of the premium "
+          },
+          {
+            "page": 4,
+            "section": "Premium-Free Period",
+            "excerpt": "6. Premium-Free Period While the Policy is in force, You are entitled to a Premium-Free Period throughout the premium payment term. The Premium-Free Period will be activated automatically when regular Premiums are missed"
+          },
+          {
+            "page": 6,
+            "section": "Premium Repayment and missed premiums",
+            "excerpt": "10. Premium Repayment You may request to repay all the missed regular Premium, subject to Our approval. You will be required to repay all the missed regular Premium under the Policy including the next regular Premium due"
+          },
+          {
+            "page": 7,
+            "section": "Change in Regular Premium and Top-up",
+            "excerpt": "12. Change in Regular Premium An increase in regular Premium is not allowed. While the Policy is in force, You may request for a decrease in regular Premium after 3 years of Premiums have been paid to Us i.e. 36 monthly,"
+          },
+          {
+            "page": 8,
+            "section": "Partial Withdrawal and Full Surrender",
+            "excerpt": "14. Partial Withdrawal While the Policy is in force, You may request for partial withdrawal(s) from Your Account value at any time, subject to the following conditions: • the minimum partial withdrawal amount is S$500 (“"
+          },
+          {
+            "page": 9,
+            "section": "Change of Life Insured",
+            "excerpt": "17. Change of Life Insured rd While the Policy is in force, You have the option to request for a change of Life insured from the third (3) Policy year onwards, subject to the following conditions: a) the new Life insured"
+          },
+          {
+            "page": 18,
+            "section": "Policy Charge",
+            "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
+          },
+          {
+            "page": 19,
+            "section": "Policy Charge example and Premium-Free Period freeze",
+            "excerpt": "Policyowner exercises Premium-Free Period between Policy Year 6 to 8, and subsequently resumes Premium payment. The table below shows the policy charge applicable for the respective periods: Policy Annual Total Premiums "
+          },
+          {
+            "page": 21,
+            "section": "Partial Withdrawal Charge",
+            "excerpt": "33. Partial Withdrawal Charge Partial withdrawal charge is payable if You request for partial withdrawal(s) from the Regular Premium Account value during the premium payment term. The partial withdrawal charge is to be d"
+          },
+          {
+            "page": 22,
+            "section": "Surrender Charge",
+            "excerpt": "34. Surrender Charge Surrender charge is payable on the Regular Premium Account value if You request for full surrender of Your Policy during the premium payment term. The surrender charge is to be deducted from the surr"
+          },
+          {
+            "page": 23,
+            "section": "Start-up Bonus Recovery Charge and Insurance Charge",
+            "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+          },
+          {
+            "page": 27,
+            "section": "Appendix A insurance charge table",
+            "excerpt": "No guarantee is given, express or implied, that You will receive any amount invested. All investments involve risks and there can be no guarantee against loss resulting from an investment in any of the ILP Sub-Fund(s), n"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-5",
+        "currency": "SGD",
+        "mipLength": 5,
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "regular",
+            "label": "Regular Premium Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "regular",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "regular",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan description and death benefit",
+                "excerpt": "PRODUCT SUMMARY: Invest flex wealth II Version 1.26 This Product Summary is for general information only. It is not a contract of insurance. It is a simplified description of the product features applicable to this plan "
+              },
+              {
+                "page": 6,
+                "section": "Premium Repayment and missed premiums",
+                "excerpt": "10. Premium Repayment You may request to repay all the missed regular Premium, subject to Our approval. You will be required to repay all the missed regular Premium under the Policy including the next regular Premium due"
+              },
+              {
+                "page": 7,
+                "section": "Change in Regular Premium and Top-up",
+                "excerpt": "12. Change in Regular Premium An increase in regular Premium is not allowed. While the Policy is in force, You may request for a decrease in regular Premium after 3 years of Premiums have been paid to Us i.e. 36 monthly,"
+              },
+              {
+                "page": 8,
+                "section": "Partial Withdrawal and Full Surrender",
+                "excerpt": "14. Partial Withdrawal While the Policy is in force, You may request for partial withdrawal(s) from Your Account value at any time, subject to the following conditions: • the minimum partial withdrawal amount is S$500 (“"
+              }
+            ]
+          },
+          {
+            "id": "topup",
+            "label": "Top-up Account",
+            "feeRate": 0,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "topup",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Change in Regular Premium and Top-up",
+                "excerpt": "12. Change in Regular Premium An increase in regular Premium is not allowed. While the Policy is in force, You may request for a decrease in regular Premium after 3 years of Premiums have been paid to Us i.e. 36 monthly,"
+              },
+              {
+                "page": 8,
+                "section": "Partial Withdrawal and Full Surrender",
+                "excerpt": "14. Partial Withdrawal While the Policy is in force, You may request for partial withdrawal(s) from Your Account value at any time, subject to the following conditions: • the minimum partial withdrawal amount is S$500 (“"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "startup-bonus",
+            "type": "sign-up",
+            "label": "Start-up Bonus",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "regular"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 1,
+            "rate": null,
+            "amount": null,
+            "tieredRates": [
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 10000,
+                "maxAnnualPremium": 19999.99,
+                "rate": 0.04
+              },
+              {
+                "currency": "SGD",
+                "minAnnualPremium": 20000,
+                "maxAnnualPremium": null,
+                "rate": 0.07
+              }
+            ],
+            "restorationRules": [
+              {
+                "trigger": "premium-holiday-repayment",
+                "basis": "repaid-premium"
+              }
+            ],
+            "notes": [
+              "Credited on regular premium received during the first policy year only.",
+              "Full repayment of missed regular premiums restores the published missed Start-up Bonus into the Regular Premium Account.",
+              "Top-up premiums do not receive the Start-up Bonus."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Start-up Bonus and Special Bonus",
+                "excerpt": "3. Start-up Bonus While the Policy is in force, a one-time Start-up Bonus will be credited to the Regular Premium Account for the first Policy year upon receipt of the regular Premium You paid. The applicable Start-up Bo"
+              },
+              {
+                "page": 6,
+                "section": "Premium Repayment and missed premiums",
+                "excerpt": "10. Premium Repayment You may request to repay all the missed regular Premium, subject to Our approval. You will be required to repay all the missed regular Premium under the Policy including the next regular Premium due"
+              }
+            ]
+          },
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "monthly-rate",
+            "appliesTo": [
+              "regular"
+            ],
+            "startPolicyYear": 6,
+            "endPolicyYear": null,
+            "rate": 0.001,
+            "amount": null,
+            "tieredRates": [],
+            "suspensionRules": [
+              {
+                "trigger": "partial-withdrawal",
+                "suspensionMonths": 12,
+                "startOffsetMonths": 1
+              }
+            ],
+            "notes": [
+              "Applied monthly on the Regular Premium Account from the month after the premium payment term ends.",
+              "No Loyalty Bonus is paid on the Top-up Account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Loyalty Bonus",
+                "excerpt": "5. Loyalty Bonus While the Policy is in force, a Loyalty Bonus will be credited to the Regular Premium Account on each Policy monthiversary starting from the Policy monthiversary immediately after the end of the premium "
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "policy-charge-during-premium-term",
+            "label": "Policy Charge",
+            "basis": "cumulative-paid-regular-premium",
+            "rate": 0.026,
+            "amount": null,
+            "cumulativePaidPremiumConfig": {
+              "annualisedPremiumAtIssue": 10000
+            },
+            "appliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": 5,
+            "notes": [
+              "Models the published monthly policy charge as a percentage of cumulative regular premiums actually paid during the premium payment term."
+            ],
+            "sourceRefs": [
+              {
+                "page": 18,
+                "section": "Policy Charge",
+                "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
+              }
+            ]
+          },
+          {
+            "id": "policy-charge-after-premium-term",
+            "label": "Policy Charge",
+            "basis": "cumulative-paid-regular-premium",
+            "rate": 0.026,
+            "amount": null,
+            "cumulativePaidPremiumConfig": {
+              "annualisedPremiumAtIssue": 10000,
+              "countRateSchedule": [
+                {
+                  "minAnnualisedPremiumsPaid": 0,
+                  "maxAnnualisedPremiumsPaid": null,
+                  "rate": 0.026
+                }
+              ]
+            },
+            "appliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 6,
+            "endPolicyYear": null,
+            "notes": [
+              "Models the published post-premium-term policy charge using the Number of Annualised Regular Premiums Paid tiers."
+            ],
+            "sourceRefs": [
+              {
+                "page": 18,
+                "section": "Policy Charge",
+                "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
+              }
+            ]
+          },
+          {
+            "id": "insurance-charge",
+            "label": "Insurance Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": null,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "income-invest-flex-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 99
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "regular"
+            ],
+            "assuranceValueAppliesTo": [
+              "regular"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 101% of total regular premium paid less regular-account withdrawals, less Regular Premium Account value net-sum-at-risk formula.",
+              "Enter the insured-life details and current net regular premiums paid base before trusting the monthly insurance-charge output.",
+              "If the net sum at risk is zero or negative, no insurance charge is due."
+            ],
+            "sourceRefs": [
+              {
+                "page": 23,
+                "section": "Start-up Bonus Recovery Charge and Insurance Charge",
+                "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+              },
+              {
+                "page": 27,
+                "section": "Appendix A insurance charge table",
+                "excerpt": "No guarantee is given, express or implied, that You will receive any amount invested. All investments involve risks and there can be no guarantee against loss resulting from an investment in any of the ILP Sub-Fund(s), n"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies a 3% upfront charge on recurring and ad-hoc top-up premiums."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Change in Regular Premium and Top-up",
+                "excerpt": "12. Change in Regular Premium An increase in regular Premium is not allowed. While the Policy is in force, You may request for a decrease in regular Premium after 3 years of Premiums have been paid to Us i.e. 36 monthly,"
+              },
+              {
+                "page": 18,
+                "section": "Policy Charge",
+                "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
+              }
+            ]
+          },
+          {
+            "id": "startup-bonus-recovery-charge",
+            "label": "Start-up Bonus Recovery Charge",
+            "trigger": "regular-premium-reduction",
+            "basis": "premium-reduction-tiered-startup-recovery",
+            "appliesTo": [
+              "regular"
+            ],
+            "rate": 0,
+            "amount": 0,
+            "sourceBonusId": "startup-bonus",
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published Start-up Bonus recovery charge when regular premium is reduced."
+            ],
+            "sourceRefs": [
+              {
+                "page": 7,
+                "section": "Change in Regular Premium and Top-up",
+                "excerpt": "12. Change in Regular Premium An increase in regular Premium is not allowed. While the Policy is in force, You may request for a decrease in regular Premium after 3 years of Premiums have been paid to Us i.e. 36 monthly,"
+              },
+              {
+                "page": 23,
+                "section": "Start-up Bonus Recovery Charge and Insurance Charge",
+                "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "regular"
+            ],
+            "freeEventCount": 2,
+            "freeEventStartPolicyYear": 4,
+            "freeEventMaxAmountRate": 0.05,
+            "freeEventMaxAmountBasis": "cumulative-paid-regular-premium",
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.7
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.6
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.5
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.4
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Applies to withdrawals from the Regular Premium Account during the premium payment term.",
+              "The first two Regular Premium Account withdrawals from policy year 4 onward are free up to 5% of cumulative regular premiums actually paid at the withdrawal month; only any excess remains chargeable.",
+              "The broader Partial Withdrawal Limit, minimum holding amount, and broader withdrawal administration remain manual in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 8,
+                "section": "Partial Withdrawal and Full Surrender",
+                "excerpt": "14. Partial Withdrawal While the Policy is in force, You may request for partial withdrawal(s) from Your Account value at any time, subject to the following conditions: • the minimum partial withdrawal amount is S$500 (“"
+              },
+              {
+                "page": 21,
+                "section": "Partial Withdrawal Charge",
+                "excerpt": "33. Partial Withdrawal Charge Partial withdrawal charge is payable if You request for partial withdrawal(s) from the Regular Premium Account value during the premium payment term. The partial withdrawal charge is to be d"
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge",
+            "label": "Premium Shortfall Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "appliesTo": [
+              "regular"
+            ],
+            "freeLifetimeMonthsSchedule": [],
+            "freeLifetimeMonthsResetOnRepayment": true,
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.75
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.4
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.2
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published premium-shortfall-charge corridor across the premium payment term, with the Premium-Free Period entitlement schedule suppressing charges while unused entitlement months remain."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Premium Repayment and missed premiums",
+                "excerpt": "10. Premium Repayment You may request to repay all the missed regular Premium, subject to Our approval. You will be required to repay all the missed regular Premium under the Policy including the next regular Premium due"
+              },
+              {
+                "page": 19,
+                "section": "Policy Charge example and Premium-Free Period freeze",
+                "excerpt": "Policyowner exercises Premium-Free Period between Policy Year 6 to 8, and subsequently resumes Premium payment. The table below shows the policy charge applicable for the respective periods: Policy Annual Total Premiums "
+              }
+            ]
+          },
+          {
+            "id": "premium-shortfall-charge-refund",
+            "label": "Premium Shortfall Charge Refund",
+            "trigger": "premium-holiday-repayment",
+            "basis": "premium-holiday-charge-refund",
+            "appliesTo": [
+              "regular"
+            ],
+            "rate": 1,
+            "amount": 0,
+            "sourceChargeRuleId": "premium-shortfall-charge",
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Returns all previously imposed premium shortfall charges without interest after all missed regular premiums are paid back in full.",
+              "Repayment also resets the applicable Premium-Free Period entitlement schedule for later missed-premium events."
+            ],
+            "sourceRefs": [
+              {
+                "page": 6,
+                "section": "Premium Repayment and missed premiums",
+                "excerpt": "10. Premium Repayment You may request to repay all the missed regular Premium, subject to Our approval. You will be required to repay all the missed regular Premium under the Policy including the next regular Premium due"
+              },
+              {
+                "page": 19,
+                "section": "Policy Charge example and Premium-Free Period freeze",
+                "excerpt": "Policyowner exercises Premium-Free Period between Policy Year 6 to 8, and subsequently resumes Premium payment. The table below shows the policy charge applicable for the respective periods: Policy Annual Total Premiums "
+              }
+            ]
+          }
+        ],
+        "policyStateSupport": {
+          "automaticLapseOnAccountValueDepletion": false,
+          "blockTopUpsDuringPremiumHoliday": true,
+          "minimumTopUpAmount": 2500,
+          "topUpAmountIncrement": 100,
+          "minimumPartialWithdrawalAmount": 500,
+          "partialWithdrawalAmountIncrement": 100,
+          "partialWithdrawalMaximumAmountRules": [
+            {
+              "activeWindow": "during-mip",
+              "accountId": "regular",
+              "basis": "cumulative-paid-regular-premium-less-prior-gross-withdrawals",
+              "maximumValueRate": 0.5
+            }
+          ],
+          "partialWithdrawalMinimumRemainingValueRules": [
+            {
+              "activeWindow": "policy-term",
+              "basis": "account-value",
+              "accountId": "regular",
+              "minimumValue": 1000
+            }
+          ]
+        },
+        "eecTable": [
+          1,
+          1,
+          0.79,
+          0.6,
+          0.5
+        ],
+        "warnings": [
+          "Invest flex wealth II is modeled as a supported V1 corridor. The parser captures the cumulative-paid policy charge, Start-up / Special / Loyalty Bonuses, top-up premium charge with blocking during active Premium-Free Period windows, the current-state death benefit as the sum of the higher of the Regular Premium Account value or the 101%-of-paid-regular-premiums floor plus Top-up Account value after manual current amount owing, the current terminal-illness snapshot as the lower of that amount and a manual remaining aggregate TI cap, the current admitted-state TI payable amount plus residual death-benefit estimate after a TI claim today through the published partial-TI continuation corridor after manual claim-amount and residual-death input, monthly insurance charge through manual insured-life inputs, Start-up Bonus recovery charge, and surrender-charge horizon.",
+          "No Premium-Free Period entitlement is published for the 5-year premium payment term.",
+          "Premium-Free-Period-gated premium shortfall charge, premium shortfall charge after entitlement exhaustion, full-repayment reset, ad-hoc top-up blocking during active Premium-Free Period windows, the published S$2,500 minimum ad-hoc top-up in S$100 increments, the published S$500 minimum one-off partial withdrawal amount with S$100 increments, the published 50%-of-cumulative-paid-regular-premiums less prior gross Regular Premium Account withdrawals limit during the premium payment term, the published S$1,000 Regular Premium Account minimum holding floor on explicit regular-account withdrawals, and the published two-count free partial withdrawal cap from policy year 4 are modeled. Account-routing administration remains informational only.",
+          "Change-of-life-insured effects remain informational only in V1."
+        ],
+        "unsupportedItems": [
+          "The current-state death and terminal-illness snapshot needs manual current amount owing and remaining aggregate TI cap inputs because debt and cross-policy TI cap usage are not reconstructed from history in V1.",
+          "The current admitted-state TI payable amount and residual death-benefit estimate after a TI claim today are supported through the published partial-TI continuation corridor after manual claim-amount and residual-death input, but claim exclusions and insurer-side settlement mechanics remain informational only.",
+          "Free partial withdrawal account-routing order and broader withdrawal administration remain informational only.",
+          "Change of Life Insured remains informational only.",
+          "Optional riders remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan description and death benefit",
+            "excerpt": "PRODUCT SUMMARY: Invest flex wealth II Version 1.26 This Product Summary is for general information only. It is not a contract of insurance. It is a simplified description of the product features applicable to this plan "
+          },
+          {
+            "page": 2,
+            "section": "Start-up Bonus and Special Bonus",
+            "excerpt": "3. Start-up Bonus While the Policy is in force, a one-time Start-up Bonus will be credited to the Regular Premium Account for the first Policy year upon receipt of the regular Premium You paid. The applicable Start-up Bo"
+          },
+          {
+            "page": 3,
+            "section": "Loyalty Bonus",
+            "excerpt": "5. Loyalty Bonus While the Policy is in force, a Loyalty Bonus will be credited to the Regular Premium Account on each Policy monthiversary starting from the Policy monthiversary immediately after the end of the premium "
+          },
+          {
+            "page": 4,
+            "section": "Premium-Free Period",
+            "excerpt": "6. Premium-Free Period While the Policy is in force, You are entitled to a Premium-Free Period throughout the premium payment term. The Premium-Free Period will be activated automatically when regular Premiums are missed"
+          },
+          {
+            "page": 6,
+            "section": "Premium Repayment and missed premiums",
+            "excerpt": "10. Premium Repayment You may request to repay all the missed regular Premium, subject to Our approval. You will be required to repay all the missed regular Premium under the Policy including the next regular Premium due"
+          },
+          {
+            "page": 7,
+            "section": "Change in Regular Premium and Top-up",
+            "excerpt": "12. Change in Regular Premium An increase in regular Premium is not allowed. While the Policy is in force, You may request for a decrease in regular Premium after 3 years of Premiums have been paid to Us i.e. 36 monthly,"
+          },
+          {
+            "page": 8,
+            "section": "Partial Withdrawal and Full Surrender",
+            "excerpt": "14. Partial Withdrawal While the Policy is in force, You may request for partial withdrawal(s) from Your Account value at any time, subject to the following conditions: • the minimum partial withdrawal amount is S$500 (“"
+          },
+          {
+            "page": 9,
+            "section": "Change of Life Insured",
+            "excerpt": "17. Change of Life Insured rd While the Policy is in force, You have the option to request for a change of Life insured from the third (3) Policy year onwards, subject to the following conditions: a) the new Life insured"
+          },
+          {
+            "page": 18,
+            "section": "Policy Charge",
+            "excerpt": "Policy charge is payable throughout the policy term. We will impose the policy charge through cancellation of units from the Regular Premium Account starting once the Policy commences and the next day after the Policy mo"
+          },
+          {
+            "page": 19,
+            "section": "Policy Charge example and Premium-Free Period freeze",
+            "excerpt": "Policyowner exercises Premium-Free Period between Policy Year 6 to 8, and subsequently resumes Premium payment. The table below shows the policy charge applicable for the respective periods: Policy Annual Total Premiums "
+          },
+          {
+            "page": 21,
+            "section": "Partial Withdrawal Charge",
+            "excerpt": "33. Partial Withdrawal Charge Partial withdrawal charge is payable if You request for partial withdrawal(s) from the Regular Premium Account value during the premium payment term. The partial withdrawal charge is to be d"
+          },
+          {
+            "page": 22,
+            "section": "Surrender Charge",
+            "excerpt": "34. Surrender Charge Surrender charge is payable on the Regular Premium Account value if You request for full surrender of Your Policy during the premium payment term. The surrender charge is to be deducted from the surr"
+          },
+          {
+            "page": 23,
+            "section": "Start-up Bonus Recovery Charge and Insurance Charge",
+            "excerpt": "35. Start-up Bonus Recovery Charge Start- up Bonus recovery charge is payable if You decrease Your Policy’s regular Premium. We will impose and deduct a Start-up Bonus recovery charge through cancellation of units from t"
+          },
+          {
+            "page": 27,
+            "section": "Appendix A insurance charge table",
+            "excerpt": "No guarantee is given, express or implied, that You will receive any amount invested. All investments involve risks and there can be no guarantee against loss resulting from an investment in any of the ILP Sub-Fund(s), n"
+          }
+        ]
+      },
+      {
         "id": "sgd-mip-10",
         "currency": "SGD",
         "mipLength": 10,
@@ -41847,42 +42985,6 @@
             "page": 27,
             "section": "Appendix A insurance charge table",
             "excerpt": "No guarantee is given, express or implied, that You will receive any amount invested. All investments involve risks and there can be no guarantee against loss resulting from an investment in any of the ILP Sub-Fund(s), n"
-          }
-        ]
-      }
-    ],
-    "publishedUnmodeledCorridors": [
-      {
-        "id": "sgd-mip-3",
-        "label": "SGD / MIP 3 years",
-        "paymentStructure": "mip",
-        "currency": "SGD",
-        "mipLength": 3,
-        "contributionMode": "regular-pay",
-        "status": "not-modeled-yet",
-        "reason": "Published in product summary, not modeled yet",
-        "sourceRefs": [
-          {
-            "page": 1,
-            "section": "Published corridor family",
-            "excerpt": "Published MIP corridors include 3, 5, 10, 15, and 20 years; only 10, 15, and 20 years are executable today."
-          }
-        ]
-      },
-      {
-        "id": "sgd-mip-5",
-        "label": "SGD / MIP 5 years",
-        "paymentStructure": "mip",
-        "currency": "SGD",
-        "mipLength": 5,
-        "contributionMode": "regular-pay",
-        "status": "not-modeled-yet",
-        "reason": "Published in product summary, not modeled yet",
-        "sourceRefs": [
-          {
-            "page": 1,
-            "section": "Published corridor family",
-            "excerpt": "Published MIP corridors include 3, 5, 10, 15, and 20 years; only 10, 15, and 20 years are executable today."
           }
         ]
       }
