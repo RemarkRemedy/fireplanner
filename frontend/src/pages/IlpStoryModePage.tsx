@@ -931,17 +931,17 @@ function WalkthroughDetailView({
         <WalkthroughExitSection policy={policy} analysis={analysis} useReal={useReal} onOpenDetailed={onOpenDetailed} />
       </div>
       <div className="border-t border-slate-200/80 pt-10">
+        <VerificationSection
+          onOpenDetailed={onOpenDetailed}
+        />
+      </div>
+      <div className="border-t border-slate-200/80 pt-10">
         <WalkthroughCashFlowSection
           policy={policy}
           quickEntry={quickEntry}
           prefilledFromPlanner={prefilledFromPlanner}
           onMonthlyIncomeChange={onMonthlyIncomeChange}
           onMonthlyExpensesChange={onMonthlyExpensesChange}
-        />
-      </div>
-      <div className="border-t border-slate-200/80 pt-10">
-        <VerificationSection
-          onOpenDetailed={onOpenDetailed}
         />
       </div>
       {analysis.summary.totalPremiumsPaid > 0 && (
