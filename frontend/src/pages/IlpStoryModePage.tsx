@@ -1172,6 +1172,17 @@ function StoryDetailView({
                       <TabsTrigger value="detailed">Detailed view</TabsTrigger>
                     </TabsList>
                   </Tabs>
+                  {analysis.summary.totalPremiumsPaid > 0 && (
+                    <Button
+                      variant="outline"
+                      className="h-10 px-4"
+                      onClick={() => setReceiptOpen(true)}
+                      aria-label="Generate ILP receipt"
+                    >
+                      <Receipt className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Generate Receipt</span>
+                    </Button>
+                  )}
                   <Button variant="outline" onClick={onReplayStory} className="h-10 px-4">
                     <Play className="mr-2 h-4 w-4" />
                     Replay Story
