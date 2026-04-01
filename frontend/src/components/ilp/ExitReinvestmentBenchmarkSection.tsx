@@ -45,8 +45,8 @@ export function ExitReinvestmentBenchmarkSection({
   analysis,
 }: ExitReinvestmentBenchmarkSectionProps) {
   const colors = useChartColors()
-  const [outsideRateKey, setOutsideRateKey] = useState<ExitBenchmarkRateKey>('4')
-  const [ilpRateKey, setIlpRateKey] = useState<ExitBenchmarkRateKey>('8')
+  const [outsideRateKey, setOutsideRateKey] = useState<ExitBenchmarkRateKey>('7')
+  const [ilpRateKey, setIlpRateKey] = useState<ExitBenchmarkRateKey>('7')
   const [showAssumptionFees, setShowAssumptionFees] = useState(false)
   const [ilpOcf, setIlpOcf] = useState(() => computeBlendedOcf(policy))
   const [externalTer, setExternalTer] = useState(0)
