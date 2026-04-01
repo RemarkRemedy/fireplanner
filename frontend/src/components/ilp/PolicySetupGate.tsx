@@ -92,8 +92,14 @@ export function PolicySetupGate({ seed, onConfirm, onCancel, prospect }: PolicyS
             label="Fund management fee (p.a.)"
             value={fundFee}
             onChange={setFundFee}
+            disabled
             tooltip="Annual fee charged by the fund manager. Most ILP sub-funds charge 1.0-1.5% p.a. Check your fund's Product Highlight Sheet for the exact rate."
           />
+          <div className="sm:col-span-2 -mt-1">
+            <p className="text-xs text-muted-foreground">
+              Fund management fee is seeded from the catalog template here. Load the product first if you need to inspect or deliberately customize fund-level assumptions later.
+            </p>
+          </div>
           {prospect ? (
             <NumberInput
               label="Projection Horizon"
