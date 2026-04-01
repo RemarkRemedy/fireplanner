@@ -155,27 +155,30 @@
             "minAnnualPremium": 12000,
             "maxAnnualPremium": 23999.99,
             "rate": 0.25
-          },
-          {
-            "currency": "SGD",
-            "minAnnualPremium": 24000,
-            "maxAnnualPremium": 35999.99,
-            "rate": 0.42
-          },
-          {
-            "currency": "SGD",
-            "minAnnualPremium": 36000,
-            "maxAnnualPremium": 47999.99,
-            "rate": 0.44
-          },
-          {
-            "currency": "SGD",
-            "minAnnualPremium": 48000,
-            "maxAnnualPremium": null,
-            "rate": 0.47
           }
         ],
-        "suspensionRules": []
+        "suspensionRules": [],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Initial Bonus",
+            "excerpt": "PRODUCT SUMMARY − #GOCLASSIC SECURE In this Product Summary, “ we, “ us ”, “ our ” refer to Tokio Marine Life Insurance Singapore Pte. Ltd. Plan Description #goClassic Secure is a whole life, limited premium investment-l"
+          },
+          {
+            "page": 2,
+            "section": "Initial Bonus Rates",
+            "excerpt": "Initial bonus rates on a per annum basis are set out below: E & O E ULJ UNXN, UNXO, UNXP Page 2 of 15 05/11/2025 Tokio Marine Life Insurance Singapore Pte. Ltd. (Company Reg. No.: 194800055D) 20 McCallum Street, #07-01 T"
+          },
+          {
+            "page": 3,
+            "section": "Initial Bonus Rates / Loyalty Bonus",
+            "excerpt": "Loyalty Bonus While the policy is in force, we will pay an annual loyalty bonus at the end of each policy year, starting from the fourth policy anniversary. During premium payment term, loyalty bonus will be paid in acco"
+          }
+        ],
+        "notes": [
+          "Tier is based on the published SGD annualised regular premium band for the 25-year premium payment term.",
+          "Allocated to the Initial Units Account upon each regular premium received in the first three policy years."
+        ]
       },
       {
         "id": "loyalty-bonus-during-mip",
@@ -196,7 +199,18 @@
             "accumulation"
           ]
         },
-        "suspensionRules": []
+        "suspensionRules": [],
+        "sourceRefs": [
+          {
+            "page": 3,
+            "section": "Loyalty Bonus",
+            "excerpt": "Loyalty Bonus While the policy is in force, we will pay an annual loyalty bonus at the end of each policy year, starting from the fourth policy anniversary. During premium payment term, loyalty bonus will be paid in acco"
+          }
+        ],
+        "notes": [
+          "Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 4 to the end of the 25-year premium payment term.",
+          "During the premium payment term, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus withdrawals, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1."
+        ]
       },
       {
         "id": "loyalty-bonus-after-mip",
@@ -211,7 +225,17 @@
         "startPolicyYear": 26,
         "endPolicyYear": null,
         "tieredRates": [],
-        "suspensionRules": []
+        "suspensionRules": [],
+        "sourceRefs": [
+          {
+            "page": 3,
+            "section": "Loyalty Bonus",
+            "excerpt": "Loyalty Bonus While the policy is in force, we will pay an annual loyalty bonus at the end of each policy year, starting from the fourth policy anniversary. During premium payment term, loyalty bonus will be paid in acco"
+          }
+        ],
+        "notes": [
+          "Models the published annual loyalty bonus on the Accumulation Units Account value after the premium payment term without the adjustment-factor multiplier."
+        ]
       },
       {
         "id": "additional-bonus",
@@ -240,7 +264,18 @@
             "disqualifyInReferenceYear": true
           }
         ],
-        "suspensionRules": []
+        "suspensionRules": [],
+        "sourceRefs": [
+          {
+            "page": 4,
+            "section": "Additional Bonus",
+            "excerpt": "purchased with the Loyalty Bonus and Additional Bonus shall be allocated. Additional Bonus While the policy is in force, we will pay an annual additional bonus of 0.20% of the Accumulation Units Account value at the end "
+          }
+        ],
+        "notes": [
+          "Models the published annual Additional Bonus of 0.20% of the Accumulation Units Account value during the 25-year premium payment term only.",
+          "The bonus is disqualified in a policy year if any premium holiday, regular-premium reduction, or partial withdrawal occurs during that same policy year."
+        ]
       }
     ],
     "chargeRules": [],
@@ -340,16 +375,16 @@
       ]
     },
     "catalogWarnings": [
-      "#goClassic Secure is cataloged as a supported V1 product. The parser captures split SGD / premium-payment-term-25 Basic Death and Advanced Death corridors with executable regular-premium routing, published initial bonus tiers, annual loyalty bonus with the published bounded adjustment-factor formula during the premium payment term and the flat post-term rate thereafter, the published 0.20% Additional Bonus during the premium payment term with same-policy-year qualification gates, fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the nil policy-level one-off partial-withdrawal charge path with the published policy-year-3 start gate, S$500 minimum amount, and S$3,000 minimum account value, the 25-year surrender charge on the Initial Units Account, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.",
+      "#goClassic Secure is cataloged as a supported V1 product. The parser captures the published SGD premium-payment-term family from 5 to 25 years across Basic Death and Advanced Death corridors with executable regular-premium routing, published term-specific initial bonus tiers, annual loyalty bonus with the published bounded adjustment-factor formula during the premium payment term and the flat post-term rate thereafter, the published 0.20% Additional Bonus during the premium payment term with same-policy-year qualification gates, fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the nil policy-level one-off partial-withdrawal charge path with the published policy-year-3 start gate, S$500 minimum amount, and S$3,000 minimum account value, the published term-specific surrender charge on the Initial Units Account, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.",
       "Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.",
-      "Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published current death-benefit estimate, Locked-in Policy Value floor, policy-year-3 MPC settlement of years 1-2 accruals, irreversible downgrade after failed deduction, and a manual current Locked-in Policy Value snapshot through the locked-in-value protection-state kernel.",
-      "Loyalty Bonus and Additional Bonus are modeled on the published bounded adjustment-factor and same-policy-year qualification corridors only; premium-holiday lapse state, regular-withdrawal administration, selected-fund residual-value conditions, credit-card charge, aggregation limits, and change-of-life-assured administration remain informational only.",
-      "This partial template models the SGD / premium-payment-term-25 (Basic Death) corridor only.",
-      "This partial template models 24-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, the nil policy-level one-off partial-withdrawal charge path with the published policy-year-3 start gate, S$500 minimum amount, and S$3,000 minimum account value, the published 25-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.",
+      "Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variants model the published current death-benefit estimate, Locked-in Policy Value floor, policy-year-3 MPC settlement of years 1-2 accruals, irreversible downgrade after failed deduction, and a manual current Locked-in Policy Value snapshot through the locked-in-value protection-state kernel.",
+      "Loyalty Bonus and Additional Bonus are modeled on the published bounded adjustment-factor and same-policy-year qualification corridors only; premium-holiday lapse state, regular-withdrawal administration, selected-fund residual-value conditions, credit-card charge, aggregation limits, change-of-life-assured administration, and non-SGD corridors remain informational only.",
+      "This supported template models the SGD / premium-payment-term-25 (Basic Death) corridor.",
+      "This supported template models 24-month initial-versus-accumulation routing, the published 25-year premium payment term initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, the nil policy-level one-off partial-withdrawal charge path with the published policy-year-3 start gate, S$500 minimum amount, and S$3,000 minimum account value, the published 25-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption, and payouts below the published minimum annual cash-payout amount of S$50 remain reinvested.",
       "Cash payout elections for dividend-paying funds should be submitted at least 30 days before the record date.",
       "Locked-in Policy Value, Monthly Protection Charge, and the related Advanced Death behavior remain metadata-only on the Basic Death corridor.",
-      "Premium-holiday lapse behavior, regular withdrawal, selected-fund residual-value conditions, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only."
+      "Premium-holiday lapse behavior, regular withdrawal, selected-fund residual-value conditions, credit-card charge, and non-SGD corridors remain metadata-only."
     ]
   },
   "expected": {
@@ -358,6 +393,12 @@
       "totalFeesCharged": 79597.94,
       "totalBonusesReceived": 24092.43,
       "netFeeDrag": 55505.51,
+      "realGrossFees": 82560.94,
+      "realBonuses": 14382.69,
+      "realNetFeeDrag": 68178.26,
+      "inceptionCharges": 0,
+      "realFundCharges": 32110.1,
+      "realWrapperFees": 50450.84,
       "currentSurrenderValue": 10260,
       "cancelNowPenalty": 16740
     },

@@ -38,12 +38,15 @@ describe('parseTokioMarineGoClassicSecure', () => {
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-goclassic-secure-additional-bonus-qualification')
     expect(product.metadataOnlyBehaviors).not.toContain('tokio-goclassic-secure-dividend-payout-threshold-and-record-date-instructions')
 
-    expect(product.variants).toHaveLength(2)
+    expect(product.variants).toHaveLength(42)
 
+    const term5Variant = product.variants.find((variant) => variant.id === 'sgd-mip-5')
+    const term22Variant = product.variants.find((variant) => variant.id === 'sgd-mip-22')
     const basicVariant = product.variants.find((variant) => variant.id === 'sgd-mip-25')
+    const advancedTerm5Variant = product.variants.find((variant) => variant.id === 'sgd-mip-5-advanced-death')
     expect(basicVariant).toBeDefined()
-    expect(basicVariant?.icpMonths).toBe(24)
-    expect(basicVariant?.accounts).toEqual([
+    expect(term5Variant?.icpMonths).toBe(24)
+    expect(term5Variant?.accounts).toEqual([
       expect.objectContaining({
         id: 'initial',
         feeRate: 0.0675,
@@ -63,25 +66,42 @@ describe('parseTokioMarineGoClassicSecure', () => {
         ],
       }),
     ])
+    expect(term5Variant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
+      { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.02 },
+      { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.04 },
+      { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.05 },
+      { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.07 },
+      { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.09 },
+    ])
+    expect(term22Variant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
+      { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.12 },
+      { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.22 },
+    ])
     expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'initial-bonus')?.tieredRates).toEqual([
       { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.15 },
       { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.25 },
-      { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.42 },
-      { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.44 },
-      { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.47 },
     ])
-    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus-during-mip')).toEqual(
+    expect(term5Variant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus-during-mip')).toEqual(
       expect.objectContaining({
         rate: 0.005,
+        startPolicyYear: 4,
+        endPolicyYear: 5,
         adjustmentFactorConfig: {
           formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
           withdrawalAccountIds: ['accumulation'],
         },
       }),
     )
-    expect(basicVariant?.bonuses.find((bonus) => bonus.id === 'additional-bonus')).toEqual(
+    expect(term5Variant?.bonuses.find((bonus) => bonus.id === 'loyalty-bonus-after-mip')).toEqual(
+      expect.objectContaining({
+        rate: 0.005,
+        startPolicyYear: 6,
+      }),
+    )
+    expect(term5Variant?.bonuses.find((bonus) => bonus.id === 'additional-bonus')).toEqual(
       expect.objectContaining({
         rate: 0.002,
+        endPolicyYear: 5,
         qualificationRules: [
           { trigger: 'premium-holiday', disqualifyInReferenceYear: true },
           { trigger: 'regular-premium-reduction', disqualifyInReferenceYear: true },
@@ -89,29 +109,29 @@ describe('parseTokioMarineGoClassicSecure', () => {
         ],
       }),
     )
-    expect(basicVariant?.feeRules).toEqual([])
-    expect(basicVariant?.policyStateSupport).toEqual({
+    expect(term5Variant?.feeRules).toEqual([])
+    expect(term5Variant?.policyStateSupport).toEqual({
       automaticLapseOnAccountValueDepletion: false,
       minimumPartialWithdrawalAmount: 500,
       minimumPartialWithdrawalStartPolicyMonthByAccount: [
         { accountId: 'accumulation', startPolicyMonth: 25 },
-        { accountId: 'initial', startPolicyMonth: 301 },
+        { accountId: 'initial', startPolicyMonth: 61 },
       ],
       partialWithdrawalMinimumRemainingValueRules: [
         { activeWindow: 'policy-term', basis: 'policy-value', minimumValue: 3_000 },
       ],
     })
-    expect(basicVariant?.eventChargeRules).toEqual([
+    expect(term5Variant?.eventChargeRules).toEqual([
       expect.objectContaining({ id: 'top-up-premium-charge', appliesTo: ['accumulation'], rate: 0.05 }),
       expect.objectContaining({ id: 'recurring-single-premium-charge', appliesTo: ['accumulation'], rate: 0.05 }),
       expect.objectContaining({ id: 'partial-withdrawal-charge', appliesTo: ['initial', 'accumulation'], rate: 0 }),
     ])
-    expect(basicVariant?.distributionSupport).toEqual({
+    expect(term5Variant?.distributionSupport).toEqual({
       mode: 'manual-assumption',
       accountIds: ['initial', 'accumulation'],
       cashPayoutWindows: [
-        { startPolicyYear: 1, endPolicyYear: 25, accountIds: ['accumulation'] },
-        { startPolicyYear: 26, endPolicyYear: null, accountIds: ['initial', 'accumulation'] },
+        { startPolicyYear: 1, endPolicyYear: 5, accountIds: ['accumulation'] },
+        { startPolicyYear: 6, endPolicyYear: null, accountIds: ['initial', 'accumulation'] },
       ],
       minimumAnnualPayoutAmount: 50,
       minimumAnnualPayoutCurrency: 'SGD',
@@ -121,10 +141,11 @@ describe('parseTokioMarineGoClassicSecure', () => {
       cashPayoutAllowedAfterMip: true,
       source: 'distribution-paying-funds',
       notes: expect.arrayContaining([
-        expect.stringContaining('During the 25-year premium payment term'),
+        expect.stringContaining('During the 5-year premium payment term'),
       ]),
       sourceRefs: expect.any(Array),
     })
+    expect(term5Variant?.eecTable).toEqual([1, 1, 0.26, 0.21, 0.15])
     expect(basicVariant?.eecTable).toEqual([
       1, 1, 0.95, 0.93, 0.91, 0.89, 0.87, 0.85, 0.83, 0.8,
       0.77, 0.74, 0.71, 0.68, 0.64, 0.6, 0.56, 0.51, 0.46, 0.41,
@@ -138,6 +159,7 @@ describe('parseTokioMarineGoClassicSecure', () => {
 
     const advancedVariant = product.variants.find((variant) => variant.id === 'sgd-mip-25-advanced-death')
     expect(advancedVariant).toBeDefined()
+    expect(advancedTerm5Variant).toBeDefined()
     expect(advancedVariant?.feeRules).toEqual([
       expect.objectContaining({
         id: 'monthly-protection-charge',
@@ -162,6 +184,19 @@ describe('parseTokioMarineGoClassicSecure', () => {
         requiresManualInput: true,
       }),
     ])
+    expect(advancedTerm5Variant?.feeRules).toEqual([
+      expect.objectContaining({
+        id: 'monthly-protection-charge',
+        assuranceConfig: expect.objectContaining({
+          formula: 'tokio-mpc-locked-in-policy-value',
+          accrual: {
+            startPolicyYear: 1,
+            endPolicyYear: 2,
+            settlementPolicyYear: 3,
+          },
+        }),
+      }),
+    ])
     expect(advancedVariant?.sourceRefs.map((ref) => ref.section)).toEqual(
       expect.arrayContaining([
         'Appendix A Surrender Charge',
@@ -169,7 +204,7 @@ describe('parseTokioMarineGoClassicSecure', () => {
       ]),
     )
     expect(product.warnings).toContain(
-      'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published current death-benefit estimate, Locked-in Policy Value floor, policy-year-3 MPC settlement of years 1-2 accruals, irreversible downgrade after failed deduction, and a manual current Locked-in Policy Value snapshot through the locked-in-value protection-state kernel.',
+      'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variants model the published current death-benefit estimate, Locked-in Policy Value floor, policy-year-3 MPC settlement of years 1-2 accruals, irreversible downgrade after failed deduction, and a manual current Locked-in Policy Value snapshot through the locked-in-value protection-state kernel.',
     )
     expect(basicVariant?.unsupportedItems).not.toContain(
       'Loyalty Bonus and Additional Bonus remain metadata-only because their annual qualification and adjustment-factor formulas need stateful bonus tracking beyond the current engine.',

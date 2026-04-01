@@ -333,10 +333,6 @@ function buildPhase0PublishedUnmodeledRegistry(): Record<string, IlpCatalogPubli
       corridor({ id: `sgd-mip-${term}-advanced-death`, label: `SGD / Premium Payment Term ${term} years / Advanced Death`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioAffluenceRefs }),
       corridor({ id: `sgd-mip-${term}-advanced-death-life-benefit-rider`, label: `SGD / Premium Payment Term ${term} years / Advanced Death + Life Benefit Rider`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioAffluenceRefs }),
     ]),
-    'tokio-marine-goclassic-secure': range(5, 24).flatMap((term) => [
-      corridor({ id: `sgd-mip-${term}`, label: `SGD / Premium Payment Term ${term} years`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioGoClassicSecureRefs }),
-      corridor({ id: `sgd-mip-${term}-advanced-death`, label: `SGD / Premium Payment Term ${term} years / Advanced Death`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioGoClassicSecureRefs }),
-    ]),
     'tokio-marine-goaffluence': range(16, 30).flatMap((term) => [
       corridor({ id: `sgd-mip-${term}`, label: `SGD / Premium Payment Term ${term} years`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioGoAffluenceRefs }),
       corridor({ id: `sgd-mip-${term}-advanced-death`, label: `SGD / Premium Payment Term ${term} years / Advanced Death`, paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: term, contributionMode: 'regular-pay', sourceRefs: tokioGoAffluenceRefs }),

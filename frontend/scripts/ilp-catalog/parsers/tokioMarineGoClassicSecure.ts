@@ -15,9 +15,13 @@ interface ParseContext {
   sourceChecksumSha256: string
 }
 
-const MIP_LENGTH = 25
+const TERM_OPTIONS = [
+  5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+] as const
 
-const SURRENDER_CHARGE_TABLE = [
+type SupportedTerm = (typeof TERM_OPTIONS)[number]
+
+const BASE_SURRENDER_CHARGE_TABLE = [
   1,
   1,
   0.95,
@@ -45,12 +49,20 @@ const SURRENDER_CHARGE_TABLE = [
   0.15,
 ] as const
 
-const INITIAL_BONUS_TIERS: IlpTemplateBonusTier[] = [
-  { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.15 },
-  { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.25 },
-  { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.42 },
-  { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.44 },
-  { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.47 },
+type InitialBonusRatesByTerm = readonly [number | null, number | null, number | null, number | null, number | null, number | null, number | null, number | null, number | null]
+
+interface InitialBonusTierConfig {
+  minAnnualPremium: number | null
+  maxAnnualPremium: number | null
+  ratesByTerm: InitialBonusRatesByTerm
+}
+
+const INITIAL_BONUS_TIER_CONFIGS: InitialBonusTierConfig[] = [
+  { minAnnualPremium: null, maxAnnualPremium: 11_999.99, ratesByTerm: [0.02, 0.05, 0.09, 0.12, 0.12, 0.12, 0.12, 0.12, 0.15] },
+  { minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, ratesByTerm: [0.04, 0.09, 0.12, 0.22, 0.22, 0.22, 0.22, 0.22, 0.25] },
+  { minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, ratesByTerm: [0.05, 0.12, 0.17, 0.27, null, null, null, null, null] },
+  { minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, ratesByTerm: [0.07, 0.17, null, null, null, null, null, null, null] },
+  { minAnnualPremium: 48_000, maxAnnualPremium: null, ratesByTerm: [0.09, 0.2, null, null, null, null, null, null, null] },
 ]
 
 function normalizeWhitespace(text: string): string {
@@ -77,10 +89,50 @@ function snippetNear(document: ExtractedPdfDocument, pageNumber: number, keyword
   return page.lines.slice(lineIndex, lineIndex + lineWindow).map((line) => line.text).join(' ')
 }
 
-function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
+function resolveInitialBonusRate(term: SupportedTerm, ratesByTerm: InitialBonusRatesByTerm): number | null {
+  if (term <= 9) return ratesByTerm[0]
+  if (term <= 14) return ratesByTerm[1]
+  if (term <= 19) return ratesByTerm[2]
+  if (term === 20) return ratesByTerm[3]
+  if (term === 21) return ratesByTerm[4]
+  if (term === 22) return ratesByTerm[5]
+  if (term === 23) return ratesByTerm[6]
+  if (term === 24) return ratesByTerm[7]
+  return ratesByTerm[8]
+}
+
+function buildInitialBonusTiers(term: SupportedTerm): IlpTemplateBonusTier[] {
+  return INITIAL_BONUS_TIER_CONFIGS.flatMap((tier) => {
+    const rate = resolveInitialBonusRate(term, tier.ratesByTerm)
+    if (rate === null) return []
+
+    return [{
+      currency: 'SGD' as const,
+      minAnnualPremium: tier.minAnnualPremium,
+      maxAnnualPremium: tier.maxAnnualPremium,
+      rate,
+    }]
+  })
+}
+
+function buildSurrenderChargeTable(term: SupportedTerm): number[] {
+  if (term === 25) return [...BASE_SURRENDER_CHARGE_TABLE]
+  return [1, 1, ...BASE_SURRENDER_CHARGE_TABLE.slice(27 - term)]
+}
+
+function describeInitialBonusTerm(term: SupportedTerm): string {
+  if (term <= 9) return '5-to-9-year premium payment terms'
+  if (term <= 14) return '10-to-14-year premium payment terms'
+  if (term <= 19) return '15-to-19-year premium payment terms'
+  return `${term}-year premium payment term`
+}
+
+function buildBonuses(document: ExtractedPdfDocument, term: SupportedTerm): IlpTemplateBonus[] {
   const page1 = sourceRef(1, 'Initial Bonus', snippetNear(document, 1, 'Initial Bonus', 18))
   const page2 = sourceRef(2, 'Initial Bonus Rates', snippetNear(document, 2, 'Initial bonus rates on a per annum basis', 20))
-  const loyaltyPage = sourceRef(3, 'Loyalty Bonus / Additional Bonus', snippetNear(document, 3, 'Loyalty Bonus', 34))
+  const page3 = sourceRef(3, 'Initial Bonus Rates / Loyalty Bonus', snippetNear(document, 3, 'Loyalty Bonus', 34))
+  const loyaltyPage = sourceRef(3, 'Loyalty Bonus', snippetNear(document, 3, 'Loyalty Bonus', 24))
+  const additionalPage = sourceRef(4, 'Additional Bonus', snippetNear(document, 4, 'Additional Bonus', 24))
 
   return [
     {
@@ -93,12 +145,12 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
       endPolicyYear: 3,
       rate: null,
       amount: null,
-      tieredRates: INITIAL_BONUS_TIERS.map((tier) => ({ ...tier })),
+      tieredRates: buildInitialBonusTiers(term),
       notes: [
-        'Tier is based on the published SGD annualised regular premium band for the 25-year premium payment term.',
+        `Tier is based on the published SGD annualised regular premium band for the ${describeInitialBonusTerm(term)}.`,
         'Allocated to the Initial Units Account upon each regular premium received in the first three policy years.',
       ],
-      sourceRefs: [page1, page2],
+      sourceRefs: [page1, page2, page3],
     },
     {
       id: 'loyalty-bonus-during-mip',
@@ -107,7 +159,7 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
       mode: 'annual-rate',
       appliesTo: ['accumulation'],
       startPolicyYear: 4,
-      endPolicyYear: 25,
+      endPolicyYear: term,
       rate: 0.005,
       amount: null,
       tieredRates: [],
@@ -116,7 +168,7 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
         withdrawalAccountIds: ['accumulation'],
       },
       notes: [
-        'Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 4 to the end of the premium payment term.',
+        `Models the published annual loyalty bonus on the Accumulation Units Account value from the end of policy year 4 to the end of the ${term}-year premium payment term.`,
         'During the premium payment term, the annual rate is multiplied by the published adjustment factor of policy-year regular premium paid minus withdrawals, divided by annualised regular premium committed at commencement date, floored at 0 and capped at 1.',
       ],
       sourceRefs: [loyaltyPage],
@@ -127,7 +179,7 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
       label: 'Loyalty Bonus (After Premium Payment Term)',
       mode: 'annual-rate',
       appliesTo: ['accumulation'],
-      startPolicyYear: 26,
+      startPolicyYear: term + 1,
       endPolicyYear: null,
       rate: 0.005,
       amount: null,
@@ -144,7 +196,7 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
       mode: 'annual-rate',
       appliesTo: ['accumulation'],
       startPolicyYear: 4,
-      endPolicyYear: 25,
+      endPolicyYear: term,
       rate: 0.002,
       amount: null,
       tieredRates: [],
@@ -154,10 +206,10 @@ function buildBonuses(document: ExtractedPdfDocument): IlpTemplateBonus[] {
         { trigger: 'partial-withdrawal', disqualifyInReferenceYear: true },
       ],
       notes: [
-        'Models the published annual Additional Bonus of 0.20% of the Accumulation Units Account value during the premium payment term only.',
+        `Models the published annual Additional Bonus of 0.20% of the Accumulation Units Account value during the ${term}-year premium payment term only.`,
         'The bonus is disqualified in a policy year if any premium holiday, regular-premium reduction, or partial withdrawal occurs during that same policy year.',
       ],
-      sourceRefs: [loyaltyPage],
+      sourceRefs: [additionalPage],
     },
   ]
 }
@@ -166,6 +218,7 @@ function buildTokioSecureMpcFeeRule(
   optionPage: IlpCatalogSourceRef,
   chargePage: IlpCatalogSourceRef,
   tablePage: IlpCatalogSourceRef,
+  term: SupportedTerm,
 ): IlpTemplateFeeRule {
   return {
     id: 'monthly-protection-charge',
@@ -195,7 +248,7 @@ function buildTokioSecureMpcFeeRule(
       },
     },
     notes: [
-      'Models the published Monthly Protection Charge for the Advanced Death corridor during the premium payment term.',
+      `Models the published Monthly Protection Charge for the Advanced Death corridor during the ${term}-year premium payment term.`,
       'The sum at risk is the published death benefit less policy value, where the protected floor is the carried Locked-in Policy Value and the valuation basis is total policy value.',
       'The first two policy years of MPC accrue and are deducted in one lump sum in policy year 3.',
       'If the Accumulation Units Account cannot fully fund MPC due, future new MPC stops permanently while the unpaid balance remains collectible as indebtedness.',
@@ -208,6 +261,7 @@ function buildTokioSecureMpcFeeRule(
 
 function buildVariant(
   document: ExtractedPdfDocument,
+  term: SupportedTerm,
   deathBenefitOption: 'basic-death' | 'advanced-death',
 ): IlpTemplateVariant {
   const isAdvancedDeath = deathBenefitOption === 'advanced-death'
@@ -219,10 +273,10 @@ function buildVariant(
   const page9Distribution = sourceRef(9, 'Dividend Distribution', snippetNear(document, 9, 'Dividend Distribution', 28))
   const page10Charges = sourceRef(10, 'Initial Charge / Policy Charge / MPC', snippetNear(document, 10, 'Initial Charge', 28))
   const page10 = sourceRef(10, 'Premium Charge / Surrender Charge', snippetNear(document, 10, 'Premium Charge for Recurring Single Premium and Top-up Premium', 26))
-  const page14Surrender = sourceRef(
-    14,
+  const page15Surrender = sourceRef(
+    15,
     'Appendix A Surrender Charge',
-    snippetNear(document, 14, 'Premium Payment Term: 25', 24),
+    snippetNear(document, 15, 'Premium Payment Term:', 24),
   )
   const page14Mpc = sourceRef(
     14,
@@ -282,9 +336,9 @@ function buildVariant(
   ]
 
   return {
-    id: isAdvancedDeath ? 'sgd-mip-25-advanced-death' : 'sgd-mip-25',
+    id: isAdvancedDeath ? `sgd-mip-${term}-advanced-death` : `sgd-mip-${term}`,
     currency: 'SGD',
-    mipLength: MIP_LENGTH,
+    mipLength: term,
     icpMonths: 24,
     accounts: [
       {
@@ -312,15 +366,15 @@ function buildVariant(
         sourceRefs: [page2, page4, page5, page10Charges, page10],
       },
     ],
-    bonuses: buildBonuses(document),
-    feeRules: isAdvancedDeath ? [buildTokioSecureMpcFeeRule(page1, page10Charges, page14Mpc)] : [],
+    bonuses: buildBonuses(document, term),
+    feeRules: isAdvancedDeath ? [buildTokioSecureMpcFeeRule(page1, page10Charges, page14Mpc, term)] : [],
     eventChargeRules,
     policyStateSupport: {
       automaticLapseOnAccountValueDepletion: false,
       minimumPartialWithdrawalAmount: 500,
       minimumPartialWithdrawalStartPolicyMonthByAccount: [
         { accountId: 'accumulation', startPolicyMonth: 25 },
-        { accountId: 'initial', startPolicyMonth: 301 },
+        { accountId: 'initial', startPolicyMonth: term * 12 + 1 },
       ],
       partialWithdrawalMinimumRemainingValueRules: [
         { activeWindow: 'policy-term', basis: 'policy-value', minimumValue: 3_000 },
@@ -332,11 +386,11 @@ function buildVariant(
       cashPayoutWindows: [
         {
           startPolicyYear: 1,
-          endPolicyYear: 25,
+          endPolicyYear: term,
           accountIds: ['accumulation'],
         },
         {
-          startPolicyYear: 26,
+          startPolicyYear: term + 1,
           endPolicyYear: null,
           accountIds: ['initial', 'accumulation'],
         },
@@ -350,27 +404,27 @@ function buildVariant(
       source: 'distribution-paying-funds',
       notes: [
         'Dividend-paying ILP sub-funds default to reinvestment unless the policyholder elects cash payout.',
-        'During the 25-year premium payment term, only dividends from the Accumulation Units Account may be paid in cash.',
+        `During the ${term}-year premium payment term, only dividends from the Accumulation Units Account may be paid in cash.`,
         'After the premium payment term, dividends from both the Initial Units Account and Accumulation Units Account may be paid in cash.',
         'Cash payouts below the published SGD 50 annual dividend threshold remain reinvested in V1.',
         'Cash payout elections should be lodged at least 30 days before the dividend record date.',
       ],
       sourceRefs: [page9Distribution],
     },
-    eecTable: [...SURRENDER_CHARGE_TABLE],
+    eecTable: buildSurrenderChargeTable(term),
     warnings: [
       isAdvancedDeath
-        ? 'This supported template models the SGD / premium-payment-term-25 (Advanced Death) corridor only.'
-        : 'This partial template models the SGD / premium-payment-term-25 (Basic Death) corridor only.',
+        ? `This supported template models the SGD / premium-payment-term-${term} (Advanced Death) corridor.`
+        : `This supported template models the SGD / premium-payment-term-${term} (Basic Death) corridor.`,
       isAdvancedDeath
-        ? 'This supported template models 24-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, the nil policy-level one-off partial-withdrawal charge path with the published policy-year-3 start gate, S$500 minimum amount, and S$3,000 minimum account value, the published 25-year surrender charge on the Initial Units Account, the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface, and the published current death-benefit estimate plus Advanced Death Monthly Protection Charge through the locked-in-value protection-state kernel.'
-        : 'This partial template models 24-month initial-versus-accumulation routing, the published 25-year initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, the nil policy-level one-off partial-withdrawal charge path with the published policy-year-3 start gate, S$500 minimum amount, and S$3,000 minimum account value, the published 25-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
+        ? `This supported template models 24-month initial-versus-accumulation routing, the published ${describeInitialBonusTerm(term)} initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, the nil policy-level one-off partial-withdrawal charge path with the published policy-year-3 start gate, S$500 minimum amount, and S$3,000 minimum account value, the published ${term}-year surrender charge on the Initial Units Account, the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface, and the published current death-benefit estimate plus Advanced Death Monthly Protection Charge through the locked-in-value protection-state kernel.`
+        : `This supported template models 24-month initial-versus-accumulation routing, the published ${describeInitialBonusTerm(term)} initial bonus tiers, the published initial charge and policy charge through executable account fee rates, recurring single premium and top-up routing into the Accumulation Units Account, the nil policy-level one-off partial-withdrawal charge path with the published policy-year-3 start gate, S$500 minimum amount, and S$3,000 minimum account value, the published ${term}-year surrender charge on the Initial Units Account, and the phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.`,
     ],
     unsupportedItems: [
       ...(isAdvancedDeath
         ? ['Full death-benefit payout handling beyond the modeled current death-benefit estimate, change-of-life-assured administration, and exact future monthiversary ratchet timing remain outside the current engine boundary.']
         : ['Locked-in Policy Value, Monthly Protection Charge, and the related Advanced Death behavior remain metadata-only on the Basic Death corridor.']),
-      'Premium-holiday lapse behavior, regular withdrawal, selected-fund residual-value conditions, credit-card charge, and non-SGD or non-25-year corridors remain metadata-only.',
+      'Premium-holiday lapse behavior, regular withdrawal, selected-fund residual-value conditions, credit-card charge, and non-SGD corridors remain metadata-only.',
     ],
     sourceRefs: [
       page1,
@@ -381,7 +435,7 @@ function buildVariant(
       page9Distribution,
       page10Charges,
       page10,
-      page14Surrender,
+      page15Surrender,
       ...(isAdvancedDeath ? [page14Mpc] : []),
     ],
   }
@@ -427,15 +481,15 @@ export function parseTokioMarineGoClassicSecure(context: ParseContext): IlpCatal
       'tokio-goclassic-secure-change-of-life-assured',
     ],
     warnings: [
-      '#goClassic Secure is cataloged as a supported V1 product. The parser captures split SGD / premium-payment-term-25 Basic Death and Advanced Death corridors with executable regular-premium routing, published initial bonus tiers, annual loyalty bonus with the published bounded adjustment-factor formula during the premium payment term and the flat post-term rate thereafter, the published 0.20% Additional Bonus during the premium payment term with same-policy-year qualification gates, fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the nil policy-level one-off partial-withdrawal charge path with the published policy-year-3 start gate, S$500 minimum amount, and S$3,000 minimum account value, the 25-year surrender charge on the Initial Units Account, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
+      '#goClassic Secure is cataloged as a supported V1 product. The parser captures the published SGD premium-payment-term family from 5 to 25 years across Basic Death and Advanced Death corridors with executable regular-premium routing, published term-specific initial bonus tiers, annual loyalty bonus with the published bounded adjustment-factor formula during the premium payment term and the flat post-term rate thereafter, the published 0.20% Additional Bonus during the premium payment term with same-policy-year qualification gates, fee-rate modeling for the initial and policy charges, recurring single premium and top-up charges into the Accumulation Units Account, the nil policy-level one-off partial-withdrawal charge path with the published policy-year-3 start gate, S$500 minimum amount, and S$3,000 minimum account value, the published term-specific surrender charge on the Initial Units Account, and the published phase-specific dividend cash-payout account restrictions through the manual distribution-mode assumption surface.',
       'Dividend cash payouts are modeled through the manual distribution-mode assumption surface with the published SGD 50 minimum payout threshold and 30-day record-date lead time.',
-      'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variant models the published current death-benefit estimate, Locked-in Policy Value floor, policy-year-3 MPC settlement of years 1-2 accruals, irreversible downgrade after failed deduction, and a manual current Locked-in Policy Value snapshot through the locked-in-value protection-state kernel.',
-      'Loyalty Bonus and Additional Bonus are modeled on the published bounded adjustment-factor and same-policy-year qualification corridors only; premium-holiday lapse state, regular-withdrawal administration, selected-fund residual-value conditions, credit-card charge, aggregation limits, and change-of-life-assured administration remain informational only.',
+      'Basic Death keeps Monthly Protection Charge metadata-only, while the Advanced Death variants model the published current death-benefit estimate, Locked-in Policy Value floor, policy-year-3 MPC settlement of years 1-2 accruals, irreversible downgrade after failed deduction, and a manual current Locked-in Policy Value snapshot through the locked-in-value protection-state kernel.',
+      'Loyalty Bonus and Additional Bonus are modeled on the published bounded adjustment-factor and same-policy-year qualification corridors only; premium-holiday lapse state, regular-withdrawal administration, selected-fund residual-value conditions, credit-card charge, aggregation limits, change-of-life-assured administration, and non-SGD corridors remain informational only.',
     ],
     archived: false,
-    variants: [
-      buildVariant(context.document, 'basic-death'),
-      buildVariant(context.document, 'advanced-death'),
-    ],
+    variants: TERM_OPTIONS.flatMap((term) => [
+      buildVariant(context.document, term, 'basic-death'),
+      buildVariant(context.document, term, 'advanced-death'),
+    ]),
   }
 }

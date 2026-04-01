@@ -7577,7 +7577,7 @@ describe('IlpReviewPage', () => {
     expect(screen.getAllByText('#goClassic (SGD / MIP 5)').length).toBeGreaterThan(0)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
-  it('seeds Tokio Marine #goClassic Secure as a supported catalog product with combined account-fee modeling', async () => {
+  it('seeds Tokio Marine #goClassic Secure 5-year basic-death corridor as a supported catalog product with combined account-fee modeling', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
 
@@ -7586,21 +7586,26 @@ describe('IlpReviewPage', () => {
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'goClassic Secure')
 
     expect(within(dialog).getByText('#goClassic Secure')).toBeInTheDocument()
-    await user.click(
-      within(dialog).getByRole('button', { name: /^sgd \/ mip 25use template$/i }),
-    )
+    const basicVariantButton = within(dialog)
+      .getAllByRole('button')
+      .find((button) => button.textContent?.includes('SGD / MIP 5') && !button.textContent.includes('Advanced Death'))
+    expect(basicVariantButton).toBeDefined()
+    await user.click(basicVariantButton!)
+    await confirmSeededPolicy(user)
 
-    expect(screen.getAllByText('#goClassic Secure (SGD / MIP 25)').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('#goClassic Secure (SGD / MIP 5)').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
-    expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
+    expect(seededAlert?.textContent).toContain('published SGD premium-payment-term family from 5 to 25 years')
+    expect(seededAlert?.textContent).toContain('Basic Death keeps Monthly Protection Charge metadata-only')
+    expect(screen.queryByText('Death Benefit Today')).not.toBeInTheDocument()
     expect(getCatalogValue('Initial Bonus')).toBeInTheDocument()
     expect(getCatalogValue('Loyalty Bonus (During Premium Payment Term)')).toBeInTheDocument()
     expect(getCatalogValue('Additional Bonus')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
-  it('seeds Tokio Marine #goClassic Secure advanced death as a supported catalog product with locked-in-value MPC inputs', async () => {
+  it('seeds Tokio Marine #goClassic Secure 24-year advanced-death corridor as a supported catalog product with locked-in-value MPC inputs', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
 
@@ -7609,15 +7614,35 @@ describe('IlpReviewPage', () => {
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'goClassic Secure')
 
     expect(within(dialog).getByText('#goClassic Secure')).toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: /advanced death/i }))
+    await user.click(within(dialog).getByRole('button', { name: /sgd \/ mip 24 \(advanced death\)/i }))
+    await confirmSeededPolicy(user)
 
-    expect(screen.getAllByText(/#goClassic Secure .*Advanced Death/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('#goClassic Secure (SGD / MIP 24 (Advanced Death))').length).toBeGreaterThan(0)
     const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
     expect(seededAlert).not.toBeNull()
     expect(seededAlert?.textContent).toContain('Supported template')
+    expect(seededAlert?.textContent).toContain('published SGD premium-payment-term family from 5 to 25 years')
     expect(seededAlert?.textContent).toContain('Locked-in Policy Value floor')
     expect(getCatalogValue('Monthly Protection Charge')).toBeInTheDocument()
     expect(screen.getByLabelText(/current locked-in policy value/i)).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('seeds Tokio Marine #goClassic Secure 5-year basic-death corridor with post-mip initial-account access', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'goClassic Secure')
+
+    expect(within(dialog).getByText('#goClassic Secure')).toBeInTheDocument()
+    const basicVariantButton = within(dialog)
+      .getAllByRole('button')
+      .find((button) => button.textContent?.includes('SGD / MIP 5') && !button.textContent.includes('Advanced Death'))
+    expect(basicVariantButton).toBeDefined()
+    await user.click(basicVariantButton!)
+
+    expect(screen.getAllByText('#goClassic Secure (SGD / MIP 5)').length).toBeGreaterThan(0)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds HSBC Life Flexi Protector as a supported catalog product with premium charges and a fixed admin fee', async () => {
