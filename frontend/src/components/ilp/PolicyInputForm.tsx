@@ -65,6 +65,65 @@ function summarizeSupportNote(note: string): { preview: string; detail: string |
   }
 }
 
+function splitSupportNoteBullets(text: string): string[] {
+  return text
+    .split(', ')
+    .reduce<string[]>((bullets, clause) => {
+      const trimmed = clause.trim()
+      if (trimmed.length === 0) return bullets
+
+      if (bullets.length > 0 && /^(including|with|where|when|once|after|before|through|during)\b/i.test(trimmed)) {
+        bullets[bullets.length - 1] = `${bullets[bullets.length - 1]}, ${trimmed}`
+        return bullets
+      }
+
+      bullets.push(trimmed.replace(/^and\s+/i, ''))
+      return bullets
+    }, [])
+}
+
+function buildSupportNoteBreakdown(note: string): {
+  intro: string | null
+  bullets: string[]
+  closing: string | null
+} {
+  const trimmed = note.trim()
+  const parserPrefix = 'The parser captures '
+  const parserIndex = trimmed.indexOf(parserPrefix)
+
+  if (parserIndex >= 0) {
+    const intro = trimmed.slice(0, parserIndex).trim().replace(/\s+$/, '')
+    const parserBody = trimmed.slice(parserIndex + parserPrefix.length).trim()
+    const semicolonIndex = parserBody.indexOf('; ')
+    const modeledText = semicolonIndex >= 0 ? parserBody.slice(0, semicolonIndex).trim() : parserBody
+    const closing = semicolonIndex >= 0 ? parserBody.slice(semicolonIndex + 2).trim() : null
+
+    return {
+      intro: intro.length > 0 ? intro : null,
+      bullets: splitSupportNoteBullets(modeledText),
+      closing,
+    }
+  }
+
+  const soIndex = trimmed.indexOf(', so ')
+  if (soIndex >= 0) {
+    const preface = trimmed.slice(0, soIndex).trim()
+    const closing = trimmed.slice(soIndex + 5).trim()
+
+    return {
+      intro: null,
+      bullets: splitSupportNoteBullets(preface),
+      closing: closing.length > 0 ? closing : null,
+    }
+  }
+
+  return {
+    intro: trimmed,
+    bullets: [],
+    closing: null,
+  }
+}
+
 function NullableCurrencyField({
   label,
   value,
@@ -1660,6 +1719,11 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                 <div className="space-y-3 pt-2">
                   {policy.catalogWarnings.slice(0, 4).map((warning, index) => {
                     const { preview, detail } = summarizeSupportNote(warning)
+                    const { intro, bullets, closing } = detail ? buildSupportNoteBreakdown(detail) : {
+                      intro: null,
+                      bullets: [],
+                      closing: null,
+                    }
 
                     return (
                       <div key={`${index}-${warning}`} className="rounded-md border bg-background/70 p-3">
@@ -1672,9 +1736,33 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                             <summary className="cursor-pointer text-xs font-medium uppercase tracking-wide text-muted-foreground">
                               Full modeled note
                             </summary>
-                            <p className="pt-2 text-sm leading-6 text-muted-foreground">
-                              {detail}
-                            </p>
+                            <div className="space-y-3 pt-2 text-sm text-muted-foreground">
+                              {intro && (
+                                <p className="leading-6">{intro}</p>
+                              )}
+                              {bullets.length > 0 ? (
+                                <div className="space-y-2">
+                                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                    What is included
+                                  </p>
+                                  <ul className="list-disc space-y-1 pl-5 leading-6">
+                                    {bullets.map((bullet) => (
+                                      <li key={bullet}>{bullet}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ) : (
+                                <p className="leading-6">{detail}</p>
+                              )}
+                              {closing && (
+                                <div className="space-y-1">
+                                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                    Boundary note
+                                  </p>
+                                  <p className="leading-6">{closing}</p>
+                                </div>
+                              )}
+                            </div>
                           </details>
                         )}
                       </div>
