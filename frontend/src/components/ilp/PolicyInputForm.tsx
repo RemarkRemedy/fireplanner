@@ -124,6 +124,66 @@ function buildSupportNoteBreakdown(note: string): {
   }
 }
 
+interface SupportNoteDisplayItem {
+  preview: string
+  detail: string | null
+  intro: string | null
+  bullets: string[]
+  closing: string | null
+}
+
+function createSupportNoteDisplayItem(note: string): SupportNoteDisplayItem {
+  const { preview, detail } = summarizeSupportNote(note)
+  const { intro, bullets, closing } = detail
+    ? buildSupportNoteBreakdown(detail)
+    : { intro: null, bullets: [], closing: null }
+
+  return {
+    preview,
+    detail,
+    intro,
+    bullets,
+    closing,
+  }
+}
+
+function mergeSupportNotes(notes: string[]): SupportNoteDisplayItem[] {
+  const items = notes.map(createSupportNoteDisplayItem)
+  const merged: SupportNoteDisplayItem[] = []
+
+  for (const item of items) {
+    const existing = item.intro
+      ? merged.find((candidate) => candidate.intro === item.intro && candidate.bullets.length > 0 && item.bullets.length > 0)
+      : null
+
+    if (!existing) {
+      merged.push(item)
+      continue
+    }
+
+    const bulletSet = new Set(existing.bullets)
+    for (const bullet of item.bullets) {
+      if (!bulletSet.has(bullet)) {
+        existing.bullets.push(bullet)
+        bulletSet.add(bullet)
+      }
+    }
+
+    if (existing.detail == null || (item.detail != null && item.detail.length > existing.detail.length)) {
+      existing.detail = item.detail
+      existing.preview = item.preview
+    }
+
+    if (existing.closing == null && item.closing != null) {
+      existing.closing = item.closing
+    } else if (existing.closing != null && item.closing != null && existing.closing !== item.closing) {
+      existing.closing = `${existing.closing} ${item.closing}`
+    }
+  }
+
+  return merged
+}
+
 function NullableCurrencyField({
   label,
   value,
@@ -1512,6 +1572,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
     missingRemainingAggregateTiCiCap,
     missingRemainingAggregateTpdCap,
   ].filter(Boolean).length
+  const modeledSupportNotes = mergeSupportNotes((policy.catalogWarnings ?? []).slice(0, 4))
   useEffect(() => {
     onManualRequirementCountChange?.(currentInputRequirementCount)
   }, [currentInputRequirementCount, onManualRequirementCountChange])
@@ -1711,55 +1772,48 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                 ? 'This template is release-gated only for the summary-described economics modeled in the catalog. Anything outside that boundary still requires document review.'
                 : 'This template still needs source review for some summary-described behaviors. Use the analysis as a narrow modeled view, not a claim that every catalog note belongs to the product scope.'}
             </p>
-            {policy.catalogWarnings && policy.catalogWarnings.length > 0 && (
+            {modeledSupportNotes.length > 0 && (
               <details className="space-y-1">
                 <summary className="cursor-pointer text-sm font-medium">
-                  Modeled support notes ({policy.catalogWarnings.slice(0, 4).length})
+                  Modeled support notes ({modeledSupportNotes.length})
                 </summary>
                 <div className="space-y-3 pt-2">
-                  {policy.catalogWarnings.slice(0, 4).map((warning, index) => {
-                    const { preview, detail } = summarizeSupportNote(warning)
-                    const { intro, bullets, closing } = detail ? buildSupportNoteBreakdown(detail) : {
-                      intro: null,
-                      bullets: [],
-                      closing: null,
-                    }
-
+                  {modeledSupportNotes.map((note, index) => {
                     return (
-                      <div key={`${index}-${warning}`} className="rounded-md border bg-background/70 p-3">
+                      <div key={`${index}-${note.preview}`} className="rounded-md border bg-background/70 p-3">
                         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                           Modeled note {index + 1}
                         </p>
-                        <p className="mt-2 text-sm leading-6 text-foreground">{preview}</p>
-                        {detail && (
+                        <p className="mt-2 text-sm leading-6 text-foreground">{note.preview}</p>
+                        {note.detail && (
                           <details className="mt-2">
                             <summary className="cursor-pointer text-xs font-medium uppercase tracking-wide text-muted-foreground">
                               Full modeled note
                             </summary>
                             <div className="space-y-3 pt-2 text-sm text-muted-foreground">
-                              {intro && (
-                                <p className="leading-6">{intro}</p>
+                              {note.intro && (
+                                <p className="leading-6">{note.intro}</p>
                               )}
-                              {bullets.length > 0 ? (
+                              {note.bullets.length > 0 ? (
                                 <div className="space-y-2">
                                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                                     What is included
                                   </p>
                                   <ul className="list-disc space-y-1 pl-5 leading-6">
-                                    {bullets.map((bullet) => (
+                                    {note.bullets.map((bullet) => (
                                       <li key={bullet}>{bullet}</li>
                                     ))}
                                   </ul>
                                 </div>
                               ) : (
-                                <p className="leading-6">{detail}</p>
+                                <p className="leading-6">{note.detail}</p>
                               )}
-                              {closing && (
+                              {note.closing && (
                                 <div className="space-y-1">
                                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                                     Boundary note
                                   </p>
-                                  <p className="leading-6">{closing}</p>
+                                  <p className="leading-6">{note.closing}</p>
                                 </div>
                               )}
                             </div>
