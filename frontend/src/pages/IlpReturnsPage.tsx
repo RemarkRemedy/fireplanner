@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react'
 import { IlpReturnsDashboard } from '@/components/ilp/IlpReturnsDashboard'
+import { useIlpMasterData } from '@/hooks/useIlpMasterData'
 import { usePageMeta } from '@/hooks/usePageMeta'
-import type { IlpMasterData } from '@/components/ilp/types'
 
 export function IlpReturnsPage() {
   usePageMeta({
@@ -11,32 +10,7 @@ export function IlpReturnsPage() {
     path: '/ilp-returns',
   })
 
-  const [data, setData] = useState<IlpMasterData | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    let active = true
-
-    async function load() {
-      try {
-        const response = await fetch('/data/ilp-master-v1.json')
-        if (!response.ok) {
-          throw new Error(`Failed to load ILP dataset (${response.status})`)
-        }
-        const payload = (await response.json()) as IlpMasterData
-        if (!active) return
-        setData(payload)
-      } catch (err) {
-        if (!active) return
-        setError(err instanceof Error ? err.message : 'Failed to load ILP dataset')
-      }
-    }
-
-    void load()
-    return () => {
-      active = false
-    }
-  }, [])
+  const { data, error } = useIlpMasterData()
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-10">

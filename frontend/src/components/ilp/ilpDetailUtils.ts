@@ -1,5 +1,13 @@
 import type { IlpMasterRow } from '@/components/ilp/types'
 
+export function splitSourceUrls(value?: string | null): string[] {
+  if (!value) return []
+  return value
+    .split(';')
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
 export function pdfPageTarget(insurer: string, pageLabel?: number | null): number | null {
   if (pageLabel == null) return null
   if (insurer === 'Great Eastern') return pageLabel + 2

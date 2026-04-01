@@ -17,6 +17,7 @@ import {
   normalizeDate,
   pdfPageTarget,
   shareClassKindLabel,
+  splitSourceUrls,
   sourceHref,
   structureLabel,
 } from '@/components/ilp/ilpDetailUtils'
@@ -47,21 +48,30 @@ function SourceLink({
   page?: string
   label: string
 }) {
-  if (!url) return <span className="text-sm text-muted-foreground">Not stated</span>
-  const target = sourceHref(insurer, url, page)
-  const pageLabel = page ? `p. ${page}` : 'source'
+  const urls = splitSourceUrls(url)
+  if (urls.length === 0) return <span className="text-sm text-muted-foreground">Not stated</span>
+  const pageLabel = page ? `p. ${page}` : ''
   const jumpTarget = pdfPageTarget(insurer, page ? Number(page) : null)
   return (
     <div className="space-y-1">
-      <a
-        href={target}
-        target="_blank"
-        rel="noreferrer noopener"
-        className="inline-flex items-center gap-1 text-sm text-foreground underline underline-offset-2"
-      >
-        {label} {pageLabel}
-        <ExternalLink className="h-3.5 w-3.5" />
-      </a>
+      {urls.map((item, index) => {
+        const text = [urls.length === 1 ? label : `${label} ${index + 1}`, index === 0 ? pageLabel : '']
+          .filter(Boolean)
+          .join(' ')
+
+        return (
+          <a
+            key={`${label}-${item}-${index}`}
+            href={sourceHref(insurer, item, index === 0 ? page : undefined)}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="inline-flex items-center gap-1 text-sm text-foreground underline underline-offset-2"
+          >
+            {text}
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        )
+      })}
       {page && jumpTarget && jumpTarget !== Number(page) && (
         <div className="text-xs text-muted-foreground">Shown page {page}, PDF jump target {jumpTarget}</div>
       )}
