@@ -8229,6 +8229,29 @@ describe('IlpReviewPage', () => {
     expect(getCatalogValue('Perpetual Bonus')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
+  it('seeds FWD Invest First Summit 30-year corridor as a supported catalog product', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Invest First Summit')
+
+    expect(within(dialog).getByText('FWD Invest First Summit')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 30use template$/i }))
+    await confirmSeededPolicy(user)
+
+    expect(screen.getAllByText('FWD Invest First Summit (SGD / MIP 30)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Supported template')
+    expect(seededAlert?.textContent).toContain('SGD 30-year premium-payment corridor')
+    expect(seededAlert?.textContent).toContain('published Loyalty Bonus schedule throughout the premium payment term')
+    expect(getCatalogValue('Booster Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Loyalty Bonus')).toBeInTheDocument()
+    expect(getCatalogValue('Perpetual Bonus')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
   it('seeds Tokio Marine TM Atlas Wealth basic-death as a supported catalog product with 12-month routing and combined account-fee modeling', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()

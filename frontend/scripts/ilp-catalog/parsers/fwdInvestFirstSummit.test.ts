@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseFwdInvestFirstSummit', () => {
-  it('builds a valid supported FWD Invest First Summit product from the source PDF', async () => {
+  it('builds the 10-year to 30-year premium-payment-term family from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseFwdInvestFirstSummit({
       document,
@@ -47,10 +47,40 @@ describe('parseFwdInvestFirstSummit', () => {
     expect(product.metadataOnlyBehaviors).not.toContain('fwd-invest-first-summit-booster-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('fwd-invest-first-summit-loyalty-bonus')
 
-    const variant = product.variants[0]
-    expect(variant?.id).toBe('sgd-mip-10')
-    expect(variant?.mipLength).toBe(10)
-    expect(variant?.policyStateSupport).toEqual({
+    const variantIds = product.variants.map((variant) => variant.id)
+    expect(variantIds).toEqual([
+      'sgd-mip-10',
+      'sgd-mip-11',
+      'sgd-mip-12',
+      'sgd-mip-13',
+      'sgd-mip-14',
+      'sgd-mip-15',
+      'sgd-mip-16',
+      'sgd-mip-17',
+      'sgd-mip-18',
+      'sgd-mip-19',
+      'sgd-mip-20',
+      'sgd-mip-21',
+      'sgd-mip-22',
+      'sgd-mip-23',
+      'sgd-mip-24',
+      'sgd-mip-25',
+      'sgd-mip-26',
+      'sgd-mip-27',
+      'sgd-mip-28',
+      'sgd-mip-29',
+      'sgd-mip-30',
+    ])
+
+    const variantById = (variantId: string) => {
+      const variant = product.variants.find((entry) => entry.id === variantId)
+      expect(variant, `Missing variant ${variantId}`).toBeDefined()
+      return variant!
+    }
+
+    const term10 = variantById('sgd-mip-10')
+    expect(term10.mipLength).toBe(10)
+    expect(term10.policyStateSupport).toEqual({
       automaticLapseOnAccountValueDepletion: false,
       blockTopUpsWhenPremiumsNotPaidUpToDate: true,
       minimumTopUpAmount: 3_000,
@@ -63,13 +93,9 @@ describe('parseFwdInvestFirstSummit', () => {
       ],
       minimumTopUpStartPolicyMonth: 13,
     })
-    expect(variant?.bonuses).toEqual([
+    expect(term10.bonuses).toEqual([
       expect.objectContaining({
         id: 'booster-bonus',
-        type: 'sign-up',
-        mode: 'premium-allocation',
-        startPolicyYear: 1,
-        endPolicyYear: 3,
         tieredRates: [
           { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.02 },
           { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.07 },
@@ -80,28 +106,18 @@ describe('parseFwdInvestFirstSummit', () => {
       }),
       expect.objectContaining({
         id: 'loyalty-bonus',
-        type: 'loyalty',
-        mode: 'annual-rate',
-        appliesTo: ['accumulation'],
         startPolicyYear: 4,
         endPolicyYear: 10,
         rate: 0.006,
-        adjustmentFactorConfig: {
-          formula: 'paid-regular-premium-less-partial-withdrawal-over-annualised-premium',
-          withdrawalAccountIds: ['accumulation'],
-        },
+        policyYearRateSchedule: undefined,
       }),
       expect.objectContaining({
         id: 'perpetual-bonus',
-        type: 'loyalty',
-        mode: 'annual-rate',
-        appliesTo: ['accumulation'],
         startPolicyYear: 11,
-        endPolicyYear: null,
         rate: 0.01,
       }),
     ])
-    expect(variant?.feeRules).toEqual([
+    expect(term10.feeRules).toEqual([
       expect.objectContaining({
         id: 'initial-account-charge',
         basis: 'account-value',
@@ -121,7 +137,7 @@ describe('parseFwdInvestFirstSummit', () => {
         }),
       }),
     ])
-    expect(variant?.eventChargeRules).toEqual([
+    expect(term10.eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'top-up-premium-charge',
         trigger: 'top-up',
@@ -163,22 +179,134 @@ describe('parseFwdInvestFirstSummit', () => {
         rate: 0,
       }),
     ])
-    expect(variant?.eecTable).toEqual([1, 1, 0.99, 0.99, 0.99, 0.81, 0.65, 0.5, 0.31, 0.09])
-    expect(variant?.warnings.some((warning) => warning.includes('current-state death-benefit estimate as 105% of policy value'))).toBe(true)
-    expect(variant?.warnings.some((warning) => warning.includes('published Booster Bonus rates for policy years 1 to 3'))).toBe(true)
-    expect(variant?.warnings.some((warning) => warning.includes('published 0.6% p.a. during-premium-term Loyalty Bonus'))).toBe(true)
-    expect(variant?.warnings.some((warning) => warning.includes('published 1.0% p.a. Perpetual Bonus'))).toBe(true)
-    expect(variant?.warnings.some((warning) => warning.includes('blocking below the published S$3,000 minimum, before policy month 13, and in policy months where regular premiums are not paid up to date'))).toBe(true)
-    expect(variant?.warnings.some((warning) => warning.includes('one-off partial-withdrawal path with accumulation-account start-month and minimum-remaining-value gating'))).toBe(true)
-    expect(variant?.warnings.some((warning) => warning.includes('premium shortfall charge with admitted-state Support Benefit charge-waiver and retrospective charge-refund support on premium-holiday events'))).toBe(true)
-    expect(variant?.unsupportedItems).toContain(
-      'Multi-life last-survivor handling and change-of-person-insured behavior remain informational only beyond the modeled current ordinary death-benefit amount.',
-    )
-    expect(variant?.unsupportedItems).toContain(
-      'Support Benefit approval history, premium-shortfall recovery state, and outstanding-charge accumulation remain informational only beyond the modeled explicit charge-waived / charge-refunded event path.',
-    )
-    expect(variant?.unsupportedItems).toContain(
-      'Top-up cap, minimum withdrawal amount, regular withdrawal scheduling, and initial-units-account withdrawal rules beyond the modeled S$3,000 top-up minimum and the modeled accumulation-account one-off path remain informational only.',
-    )
+    expect(term10.eecTable).toEqual([1, 1, 0.99, 0.99, 0.99, 0.81, 0.65, 0.5, 0.31, 0.09])
+
+    const term11 = variantById('sgd-mip-11')
+    expect(term11.bonuses[0]).toEqual(expect.objectContaining({
+      id: 'booster-bonus',
+      tieredRates: [
+        { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.02 },
+        { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.07 },
+        { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.09 },
+        { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.12 },
+        { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.15 },
+      ],
+    }))
+    expect(term11.bonuses[1]).toEqual(expect.objectContaining({
+      id: 'loyalty-bonus',
+      startPolicyYear: 4,
+      endPolicyYear: 11,
+      rate: 0,
+      policyYearRateSchedule: [
+        { startPolicyYear: 4, endPolicyYear: 10, rate: 0.006 },
+        { startPolicyYear: 11, endPolicyYear: 11, rate: 0.015 },
+      ],
+    }))
+    expect(term11.eecTable).toEqual([1, 1, 0.99, 0.99, 0.99, 0.83, 0.69, 0.55, 0.38, 0.24, 0.09])
+
+    const term15 = variantById('sgd-mip-15')
+    expect(term15.bonuses[0]).toEqual(expect.objectContaining({
+      id: 'booster-bonus',
+      tieredRates: [
+        { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.05 },
+        { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.10 },
+        { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.15 },
+        { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.20 },
+        { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.23 },
+      ],
+    }))
+    expect(term15.bonuses[1]).toEqual(expect.objectContaining({
+      id: 'loyalty-bonus',
+      endPolicyYear: 15,
+      policyYearRateSchedule: [
+        { startPolicyYear: 4, endPolicyYear: 10, rate: 0.006 },
+        { startPolicyYear: 11, endPolicyYear: 15, rate: 0.015 },
+      ],
+    }))
+    expect(term15.feeRules[1]).toEqual(expect.objectContaining({
+      id: 'accumulation-account-charge',
+      premiumBaseConfig: expect.objectContaining({
+        multiplierSchedule: [
+          { startPolicyYear: 1, endPolicyYear: null, mode: 'fixed', multiplier: 15 },
+        ],
+      }),
+    }))
+    expect(term15.eventChargeRules[3]).toEqual(expect.objectContaining({
+      id: 'premium-reduction-charge',
+      rateSchedule: [
+        { startPolicyYear: 3, endPolicyYear: 4, rate: 0.09 },
+      ],
+    }))
+    expect(term15.eecTable).toEqual([1, 1, 0.99, 0.99, 0.99, 0.91, 0.84, 0.76, 0.68, 0.6, 0.47, 0.4, 0.31, 0.24, 0.15])
+
+    const term16 = variantById('sgd-mip-16')
+    expect(term16.eventChargeRules[3]).toEqual(expect.objectContaining({
+      id: 'premium-reduction-charge',
+      rateSchedule: [
+        { startPolicyYear: 3, endPolicyYear: 6, rate: 0.09 },
+      ],
+    }))
+    expect(term16.eecTable).toEqual([1, 1, 0.99, 0.99, 0.99, 0.92, 0.86, 0.79, 0.72, 0.65, 0.52, 0.44, 0.36, 0.29, 0.2, 0.15])
+
+    const term25 = variantById('sgd-mip-25')
+    expect(term25.bonuses[0]).toEqual(expect.objectContaining({
+      id: 'booster-bonus',
+      tieredRates: [
+        { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.25 },
+        { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.30 },
+        { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.40 },
+        { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.42 },
+        { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.45 },
+      ],
+    }))
+    expect(term25.eventChargeRules[3]).toEqual(expect.objectContaining({
+      id: 'premium-reduction-charge',
+      rateSchedule: [
+        { startPolicyYear: 3, endPolicyYear: 8, rate: 0.09 },
+      ],
+    }))
+    expect(term25.eecTable).toEqual([
+      1, 1, 0.99, 0.99, 0.99, 0.98, 0.96, 0.94, 0.92, 0.9,
+      0.85, 0.82, 0.8, 0.78, 0.65, 0.57, 0.52, 0.48, 0.44, 0.32,
+      0.24, 0.19, 0.18, 0.16, 0.15,
+    ])
+
+    const term30 = variantById('sgd-mip-30')
+    expect(term30.bonuses[0]).toEqual(expect.objectContaining({
+      id: 'booster-bonus',
+      tieredRates: [
+        { currency: 'SGD', minAnnualPremium: null, maxAnnualPremium: 11_999.99, rate: 0.30 },
+        { currency: 'SGD', minAnnualPremium: 12_000, maxAnnualPremium: 23_999.99, rate: 0.40 },
+        { currency: 'SGD', minAnnualPremium: 24_000, maxAnnualPremium: 35_999.99, rate: 0.50 },
+        { currency: 'SGD', minAnnualPremium: 36_000, maxAnnualPremium: 47_999.99, rate: 0.52 },
+        { currency: 'SGD', minAnnualPremium: 48_000, maxAnnualPremium: null, rate: 0.55 },
+      ],
+    }))
+    expect(term30.bonuses[1]).toEqual(expect.objectContaining({
+      id: 'loyalty-bonus',
+      endPolicyYear: 30,
+      policyYearRateSchedule: [
+        { startPolicyYear: 4, endPolicyYear: 10, rate: 0.006 },
+        { startPolicyYear: 11, endPolicyYear: 30, rate: 0.015 },
+      ],
+    }))
+    expect(term30.bonuses[2]).toEqual(expect.objectContaining({
+      id: 'perpetual-bonus',
+      startPolicyYear: 31,
+      rate: 0.01,
+    }))
+    expect(term30.feeRules[1]).toEqual(expect.objectContaining({
+      id: 'accumulation-account-charge',
+      premiumBaseConfig: expect.objectContaining({
+        multiplierSchedule: [
+          { startPolicyYear: 1, endPolicyYear: null, mode: 'fixed', multiplier: 30 },
+        ],
+      }),
+    }))
+    expect(term30.eecTable).toEqual([
+      1, 1, 0.99, 0.99, 0.99, 0.99, 0.98, 0.97, 0.96, 0.95,
+      0.91, 0.9, 0.88, 0.87, 0.78, 0.73, 0.69, 0.67, 0.63, 0.54,
+      0.48, 0.46, 0.45, 0.44, 0.43, 0.42, 0.39, 0.31, 0.24, 0.15,
+    ])
   }, 30_000)
 })

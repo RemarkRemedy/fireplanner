@@ -280,7 +280,6 @@ function attachPublishedUnmodeledCorridors(
 function buildPhase0PublishedUnmodeledRegistry(): Record<string, IlpCatalogPublishedCorridor[]> {
   const aiaPwe2Refs = [sourceRef('Published corridor family', 'Single-pay and regular-pay 6 to 10 year corridors are published, while only the SGD 5-year corridor is executable today.')]
   const aiaPwlRefs = [sourceRef('Published corridor family', 'Single Pay is published alongside the modeled SGD 5-year regular-pay corridor.')]
-  const fwdSummitRefs = [sourceRef('Published corridor family', 'Premium payment term ranges from 10 to 30 years; only the 10-year corridor is executable today.')]
   const fwdMaxRefs = [sourceRef('Published corridor family', 'Premium payment term ranges from 10 to 30 years; only the 10-year corridor is executable today.')]
   const legacyFlexRefs = [sourceRef('Published corridor family', 'The family includes a single-premium MIP 5 corridor in addition to the executable regular-pay corridors.')]
   const singlifeRefs = [sourceRef('Published corridor family', 'Published Singlife Legacy Invest corridors vary by both premium payment term and policy term; only the SGD 10-year / term-15 corridor is executable today.')]
@@ -308,15 +307,6 @@ function buildPhase0PublishedUnmodeledRegistry(): Record<string, IlpCatalogPubli
     'aia-platinum-wealth-legacy': [
       corridor({ id: 'sgd-single-pay', label: 'SGD / Single Pay', paymentStructure: 'single-pay', currency: 'SGD', contributionMode: 'single-pay', sourceRefs: aiaPwlRefs }),
     ],
-    'fwd-invest-first-summit': range(11, 30).map((term) => corridor({
-      id: `sgd-mip-${term}`,
-      label: `SGD / Premium Payment Term ${term} years`,
-      paymentStructure: 'ppt',
-      currency: 'SGD',
-      premiumPaymentTermYears: term,
-      contributionMode: 'regular-pay',
-      sourceRefs: fwdSummitRefs,
-    })),
     'fwd-invest-first-max': range(11, 30).map((term) => corridor({
       id: `sgd-mip-${term}`,
       label: `SGD / Premium Payment Term ${term} years`,
