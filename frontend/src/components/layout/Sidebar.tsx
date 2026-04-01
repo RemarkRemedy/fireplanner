@@ -16,6 +16,7 @@ import { ScenarioManager } from './ScenarioManager'
 import { ThemeToggle } from './ThemeToggle'
 import { trackEvent } from '@/lib/analytics'
 import { isCompanionMode, COMPANION_SECTION_SCROLL_KEY } from '@/lib/companion/isCompanionMode'
+import { isIlpRouteFamily, matchesNavPath } from '@/lib/ilpRoutes'
 import {
   User,
   DollarSign,
@@ -41,6 +42,8 @@ import {
   HelpCircle,
   Banknote,
   FileSpreadsheet,
+  BadgePercent,
+  TrendingUp,
 } from 'lucide-react'
 
 interface NavItem {
@@ -117,9 +120,9 @@ const AFTER_INPUTS_GROUPS: { title: string; items: NavItem[] }[] = [
     items: [
       { label: 'Stress Test', path: '/stress-test', icon: <ShieldAlert className="h-4 w-4" /> },
       { label: 'ILP Fees', path: '/ilp-fees', icon: <FileSpreadsheet className="h-4 w-4" /> },
-      { label: 'ILP Review', path: '/ilp-review', icon: <FileSpreadsheet className="h-4 w-4" /> },
-      { label: 'ILP OCF', path: '/ilp-ocf', icon: <FileSpreadsheet className="h-4 w-4" /> },
-      { label: 'ILP Returns', path: '/ilp-returns', icon: <FileSpreadsheet className="h-4 w-4" /> },
+      { label: 'ILP Review', path: '/ilp-review', icon: <ShieldAlert className="h-4 w-4" /> },
+      { label: 'ILP OCF', path: '/ilp-ocf', icon: <BadgePercent className="h-4 w-4" /> },
+      { label: 'ILP Returns', path: '/ilp-returns', icon: <TrendingUp className="h-4 w-4" /> },
     ],
   },
   {
@@ -203,12 +206,7 @@ function NavGroups({ onNavigate }: { onNavigate?: () => void }) {
     }
   })
 
-  const isActiveNavItem = useCallback((item: NavItem) => {
-    if (item.path === '/ilp-fees') {
-      return location.pathname.startsWith('/ilp-fees')
-    }
-    return location.pathname === item.path
-  }, [location.pathname])
+  const isActiveNavItem = useCallback((item: NavItem) => matchesNavPath(location.pathname, item.path), [location.pathname])
 
   const expandSection = useUIStore((s) => s.expandSection)
 
@@ -461,17 +459,10 @@ export function Sidebar() {
   const location = useLocation()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const companionMode = isCompanionMode()
-  const isIlpRoute = (
-    location.pathname.startsWith('/ilp-fees')
-    || location.pathname.startsWith('/ilp-review')
-    || location.pathname.startsWith('/ilp-ocf')
-    || location.pathname.startsWith('/ilp-returns')
-  )
+  const isIlpRoute = isIlpRouteFamily(location.pathname)
   const isActiveMobileItem = (item: NavItem) => {
-    if (item.path === '/ilp-fees') {
-      return isIlpRoute
-    }
-    return location.pathname === item.path
+    if (item.path === '/ilp-fees') return isIlpRoute
+    return matchesNavPath(location.pathname, item.path)
   }
 
   const expandSection = useUIStore((s) => s.expandSection)

@@ -121,6 +121,7 @@ const routes = [
       <p>Use this page for sub-fund fee screening, then verify the cited insurer source before making like-for-like comparisons.</p>
       <ul>
         <li><a href="/ilp-ocf">Open ILP OCF Dashboard</a></li>
+        <li><a href="/ilp-returns">Open ILP Returns Dashboard</a></li>
         <li><a href="/ilp-fees">Open ILP fee product tools</a></li>
       </ul>
     `,
@@ -135,6 +136,7 @@ const routes = [
       <p>Use the date filters carefully: rows are most comparable within the same reporting cohort.</p>
       <ul>
         <li><a href="/ilp-returns">Open ILP Returns Dashboard</a></li>
+        <li><a href="/ilp-ocf">Open ILP OCF Dashboard</a></li>
         <li><a href="/ilp-fees">Return to ILP fee product tools</a></li>
       </ul>
     `,

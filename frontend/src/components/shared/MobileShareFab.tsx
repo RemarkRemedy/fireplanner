@@ -7,6 +7,7 @@ import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover'
 import { generateShareUrl } from '@/lib/shareUrl'
 import { useUIStore } from '@/stores/useUIStore'
 import { trackEvent } from '@/lib/analytics'
+import { isIlpRouteFamily } from '@/lib/ilpRoutes'
 
 export function MobileShareFab() {
   const { pathname } = useLocation()
@@ -15,12 +16,7 @@ export function MobileShareFab() {
 
   const nudgeId = 'share-fab-tooltip'
   const alreadyDismissed = dismissedNudges.includes(nudgeId)
-  const isIlpPage = (
-    pathname.startsWith('/ilp-fees')
-    || pathname.startsWith('/ilp-review')
-    || pathname.startsWith('/ilp-ocf')
-    || pathname.startsWith('/ilp-returns')
-  )
+  const isIlpPage = isIlpRouteFamily(pathname)
   const [tooltipOpen, setTooltipOpen] = useState(!alreadyDismissed && !isIlpPage)
 
   const handleDismiss = () => {

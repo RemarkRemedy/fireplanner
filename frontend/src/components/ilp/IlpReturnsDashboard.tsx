@@ -1,7 +1,7 @@
-import { useDeferredValue, useEffect, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { ExternalLink, Info, Search } from 'lucide-react'
 import { IlpSubfundDetailSheet } from '@/components/ilp/IlpSubfundDetailSheet'
-import { sourceHref } from '@/components/ilp/ilpDetailUtils'
+import { normalizeDate, sourceHref } from '@/components/ilp/ilpDetailUtils'
 import type { IlpMasterData, IlpMasterRow, ReturnStats, ReturnWindowSlug } from '@/components/ilp/types'
 import { RETURN_WINDOWS } from '@/components/ilp/types'
 
@@ -11,8 +11,18 @@ type Props = {
 
 type CohortMode = 'recent_reports' | 'all' | string
 
-const RECENT_REPORT_DATES = ['30 Nov 2025', '31 December 2025', '31 January 2026'] as const
+const RECENT_REPORT_DATES = ['30 November 2025', '31 December 2025', '31 January 2026'] as const
 const RECENT_REPORT_SET = new Set<string>(RECENT_REPORT_DATES)
+
+function getUrlFundId(): string | null {
+  if (typeof window === 'undefined') return null
+  return new URLSearchParams(window.location.search).get('fund')
+}
+
+function normalizeAsOfDate(value?: string | null): string {
+  const normalized = normalizeDate(value)
+  return normalized === 'Not stated' ? '' : normalized
+}
 
 function compareNullable(left: number | null | undefined, right: number | null | undefined, direction: 'asc' | 'desc') {
   const leftValid = Number.isFinite(left)
@@ -43,12 +53,26 @@ function getReturnStats(row: IlpMasterRow, activeWindow: ReturnWindowSlug): Retu
 }
 
 export function IlpReturnsDashboard({ data }: Props) {
-  const comparisonRows = data.rows.filter((row) => row.returns?.hasComparisonData)
-  const insurers = Array.from(new Set(comparisonRows.map((row) => row.insurer))).sort()
-  const asOfDates = Array.from(
-    new Set(comparisonRows.map((row) => row.returns?.asOfDate).filter((value): value is string => Boolean(value))),
-  ).sort()
-  const recentReportCount = comparisonRows.filter((row) => RECENT_REPORT_SET.has(row.returns?.asOfDate ?? '')).length
+  const comparisonRows = useMemo(
+    () => data.rows.filter((row) => row.returns?.hasComparisonData),
+    [data.rows],
+  )
+  const insurers = useMemo(() => Array.from(new Set(comparisonRows.map((row) => row.insurer))).sort(), [comparisonRows])
+  const asOfDates = useMemo(
+    () => Array.from(
+      new Set(
+        comparisonRows
+          .map((row) => normalizeAsOfDate(row.returns?.asOfDate))
+          .filter(Boolean),
+      ),
+    ).sort(),
+    [comparisonRows],
+  )
+  const recentReportCount = useMemo(
+    () => comparisonRows.filter((row) => RECENT_REPORT_SET.has(normalizeAsOfDate(row.returns?.asOfDate))).length,
+    [comparisonRows],
+  )
+  const returnComparisonRowCount = data.coverage.returnComparisonRows ?? comparisonRows.length
 
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search)
@@ -57,31 +81,42 @@ export function IlpReturnsDashboard({ data }: Props) {
   const [returnWindow, setReturnWindow] = useState<ReturnWindowSlug>('since_inception')
   const [sort, setSort] = useState<'gap-desc' | 'gap-asc' | 'fund-desc' | 'fund-asc' | 'alpha'>('gap-desc')
   const [quickFilter, setQuickFilter] = useState<'all' | 'outperform' | 'proxy' | 'low-fee'>('all')
-  const [selectedRow, setSelectedRow] = useState<IlpMasterRow | null>(null)
+  const [selectedFundId, setSelectedFundId] = useState<string | null>(() => getUrlFundId())
+  const selectedRow = useMemo(
+    () => comparisonRows.find((row) => row.id === selectedFundId) ?? null,
+    [comparisonRows, selectedFundId],
+  )
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const fundId = params.get('fund')
-    if (!fundId) return
-    const match = comparisonRows.find((row) => row.id === fundId)
-    if (match) setSelectedRow(match)
-  }, [comparisonRows])
+    if (selectedFundId && !comparisonRows.some((row) => row.id === selectedFundId)) {
+      setSelectedFundId(null)
+    }
+  }, [comparisonRows, selectedFundId])
+
+  useEffect(() => {
+    const handlePopState = () => setSelectedFundId(getUrlFundId())
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
 
   useEffect(() => {
     const url = new URL(window.location.href)
-    if (selectedRow) {
-      url.searchParams.set('fund', selectedRow.id)
+    const currentFundId = url.searchParams.get('fund')
+    if (selectedFundId) {
+      if (currentFundId === selectedFundId) return
+      url.searchParams.set('fund', selectedFundId)
     } else {
+      if (!currentFundId) return
       url.searchParams.delete('fund')
     }
     window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
-  }, [selectedRow])
+  }, [selectedFundId])
 
-  const visibleRows = comparisonRows
+  const visibleRows = useMemo(() => comparisonRows
     .filter((row) => {
       const query = deferredSearch.trim().toLowerCase()
       const stats = getReturnStats(row, returnWindow)
-      const rowAsOf = row.returns?.asOfDate ?? ''
+      const rowAsOf = normalizeAsOfDate(row.returns?.asOfDate)
 
       if (insurer !== 'all' && row.insurer !== insurer) return false
       if (asOfDate === 'recent_reports' && !RECENT_REPORT_SET.has(rowAsOf)) return false
@@ -98,7 +133,7 @@ export function IlpReturnsDashboard({ data }: Props) {
         row.etfProxy ?? '',
         row.returns?.fundFamily ?? '',
         row.returns?.shareClassOrCurrency ?? '',
-        row.returns?.asOfDate ?? '',
+        rowAsOf,
       ].join(' ').toLowerCase()
       return haystack.includes(query)
     })
@@ -110,14 +145,22 @@ export function IlpReturnsDashboard({ data }: Props) {
       if (sort === 'fund-asc') return compareNullable(leftStats.fundPct, rightStats.fundPct, 'asc')
       if (sort === 'alpha') return left.subFund.localeCompare(right.subFund)
       return compareNullable(leftStats.gapPct, rightStats.gapPct, 'desc')
-    })
+    }),
+  [asOfDate, comparisonRows, deferredSearch, insurer, quickFilter, returnWindow, sort])
 
-  const currentWindowLabel = RETURN_WINDOWS.find((item) => item.slug === returnWindow)?.label ?? 'Since inception'
-  const asOfSummary = asOfDate === 'recent_reports'
-    ? 'Recent reports cohort: 30 Nov 2025, 31 December 2025, 31 January 2026'
-    : asOfDate === 'all'
-      ? `Mixed dates: ${asOfDates.join(', ')}`
-      : `As of: ${asOfDate}`
+  const currentWindowLabel = useMemo(
+    () => RETURN_WINDOWS.find((item) => item.slug === returnWindow)?.label ?? 'Since inception',
+    [returnWindow],
+  )
+  const asOfSummary = useMemo(
+    () => (asOfDate === 'recent_reports'
+      ? 'Recent reports cohort: 30 November 2025, 31 December 2025, 31 January 2026'
+      : asOfDate === 'all'
+        ? `Mixed dates: ${asOfDates.join(', ')}`
+        : `As of: ${asOfDate}`),
+    [asOfDate, asOfDates],
+  )
+  const openRow = (row: IlpMasterRow) => setSelectedFundId(row.id)
 
   return (
     <div className="space-y-6">
@@ -141,7 +184,7 @@ export function IlpReturnsDashboard({ data }: Props) {
           <div className="mt-3 space-y-3 text-sm text-muted-foreground">
             <div className="flex items-baseline justify-between gap-4">
               <span>Rows with return comparison</span>
-              <strong className="text-xl text-foreground">{data.coverage.returnComparisonRows}</strong>
+              <strong className="text-xl text-foreground">{returnComparisonRowCount}</strong>
             </div>
             <div className="flex items-baseline justify-between gap-4">
               <span>Current default cohort</span>
@@ -277,11 +320,11 @@ export function IlpReturnsDashboard({ data }: Props) {
                   key={row.id}
                   role="button"
                   tabIndex={0}
-                  onClick={() => setSelectedRow(row)}
+                  onClick={() => openRow(row)}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
                       event.preventDefault()
-                      setSelectedRow(row)
+                      openRow(row)
                     }
                   }}
                   className="cursor-pointer border-b align-top transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
@@ -293,7 +336,7 @@ export function IlpReturnsDashboard({ data }: Props) {
                     </div>
                     <button
                       type="button"
-                      onClick={() => setSelectedRow(row)}
+                      onClick={() => openRow(row)}
                       className="mt-2 text-xs font-medium text-foreground underline underline-offset-2"
                     >
                       Open details
@@ -320,7 +363,7 @@ export function IlpReturnsDashboard({ data }: Props) {
                       {stats.gapDisplay || 'N/A'}
                     </span>
                   </td>
-                  <td className="px-4 py-4 text-foreground">{row.returns?.asOfDate || 'N/A'}</td>
+                  <td className="px-4 py-4 text-foreground">{normalizeAsOfDate(row.returns?.asOfDate) || 'N/A'}</td>
                   <td className="px-4 py-4">
                     <a
                       href={sourceHref(row.insurer, row.returns?.returnSourceUrl, row.returns?.returnSourcePage)}
@@ -354,11 +397,11 @@ export function IlpReturnsDashboard({ data }: Props) {
               key={row.id}
               role="button"
               tabIndex={0}
-              onClick={() => setSelectedRow(row)}
+              onClick={() => openRow(row)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault()
-                  setSelectedRow(row)
+                  openRow(row)
                 }
               }}
               className="cursor-pointer rounded-lg border bg-card p-4 shadow-sm transition-colors hover:bg-muted/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
@@ -371,7 +414,7 @@ export function IlpReturnsDashboard({ data }: Props) {
                   </p>
                   <button
                     type="button"
-                    onClick={() => setSelectedRow(row)}
+                    onClick={() => openRow(row)}
                     className="mt-2 text-xs font-medium text-foreground underline underline-offset-2"
                   >
                     Open details
@@ -395,7 +438,7 @@ export function IlpReturnsDashboard({ data }: Props) {
                 </div>
                 <div>
                   <dt className="text-xs uppercase tracking-[0.08em] text-muted-foreground">As of</dt>
-                  <dd className="mt-1 text-foreground">{row.returns?.asOfDate || 'N/A'}</dd>
+                  <dd className="mt-1 text-foreground">{normalizeAsOfDate(row.returns?.asOfDate) || 'N/A'}</dd>
                 </div>
                 <div>
                   <dt className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Fund</dt>
@@ -428,7 +471,13 @@ export function IlpReturnsDashboard({ data }: Props) {
         })}
       </div>
 
-      <IlpSubfundDetailSheet row={selectedRow} open={Boolean(selectedRow)} onOpenChange={(open) => !open && setSelectedRow(null)} />
+      <IlpSubfundDetailSheet
+        row={selectedRow}
+        open={Boolean(selectedRow)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedFundId(null)
+        }}
+      />
     </div>
   )
 }

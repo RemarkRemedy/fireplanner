@@ -22,18 +22,10 @@ import { useExpenseTracker } from '@/hooks/useExpenseTracker'
 import { ExpenseTrackerBanner } from '@/components/email/ExpenseTrackerBanner'
 import { useExitIntent } from '@/hooks/useExitIntent'
 import { ExpenseTrackerModal } from '@/components/email/ExpenseTrackerModal'
+import { isIlpRouteFamily } from '@/lib/ilpRoutes'
 
 // Pages that show the stats strip (inputs and analysis pages, not start/reference)
 const STATS_ROUTES = ['/inputs', '/projection', '/withdrawal', '/stress-test', '/dashboard', '/planner', '/health-check']
-
-function isIlpFeeDashboardRoute(pathname: string) {
-  return (
-    pathname === '/ilp-review'
-    || pathname === '/ilp-ocf'
-    || pathname === '/ilp-returns'
-    || pathname.startsWith('/ilp-fees')
-  )
-}
 
 function AppLayoutBannerArea() {
   const { isEligible } = useExpenseTracker()
@@ -130,7 +122,7 @@ export function AppLayout() {
   // close it once so the ILP report surfaces do not start with the side panel already open.
   useEffect(() => {
     const previousPath = previousPathRef.current
-    const enteringIlpFeeDashboard = isIlpFeeDashboardRoute(location.pathname) && !isIlpFeeDashboardRoute(previousPath ?? '')
+    const enteringIlpFeeDashboard = isIlpRouteFamily(location.pathname) && !isIlpRouteFamily(previousPath ?? '')
 
     if (enteringIlpFeeDashboard && useUIStore.getState().helpPanelOpen) {
       useUIStore.getState().setField('helpPanelOpen', false)

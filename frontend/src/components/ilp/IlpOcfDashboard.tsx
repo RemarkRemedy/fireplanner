@@ -30,6 +30,11 @@ type FeeRow = {
   sourceNote: string
 }
 
+function getUrlFundId(): string | null {
+  if (typeof window === 'undefined') return null
+  return new URLSearchParams(window.location.search).get('fund')
+}
+
 function compareNullable(left: number | null | undefined, right: number | null | undefined, direction: 'asc' | 'desc') {
   const leftValid = Number.isFinite(left)
   const rightValid = Number.isFinite(right)
@@ -69,19 +74,28 @@ export function IlpOcfDashboard({ data }: Props) {
     [data.rows],
   )
 
-  const insurers = Array.from(new Set(verifiedRows.map((row) => row.insurer))).sort()
-  const feeLabels = Array.from(new Set(verifiedRows.map((row) => row.annualFeeLabel))).sort()
-  const structures = Array.from(new Set(verifiedRows.map((row) => row.structureLabel))).sort()
-  const asOfDates = Array.from(new Set(verifiedRows.map((row) => row.feeAsOfDate))).sort((a, b) => a.localeCompare(b))
-  const numericFees = verifiedRows
-    .map((row) => row.annualFeePct)
-    .filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
-    .sort((a, b) => a - b)
-  const medianFee = numericFees.length
-    ? (numericFees.length % 2 === 0
-      ? (numericFees[numericFees.length / 2 - 1] + numericFees[numericFees.length / 2]) / 2
-      : numericFees[Math.floor(numericFees.length / 2)])
-    : null
+  const insurers = useMemo(() => Array.from(new Set(verifiedRows.map((row) => row.insurer))).sort(), [verifiedRows])
+  const feeLabels = useMemo(() => Array.from(new Set(verifiedRows.map((row) => row.annualFeeLabel))).sort(), [verifiedRows])
+  const structures = useMemo(() => Array.from(new Set(verifiedRows.map((row) => row.structureLabel))).sort(), [verifiedRows])
+  const asOfDates = useMemo(
+    () => Array.from(new Set(verifiedRows.map((row) => row.feeAsOfDate))).sort((a, b) => a.localeCompare(b)),
+    [verifiedRows],
+  )
+  const numericFees = useMemo(
+    () => verifiedRows
+      .map((row) => row.annualFeePct)
+      .filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
+      .sort((a, b) => a - b),
+    [verifiedRows],
+  )
+  const medianFee = useMemo(
+    () => (numericFees.length
+      ? (numericFees.length % 2 === 0
+        ? (numericFees[numericFees.length / 2 - 1] + numericFees[numericFees.length / 2]) / 2
+        : numericFees[Math.floor(numericFees.length / 2)])
+      : null),
+    [numericFees],
+  )
 
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search)
@@ -91,27 +105,38 @@ export function IlpOcfDashboard({ data }: Props) {
   const [structure, setStructure] = useState('all')
   const [sort, setSort] = useState<SortMode>('fee-asc')
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('all')
-  const [selectedRow, setSelectedRow] = useState<IlpMasterRow | null>(null)
+  const [selectedFundId, setSelectedFundId] = useState<string | null>(() => getUrlFundId())
+  const selectedRow = useMemo(
+    () => verifiedRows.find((row) => row.id === selectedFundId)?.raw ?? null,
+    [selectedFundId, verifiedRows],
+  )
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const fundId = params.get('fund')
-    if (!fundId) return
-    const match = verifiedRows.find((row) => row.id === fundId)
-    if (match) setSelectedRow(match.raw)
-  }, [verifiedRows])
+    if (selectedFundId && !verifiedRows.some((row) => row.id === selectedFundId)) {
+      setSelectedFundId(null)
+    }
+  }, [selectedFundId, verifiedRows])
+
+  useEffect(() => {
+    const handlePopState = () => setSelectedFundId(getUrlFundId())
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
 
   useEffect(() => {
     const url = new URL(window.location.href)
-    if (selectedRow) {
-      url.searchParams.set('fund', selectedRow.id)
+    const currentFundId = url.searchParams.get('fund')
+    if (selectedFundId) {
+      if (currentFundId === selectedFundId) return
+      url.searchParams.set('fund', selectedFundId)
     } else {
+      if (!currentFundId) return
       url.searchParams.delete('fund')
     }
     window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
-  }, [selectedRow])
+  }, [selectedFundId])
 
-  const visibleRows = verifiedRows
+  const visibleRows = useMemo(() => verifiedRows
     .filter((row) => {
       const query = deferredSearch.trim().toLowerCase()
       if (insurer !== 'all' && row.insurer !== insurer) return false
@@ -144,11 +169,20 @@ export function IlpOcfDashboard({ data }: Props) {
         return left.subFund.localeCompare(right.subFund)
       }
       return compareNullable(left.annualFeePct, right.annualFeePct, 'asc')
-    })
+    }),
+  [asOfDate, deferredSearch, feeLabel, insurer, quickFilter, sort, structure, verifiedRows])
 
-  const lowFeeCount = verifiedRows.filter((row) => (row.annualFeePct ?? Infinity) <= 1).length
-  const etfProxyCount = verifiedRows.filter((row) => Boolean(row.etfProxy)).length
-  const managerShownCount = verifiedRows.filter((row) => row.externalManager && row.externalManager !== 'Not stated').length
+  const lowFeeCount = useMemo(
+    () => verifiedRows.filter((row) => (row.annualFeePct ?? Infinity) <= 1).length,
+    [verifiedRows],
+  )
+  const etfProxyCount = useMemo(() => verifiedRows.filter((row) => Boolean(row.etfProxy)).length, [verifiedRows])
+  const managerShownCount = useMemo(
+    () => verifiedRows.filter((row) => row.externalManager && row.externalManager !== 'Not stated').length,
+    [verifiedRows],
+  )
+
+  const openRow = (row: FeeRow) => setSelectedFundId(row.id)
 
   return (
     <div className="space-y-6">
@@ -335,11 +369,11 @@ export function IlpOcfDashboard({ data }: Props) {
                 key={row.id}
                 role="button"
                 tabIndex={0}
-                onClick={() => setSelectedRow(row.raw)}
+                onClick={() => openRow(row)}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault()
-                    setSelectedRow(row.raw)
+                    openRow(row)
                   }
                 }}
                 className="cursor-pointer border-b align-top transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
@@ -354,7 +388,7 @@ export function IlpOcfDashboard({ data }: Props) {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setSelectedRow(row.raw)}
+                    onClick={() => openRow(row)}
                     className="mt-2 text-xs font-medium text-foreground underline underline-offset-2"
                   >
                     Open details
@@ -402,11 +436,11 @@ export function IlpOcfDashboard({ data }: Props) {
             key={row.id}
             role="button"
             tabIndex={0}
-            onClick={() => setSelectedRow(row.raw)}
+            onClick={() => openRow(row)}
             onKeyDown={(event) => {
               if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault()
-                setSelectedRow(row.raw)
+                openRow(row)
               }
             }}
             className="cursor-pointer rounded-lg border bg-card p-4 shadow-sm transition-colors hover:bg-muted/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
@@ -417,7 +451,7 @@ export function IlpOcfDashboard({ data }: Props) {
                 <p className="mt-1 text-xs text-muted-foreground">{row.insurer}</p>
                 <button
                   type="button"
-                  onClick={() => setSelectedRow(row.raw)}
+                  onClick={() => openRow(row)}
                   className="mt-2 text-xs font-medium text-foreground underline underline-offset-2"
                 >
                   Open details
@@ -467,7 +501,13 @@ export function IlpOcfDashboard({ data }: Props) {
         ))}
       </div>
 
-      <IlpSubfundDetailSheet row={selectedRow} open={Boolean(selectedRow)} onOpenChange={(open) => !open && setSelectedRow(null)} />
+      <IlpSubfundDetailSheet
+        row={selectedRow}
+        open={Boolean(selectedRow)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedFundId(null)
+        }}
+      />
     </div>
   )
 }
