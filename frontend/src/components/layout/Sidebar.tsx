@@ -451,6 +451,13 @@ export function Sidebar() {
   const location = useLocation()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const companionMode = isCompanionMode()
+  const isIlpRoute = location.pathname.startsWith('/ilp-fees') || location.pathname.startsWith('/ilp-review')
+  const isActiveMobileItem = (item: NavItem) => {
+    if (item.path === '/ilp-fees') {
+      return isIlpRoute
+    }
+    return location.pathname === item.path
+  }
 
   const expandSection = useUIStore((s) => s.expandSection)
 
@@ -553,7 +560,9 @@ export function Sidebar() {
           { label: 'Plan', path: '/projection', icon: <TableProperties className="h-5 w-5" /> },
           { label: 'Test', path: '/stress-test', icon: <ShieldAlert className="h-5 w-5" /> },
           { label: 'Dash', path: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-          { label: 'Strategies', path: '/withdrawal', icon: <Banknote className="h-5 w-5" /> },
+          isIlpRoute
+            ? { label: 'ILP', path: '/ilp-fees', icon: <FileSpreadsheet className="h-5 w-5" /> }
+            : { label: 'Strategies', path: '/withdrawal', icon: <Banknote className="h-5 w-5" /> },
           ]
         ).map((item) => (
           <NavLink
@@ -561,7 +570,7 @@ export function Sidebar() {
             to={item.path}
             className={cn(
               'flex flex-col items-center gap-0.5 text-xs min-w-[48px]',
-              location.pathname === item.path
+              isActiveMobileItem(item)
                 ? 'text-primary'
                 : 'text-muted-foreground'
             )}
