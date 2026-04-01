@@ -70,16 +70,46 @@ export function ExitReinvestmentBenchmarkSection({
     ? buildExitReinvestmentPath(analysis, selectedOption.exitYear, selectedOption.netExitValue, annualReturn)
     : []
 
+  const exitPathSeries = useMemo(() => {
+    const visibleOptions = benchmark.options.filter((option) => option.exitYear > 0 || String(option.exitYear) === selectedExitYear)
+
+    return visibleOptions.map((option) => ({
+      option,
+      dataKey: `exitPath_${option.exitYear}`,
+      points: buildExitReinvestmentPath(analysis, option.exitYear, option.netExitValue, annualReturn),
+    }))
+  }, [analysis, annualReturn, benchmark.options, selectedExitYear])
+
+  const combinedPathData = useMemo(() => {
+    const rows = pathData.map((point) => ({
+      year: point.year,
+      policyYear: point.policyYear,
+      holdIlpValue: point.holdIlpValue,
+    }))
+
+    for (const series of exitPathSeries) {
+      series.points.forEach((point, index) => {
+        rows[index] = {
+          ...rows[index],
+          [series.dataKey]: point.selectedPathValue,
+        }
+      })
+    }
+
+    return rows
+  }, [exitPathSeries, pathData])
+
   const horizonValueDomain = useMemo<[number, number]>(() => {
     const values = [
       benchmark.holdValueAtHorizon,
       ...horizonBarData.map((entry) => entry.horizonValue),
-      ...pathData.flatMap((entry) => [entry.holdIlpValue, entry.selectedPathValue]),
+      ...pathData.map((entry) => entry.holdIlpValue),
+      ...exitPathSeries.flatMap((series) => series.points.map((point) => point.selectedPathValue)),
     ]
     const maxValue = Math.max(...values, 0)
     const roundedMax = Math.ceil((maxValue * 1.08) / 1000) * 1000
     return [0, Math.max(roundedMax, 1000)]
-  }, [benchmark.holdValueAtHorizon, horizonBarData, pathData])
+  }, [benchmark.holdValueAtHorizon, exitPathSeries, horizonBarData, pathData])
 
   return (
     <Card>
@@ -152,12 +182,12 @@ export function ExitReinvestmentBenchmarkSection({
           <div>
             <h3 className="text-sm font-semibold">Path after the selected exit year</h3>
             <p className="text-sm text-muted-foreground">
-              The purple line keeps the ILP all the way to year {benchmark.horizonYear}. The teal line follows the selected strategy: stay in the ILP until the chosen exit year, then move outside and invest the rest at {rateKey}% nominal.
+              The purple line keeps the ILP all the way to year {benchmark.horizonYear}. Each lighter line shows one exit-and-invest path. The highlighted teal line is the currently selected exit year, so you can compare all exit options without losing the chosen path.
             </p>
           </div>
           <div className="h-72 rounded-lg border border-border/60 p-4" role="img" aria-label="Line chart showing ILP hold value and selected exit-and-invest-outside path">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={pathData} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
+              <LineChart data={combinedPathData} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
                 <XAxis dataKey="policyYear" tickLine={false} axisLine={false} />
                 <YAxis
@@ -171,11 +201,28 @@ export function ExitReinvestmentBenchmarkSection({
                   labelFormatter={(value: number) => `Year ${value}`}
                   formatter={(value: number, name: string) => [
                     formatIlpCurrency(value, policy.currency),
-                    name === 'selectedPathValue' ? 'Exit and invest outside' : 'Keep ILP',
+                    name === 'holdIlpValue'
+                      ? 'Keep ILP'
+                      : name === `exitPath_${selectedOption?.exitYear ?? ''}`
+                        ? `Selected exit path (Year ${selectedOption?.policyYear ?? 'n/a'})`
+                        : 'Other exit path',
                   ]}
                 />
                 <Line type="monotone" dataKey="holdIlpValue" stroke={colors.primary} strokeWidth={3} dot={false} />
-                <Line type="monotone" dataKey="selectedPathValue" stroke={colors.success} strokeWidth={3} dot={false} />
+                {exitPathSeries.map((series) => {
+                  const isSelected = String(series.option.exitYear) === selectedExitYear
+                  return (
+                    <Line
+                      key={series.dataKey}
+                      type="monotone"
+                      dataKey={series.dataKey}
+                      stroke={colors.success}
+                      strokeOpacity={isSelected ? 1 : 0.18}
+                      strokeWidth={isSelected ? 3.5 : 1.5}
+                      dot={false}
+                    />
+                  )
+                })}
               </LineChart>
             </ResponsiveContainer>
           </div>
