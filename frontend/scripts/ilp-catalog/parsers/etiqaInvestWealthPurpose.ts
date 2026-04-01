@@ -15,7 +15,7 @@ interface ParseContext {
   sourceChecksumSha256: string
 }
 
-const TERM_OPTIONS = [10, 15, 20] as const
+const TERM_OPTIONS = [3, 5, 10, 15, 20] as const
 type MipTerm = (typeof TERM_OPTIONS)[number]
 
 interface VariantConfig {
@@ -31,8 +31,8 @@ interface VariantConfig {
     rate: number
   }>
   surrenderRates: number[]
-  specialBonusStartYear: number
-  specialBonusEndYear: number
+  specialBonusStartYear: number | null
+  specialBonusEndYear: number | null
   premiumFreePeriodNote: string
   premiumFreePeriodSchedule: Array<{
     startPolicyYear: number
@@ -44,6 +44,44 @@ interface VariantConfig {
 const PREMIUM_CHARGE_RATE = 0.03
 
 const VARIANT_CONFIGS: Record<MipTerm, VariantConfig> = {
+  3: {
+    mipLength: 3,
+    annualPremiumMin: 10_000,
+    premiumShortfallRates: [1, 1, 0.75],
+    partialWithdrawalRates: [1, 0.7, 0.6],
+    startupBonusTiers: [
+      { currency: 'SGD', minAnnualPremium: 10_000, maxAnnualPremium: 19_999.99, rate: 0 },
+      { currency: 'SGD', minAnnualPremium: 20_000, maxAnnualPremium: null, rate: 0.01 },
+    ],
+    policyChargeRate: 0.026,
+    policyChargeTailRates: [
+      { minAnnualisedPremiumsPaid: 0, maxAnnualisedPremiumsPaid: null, rate: 0.026 },
+    ],
+    surrenderRates: [1, 1, 0.79],
+    specialBonusStartYear: null,
+    specialBonusEndYear: null,
+    premiumFreePeriodNote: 'No Premium-Free Period entitlement is published for the 3-year premium payment term.',
+    premiumFreePeriodSchedule: [],
+  },
+  5: {
+    mipLength: 5,
+    annualPremiumMin: 10_000,
+    premiumShortfallRates: [1, 1, 0.75, 0.4, 0.2],
+    partialWithdrawalRates: [1, 0.7, 0.6, 0.5, 0.4],
+    startupBonusTiers: [
+      { currency: 'SGD', minAnnualPremium: 10_000, maxAnnualPremium: 19_999.99, rate: 0.04 },
+      { currency: 'SGD', minAnnualPremium: 20_000, maxAnnualPremium: null, rate: 0.07 },
+    ],
+    policyChargeRate: 0.026,
+    policyChargeTailRates: [
+      { minAnnualisedPremiumsPaid: 0, maxAnnualisedPremiumsPaid: null, rate: 0.026 },
+    ],
+    surrenderRates: [1, 1, 0.79, 0.6, 0.5],
+    specialBonusStartYear: null,
+    specialBonusEndYear: null,
+    premiumFreePeriodNote: 'No Premium-Free Period entitlement is published for the 5-year premium payment term.',
+    premiumFreePeriodSchedule: [],
+  },
   10: {
     mipLength: 10,
     annualPremiumMin: 4_800,
@@ -177,7 +215,7 @@ function buildBonuses(
   page3: IlpCatalogSourceRef,
   repaymentPage: IlpCatalogSourceRef,
 ): IlpTemplateBonus[] {
-  return [
+  const bonuses: IlpTemplateBonus[] = [
     {
       id: 'startup-bonus',
       type: 'sign-up',
@@ -199,7 +237,10 @@ function buildBonuses(
       ],
       sourceRefs: [page2, repaymentPage],
     },
-    {
+  ]
+
+  if (config.specialBonusStartYear != null && config.specialBonusEndYear != null) {
+    bonuses.push({
       id: 'special-bonus',
       type: 'allocation',
       label: 'Special Bonus',
@@ -218,8 +259,10 @@ function buildBonuses(
         'Full repayment of missed regular premiums restores the published missed Special Bonus into the Regular Premium Account.',
       ],
       sourceRefs: [page2, repaymentPage],
-    },
-    {
+    })
+  }
+
+  bonuses.push({
       id: 'loyalty-bonus',
       type: 'loyalty',
       label: 'Loyalty Bonus',
@@ -236,8 +279,9 @@ function buildBonuses(
         'No Loyalty Bonus is paid on the Top-up Account.',
       ],
       sourceRefs: [page3],
-    },
-  ]
+    })
+
+  return bonuses
 }
 
 function buildFeeRules(config: VariantConfig, page18: IlpCatalogSourceRef): IlpTemplateFeeRule[] {

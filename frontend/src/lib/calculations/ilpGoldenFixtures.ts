@@ -15195,6 +15195,22 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
   },
   {
     productId: 'etiqa-invest-wealth-purpose',
+    variantId: 'sgd-mip-3',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'Etiqa Invest Wealth Purpose baseline scenario for the SGD / MIP 3 corridor.',
+  },
+  {
+    productId: 'etiqa-invest-wealth-purpose',
+    variantId: 'sgd-mip-5',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: ['baseline'],
+    description: 'Etiqa Invest Wealth Purpose baseline scenario for the SGD / MIP 5 corridor.',
+  },
+  {
+    productId: 'etiqa-invest-wealth-purpose',
     variantId: 'sgd-mip-10',
     scenarioId: 'baseline',
     fixtureClass: 'supported',

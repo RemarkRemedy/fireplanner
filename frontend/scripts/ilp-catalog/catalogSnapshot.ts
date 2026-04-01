@@ -284,7 +284,6 @@ function buildPhase0PublishedUnmodeledRegistry(): Record<string, IlpCatalogPubli
   const fwdSummitRefs = [sourceRef('Published corridor family', 'Premium payment term ranges from 10 to 30 years; only the 10-year corridor is executable today.')]
   const fwdMaxRefs = [sourceRef('Published corridor family', 'Premium payment term ranges from 10 to 30 years; only the 10-year corridor is executable today.')]
   const legacyFlexRefs = [sourceRef('Published corridor family', 'The family includes a single-premium MIP 5 corridor in addition to the executable regular-pay corridors.')]
-  const etiqaWealthPurposeRefs = [sourceRef('Published corridor family', 'Published MIP corridors include 3, 5, 10, 15, and 20 years; only 10, 15, and 20 years are executable today.')]
   const singlifeRefs = [sourceRef('Published corridor family', 'Published Singlife Legacy Invest corridors vary by both premium payment term and policy term; only the SGD 10-year / term-15 corridor is executable today.')]
   const tokioAtlasRefs = [sourceRef('Published corridor family', 'TM Atlas Wealth publishes premium payment terms from 5 to 25 years across base and Advanced Death variants; only the 25-year corridors are executable today.')]
   const tokioAffluenceRefs = [sourceRef('Published corridor family', 'Affluence@Future publishes premium payment terms from 15 to 30 years across base, Advanced Death, and Advanced Death + Life Benefit Rider corridors; only 15-year corridors are executable today.')]
@@ -343,15 +342,6 @@ function buildPhase0PublishedUnmodeledRegistry(): Record<string, IlpCatalogPubli
         sourceRefs: legacyFlexRefs,
       }),
     ],
-    'etiqa-invest-wealth-purpose': [3, 5].map((term) => corridor({
-      id: `sgd-mip-${term}`,
-      label: `SGD / MIP ${term} years`,
-      paymentStructure: 'mip',
-      currency: 'SGD',
-      mipLength: term,
-      contributionMode: 'regular-pay',
-      sourceRefs: etiqaWealthPurposeRefs,
-    })),
     'singlife-legacy-invest': [
       corridor({ id: 'sgd-single-premium-term-10', label: 'SGD / Single Premium / Policy Term 10 years', paymentStructure: 'single-pay', currency: 'SGD', contributionMode: 'single-pay', policyTermYears: 10, sourceRefs: singlifeRefs }),
       corridor({ id: 'sgd-single-premium-term-15', label: 'SGD / Single Premium / Policy Term 15 years', paymentStructure: 'single-pay', currency: 'SGD', contributionMode: 'single-pay', policyTermYears: 15, sourceRefs: singlifeRefs }),
