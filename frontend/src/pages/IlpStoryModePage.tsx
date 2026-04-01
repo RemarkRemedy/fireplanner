@@ -163,7 +163,7 @@ function ProspectSetupPreview({ seed }: { seed: IlpPolicySeed }) {
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="rounded-md border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
-          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Template</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Template</div>
           <div className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{seed.name}</div>
           <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             {seed.insurer} · {seed.currency}
@@ -171,7 +171,7 @@ function ProspectSetupPreview({ seed }: { seed: IlpPolicySeed }) {
           </div>
         </div>
         <div className="rounded-md border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
-          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Starting assumptions</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Starting assumptions</div>
           <div className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{pathLabel}</div>
           <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">{horizonLabel}</div>
         </div>
@@ -407,7 +407,7 @@ export function IlpStoryModePage() {
 function GuideNote() {
   return (
     <div className="rounded-md border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-900 dark:bg-amber-950/20">
-      <div className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-900 dark:text-amber-200">
+      <div className="text-xs font-semibold uppercase tracking-wide text-amber-900 dark:text-amber-200">
         Use this estimate as a guide
       </div>
       <ul className="mt-2 space-y-2 text-sm leading-6 text-amber-900/90 dark:text-amber-100/90">
@@ -1146,14 +1146,14 @@ function StoryDetailView({
           <div className="space-y-2 lg:min-w-[32rem]">
             <div className="flex flex-wrap items-end justify-end gap-6">
               <div className="space-y-2">
-                <div className="text-right text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                <div className="text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Dollar basis
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <Tabs value={useReal ? 'real' : 'nominal'} onValueChange={(value) => setUseReal(value === 'real')}>
-                    <TabsList className="h-12 rounded-2xl border-[#d9e4f2] bg-[#f3f7fd] p-1">
-                      <TabsTrigger value="nominal" className="rounded-xl px-4 py-2.5">Nominal</TabsTrigger>
-                      <TabsTrigger value="real" className="rounded-xl px-4 py-2.5">Today&apos;s dollars</TabsTrigger>
+                    <TabsList>
+                      <TabsTrigger value="nominal">Nominal</TabsTrigger>
+                      <TabsTrigger value="real">Today&apos;s dollars</TabsTrigger>
                     </TabsList>
                   </Tabs>
                   <p className="text-right text-xs text-muted-foreground">
@@ -1162,21 +1162,17 @@ function StoryDetailView({
                 </div>
               </div>
               <div className="space-y-2">
-                <div className="text-right text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                <div className="text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   View mode
                 </div>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-end">
                   <Tabs value={mode} onValueChange={(value) => onModeChange(value as StoryDetailMode)} className="sm:flex-1">
-                    <TabsList className="grid h-12 w-full grid-cols-2 rounded-2xl border-[#d9e4f2] bg-[#f3f7fd] p-1">
-                      <TabsTrigger value="walkthrough" className="rounded-xl px-5 py-2.5">
-                        Walkthrough
-                      </TabsTrigger>
-                      <TabsTrigger value="detailed" className="rounded-xl px-5 py-2.5">
-                        Detailed view
-                      </TabsTrigger>
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="walkthrough">Walkthrough</TabsTrigger>
+                      <TabsTrigger value="detailed">Detailed view</TabsTrigger>
                     </TabsList>
                   </Tabs>
-                  <Button variant="outline" onClick={onReplayStory} className="h-12 px-5">
+                  <Button variant="outline" onClick={onReplayStory} className="h-10 px-4">
                     <Play className="mr-2 h-4 w-4" />
                     Replay Story
                   </Button>
