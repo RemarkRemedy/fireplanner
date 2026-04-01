@@ -216,7 +216,7 @@ export function AppLayout() {
             <div className="fixed bottom-16 right-4 z-40 md:hidden">
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button size="icon" className="rounded-full shadow-lg h-10 w-10">
+                  <Button size="icon" className="rounded-full shadow-lg h-11 w-11">
                     <HelpCircle className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>

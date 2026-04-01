@@ -69,7 +69,7 @@ export function MobileShareFab() {
         <PopoverAnchor asChild>
           <Button
             size="icon"
-            className="rounded-full shadow-lg h-10 w-10"
+            className="rounded-full shadow-lg h-11 w-11"
             onClick={handleShare}
             aria-label="Share your plan"
           >
