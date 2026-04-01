@@ -248,7 +248,7 @@ export function IlpLeaderboardPage() {
 
   return (
     <div className="space-y-6 text-foreground">
-      <section className="rounded-2xl border border-border bg-card px-5 py-5 shadow-sm sm:px-7 sm:py-6">
+      <section className="rounded-lg border border-border bg-card px-5 py-5 shadow-sm sm:px-7 sm:py-6">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.95fr)] lg:items-end">
           <div className="space-y-3">
             <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Ranked fee report</div>
@@ -261,7 +261,7 @@ export function IlpLeaderboardPage() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-border bg-muted/30 p-4">
+          <div className="rounded-lg border border-border bg-muted/30 p-4">
             <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">How to read this table</div>
             <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
               <li>Rank is based on the active sort, not a hidden score.</li>
@@ -287,25 +287,25 @@ export function IlpLeaderboardPage() {
               setActivePremiumSection(value as PremiumSection)
               setFilterInsurer(null)
             }}>
-              <TabsList className="h-12 rounded-2xl border-border bg-muted/20 p-1">
-                <TabsTrigger value="regular" className="min-w-[11rem] rounded-xl px-5 py-2.5">
+              <TabsList className="h-10 border-border bg-muted p-1">
+                <TabsTrigger value="regular" className="min-w-[11rem] px-5 py-1.5">
                   Regular premium
                 </TabsTrigger>
-                <TabsTrigger value="single" className="min-w-[11rem] rounded-xl px-5 py-2.5">
+                <TabsTrigger value="single" className="min-w-[11rem] px-5 py-1.5">
                   Single premium
                 </TabsTrigger>
               </TabsList>
             </Tabs>
 
             {activePremiumSection === 'regular' ? (
-              <div className="w-full space-y-3 rounded-2xl border border-border bg-muted/30 p-4">
+              <div className="w-full space-y-3 rounded-lg border border-border bg-muted/30 p-4">
                 <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Comparison basis</div>
                 <Tabs value={regularBasisMode} onValueChange={(value) => setRegularBasisMode(value as RegularBasisMode)}>
-                  <TabsList className="grid h-11 w-full grid-cols-2 rounded-2xl border-border bg-card p-1">
-                    <TabsTrigger value="standardized" className="rounded-xl px-4 py-2">
+                  <TabsList className="grid h-10 w-full grid-cols-2 border-border bg-muted p-1">
+                    <TabsTrigger value="standardized" className="px-3 py-1.5">
                       Standardized
                     </TabsTrigger>
-                    <TabsTrigger value="custom" className="rounded-xl px-4 py-2">
+                    <TabsTrigger value="custom" className="px-3 py-1.5">
                       Custom
                     </TabsTrigger>
                   </TabsList>
@@ -340,7 +340,7 @@ export function IlpLeaderboardPage() {
                 )}
               </div>
             ) : (
-              <div className="w-full rounded-2xl border border-border bg-muted/30 p-4 text-sm leading-6 text-muted-foreground">
+              <div className="w-full rounded-lg border border-border bg-muted/30 p-4 text-sm leading-6 text-muted-foreground">
                 Single-premium products stay standardized here. Use the story view if you want to test a specific lump-sum amount for one product.
               </div>
             )}
@@ -349,7 +349,7 @@ export function IlpLeaderboardPage() {
       </section>
 
       {summary && (
-        <section className="grid gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-2 xl:grid-cols-4">
+        <section className="grid gap-px overflow-hidden rounded-lg border border-border bg-border md:grid-cols-2 xl:grid-cols-4">
           <div className="bg-card p-4 sm:p-5">
             <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Filtered set</div>
             <div className="mt-3 text-3xl font-semibold tabular-nums">{filtered.length}</div>
@@ -385,7 +385,7 @@ export function IlpLeaderboardPage() {
         </section>
       )}
 
-      <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
+      <section className="rounded-lg border border-border bg-card p-4 sm:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
             <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Filters</div>
@@ -407,7 +407,7 @@ export function IlpLeaderboardPage() {
             />
           </div>
           <select
-            className="h-11 rounded-xl border border-border bg-card px-3 text-sm text-foreground"
+            className="h-10 border border-border bg-card px-3 text-sm text-foreground"
             value={filterInsurer ?? ''}
             onChange={(event) => setFilterInsurer(event.target.value || null)}
           >
@@ -419,7 +419,7 @@ export function IlpLeaderboardPage() {
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <div className="border-b border-border px-4 py-3 sm:px-5">
           <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Scoreboard</div>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -528,7 +528,7 @@ export function IlpLeaderboardPage() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-border bg-muted/30 p-4 sm:p-5">
+      <section className="rounded-lg border border-border bg-muted/30 p-4 sm:p-5">
         <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Method notes</div>
         <div className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
           <p>* Products marked with * do not have bonus modelling. Their net fee drag may be overstated.</p>
