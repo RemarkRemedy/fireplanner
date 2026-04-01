@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Share2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -8,12 +9,14 @@ import { useUIStore } from '@/stores/useUIStore'
 import { trackEvent } from '@/lib/analytics'
 
 export function MobileShareFab() {
+  const { pathname } = useLocation()
   const dismissedNudges = useUIStore((s) => s.dismissedNudges)
   const dismissNudge = useUIStore((s) => s.dismissNudge)
 
   const nudgeId = 'share-fab-tooltip'
   const alreadyDismissed = dismissedNudges.includes(nudgeId)
-  const [tooltipOpen, setTooltipOpen] = useState(!alreadyDismissed)
+  const isIlpPage = pathname.startsWith('/ilp-fees')
+  const [tooltipOpen, setTooltipOpen] = useState(!alreadyDismissed && !isIlpPage)
 
   const handleDismiss = () => {
     setTooltipOpen(false)
