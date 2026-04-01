@@ -290,13 +290,9 @@ export function IlpLeaderboardPage() {
               setActivePremiumSection(value as PremiumSection)
               setFilterInsurer(null)
             }}>
-              <TabsList className="h-10 border-border bg-muted p-1">
-                <TabsTrigger value="regular" className="min-w-[11rem] px-5 py-1.5">
-                  Regular premium
-                </TabsTrigger>
-                <TabsTrigger value="single" className="min-w-[11rem] px-5 py-1.5">
-                  Single premium
-                </TabsTrigger>
+              <TabsList>
+                <TabsTrigger value="regular">Regular premium</TabsTrigger>
+                <TabsTrigger value="single">Single premium</TabsTrigger>
               </TabsList>
             </Tabs>
 
@@ -304,13 +300,9 @@ export function IlpLeaderboardPage() {
               <div className="w-full space-y-3 rounded-lg border border-border bg-muted/30 p-4">
                 <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Comparison basis</div>
                 <Tabs value={regularBasisMode} onValueChange={(value) => setRegularBasisMode(value as RegularBasisMode)}>
-                  <TabsList className="grid h-10 w-full grid-cols-2 border-border bg-muted p-1">
-                    <TabsTrigger value="standardized" className="px-3 py-1.5">
-                      Standardized
-                    </TabsTrigger>
-                    <TabsTrigger value="custom" className="px-3 py-1.5">
-                      Custom
-                    </TabsTrigger>
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="standardized">Standardized</TabsTrigger>
+                    <TabsTrigger value="custom">Custom</TabsTrigger>
                   </TabsList>
                 </Tabs>
 
