@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { X } from 'lucide-react'
+import { RefreshCw, X } from 'lucide-react'
 import { WrappedCard } from '@/components/wrapped/WrappedCard'
 import { WrappedProgressBar } from '@/components/wrapped/WrappedProgressBar'
 import { AnimatedNumber } from '@/components/wrapped/AnimatedNumber'
@@ -8,6 +8,7 @@ import { staggerChild } from '@/components/wrapped/wrappedAnimations'
 import type { IlpPolicyAnalysis, IlpPolicyInput } from '@/lib/calculations/ilp'
 import { useFeeImpact } from '@/hooks/useFeeImpact'
 import { formatIlpCurrency, formatIlpPercent } from './formatters'
+import { buildIlpFeeYardstickMatches } from './ilpFeeYardsticks'
 
 const ILP_GRADIENTS = {
   cost: 'linear-gradient(to bottom right, #0F1729, #1A1040)',
@@ -47,6 +48,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [direction, setDirection] = useState(1)
   const [useReal, setUseReal] = useState(true)
+  const [yardstickIndex, setYardstickIndex] = useState(0)
   const isTransitioning = useRef(false)
   const pointerStart = useRef<{ x: number; y: number; time: number } | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -73,9 +75,16 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
   const grossWrapperFees = wrapperFees + inceptionCharges
   const netWrapperCost = grossWrapperFees - bonuses
   const totalEstimatedFees = netWrapperCost + fundCharges
+  const realTotalEstimatedFees = summary.realWrapperFees + summary.realFundCharges + summary.inceptionCharges - summary.realBonuses
   const bonusCoverPct = grossWrapperFees > 0 ? bonuses / grossWrapperFees : 0
   const wrapperPctOfPremiums = summary.totalPremiumsPaid > 0 ? netWrapperCost / summary.totalPremiumsPaid : 0
   const blendedOcf = policy.funds.reduce((sum, fund) => sum + fund.allocation * fund.ocf, 0)
+  const relatableCostData = useMemo(
+    () => buildIlpFeeYardstickMatches(realTotalEstimatedFees, horizonYears, policy.currency),
+    [realTotalEstimatedFees, horizonYears, policy.currency],
+  )
+  const relatableCostExamples = relatableCostData?.matches ?? null
+  const activeYardstickExample = relatableCostExamples?.[yardstickIndex % (relatableCostExamples.length || 1)] ?? null
 
   const { annualDragPct } = feeImpact
   const isProjected = analysis.mode === 'projected'
@@ -122,6 +131,10 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
   useEffect(() => {
     containerRef.current?.focus()
   }, [])
+
+  useEffect(() => {
+    setYardstickIndex(0)
+  }, [realTotalEstimatedFees, horizonYears, policy.currency])
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     pointerStart.current = { x: e.clientX, y: e.clientY, time: Date.now() }
@@ -203,6 +216,44 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                 <motion.p variants={staggerChild} className="max-w-sm text-lg text-white/90 md:text-xl">
                   in estimated total fees over {horizonYears} years ({basisLabel}).
                 </motion.p>
+                {activeYardstickExample && relatableCostExamples && (
+                  <motion.div
+                    variants={staggerChild}
+                    className="w-full max-w-xl rounded-md border border-white/10 bg-white/[0.04] px-4 py-3 text-left"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-white/45">
+                        Everyday yardsticks
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="text-[11px] text-white/45">
+                          {yardstickIndex + 1} of {relatableCostExamples.length}
+                        </div>
+                        <button
+                          type="button"
+                          aria-label="Show another example"
+                          title="Show another example"
+                          onPointerDown={(event) => event.stopPropagation()}
+                          onPointerUp={(event) => event.stopPropagation()}
+                          onClick={() => setYardstickIndex((index) => (
+                            relatableCostExamples.length === 0
+                              ? 0
+                              : (index + 1) % relatableCostExamples.length
+                          ))}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/[0.06] text-white/70 transition hover:bg-white/[0.12] hover:text-white"
+                        >
+                          <RefreshCw className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                    <p className="mt-1 max-w-[30rem] min-h-[3rem] text-sm leading-6 text-white/78 md:max-w-[32rem] md:text-base">
+                      In today&apos;s dollars, that is {activeYardstickExample.sentence}.
+                    </p>
+                    <p className="mt-1 text-[11px] text-white/45">
+                      Using the {relatableCostData?.band.label} comparison set.
+                    </p>
+                  </motion.div>
+                )}
                 <motion.div variants={staggerChild} className="grid w-full max-w-xl grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="rounded-md border border-white/10 bg-white/[0.05] p-4 text-left">
                     <div className="text-xs uppercase tracking-wide text-white/50">Net policy fees</div>
