@@ -166,17 +166,13 @@ function buildCompactSnapshotMetrics(policy: IlpPolicyInput, analysis: IlpPolicy
 function ReviewWorkspaceOverview({
   selectedPolicy,
   policyCount,
-  displayAnalysis,
-  manualRequirementCount,
 }: {
   selectedPolicy: IlpPolicyInput | null
   policyCount: number
-  displayAnalysis: IlpPolicyAnalysis | null
-  manualRequirementCount: number
 }) {
   return (
     <Card className="border-primary/20 bg-primary/[0.03]">
-      <CardContent className="space-y-4 pt-6">
+      <CardContent className="space-y-3 pt-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
@@ -185,7 +181,7 @@ function ReviewWorkspaceOverview({
               <Badge variant="secondary">{policyCount} {policyCount === 1 ? 'policy' : 'policies'} loaded</Badge>
             </div>
             <p className="max-w-3xl text-sm text-muted-foreground">
-              Use this page as the advanced working bench: configure the real policy, unlock today&apos;s supported snapshot, then move into comparison and deeper projection review once the current state is coherent.
+              Use this page as the advanced working bench: complete the form first, keep today&apos;s snapshot beside you, then move into comparison and deeper review below once the current state is coherent.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -201,48 +197,6 @@ function ReviewWorkspaceOverview({
             <Button asChild size="sm" variant="outline">
               <a href="#advanced-review">Advanced review</a>
             </Button>
-          </div>
-        </div>
-
-        <div className="grid gap-3 md:grid-cols-3">
-          <div className="rounded-lg border bg-background/80 p-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Support status</p>
-            <p className="mt-1 text-sm font-semibold">
-              {selectedPolicy?.catalogSource == null
-                ? 'Manual draft'
-                : selectedPolicy.catalogSource.supportStatus === 'supported'
-                  ? 'Supported'
-                  : 'Template needing review'}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {selectedPolicy?.catalogSource == null
-                ? 'Not seeded from the catalog.'
-                : 'Use the seeded support notes as the honest runtime boundary.'}
-            </p>
-          </div>
-          <div className="rounded-lg border bg-background/80 p-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Current-state readiness</p>
-            <p className="mt-1 text-sm font-semibold">
-              {manualRequirementCount === 0
-                ? 'Ready for current snapshot'
-                : `Needs ${manualRequirementCount} current input${manualRequirementCount === 1 ? '' : 's'}`}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Supported manual inputs belong in this workspace. They do not mean the page is unsupported.
-            </p>
-          </div>
-          <div className="rounded-lg border bg-background/80 p-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Review mode</p>
-            <p className="mt-1 text-sm font-semibold">
-              {displayAnalysis == null
-                ? 'Fix the selected policy to unlock review'
-                : displayAnalysis.mode === 'current-only'
-                  ? 'Current snapshot first'
-                  : 'Projected review available'}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Comparison and deeper charts live below the working row so the form and snapshot stay readable.
-            </p>
           </div>
         </div>
       </CardContent>
@@ -288,95 +242,51 @@ function CurrentSnapshotRail({
           <div className="space-y-1">
             <h2 className="text-lg font-semibold">Current Snapshot</h2>
             <p className="text-sm text-muted-foreground">
-              High-signal current metrics stay visible beside the form. Deeper projection charts move below this working row.
+              Keep today&apos;s key numbers visible while you work through the form. The full summary grid and projection stack stay lower on the page.
             </p>
           </div>
 
-          <div className="space-y-3">
-            <div className="rounded-lg border bg-muted/20 p-3">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Template</p>
-                  <p className="text-sm font-semibold">
-                    {selectedPolicy.catalogSource == null
-                      ? 'Manual draft'
-                      : selectedPolicy.catalogSource.supportStatus === 'supported'
-                        ? 'Supported template'
-                        : 'Template needing review'}
-                  </p>
-                </div>
-                <Badge variant={selectedPolicy.catalogSource?.supportStatus === 'supported' ? 'outline' : 'secondary'}>
-                  {selectedPolicy.catalogSource == null
-                    ? 'Manual draft'
-                    : selectedPolicy.catalogSource.supportStatus === 'supported'
-                      ? 'Supported'
-                      : 'Review'}
-                </Badge>
-              </div>
-            </div>
-
-            <div className="rounded-lg border bg-muted/20 p-3">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Current inputs</p>
-                  <p className="text-sm font-semibold">
-                    {manualRequirementCount === 0 ? 'Ready' : `${manualRequirementCount} still needed`}
-                  </p>
-                </div>
-                <Badge variant={manualRequirementCount === 0 ? 'outline' : 'secondary'}>
-                  {manualRequirementCount === 0 ? 'Ready' : 'Needs input'}
-                </Badge>
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">
+          <div className="rounded-lg border bg-muted/20 p-3">
+            <div className="flex flex-wrap gap-2">
+              {selectedPolicy.catalogSource == null ? (
+                <Badge variant="secondary">Manual draft</Badge>
+              ) : selectedPolicy.catalogSource.supportStatus === 'supported' ? (
+                <Badge variant="outline">Seeded template</Badge>
+              ) : (
+                <Badge variant="secondary">Template needs review</Badge>
+              )}
+              <Badge variant={manualRequirementCount === 0 ? 'outline' : 'secondary'}>
                 {manualRequirementCount === 0
-                  ? 'No unfilled supported manual inputs remain on this seeded policy.'
-                  : 'Fill the remaining supported current-state fields in the working column to unlock the full current snapshot.'}
-              </p>
-            </div>
-
-            <div className="rounded-lg border bg-muted/20 p-3">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Review scope</p>
-                  <p className="text-sm font-semibold">
-                    {displayAnalysis == null
-                      ? 'No review yet'
-                      : displayAnalysis.mode === 'current-only'
-                        ? 'Current snapshot only'
-                        : 'Projected review available'}
-                  </p>
-                </div>
-                <Badge variant={displayAnalysis == null ? 'secondary' : displayAnalysis.mode === 'projected' ? 'outline' : 'secondary'}>
-                  {displayAnalysis == null ? 'Pending' : displayAnalysis.mode === 'projected' ? 'Projected' : 'Current'}
-                </Badge>
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">
+                  ? 'Current inputs complete'
+                  : `${manualRequirementCount} current input${manualRequirementCount === 1 ? '' : 's'} left`}
+              </Badge>
+              <Badge variant={displayAnalysis == null ? 'secondary' : displayAnalysis.mode === 'projected' ? 'outline' : 'secondary'}>
                 {displayAnalysis == null
-                  ? 'Fix the selected policy before relying on the review stack.'
-                  : displayAnalysis.mode === 'current-only'
-                    ? 'Today&apos;s state is supported, but projection, NPV, and opportunity-cost panels stay intentionally unavailable.'
-                    : 'Current snapshot is stable enough to use the deeper review stack below.'}
-              </p>
-            </div>
-
-            <div className="rounded-lg border bg-muted/20 p-3">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Residual notes</p>
-                  <p className="text-sm font-semibold">
-                    {informationalResidualCount === 0
-                      ? 'Contained'
-                      : `${informationalResidualCount} informational residual${informationalResidualCount === 1 ? '' : 's'}`}
-                  </p>
-                </div>
-                <Badge variant={informationalResidualCount === 0 ? 'outline' : 'secondary'}>
-                  {informationalResidualCount === 0 ? 'Contained' : 'Review notes'}
+                  ? 'Review paused'
+                  : displayAnalysis.mode === 'projected'
+                    ? 'Projected review below'
+                    : 'Current snapshot only'}
+              </Badge>
+              {informationalResidualCount > 0 && (
+                <Badge variant="secondary">
+                  {informationalResidualCount} review note{informationalResidualCount === 1 ? '' : 's'}
                 </Badge>
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Product-summary behaviors outside the modeled estimate remain visible in the support notes and seeded warnings.
-              </p>
+              )}
             </div>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {displayAnalysis == null
+                ? 'Fix the selected policy before relying on the snapshot or deeper review panels.'
+                : manualRequirementCount > 0
+                  ? 'Use the working column to fill the remaining current-state fields. The seeded notes already describe the support boundary, so this rail only tracks what is still blocking a trustworthy current snapshot.'
+                  : displayAnalysis.mode === 'current-only'
+                    ? 'Today&apos;s state is coherent, but this policy intentionally stops at current-state review.'
+                    : 'Today&apos;s state is coherent, so you can use the compact snapshot here and the deeper projected review below.'}
+            </p>
+            {manualRequirementCount > 0 && (
+              <Button asChild className="mt-3" size="sm" variant="outline">
+                <a href="#policy-configuration">Finish current inputs</a>
+              </Button>
+            )}
           </div>
 
           {selectedProjectedAnalysis == null && selectedCurrentOnlyAnalysis == null && (
@@ -402,7 +312,7 @@ function CurrentSnapshotRail({
               <div className="space-y-1">
                 <h3 className="text-sm font-semibold">Key current metrics</h3>
                 <p className="text-xs text-muted-foreground">
-                  This rail stays intentionally compact. Use the advanced review section for the full summary grid and projected analysis.
+                  This rail stays compact on purpose. Use the advanced review section for the full summary grid and projected analysis.
                 </p>
               </div>
               <div className="space-y-2">
@@ -426,12 +336,6 @@ function CurrentSnapshotRail({
                   </div>
                 ))}
               </div>
-
-              {manualRequirementCount > 0 && (
-                <Button asChild size="sm" variant="outline">
-                  <a href="#policy-configuration">Finish current inputs in the working column</a>
-                </Button>
-              )}
             </div>
           )}
         </CardContent>
@@ -662,8 +566,6 @@ export function IlpReviewPage() {
       <ReviewWorkspaceOverview
         selectedPolicy={selectedPolicy}
         policyCount={policies.length}
-        displayAnalysis={displayAnalysis}
-        manualRequirementCount={manualRequirementCount}
       />
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_22rem]">
