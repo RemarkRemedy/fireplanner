@@ -1615,6 +1615,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
   const updateEventChargeRules = (eventChargeRules: IlpEventChargeRule[]) => updatePolicy(policy.id, { eventChargeRules })
   const formSectionClass = 'rounded-xl border bg-card px-5 shadow-sm'
   const formGridGapClass = 'gap-x-5 gap-y-5'
+  const policyDetailSubsectionClass = 'col-span-full rounded-lg border bg-muted/25 px-4 py-3'
 
   return (
     <div ref={formRef} className="space-y-4">
@@ -1790,6 +1791,12 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
         <AccordionItem value="policy" className={formSectionClass}>
           <AccordionTrigger>Policy Details</AccordionTrigger>
         <AccordionContent className={`grid md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 ${formGridGapClass} [&_label]:flex [&_label]:min-h-[4.5rem] [&_label]:items-start [&_label]:gap-1 [&_label]:leading-snug`}>
+            <div className={policyDetailSubsectionClass}>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Setup & timeline</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Seed identity, contribution rhythm, and where the policy sits in its premium schedule today.
+              </p>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="ilp-name">Policy Name</Label>
               <Input
@@ -1902,6 +1909,12 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
             )}
             {needsAssuranceInputs && (
               <>
+                <div className={policyDetailSubsectionClass}>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Life assured & current state</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Capture the insured profile and the current manual facts that anchor today&apos;s benefit and payout surface.
+                  </p>
+                </div>
                 {supportsTokioLifeState && (
                   <div className="space-y-2">
                     <Label>Life Assured Mode</Label>
@@ -2880,6 +2893,12 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                 )}
               </>
             )}
+            <div className={policyDetailSubsectionClass}>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Analysis horizon</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Set the projection window after the current state is coherent.
+              </p>
+            </div>
             <NumberInput
               label={policy.mipBasis === 'open-ended' ? 'Review Horizon (Years)' : 'Post-MIP Years'}
               value={policy.postMipYears}
