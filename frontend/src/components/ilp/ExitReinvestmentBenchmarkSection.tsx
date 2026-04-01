@@ -54,15 +54,19 @@ export function ExitReinvestmentBenchmarkSection({
 
   const annualReturn = rateKey === '4' ? 0.04 : 0.07
   const selectedOption = benchmark.options.find((option) => String(option.exitYear) === selectedExitYear) ?? benchmark.options[0]
+  const neverEnterOption = benchmark.options.find((option) => option.exitYear === 0) ?? benchmark.options[0]
 
   const selectedHorizonValue = rateKey === '4'
     ? (selectedOption?.horizonValueAt4 ?? 0)
     : (selectedOption?.horizonValueAt7 ?? 0)
+  const neverEnterHorizonValue = rateKey === '4'
+    ? (neverEnterOption?.horizonValueAt4 ?? 0)
+    : (neverEnterOption?.horizonValueAt7 ?? 0)
 
   const horizonBarData = benchmark.options.map((option) => ({
     exitYear: option.exitYear,
     policyYear: option.policyYear,
-    label: `Year ${option.policyYear}`,
+    label: option.exitYear === 0 ? 'Never enter' : `Year ${option.policyYear}`,
     horizonValue: rateKey === '4' ? option.horizonValueAt4 : option.horizonValueAt7,
   }))
 
@@ -71,7 +75,7 @@ export function ExitReinvestmentBenchmarkSection({
     : []
 
   const exitPathSeries = useMemo(() => {
-    const visibleOptions = benchmark.options.filter((option) => option.exitYear > 0 || String(option.exitYear) === selectedExitYear)
+    const visibleOptions = benchmark.options.filter((option) => option.exitYear === 0 || option.exitYear > 0 || String(option.exitYear) === selectedExitYear)
 
     return visibleOptions.map((option) => ({
       option,
@@ -118,7 +122,7 @@ export function ExitReinvestmentBenchmarkSection({
           <div className="space-y-2">
             <CardTitle>If you exit and invest outside instead</CardTitle>
             <p className="max-w-3xl text-sm text-muted-foreground">
-              Pick an exit year, take the net surrender value at that point, and assume the remaining planned contributions are invested outside the ILP instead. The charts below show the resulting value at year {benchmark.horizonYear}.
+              The charts below compare three real choices: never enter the ILP at all, enter first and exit in a chosen year, or keep the ILP all the way to year {benchmark.horizonYear}. When you switch out, the benchmark uses the net surrender value at that exit point plus any remaining planned contributions invested outside instead.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:items-end">
@@ -140,7 +144,7 @@ export function ExitReinvestmentBenchmarkSection({
                 <SelectContent>
                   {benchmark.options.map((option) => (
                     <SelectItem key={option.exitYear} value={String(option.exitYear)}>
-                      Year {option.policyYear}
+                      {option.exitYear === 0 ? 'Never enter ILP' : `Year ${option.policyYear}`}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -149,12 +153,25 @@ export function ExitReinvestmentBenchmarkSection({
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-4">
+          <div className="rounded-lg border p-4">
+            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Never enter ILP</div>
+            <div className="mt-1 text-lg font-semibold tabular-nums">
+              {formatIlpCurrency(neverEnterHorizonValue, policy.currency)}
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Invest the same planned contributions outside from the start at {rateKey}% nominal.
+            </p>
+          </div>
           <div className="rounded-lg border p-4">
             <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Selected exit</div>
-            <div className="mt-1 text-lg font-semibold">Year {selectedOption?.policyYear ?? 'n/a'}</div>
+            <div className="mt-1 text-lg font-semibold">
+              {selectedOption?.exitYear === 0 ? 'Never enter' : `Year ${selectedOption?.policyYear ?? 'n/a'}`}
+            </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              Net exit value {formatIlpCurrency(selectedOption?.netExitValue ?? 0, policy.currency)}
+              {selectedOption?.exitYear === 0
+                ? `Start outside with no ILP lock-in.`
+                : `Net exit value ${formatIlpCurrency(selectedOption?.netExitValue ?? 0, policy.currency)}`}
             </p>
           </div>
           <div className="rounded-lg border p-4">
@@ -182,7 +199,7 @@ export function ExitReinvestmentBenchmarkSection({
           <div>
             <h3 className="text-sm font-semibold">Path after the selected exit year</h3>
             <p className="text-sm text-muted-foreground">
-              The purple line keeps the ILP all the way to year {benchmark.horizonYear}. Each lighter line shows one exit-and-invest path. The highlighted teal line is the currently selected exit year, so you can compare all exit options without losing the chosen path.
+              The purple line keeps the ILP all the way to year {benchmark.horizonYear}. One faint line shows the never-enter path, and the other faint lines show exit-and-invest alternatives. The highlighted teal line is the currently selected path.
             </p>
           </div>
           <div className="h-72 rounded-lg border border-border/60 p-4" role="img" aria-label="Line chart showing ILP hold value and selected exit-and-invest-outside path">
@@ -203,22 +220,28 @@ export function ExitReinvestmentBenchmarkSection({
                     formatIlpCurrency(value, policy.currency),
                     name === 'holdIlpValue'
                       ? 'Keep ILP'
+                      : name === 'exitPath_0'
+                        ? 'Never enter ILP'
                       : name === `exitPath_${selectedOption?.exitYear ?? ''}`
-                        ? `Selected exit path (Year ${selectedOption?.policyYear ?? 'n/a'})`
+                        ? selectedOption?.exitYear === 0
+                          ? 'Selected path (Never enter ILP)'
+                          : `Selected exit path (Year ${selectedOption?.policyYear ?? 'n/a'})`
                         : 'Other exit path',
                   ]}
                 />
                 <Line type="monotone" dataKey="holdIlpValue" stroke={colors.primary} strokeWidth={3} dot={false} />
                 {exitPathSeries.map((series) => {
                   const isSelected = String(series.option.exitYear) === selectedExitYear
+                  const isNeverEnter = series.option.exitYear === 0
                   return (
                     <Line
                       key={series.dataKey}
                       type="monotone"
                       dataKey={series.dataKey}
-                      stroke={colors.success}
-                      strokeOpacity={isSelected ? 1 : 0.18}
-                      strokeWidth={isSelected ? 3.5 : 1.5}
+                      stroke={isNeverEnter ? colors.warning : colors.success}
+                      strokeOpacity={isSelected ? 1 : isNeverEnter ? 0.55 : 0.18}
+                      strokeWidth={isSelected ? 3.5 : isNeverEnter ? 2 : 1.5}
+                      strokeDasharray={isNeverEnter && !isSelected ? '6 4' : undefined}
                       dot={false}
                     />
                   )
@@ -232,7 +255,7 @@ export function ExitReinvestmentBenchmarkSection({
           <div>
             <h3 className="text-sm font-semibold">Horizon value for every exit option</h3>
             <p className="text-sm text-muted-foreground">
-              Each bar shows what the portfolio could be worth by year {benchmark.horizonYear} if you exited in that year and invested outside at {rateKey}% nominal. Click a bar to inspect that path above.
+              The first bar is the clean “never enter ILP” baseline. The rest show what the portfolio could be worth by year {benchmark.horizonYear} if you entered the ILP, then exited in that year and invested outside at {rateKey}% nominal. Click a bar to inspect that path above.
             </p>
           </div>
           <div className="h-80 rounded-lg border border-border/60 p-4" role="img" aria-label="Bar chart showing horizon value for each exit year">
