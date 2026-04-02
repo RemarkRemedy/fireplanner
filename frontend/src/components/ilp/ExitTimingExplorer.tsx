@@ -35,24 +35,19 @@ interface ExitTimingExplorerProps {
   useReal?: boolean
 }
 
-function flipVerticalBarRadius([topLeft, topRight, bottomRight, bottomLeft]: [number, number, number, number]) {
-  return [bottomLeft, bottomRight, topRight, topLeft] as const
-}
-
 function renderVerticalBarShape(
   props: any,
   radius: [number, number, number, number],
 ) {
   const normalizedHeight = Math.abs(props.height ?? 0)
   const normalizedY = (props.height ?? 0) < 0 ? (props.y ?? 0) + (props.height ?? 0) : props.y
-  const normalizedRadius = (props.height ?? 0) < 0 ? flipVerticalBarRadius(radius) : radius
 
   return (
     <Rectangle
       {...props}
       y={normalizedY}
       height={normalizedHeight}
-      radius={normalizedRadius}
+      radius={radius}
     />
   )
 }
