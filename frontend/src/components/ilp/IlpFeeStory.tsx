@@ -9,7 +9,7 @@ import { AnimatedNumber } from '@/components/wrapped/AnimatedNumber'
 import { staggerChild } from '@/components/wrapped/wrappedAnimations'
 import type { IlpPolicyAnalysis, IlpPolicyInput } from '@/lib/calculations/ilp'
 import { useFeeImpact } from '@/hooks/useFeeImpact'
-import { IllustrationOnlyChartFrame } from './IllustrationOnlyChartFrame'
+import { IllustrationOnlyChartFrame, IllustrativeChartsGroup } from './IllustrationOnlyChartFrame'
 import { formatIlpCurrency, formatIlpPercent } from './formatters'
 import { buildIlpFeeYardstickMatches } from './ilpFeeYardsticks'
 import { buildDiscountedChargeTimeline } from './discountedChargeTimeline'
@@ -437,69 +437,81 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                         Exclude fund fees (OCF) from this view
                       </label>
                     </motion.div>
+                    <motion.div
+                      variants={staggerChild}
+                      className="w-full max-w-4xl rounded-xl border border-white/10 bg-white/[0.04] p-4"
+                      onPointerDown={(event) => event.stopPropagation()}
+                      onPointerUp={(event) => event.stopPropagation()}
+                    >
+                      <p className="text-sm leading-6 text-white/68">
+                        Illustrative chart. This visual shows the modeled scenario from the current story assumptions and should not be read as a policy statement.
+                      </p>
+                    </motion.div>
                     <motion.div variants={staggerChild} className="w-full max-w-4xl rounded-xl border border-white/10 bg-white/[0.04] p-4">
-                      <IllustrationOnlyChartFrame
-                        className="h-72 w-full"
-                        ariaLabel="Line chart showing total out-of-pocket fees by exit year"
-                        dark
-                      >
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={discountedChargeTimeline} margin={{ top: 14, right: 10, bottom: 8, left: 2 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
-                            <XAxis
-                              dataKey="exitYear"
-                              tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.55)' }}
-                              tickLine={false}
-                              axisLine={false}
-                              padding={{ left: 6, right: 6 }}
-                            />
-                            <YAxis
-                              width={54}
-                              domain={[0, discountedChargeAxisMax]}
-                              tickCount={5}
-                              tickFormatter={formatCompactStoryAxisTick}
-                              tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.55)' }}
-                              tickLine={false}
-                              axisLine={false}
-                              tickMargin={8}
-                            />
-                            <Tooltip
-                              content={({ active, payload, label }) => {
-                                if (!active || !payload?.length) return null
-                                const point = payload[0]?.payload
-                                if (!point) return null
-                                const rows = [
-                                  { label: 'Total', value: formatIlpCurrency(point.totalDiscountedCharges, policy.currency), bold: true },
-                                  { label: 'Policy charges', value: formatIlpCurrency(point.discountedPolicyCharges, policy.currency) },
-                                  ...(!excludeStoryFundFees ? [{ label: 'Fund charges', value: formatIlpCurrency(point.discountedFundCharges, policy.currency) }] : []),
-                                  { label: 'Bonuses offset', value: `-${formatIlpCurrency(point.discountedBonuses, policy.currency)}` },
-                                  { label: 'Initial charges', value: formatIlpCurrency(point.discountedInceptionCharges, policy.currency) },
-                                  { label: 'Early-exit charge', value: formatIlpCurrency(point.discountedEec, policy.currency) },
-                                ]
-                                return (
-                                  <div style={{ background: 'rgba(11, 14, 28, 0.94)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '10px 14px', color: 'white', fontSize: 13 }}>
-                                    <div style={{ fontWeight: 600, marginBottom: 6 }}>Exit in Year {label}</div>
-                                    {rows.map((row) => (
-                                      <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, opacity: row.bold ? 1 : 0.7, fontWeight: row.bold ? 600 : 400 }}>
-                                        <span>{row.label}</span>
-                                        <span style={{ fontVariantNumeric: 'tabular-nums' }}>{row.value}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )
-                              }}
-                            />
-                            <Line
-                              type="monotone"
-                              dataKey="totalDiscountedCharges"
-                              stroke="#F9A8D4"
-                              strokeWidth={3}
-                              dot={false}
-                              activeDot={{ r: 5, fill: '#F9A8D4', stroke: '#FFFFFF', strokeWidth: 1.5 }}
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </IllustrationOnlyChartFrame>
+                      <IllustrativeChartsGroup revealed>
+                        <IllustrationOnlyChartFrame
+                          className="h-72 w-full"
+                          ariaLabel="Line chart showing total out-of-pocket fees by exit year"
+                          dark
+                        >
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={discountedChargeTimeline} margin={{ top: 14, right: 10, bottom: 8, left: 2 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
+                              <XAxis
+                                dataKey="exitYear"
+                                tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.55)' }}
+                                tickLine={false}
+                                axisLine={false}
+                                padding={{ left: 6, right: 6 }}
+                              />
+                              <YAxis
+                                width={54}
+                                domain={[0, discountedChargeAxisMax]}
+                                tickCount={5}
+                                tickFormatter={formatCompactStoryAxisTick}
+                                tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.55)' }}
+                                tickLine={false}
+                                axisLine={false}
+                                tickMargin={8}
+                              />
+                              <Tooltip
+                                content={({ active, payload, label }) => {
+                                  if (!active || !payload?.length) return null
+                                  const point = payload[0]?.payload
+                                  if (!point) return null
+                                  const rows = [
+                                    { label: 'Total', value: formatIlpCurrency(point.totalDiscountedCharges, policy.currency), bold: true },
+                                    { label: 'Policy charges', value: formatIlpCurrency(point.discountedPolicyCharges, policy.currency) },
+                                    ...(!excludeStoryFundFees ? [{ label: 'Fund charges', value: formatIlpCurrency(point.discountedFundCharges, policy.currency) }] : []),
+                                    { label: 'Bonuses offset', value: `-${formatIlpCurrency(point.discountedBonuses, policy.currency)}` },
+                                    { label: 'Initial charges', value: formatIlpCurrency(point.discountedInceptionCharges, policy.currency) },
+                                    { label: 'Early-exit charge', value: formatIlpCurrency(point.discountedEec, policy.currency) },
+                                  ]
+                                  return (
+                                    <div style={{ background: 'rgba(11, 14, 28, 0.94)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '10px 14px', color: 'white', fontSize: 13 }}>
+                                      <div style={{ fontWeight: 600, marginBottom: 6 }}>Exit in Year {label}</div>
+                                      {rows.map((row) => (
+                                        <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, opacity: row.bold ? 1 : 0.7, fontWeight: row.bold ? 600 : 400 }}>
+                                          <span>{row.label}</span>
+                                          <span style={{ fontVariantNumeric: 'tabular-nums' }}>{row.value}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )
+                                }}
+                              />
+                              <Line
+                                type="monotone"
+                                dataKey="totalDiscountedCharges"
+                                stroke="#F9A8D4"
+                                strokeWidth={3}
+                                dot={false}
+                                activeDot={{ r: 5, fill: '#F9A8D4', stroke: '#FFFFFF', strokeWidth: 1.5 }}
+                              />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </IllustrationOnlyChartFrame>
+                      </IllustrativeChartsGroup>
                     </motion.div>
                     <motion.p variants={staggerChild} className="max-w-2xl text-sm text-white/62">
                       Lower points can highlight potentially better exit windows, but this is only one lens. You still need to weigh the value available, what you would keep contributing, and the role this policy plays in your plan.
