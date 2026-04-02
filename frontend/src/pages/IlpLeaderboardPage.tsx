@@ -426,17 +426,23 @@ export function IlpLeaderboardPage() {
             </p>
           </div>
           <div className="bg-card p-4 sm:p-5">
-            <div className="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lowest fee drag</div>
+            <div className="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Lowest ILP fee drag</div>
             <div className="mt-3 text-2xl font-semibold tabular-nums">{formatPercent(summary.lowestFeeRow.netFeeDragPct)}</div>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               {summary.lowestFeeRow.productName} · {summary.lowestFeeRow.variantLabel}
             </p>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              Wrapper fees only. Sub-fund fees are excluded here.
+            </p>
           </div>
           <div className="bg-card p-4 sm:p-5">
-            <div className="text-xs font-medium uppercase tracking-wide text-rose-700 dark:text-rose-400">Highest fee drag</div>
+            <div className="text-xs font-medium uppercase tracking-wide text-rose-700 dark:text-rose-400">Highest ILP fee drag</div>
             <div className="mt-3 text-2xl font-semibold tabular-nums">{formatPercent(summary.highestFeeRow.netFeeDragPct)}</div>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               {summary.highestFeeRow.productName} · {summary.highestFeeRow.variantLabel}
+            </p>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              Wrapper fees only. Sub-fund fees are excluded here.
             </p>
           </div>
           <div className="bg-card p-4 sm:p-5">
@@ -623,7 +629,8 @@ export function IlpLeaderboardPage() {
         <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Method notes</div>
         <div className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
           <p>* Products marked with * do not have bonus modelling. Their net fee drag may be overstated.</p>
-          <p>`Net Fees / Premiums` is total net fees divided by total premiums paid over the full modelled horizon. It is not an annualized drag rate.</p>
+          <p>`Net Fees / Premiums` is total net wrapper fees divided by total premiums paid over the full modelled horizon. It is not an annualized drag rate.</p>
+          <p>This comparison excludes sub-fund fees and OCF. Use `/ilp-ocf` or the story/review flows when you want to inspect fund-level charges separately.</p>
           <p>
             {activePremiumSection === 'regular'
               ? regularMethodNote
