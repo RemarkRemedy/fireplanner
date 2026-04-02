@@ -8,7 +8,7 @@ import { WrappedProgressBar } from '@/components/wrapped/WrappedProgressBar'
 import { AnimatedNumber } from '@/components/wrapped/AnimatedNumber'
 import { staggerChild } from '@/components/wrapped/wrappedAnimations'
 import type { IlpPolicyAnalysis, IlpPolicyInput } from '@/lib/calculations/ilp'
-import { useIsMobile } from '@/hooks/useIsMobile'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useFeeImpact } from '@/hooks/useFeeImpact'
 import { IllustrationOnlyChartFrame, IllustrativeChartsGroup } from './IllustrationOnlyChartFrame'
 import { formatIlpCurrency, formatIlpPercent } from './formatters'
@@ -83,7 +83,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
   const isTransitioning = useRef(false)
   const pointerStart = useRef<{ x: number; y: number; time: number } | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const isMobile = useIsMobile()
+  const useCompactExitSummaries = useMediaQuery('(max-width: 1279px)')
   const feeImpact = useFeeImpact(policy, analysis, false)
 
   const activeCards = BASE_CARDS
@@ -600,7 +600,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                 {isProjected && bestExitOption ? (
                   <>
                     <motion.div variants={staggerChild} className="w-full max-w-5xl text-left">
-                      {isMobile ? (
+                      {useCompactExitSummaries ? (
                         <div className="space-y-3">
                           <div className="grid grid-cols-3 gap-2" data-story-interactive>
                             {[
