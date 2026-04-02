@@ -13,6 +13,7 @@ import { FeeImpactChart } from '@/components/ilp/FeeImpactChart'
 import { DiscountedChargeTimelineSection } from '@/components/ilp/DiscountedChargeTimelineSection'
 import { ExitReinvestmentBenchmarkSection } from '@/components/ilp/ExitReinvestmentBenchmarkSection'
 import { useFeeImpact } from '@/hooks/useFeeImpact'
+import { useIlpFeesIllustrativeDisclosure } from '@/hooks/useIlpFeesIllustrativeDisclosure'
 import { useHouseholdRuntimeInputs } from '@/hooks/useHouseholdRuntimeInputs'
 import { DecisionPanel } from '@/components/ilp/DecisionPanel'
 import { OpportunityCostCard } from '@/components/ilp/OpportunityCostCard'
@@ -1098,7 +1099,7 @@ function StoryDetailView({
   const [useReal, setUseReal] = useState(false)
   const feeImpact = useFeeImpact(policy, analysis, useReal)
   const [receiptOpen, setReceiptOpen] = useState(false)
-  const [detailChartsRevealed, setDetailChartsRevealed] = useState(false)
+  const { revealed: detailChartsRevealed, setRevealed: setDetailChartsRevealed } = useIlpFeesIllustrativeDisclosure()
   const householdPlan = useHouseholdPlanStore((state) => state.plan)
   const householdRuntime = useHouseholdRuntimeInputs()
   const plannerQuickEntry = useMemo(() => derivePlannerCashFlowQuickEntry({
@@ -1202,7 +1203,7 @@ function StoryDetailView({
             <div className="space-y-1">
               <p className="text-sm font-semibold">Illustrative charts</p>
               <p className="text-sm text-muted-foreground">
-                The charts in this story detail view are illustrative summaries of the modeled scenario. Acknowledge them once here, then use the `Illustrative` badges on each chart as a reminder.
+                The charts across the ILP Fees section are illustrative summaries of the modeled scenario. Acknowledge them once here, then use the `Illustrative` badges on each chart as a reminder.
               </p>
             </div>
             <div className="flex max-w-md items-start gap-3 rounded-lg border border-border/70 bg-background px-3 py-2 shadow-sm">
@@ -1212,7 +1213,7 @@ function StoryDetailView({
                 onCheckedChange={(value) => setDetailChartsRevealed(value === true)}
               />
               <label htmlFor="story-detail-illustrative" className="cursor-pointer text-sm leading-6 text-foreground">
-                Show illustrative charts in this detail view
+                Show illustrative charts across ILP Fees
               </label>
             </div>
           </div>
