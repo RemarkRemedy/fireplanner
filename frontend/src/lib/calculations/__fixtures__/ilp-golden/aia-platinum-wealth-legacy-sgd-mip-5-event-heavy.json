@@ -13,7 +13,10 @@
       "branch:aia-platinum-wealth-legacy-premium-holiday-charge",
       "branch:aia-platinum-wealth-legacy-partial-withdrawal-charge",
       "branch:aia-platinum-wealth-legacy-regular-premium-charge",
+      "branch:aia-platinum-wealth-legacy-single-premium-charge",
       "branch:aia-platinum-wealth-legacy-full-surrender-charge",
+      "branch:aia-platinum-wealth-legacy-administration-charge-manual-input",
+      "branch:aia-platinum-wealth-legacy-insurance-risk-charge-manual-input",
       "kernel:top-up-paid-up-to-date-block",
       "kernel:current-death-benefit-estimate",
       "kernel:current-ti-benefit-estimate",
@@ -132,7 +135,76 @@
         ],
         "rate": 0,
         "amount": 0,
-        "allocation": "equal-split"
+        "requiresManualInput": false,
+        "allocation": "equal-split",
+        "sourceRefs": [
+          {
+            "page": 3,
+            "section": "Regular premium and top-up allocation",
+            "excerpt": "Approximate excerpt; keyword \"100% of Regular Premium less Premium Charge\" not found on page. Regular Number of (Premium - Premium Charge) ÷ Bid Price = Units Amount First policy ($10,000 - 36% x $10,000) ÷ $1.00 = 6,400"
+          },
+          {
+            "page": 3,
+            "section": "Premium charge and charge schedule",
+            "excerpt": "(Premium - Premium Charge) ÷ Bid Price = Units Amount First policy ($10,000 - 36% x $10,000) ÷ $1.00 = 6,400 year Second ($10,000 - 18% x $10,000) ÷ $1.00 = 8,200 policy year If you did not pay regular premium on the pre"
+          }
+        ],
+        "notes": [
+          "Models the published regular premium charge schedule for the regular-pay 5-year corridor only.",
+          "If regular premiums are missed and later resumed, the charge schedule continues from the rate band immediately after the last accepted premium."
+        ]
+      },
+      {
+        "id": "administration-charge",
+        "label": "Administration Charge",
+        "basis": "fixed-annual",
+        "activeWindow": "policy-term",
+        "startPolicyYear": 1,
+        "endPolicyYear": 10,
+        "appliesTo": [
+          "policy"
+        ],
+        "rate": 0,
+        "amount": 0,
+        "requiresManualInput": false,
+        "allocation": "pro-rata-by-value",
+        "sourceRefs": [
+          {
+            "page": 3,
+            "section": "Premium charge and charge schedule",
+            "excerpt": "(Premium - Premium Charge) ÷ Bid Price = Units Amount First policy ($10,000 - 36% x $10,000) ÷ $1.00 = 6,400 year Second ($10,000 - 18% x $10,000) ÷ $1.00 = 8,200 policy year If you did not pay regular premium on the pre"
+          }
+        ],
+        "notes": [
+          "Manual-input approximation for the published monthly administration charge corridor during the first 10 policy years.",
+          "Enter the annualized administration charge from the policy illustration. If the illustration shows a monthly amount, multiply it by 12.",
+          "Rate depends on entry age and insured amount. The published summary does not include rate tables."
+        ]
+      },
+      {
+        "id": "insurance-risk-charge",
+        "label": "Insurance Risk Charge",
+        "basis": "fixed-annual",
+        "activeWindow": "policy-term",
+        "appliesTo": [
+          "policy"
+        ],
+        "rate": 0,
+        "amount": 0,
+        "requiresManualInput": false,
+        "allocation": "pro-rata-by-value",
+        "sourceRefs": [
+          {
+            "page": 3,
+            "section": "Premium charge and charge schedule",
+            "excerpt": "(Premium - Premium Charge) ÷ Bid Price = Units Amount First policy ($10,000 - 36% x $10,000) ÷ $1.00 = 6,400 year Second ($10,000 - 18% x $10,000) ÷ $1.00 = 8,200 policy year If you did not pay regular premium on the pre"
+          }
+        ],
+        "notes": [
+          "Manual-input approximation for the monthly Insurance Risk Charge deducted on the prevailing sum-at-risk corridor.",
+          "Enter the annualized Insurance Risk Charge from the policy illustration. If the illustration shows a monthly amount, multiply it by 12.",
+          "Applicable rates depend on underwriting class and insurer illustration factors that are not published in the summary."
+        ]
       }
     ],
     "policyEvents": [
@@ -172,6 +244,7 @@
         ],
         "rate": 0.03,
         "amount": 0,
+        "requiresManualInput": false,
         "allocation": "equal-split"
       },
       {
@@ -198,6 +271,7 @@
           }
         ],
         "amount": 0,
+        "requiresManualInput": false,
         "allocation": "pro-rata-by-value"
       },
       {
@@ -263,6 +337,7 @@
           }
         ],
         "amount": 0,
+        "requiresManualInput": false,
         "allocation": "equal-split"
       }
     ],
@@ -277,10 +352,13 @@
       "structureStatus": "structured",
       "modeledEconomics": [
         "branch:aia-platinum-wealth-legacy-regular-premium-charge",
+        "branch:aia-platinum-wealth-legacy-single-premium-charge",
         "branch:aia-platinum-wealth-legacy-top-up-premium-charge",
         "branch:aia-platinum-wealth-legacy-premium-holiday-charge",
         "branch:aia-platinum-wealth-legacy-partial-withdrawal-charge",
         "branch:aia-platinum-wealth-legacy-full-surrender-charge",
+        "branch:aia-platinum-wealth-legacy-administration-charge-manual-input",
+        "branch:aia-platinum-wealth-legacy-insurance-risk-charge-manual-input",
         "kernel:top-up-paid-up-to-date-block",
         "kernel:current-death-benefit-estimate",
         "kernel:current-ti-benefit-estimate",
@@ -290,9 +368,6 @@
         "aia-platinum-wealth-legacy-fund-management-charge"
       ],
       "metadataOnlyBehaviors": [
-        "aia-platinum-wealth-legacy-single-premium-corridor",
-        "aia-platinum-wealth-legacy-administration-charge",
-        "aia-platinum-wealth-legacy-insurance-risk-charge",
         "aia-platinum-wealth-legacy-no-lapse-privilege",
         "aia-platinum-wealth-legacy-expiry-age-election",
         "aia-platinum-wealth-legacy-layering-and-adjusted-partial-withdrawal",
@@ -300,14 +375,13 @@
       ]
     },
     "catalogWarnings": [
-      "AIA Platinum Wealth Legacy is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the published regular-premium partial-withdrawal / surrender charge schedules, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, administration charge, insurance risk charge, no-lapse activation or expiry election mechanics, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.",
-      "AIA Platinum Wealth Legacy is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the published regular-premium partial-withdrawal / surrender charge schedules, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, administration charge, insurance risk charge, no-lapse activation or expiry election mechanics, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.",
-      "Single-pay corridor and the 5% single-premium charge remain informational only in V1.",
-      "Administration charge remains informational only because the applicable rates live in the policy illustration rather than the product summary.",
-      "The current death benefit needs manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs because adjusted partial withdrawals and no-lapse history are not reconstructed from history in V1.",
-      "Insurance Risk Charge, No Lapse Privilege activation or termination, and expiry-age election mechanics remain informational only.",
+      "AIA Platinum Wealth Legacy is cataloged as a supported V1 product for the regular-pay 5-year corridor plus the single-pay corridor. The parser captures premium-year regular premium charges, the 5% single-premium charge, the 3% top-up premium charge with the paid-up-to-date block on the regular-pay corridor only, the premium-holiday charge schedule on the regular-pay corridor, the published regular-pay and single-pay partial-withdrawal / surrender charge schedules, manual-input administration-charge and insurance-risk-charge placeholders sourced from the policy illustration, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs that remain user-supplied by design in this app, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while no-lapse activation or expiry election mechanics and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.",
+      "AIA Platinum Wealth Legacy is cataloged as a supported V1 product for the regular-pay 5-year corridor plus the single-pay corridor. The parser captures premium-year regular premium charges, the 5% single-premium charge, the 3% top-up premium charge with the paid-up-to-date block on the regular-pay corridor only, the premium-holiday charge schedule on the regular-pay corridor, the published regular-pay and single-pay partial-withdrawal / surrender charge schedules, manual-input administration-charge and insurance-risk-charge placeholders sourced from the policy illustration, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs that remain user-supplied by design in this app, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while no-lapse activation or expiry election mechanics and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.",
+      "Administration charge is modeled only as a manual-input annualized placeholder because the applicable age / insured-amount rates live in the policy illustration rather than the product summary.",
+      "The current death benefit keeps manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs because adjusted partial-withdrawal history, debt, and no-lapse state are live policy facts this app cannot observe; those inputs are manual by design in V1.",
+      "Insurance Risk Charge is modeled only as a manual-input annualized placeholder because the applicable standard / non-standard life rates live in the policy illustration rather than the product summary. No Lapse Privilege activation or termination and expiry-age election mechanics remain informational only.",
       "Adjusted partial withdrawal, layer creation from insured-amount changes, and minimum-insured-amount gating remain informational only.",
-      "The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both need manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs because adjusted partial withdrawals and TI usage are not reconstructed from history in V1.",
+      "The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both keep manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs because debt, no-lapse status, and cross-policy TI usage are current policy facts this app cannot observe; those inputs are manual by design in V1.",
       "Terminal-illness claim exclusions, settlement workflow, and non-manual post-claim state remain informational only beyond the modeled current terminal-illness and residual-after-TI snapshot surface.",
       "Other protection-side payout handling remains informational only.",
       "Fund-level management charges and no-fund-switching constraints remain informational only."
@@ -319,6 +393,12 @@
       "totalFeesCharged": 4151,
       "totalBonusesReceived": 0,
       "netFeeDrag": 4151,
+      "realGrossFees": 12115.04,
+      "realBonuses": 0,
+      "realNetFeeDrag": 12115.04,
+      "inceptionCharges": 0,
+      "realFundCharges": 8101.01,
+      "realWrapperFees": 4014.03,
       "currentSurrenderValue": 12000,
       "cancelNowPenalty": 8000
     },

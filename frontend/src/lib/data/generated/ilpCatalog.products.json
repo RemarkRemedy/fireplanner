@@ -3714,6 +3714,7 @@
     "economicsStatus": "supported",
     "modeledEconomics": [
       "branch:aia-platinum-wealth-legacy-regular-premium-charge",
+      "branch:aia-platinum-wealth-legacy-single-premium-charge",
       "branch:aia-platinum-wealth-legacy-top-up-premium-charge",
       "branch:aia-platinum-wealth-legacy-premium-holiday-charge",
       "branch:aia-platinum-wealth-legacy-partial-withdrawal-charge",
@@ -3729,14 +3730,13 @@
       "aia-platinum-wealth-legacy-fund-management-charge"
     ],
     "metadataOnlyBehaviors": [
-      "aia-platinum-wealth-legacy-single-premium-corridor",
       "aia-platinum-wealth-legacy-no-lapse-privilege",
       "aia-platinum-wealth-legacy-expiry-age-election",
       "aia-platinum-wealth-legacy-layering-and-adjusted-partial-withdrawal",
       "aia-platinum-wealth-legacy-no-fund-switching"
     ],
     "warnings": [
-      "AIA Platinum Wealth Legacy is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the published regular-premium partial-withdrawal / surrender charge schedules, manual-input administration-charge and insurance-risk-charge placeholders sourced from the policy illustration, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs that remain user-supplied by design in this app, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, no-lapse activation or expiry election mechanics, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface."
+      "AIA Platinum Wealth Legacy is cataloged as a supported V1 product for the regular-pay 5-year corridor plus the single-pay corridor. The parser captures premium-year regular premium charges, the 5% single-premium charge, the 3% top-up premium charge with the paid-up-to-date block on the regular-pay corridor only, the premium-holiday charge schedule on the regular-pay corridor, the published regular-pay and single-pay partial-withdrawal / surrender charge schedules, manual-input administration-charge and insurance-risk-charge placeholders sourced from the policy illustration, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs that remain user-supplied by design in this app, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while no-lapse activation or expiry election mechanics and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface."
     ],
     "archived": false,
     "variants": [
@@ -4067,10 +4067,9 @@
           0.05
         ],
         "warnings": [
-          "AIA Platinum Wealth Legacy is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the published regular-premium partial-withdrawal / surrender charge schedules, manual-input administration-charge and insurance-risk-charge placeholders sourced from the policy illustration, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs that remain user-supplied by design in this app, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, no-lapse activation or expiry election mechanics, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface."
+          "AIA Platinum Wealth Legacy is cataloged as a supported V1 product for the regular-pay 5-year corridor plus the single-pay corridor. The parser captures premium-year regular premium charges, the 5% single-premium charge, the 3% top-up premium charge with the paid-up-to-date block on the regular-pay corridor only, the premium-holiday charge schedule on the regular-pay corridor, the published regular-pay and single-pay partial-withdrawal / surrender charge schedules, manual-input administration-charge and insurance-risk-charge placeholders sourced from the policy illustration, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs that remain user-supplied by design in this app, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while no-lapse activation or expiry election mechanics and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface."
         ],
         "unsupportedItems": [
-          "Single-pay corridor and the 5% single-premium charge remain informational only in V1.",
           "Administration charge is modeled only as a manual-input annualized placeholder because the applicable age / insured-amount rates live in the policy illustration rather than the product summary.",
           "The current death benefit keeps manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs because adjusted partial-withdrawal history, debt, and no-lapse state are live policy facts this app cannot observe; those inputs are manual by design in V1.",
           "Insurance Risk Charge is modeled only as a manual-input annualized placeholder because the applicable standard / non-standard life rates live in the policy illustration rather than the product summary. No Lapse Privilege activation or termination and expiry-age election mechanics remain informational only.",
@@ -4112,22 +4111,289 @@
             "excerpt": "Premium Holiday. When your policy is on Premium Holiday, the premiums payable for any premium-paying supplementary agreements will be deducted by cancellation of units. Your policy will remain on Premium Holiday until yo"
           }
         ]
-      }
-    ],
-    "publishedUnmodeledCorridors": [
+      },
       {
         "id": "sgd-single-pay",
-        "label": "SGD / Single Pay",
-        "paymentStructure": "single-pay",
         "currency": "SGD",
+        "mipLength": 5,
+        "paymentStructure": "single-pay",
         "contributionMode": "single-pay",
-        "status": "not-modeled-yet",
-        "reason": "Published in product summary, not modeled yet",
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Single Pay Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview and product structure",
+                "excerpt": "Product Summary for AIA Platinum Wealth Legacy Version 4.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.a"
+              },
+              {
+                "page": 3,
+                "section": "Single premium and top-up allocation",
+                "excerpt": "Premium Charge = 5% of Single Premium Regular Premium Number of Regular Premiums paid to and accepted by us Premium Charge Annual Semi-annual Quarterly Monthly (% of Regular Premium) st st nd st th st th 1 1 – 2 1 – 4 1 "
+              },
+              {
+                "page": 6,
+                "section": "Top-up premium mechanics",
+                "excerpt": "6.2. Top-Up Premium Policyholder can avoid the policy lapsing by topping up additional premium. Top-ups can be either paid on an ad hoc basis or regularly. Top ups increase the Policy Value but they do not affect the Ins"
+              }
+            ]
+          }
+        ],
+        "bonuses": [],
+        "feeRules": [
+          {
+            "id": "single-premium-charge",
+            "label": "Single Premium Charge",
+            "basis": "initial-single-premium",
+            "rate": 0.05,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 5% premium charge deducted from the accepted single premium before units are purchased."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Single premium and top-up allocation",
+                "excerpt": "Premium Charge = 5% of Single Premium Regular Premium Number of Regular Premiums paid to and accepted by us Premium Charge Annual Semi-annual Quarterly Monthly (% of Regular Premium) st st nd st th st th 1 1 – 2 1 – 4 1 "
+              },
+              {
+                "page": 3,
+                "section": "Single-premium charge and illustration-backed placeholders",
+                "excerpt": "Single Premium Premium Charge = 5% of Single Premium Regular Premium Number of Regular Premiums paid to and accepted by us Premium Charge Annual Semi-annual Quarterly Monthly (% of Regular Premium) st st nd st th st th 1"
+              }
+            ]
+          },
+          {
+            "id": "administration-charge",
+            "label": "Administration Charge",
+            "basis": "fixed-annual",
+            "rate": 0,
+            "amount": 0,
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": 10,
+            "notes": [
+              "Manual-input approximation for the published monthly administration charge corridor during the first 10 policy years.",
+              "Enter the annualized administration charge from the policy illustration. If the illustration shows a monthly amount, multiply it by 12.",
+              "Rate depends on entry age and insured amount. The published summary does not include rate tables."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Single-premium charge and illustration-backed placeholders",
+                "excerpt": "Single Premium Premium Charge = 5% of Single Premium Regular Premium Number of Regular Premiums paid to and accepted by us Premium Charge Annual Semi-annual Quarterly Monthly (% of Regular Premium) st st nd st th st th 1"
+              }
+            ]
+          },
+          {
+            "id": "insurance-risk-charge",
+            "label": "Insurance Risk Charge",
+            "basis": "fixed-annual",
+            "rate": 0,
+            "amount": 0,
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Manual-input approximation for the monthly Insurance Risk Charge deducted on the prevailing sum-at-risk corridor.",
+              "Enter the annualized Insurance Risk Charge from the policy illustration. If the illustration shows a monthly amount, multiply it by 12.",
+              "Applicable rates depend on underwriting class and insurer illustration factors that are not published in the summary."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Single-premium charge and illustration-backed placeholders",
+                "excerpt": "Single Premium Premium Charge = 5% of Single Premium Regular Premium Number of Regular Premiums paid to and accepted by us Premium Charge Annual Semi-annual Quarterly Monthly (% of Regular Premium) st st nd st th st th 1"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 3% premium charge deducted from each accepted ad hoc top-up premium."
+            ],
+            "sourceRefs": [
+              {
+                "page": 3,
+                "section": "Single premium and top-up allocation",
+                "excerpt": "Premium Charge = 5% of Single Premium Regular Premium Number of Regular Premiums paid to and accepted by us Premium Charge Annual Semi-annual Quarterly Monthly (% of Regular Premium) st st nd st th st th 1 1 – 2 1 – 4 1 "
+              },
+              {
+                "page": 6,
+                "section": "Top-up premium mechanics",
+                "excerpt": "6.2. Top-Up Premium Policyholder can avoid the policy lapsing by topping up additional premium. Top-ups can be either paid on an ad hoc basis or regularly. Top ups increase the Policy Value but they do not affect the Ins"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.18
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.16
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.14
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.12
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.1
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": 6,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 7,
+                "endPolicyYear": 7,
+                "rate": 0.06
+              },
+              {
+                "startPolicyYear": 8,
+                "endPolicyYear": 8,
+                "rate": 0.04
+              },
+              {
+                "startPolicyYear": 9,
+                "endPolicyYear": 9,
+                "rate": 0.02
+              },
+              {
+                "startPolicyYear": 10,
+                "endPolicyYear": 10,
+                "rate": 0.01
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published single-pay partial withdrawal charge factor on withdrawn policy value."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Single-pay withdrawal and surrender schedule",
+                "excerpt": "Single Premium Units Partial Withdrawal/Surrender Charge = Partial Withdrawal/Surrender Charge Factor x Single Premium Policy Value Withdrawn Policy Year Partial Withdrawal/Surrender Charge Rate 1 18% 2 16% 3 14% 4 12% 5"
+              }
+            ]
+          }
+        ],
+        "policyStateSupport": {
+          "automaticLapseOnAccountValueDepletion": false
+        },
+        "eecTable": [
+          0.18,
+          0.16,
+          0.14,
+          0.12,
+          0.1,
+          0.08,
+          0.06,
+          0.04,
+          0.02,
+          0.01
+        ],
+        "warnings": [
+          "AIA Platinum Wealth Legacy is cataloged as a supported V1 product for the single-pay corridor. The parser captures the 5% single-premium charge, the 3% top-up premium charge, the published single-pay partial-withdrawal / surrender charge schedules, manual-input administration-charge and insurance-risk-charge placeholders sourced from the policy illustration, and the current-state death benefit corridor plus terminal-illness and residual-after-TI snapshots via the same manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs, while no-lapse activation or expiry election mechanics and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current snapshot surface."
+        ],
+        "unsupportedItems": [
+          "Administration charge is modeled only as a manual-input annualized placeholder because the applicable age / insured-amount rates live in the policy illustration rather than the product summary.",
+          "The current death benefit keeps manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs because adjusted partial-withdrawal history, debt, and no-lapse state are live policy facts this app cannot observe; those inputs are manual by design in V1.",
+          "Insurance Risk Charge is modeled only as a manual-input annualized placeholder because the applicable standard / non-standard life rates live in the policy illustration rather than the product summary. No Lapse Privilege activation or termination and expiry-age election mechanics remain informational only.",
+          "Adjusted partial withdrawal, layer creation from insured-amount changes, and minimum-insured-amount gating remain informational only.",
+          "The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both keep manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs because debt, no-lapse status, and cross-policy TI usage are current policy facts this app cannot observe; those inputs are manual by design in V1.",
+          "Terminal-illness claim exclusions, settlement workflow, and non-manual post-claim state remain informational only beyond the modeled current terminal-illness and residual-after-TI snapshot surface.",
+          "Other protection-side payout handling remains informational only.",
+          "Fund-level management charges and no-fund-switching constraints remain informational only."
+        ],
         "sourceRefs": [
           {
             "page": 1,
-            "section": "Published corridor family",
-            "excerpt": "Single Pay is published alongside the modeled SGD 5-year regular-pay corridor."
+            "section": "Plan overview and product structure",
+            "excerpt": "Product Summary for AIA Platinum Wealth Legacy Version 4.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.a"
+          },
+          {
+            "page": 3,
+            "section": "Single premium and top-up allocation",
+            "excerpt": "Premium Charge = 5% of Single Premium Regular Premium Number of Regular Premiums paid to and accepted by us Premium Charge Annual Semi-annual Quarterly Monthly (% of Regular Premium) st st nd st th st th 1 1 – 2 1 – 4 1 "
+          },
+          {
+            "page": 3,
+            "section": "Single-premium charge and illustration-backed placeholders",
+            "excerpt": "Single Premium Premium Charge = 5% of Single Premium Regular Premium Number of Regular Premiums paid to and accepted by us Premium Charge Annual Semi-annual Quarterly Monthly (% of Regular Premium) st st nd st th st th 1"
+          },
+          {
+            "page": 4,
+            "section": "Single-pay withdrawal and surrender schedule",
+            "excerpt": "Single Premium Units Partial Withdrawal/Surrender Charge = Partial Withdrawal/Surrender Charge Factor x Single Premium Policy Value Withdrawn Policy Year Partial Withdrawal/Surrender Charge Rate 1 18% 2 16% 3 14% 4 12% 5"
+          },
+          {
+            "page": 6,
+            "section": "Top-up premium mechanics",
+            "excerpt": "6.2. Top-Up Premium Policyholder can avoid the policy lapsing by topping up additional premium. Top-ups can be either paid on an ad hoc basis or regularly. Top ups increase the Policy Value but they do not affect the Ins"
           }
         ]
       }

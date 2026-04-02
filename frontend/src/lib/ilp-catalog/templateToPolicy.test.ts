@@ -11758,6 +11758,59 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current residual death-benefit estimate after a TI claim today'))).toBe(true)
   })
 
+  it('maps AIA Platinum Wealth Legacy into a supported single-pay seed', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'aia-platinum-wealth-legacy')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-single-pay')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.economicsStatus).toBe('supported')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-platinum-wealth-legacy-single-premium-charge')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-platinum-wealth-legacy-administration-charge-manual-input')
+    expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-platinum-wealth-legacy-insurance-risk-charge-manual-input')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-legacy-single-premium-corridor')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-wealth-legacy-no-lapse-privilege')
+    expect(seed.monthlyContribution).toBe(0)
+    expect(seed.catalogSource?.contributionMode).toBe('single-pay')
+    expect(seed.policyStateSupport).toEqual({
+      automaticLapseOnAccountValueDepletion: false,
+    })
+    expect(seed.chargeRules).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'single-premium-charge',
+        basis: 'initial-single-premium',
+        rate: 0.05,
+      }),
+      expect.objectContaining({
+        id: 'administration-charge',
+        basis: 'fixed-annual',
+        requiresManualInput: true,
+      }),
+      expect.objectContaining({
+        id: 'insurance-risk-charge',
+        basis: 'fixed-annual',
+        requiresManualInput: true,
+      }),
+    ]))
+    expect(seed.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        rate: 0.03,
+      }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+      }),
+    ])
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('5% single-premium charge'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('published regular-pay and single-pay partial-withdrawal / surrender charge schedules'))).toBe(true)
+  })
+
   it('maps #goAssure into a regular-pay supported seed with policy-charge and shortfall-charge mechanics', () => {
     const { manifest, products } = getIlpCatalog()
     const product = products.find((entry) => entry.id === 'tokio-marine-goassure')

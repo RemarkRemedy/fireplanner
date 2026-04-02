@@ -47,6 +47,7 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
         lines: [
           { y: 700, text: 'Partial Withdrawal/Surrender Charge Rate 1 50% 2 45% 3 40% 4 35% 5 30% 6 25% 7 20% 8 15% 9 10% 10 5%' },
           { y: 680, text: 'Premium Holiday Charge Annual Rate 1-4 35% 5+ 0%' },
+          { y: 660, text: 'Single Premium Partial Withdrawal/Surrender Charge Rate 1 18% 2 16% 3 14% 4 12% 5 10% 6 8% 7 6% 8 4% 9 2% 10 1%' },
         ],
       },
       {
@@ -72,7 +73,7 @@ function makeSyntheticDocument(): ExtractedPdfDocument {
 }
 
 describe('parseAiaPlatinumWealthLegacy', () => {
-  it('builds a valid supported regular-pay product from extracted summary text', async () => {
+  it('builds valid supported regular-pay and single-pay product corridors from extracted summary text', async () => {
     const document = makeSyntheticDocument()
     const product = parseAiaPlatinumWealthLegacy({
       document,
@@ -86,6 +87,7 @@ describe('parseAiaPlatinumWealthLegacy', () => {
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:aia-platinum-wealth-legacy-regular-premium-charge',
+      'branch:aia-platinum-wealth-legacy-single-premium-charge',
       'branch:aia-platinum-wealth-legacy-top-up-premium-charge',
       'branch:aia-platinum-wealth-legacy-premium-holiday-charge',
       'branch:aia-platinum-wealth-legacy-partial-withdrawal-charge',
@@ -97,14 +99,15 @@ describe('parseAiaPlatinumWealthLegacy', () => {
       'kernel:current-ti-benefit-estimate',
       'kernel:current-residual-death-benefit-after-ti-estimate',
     ])
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-legacy-single-premium-corridor')
     expect(product.metadataOnlyBehaviors).toContain('aia-platinum-wealth-legacy-no-lapse-privilege')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-legacy-protection-benefits')
-    expect(product.warnings.some((warning) => warning.includes('regular-pay 5-year corridor'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('regular-pay 5-year corridor plus the single-pay corridor'))).toBe(true)
     expect(product.warnings.some((warning) => warning.includes('manual-input administration-charge and insurance-risk-charge placeholders sourced from the policy illustration'))).toBe(true)
     expect(product.warnings.some((warning) => warning.includes('current No Lapse Privilege mode inputs that remain user-supplied by design in this app'))).toBe(true)
 
-    const variant = product.variants[0]
-    expect(variant).toMatchObject({
+    const regularVariant = product.variants.find((entry) => entry.id === 'sgd-mip-5')
+    expect(regularVariant).toMatchObject({
       id: 'sgd-mip-5',
       mipLength: 5,
       eecTable: [0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05],
@@ -113,7 +116,7 @@ describe('parseAiaPlatinumWealthLegacy', () => {
         blockTopUpsWhenPremiumsNotPaidUpToDate: true,
       },
     })
-    expect(variant.feeRules).toEqual(expect.arrayContaining([
+    expect(regularVariant?.feeRules).toEqual(expect.arrayContaining([
       expect.objectContaining({
         id: 'regular-premium-charge',
         yearBasis: 'premium-year',
@@ -132,7 +135,7 @@ describe('parseAiaPlatinumWealthLegacy', () => {
         activeWindow: 'policy-term',
       }),
     ]))
-    expect(variant.eventChargeRules).toEqual([
+    expect(regularVariant?.eventChargeRules).toEqual([
       expect.objectContaining({
         id: 'top-up-premium-charge',
         trigger: 'top-up',
@@ -159,10 +162,65 @@ describe('parseAiaPlatinumWealthLegacy', () => {
         ],
       }),
     ])
-    expect(variant.unsupportedItems).toContain('The current death benefit keeps manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs because adjusted partial-withdrawal history, debt, and no-lapse state are live policy facts this app cannot observe; those inputs are manual by design in V1.')
-    expect(variant.unsupportedItems).toContain('The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both keep manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs because debt, no-lapse status, and cross-policy TI usage are current policy facts this app cannot observe; those inputs are manual by design in V1.')
-    expect(variant.unsupportedItems).toContain('Terminal-illness claim exclusions, settlement workflow, and non-manual post-claim state remain informational only beyond the modeled current terminal-illness and residual-after-TI snapshot surface.')
-    expect(variant.unsupportedItems).toContain('Other protection-side payout handling remains informational only.')
+    expect(regularVariant?.unsupportedItems).toContain('The current death benefit keeps manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs because adjusted partial-withdrawal history, debt, and no-lapse state are live policy facts this app cannot observe; those inputs are manual by design in V1.')
+    expect(regularVariant?.unsupportedItems).toContain('The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both keep manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs because debt, no-lapse status, and cross-policy TI usage are current policy facts this app cannot observe; those inputs are manual by design in V1.')
+    expect(regularVariant?.unsupportedItems).toContain('Terminal-illness claim exclusions, settlement workflow, and non-manual post-claim state remain informational only beyond the modeled current terminal-illness and residual-after-TI snapshot surface.')
+    expect(regularVariant?.unsupportedItems).toContain('Other protection-side payout handling remains informational only.')
+
+    const singlePayVariant = product.variants.find((entry) => entry.id === 'sgd-single-pay')
+    expect(singlePayVariant).toMatchObject({
+      id: 'sgd-single-pay',
+      paymentStructure: 'single-pay',
+      contributionMode: 'single-pay',
+      eecTable: [0.18, 0.16, 0.14, 0.12, 0.1, 0.08, 0.06, 0.04, 0.02, 0.01],
+      policyStateSupport: {
+        automaticLapseOnAccountValueDepletion: false,
+      },
+    })
+    expect(singlePayVariant?.feeRules).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'single-premium-charge',
+        basis: 'initial-single-premium',
+        rate: 0.05,
+      }),
+      expect.objectContaining({
+        id: 'administration-charge',
+        basis: 'fixed-annual',
+        requiresManualInput: true,
+      }),
+      expect.objectContaining({
+        id: 'insurance-risk-charge',
+        basis: 'fixed-annual',
+        requiresManualInput: true,
+      }),
+    ]))
+    expect(singlePayVariant?.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        rate: 0.03,
+      }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+        rateSchedule: [
+          { startPolicyYear: 1, endPolicyYear: 1, rate: 0.18 },
+          { startPolicyYear: 2, endPolicyYear: 2, rate: 0.16 },
+          { startPolicyYear: 3, endPolicyYear: 3, rate: 0.14 },
+          { startPolicyYear: 4, endPolicyYear: 4, rate: 0.12 },
+          { startPolicyYear: 5, endPolicyYear: 5, rate: 0.1 },
+          { startPolicyYear: 6, endPolicyYear: 6, rate: 0.08 },
+          { startPolicyYear: 7, endPolicyYear: 7, rate: 0.06 },
+          { startPolicyYear: 8, endPolicyYear: 8, rate: 0.04 },
+          { startPolicyYear: 9, endPolicyYear: 9, rate: 0.02 },
+          { startPolicyYear: 10, endPolicyYear: 10, rate: 0.01 },
+        ],
+      }),
+    ])
+    expect(singlePayVariant?.eventChargeRules.map((rule) => rule.id)).not.toContain('premium-holiday-charge')
+    expect(singlePayVariant?.warnings).toContain(
+      'AIA Platinum Wealth Legacy is cataloged as a supported V1 product for the single-pay corridor. The parser captures the 5% single-premium charge, the 3% top-up premium charge, the published single-pay partial-withdrawal / surrender charge schedules, manual-input administration-charge and insurance-risk-charge placeholders sourced from the policy illustration, and the current-state death benefit corridor plus terminal-illness and residual-after-TI snapshots via the same manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs, while no-lapse activation or expiry election mechanics and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current snapshot surface.',
+    )
   })
 
   it.skipIf(!existsSync(SOURCE_PATH))('matches the live source PDF when the local corpus is available', async () => {
@@ -175,6 +233,7 @@ describe('parseAiaPlatinumWealthLegacy', () => {
 
     expect(() => ilpCatalogProductSchema.parse(product)).not.toThrow()
     expect(product.sourceChecksumSha256).toBe(checksum)
-    expect(product.variants[0]?.eecTable).toEqual([0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05])
+    expect(product.variants.find((entry) => entry.id === 'sgd-mip-5')?.eecTable).toEqual([0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05])
+    expect(product.variants.find((entry) => entry.id === 'sgd-single-pay')?.eecTable).toEqual([0.18, 0.16, 0.14, 0.12, 0.1, 0.08, 0.06, 0.04, 0.02, 0.01])
   }, 30_000)
 })

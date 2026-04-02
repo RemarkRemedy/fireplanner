@@ -97,6 +97,7 @@ export type GoldenCoverageTag =
   | 'branch:aia-platinum-wealth-elite-2-partial-withdrawal-charge'
   | 'branch:aia-platinum-wealth-elite-2-full-surrender-charge'
   | 'branch:aia-platinum-wealth-legacy-regular-premium-charge'
+  | 'branch:aia-platinum-wealth-legacy-single-premium-charge'
   | 'branch:aia-platinum-wealth-legacy-top-up-premium-charge'
   | 'branch:aia-platinum-wealth-legacy-premium-holiday-charge'
   | 'branch:aia-platinum-wealth-legacy-partial-withdrawal-charge'
@@ -6932,23 +6933,28 @@ function aiaPlatinumWealthElite2StressPolicy(
 
 function aiaPlatinumWealthLegacyBasePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-mip-5' | 'sgd-single-pay',
   id: string,
   funds: IlpFund[],
   overrides: Partial<IlpPolicyInput> = {},
 ): IlpPolicyInput {
-  const base = seedPolicy(snapshot, 'aia-platinum-wealth-legacy', 'sgd-mip-5', id, {
-    monthlyContribution: 900,
-    currentPolicyYear: 3,
-    monthsAlreadyPaid: 24,
+  const isSinglePay = variantId === 'sgd-single-pay'
+  const base = seedPolicy(snapshot, 'aia-platinum-wealth-legacy', variantId, id, {
+    initialSinglePremium: isSinglePay ? 100_000 : 0,
+    monthlyContribution: isSinglePay ? 0 : 900,
+    currentPolicyYear: isSinglePay ? 1 : 3,
+    monthsAlreadyPaid: isSinglePay ? 0 : 24,
   })
 
   return withResolvedManualInputs(withFunds(
     ilpPolicySchema.parse({
       ...base,
-      name: 'Golden AIA Platinum Wealth Legacy (SGD / MIP 5)',
+      name: isSinglePay
+        ? 'Golden AIA Platinum Wealth Legacy (SGD / Single Pay)'
+        : 'Golden AIA Platinum Wealth Legacy (SGD / MIP 5)',
       accounts: base.accounts.map((account) => ({
         ...account,
-        currentValue: 20_000,
+        currentValue: isSinglePay ? 94_000 : 20_000,
       })),
       policyEvents: [],
       ...overrides,
@@ -6959,18 +6965,53 @@ function aiaPlatinumWealthLegacyBasePolicy(
 
 function aiaPlatinumWealthLegacyBaselinePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-mip-5' | 'sgd-single-pay',
   id: string,
 ): IlpPolicyInput {
-  return aiaPlatinumWealthLegacyBasePolicy(snapshot, id, AIA_BALANCED_FUNDS, {
-    name: 'Golden AIA Platinum Wealth Legacy (SGD / MIP 5 Baseline)',
+  return aiaPlatinumWealthLegacyBasePolicy(snapshot, variantId, id, AIA_BALANCED_FUNDS, {
+    name: variantId === 'sgd-single-pay'
+      ? 'Golden AIA Platinum Wealth Legacy (SGD / Single Pay Baseline)'
+      : 'Golden AIA Platinum Wealth Legacy (SGD / MIP 5 Baseline)',
   })
 }
 
 function aiaPlatinumWealthLegacyEventHeavyPolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: 'sgd-mip-5' | 'sgd-single-pay',
   id: string,
 ): IlpPolicyInput {
-  return aiaPlatinumWealthLegacyBasePolicy(snapshot, id, AIA_BALANCED_FUNDS, {
+  if (variantId === 'sgd-single-pay') {
+    return aiaPlatinumWealthLegacyBasePolicy(snapshot, variantId, id, AIA_BALANCED_FUNDS, {
+      name: 'Golden AIA Platinum Wealth Legacy (SGD / Single Pay Event Heavy)',
+      currentPolicyYear: 3,
+      monthsAlreadyPaid: 24,
+      accounts: [
+        {
+          ...seedPolicy(snapshot, 'aia-platinum-wealth-legacy', 'sgd-single-pay', id).accounts[0]!,
+          currentValue: 88_000,
+        },
+      ],
+      policyEvents: [
+        {
+          id: 'top-up-1',
+          type: 'top-up',
+          startPolicyMonth: 26,
+          durationMonths: 1,
+          amount: 8_000,
+        },
+        {
+          id: 'withdrawal-1',
+          type: 'partial-withdrawal',
+          startPolicyMonth: 31,
+          durationMonths: 1,
+          amount: 4_500,
+          accountId: 'policy',
+        },
+      ],
+    })
+  }
+
+  return aiaPlatinumWealthLegacyBasePolicy(snapshot, variantId, id, AIA_BALANCED_FUNDS, {
     name: 'Golden AIA Platinum Wealth Legacy (SGD / MIP 5 Event Heavy)',
     policyEvents: [
       {
@@ -7004,7 +7045,7 @@ function aiaPlatinumWealthLegacyStressPolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
 ): IlpPolicyInput {
-  return aiaPlatinumWealthLegacyBasePolicy(snapshot, id, AIA_STRESS_FUNDS, {
+  return aiaPlatinumWealthLegacyBasePolicy(snapshot, 'sgd-mip-5', id, AIA_STRESS_FUNDS, {
     name: 'Golden AIA Platinum Wealth Legacy (SGD / MIP 5 OCF Stress)',
   })
 }
@@ -10940,6 +10981,26 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
   },
   {
     productId: 'aia-platinum-wealth-legacy',
+    variantId: 'sgd-single-pay',
+    scenarioId: 'baseline',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'branch:aia-platinum-wealth-legacy-single-premium-charge',
+      'branch:aia-platinum-wealth-legacy-full-surrender-charge',
+    ],
+    description: 'AIA Platinum Wealth Legacy baseline scenario proving the supported single-pay corridor.',
+    integrityChecks: [
+      {
+        description: 'single-pay corridor keeps monthly contribution at zero',
+        test: (_, artifact) => artifact.policyInput.monthlyContribution === 0,
+      },
+    ],
+  },
+  {
+    productId: 'aia-platinum-wealth-legacy',
     variantId: 'sgd-mip-5',
     scenarioId: 'event-heavy',
     fixtureClass: 'supported',
@@ -10954,6 +11015,24 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       {
         description: 'event-heavy policy produces a later withdrawal and top-up activity',
         test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0 && row.annualContribution > artifact.policyInput.monthlyContribution * 12),
+      },
+    ],
+  },
+  {
+    productId: 'aia-platinum-wealth-legacy',
+    variantId: 'sgd-single-pay',
+    scenarioId: 'event-heavy',
+    fixtureClass: 'supported',
+    coverageTags: [
+      'event-heavy',
+      'branch:aia-platinum-wealth-legacy-top-up-premium-charge',
+      'branch:aia-platinum-wealth-legacy-partial-withdrawal-charge',
+    ],
+    description: 'AIA Platinum Wealth Legacy event-heavy scenario covering top-up and partial withdrawal on the supported single-pay corridor.',
+    integrityChecks: [
+      {
+        description: 'single-pay event-heavy policy produces a later withdrawal and top-up activity',
+        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0 && row.annualContribution > 0),
       },
     ],
   },
@@ -18183,10 +18262,10 @@ function buildPolicyForDefinition(
     return aiaPlatinumWealthElite2StressPolicy(snapshot, id)
   }
   if (definition.productId === 'aia-platinum-wealth-legacy' && definition.scenarioId === 'baseline') {
-    return aiaPlatinumWealthLegacyBaselinePolicy(snapshot, id)
+    return aiaPlatinumWealthLegacyBaselinePolicy(snapshot, definition.variantId as 'sgd-mip-5' | 'sgd-single-pay', id)
   }
   if (definition.productId === 'aia-platinum-wealth-legacy' && definition.scenarioId === 'event-heavy') {
-    return aiaPlatinumWealthLegacyEventHeavyPolicy(snapshot, id)
+    return aiaPlatinumWealthLegacyEventHeavyPolicy(snapshot, definition.variantId as 'sgd-mip-5' | 'sgd-single-pay', id)
   }
   if (definition.productId === 'aia-platinum-wealth-legacy' && definition.scenarioId === 'ocf-stress') {
     return aiaPlatinumWealthLegacyStressPolicy(snapshot, id)
