@@ -27,11 +27,18 @@ export function FundFeeAssumptionField({
         labelClassName={inputLabelClassName}
         tooltip="Annual fee charged by the fund manager. This affects the fund-fee drag in the ILP fee story. Use the exact rate if you have it, or start from a typical range."
       />
-      <div className="rounded-md border border-slate-200 bg-slate-50/80 p-3 dark:border-slate-800 dark:bg-slate-950/60">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-            Typical shortcuts
-          </span>
+      <div className="rounded-xl border border-slate-200/80 bg-white/80 p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950/60">
+        <div className="space-y-2">
+          <div>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+              Typical fund mixes
+            </span>
+            <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+              Use one of these as a starting point if you do not have the exact
+              fee from your statement yet.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
           {ILP_FUND_FEE_SUGGESTIONS.map((suggestion) => (
             <Button
               key={suggestion.label}
@@ -48,8 +55,9 @@ export function FundFeeAssumptionField({
               {suggestion.label} {`${(suggestion.value * 100).toFixed(1)}%`}
             </Button>
           ))}
+          </div>
         </div>
-        <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+        <p className="mt-3 border-t border-slate-200/80 pt-3 text-xs leading-5 text-slate-500 dark:border-slate-800 dark:text-slate-400">
           {note}
         </p>
       </div>

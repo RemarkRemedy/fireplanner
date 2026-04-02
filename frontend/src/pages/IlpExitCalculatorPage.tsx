@@ -97,85 +97,121 @@ function ExitSetupForm({ seed, onConfirm, onCancel }: ExitSetupFormProps) {
   );
 
   return (
-    <Card className="border-primary/30">
-      <CardContent className="space-y-6 pt-6">
-        <div className="space-y-2">
-          <h2 className="text-xl font-semibold">{seed.name}</h2>
-          <p className="text-sm text-muted-foreground">
-            {seed.insurer} · {seed.currency}
-            {seed.mipLength != null && ` · MIP ${seed.mipLength} years`}
-          </p>
-        </div>
-
-        <div className="space-y-1">
-          <p className="text-sm font-medium">Your current policy details</p>
-          <p className="text-xs text-muted-foreground">
-            Enter your current policy year, premiums paid, and account balances
-            from your latest policy statement.
-          </p>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          {isSinglePremium ? (
-            <CurrencyInput
-              label="Initial Single Premium"
-              value={initialSinglePremium}
-              onChange={setInitialSinglePremium}
-              currency={seed.currency}
-              labelClassName={EXIT_SETUP_LABEL_CLASS}
-            />
-          ) : (
-            <CurrencyInput
-              label="Monthly Premium"
-              value={monthlyContribution}
-              onChange={setMonthlyContribution}
-              currency={seed.currency}
-              labelClassName={EXIT_SETUP_LABEL_CLASS}
-            />
-          )}
-          <NumberInput
-            label="Current Policy Year"
-            value={currentPolicyYear}
-            onChange={setCurrentPolicyYear}
-            integer
-            min={1}
-            labelClassName={EXIT_SETUP_LABEL_CLASS}
-          />
-          <NumberInput
-            label="Months Already Paid"
-            value={monthsAlreadyPaid}
-            onChange={setMonthsAlreadyPaid}
-            integer
-            min={0}
-            labelClassName={EXIT_SETUP_LABEL_CLASS}
-          />
-          <FundFeeAssumptionField
-            value={fundFee}
-            onChange={setFundFee}
-            inputLabelClassName={EXIT_SETUP_LABEL_CLASS}
-            note="Starts at 1.5% p.a. as a usable default for current-policy review. Replace it with the fund fee from your policy documents if you have it, or use one of the typical shortcuts as a starting point."
-          />
-          <div className="flex items-end">
-            <div className="space-y-1 text-sm">
-              <div className="text-muted-foreground">Projection horizon</div>
-              <div className="font-medium">{horizonYears} years</div>
+    <Card className="border-primary/30 shadow-sm">
+      <CardContent className="space-y-8 p-6 sm:p-7">
+        <div className="space-y-4">
+          <Badge
+            variant="outline"
+            className="w-fit border-emerald-200 bg-emerald-50 text-[11px] uppercase tracking-[0.18em] text-emerald-700"
+          >
+            Current-policy review
+          </Badge>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-semibold tracking-tight">{seed.name}</h2>
+            <p className="text-sm text-muted-foreground">
+              {seed.insurer} · {seed.currency}
+              {seed.mipLength != null && ` · MIP ${seed.mipLength} years`}
+            </p>
+          </div>
+          <div className="grid gap-3 lg:grid-cols-[1.5fr_1fr_0.8fr]">
+            <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                What this review does
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-700">
+                Starts from where your policy stands today, then estimates what
+                premiums, bonuses, fees, and investment performance may have
+                contributed so far.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Bring from your statement
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-700">
+                Policy year, months already paid, and your current account
+                balance
+                {hasMultipleAccounts ? "s" : ""}.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-blue-200/80 bg-blue-50/70 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">
+                Projection horizon
+              </p>
+              <div className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+                {horizonYears}
+              </div>
+              <p className="text-sm text-slate-600">years from today</p>
             </div>
           </div>
         </div>
 
-        {/* Per-account balances */}
-        <div className="space-y-3">
-          <div className="space-y-1">
-            <p className="text-sm font-medium">
+        <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5 sm:p-6">
+          <div className="mb-5 space-y-1">
+            <p className="text-sm font-semibold text-slate-900">
+              Your current policy details
+            </p>
+            <p className="text-sm leading-6 text-muted-foreground">
+              Enter the key inputs that anchor the exit analysis. You can adjust
+              the fund fee here if your current fund mix differs from the
+              default assumption.
+            </p>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2">
+            {isSinglePremium ? (
+              <CurrencyInput
+                label="Initial Single Premium"
+                value={initialSinglePremium}
+                onChange={setInitialSinglePremium}
+                currency={seed.currency}
+                labelClassName={EXIT_SETUP_LABEL_CLASS}
+              />
+            ) : (
+              <CurrencyInput
+                label="Monthly Premium"
+                value={monthlyContribution}
+                onChange={setMonthlyContribution}
+                currency={seed.currency}
+                labelClassName={EXIT_SETUP_LABEL_CLASS}
+              />
+            )}
+            <NumberInput
+              label="Current Policy Year"
+              value={currentPolicyYear}
+              onChange={setCurrentPolicyYear}
+              integer
+              min={1}
+              labelClassName={EXIT_SETUP_LABEL_CLASS}
+            />
+            <NumberInput
+              label="Months Already Paid"
+              value={monthsAlreadyPaid}
+              onChange={setMonthsAlreadyPaid}
+              integer
+              min={0}
+              labelClassName={EXIT_SETUP_LABEL_CLASS}
+            />
+            <FundFeeAssumptionField
+              value={fundFee}
+              onChange={setFundFee}
+              inputLabelClassName={EXIT_SETUP_LABEL_CLASS}
+              note="Starts at 1.5% p.a. as a usable default for current-policy review. Replace it with the fund fee from your policy documents if you have it, or use one of the typical shortcuts as a starting point."
+            />
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6">
+          <div className="mb-5 space-y-1">
+            <p className="text-sm font-semibold text-slate-900">
               {hasMultipleAccounts
                 ? "Current account balances"
                 : "Current account balance"}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm leading-6 text-muted-foreground">
               Find these on your latest policy statement.{" "}
               {hasMultipleAccounts
-                ? "EEC (early exit charge) applies only to accounts marked as subject to EEC, so entering accurate per-account values matters for exit calculations."
-                : "This is used to calculate your surrender value and exit options."}
+                ? "EEC (early exit charge) applies only to accounts marked as subject to EEC, so accurate per-account values matter for exit calculations."
+                : "This helps estimate your surrender value and what staying or exiting could look like next."}
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -191,12 +227,13 @@ function ExitSetupForm({ seed, onConfirm, onCancel }: ExitSetupFormProps) {
                   }))
                 }
                 currency={seed.currency}
+                labelClassName={EXIT_SETUP_LABEL_CLASS}
               />
             ))}
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 border-t border-slate-200/80 pt-2">
           <Button onClick={handleConfirm} className="gap-2">
             <Calculator className="h-4 w-4" />
             Calculate exit options
