@@ -248,6 +248,55 @@ export function IlpLeaderboardPage() {
   const regularMethodNote = regularBasisMode === 'custom'
     ? `Regular-premium rows use your custom ${customMonthlyPremium != null ? formatNumber(customMonthlyPremium) : 'custom'} per-month amount in each product's policy currency, policy year 1, 0 months paid, the mid return scenario, and the full horizon basis.`
     : 'Regular-premium rows use the standardized 350/month basis in each product\'s policy currency, policy year 1, 0 months paid, the mid return scenario, and the full horizon basis.'
+  const hasViewOverrides = activePremiumSection !== 'regular'
+    || regularBasisMode !== 'standardized'
+    || confirmedPremium != null
+    || search.trim().length > 0
+    || filterInsurer != null
+    || sortKey !== 'netFeeDragPct'
+    || sortDir !== 'asc'
+  const activeSortLabel = (() => {
+    const direction = sortDir === 'asc' ? 'lowest first' : 'highest first'
+    switch (sortKey) {
+      case 'totalFeesCharged':
+        return `Gross fees, ${direction}`
+      case 'totalBonusesReceived':
+        return `Bonuses, ${direction}`
+      case 'bestExitYear':
+        return `Lowest-fee exit year, ${direction}`
+      case 'mipLength':
+        return `MIP length, ${direction}`
+      case 'insurer':
+        return `Insurer, ${direction}`
+      case 'productName':
+        return `Product, ${direction}`
+      case 'netFeeDragPct':
+      default:
+        return `Net fees / premiums, ${direction}`
+    }
+  })()
+  const activeViewBadges = [
+    activePremiumSection === 'regular' ? 'Regular premium' : 'Single premium',
+    activePremiumSection === 'regular'
+      ? regularBasisMode === 'custom'
+        ? `Custom basis${confirmedPremium != null ? `: ${formatNumber(confirmedPremium)}/month` : ''}`
+        : 'Standardized 350/month basis'
+      : 'Standardized single-premium basis',
+    `Sort: ${activeSortLabel}`,
+    search.trim() ? `Search: ${search.trim()}` : null,
+    filterInsurer ? filterInsurer : null,
+  ].filter((value): value is string => Boolean(value))
+
+  function resetComparisonView() {
+    setSearch('')
+    setFilterInsurer(null)
+    setSortKey('netFeeDragPct')
+    setSortDir('asc')
+    setActivePremiumSection('regular')
+    setRegularBasisMode('standardized')
+    setConfirmedPremium(null)
+    setCustomMonthlyPremiumInput(String(STANDARD_MONTHLY_PREMIUM))
+  }
 
   return (
     <div className="space-y-6 text-foreground">
@@ -262,6 +311,17 @@ export function IlpLeaderboardPage() {
                 Regular-premium and single-premium products are separated so they are not ranked on the same table.
               </p>
             </div>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Button asChild size="sm" variant="outline">
+                <a href="#leaderboard-basis">Premium basis</a>
+              </Button>
+              <Button asChild size="sm" variant="outline">
+                <a href="#leaderboard-filters">Filters</a>
+              </Button>
+              <Button asChild size="sm" variant="outline">
+                <a href="#leaderboard-results">Ranked table</a>
+              </Button>
+            </div>
           </div>
 
           <div className="rounded-lg border border-border bg-muted/30 p-4">
@@ -274,7 +334,10 @@ export function IlpLeaderboardPage() {
           </div>
         </div>
 
-        <div className="mt-6 flex flex-col gap-4 border-t border-border/70 pt-6 xl:flex-row xl:items-end xl:justify-between">
+        <div
+          id="leaderboard-basis"
+          className="mt-6 flex scroll-mt-24 flex-col gap-4 border-t border-border/70 pt-6 xl:flex-row xl:items-end xl:justify-between"
+        >
           <div className="max-w-3xl space-y-2">
             <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Premium basis</div>
             <p className="text-sm leading-6 text-muted-foreground">
@@ -390,7 +453,7 @@ export function IlpLeaderboardPage() {
         </section>
       )}
 
-      <section className="rounded-lg border border-border bg-card p-4 sm:p-5">
+      <section id="leaderboard-filters" className="scroll-mt-24 rounded-lg border border-border bg-card p-4 sm:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
             <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Filters</div>
@@ -422,9 +485,32 @@ export function IlpLeaderboardPage() {
             ))}
           </select>
         </div>
+
+        <div className="mt-4 rounded-lg border border-border bg-muted/20 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                <span><strong className="text-foreground">{filtered.length}</strong> results</span>
+                <span>{activePremiumSection === 'regular' ? 'Regular-premium ranking' : 'Single-premium ranking'}</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {activeViewBadges.map((badge) => (
+                  <span key={badge} className="inline-flex rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground">
+                    {badge}
+                  </span>
+                ))}
+              </div>
+            </div>
+            {hasViewOverrides && (
+              <Button type="button" variant="outline" size="sm" onClick={resetComparisonView} className="w-fit">
+                Reset view
+              </Button>
+            )}
+          </div>
+        </div>
       </section>
 
-      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+      <section id="leaderboard-results" className="scroll-mt-24 overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <div className="border-b border-border px-4 py-3 sm:px-5">
           <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Scoreboard</div>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
