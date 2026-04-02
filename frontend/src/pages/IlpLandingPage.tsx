@@ -38,7 +38,7 @@ export function IlpLandingPage() {
     },
   ]
 
-  const entryCards = [
+  const guidedDashboards = [
     {
       title: "I'm considering an ILP",
       description: 'See how policy charges build over time, how bonuses change the picture, and what assumptions drive the result.',
@@ -63,19 +63,6 @@ export function IlpLandingPage() {
       accent: 'from-emerald-500/15 via-emerald-500/5 to-transparent',
       bullets: ['Shows surrender charges', 'Compares hold vs exit paths', 'Uses your current policy inputs'],
       href: '/ilp-fees/exit',
-      kind: 'link' as const,
-    },
-    {
-      title: "I'm comparing options",
-      description: 'Compare policy charges across products on a shared basis, then follow through to sub-fund fees and benchmark-relative returns.',
-      cta: 'Compare products',
-      footnote: 'Standardized at S$350/mo, mid return scenario.',
-      eyebrow: 'Comparison path',
-      icon: Search,
-      tone: 'border-violet-200 bg-violet-50/70 dark:border-violet-900/80 dark:bg-violet-950/20',
-      accent: 'from-violet-500/15 via-violet-500/5 to-transparent',
-      bullets: ['Filter by insurer and premium type', 'Compare net fees vs premiums', 'Open exact product variants'],
-      href: '/ilp-fees/compare',
       kind: 'link' as const,
     },
   ]
@@ -144,7 +131,7 @@ export function IlpLandingPage() {
         <div className="space-y-2">
           <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Choose how you want to review an ILP</h2>
           <p className="max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-            Start with the guided dashboard that matches your situation. You can still move into direct fee, sub-fund, and benchmark checks afterwards.
+            Start with the guided dashboard that matches your situation. If you want market-wide side-by-side checks, use the direct comparison views below.
           </p>
         </div>
         <div className="space-y-3">
@@ -152,7 +139,7 @@ export function IlpLandingPage() {
             <div>
               <h3 className="text-base font-semibold text-slate-950 dark:text-white">Guided dashboards</h3>
               <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                Better visualizations and clearer interpretation if you want help understanding what the data means.
+                Better visualizations and clearer interpretation when you want help understanding one product or your current policy.
               </p>
             </div>
             <div className="hidden rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-medium text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-950/80 dark:text-slate-300 sm:inline-flex">
@@ -160,8 +147,8 @@ export function IlpLandingPage() {
             </div>
           </div>
         </div>
-        <div className="grid gap-4 xl:grid-cols-3">
-          {entryCards.map((entry) => {
+        <div className="grid gap-4 lg:grid-cols-2">
+          {guidedDashboards.map((entry) => {
             const Icon = entry.icon
             const content = (
               <Card className={`relative h-full overflow-hidden rounded-md border transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-lg ${entry.tone}`}>
@@ -222,12 +209,12 @@ export function IlpLandingPage() {
 
       <section className="space-y-4">
         <div className="rounded-md border border-slate-200/80 bg-slate-50/80 px-4 py-3 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-300">
-          Prefer to inspect the underlying data directly? Use the views below.
+          Comparing multiple products side by side? Use the views below.
         </div>
         <div className="space-y-2">
           <h3 className="text-base font-semibold text-slate-950 dark:text-white">Direct comparison views</h3>
           <p className="max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-            Use these when you want the fee, sub-fund, and benchmark data directly without the guided workflow framing.
+            Use these when you want standardized fee, sub-fund, and benchmark data directly without the guided workflow framing.
           </p>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
