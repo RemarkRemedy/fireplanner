@@ -13,11 +13,15 @@
       "kernel:current-ti-benefit-estimate",
       "branch:aia-platinum-wealth-elite-2-regular-premium-charge",
       "branch:aia-platinum-wealth-elite-2-full-surrender-charge",
+      "branch:aia-platinum-wealth-elite-2-single-premium-charge",
       "branch:aia-platinum-wealth-elite-2-top-up-premium-charge",
       "branch:aia-platinum-wealth-elite-2-premium-holiday-charge",
       "branch:aia-platinum-wealth-elite-2-partial-withdrawal-charge",
       "branch:aia-platinum-wealth-elite-2-vitality-bonus",
+      "branch:aia-platinum-wealth-elite-2-no-lapse-administration-charge-carry",
+      "branch:aia-platinum-wealth-elite-2-insurance-risk-charge-manual-input",
       "kernel:top-up-paid-up-to-date-block",
+      "kernel:no-lapse-fixed-charge-debt-carry",
       "kernel:current-residual-death-benefit-after-ti-estimate"
     ],
     "catalogVersion": "0.1.0",
@@ -166,7 +170,20 @@
             "rate": 0.02
           }
         ],
-        "suspensionRules": []
+        "suspensionRules": [],
+        "sourceRefs": [
+          {
+            "page": 15,
+            "section": "Vitality Fund Boost",
+            "excerpt": "units, also known as Vitality Fund Boost. The Vitality Fund Boost will be payable up to the first 5 policy years upon meeting certain criteria. This product summary is meant to be read together with Product Summary for A"
+          }
+        ],
+        "notes": [
+          "Rate is re-rated annually by Vitality status 45 days before each policy anniversary. This model uses a static assumption for the entire projection.",
+          "The published Jul 2025 summary shows Silver status only receiving the boost in policy year 1, with years 2-5 marked not applicable.",
+          "No-status termination, post-termination reinstatement rules, change-of-insured eligibility, and layer-specific exclusions remain informational only in this corridor.",
+          "This modeled bonus applies to the regular-pay corridor only. Single-premium Vitality Fund Boost remains inside the metadata-only single-pay corridor."
+        ]
       }
     ],
     "chargeRules": [
@@ -208,7 +225,136 @@
         ],
         "rate": 0,
         "amount": 0,
-        "allocation": "equal-split"
+        "requiresManualInput": false,
+        "allocation": "equal-split",
+        "sourceRefs": [
+          {
+            "page": 4,
+            "section": "Regular premium and top-up allocation",
+            "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+          },
+          {
+            "page": 4,
+            "section": "Premium charge and charge schedule",
+            "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+          }
+        ],
+        "notes": [
+          "Models the published regular premium charge schedule for the regular-pay 5-year corridor only.",
+          "If regular premiums are missed and later resumed, the charge schedule continues from the rate band immediately after the last accepted premium."
+        ]
+      },
+      {
+        "id": "administration-charge",
+        "label": "Administration Charge",
+        "basis": "insured-amount-at-issue",
+        "activeWindow": "policy-term",
+        "startPolicyYear": 1,
+        "endPolicyYear": 4,
+        "appliesTo": [
+          "policy"
+        ],
+        "rate": 0,
+        "amount": 0,
+        "issueAgeRateTiers": [
+          {
+            "minIssueAgeNextBirthday": 1,
+            "maxIssueAgeNextBirthday": 20,
+            "rate": 0.0016
+          },
+          {
+            "minIssueAgeNextBirthday": 21,
+            "maxIssueAgeNextBirthday": 25,
+            "rate": 0.0018
+          },
+          {
+            "minIssueAgeNextBirthday": 26,
+            "maxIssueAgeNextBirthday": 30,
+            "rate": 0.0024
+          },
+          {
+            "minIssueAgeNextBirthday": 31,
+            "maxIssueAgeNextBirthday": 35,
+            "rate": 0.0032
+          },
+          {
+            "minIssueAgeNextBirthday": 36,
+            "maxIssueAgeNextBirthday": 40,
+            "rate": 0.004
+          },
+          {
+            "minIssueAgeNextBirthday": 41,
+            "maxIssueAgeNextBirthday": 45,
+            "rate": 0.0053
+          },
+          {
+            "minIssueAgeNextBirthday": 46,
+            "maxIssueAgeNextBirthday": 50,
+            "rate": 0.0066
+          },
+          {
+            "minIssueAgeNextBirthday": 51,
+            "maxIssueAgeNextBirthday": 60,
+            "rate": 0.0092
+          },
+          {
+            "minIssueAgeNextBirthday": 61,
+            "maxIssueAgeNextBirthday": 65,
+            "rate": 0.0104
+          },
+          {
+            "minIssueAgeNextBirthday": 66,
+            "maxIssueAgeNextBirthday": 70,
+            "rate": 0.0126
+          }
+        ],
+        "carryForwardOnInsufficientDeductionWithinPolicyYears": {
+          "startPolicyYear": 1,
+          "endPolicyYear": 15
+        },
+        "requiresManualInput": false,
+        "allocation": "equal-split",
+        "sourceRefs": [
+          {
+            "page": 4,
+            "section": "Premium charge and charge schedule",
+            "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+          }
+        ],
+        "notes": [
+          "Models the published first-layer administration charge as insured amount at issue multiplied by the issue-age annual administration-charge rate during the first four policy years.",
+          "This executable slice assumes the original issue-date insured amount only. Change-of-insured layering and new-layer resets remain informational only.",
+          "The engine derives issue age from current Age Next Birthday and Current Policy Year, and needs the initial insured amount at issue to price the charge."
+        ]
+      },
+      {
+        "id": "insurance-risk-charge",
+        "label": "Insurance Risk Charge",
+        "basis": "fixed-annual",
+        "activeWindow": "policy-term",
+        "appliesTo": [
+          "policy"
+        ],
+        "rate": 0,
+        "amount": 0,
+        "carryForwardOnInsufficientDeductionWithinPolicyYears": {
+          "startPolicyYear": 1,
+          "endPolicyYear": 15
+        },
+        "requiresManualInput": false,
+        "allocation": "pro-rata-by-value",
+        "sourceRefs": [
+          {
+            "page": 4,
+            "section": "Premium charge and charge schedule",
+            "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+          }
+        ],
+        "notes": [
+          "Manual-input approximation for the monthly Insurance Risk Charge deducted on the prevailing insured-amount-less-policy-value corridor.",
+          "Enter the annualized Insurance Risk Charge from the policy illustration. If the illustration shows a monthly amount, multiply it by 12.",
+          "Applicable rates depend on underwriting class, Free Legacy Cover waiver state, and other illustration factors that are not fully published in the summary."
+        ]
       }
     ],
     "policyEvents": [],
@@ -224,6 +370,7 @@
         ],
         "rate": 0.03,
         "amount": 0,
+        "requiresManualInput": false,
         "allocation": "equal-split"
       },
       {
@@ -250,6 +397,7 @@
           }
         ],
         "amount": 0,
+        "requiresManualInput": false,
         "allocation": "pro-rata-by-value"
       },
       {
@@ -295,6 +443,7 @@
           }
         ],
         "amount": 0,
+        "requiresManualInput": false,
         "allocation": "equal-split"
       }
     ],
@@ -309,12 +458,16 @@
       "structureStatus": "structured",
       "modeledEconomics": [
         "branch:aia-platinum-wealth-elite-2-regular-premium-charge",
+        "branch:aia-platinum-wealth-elite-2-single-premium-charge",
         "branch:aia-platinum-wealth-elite-2-top-up-premium-charge",
         "branch:aia-platinum-wealth-elite-2-premium-holiday-charge",
         "branch:aia-platinum-wealth-elite-2-partial-withdrawal-charge",
         "branch:aia-platinum-wealth-elite-2-full-surrender-charge",
         "branch:aia-platinum-wealth-elite-2-vitality-bonus",
+        "branch:aia-platinum-wealth-elite-2-no-lapse-administration-charge-carry",
+        "branch:aia-platinum-wealth-elite-2-insurance-risk-charge-manual-input",
         "kernel:top-up-paid-up-to-date-block",
+        "kernel:no-lapse-fixed-charge-debt-carry",
         "kernel:current-death-benefit-estimate",
         "kernel:current-ti-benefit-estimate",
         "kernel:current-residual-death-benefit-after-ti-estimate"
@@ -323,12 +476,9 @@
         "aia-platinum-wealth-elite-2-fund-management-charge"
       ],
       "metadataOnlyBehaviors": [
-        "aia-platinum-wealth-elite-2-single-premium-corridor",
         "aia-platinum-wealth-elite-2-premium-term-extension",
-        "aia-platinum-wealth-elite-2-administration-charge",
-        "aia-platinum-wealth-elite-2-insurance-risk-charge",
         "aia-platinum-wealth-elite-2-free-legacy-cover",
-        "aia-platinum-wealth-elite-2-no-lapse-privilege",
+        "aia-platinum-wealth-elite-2-no-lapse-history-and-non-manual-charge-indebtedness",
         "aia-platinum-wealth-elite-2-income-withdrawal-privilege",
         "aia-platinum-wealth-elite-2-death-benefit-bequest-option",
         "aia-platinum-wealth-elite-2-change-of-insured-and-layering",
@@ -336,17 +486,15 @@
       ]
     },
     "catalogWarnings": [
-      "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the regular-premium withdrawal / surrender charge schedules, a static-assumption Vitality Fund Boost schedule for the regular-pay corridor, the current-state death benefit as the higher of current insured amount or policy value via a manual current insured amount input, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, premium-term extension, administration charge, insurance risk charge, no-lapse mechanics, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.",
-      "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the regular-premium withdrawal / surrender charge schedules, a static-assumption Vitality Fund Boost schedule for the regular-pay corridor, the current-state death benefit as the higher of current insured amount or policy value via a manual current insured amount input, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, premium-term extension, administration charge, insurance risk charge, no-lapse mechanics, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.",
-      "The current executable slice intentionally excludes the optional extension of the regular premium term beyond five years.",
-      "Single-pay corridor and the 5% single-premium charge remain informational only in V1.",
+      "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor plus the single-pay corridor. The parser captures premium-year regular premium charges on the regular-pay corridor, the 5% single-premium charge on the single-pay corridor, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule on the regular-pay corridor, the published regular-premium and single-premium withdrawal / surrender charge schedules, the first-layer administration charge via issue-age and initial insured-amount inputs with no-lapse fixed-charge carry during the published privilege window, a manual-input insurance-risk-charge placeholder sourced from the policy illustration with the same fixed-charge carry seam, a static-assumption Vitality Fund Boost schedule for both the regular-pay and single-pay corridors, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs that remain user-supplied by design in this app, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs are supplied, while premium-term extension, Free Legacy Cover waivers, no-lapse activation history, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.",
+      "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor plus the single-pay corridor. The parser captures premium-year regular premium charges on the regular-pay corridor, the 5% single-premium charge on the single-pay corridor, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule on the regular-pay corridor, the published regular-premium and single-premium withdrawal / surrender charge schedules, the first-layer administration charge via issue-age and initial insured-amount inputs with no-lapse fixed-charge carry during the published privilege window, a manual-input insurance-risk-charge placeholder sourced from the policy illustration with the same fixed-charge carry seam, a static-assumption Vitality Fund Boost schedule for both the regular-pay and single-pay corridors, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs that remain user-supplied by design in this app, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs are supplied, while premium-term extension, Free Legacy Cover waivers, no-lapse activation history, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.",
       "Optional extension of the regular premium term beyond five years remains informational only in V1.",
-      "Administration charge remains informational only because it depends on issue-age and change-of-insured layering state.",
-      "Insurance Risk Charge, Free Legacy Cover, and No Lapse Privilege debt accrual remain informational only.",
-      "Income Withdrawal Privilege and change-of-insured effects remain informational only, while Vitality Fund Boost is modeled under a static assumed status for the regular-pay corridor only.",
-      "The current death benefit needs a manual current insured amount input because withdrawals, Income Withdrawal Privilege usage, and claim-side reductions are not reconstructed from history in V1.",
+      "Administration charge is modeled for the first issue-date insured-amount layer only. Change-of-insured layering and new-layer charge resets remain informational only.",
+      "Insurance Risk Charge is modeled only as a manual-input annualized placeholder because the applicable insurer illustration rate depends on underwriting and Free Legacy Cover state. Free Legacy Cover, no-lapse activation history, and non-manual charge indebtedness remain informational only.",
+      "Income Withdrawal Privilege and change-of-insured effects remain informational only, while Vitality Fund Boost is modeled under a static assumed status for the regular-pay and single-pay corridors only.",
+      "The current death benefit keeps manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs because withdrawals, debt, no-lapse status, Income Withdrawal Privilege usage, and claim-side reductions change the live corridor in ways this app cannot observe; those inputs are manual by design in V1.",
       "Death Benefit Bequest Option and other protection-side payout handling remain informational only.",
-      "The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both need manual current insured amount and remaining aggregate TI cap inputs because claim-side reductions and TI usage are not reconstructed from history in V1.",
+      "The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both keep manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs because the live insured amount, debt, no-lapse status, and cross-policy TI usage are current policy facts this app cannot observe; those inputs are manual by design in V1.",
       "Terminal-illness claim exclusions, settlement workflow, and non-manual post-claim state remain informational only beyond the modeled current terminal-illness and residual-after-TI snapshot surface.",
       "Fund-level management charges, fund switching, and automatic fund re-balancing remain informational only."
     ]
@@ -357,6 +505,12 @@
       "totalFeesCharged": 3132,
       "totalBonusesReceived": 0,
       "netFeeDrag": 3132,
+      "realGrossFees": 10578.92,
+      "realBonuses": 0,
+      "realNetFeeDrag": 10578.92,
+      "inceptionCharges": 0,
+      "realFundCharges": 7574.33,
+      "realWrapperFees": 3004.59,
       "currentSurrenderValue": 14000,
       "cancelNowPenalty": 6000
     },

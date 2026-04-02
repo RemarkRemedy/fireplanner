@@ -159,9 +159,9 @@ describe('ILP fee dashboard blog bridge', () => {
 
     const card = getProductCard('AIA Platinum Wealth Elite 2.0')
 
-    expect(within(card).getByText('6 published corridors not modeled')).toBeInTheDocument()
+    expect(within(card).getByText('5 published corridors not modeled')).toBeInTheDocument()
 
-    const disabledCorridor = within(card).getByRole('button', { name: /SGD \/ Single Pay/i })
+    const disabledCorridor = within(card).getByRole('button', { name: /SGD \/ Regular Pay 6 years/i })
     expect(disabledCorridor).toBeDisabled()
 
     await user.click(disabledCorridor)
@@ -173,6 +173,29 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(onSelect).toHaveBeenCalledTimes(1)
     expect(onSelect.mock.calls[0]?.[0].id).toBe('aia-platinum-wealth-elite-2')
     expect(onSelect.mock.calls[0]?.[1].id).toBe('sgd-mip-5')
+  })
+
+  it('promotes AIA Platinum Wealth Elite 2.0 single-pay corridor into an executable template', async () => {
+    const user = userEvent.setup()
+    const onSelect = vi.fn()
+
+    render(
+      <MemoryRouter>
+        <ProductPickerDialog open onOpenChange={() => {}} onSelect={onSelect} />
+      </MemoryRouter>,
+    )
+
+    await user.type(screen.getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Wealth Elite 2.0')
+
+    const card = getProductCard('AIA Platinum Wealth Elite 2.0')
+
+    expect(within(card).getByRole('button', { name: /SGD \/ Single Pay/i })).toBeEnabled()
+
+    await user.click(within(card).getByRole('button', { name: /SGD \/ Single Pay/i }))
+
+    expect(onSelect).toHaveBeenCalledTimes(1)
+    expect(onSelect.mock.calls[0]?.[0].id).toBe('aia-platinum-wealth-elite-2')
+    expect(onSelect.mock.calls[0]?.[1].id).toBe('sgd-single-pay')
   })
 
   it('promotes Legacy Flex Solitaire single-premium corridor into an executable template', async () => {

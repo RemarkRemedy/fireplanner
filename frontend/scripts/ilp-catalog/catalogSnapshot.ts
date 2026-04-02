@@ -289,7 +289,6 @@ function buildPhase0PublishedUnmodeledRegistry(): Record<string, IlpCatalogPubli
 
   return {
     'aia-platinum-wealth-elite-2': [
-      corridor({ id: 'sgd-single-pay', label: 'SGD / Single Pay', paymentStructure: 'single-pay', currency: 'SGD', contributionMode: 'single-pay', sourceRefs: aiaPwe2Refs }),
       ...range(6, 10).map((term) => corridor({
         id: `sgd-mip-${term}`,
         label: `SGD / Regular Pay ${term} years`,
