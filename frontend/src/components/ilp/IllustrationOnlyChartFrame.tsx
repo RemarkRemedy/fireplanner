@@ -1,5 +1,6 @@
 import { createContext, useContext, useId, useState, type ReactNode } from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
+import { useIlpFeesIllustrativeDisclosure } from '@/hooks/useIlpFeesIllustrativeDisclosure'
 import { cn } from '@/lib/utils'
 
 const IllustrativeChartsGroupContext = createContext<{ revealed: boolean } | null>(null)
@@ -32,8 +33,12 @@ export function IllustrationOnlyChartFrame({
   dark = false,
 }: IllustrationOnlyChartFrameProps) {
   const groupedDisclosure = useContext(IllustrativeChartsGroupContext)
-  const [revealed, setRevealed] = useState(false)
+  const usesSharedIlpFeesDisclosure = typeof window !== 'undefined' && window.location.pathname.startsWith('/ilp-fees')
+  const { revealed: sharedRevealed, setRevealed: setSharedRevealed } = useIlpFeesIllustrativeDisclosure(usesSharedIlpFeesDisclosure)
+  const [localRevealed, setLocalRevealed] = useState(false)
   const checkboxId = useId()
+  const revealed = usesSharedIlpFeesDisclosure ? sharedRevealed : localRevealed
+  const setRevealed = usesSharedIlpFeesDisclosure ? setSharedRevealed : setLocalRevealed
 
   if (groupedDisclosure) {
     return (
@@ -68,6 +73,18 @@ export function IllustrationOnlyChartFrame({
       <div role="img" aria-label={ariaLabel} className="h-full">
         {children}
       </div>
+      {revealed && (
+        <div
+          className={cn(
+            'absolute right-3 top-3 z-10 rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] shadow-sm',
+            dark
+              ? 'border-white/18 bg-slate-950/82 text-white/80'
+              : 'border-slate-300/80 bg-white/92 text-slate-500',
+          )}
+        >
+          Illustrative
+        </div>
+      )}
       {!revealed && (
         <div
           className={cn(
