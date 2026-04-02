@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowRight, BadgeDollarSign, ChartColumnBig, Clock3, Play, Receipt, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { InterpretationCallout } from '@/components/shared/InterpretationCallout'
 import { CurrencyInput } from '@/components/shared/CurrencyInput'
@@ -28,6 +29,7 @@ import { formatCatalogVariantLabel } from '@/lib/ilp-catalog/labels'
 import type { IlpPolicySeed } from '@/lib/ilp-catalog/policySeedSchema'
 import { templateVariantToPolicySeed } from '@/lib/ilp-catalog/templateToPolicy'
 import type { IlpCatalogProduct, IlpTemplateVariant } from '@/lib/ilp-catalog/types'
+import { IllustrativeChartsGroup } from '@/components/ilp/IllustrationOnlyChartFrame'
 import { formatIlpCurrency, formatIlpPercent } from '@/components/ilp/formatters'
 import { mergePolicySeed } from '@/stores/useIlpStore'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
@@ -1096,6 +1098,7 @@ function StoryDetailView({
   const [useReal, setUseReal] = useState(false)
   const feeImpact = useFeeImpact(policy, analysis, useReal)
   const [receiptOpen, setReceiptOpen] = useState(false)
+  const [detailChartsRevealed, setDetailChartsRevealed] = useState(false)
   const householdPlan = useHouseholdPlanStore((state) => state.plan)
   const householdRuntime = useHouseholdRuntimeInputs()
   const plannerQuickEntry = useMemo(() => derivePlannerCashFlowQuickEntry({
@@ -1194,47 +1197,69 @@ function StoryDetailView({
             </p>
           </div>
         )}
+        <div className="rounded-lg border border-border/70 bg-muted/20 p-4 sm:p-5">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold">Illustrative charts</p>
+              <p className="text-sm text-muted-foreground">
+                The charts in this story detail view are illustrative summaries of the modeled scenario. Acknowledge them once here, then use the `Illustrative` badges on each chart as a reminder.
+              </p>
+            </div>
+            <div className="flex max-w-md items-start gap-3 rounded-lg border border-border/70 bg-background px-3 py-2 shadow-sm">
+              <Checkbox
+                id="story-detail-illustrative"
+                checked={detailChartsRevealed}
+                onCheckedChange={(value) => setDetailChartsRevealed(value === true)}
+              />
+              <label htmlFor="story-detail-illustrative" className="cursor-pointer text-sm leading-6 text-foreground">
+                Show illustrative charts in this detail view
+              </label>
+            </div>
+          </div>
+        </div>
       </section>
 
-      {mode === 'walkthrough' ? (
-        <WalkthroughDetailView
-          policy={policy}
-          analysis={analysis}
-          feeImpact={feeImpact}
-          useReal={useReal}
-          quickEntry={quickEntry}
-          prefilledFromPlanner={plannerQuickEntry != null}
-          onMonthlyIncomeChange={(value) => {
-            setQuickEntryTouched(true)
-            setQuickEntry((current) => ({ ...current, monthlyIncome: value }))
-          }}
-          onMonthlyExpensesChange={(value) => {
-            setQuickEntryTouched(true)
-            setQuickEntry((current) => ({ ...current, monthlyExpenses: value }))
-          }}
-          onOpenDetailed={() => onModeChange('detailed')}
-          onOpenReceipt={() => setReceiptOpen(true)}
-        />
-      ) : (
-        <DetailedAnalysisView
-          policy={policy}
-          analysis={analysis}
-          feeImpact={feeImpact}
-          useReal={useReal}
-          onUseRealChange={setUseReal}
-          quickEntry={quickEntry}
-          prefilledFromPlanner={plannerQuickEntry != null}
-          onMonthlyIncomeChange={(value) => {
-            setQuickEntryTouched(true)
-            setQuickEntry((current) => ({ ...current, monthlyIncome: value }))
-          }}
-          onMonthlyExpensesChange={(value) => {
-            setQuickEntryTouched(true)
-            setQuickEntry((current) => ({ ...current, monthlyExpenses: value }))
-          }}
-          onOpenReceipt={() => setReceiptOpen(true)}
-        />
-      )}
+      <IllustrativeChartsGroup revealed={detailChartsRevealed}>
+        {mode === 'walkthrough' ? (
+          <WalkthroughDetailView
+            policy={policy}
+            analysis={analysis}
+            feeImpact={feeImpact}
+            useReal={useReal}
+            quickEntry={quickEntry}
+            prefilledFromPlanner={plannerQuickEntry != null}
+            onMonthlyIncomeChange={(value) => {
+              setQuickEntryTouched(true)
+              setQuickEntry((current) => ({ ...current, monthlyIncome: value }))
+            }}
+            onMonthlyExpensesChange={(value) => {
+              setQuickEntryTouched(true)
+              setQuickEntry((current) => ({ ...current, monthlyExpenses: value }))
+            }}
+            onOpenDetailed={() => onModeChange('detailed')}
+            onOpenReceipt={() => setReceiptOpen(true)}
+          />
+        ) : (
+          <DetailedAnalysisView
+            policy={policy}
+            analysis={analysis}
+            feeImpact={feeImpact}
+            useReal={useReal}
+            onUseRealChange={setUseReal}
+            quickEntry={quickEntry}
+            prefilledFromPlanner={plannerQuickEntry != null}
+            onMonthlyIncomeChange={(value) => {
+              setQuickEntryTouched(true)
+              setQuickEntry((current) => ({ ...current, monthlyIncome: value }))
+            }}
+            onMonthlyExpensesChange={(value) => {
+              setQuickEntryTouched(true)
+              setQuickEntry((current) => ({ ...current, monthlyExpenses: value }))
+            }}
+            onOpenReceipt={() => setReceiptOpen(true)}
+          />
+        )}
+      </IllustrativeChartsGroup>
 
       <ReceiptPreviewModal
         open={receiptOpen}
