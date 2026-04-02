@@ -1,44 +1,56 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, BarChart3, BookOpen, Calculator, Search, ShieldCheck, WalletCards } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
-import { ProductPickerDialog } from '@/components/ilp/catalog/ProductPickerDialog'
-import { usePageMeta } from '@/hooks/usePageMeta'
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  ArrowRight,
+  BarChart3,
+  BookOpen,
+  Calculator,
+  Search,
+  ShieldCheck,
+  WalletCards,
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { ProductPickerDialog } from "@/components/ilp/catalog/ProductPickerDialog";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
-const BLOG_URL = '/blog/ilp-questions'
-type GuidedIntent = 'explore' | 'review'
+const BLOG_URL = "/blog/ilp-questions";
+type GuidedIntent = "explore" | "review";
 
 export function IlpLandingPage() {
   usePageMeta({
-    title: 'ILP Due Diligence: SG FIRE Planner',
-    description: 'Compare policy charges, sub-fund fee disclosures, and benchmark-relative returns for Singapore ILPs in one place.',
-    path: '/ilp-fees',
-  })
+    title: "ILP Due Diligence: SG FIRE Planner",
+    description:
+      "Compare policy charges, sub-fund fee disclosures, and benchmark-relative returns for Singapore ILPs in one place.",
+    path: "/ilp-fees",
+  });
 
-  const navigate = useNavigate()
-  const [pickerOpen, setPickerOpen] = useState(false)
-  const [guidedIntent, setGuidedIntent] = useState<GuidedIntent>('explore')
+  const navigate = useNavigate();
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [guidedIntent, setGuidedIntent] = useState<GuidedIntent>("explore");
 
   const directComparisonViews = [
     {
-      title: 'Returns vs benchmark',
-      description: 'Check how a fund has performed against its stated benchmark before drawing conclusions.',
-      href: '/ilp-returns',
+      title: "Returns vs benchmark",
+      description:
+        "Check how a fund has performed against its stated benchmark before drawing conclusions.",
+      href: "/ilp-returns",
       icon: BarChart3,
     },
     {
-      title: 'Policy charges',
-      description: 'Compare policy-level charges across products on a shared basis, then follow through to sub-fund fees and benchmark-relative returns.',
-      href: '/ilp-fees/compare',
+      title: "Policy charges",
+      description:
+        "Compare policy-level charges across products on a shared basis, then follow through to sub-fund fees and benchmark-relative returns.",
+      href: "/ilp-fees/compare",
       icon: WalletCards,
     },
     {
-      title: 'Sub-fund fees',
-      description: 'Review fee labels, source dates, and like-for-like sub-fund fee disclosures.',
-      href: '/ilp-ocf',
+      title: "Sub-fund fees",
+      description:
+        "Review fee labels, source dates, and like-for-like sub-fund fee disclosures.",
+      href: "/ilp-ocf",
       icon: Search,
     },
-  ]
+  ];
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
@@ -54,21 +66,35 @@ export function IlpLandingPage() {
                 ILP Due Diligence
               </h1>
               <p className="max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300 sm:text-lg">
-                Compare policy charges, sub-fund fee disclosures, and benchmark-relative returns for Singapore ILPs in one place. Start with the view that matches what you are checking.
+                Compare policy charges, sub-fund fee disclosures, and
+                benchmark-relative returns for Singapore ILPs in one place.
+                Start with the view that matches what you are checking.
               </p>
             </div>
             <div className="flex flex-wrap gap-3 text-sm">
               <div className="rounded-md border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
-                <div className="font-semibold text-slate-950 dark:text-white">92 products</div>
-                <div className="text-slate-500 dark:text-slate-400">Catalogued for fee review</div>
+                <div className="font-semibold text-slate-950 dark:text-white">
+                  92 products
+                </div>
+                <div className="text-slate-500 dark:text-slate-400">
+                  Catalogued for fee review
+                </div>
               </div>
               <div className="rounded-md border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
-                <div className="font-semibold text-slate-950 dark:text-white">Year-by-year charges</div>
-                <div className="text-slate-500 dark:text-slate-400">Not just a headline fee rate</div>
+                <div className="font-semibold text-slate-950 dark:text-white">
+                  Year-by-year charges
+                </div>
+                <div className="text-slate-500 dark:text-slate-400">
+                  Not just a headline fee rate
+                </div>
               </div>
               <div className="rounded-md border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
-                <div className="font-semibold text-slate-950 dark:text-white">Runs locally</div>
-                <div className="text-slate-500 dark:text-slate-400">Your policy details stay in browser</div>
+                <div className="font-semibold text-slate-950 dark:text-white">
+                  Runs locally
+                </div>
+                <div className="text-slate-500 dark:text-slate-400">
+                  Your policy details stay in browser
+                </div>
               </div>
             </div>
           </div>
@@ -79,11 +105,19 @@ export function IlpLandingPage() {
                 <WalletCards className="h-5 w-5" />
               </div>
               <div className="space-y-2">
-                <p className="text-sm font-semibold text-slate-950 dark:text-white">What this hub helps you check</p>
+                <p className="text-sm font-semibold text-slate-950 dark:text-white">
+                  What this hub helps you check
+                </p>
                 <ul className="space-y-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
                   <li>Compare policy charges and bonuses on a shared basis.</li>
-                  <li>Review sub-fund fee disclosures with labels and source dates intact.</li>
-                  <li>Check returns against the stated benchmark before drawing conclusions.</li>
+                  <li>
+                    Review sub-fund fee disclosures with labels and source dates
+                    intact.
+                  </li>
+                  <li>
+                    Check returns against the stated benchmark before drawing
+                    conclusions.
+                  </li>
                 </ul>
               </div>
             </div>
@@ -102,17 +136,26 @@ export function IlpLandingPage() {
 
       <section className="space-y-4">
         <div className="space-y-2">
-          <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Choose your starting point</h2>
+          <h2 className="text-xl font-semibold text-slate-950 dark:text-white">
+            Choose your starting point
+          </h2>
           <p className="max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-            Pick one product to understand the fee story, or use your policy statement to review a policy you already own. If you want market-wide side-by-side checks first, use the direct comparison views below.
+            Pick one product to understand the fee story, or use your policy
+            statement to review a policy you already own. If you want
+            market-wide side-by-side checks first, use the direct comparison
+            views below.
           </p>
         </div>
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h3 className="text-base font-semibold text-slate-950 dark:text-white">Guided review</h3>
+              <h3 className="text-base font-semibold text-slate-950 dark:text-white">
+                Guided review
+              </h3>
               <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                These are the easiest ways to understand one product in context. The product picker is shared underneath, but each path starts in a different place.
+                These are the easiest ways to understand one product in context,
+                depending on whether you are evaluating it fresh or reviewing a
+                policy you already own.
               </p>
             </div>
             <div className="hidden rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-medium text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-950/80 dark:text-slate-300 sm:inline-flex">
@@ -124,8 +167,8 @@ export function IlpLandingPage() {
           <button
             type="button"
             onClick={() => {
-              setGuidedIntent('explore')
-              setPickerOpen(true)
+              setGuidedIntent("explore");
+              setPickerOpen(true);
             }}
             className="group text-left"
           >
@@ -137,7 +180,9 @@ export function IlpLandingPage() {
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
                       Understand one ILP
                     </p>
-                    <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Start with the fee story</h2>
+                    <h2 className="text-xl font-semibold text-slate-950 dark:text-white">
+                      Start with the fee story
+                    </h2>
                   </div>
                   <div className="rounded-md bg-white/90 p-3 text-slate-700 shadow-sm dark:bg-slate-900/90 dark:text-slate-200">
                     <BarChart3 className="h-5 w-5" />
@@ -145,17 +190,24 @@ export function IlpLandingPage() {
                 </div>
 
                 <p className="flex-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                  Pick a product to see the fee story, bonuses, and exit trade-offs using the standard walkthrough.
+                  Pick a product to see the fee story, bonuses, and exit
+                  trade-offs using the standard walkthrough.
                 </p>
 
                 <div className="space-y-2 rounded-md border border-white/70 bg-white/80 p-4 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
                   <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                     <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                    <span>Good if you are still deciding or comparing one product closely.</span>
+                    <span>
+                      Good if you are still deciding or comparing one product
+                      closely.
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                     <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                    <span>Starts with the standard fee walkthrough before you go deeper.</span>
+                    <span>
+                      Starts with the standard fee walkthrough before you go
+                      deeper.
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                     <span className="h-1.5 w-1.5 rounded-full bg-primary" />
@@ -168,7 +220,9 @@ export function IlpLandingPage() {
                     Pick a product
                     <ArrowRight className="h-4 w-4" />
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">You can still switch into current-policy review after picking the product.</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    This takes you into the standard fee story first.
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -177,52 +231,65 @@ export function IlpLandingPage() {
           <button
             type="button"
             onClick={() => {
-              setGuidedIntent('review')
-              setPickerOpen(true)
+              setGuidedIntent("review");
+              setPickerOpen(true);
             }}
             className="group text-left"
           >
             <Card className="relative h-full overflow-hidden rounded-md border border-emerald-200 bg-emerald-50/60 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-lg dark:border-emerald-900/80 dark:bg-emerald-950/20">
               <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-br from-emerald-500/15 via-emerald-500/5 to-transparent" />
               <CardContent className="relative flex h-full flex-col gap-5 p-6">
-              <div className="flex items-start justify-between gap-4">
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-                    Review my current ILP
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                      Review my current ILP
+                    </p>
+                    <h3 className="text-xl font-semibold text-slate-950 dark:text-white">
+                      Use your policy statement
+                    </h3>
+                  </div>
+                  <div className="rounded-md bg-white/90 p-3 text-slate-700 shadow-sm dark:bg-slate-900/90 dark:text-slate-200">
+                    <Calculator className="h-5 w-5" />
+                  </div>
+                </div>
+                <p className="flex-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  Use your policy statement to estimate what you&apos;ve put in,
+                  how fees and bonuses may have affected it, and what your
+                  options look like now.
+                </p>
+
+                <div className="space-y-2 rounded-md border border-white/70 bg-white/80 p-4 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
+                  <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    <span>Best when you already own the policy.</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    <span>
+                      You will enter your policy year, months paid, and current
+                      balance.
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    <span>
+                      Shows what may have come from premiums, bonuses, fees, and
+                      returns so far.
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
+                    Use my policy statement
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    This takes you straight to the current-policy form after you
+                    pick the product.
                   </p>
-                  <h3 className="text-xl font-semibold text-slate-950 dark:text-white">Use your policy statement</h3>
                 </div>
-                <div className="rounded-md bg-white/90 p-3 text-slate-700 shadow-sm dark:bg-slate-900/90 dark:text-slate-200">
-                  <Calculator className="h-5 w-5" />
-                </div>
-              </div>
-              <p className="flex-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                Use your policy statement to estimate what you&apos;ve put in, how fees and bonuses may have affected it, and what your options look like now.
-              </p>
-
-              <div className="space-y-2 rounded-md border border-white/70 bg-white/80 p-4 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
-                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                  <span>Best when you already own the policy.</span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                  <span>You will enter your policy year, months paid, and current balance.</span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                  <span>Shows what may have come from premiums, bonuses, fees, and returns so far.</span>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <div className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
-                  Use my policy statement
-                  <ArrowRight className="h-4 w-4" />
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">We will start with the current-policy review style after you pick the product.</p>
-              </div>
-            </CardContent>
+              </CardContent>
             </Card>
           </button>
         </div>
@@ -230,17 +297,21 @@ export function IlpLandingPage() {
 
       <section className="space-y-4">
         <div className="rounded-md border border-slate-200/80 bg-slate-50/80 px-4 py-3 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-300">
-          Comparing multiple products side by side? Start here, then follow through to sub-fund fee and benchmark checks.
+          Comparing multiple products side by side? Start here, then follow
+          through to sub-fund fee and benchmark checks.
         </div>
         <div className="space-y-2">
-          <h3 className="text-base font-semibold text-slate-950 dark:text-white">Direct comparison views</h3>
+          <h3 className="text-base font-semibold text-slate-950 dark:text-white">
+            Direct comparison views
+          </h3>
           <p className="max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-            Use these when you want standardized market-wide comparisons first, without the guided workflow framing.
+            Use these when you want standardized market-wide comparisons first,
+            without the guided workflow framing.
           </p>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
           {directComparisonViews.map((lens) => {
-            const Icon = lens.icon
+            const Icon = lens.icon;
             return (
               <Link
                 key={lens.title}
@@ -250,23 +321,33 @@ export function IlpLandingPage() {
                 <div className="mb-3 inline-flex rounded-md bg-slate-100 p-3 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
                   <Icon className="h-5 w-5" />
                 </div>
-                <h3 className="text-base font-semibold text-slate-950 dark:text-white">{lens.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{lens.description}</p>
+                <h3 className="text-base font-semibold text-slate-950 dark:text-white">
+                  {lens.title}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  {lens.description}
+                </p>
               </Link>
-            )
+            );
           })}
         </div>
       </section>
 
       {/* CTA 2: educational guide card */}
-      <a href={`${BLOG_URL}?utm_source=dashboard&utm_content=landing_guide`} className="group block">
+      <a
+        href={`${BLOG_URL}?utm_source=dashboard&utm_content=landing_guide`}
+        className="group block"
+      >
         <Card className="transition-colors group-hover:border-primary group-hover:shadow-sm">
           <CardContent className="flex items-start gap-4 p-6">
             <BookOpen className="mt-0.5 h-6 w-6 shrink-0 text-muted-foreground group-hover:text-primary" />
             <div className="space-y-1">
-              <p className="font-medium group-hover:text-primary">Questions to ask before you buy an ILP</p>
+              <p className="font-medium group-hover:text-primary">
+                Questions to ask before you buy an ILP
+              </p>
               <p className="text-sm text-muted-foreground">
-                Seven questions to help you understand charges, coverage, and alternatives before you decide. Takes about 10 minutes.
+                Seven questions to help you understand charges, coverage, and
+                alternatives before you decide. Takes about 10 minutes.
               </p>
             </div>
           </CardContent>
@@ -279,16 +360,20 @@ export function IlpLandingPage() {
           href={`${BLOG_URL}?utm_source=dashboard&utm_content=landing_compare#2-what-are-the-total-annual-fees-including-fund-level-charges`}
           className="text-sm text-muted-foreground hover:text-foreground"
         >
-          How does an ILP compare with standalone coverage plus separate investing on a pure-cost basis? See the interactive comparison &rarr;
+          How does an ILP compare with standalone coverage plus separate
+          investing on a pure-cost basis? See the interactive comparison &rarr;
         </a>
       </div>
 
       <div className="space-y-3 text-center text-xs text-muted-foreground">
         <p>
-          These tools support due diligence. They show charge calculations and comparisons based on product documentation and standardized assumptions, but they do not replace product suitability advice.
+          These tools support due diligence. They show charge calculations and
+          comparisons based on product documentation and standardized
+          assumptions, but they do not replace product suitability advice.
         </p>
         <p>
-          Privacy-first. All computation runs in your browser. No data is sent to any server.
+          Privacy-first. All computation runs in your browser. No data is sent
+          to any server.
         </p>
       </div>
 
@@ -306,11 +391,17 @@ export function IlpLandingPage() {
         open={pickerOpen}
         onOpenChange={setPickerOpen}
         onSelect={(product, variant) => {
-          setPickerOpen(false)
-          const variantId = encodeURIComponent(variant.id)
-          navigate(`/ilp-fees/story/${product.id}?variantId=${variantId}&intent=${guidedIntent}`)
+          setPickerOpen(false);
+          const variantId = encodeURIComponent(variant.id);
+          if (guidedIntent === "review") {
+            navigate(
+              `/ilp-fees/exit?productId=${product.id}&variantId=${variantId}`,
+            );
+          } else {
+            navigate(`/ilp-fees/story/${product.id}?variantId=${variantId}`);
+          }
         }}
       />
     </div>
-  )
+  );
 }
