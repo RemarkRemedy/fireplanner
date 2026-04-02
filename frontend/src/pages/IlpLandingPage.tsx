@@ -16,8 +16,15 @@ export function IlpLandingPage() {
 
   const navigate = useNavigate()
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [pickerMode, setPickerMode] = useState<'story' | 'exit' | null>(null)
 
   const directComparisonViews = [
+    {
+      title: 'Returns vs benchmark',
+      description: 'Check how a fund has performed against its stated benchmark before drawing conclusions.',
+      href: '/ilp-returns',
+      icon: BarChart3,
+    },
     {
       title: 'Policy charges',
       description: 'Compare policy-level charges across products on a shared basis, then follow through to sub-fund fees and benchmark-relative returns.',
@@ -29,12 +36,6 @@ export function IlpLandingPage() {
       description: 'Review fee labels, source dates, and like-for-like sub-fund fee disclosures.',
       href: '/ilp-ocf',
       icon: Search,
-    },
-    {
-      title: 'Returns vs benchmark',
-      description: 'Check how a fund has performed against its stated benchmark before drawing conclusions.',
-      href: '/ilp-returns',
-      icon: BarChart3,
     },
   ]
 
@@ -49,8 +50,10 @@ export function IlpLandingPage() {
       tone: 'border-sky-200 bg-sky-50/70 dark:border-sky-900/80 dark:bg-sky-950/20',
       accent: 'from-sky-500/15 via-sky-500/5 to-transparent',
       bullets: ['Fee story in minutes', 'Works with public product docs', 'No signup required'],
-      action: () => setPickerOpen(true),
-      kind: 'button' as const,
+      action: () => {
+        setPickerMode('story')
+        setPickerOpen(true)
+      },
     },
     {
       title: 'I have an ILP',
@@ -62,8 +65,10 @@ export function IlpLandingPage() {
       tone: 'border-emerald-200 bg-emerald-50/70 dark:border-emerald-900/80 dark:bg-emerald-950/20',
       accent: 'from-emerald-500/15 via-emerald-500/5 to-transparent',
       bullets: ['Shows surrender charges', 'Compares hold vs exit paths', 'Uses your current policy inputs'],
-      href: '/ilp-fees/exit',
-      kind: 'link' as const,
+      action: () => {
+        setPickerMode('exit')
+        setPickerOpen(true)
+      },
     },
   ]
 
@@ -150,7 +155,8 @@ export function IlpLandingPage() {
         <div className="grid gap-4 lg:grid-cols-2">
           {guidedDashboards.map((entry) => {
             const Icon = entry.icon
-            const content = (
+            return (
+              <button key={entry.title} type="button" onClick={entry.action} className="group text-left">
               <Card className={`relative h-full overflow-hidden rounded-md border transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-lg ${entry.tone}`}>
                 <div className={`absolute inset-x-0 top-0 h-24 bg-gradient-to-br ${entry.accent}`} />
                 <CardContent className="relative flex h-full flex-col gap-5 p-6">
@@ -188,20 +194,7 @@ export function IlpLandingPage() {
                   </div>
                 </CardContent>
               </Card>
-            )
-
-            if (entry.kind === 'button') {
-              return (
-                <button key={entry.title} type="button" onClick={entry.action} className="group text-left">
-                  {content}
-                </button>
-              )
-            }
-
-            return (
-              <Link key={entry.title} to={entry.href!} className="group">
-                {content}
-              </Link>
+              </button>
             )
           })}
         </div>
@@ -283,10 +276,21 @@ export function IlpLandingPage() {
 
       <ProductPickerDialog
         open={pickerOpen}
-        onOpenChange={setPickerOpen}
+        onOpenChange={(open) => {
+          setPickerOpen(open)
+          if (!open) {
+            setPickerMode(null)
+          }
+        }}
         onSelect={(product, variant) => {
           setPickerOpen(false)
-          navigate(`/ilp-fees/story/${product.id}?variantId=${encodeURIComponent(variant.id)}`)
+          const variantId = encodeURIComponent(variant.id)
+          if (pickerMode === 'exit') {
+            navigate(`/ilp-fees/exit?productId=${product.id}&variantId=${variantId}`)
+          } else {
+            navigate(`/ilp-fees/story/${product.id}?variantId=${variantId}`)
+          }
+          setPickerMode(null)
         }}
       />
     </div>

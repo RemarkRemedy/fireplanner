@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowRight, Calculator } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -168,12 +168,48 @@ export function IlpExitCalculatorPage() {
   })
 
   const addPolicyFromSeed = useIlpStore((state) => state.addPolicyFromSeed)
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pendingSeed, setPendingSeed] = useState<IlpPolicySeed | null>(null)
   const [selectedProduct, setSelectedProduct] = useState<IlpCatalogProduct | null>(null)
   const [exitPolicy, setExitPolicy] = useState<IlpPolicyInput | null>(null)
   const { revealed: illustrativeChartsRevealed, setRevealed: setIllustrativeChartsRevealed } = useIlpFeesIllustrativeDisclosure()
+  const requestedProductId = searchParams.get('productId')
+  const requestedVariantId = searchParams.get('variantId')
+
+  const routeSelection = useMemo(() => {
+    if (!requestedProductId || !requestedVariantId) {
+      return null
+    }
+
+    const { products, manifest } = getIlpCatalog()
+    const product = products.find((candidate) => candidate.id === requestedProductId)
+    if (!product) {
+      return null
+    }
+
+    const variant = product.variants.find((candidate) => candidate.id === requestedVariantId)
+    if (!variant) {
+      return null
+    }
+
+    return {
+      product,
+      seed: templateVariantToPolicySeed(product, variant, manifest),
+    }
+  }, [requestedProductId, requestedVariantId])
+
+  useEffect(() => {
+    if (!routeSelection || pendingSeed || exitPolicy) {
+      return
+    }
+
+    setSelectedProduct(routeSelection.product)
+    setPendingSeed(routeSelection.seed)
+    setPickerOpen(false)
+  }, [exitPolicy, pendingSeed, routeSelection])
 
   const analysis: IlpPolicyAnalysis | null = useMemo(() => {
     if (!exitPolicy) return null
@@ -223,7 +259,7 @@ export function IlpExitCalculatorPage() {
         <div className="space-y-2">
           <h1 className="text-2xl font-bold">ILP Exit Calculator</h1>
           <p className="text-muted-foreground">
-            Find out if staying in your ILP or exiting makes more financial sense under your specific circumstances.
+            Compare hold and exit scenarios using your own policy inputs and the assumptions in this tool.
           </p>
         </div>
 
@@ -246,7 +282,7 @@ export function IlpExitCalculatorPage() {
         <Card>
           <CardContent className="pt-6">
             <p className="text-xs text-muted-foreground">
-              Not financial advice. This calculator shows fee comparisons based on your inputs and standardized assumptions. Consult a licensed financial adviser before making policy decisions.
+              This tool compares scenarios based on your inputs and standardized assumptions. It does not tell you whether you should stay, exit, or switch.
             </p>
           </CardContent>
         </Card>
@@ -276,6 +312,9 @@ export function IlpExitCalculatorPage() {
           onCancel={() => {
             setPendingSeed(null)
             setSelectedProduct(null)
+            if (requestedProductId || requestedVariantId) {
+              navigate('/ilp-fees/exit', { replace: true })
+            }
           }}
         />
       </div>
@@ -363,6 +402,9 @@ export function IlpExitCalculatorPage() {
               setExitPolicy(null)
               setPendingSeed(null)
               setSelectedProduct(null)
+              if (requestedProductId || requestedVariantId) {
+                navigate('/ilp-fees/exit', { replace: true })
+              }
             }}
           >
             Start over
