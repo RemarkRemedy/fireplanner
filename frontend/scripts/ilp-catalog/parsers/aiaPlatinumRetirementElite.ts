@@ -256,6 +256,8 @@ function buildRegularPremiumVariant(document: ExtractedPdfDocument): IlpTemplate
     id: 'sgd-mip-5',
     currency: 'SGD',
     mipLength: 5,
+    paymentStructure: 'mip',
+    contributionMode: 'regular-pay',
     icpMonths: 1,
     accounts: [
       {
@@ -427,6 +429,8 @@ function buildSinglePremiumVariant(document: ExtractedPdfDocument): IlpTemplateV
     currency: 'SGD',
     mipBasis: 'open-ended',
     mipLength: null,
+    paymentStructure: 'single-pay',
+    contributionMode: 'single-pay',
     icpMonths: 1,
     accounts: [
       {
@@ -515,6 +519,7 @@ export function parseAiaPlatinumRetirementElite({ document, sourceChecksumSha256
       'kernel:current-ti-benefit-estimate',
       'kernel:scheduled-payout-manual-assumption',
       'kernel:scheduled-payout-target-retirement-age-gate',
+      'kernel:scheduled-payout-first-year-proration',
       'kernel:lapse-reinstatement-payout-state',
     ],
     coveredElsewhereBehaviors: ['aia-platinum-retirement-elite-fund-management-charge'],

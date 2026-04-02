@@ -126,6 +126,7 @@ describe('parseAiaPlatinumRetirementElite', () => {
       'kernel:current-ti-benefit-estimate',
       'kernel:scheduled-payout-manual-assumption',
       'kernel:scheduled-payout-target-retirement-age-gate',
+      'kernel:scheduled-payout-first-year-proration',
       'kernel:lapse-reinstatement-payout-state',
     ])
     expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-retirement-elite-withdrawal-adjusted-power-up-bonus')
@@ -149,6 +150,8 @@ describe('parseAiaPlatinumRetirementElite', () => {
       id: 'sgd-mip-5',
       currency: 'SGD',
       mipLength: 5,
+      paymentStructure: 'mip',
+      contributionMode: 'regular-pay',
       policyStateSupport: {
         automaticLapseOnAccountValueDepletion: true,
         blockTopUpsWhenPremiumsNotPaidUpToDate: true,
@@ -219,6 +222,13 @@ describe('parseAiaPlatinumRetirementElite', () => {
     expect(regularPayVariant?.warnings).toContain(
       'AIA Platinum Retirement Elite is cataloged as a supported V1 product. The current parser captures the regular-pay 5-year corridor: premium-year regular premium charges, the 2.50% p.a. regular-premium supplementary charge, the premium-holiday charge schedule, annual-state lapse after projected account-value depletion, the 3% top-up premium charge with blocking in months where regular premiums are not paid up to date and the published S$1,000 minimum on explicit ad-hoc top-ups, the regular-premium withdrawal / surrender charge schedules, the regular-pay Power-up Bonus corridor from the end of policy year 10 and every fifth policy year thereafter including the published cumulative withdrawal-factor adjustment from policy year 6 onward, scheduled payout capability once a manual payout assumption is supplied with the published target-retirement-age start gate, the current-state death and terminal-illness benefit amount as 105% of policy value, and the current accidental-death uplift as 50% of cumulative paid regular premiums during the first 5 policy years, including lapse suppression in the annual-state model.',
     )
+    expect(singlePayVariant).toMatchObject({
+      id: 'sgd-open-ended-sp',
+      currency: 'SGD',
+      mipBasis: 'open-ended',
+      paymentStructure: 'single-pay',
+      contributionMode: 'single-pay',
+    })
     expect(regularPayVariant?.unsupportedItems).not.toContain(
       'Withdrawal-adjusted Power-up Bonus scaling after any partial withdrawal from policy year 6 onward remains informational only.',
     )

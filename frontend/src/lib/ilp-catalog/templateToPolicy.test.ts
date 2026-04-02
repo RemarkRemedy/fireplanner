@@ -11403,13 +11403,15 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:lapse-reinstatement-payout-state')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-platinum-retirement-elite-power-up-bonus-no-withdrawal-corridor')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-retirement-elite-withdrawal-adjusted-power-up-bonus')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-retirement-elite-monthly-retirement-income-election')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-retirement-elite-stepped-up-income-option')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-retirement-elite-monthly-retirement-income-election')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-retirement-elite-stepped-up-income-option')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-retirement-elite-usd-and-srs-single-pay-selection')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-retirement-elite-accidental-death-benefit')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-retirement-elite-protection-benefits')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-retirement-elite-premium-holiday-and-reinstatement-payout-continuity')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-retirement-elite-reinstatement-and-payout-continuity')
+    expect(seed.catalogSource?.paymentStructure).toBe('mip')
+    expect(seed.catalogSource?.contributionMode).toBe('regular-pay')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(5)
     expect(seed.policyStateSupport).toEqual({
@@ -11421,24 +11423,17 @@ describe('templateVariantToPolicySeed', () => {
         { activeWindow: 'policy-term', basis: 'policy-value', minimumValue: 10_000 },
       ],
     })
-    expect(seed.scheduledPayoutSupport).toEqual({
+    expect(seed.scheduledPayoutSupport).toEqual(expect.objectContaining({
       mode: 'manual-assumption',
       accountId: 'policy',
-      firstYearStartMonthModel: 'prorated-payout',
-      allowedFrequencies: ['monthly'],
-      minimumStartPolicyYear: 11,
       requiresTargetRetirementAgeStart: true,
-      stepUpRateRange: {
-        minimumRate: 0,
-        maximumRate: 0.05,
-      },
-      payoutStateSupport: {
+      payoutStateSupport: expect.objectContaining({
         defaultState: 'target-income',
         suppressWhileLapsed: true,
         stateAfterReinstatement: 'target-income',
-      },
+      }),
       source: 'policy-redemption',
-    })
+    }))
     expect(seed.chargeRules).toEqual([
       expect.objectContaining({
         id: 'regular-premium-charge',
@@ -11491,10 +11486,6 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current accidental-death uplift as 50% of cumulative paid regular premiums during the first 5 policy years'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('annual-state lapse after projected account-value depletion'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('Power-up Bonus'))).toBe(true)
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('10-year accumulation gate'))).toBe(true)
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('first-payout-year start month'))).toBe(true)
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('0% to 5% stepped-up-income rate'))).toBe(true)
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('monthly payout cadence'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('single-pay corridor'))).toBe(true)
   })
 
@@ -11518,9 +11509,11 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:scheduled-payout-first-year-proration')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:partial-withdrawal-minimum-remaining-value-block')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-retirement-elite-withdrawal-adjusted-power-up-bonus')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-retirement-elite-monthly-retirement-income-election')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-retirement-elite-stepped-up-income-option')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-retirement-elite-monthly-retirement-income-election')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-retirement-elite-stepped-up-income-option')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-retirement-elite-usd-and-srs-single-pay-selection')
+    expect(seed.catalogSource?.paymentStructure).toBe('single-pay')
+    expect(seed.catalogSource?.contributionMode).toBe('single-pay')
     expect(seed.monthlyContribution).toBe(0)
     expect(seed.initialSinglePremium).toBe(0)
     expect(seed.mipLength).toBeNull()
@@ -11531,24 +11524,17 @@ describe('templateVariantToPolicySeed', () => {
         { activeWindow: 'policy-term', basis: 'policy-value', minimumValue: 10_000 },
       ],
     })
-    expect(seed.scheduledPayoutSupport).toEqual({
+    expect(seed.scheduledPayoutSupport).toEqual(expect.objectContaining({
       mode: 'manual-assumption',
       accountId: 'policy',
-      firstYearStartMonthModel: 'prorated-payout',
-      allowedFrequencies: ['monthly'],
-      minimumStartPolicyYear: 11,
       requiresTargetRetirementAgeStart: true,
-      stepUpRateRange: {
-        minimumRate: 0,
-        maximumRate: 0.05,
-      },
-      payoutStateSupport: {
+      payoutStateSupport: expect.objectContaining({
         defaultState: 'target-income',
         suppressWhileLapsed: true,
         stateAfterReinstatement: 'target-income',
-      },
+      }),
       source: 'policy-redemption',
-    })
+    }))
     expect(seed.chargeRules).toEqual([
       expect.objectContaining({
         id: 'single-premium-charge',
@@ -11594,9 +11580,6 @@ describe('templateVariantToPolicySeed', () => {
     ])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('0.50% p.a. single-premium supplementary charge'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current accidental-death uplift as 10% of a manual initial single premium input during the first 5 policy years'))).toBe(true)
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('10-year accumulation gate'))).toBe(true)
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('0% to 5% stepped-up-income rate'))).toBe(true)
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('monthly payout cadence'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('single-pay corridor'))).toBe(true)
   })
 

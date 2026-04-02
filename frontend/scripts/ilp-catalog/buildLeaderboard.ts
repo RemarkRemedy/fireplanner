@@ -12,6 +12,7 @@ import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { IlpPolicyInput } from '../../src/lib/calculations/ilp.js'
 import { analyzeIlpPolicy } from '../../src/lib/calculations/ilp.js'
+import { formatCatalogVariantLabel } from '../../src/lib/ilp-catalog/labels.js'
 import { templateVariantToPolicySeed } from '../../src/lib/ilp-catalog/templateToPolicy.js'
 import type { IlpCatalogManifest, IlpCatalogProduct } from '../../src/lib/ilp-catalog/types.js'
 import type { IlpPolicySeed } from '../../src/lib/ilp-catalog/policySeedSchema.js'
@@ -99,7 +100,8 @@ async function main() {
         const seed = templateVariantToPolicySeed(product, variant, manifest)
 
         // Determine premium type
-        const isSinglePremium = (seed.initialSinglePremium ?? 0) > 0 || seed.monthlyContribution === 0
+        const isSinglePremium = variant.contributionMode === 'single-pay'
+          || ((seed.initialSinglePremium ?? 0) > 0 || seed.monthlyContribution === 0)
         const premiumType = isSinglePremium ? 'single' as const : 'regular' as const
 
         // Override with standardized assumptions
@@ -114,11 +116,7 @@ async function main() {
         const analysis = analyzeIlpPolicy(policy)
         const { summary } = analysis
 
-        const variantLabel = [
-          variant.currency,
-          variant.mipBasis === 'open-ended' ? 'Open-ended' : `MIP ${variant.mipLength}`,
-          variant.id.includes('advanced') ? '(Advanced)' : '',
-        ].filter(Boolean).join(' / ').trim()
+        const variantLabel = formatCatalogVariantLabel(variant)
 
         rows.push({
           productId: product.id,

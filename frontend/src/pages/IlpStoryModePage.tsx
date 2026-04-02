@@ -24,6 +24,7 @@ import { formatIlpBonusSupport } from '@/lib/ilpBonusSupport'
 import { buildFeeBreakdown } from '@/lib/calculations/ilpFeeBreakdown'
 import type { IlpPolicyInput, IlpProjectedPolicyAnalysis } from '@/lib/calculations/ilp'
 import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
+import { formatCatalogVariantLabel } from '@/lib/ilp-catalog/labels'
 import type { IlpPolicySeed } from '@/lib/ilp-catalog/policySeedSchema'
 import { templateVariantToPolicySeed } from '@/lib/ilp-catalog/templateToPolicy'
 import type { IlpCatalogProduct, IlpTemplateVariant } from '@/lib/ilp-catalog/types'
@@ -228,16 +229,7 @@ function VariantPicker({
             className="rounded-lg border p-4 text-left transition-colors hover:border-primary hover:bg-accent/50"
             onClick={() => onSelect(variant)}
           >
-            <div className="font-medium">
-              {variant.currency} / {variant.mipBasis === 'open-ended' ? 'Open-ended' : `MIP ${variant.mipLength}`}
-              {(() => {
-                const suffix = variant.id.split('-').pop()
-                if (suffix && !['sgd', 'usd', 'sp', 'rsp'].includes(suffix) && !/^\d+$/.test(suffix)) {
-                  return ` (${suffix.charAt(0).toUpperCase() + suffix.slice(1)})`
-                }
-                return ''
-              })()}
-            </div>
+            <div className="font-medium">{formatCatalogVariantLabel(variant)}</div>
             <div className="text-xs text-muted-foreground">
               {variant.accounts.length} account{variant.accounts.length === 1 ? '' : 's'}, {variant.feeRules.length} fee rules
             </div>

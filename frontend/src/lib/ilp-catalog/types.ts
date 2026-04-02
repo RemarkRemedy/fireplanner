@@ -5,6 +5,8 @@ export type IlpCatalogCurrency = 'SGD' | 'USD'
 export type IlpCatalogSourceDocumentType = 'summary' | 'brochure'
 export type IlpCatalogSourceClass = 'summary' | 'brochure-only'
 export type IlpMipBasis = 'finite' | 'open-ended'
+export type IlpCatalogPaymentStructure = 'mip' | 'ppt' | 'single-pay' | 'flexi' | 'iip'
+export type IlpCatalogContributionMode = 'regular-pay' | 'single-pay'
 export type IlpVitalityStatus = 'bronze' | 'silver' | 'gold' | 'platinum'
 export type IlpRegularPremiumPaymentFrequency = 'annual' | 'semi-annual' | 'quarterly' | 'monthly'
 
@@ -445,6 +447,11 @@ export interface IlpTemplateVariant {
   currency: IlpCatalogCurrency
   mipBasis?: IlpMipBasis
   mipLength?: number | null
+  paymentStructure?: IlpCatalogPaymentStructure
+  premiumPaymentTermYears?: number | null
+  policyTermYears?: number | null
+  flexiTerm?: number | null
+  contributionMode?: IlpCatalogContributionMode
   icpMonths: number
   accounts: IlpTemplateAccount[]
   bonuses: IlpTemplateBonus[]
@@ -464,14 +471,14 @@ export interface IlpTemplateVariant {
 export interface IlpCatalogPublishedCorridor {
   id: string
   label: string
-  paymentStructure: 'mip' | 'ppt' | 'single-pay' | 'flexi' | 'iip'
+  paymentStructure: IlpCatalogPaymentStructure
   behavioralConstraint?: 'lock-in'
   currency?: IlpCatalogCurrency
   mipLength?: number | null
   premiumPaymentTermYears?: number | null
   policyTermYears?: number | null
   flexiTerm?: number | null
-  contributionMode?: 'regular-pay' | 'single-pay'
+  contributionMode?: IlpCatalogContributionMode
   status: 'not-modeled-yet'
   reason: string
   sourceRefs: IlpCatalogSourceRef[]
