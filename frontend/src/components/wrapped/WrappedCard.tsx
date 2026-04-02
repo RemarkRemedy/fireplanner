@@ -15,7 +15,7 @@ interface WrappedCardProps {
 export function WrappedCard({ gradient, direction, children, compact, wide }: WrappedCardProps) {
   return (
     <motion.div
-      className="absolute inset-0 flex flex-col items-stretch justify-start overflow-y-auto px-4 pb-8 pt-14 text-white sm:px-6 sm:pb-10 sm:pt-16 md:items-center md:justify-center md:px-8 md:py-10"
+      className="absolute inset-0 overflow-y-auto text-white"
       style={{ background: gradient, boxShadow: 'inset 0 0 60px rgba(255,255,255,0.04)' }}
       custom={direction}
       variants={cardVariants}
@@ -33,14 +33,16 @@ export function WrappedCard({ gradient, direction, children, compact, wide }: Wr
           backgroundRepeat: 'repeat',
         }}
       />
-      <motion.div
-        className={`z-10 mx-auto flex w-full flex-col items-center text-center ${wide ? 'max-w-5xl' : 'max-w-lg'} ${compact ? 'gap-3 md:gap-4' : 'gap-4 md:gap-6'}`}
-        variants={staggerContainer}
-        initial="enter"
-        animate="center"
-      >
-        {children}
-      </motion.div>
+      <div className="relative z-10 flex min-h-full px-4 pb-8 pt-14 sm:px-6 sm:pb-10 sm:pt-16 md:px-8 md:py-10">
+        <motion.div
+          className={`mx-auto flex w-full flex-col items-center justify-center text-center ${wide ? 'max-w-5xl' : 'max-w-lg'} ${compact ? 'gap-3 md:gap-4' : 'gap-4 md:gap-6'}`}
+          variants={staggerContainer}
+          initial="enter"
+          animate="center"
+        >
+          {children}
+        </motion.div>
+      </div>
     </motion.div>
   )
 }
