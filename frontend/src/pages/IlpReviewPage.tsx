@@ -150,19 +150,41 @@ function buildCompactSnapshotMetrics(policy: IlpPolicyInput, analysis: IlpPolicy
 function ReviewWorkspaceOverview({
   selectedPolicy,
   policyCount,
+  comparisonCount,
+  excludedCount,
+  currentOnlyCount,
+  manualRequirementCount,
+  selectedAnalysisMode,
 }: {
   selectedPolicy: IlpPolicyInput | null
   policyCount: number
+  comparisonCount: number
+  excludedCount: number
+  currentOnlyCount: number
+  manualRequirementCount: number
+  selectedAnalysisMode: 'projected' | 'current-only' | 'paused'
 }) {
   return (
     <Card variant="accent">
-      <CardContent className="space-y-3 pt-6">
+      <CardContent className="space-y-4 pt-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg font-semibold">Selected Policy Workspace</h2>
               {selectedPolicy && <Badge variant="outline">{selectedPolicy.name}</Badge>}
               <Badge variant="secondary">{policyCount} {policyCount === 1 ? 'policy' : 'policies'} loaded</Badge>
+              <Badge variant={manualRequirementCount === 0 ? 'outline' : 'secondary'}>
+                {manualRequirementCount === 0
+                  ? 'Current inputs ready'
+                  : `${manualRequirementCount} current input${manualRequirementCount === 1 ? '' : 's'} left`}
+              </Badge>
+              <Badge variant={selectedAnalysisMode === 'projected' ? 'outline' : 'secondary'}>
+                {selectedAnalysisMode === 'projected'
+                  ? 'Projected review available'
+                  : selectedAnalysisMode === 'current-only'
+                    ? 'Current snapshot only'
+                    : 'Review paused'}
+              </Badge>
             </div>
             <p className="max-w-3xl text-sm text-muted-foreground">
               Use this page as the advanced working bench: complete the form first, keep today&apos;s snapshot beside you, then move into comparison and deeper review below once the current state is coherent.
@@ -181,6 +203,30 @@ function ReviewWorkspaceOverview({
             <Button asChild size="sm" variant="outline">
               <a href="#advanced-review">Advanced review</a>
             </Button>
+          </div>
+        </div>
+
+        <div className="grid gap-3 rounded-lg border bg-background/70 p-3 md:grid-cols-3">
+          <div className="space-y-1">
+            <p className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">Compare set</p>
+            <p className="text-sm font-semibold">{comparisonCount} {comparisonCount === 1 ? 'policy' : 'policies'} currently analyzable</p>
+            <p className="text-xs text-muted-foreground">
+              These are the policies that feed the comparison table and projected charts right now.
+            </p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">Blocked policies</p>
+            <p className="text-sm font-semibold">{excludedCount} {excludedCount === 1 ? 'policy' : 'policies'} excluded</p>
+            <p className="text-xs text-muted-foreground">
+              Validation issues keep blocked policies editable, but they stay out of the analysis set until fixed.
+            </p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">Current-only paths</p>
+            <p className="text-sm font-semibold">{currentOnlyCount} {currentOnlyCount === 1 ? 'policy stays' : 'policies stay'} in snapshot mode</p>
+            <p className="text-xs text-muted-foreground">
+              Mature finite-MIP cases can still compare current-state outcomes even when projected review is intentionally disabled.
+            </p>
           </div>
         </div>
       </CardContent>
@@ -549,6 +595,15 @@ export function IlpReviewPage() {
       <ReviewWorkspaceOverview
         selectedPolicy={selectedPolicy}
         policyCount={policies.length}
+        comparisonCount={analysisResult.analysis?.policies.length ?? 0}
+        excludedCount={excludedCount}
+        currentOnlyCount={currentOnlyCount}
+        manualRequirementCount={manualRequirementCount}
+        selectedAnalysisMode={
+          selectedAnalysis == null
+            ? 'paused'
+            : selectedAnalysis.mode
+        }
       />
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_22rem]">
