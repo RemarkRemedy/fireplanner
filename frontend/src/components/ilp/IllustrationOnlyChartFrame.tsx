@@ -7,6 +7,8 @@ const IllustrativeChartsGroupContext = createContext<{ revealed: boolean } | nul
 
 interface IllustrationOnlyChartFrameProps {
   ariaLabel: string
+  badgeClassName?: string
+  badgePlacement?: 'inline' | 'overlay'
   children: ReactNode
   className?: string
   dark?: boolean
@@ -28,6 +30,8 @@ export function IllustrativeChartsGroup({
 
 export function IllustrationOnlyChartFrame({
   ariaLabel,
+  badgeClassName,
+  badgePlacement = 'overlay',
   children,
   className,
   dark = false,
@@ -39,6 +43,22 @@ export function IllustrationOnlyChartFrame({
   const checkboxId = useId()
   const revealed = usesSharedIlpFeesDisclosure ? sharedRevealed : localRevealed
   const setRevealed = usesSharedIlpFeesDisclosure ? setSharedRevealed : setLocalRevealed
+  const badge = (
+    <div
+      className={cn(
+        badgePlacement === 'overlay'
+          ? 'absolute right-3 top-3 z-10'
+          : 'mb-3 flex justify-end',
+        'rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] shadow-sm',
+        dark
+          ? 'border-white/18 bg-slate-950/82 text-white/80'
+          : 'border-slate-300/80 bg-white/92 text-slate-500',
+        badgeClassName,
+      )}
+    >
+      Illustrative
+    </div>
+  )
 
   if (groupedDisclosure) {
     return (
@@ -49,42 +69,22 @@ export function IllustrationOnlyChartFrame({
           className,
         )}
       >
+        {groupedDisclosure.revealed && badgePlacement === 'inline' ? badge : null}
         <div role="img" aria-label={ariaLabel} className="h-full">
           {children}
         </div>
-        {groupedDisclosure.revealed && (
-          <div
-            className={cn(
-              'absolute right-3 top-3 z-10 rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] shadow-sm',
-              dark
-                ? 'border-white/18 bg-slate-950/82 text-white/80'
-                : 'border-slate-300/80 bg-white/92 text-slate-500',
-            )}
-          >
-            Illustrative
-          </div>
-        )}
+        {groupedDisclosure.revealed && badgePlacement === 'overlay' ? badge : null}
       </div>
     )
   }
 
   return (
     <div className={cn('relative', className)}>
+      {revealed && badgePlacement === 'inline' ? badge : null}
       <div role="img" aria-label={ariaLabel} className="h-full">
         {children}
       </div>
-      {revealed && (
-        <div
-          className={cn(
-            'absolute right-3 top-3 z-10 rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] shadow-sm',
-            dark
-              ? 'border-white/18 bg-slate-950/82 text-white/80'
-              : 'border-slate-300/80 bg-white/92 text-slate-500',
-          )}
-        >
-          Illustrative
-        </div>
-      )}
+      {revealed && badgePlacement === 'overlay' ? badge : null}
       {!revealed && (
         <div
           className={cn(

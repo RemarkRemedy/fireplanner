@@ -198,6 +198,7 @@ export function ExitTimingExplorer({ policy, analysis, useReal = false }: ExitTi
           <IllustrationOnlyChartFrame
             className={chartPanelClassName}
             ariaLabel="Bar chart showing net gap by exit year"
+            badgePlacement="inline"
           >
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-3">
               <div className="text-sm text-muted-foreground">
@@ -333,6 +334,7 @@ export function ExitTimingExplorer({ policy, analysis, useReal = false }: ExitTi
           <IllustrationOnlyChartFrame
             className={chartPanelClassName}
             ariaLabel="Line chart showing withdrawable value, added contributions, and ETF benchmark by exit year"
+            badgePlacement="inline"
           >
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-3">
               <div>
