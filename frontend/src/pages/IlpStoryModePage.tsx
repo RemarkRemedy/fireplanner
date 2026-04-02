@@ -251,17 +251,17 @@ function ReviewModeBranch({
   return (
     <Card className="border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/80 dark:bg-emerald-950/20">
       <CardContent className="space-y-4 p-5">
-        <div className="space-y-1">
+        <div className="space-y-2">
           <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-            Same product, different input mode
+            Already have this ILP?
           </div>
-          <h3 className="text-base font-semibold text-slate-950 dark:text-white">Already own this policy?</h3>
+          <h3 className="text-base font-semibold text-slate-950 dark:text-white">Use your policy statement instead</h3>
         </div>
         <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
-          Switch to current-policy review if you want hold-versus-exit analysis using your current policy year, months already paid, and account balances.
+          Enter where you are in the policy today, how much you have paid so far, and your current balance. We will use that to show what you may have put in, what fees and bonuses may have done so far, and what staying or exiting could look like next.
         </p>
         <Link to={exitHref} className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
-          Enter current policy details
+          Review my current policy
           <ArrowRight className="h-4 w-4" />
         </Link>
       </CardContent>
