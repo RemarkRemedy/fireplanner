@@ -153,14 +153,14 @@ function ProspectSetupPreview({ seed }: { seed: IlpPolicySeed }) {
       <div className="space-y-3">
         <div className="inline-flex items-center gap-2 rounded-full border border-slate-300/80 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-slate-600 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-300">
           <Clock3 className="h-3.5 w-3.5" />
-          Prospect setup
+          Standard review
         </div>
         <div className="space-y-2">
           <h2 className="text-3xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-4xl">
             Confirm your details
           </h2>
           <p className="max-w-xl text-base leading-7 text-slate-600 dark:text-slate-300">
-            We only need the premium, fund fee, and projection horizon before we show the full fee breakdown. The product rules stay the same; these inputs only control the scenario we illustrate.
+            This is the standard-assumption setup. We only need the premium, fund fee, and projection horizon before we show the walkthrough and detailed fee breakdown.
           </p>
         </div>
       </div>
@@ -185,7 +185,7 @@ function ProspectSetupPreview({ seed }: { seed: IlpPolicySeed }) {
         <div>
           <p className="text-sm font-semibold text-slate-950 dark:text-white">What you’ll see next</p>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            This is the same dashboard detail, staged in a simpler path for prospective buyers.
+            This is the same dashboard detail, staged as the standard walkthrough for someone reviewing the product before adding current-policy inputs.
           </p>
         </div>
         <div className="grid gap-3">
@@ -243,6 +243,32 @@ function VariantPicker({
   )
 }
 
+function ReviewModeBranch({
+  exitHref,
+}: {
+  exitHref: string
+}) {
+  return (
+    <Card className="border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/80 dark:bg-emerald-950/20">
+      <CardContent className="space-y-4 p-5">
+        <div className="space-y-1">
+          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+            Same product, different input mode
+          </div>
+          <h3 className="text-base font-semibold text-slate-950 dark:text-white">Already own this policy?</h3>
+        </div>
+        <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
+          Switch to current-policy review if you want hold-versus-exit analysis using your current policy year, months already paid, and account balances.
+        </p>
+        <Link to={exitHref} className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+          Enter current policy details
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </CardContent>
+    </Card>
+  )
+}
+
 // --- Main page ---
 
 export function IlpStoryModePage() {
@@ -294,6 +320,9 @@ export function IlpStoryModePage() {
 
   // Effective seed: user-selected seed takes priority, then route-selected, then auto-derived default
   const effectiveSeed = pendingSeed ?? routeSeed ?? defaultSeed
+  const exitHref = productId && requestedVariantId
+    ? `/ilp-fees/exit?productId=${productId}&variantId=${encodeURIComponent(requestedVariantId)}`
+    : '/ilp-fees/exit'
 
   // --- Product not found ---
   if (!productId || !catalogProduct) {
@@ -334,6 +363,7 @@ export function IlpStoryModePage() {
         <div className="grid w-full gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(22rem,30rem)] lg:items-start">
           <ProspectSetupPreview seed={effectiveSeed} />
           <div className="space-y-3">
+            <ReviewModeBranch exitHref={exitHref} />
             <PolicySetupGate
               seed={effectiveSeed}
               prospect

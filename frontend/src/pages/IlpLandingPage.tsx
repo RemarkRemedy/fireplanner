@@ -16,7 +16,6 @@ export function IlpLandingPage() {
 
   const navigate = useNavigate()
   const [pickerOpen, setPickerOpen] = useState(false)
-  const [pickerMode, setPickerMode] = useState<'story' | 'exit' | null>(null)
 
   const directComparisonViews = [
     {
@@ -36,39 +35,6 @@ export function IlpLandingPage() {
       description: 'Review fee labels, source dates, and like-for-like sub-fund fee disclosures.',
       href: '/ilp-ocf',
       icon: Search,
-    },
-  ]
-
-  const guidedDashboards = [
-    {
-      title: "I'm considering an ILP",
-      description: 'See how policy charges build over time, how bonuses change the picture, and what assumptions drive the result.',
-      cta: 'Pick a product',
-      footnote: 'Start with one product, then compare it with the wider market.',
-      eyebrow: 'Prospect path',
-      icon: BarChart3,
-      tone: 'border-sky-200 bg-sky-50/70 dark:border-sky-900/80 dark:bg-sky-950/20',
-      accent: 'from-sky-500/15 via-sky-500/5 to-transparent',
-      bullets: ['Fee story in minutes', 'Works with public product docs', 'No signup required'],
-      action: () => {
-        setPickerMode('story')
-        setPickerOpen(true)
-      },
-    },
-    {
-      title: 'I have an ILP',
-      description: 'Enter your current policy details to compare hold and exit scenarios using your own inputs and assumptions.',
-      cta: 'Calculate exit options',
-      footnote: 'You will need your latest policy statement.',
-      eyebrow: 'Policyholder path',
-      icon: Calculator,
-      tone: 'border-emerald-200 bg-emerald-50/70 dark:border-emerald-900/80 dark:bg-emerald-950/20',
-      accent: 'from-emerald-500/15 via-emerald-500/5 to-transparent',
-      bullets: ['Shows surrender charges', 'Compares hold vs exit paths', 'Uses your current policy inputs'],
-      action: () => {
-        setPickerMode('exit')
-        setPickerOpen(true)
-      },
     },
   ]
 
@@ -136,7 +102,7 @@ export function IlpLandingPage() {
         <div className="space-y-2">
           <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Choose how you want to review an ILP</h2>
           <p className="max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-            Start with the guided dashboard that matches your situation. If you want market-wide side-by-side checks, use the direct comparison views below.
+            Start with one product, then choose whether you want the standard walkthrough or a current-policy review. If you want market-wide side-by-side checks first, use the direct comparison views below.
           </p>
         </div>
         <div className="space-y-3">
@@ -144,7 +110,7 @@ export function IlpLandingPage() {
             <div>
               <h3 className="text-base font-semibold text-slate-950 dark:text-white">Guided dashboards</h3>
               <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                Better visualizations and clearer interpretation when you want help understanding one product or your current policy.
+                One product-first flow with a cleaner branch into either standard assumptions or your current policy details.
               </p>
             </div>
             <div className="hidden rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-medium text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-950/80 dark:text-slate-300 sm:inline-flex">
@@ -152,51 +118,86 @@ export function IlpLandingPage() {
             </div>
           </div>
         </div>
-        <div className="grid gap-4 lg:grid-cols-2">
-          {guidedDashboards.map((entry) => {
-            const Icon = entry.icon
-            return (
-              <button key={entry.title} type="button" onClick={entry.action} className="group text-left">
-              <Card className={`relative h-full overflow-hidden rounded-md border transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-lg ${entry.tone}`}>
-                <div className={`absolute inset-x-0 top-0 h-24 bg-gradient-to-br ${entry.accent}`} />
-                <CardContent className="relative flex h-full flex-col gap-5 p-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-2">
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-                        {entry.eyebrow}
-                      </p>
-                      <h2 className="text-xl font-semibold text-slate-950 dark:text-white">{entry.title}</h2>
-                    </div>
-                    <div className="rounded-md bg-white/90 p-3 text-slate-700 shadow-sm dark:bg-slate-900/90 dark:text-slate-200">
-                      <Icon className="h-5 w-5" />
-                    </div>
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(18rem,0.75fr)]">
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            className="group text-left"
+          >
+            <Card className="relative h-full overflow-hidden rounded-md border border-sky-200 bg-sky-50/70 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-lg dark:border-sky-900/80 dark:bg-sky-950/20">
+              <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-br from-sky-500/15 via-sky-500/5 to-transparent" />
+              <CardContent className="relative flex h-full flex-col gap-5 p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                      Unified guided path
+                    </p>
+                    <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Pick an ILP product once</h2>
                   </div>
+                  <div className="rounded-md bg-white/90 p-3 text-slate-700 shadow-sm dark:bg-slate-900/90 dark:text-slate-200">
+                    <BarChart3 className="h-5 w-5" />
+                  </div>
+                </div>
 
-                  <p className="flex-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                    {entry.description}
+                <p className="flex-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  Start with one product, then choose between the standard walkthrough and a current-policy review. The fee model stays the same; only the input mode changes.
+                </p>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-md border border-white/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
+                    <div className="text-sm font-medium text-slate-950 dark:text-white">Standard walkthrough</div>
+                    <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                      See the fee story, walkthrough, and detailed evidence using template assumptions.
+                    </p>
+                  </div>
+                  <div className="rounded-md border border-white/70 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
+                    <div className="text-sm font-medium text-slate-950 dark:text-white">Current policy review</div>
+                    <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                      Enter your current policy year, months already paid, and balances when you already own the policy.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
+                    Choose product
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">You only pick the product once. The next screen lets you choose the review mode.</p>
+                </div>
+              </CardContent>
+            </Card>
+          </button>
+
+          <Card className="rounded-md border border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/80 dark:bg-emerald-950/20">
+            <CardContent className="flex h-full flex-col gap-4 p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                    Current-policy branch
                   </p>
-
-                  <div className="space-y-2 rounded-md border border-white/70 bg-white/80 p-4 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
-                    {entry.bullets.map((bullet) => (
-                      <div key={bullet} className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                        <span>{bullet}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
-                      {entry.cta}
-                      <ArrowRight className="h-4 w-4" />
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{entry.footnote}</p>
-                  </div>
-                </CardContent>
-              </Card>
-              </button>
-            )
-          })}
+                  <h3 className="text-lg font-semibold text-slate-950 dark:text-white">Bring your policy statement</h3>
+                </div>
+                <div className="rounded-md bg-white/90 p-3 text-slate-700 shadow-sm dark:bg-slate-900/90 dark:text-slate-200">
+                  <Calculator className="h-5 w-5" />
+                </div>
+              </div>
+              <div className="space-y-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                <div className="flex items-start gap-2">
+                  <span className="mt-2 h-1.5 w-1.5 rounded-full bg-primary" />
+                  <span>Use this when you want hold-versus-exit analysis, not just the standard fee walkthrough.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="mt-2 h-1.5 w-1.5 rounded-full bg-primary" />
+                  <span>The extra inputs are mainly current policy year, months already paid, and current account balances.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="mt-2 h-1.5 w-1.5 rounded-full bg-primary" />
+                  <span>You branch into that mode after choosing the product, instead of from a separate top-level path.</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
@@ -276,21 +277,11 @@ export function IlpLandingPage() {
 
       <ProductPickerDialog
         open={pickerOpen}
-        onOpenChange={(open) => {
-          setPickerOpen(open)
-          if (!open) {
-            setPickerMode(null)
-          }
-        }}
+        onOpenChange={setPickerOpen}
         onSelect={(product, variant) => {
           setPickerOpen(false)
           const variantId = encodeURIComponent(variant.id)
-          if (pickerMode === 'exit') {
-            navigate(`/ilp-fees/exit?productId=${product.id}&variantId=${variantId}`)
-          } else {
-            navigate(`/ilp-fees/story/${product.id}?variantId=${variantId}`)
-          }
-          setPickerMode(null)
+          navigate(`/ilp-fees/story/${product.id}?variantId=${variantId}`)
         }}
       />
     </div>
