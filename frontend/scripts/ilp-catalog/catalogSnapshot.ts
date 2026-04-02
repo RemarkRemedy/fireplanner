@@ -278,7 +278,6 @@ function attachPublishedUnmodeledCorridors(
 }
 
 function buildPhase0PublishedUnmodeledRegistry(): Record<string, IlpCatalogPublishedCorridor[]> {
-  const aiaPwe2Refs = [sourceRef('Published corridor family', 'Single-pay and regular-pay 6 to 10 year corridors are published, while only the SGD 5-year corridor is executable today.')]
   const aiaPwlRefs = [sourceRef('Published corridor family', 'Single Pay is published alongside the modeled SGD 5-year regular-pay corridor.')]
   const fwdMaxRefs = [sourceRef('Published corridor family', 'Premium payment term ranges from 10 to 30 years; only the 10-year corridor is executable today.')]
   const legacyFlexRefs = [sourceRef('Published corridor family', 'The family includes a single-premium MIP 5 corridor in addition to the executable regular-pay corridors.')]
@@ -288,17 +287,6 @@ function buildPhase0PublishedUnmodeledRegistry(): Record<string, IlpCatalogPubli
   const hsbcWealthFocusRefs = [sourceRef('Published corridor family', 'Wealth Focus is published as flexi-term product cards including Flexi 2 and Flexi 4, each with SGD and USD 10-year corridors.')]
 
   return {
-    'aia-platinum-wealth-elite-2': [
-      ...range(6, 10).map((term) => corridor({
-        id: `sgd-mip-${term}`,
-        label: `SGD / Regular Pay ${term} years`,
-        paymentStructure: 'ppt',
-        currency: 'SGD',
-        premiumPaymentTermYears: term,
-        contributionMode: 'regular-pay',
-        sourceRefs: aiaPwe2Refs,
-      })),
-    ],
     'hsbc-life-wealth-focus-flexi-2': [
       corridor({ id: 'sgd-mip-10', label: 'SGD / MIP 10 years', paymentStructure: 'flexi', currency: 'SGD', mipLength: 10, flexiTerm: 2, contributionMode: 'regular-pay', sourceRefs: hsbcWealthFocusRefs }),
       corridor({ id: 'usd-mip-10', label: 'USD / MIP 10 years', paymentStructure: 'flexi', currency: 'USD', mipLength: 10, flexiTerm: 2, contributionMode: 'regular-pay', sourceRefs: hsbcWealthFocusRefs }),

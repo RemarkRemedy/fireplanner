@@ -110,13 +110,22 @@ describe('parseAiaPlatinumWealthElite2', () => {
       'kernel:current-ti-benefit-estimate',
       'kernel:current-residual-death-benefit-after-ti-estimate',
     ])
-    expect(product.variants.map((variant) => variant.id)).toEqual(['sgd-mip-5', 'sgd-single-pay'])
+    expect(product.variants.map((variant) => variant.id)).toEqual([
+      'sgd-mip-5',
+      'sgd-mip-6',
+      'sgd-mip-7',
+      'sgd-mip-8',
+      'sgd-mip-9',
+      'sgd-mip-10',
+      'sgd-single-pay',
+    ])
     expect(product.metadataOnlyBehaviors).toContain('aia-platinum-wealth-elite-2-no-lapse-history-and-non-manual-charge-indebtedness')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-elite-2-no-lapse-privilege')
+    expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-elite-2-premium-term-extension')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-elite-2-single-premium-corridor')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-elite-2-protection-benefits')
     expect(product.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-elite-2-vitality-bonus')
-    expect(product.warnings.some((warning) => warning.includes('regular-pay 5-year corridor plus the single-pay corridor'))).toBe(true)
+    expect(product.warnings.some((warning) => warning.includes('regular-pay 5 to 10-year corridors plus the single-pay corridor'))).toBe(true)
     expect(product.warnings.some((warning) => warning.includes('administration charge'))).toBe(true)
     expect(product.warnings.some((warning) => warning.includes('5% single-premium charge'))).toBe(true)
     expect(product.warnings.some((warning) => warning.includes('manual-input insurance-risk-charge placeholder'))).toBe(true)
@@ -127,6 +136,9 @@ describe('parseAiaPlatinumWealthElite2', () => {
     expect(regularVariant).toMatchObject({
       id: 'sgd-mip-5',
       mipLength: 5,
+      paymentStructure: 'ppt',
+      premiumPaymentTermYears: 5,
+      contributionMode: 'regular-pay',
       policyStateSupport: {
         automaticLapseOnAccountValueDepletion: true,
         blockTopUpsWhenPremiumsNotPaidUpToDate: true,
@@ -206,7 +218,6 @@ describe('parseAiaPlatinumWealthElite2', () => {
       }),
     ])
     expect(regularVariant?.eecTable).toEqual([0.5, 0.4, 0.3, 0.2, 0.1, 0])
-    expect(regularVariant?.unsupportedItems).toContain('Optional extension of the regular premium term beyond five years remains informational only in V1.')
     expect(regularVariant?.unsupportedItems).toContain('Administration charge is modeled for the first issue-date insured-amount layer only. Change-of-insured layering and new-layer charge resets remain informational only.')
     expect(regularVariant?.unsupportedItems).toContain('Insurance Risk Charge is modeled only as a manual-input annualized placeholder because the applicable insurer illustration rate depends on underwriting and Free Legacy Cover state. Free Legacy Cover, no-lapse activation history, and non-manual charge indebtedness remain informational only.')
     expect(regularVariant?.unsupportedItems).toContain('Income Withdrawal Privilege and change-of-insured effects remain informational only, while Vitality Fund Boost is modeled under a static assumed status for the regular-pay and single-pay corridors only.')
@@ -214,6 +225,45 @@ describe('parseAiaPlatinumWealthElite2', () => {
     expect(regularVariant?.unsupportedItems).toContain('Death Benefit Bequest Option and other protection-side payout handling remain informational only.')
     expect(regularVariant?.unsupportedItems).toContain('The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both keep manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs because the live insured amount, debt, no-lapse status, and cross-policy TI usage are current policy facts this app cannot observe; those inputs are manual by design in V1.')
     expect(regularVariant?.unsupportedItems).toContain('Terminal-illness claim exclusions, settlement workflow, and non-manual post-claim state remain informational only beyond the modeled current terminal-illness and residual-after-TI snapshot surface.')
+
+    const longRegularVariant = product.variants.find((variant) => variant.id === 'sgd-mip-10')
+    expect(longRegularVariant).toMatchObject({
+      id: 'sgd-mip-10',
+      mipLength: 10,
+      paymentStructure: 'ppt',
+      premiumPaymentTermYears: 10,
+      contributionMode: 'regular-pay',
+      policyStateSupport: {
+        automaticLapseOnAccountValueDepletion: true,
+        blockTopUpsWhenPremiumsNotPaidUpToDate: true,
+        accountValueDepletionNonLapseWindows: [
+          { startPolicyYear: 1, endPolicyYear: 15 },
+        ],
+      },
+    })
+    expect(longRegularVariant?.eecTable).toEqual([0.5, 0.4, 0.3, 0.2, 0.1, 0, 0, 0, 0, 0])
+    expect(longRegularVariant?.feeRules).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'regular-premium-charge',
+        rateSchedule: expect.arrayContaining([
+          expect.objectContaining({ startPolicyYear: 6, endPolicyYear: null, rate: 0.03 }),
+        ]),
+      }),
+    ]))
+    expect(longRegularVariant?.eventChargeRules).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'premium-holiday-charge',
+        rateSchedule: expect.arrayContaining([
+          expect.objectContaining({ startPolicyYear: 5, endPolicyYear: null, rate: 0 }),
+        ]),
+      }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        rateSchedule: expect.arrayContaining([
+          expect.objectContaining({ startPolicyYear: 6, endPolicyYear: null, rate: 0 }),
+        ]),
+      }),
+    ]))
 
     const singlePayVariant = product.variants.find((variant) => variant.id === 'sgd-single-pay')
     expect(singlePayVariant).toMatchObject({
@@ -280,6 +330,7 @@ describe('parseAiaPlatinumWealthElite2', () => {
       expect.stringContaining('single-pay corridor'),
       expect.stringContaining('5% single-premium charge'),
     ]))
+    expect(singlePayVariant?.unsupportedItems).not.toContain('Premium-term extension remains informational only in V1 because it applies to the regular-pay corridor only.')
   })
 
   it.skipIf(!existsSync(SOURCE_PATH))('matches the live source PDF when the local corpus is available', async () => {

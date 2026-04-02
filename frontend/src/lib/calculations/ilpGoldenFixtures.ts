@@ -6989,17 +6989,18 @@ function aiaWealthVentureStressPolicy(
 
 function aiaPlatinumWealthElite2BasePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
-  variantId: 'sgd-mip-5' | 'sgd-single-pay',
+  variantId: 'sgd-mip-5' | 'sgd-mip-6' | 'sgd-mip-7' | 'sgd-mip-8' | 'sgd-mip-9' | 'sgd-mip-10' | 'sgd-single-pay',
   id: string,
   funds: IlpFund[],
   overrides: Partial<IlpPolicyInput> = {},
 ): IlpPolicyInput {
   const isSinglePay = variantId === 'sgd-single-pay'
+  const premiumPaymentTermYears = isSinglePay ? null : Number(variantId.replace('sgd-mip-', ''))
   const base = seedPolicy(snapshot, 'aia-platinum-wealth-elite-2', variantId, id, {
     initialSinglePremium: isSinglePay ? 100_000 : 0,
     monthlyContribution: isSinglePay ? 0 : 900,
-    currentPolicyYear: isSinglePay ? 1 : 3,
-    monthsAlreadyPaid: isSinglePay ? 0 : 24,
+    currentPolicyYear: isSinglePay ? 1 : premiumPaymentTermYears === 10 ? 7 : 3,
+    monthsAlreadyPaid: isSinglePay ? 0 : premiumPaymentTermYears === 10 ? 72 : 24,
   })
 
   return withResolvedManualInputs(withFunds(
@@ -7007,10 +7008,10 @@ function aiaPlatinumWealthElite2BasePolicy(
       ...base,
       name: isSinglePay
         ? 'Golden AIA Platinum Wealth Elite 2.0 (SGD / Single Pay)'
-        : 'Golden AIA Platinum Wealth Elite 2.0 (SGD / MIP 5)',
+        : `Golden AIA Platinum Wealth Elite 2.0 (SGD / Premium Payment Term ${premiumPaymentTermYears} years)`,
       accounts: base.accounts.map((account) => ({
         ...account,
-        currentValue: isSinglePay ? 94_000 : 20_000,
+        currentValue: isSinglePay ? 94_000 : premiumPaymentTermYears === 10 ? 58_000 : 20_000,
       })),
       policyEvents: [],
       ...overrides,
@@ -7021,26 +7022,27 @@ function aiaPlatinumWealthElite2BasePolicy(
 
 function aiaPlatinumWealthElite2BaselinePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
-  variantId: 'sgd-mip-5' | 'sgd-single-pay',
+  variantId: 'sgd-mip-5' | 'sgd-mip-6' | 'sgd-mip-7' | 'sgd-mip-8' | 'sgd-mip-9' | 'sgd-mip-10' | 'sgd-single-pay',
   id: string,
 ): IlpPolicyInput {
   return aiaPlatinumWealthElite2BasePolicy(snapshot, variantId, id, AIA_BALANCED_FUNDS, {
     name: variantId === 'sgd-single-pay'
       ? 'Golden AIA Platinum Wealth Elite 2.0 (SGD / Single Pay Baseline)'
-      : 'Golden AIA Platinum Wealth Elite 2.0 (SGD / MIP 5 Baseline)',
+      : `Golden AIA Platinum Wealth Elite 2.0 (SGD / Premium Payment Term ${variantId.replace('sgd-mip-', '')} years Baseline)`,
   })
 }
 
 function aiaPlatinumWealthElite2EventHeavyPolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
-  variantId: 'sgd-mip-5' | 'sgd-single-pay',
+  variantId: 'sgd-mip-5' | 'sgd-mip-6' | 'sgd-mip-7' | 'sgd-mip-8' | 'sgd-mip-9' | 'sgd-mip-10' | 'sgd-single-pay',
   id: string,
 ): IlpPolicyInput {
+  const isSinglePay = variantId === 'sgd-single-pay'
   return aiaPlatinumWealthElite2BasePolicy(snapshot, variantId, id, AIA_BALANCED_FUNDS, {
-    name: variantId === 'sgd-single-pay'
+    name: isSinglePay
       ? 'Golden AIA Platinum Wealth Elite 2.0 (SGD / Single Pay Event Heavy)'
-      : 'Golden AIA Platinum Wealth Elite 2.0 (SGD / MIP 5 Event Heavy)',
-    policyEvents: variantId === 'sgd-single-pay'
+      : `Golden AIA Platinum Wealth Elite 2.0 (SGD / Premium Payment Term ${variantId.replace('sgd-mip-', '')} years Event Heavy)`,
+    policyEvents: isSinglePay
       ? [
           {
             id: 'top-up-1',
@@ -7058,7 +7060,33 @@ function aiaPlatinumWealthElite2EventHeavyPolicy(
             accountId: 'policy',
           },
         ]
-      : [
+      : variantId === 'sgd-mip-10'
+        ? [
+            {
+              id: 'holiday-1',
+              type: 'premium-holiday',
+              startPolicyMonth: 79,
+              durationMonths: 3,
+              repayMissedPremiums: true,
+              repaymentAccountId: 'policy',
+            },
+            {
+              id: 'top-up-1',
+              type: 'top-up',
+              startPolicyMonth: 85,
+              durationMonths: 1,
+              amount: 8_000,
+            },
+            {
+              id: 'withdrawal-1',
+              type: 'partial-withdrawal',
+              startPolicyMonth: 92,
+              durationMonths: 1,
+              amount: 3_500,
+              accountId: 'policy',
+            },
+          ]
+        : [
           {
             id: 'holiday-1',
             type: 'premium-holiday',
@@ -7090,8 +7118,8 @@ function aiaPlatinumWealthElite2StressPolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
 ): IlpPolicyInput {
-  return aiaPlatinumWealthElite2BasePolicy(snapshot, 'sgd-mip-5', id, AIA_STRESS_FUNDS, {
-    name: 'Golden AIA Platinum Wealth Elite 2.0 (SGD / MIP 5 OCF Stress)',
+  return aiaPlatinumWealthElite2BasePolicy(snapshot, 'sgd-mip-10', id, AIA_STRESS_FUNDS, {
+    name: 'Golden AIA Platinum Wealth Elite 2.0 (SGD / Premium Payment Term 10 years OCF Stress)',
   })
 }
 
@@ -11096,6 +11124,26 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       },
     ],
   },
+  ...(['sgd-mip-6', 'sgd-mip-7', 'sgd-mip-8', 'sgd-mip-9', 'sgd-mip-10'] as const).map((variantId) => ({
+    productId: 'aia-platinum-wealth-elite-2',
+    variantId,
+    scenarioId: 'baseline',
+    fixtureClass: 'supported' as const,
+    coverageTags: [
+      'baseline',
+      'kernel:current-death-benefit-estimate',
+      'kernel:current-ti-benefit-estimate',
+      'branch:aia-platinum-wealth-elite-2-regular-premium-charge',
+      'branch:aia-platinum-wealth-elite-2-full-surrender-charge',
+    ] as GoldenCoverageTag[],
+    description: `AIA Platinum Wealth Elite 2.0 baseline scenario proving the supported ${variantId.replace('sgd-mip-', '')}-year regular-pay corridor.`,
+    integrityChecks: [
+      {
+        description: 'records positive annual fees under the supported premium-charge corridor',
+        test: (_: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>, artifact: GoldenFixtureArtifact) => (artifact.expected.projections.mid.rows[0]?.cumulativeGrossFees ?? 0) > 0,
+      },
+    ],
+  })),
   {
     productId: 'aia-platinum-wealth-elite-2',
     variantId: 'sgd-single-pay',
@@ -11118,7 +11166,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
   },
   {
     productId: 'aia-platinum-wealth-elite-2',
-    variantId: 'sgd-mip-5',
+    variantId: 'sgd-mip-10',
     scenarioId: 'event-heavy',
     fixtureClass: 'supported',
     coverageTags: [
@@ -11127,7 +11175,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'branch:aia-platinum-wealth-elite-2-premium-holiday-charge',
       'branch:aia-platinum-wealth-elite-2-partial-withdrawal-charge',
     ],
-    description: 'AIA Platinum Wealth Elite 2.0 event-heavy scenario covering premium holiday, top-up, and partial withdrawal on the supported regular-pay corridor.',
+    description: 'AIA Platinum Wealth Elite 2.0 event-heavy scenario covering premium holiday, top-up, and partial withdrawal on the supported 10-year regular-pay corridor.',
     integrityChecks: [
       {
         description: 'event-heavy policy produces a later withdrawal and top-up activity',
@@ -11155,11 +11203,11 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
   },
   {
     productId: 'aia-platinum-wealth-elite-2',
-    variantId: 'sgd-mip-5',
+    variantId: 'sgd-mip-10',
     scenarioId: 'ocf-stress',
     fixtureClass: 'supported',
     coverageTags: ['ocf-stress'],
-    description: 'AIA Platinum Wealth Elite 2.0 alternate-fund high-OCF stress scenario.',
+    description: 'AIA Platinum Wealth Elite 2.0 alternate-fund high-OCF stress scenario for the supported 10-year regular-pay corridor.',
   },
   {
     productId: 'aia-platinum-wealth-legacy',
@@ -18459,10 +18507,10 @@ function buildPolicyForDefinition(
     return aiaWealthVentureStressPolicy(snapshot, id)
   }
   if (definition.productId === 'aia-platinum-wealth-elite-2' && definition.scenarioId === 'baseline') {
-    return aiaPlatinumWealthElite2BaselinePolicy(snapshot, definition.variantId as 'sgd-mip-5' | 'sgd-single-pay', id)
+    return aiaPlatinumWealthElite2BaselinePolicy(snapshot, definition.variantId as 'sgd-mip-5' | 'sgd-mip-6' | 'sgd-mip-7' | 'sgd-mip-8' | 'sgd-mip-9' | 'sgd-mip-10' | 'sgd-single-pay', id)
   }
   if (definition.productId === 'aia-platinum-wealth-elite-2' && definition.scenarioId === 'event-heavy') {
-    return aiaPlatinumWealthElite2EventHeavyPolicy(snapshot, definition.variantId as 'sgd-mip-5' | 'sgd-single-pay', id)
+    return aiaPlatinumWealthElite2EventHeavyPolicy(snapshot, definition.variantId as 'sgd-mip-5' | 'sgd-mip-6' | 'sgd-mip-7' | 'sgd-mip-8' | 'sgd-mip-9' | 'sgd-mip-10' | 'sgd-single-pay', id)
   }
   if (definition.productId === 'aia-platinum-wealth-elite-2' && definition.scenarioId === 'ocf-stress') {
     return aiaPlatinumWealthElite2StressPolicy(snapshot, id)

@@ -25,10 +25,12 @@ interface AiaPlatinumWealthConfig {
   supportStatus?: IlpCatalogProduct['supportStatus']
   economicsStatus?: IlpCatalogProduct['economicsStatus']
   catalogWarningLabel?: string
+  regularPremiumTermYears?: readonly number[]
   regularPremiumChargeSchedule: readonly ChargeTier[]
   premiumHolidayChargeSchedule: readonly ChargeTier[]
   regularFullSurrenderChargeSchedule?: readonly number[]
   regularPartialWithdrawalChargeSchedule?: readonly number[]
+  regularPartialWithdrawalChargeFinalTierContinuesOnward?: boolean
   modeledEconomics: string[]
   coveredElsewhereBehaviors?: string[]
   metadataOnlyBehaviors: string[]
@@ -84,15 +86,39 @@ function snippetNear(
 
 function buildRateSchedule(
   values: readonly number[],
+  options: {
+    finalTierContinuesOnward?: boolean
+  } = {},
 ): Array<{ startPolicyYear: number, endPolicyYear: number | null, rate: number }> {
   return values.map((rate, index) => ({
     startPolicyYear: index + 1,
-    endPolicyYear: index + 1,
+    endPolicyYear: options.finalTierContinuesOnward && index === values.length - 1
+      ? null
+      : index + 1,
     rate,
   }))
 }
 
-function buildVariant(document: ExtractedPdfDocument, config: AiaPlatinumWealthConfig): IlpTemplateVariant {
+function buildEecTable(values: readonly number[], mipLength: number): number[] {
+  if (values.length === 0) {
+    return []
+  }
+
+  const table = [...values]
+  const finalRate = values[values.length - 1]
+
+  while (table.length < mipLength) {
+    table.push(finalRate)
+  }
+
+  return table
+}
+
+function buildVariant(
+  document: ExtractedPdfDocument,
+  config: AiaPlatinumWealthConfig,
+  premiumPaymentTermYears: number,
+): IlpTemplateVariant {
   const catalogWarningLabel = config.catalogWarningLabel ?? 'partial modeled subset in V1'
   const overviewRef = sourceRef(
     config.overviewPage,
@@ -137,7 +163,7 @@ function buildVariant(document: ExtractedPdfDocument, config: AiaPlatinumWealthC
       rateSchedule: config.regularPremiumChargeSchedule.map((tier) => ({ ...tier })),
       activeWindow: 'policy-term',
       notes: [
-        'Models the published regular premium charge schedule for the regular-pay 5-year corridor only.',
+        'Models the published regular premium charge schedule for the supported regular-pay corridor.',
         'If regular premiums are missed and later resumed, the charge schedule continues from the rate band immediately after the last accepted premium.',
       ],
       sourceRefs: [premiumRef, chargeRef],
@@ -198,7 +224,9 @@ function buildVariant(document: ExtractedPdfDocument, config: AiaPlatinumWealthC
       appliesTo: ['policy'],
       rate: 0,
       amount: 0,
-      rateSchedule: buildRateSchedule(config.regularPartialWithdrawalChargeSchedule),
+      rateSchedule: buildRateSchedule(config.regularPartialWithdrawalChargeSchedule, {
+        finalTierContinuesOnward: config.regularPartialWithdrawalChargeFinalTierContinuesOnward,
+      }),
       activeWindow: 'policy-term',
       allocation: 'equal-split',
       notes: [
@@ -210,9 +238,12 @@ function buildVariant(document: ExtractedPdfDocument, config: AiaPlatinumWealthC
   }
 
   return {
-    id: 'sgd-mip-5',
+    id: `sgd-mip-${premiumPaymentTermYears}`,
     currency: 'SGD',
-    mipLength: 5,
+    mipLength: premiumPaymentTermYears,
+    paymentStructure: 'ppt',
+    premiumPaymentTermYears,
+    contributionMode: 'regular-pay',
     icpMonths: 1,
     accounts: [
       {
@@ -233,7 +264,7 @@ function buildVariant(document: ExtractedPdfDocument, config: AiaPlatinumWealthC
     feeRules,
     eventChargeRules,
     eecTable: config.regularFullSurrenderChargeSchedule
-      ? [...config.regularFullSurrenderChargeSchedule]
+      ? buildEecTable(config.regularFullSurrenderChargeSchedule, premiumPaymentTermYears)
       : [],
     policyStateSupport: {
       automaticLapseOnAccountValueDepletion: false,
@@ -255,6 +286,7 @@ export function buildAiaPlatinumWealthProduct(
   const supportStatus = config.supportStatus ?? 'partial'
   const economicsStatus = config.economicsStatus ?? 'partial-modeled-subset'
   const catalogWarningLabel = config.catalogWarningLabel ?? 'partial modeled subset in V1'
+  const regularPremiumTermYears = config.regularPremiumTermYears ?? [5]
 
   return {
     id: config.id,
@@ -274,6 +306,10 @@ export function buildAiaPlatinumWealthProduct(
       `${config.productName} is cataloged as a ${catalogWarningLabel}. ${config.productWarning}`,
     ],
     archived: false,
-    variants: [buildVariant(context.document, config)],
+    variants: regularPremiumTermYears.map((premiumPaymentTermYears) => buildVariant(
+      context.document,
+      config,
+      premiumPaymentTermYears,
+    )),
   }
 }

@@ -3103,7 +3103,6 @@
       "aia-platinum-wealth-elite-2-fund-management-charge"
     ],
     "metadataOnlyBehaviors": [
-      "aia-platinum-wealth-elite-2-premium-term-extension",
       "aia-platinum-wealth-elite-2-free-legacy-cover",
       "aia-platinum-wealth-elite-2-no-lapse-history-and-non-manual-charge-indebtedness",
       "aia-platinum-wealth-elite-2-income-withdrawal-privilege",
@@ -3112,7 +3111,7 @@
       "aia-platinum-wealth-elite-2-fund-switching-and-rebalancing"
     ],
     "warnings": [
-      "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor plus the single-pay corridor. The parser captures premium-year regular premium charges on the regular-pay corridor, the 5% single-premium charge on the single-pay corridor, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule on the regular-pay corridor, the published regular-premium and single-premium withdrawal / surrender charge schedules, the first-layer administration charge via issue-age and initial insured-amount inputs with no-lapse fixed-charge carry during the published privilege window, a manual-input insurance-risk-charge placeholder sourced from the policy illustration with the same fixed-charge carry seam, a static-assumption Vitality Fund Boost schedule for both the regular-pay and single-pay corridors, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs that remain user-supplied by design in this app, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs are supplied, while premium-term extension, Free Legacy Cover waivers, no-lapse activation history, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface."
+      "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5 to 10-year corridors plus the single-pay corridor. The parser captures premium-year regular premium charges across the regular-pay 5 to 10-year corridors, the 5% single-premium charge on the single-pay corridor, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule on the regular-pay corridor, the published regular-premium and single-premium withdrawal / surrender charge schedules, the first-layer administration charge via issue-age and initial insured-amount inputs with no-lapse fixed-charge carry during the published privilege window, a manual-input insurance-risk-charge placeholder sourced from the policy illustration with the same fixed-charge carry seam, a static-assumption Vitality Fund Boost schedule for both the regular-pay and single-pay corridors, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs that remain user-supplied by design in this app, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs are supplied, while Free Legacy Cover waivers, no-lapse activation history, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface."
     ],
     "archived": false,
     "variants": [
@@ -3120,6 +3119,9 @@
         "id": "sgd-mip-5",
         "currency": "SGD",
         "mipLength": 5,
+        "paymentStructure": "ppt",
+        "premiumPaymentTermYears": 5,
+        "contributionMode": "regular-pay",
         "icpMonths": 1,
         "accounts": [
           {
@@ -3233,7 +3235,7 @@
               "Rate is re-rated annually by Vitality status 45 days before each policy anniversary. This model uses a static assumption for the entire projection.",
               "The published Jul 2025 summary shows Silver status only receiving the boost in policy year 1, with years 2-5 marked not applicable.",
               "No-status termination, post-termination reinstatement rules, change-of-insured eligibility, and layer-specific exclusions remain informational only in this corridor.",
-              "This modeled bonus applies to the regular-pay corridor only. Single-premium Vitality Fund Boost remains inside the metadata-only single-pay corridor."
+              "This modeled bonus applies to the supported regular-pay corridors only. The single-pay corridor uses its own published issue-date and anniversary Vitality Fund Boost schedule."
             ],
             "sourceRefs": [
               {
@@ -3280,11 +3282,16 @@
                 "startPolicyYear": 5,
                 "endPolicyYear": 5,
                 "rate": 0.06
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": null,
+                "rate": 0.03
               }
             ],
             "activeWindow": "policy-term",
             "notes": [
-              "Models the published regular premium charge schedule for the regular-pay 5-year corridor only.",
+              "Models the published regular premium charge schedule for the supported regular-pay corridor.",
               "If regular premiums are missed and later resumed, the charge schedule continues from the rate band immediately after the last accepted premium."
             ],
             "sourceRefs": [
@@ -3458,7 +3465,7 @@
               },
               {
                 "startPolicyYear": 5,
-                "endPolicyYear": 5,
+                "endPolicyYear": null,
                 "rate": 0
               }
             ],
@@ -3519,7 +3526,7 @@
               },
               {
                 "startPolicyYear": 6,
-                "endPolicyYear": 6,
+                "endPolicyYear": null,
                 "rate": 0
               }
             ],
@@ -3563,10 +3570,2519 @@
           0
         ],
         "warnings": [
-          "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor plus the single-pay corridor. The parser captures premium-year regular premium charges on the regular-pay corridor, the 5% single-premium charge on the single-pay corridor, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule on the regular-pay corridor, the published regular-premium and single-premium withdrawal / surrender charge schedules, the first-layer administration charge via issue-age and initial insured-amount inputs with no-lapse fixed-charge carry during the published privilege window, a manual-input insurance-risk-charge placeholder sourced from the policy illustration with the same fixed-charge carry seam, a static-assumption Vitality Fund Boost schedule for both the regular-pay and single-pay corridors, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs that remain user-supplied by design in this app, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs are supplied, while premium-term extension, Free Legacy Cover waivers, no-lapse activation history, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface."
+          "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5 to 10-year corridors plus the single-pay corridor. The parser captures premium-year regular premium charges across the regular-pay 5 to 10-year corridors, the 5% single-premium charge on the single-pay corridor, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule on the regular-pay corridor, the published regular-premium and single-premium withdrawal / surrender charge schedules, the first-layer administration charge via issue-age and initial insured-amount inputs with no-lapse fixed-charge carry during the published privilege window, a manual-input insurance-risk-charge placeholder sourced from the policy illustration with the same fixed-charge carry seam, a static-assumption Vitality Fund Boost schedule for both the regular-pay and single-pay corridors, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs that remain user-supplied by design in this app, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs are supplied, while Free Legacy Cover waivers, no-lapse activation history, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface."
         ],
         "unsupportedItems": [
-          "Optional extension of the regular premium term beyond five years remains informational only in V1.",
+          "Administration charge is modeled for the first issue-date insured-amount layer only. Change-of-insured layering and new-layer charge resets remain informational only.",
+          "Insurance Risk Charge is modeled only as a manual-input annualized placeholder because the applicable insurer illustration rate depends on underwriting and Free Legacy Cover state. Free Legacy Cover, no-lapse activation history, and non-manual charge indebtedness remain informational only.",
+          "Income Withdrawal Privilege and change-of-insured effects remain informational only, while Vitality Fund Boost is modeled under a static assumed status for the regular-pay and single-pay corridors only.",
+          "The current death benefit keeps manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs because withdrawals, debt, no-lapse status, Income Withdrawal Privilege usage, and claim-side reductions change the live corridor in ways this app cannot observe; those inputs are manual by design in V1.",
+          "Death Benefit Bequest Option and other protection-side payout handling remain informational only.",
+          "The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both keep manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs because the live insured amount, debt, no-lapse status, and cross-policy TI usage are current policy facts this app cannot observe; those inputs are manual by design in V1.",
+          "Terminal-illness claim exclusions, settlement workflow, and non-manual post-claim state remain informational only beyond the modeled current terminal-illness and residual-after-TI snapshot surface.",
+          "Fund-level management charges, fund switching, and automatic fund re-balancing remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview and product structure",
+            "excerpt": "Product Summary for Platinum Wealth Elite 2.0 Version 2.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.ai"
+          },
+          {
+            "page": 4,
+            "section": "Regular premium and top-up allocation",
+            "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+          },
+          {
+            "page": 4,
+            "section": "Premium charge and charge schedule",
+            "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+          },
+          {
+            "page": 5,
+            "section": "Premium holiday and surrender mechanics",
+            "excerpt": "6.2. Premium Holiday Charge Single Premium Not Applicable. Regular Premium If you missed paying premium when due, a Premium Holiday Charge will be charged on monthly basis. This charge will be stopped once you resume the"
+          },
+          {
+            "page": 8,
+            "section": "Top-up premium mechanics",
+            "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+          },
+          {
+            "page": 9,
+            "section": "Premium holiday continuation and non-payment",
+            "excerpt": "When your policy is on Premium Holiday, the premiums payable for any premium-paying supplementary agreements (if any) will be deducted by cancellation of units. Your policy will remain on Premium Holiday until you resume"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-6",
+        "currency": "SGD",
+        "mipLength": 6,
+        "paymentStructure": "ppt",
+        "premiumPaymentTermYears": 6,
+        "contributionMode": "regular-pay",
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Regular Premium Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview and product structure",
+                "excerpt": "Product Summary for Platinum Wealth Elite 2.0 Version 2.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.ai"
+              },
+              {
+                "page": 4,
+                "section": "Regular premium and top-up allocation",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium mechanics",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "vitality-fund-boost",
+            "type": "allocation",
+            "label": "Vitality Fund Boost",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 5,
+            "requiresPremiumsPaidUpToDate": true,
+            "rate": 0,
+            "amount": 0,
+            "tieredRates": [],
+            "vitalityStatusRateSchedule": [
+              {
+                "status": "bronze",
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0
+              },
+              {
+                "status": "bronze",
+                "startPolicyYear": 2,
+                "endPolicyYear": 5,
+                "rate": 0
+              },
+              {
+                "status": "silver",
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.01
+              },
+              {
+                "status": "silver",
+                "startPolicyYear": 2,
+                "endPolicyYear": 5,
+                "rate": 0
+              },
+              {
+                "status": "gold",
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.01
+              },
+              {
+                "status": "gold",
+                "startPolicyYear": 2,
+                "endPolicyYear": 5,
+                "rate": 0.01
+              },
+              {
+                "status": "platinum",
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.01
+              },
+              {
+                "status": "platinum",
+                "startPolicyYear": 2,
+                "endPolicyYear": 5,
+                "rate": 0.02
+              }
+            ],
+            "notes": [
+              "Rate is re-rated annually by Vitality status 45 days before each policy anniversary. This model uses a static assumption for the entire projection.",
+              "The published Jul 2025 summary shows Silver status only receiving the boost in policy year 1, with years 2-5 marked not applicable.",
+              "No-status termination, post-termination reinstatement rules, change-of-insured eligibility, and layer-specific exclusions remain informational only in this corridor.",
+              "This modeled bonus applies to the supported regular-pay corridors only. The single-pay corridor uses its own published issue-date and anniversary Vitality Fund Boost schedule."
+            ],
+            "sourceRefs": [
+              {
+                "page": 15,
+                "section": "Vitality Fund Boost",
+                "excerpt": "units, also known as Vitality Fund Boost. The Vitality Fund Boost will be payable up to the first 5 policy years upon meeting certain criteria. This product summary is meant to be read together with Product Summary for A"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "regular-premium-charge",
+            "label": "Regular Premium Charge",
+            "basis": "annual-contribution",
+            "yearBasis": "premium-year",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.06
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": null,
+                "rate": 0.03
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published regular premium charge schedule for the supported regular-pay corridor.",
+              "If regular premiums are missed and later resumed, the charge schedule continues from the rate band immediately after the last accepted premium."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Regular premium and top-up allocation",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+              },
+              {
+                "page": 4,
+                "section": "Premium charge and charge schedule",
+                "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+              }
+            ]
+          },
+          {
+            "id": "administration-charge",
+            "label": "Administration Charge",
+            "basis": "insured-amount-at-issue",
+            "rate": 0,
+            "amount": 0,
+            "issueAgeRateTiers": [
+              {
+                "minIssueAgeNextBirthday": 1,
+                "maxIssueAgeNextBirthday": 20,
+                "rate": 0.0016
+              },
+              {
+                "minIssueAgeNextBirthday": 21,
+                "maxIssueAgeNextBirthday": 25,
+                "rate": 0.0018
+              },
+              {
+                "minIssueAgeNextBirthday": 26,
+                "maxIssueAgeNextBirthday": 30,
+                "rate": 0.0024
+              },
+              {
+                "minIssueAgeNextBirthday": 31,
+                "maxIssueAgeNextBirthday": 35,
+                "rate": 0.0032
+              },
+              {
+                "minIssueAgeNextBirthday": 36,
+                "maxIssueAgeNextBirthday": 40,
+                "rate": 0.004
+              },
+              {
+                "minIssueAgeNextBirthday": 41,
+                "maxIssueAgeNextBirthday": 45,
+                "rate": 0.0053
+              },
+              {
+                "minIssueAgeNextBirthday": 46,
+                "maxIssueAgeNextBirthday": 50,
+                "rate": 0.0066
+              },
+              {
+                "minIssueAgeNextBirthday": 51,
+                "maxIssueAgeNextBirthday": 60,
+                "rate": 0.0092
+              },
+              {
+                "minIssueAgeNextBirthday": 61,
+                "maxIssueAgeNextBirthday": 65,
+                "rate": 0.0104
+              },
+              {
+                "minIssueAgeNextBirthday": 66,
+                "maxIssueAgeNextBirthday": 70,
+                "rate": 0.0126
+              }
+            ],
+            "carryForwardOnInsufficientDeductionWithinPolicyYears": {
+              "startPolicyYear": 1,
+              "endPolicyYear": 15
+            },
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": 4,
+            "notes": [
+              "Models the published first-layer administration charge as insured amount at issue multiplied by the issue-age annual administration-charge rate during the first four policy years.",
+              "This executable slice assumes the original issue-date insured amount only. Change-of-insured layering and new-layer resets remain informational only.",
+              "The engine derives issue age from current Age Next Birthday and Current Policy Year, and needs the initial insured amount at issue to price the charge."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium charge and charge schedule",
+                "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+              }
+            ]
+          },
+          {
+            "id": "insurance-risk-charge",
+            "label": "Insurance Risk Charge",
+            "basis": "fixed-annual",
+            "rate": 0,
+            "amount": 0,
+            "carryForwardOnInsufficientDeductionWithinPolicyYears": {
+              "startPolicyYear": 1,
+              "endPolicyYear": 15
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Manual-input approximation for the monthly Insurance Risk Charge deducted on the prevailing insured-amount-less-policy-value corridor.",
+              "Enter the annualized Insurance Risk Charge from the policy illustration. If the illustration shows a monthly amount, multiply it by 12.",
+              "Applicable rates depend on underwriting class, Free Legacy Cover waiver state, and other illustration factors that are not fully published in the summary."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium charge and charge schedule",
+                "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 3% premium charge deducted from each accepted ad hoc top-up premium.",
+              "Ad hoc top-ups are blocked in policy months where due regular premiums are not paid up to date."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Regular premium and top-up allocation",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium mechanics",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+              }
+            ]
+          },
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "yearBasis": "premium-year",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 4,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": null,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Charged monthly during premium holiday based on the annualised regular premium.",
+              "The charge stops once all outstanding regular premiums are fully repaid."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium holiday and surrender mechanics",
+                "excerpt": "6.2. Premium Holiday Charge Single Premium Not Applicable. Regular Premium If you missed paying premium when due, a Premium Holiday Charge will be charged on monthly basis. This charge will be stopped once you resume the"
+              },
+              {
+                "page": 9,
+                "section": "Premium holiday continuation and non-payment",
+                "excerpt": "When your policy is on Premium Holiday, the premiums payable for any premium-paying supplementary agreements (if any) will be deducted by cancellation of units. Your policy will remain on Premium Holiday until you resume"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.667
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.429
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.111
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": null,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published partial withdrawal charge factor on withdrawn regular-premium policy value.",
+              "Single-premium and top-up withdrawal behavior remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium holiday and surrender mechanics",
+                "excerpt": "6.2. Premium Holiday Charge Single Premium Not Applicable. Regular Premium If you missed paying premium when due, a Premium Holiday Charge will be charged on monthly basis. This charge will be stopped once you resume the"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium mechanics",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+              }
+            ]
+          }
+        ],
+        "policyStateSupport": {
+          "automaticLapseOnAccountValueDepletion": true,
+          "accountValueDepletionNonLapseWindows": [
+            {
+              "startPolicyYear": 1,
+              "endPolicyYear": 15
+            }
+          ],
+          "blockTopUpsWhenPremiumsNotPaidUpToDate": true
+        },
+        "eecTable": [
+          0.5,
+          0.4,
+          0.3,
+          0.2,
+          0.1,
+          0
+        ],
+        "warnings": [
+          "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5 to 10-year corridors plus the single-pay corridor. The parser captures premium-year regular premium charges across the regular-pay 5 to 10-year corridors, the 5% single-premium charge on the single-pay corridor, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule on the regular-pay corridor, the published regular-premium and single-premium withdrawal / surrender charge schedules, the first-layer administration charge via issue-age and initial insured-amount inputs with no-lapse fixed-charge carry during the published privilege window, a manual-input insurance-risk-charge placeholder sourced from the policy illustration with the same fixed-charge carry seam, a static-assumption Vitality Fund Boost schedule for both the regular-pay and single-pay corridors, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs that remain user-supplied by design in this app, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs are supplied, while Free Legacy Cover waivers, no-lapse activation history, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface."
+        ],
+        "unsupportedItems": [
+          "Administration charge is modeled for the first issue-date insured-amount layer only. Change-of-insured layering and new-layer charge resets remain informational only.",
+          "Insurance Risk Charge is modeled only as a manual-input annualized placeholder because the applicable insurer illustration rate depends on underwriting and Free Legacy Cover state. Free Legacy Cover, no-lapse activation history, and non-manual charge indebtedness remain informational only.",
+          "Income Withdrawal Privilege and change-of-insured effects remain informational only, while Vitality Fund Boost is modeled under a static assumed status for the regular-pay and single-pay corridors only.",
+          "The current death benefit keeps manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs because withdrawals, debt, no-lapse status, Income Withdrawal Privilege usage, and claim-side reductions change the live corridor in ways this app cannot observe; those inputs are manual by design in V1.",
+          "Death Benefit Bequest Option and other protection-side payout handling remain informational only.",
+          "The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both keep manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs because the live insured amount, debt, no-lapse status, and cross-policy TI usage are current policy facts this app cannot observe; those inputs are manual by design in V1.",
+          "Terminal-illness claim exclusions, settlement workflow, and non-manual post-claim state remain informational only beyond the modeled current terminal-illness and residual-after-TI snapshot surface.",
+          "Fund-level management charges, fund switching, and automatic fund re-balancing remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview and product structure",
+            "excerpt": "Product Summary for Platinum Wealth Elite 2.0 Version 2.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.ai"
+          },
+          {
+            "page": 4,
+            "section": "Regular premium and top-up allocation",
+            "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+          },
+          {
+            "page": 4,
+            "section": "Premium charge and charge schedule",
+            "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+          },
+          {
+            "page": 5,
+            "section": "Premium holiday and surrender mechanics",
+            "excerpt": "6.2. Premium Holiday Charge Single Premium Not Applicable. Regular Premium If you missed paying premium when due, a Premium Holiday Charge will be charged on monthly basis. This charge will be stopped once you resume the"
+          },
+          {
+            "page": 8,
+            "section": "Top-up premium mechanics",
+            "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+          },
+          {
+            "page": 9,
+            "section": "Premium holiday continuation and non-payment",
+            "excerpt": "When your policy is on Premium Holiday, the premiums payable for any premium-paying supplementary agreements (if any) will be deducted by cancellation of units. Your policy will remain on Premium Holiday until you resume"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-7",
+        "currency": "SGD",
+        "mipLength": 7,
+        "paymentStructure": "ppt",
+        "premiumPaymentTermYears": 7,
+        "contributionMode": "regular-pay",
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Regular Premium Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview and product structure",
+                "excerpt": "Product Summary for Platinum Wealth Elite 2.0 Version 2.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.ai"
+              },
+              {
+                "page": 4,
+                "section": "Regular premium and top-up allocation",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium mechanics",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "vitality-fund-boost",
+            "type": "allocation",
+            "label": "Vitality Fund Boost",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 5,
+            "requiresPremiumsPaidUpToDate": true,
+            "rate": 0,
+            "amount": 0,
+            "tieredRates": [],
+            "vitalityStatusRateSchedule": [
+              {
+                "status": "bronze",
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0
+              },
+              {
+                "status": "bronze",
+                "startPolicyYear": 2,
+                "endPolicyYear": 5,
+                "rate": 0
+              },
+              {
+                "status": "silver",
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.01
+              },
+              {
+                "status": "silver",
+                "startPolicyYear": 2,
+                "endPolicyYear": 5,
+                "rate": 0
+              },
+              {
+                "status": "gold",
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.01
+              },
+              {
+                "status": "gold",
+                "startPolicyYear": 2,
+                "endPolicyYear": 5,
+                "rate": 0.01
+              },
+              {
+                "status": "platinum",
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.01
+              },
+              {
+                "status": "platinum",
+                "startPolicyYear": 2,
+                "endPolicyYear": 5,
+                "rate": 0.02
+              }
+            ],
+            "notes": [
+              "Rate is re-rated annually by Vitality status 45 days before each policy anniversary. This model uses a static assumption for the entire projection.",
+              "The published Jul 2025 summary shows Silver status only receiving the boost in policy year 1, with years 2-5 marked not applicable.",
+              "No-status termination, post-termination reinstatement rules, change-of-insured eligibility, and layer-specific exclusions remain informational only in this corridor.",
+              "This modeled bonus applies to the supported regular-pay corridors only. The single-pay corridor uses its own published issue-date and anniversary Vitality Fund Boost schedule."
+            ],
+            "sourceRefs": [
+              {
+                "page": 15,
+                "section": "Vitality Fund Boost",
+                "excerpt": "units, also known as Vitality Fund Boost. The Vitality Fund Boost will be payable up to the first 5 policy years upon meeting certain criteria. This product summary is meant to be read together with Product Summary for A"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "regular-premium-charge",
+            "label": "Regular Premium Charge",
+            "basis": "annual-contribution",
+            "yearBasis": "premium-year",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.06
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": null,
+                "rate": 0.03
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published regular premium charge schedule for the supported regular-pay corridor.",
+              "If regular premiums are missed and later resumed, the charge schedule continues from the rate band immediately after the last accepted premium."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Regular premium and top-up allocation",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+              },
+              {
+                "page": 4,
+                "section": "Premium charge and charge schedule",
+                "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+              }
+            ]
+          },
+          {
+            "id": "administration-charge",
+            "label": "Administration Charge",
+            "basis": "insured-amount-at-issue",
+            "rate": 0,
+            "amount": 0,
+            "issueAgeRateTiers": [
+              {
+                "minIssueAgeNextBirthday": 1,
+                "maxIssueAgeNextBirthday": 20,
+                "rate": 0.0016
+              },
+              {
+                "minIssueAgeNextBirthday": 21,
+                "maxIssueAgeNextBirthday": 25,
+                "rate": 0.0018
+              },
+              {
+                "minIssueAgeNextBirthday": 26,
+                "maxIssueAgeNextBirthday": 30,
+                "rate": 0.0024
+              },
+              {
+                "minIssueAgeNextBirthday": 31,
+                "maxIssueAgeNextBirthday": 35,
+                "rate": 0.0032
+              },
+              {
+                "minIssueAgeNextBirthday": 36,
+                "maxIssueAgeNextBirthday": 40,
+                "rate": 0.004
+              },
+              {
+                "minIssueAgeNextBirthday": 41,
+                "maxIssueAgeNextBirthday": 45,
+                "rate": 0.0053
+              },
+              {
+                "minIssueAgeNextBirthday": 46,
+                "maxIssueAgeNextBirthday": 50,
+                "rate": 0.0066
+              },
+              {
+                "minIssueAgeNextBirthday": 51,
+                "maxIssueAgeNextBirthday": 60,
+                "rate": 0.0092
+              },
+              {
+                "minIssueAgeNextBirthday": 61,
+                "maxIssueAgeNextBirthday": 65,
+                "rate": 0.0104
+              },
+              {
+                "minIssueAgeNextBirthday": 66,
+                "maxIssueAgeNextBirthday": 70,
+                "rate": 0.0126
+              }
+            ],
+            "carryForwardOnInsufficientDeductionWithinPolicyYears": {
+              "startPolicyYear": 1,
+              "endPolicyYear": 15
+            },
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": 4,
+            "notes": [
+              "Models the published first-layer administration charge as insured amount at issue multiplied by the issue-age annual administration-charge rate during the first four policy years.",
+              "This executable slice assumes the original issue-date insured amount only. Change-of-insured layering and new-layer resets remain informational only.",
+              "The engine derives issue age from current Age Next Birthday and Current Policy Year, and needs the initial insured amount at issue to price the charge."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium charge and charge schedule",
+                "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+              }
+            ]
+          },
+          {
+            "id": "insurance-risk-charge",
+            "label": "Insurance Risk Charge",
+            "basis": "fixed-annual",
+            "rate": 0,
+            "amount": 0,
+            "carryForwardOnInsufficientDeductionWithinPolicyYears": {
+              "startPolicyYear": 1,
+              "endPolicyYear": 15
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Manual-input approximation for the monthly Insurance Risk Charge deducted on the prevailing insured-amount-less-policy-value corridor.",
+              "Enter the annualized Insurance Risk Charge from the policy illustration. If the illustration shows a monthly amount, multiply it by 12.",
+              "Applicable rates depend on underwriting class, Free Legacy Cover waiver state, and other illustration factors that are not fully published in the summary."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium charge and charge schedule",
+                "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 3% premium charge deducted from each accepted ad hoc top-up premium.",
+              "Ad hoc top-ups are blocked in policy months where due regular premiums are not paid up to date."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Regular premium and top-up allocation",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium mechanics",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+              }
+            ]
+          },
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "yearBasis": "premium-year",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 4,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": null,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Charged monthly during premium holiday based on the annualised regular premium.",
+              "The charge stops once all outstanding regular premiums are fully repaid."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium holiday and surrender mechanics",
+                "excerpt": "6.2. Premium Holiday Charge Single Premium Not Applicable. Regular Premium If you missed paying premium when due, a Premium Holiday Charge will be charged on monthly basis. This charge will be stopped once you resume the"
+              },
+              {
+                "page": 9,
+                "section": "Premium holiday continuation and non-payment",
+                "excerpt": "When your policy is on Premium Holiday, the premiums payable for any premium-paying supplementary agreements (if any) will be deducted by cancellation of units. Your policy will remain on Premium Holiday until you resume"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.667
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.429
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.111
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": null,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published partial withdrawal charge factor on withdrawn regular-premium policy value.",
+              "Single-premium and top-up withdrawal behavior remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium holiday and surrender mechanics",
+                "excerpt": "6.2. Premium Holiday Charge Single Premium Not Applicable. Regular Premium If you missed paying premium when due, a Premium Holiday Charge will be charged on monthly basis. This charge will be stopped once you resume the"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium mechanics",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+              }
+            ]
+          }
+        ],
+        "policyStateSupport": {
+          "automaticLapseOnAccountValueDepletion": true,
+          "accountValueDepletionNonLapseWindows": [
+            {
+              "startPolicyYear": 1,
+              "endPolicyYear": 15
+            }
+          ],
+          "blockTopUpsWhenPremiumsNotPaidUpToDate": true
+        },
+        "eecTable": [
+          0.5,
+          0.4,
+          0.3,
+          0.2,
+          0.1,
+          0,
+          0
+        ],
+        "warnings": [
+          "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5 to 10-year corridors plus the single-pay corridor. The parser captures premium-year regular premium charges across the regular-pay 5 to 10-year corridors, the 5% single-premium charge on the single-pay corridor, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule on the regular-pay corridor, the published regular-premium and single-premium withdrawal / surrender charge schedules, the first-layer administration charge via issue-age and initial insured-amount inputs with no-lapse fixed-charge carry during the published privilege window, a manual-input insurance-risk-charge placeholder sourced from the policy illustration with the same fixed-charge carry seam, a static-assumption Vitality Fund Boost schedule for both the regular-pay and single-pay corridors, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs that remain user-supplied by design in this app, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs are supplied, while Free Legacy Cover waivers, no-lapse activation history, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface."
+        ],
+        "unsupportedItems": [
+          "Administration charge is modeled for the first issue-date insured-amount layer only. Change-of-insured layering and new-layer charge resets remain informational only.",
+          "Insurance Risk Charge is modeled only as a manual-input annualized placeholder because the applicable insurer illustration rate depends on underwriting and Free Legacy Cover state. Free Legacy Cover, no-lapse activation history, and non-manual charge indebtedness remain informational only.",
+          "Income Withdrawal Privilege and change-of-insured effects remain informational only, while Vitality Fund Boost is modeled under a static assumed status for the regular-pay and single-pay corridors only.",
+          "The current death benefit keeps manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs because withdrawals, debt, no-lapse status, Income Withdrawal Privilege usage, and claim-side reductions change the live corridor in ways this app cannot observe; those inputs are manual by design in V1.",
+          "Death Benefit Bequest Option and other protection-side payout handling remain informational only.",
+          "The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both keep manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs because the live insured amount, debt, no-lapse status, and cross-policy TI usage are current policy facts this app cannot observe; those inputs are manual by design in V1.",
+          "Terminal-illness claim exclusions, settlement workflow, and non-manual post-claim state remain informational only beyond the modeled current terminal-illness and residual-after-TI snapshot surface.",
+          "Fund-level management charges, fund switching, and automatic fund re-balancing remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview and product structure",
+            "excerpt": "Product Summary for Platinum Wealth Elite 2.0 Version 2.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.ai"
+          },
+          {
+            "page": 4,
+            "section": "Regular premium and top-up allocation",
+            "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+          },
+          {
+            "page": 4,
+            "section": "Premium charge and charge schedule",
+            "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+          },
+          {
+            "page": 5,
+            "section": "Premium holiday and surrender mechanics",
+            "excerpt": "6.2. Premium Holiday Charge Single Premium Not Applicable. Regular Premium If you missed paying premium when due, a Premium Holiday Charge will be charged on monthly basis. This charge will be stopped once you resume the"
+          },
+          {
+            "page": 8,
+            "section": "Top-up premium mechanics",
+            "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+          },
+          {
+            "page": 9,
+            "section": "Premium holiday continuation and non-payment",
+            "excerpt": "When your policy is on Premium Holiday, the premiums payable for any premium-paying supplementary agreements (if any) will be deducted by cancellation of units. Your policy will remain on Premium Holiday until you resume"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-8",
+        "currency": "SGD",
+        "mipLength": 8,
+        "paymentStructure": "ppt",
+        "premiumPaymentTermYears": 8,
+        "contributionMode": "regular-pay",
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Regular Premium Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview and product structure",
+                "excerpt": "Product Summary for Platinum Wealth Elite 2.0 Version 2.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.ai"
+              },
+              {
+                "page": 4,
+                "section": "Regular premium and top-up allocation",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium mechanics",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "vitality-fund-boost",
+            "type": "allocation",
+            "label": "Vitality Fund Boost",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 5,
+            "requiresPremiumsPaidUpToDate": true,
+            "rate": 0,
+            "amount": 0,
+            "tieredRates": [],
+            "vitalityStatusRateSchedule": [
+              {
+                "status": "bronze",
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0
+              },
+              {
+                "status": "bronze",
+                "startPolicyYear": 2,
+                "endPolicyYear": 5,
+                "rate": 0
+              },
+              {
+                "status": "silver",
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.01
+              },
+              {
+                "status": "silver",
+                "startPolicyYear": 2,
+                "endPolicyYear": 5,
+                "rate": 0
+              },
+              {
+                "status": "gold",
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.01
+              },
+              {
+                "status": "gold",
+                "startPolicyYear": 2,
+                "endPolicyYear": 5,
+                "rate": 0.01
+              },
+              {
+                "status": "platinum",
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.01
+              },
+              {
+                "status": "platinum",
+                "startPolicyYear": 2,
+                "endPolicyYear": 5,
+                "rate": 0.02
+              }
+            ],
+            "notes": [
+              "Rate is re-rated annually by Vitality status 45 days before each policy anniversary. This model uses a static assumption for the entire projection.",
+              "The published Jul 2025 summary shows Silver status only receiving the boost in policy year 1, with years 2-5 marked not applicable.",
+              "No-status termination, post-termination reinstatement rules, change-of-insured eligibility, and layer-specific exclusions remain informational only in this corridor.",
+              "This modeled bonus applies to the supported regular-pay corridors only. The single-pay corridor uses its own published issue-date and anniversary Vitality Fund Boost schedule."
+            ],
+            "sourceRefs": [
+              {
+                "page": 15,
+                "section": "Vitality Fund Boost",
+                "excerpt": "units, also known as Vitality Fund Boost. The Vitality Fund Boost will be payable up to the first 5 policy years upon meeting certain criteria. This product summary is meant to be read together with Product Summary for A"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "regular-premium-charge",
+            "label": "Regular Premium Charge",
+            "basis": "annual-contribution",
+            "yearBasis": "premium-year",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.06
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": null,
+                "rate": 0.03
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published regular premium charge schedule for the supported regular-pay corridor.",
+              "If regular premiums are missed and later resumed, the charge schedule continues from the rate band immediately after the last accepted premium."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Regular premium and top-up allocation",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+              },
+              {
+                "page": 4,
+                "section": "Premium charge and charge schedule",
+                "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+              }
+            ]
+          },
+          {
+            "id": "administration-charge",
+            "label": "Administration Charge",
+            "basis": "insured-amount-at-issue",
+            "rate": 0,
+            "amount": 0,
+            "issueAgeRateTiers": [
+              {
+                "minIssueAgeNextBirthday": 1,
+                "maxIssueAgeNextBirthday": 20,
+                "rate": 0.0016
+              },
+              {
+                "minIssueAgeNextBirthday": 21,
+                "maxIssueAgeNextBirthday": 25,
+                "rate": 0.0018
+              },
+              {
+                "minIssueAgeNextBirthday": 26,
+                "maxIssueAgeNextBirthday": 30,
+                "rate": 0.0024
+              },
+              {
+                "minIssueAgeNextBirthday": 31,
+                "maxIssueAgeNextBirthday": 35,
+                "rate": 0.0032
+              },
+              {
+                "minIssueAgeNextBirthday": 36,
+                "maxIssueAgeNextBirthday": 40,
+                "rate": 0.004
+              },
+              {
+                "minIssueAgeNextBirthday": 41,
+                "maxIssueAgeNextBirthday": 45,
+                "rate": 0.0053
+              },
+              {
+                "minIssueAgeNextBirthday": 46,
+                "maxIssueAgeNextBirthday": 50,
+                "rate": 0.0066
+              },
+              {
+                "minIssueAgeNextBirthday": 51,
+                "maxIssueAgeNextBirthday": 60,
+                "rate": 0.0092
+              },
+              {
+                "minIssueAgeNextBirthday": 61,
+                "maxIssueAgeNextBirthday": 65,
+                "rate": 0.0104
+              },
+              {
+                "minIssueAgeNextBirthday": 66,
+                "maxIssueAgeNextBirthday": 70,
+                "rate": 0.0126
+              }
+            ],
+            "carryForwardOnInsufficientDeductionWithinPolicyYears": {
+              "startPolicyYear": 1,
+              "endPolicyYear": 15
+            },
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": 4,
+            "notes": [
+              "Models the published first-layer administration charge as insured amount at issue multiplied by the issue-age annual administration-charge rate during the first four policy years.",
+              "This executable slice assumes the original issue-date insured amount only. Change-of-insured layering and new-layer resets remain informational only.",
+              "The engine derives issue age from current Age Next Birthday and Current Policy Year, and needs the initial insured amount at issue to price the charge."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium charge and charge schedule",
+                "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+              }
+            ]
+          },
+          {
+            "id": "insurance-risk-charge",
+            "label": "Insurance Risk Charge",
+            "basis": "fixed-annual",
+            "rate": 0,
+            "amount": 0,
+            "carryForwardOnInsufficientDeductionWithinPolicyYears": {
+              "startPolicyYear": 1,
+              "endPolicyYear": 15
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Manual-input approximation for the monthly Insurance Risk Charge deducted on the prevailing insured-amount-less-policy-value corridor.",
+              "Enter the annualized Insurance Risk Charge from the policy illustration. If the illustration shows a monthly amount, multiply it by 12.",
+              "Applicable rates depend on underwriting class, Free Legacy Cover waiver state, and other illustration factors that are not fully published in the summary."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium charge and charge schedule",
+                "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 3% premium charge deducted from each accepted ad hoc top-up premium.",
+              "Ad hoc top-ups are blocked in policy months where due regular premiums are not paid up to date."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Regular premium and top-up allocation",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium mechanics",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+              }
+            ]
+          },
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "yearBasis": "premium-year",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 4,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": null,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Charged monthly during premium holiday based on the annualised regular premium.",
+              "The charge stops once all outstanding regular premiums are fully repaid."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium holiday and surrender mechanics",
+                "excerpt": "6.2. Premium Holiday Charge Single Premium Not Applicable. Regular Premium If you missed paying premium when due, a Premium Holiday Charge will be charged on monthly basis. This charge will be stopped once you resume the"
+              },
+              {
+                "page": 9,
+                "section": "Premium holiday continuation and non-payment",
+                "excerpt": "When your policy is on Premium Holiday, the premiums payable for any premium-paying supplementary agreements (if any) will be deducted by cancellation of units. Your policy will remain on Premium Holiday until you resume"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.667
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.429
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.111
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": null,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published partial withdrawal charge factor on withdrawn regular-premium policy value.",
+              "Single-premium and top-up withdrawal behavior remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium holiday and surrender mechanics",
+                "excerpt": "6.2. Premium Holiday Charge Single Premium Not Applicable. Regular Premium If you missed paying premium when due, a Premium Holiday Charge will be charged on monthly basis. This charge will be stopped once you resume the"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium mechanics",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+              }
+            ]
+          }
+        ],
+        "policyStateSupport": {
+          "automaticLapseOnAccountValueDepletion": true,
+          "accountValueDepletionNonLapseWindows": [
+            {
+              "startPolicyYear": 1,
+              "endPolicyYear": 15
+            }
+          ],
+          "blockTopUpsWhenPremiumsNotPaidUpToDate": true
+        },
+        "eecTable": [
+          0.5,
+          0.4,
+          0.3,
+          0.2,
+          0.1,
+          0,
+          0,
+          0
+        ],
+        "warnings": [
+          "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5 to 10-year corridors plus the single-pay corridor. The parser captures premium-year regular premium charges across the regular-pay 5 to 10-year corridors, the 5% single-premium charge on the single-pay corridor, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule on the regular-pay corridor, the published regular-premium and single-premium withdrawal / surrender charge schedules, the first-layer administration charge via issue-age and initial insured-amount inputs with no-lapse fixed-charge carry during the published privilege window, a manual-input insurance-risk-charge placeholder sourced from the policy illustration with the same fixed-charge carry seam, a static-assumption Vitality Fund Boost schedule for both the regular-pay and single-pay corridors, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs that remain user-supplied by design in this app, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs are supplied, while Free Legacy Cover waivers, no-lapse activation history, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface."
+        ],
+        "unsupportedItems": [
+          "Administration charge is modeled for the first issue-date insured-amount layer only. Change-of-insured layering and new-layer charge resets remain informational only.",
+          "Insurance Risk Charge is modeled only as a manual-input annualized placeholder because the applicable insurer illustration rate depends on underwriting and Free Legacy Cover state. Free Legacy Cover, no-lapse activation history, and non-manual charge indebtedness remain informational only.",
+          "Income Withdrawal Privilege and change-of-insured effects remain informational only, while Vitality Fund Boost is modeled under a static assumed status for the regular-pay and single-pay corridors only.",
+          "The current death benefit keeps manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs because withdrawals, debt, no-lapse status, Income Withdrawal Privilege usage, and claim-side reductions change the live corridor in ways this app cannot observe; those inputs are manual by design in V1.",
+          "Death Benefit Bequest Option and other protection-side payout handling remain informational only.",
+          "The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both keep manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs because the live insured amount, debt, no-lapse status, and cross-policy TI usage are current policy facts this app cannot observe; those inputs are manual by design in V1.",
+          "Terminal-illness claim exclusions, settlement workflow, and non-manual post-claim state remain informational only beyond the modeled current terminal-illness and residual-after-TI snapshot surface.",
+          "Fund-level management charges, fund switching, and automatic fund re-balancing remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview and product structure",
+            "excerpt": "Product Summary for Platinum Wealth Elite 2.0 Version 2.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.ai"
+          },
+          {
+            "page": 4,
+            "section": "Regular premium and top-up allocation",
+            "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+          },
+          {
+            "page": 4,
+            "section": "Premium charge and charge schedule",
+            "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+          },
+          {
+            "page": 5,
+            "section": "Premium holiday and surrender mechanics",
+            "excerpt": "6.2. Premium Holiday Charge Single Premium Not Applicable. Regular Premium If you missed paying premium when due, a Premium Holiday Charge will be charged on monthly basis. This charge will be stopped once you resume the"
+          },
+          {
+            "page": 8,
+            "section": "Top-up premium mechanics",
+            "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+          },
+          {
+            "page": 9,
+            "section": "Premium holiday continuation and non-payment",
+            "excerpt": "When your policy is on Premium Holiday, the premiums payable for any premium-paying supplementary agreements (if any) will be deducted by cancellation of units. Your policy will remain on Premium Holiday until you resume"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-9",
+        "currency": "SGD",
+        "mipLength": 9,
+        "paymentStructure": "ppt",
+        "premiumPaymentTermYears": 9,
+        "contributionMode": "regular-pay",
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Regular Premium Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview and product structure",
+                "excerpt": "Product Summary for Platinum Wealth Elite 2.0 Version 2.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.ai"
+              },
+              {
+                "page": 4,
+                "section": "Regular premium and top-up allocation",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium mechanics",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "vitality-fund-boost",
+            "type": "allocation",
+            "label": "Vitality Fund Boost",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 5,
+            "requiresPremiumsPaidUpToDate": true,
+            "rate": 0,
+            "amount": 0,
+            "tieredRates": [],
+            "vitalityStatusRateSchedule": [
+              {
+                "status": "bronze",
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0
+              },
+              {
+                "status": "bronze",
+                "startPolicyYear": 2,
+                "endPolicyYear": 5,
+                "rate": 0
+              },
+              {
+                "status": "silver",
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.01
+              },
+              {
+                "status": "silver",
+                "startPolicyYear": 2,
+                "endPolicyYear": 5,
+                "rate": 0
+              },
+              {
+                "status": "gold",
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.01
+              },
+              {
+                "status": "gold",
+                "startPolicyYear": 2,
+                "endPolicyYear": 5,
+                "rate": 0.01
+              },
+              {
+                "status": "platinum",
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.01
+              },
+              {
+                "status": "platinum",
+                "startPolicyYear": 2,
+                "endPolicyYear": 5,
+                "rate": 0.02
+              }
+            ],
+            "notes": [
+              "Rate is re-rated annually by Vitality status 45 days before each policy anniversary. This model uses a static assumption for the entire projection.",
+              "The published Jul 2025 summary shows Silver status only receiving the boost in policy year 1, with years 2-5 marked not applicable.",
+              "No-status termination, post-termination reinstatement rules, change-of-insured eligibility, and layer-specific exclusions remain informational only in this corridor.",
+              "This modeled bonus applies to the supported regular-pay corridors only. The single-pay corridor uses its own published issue-date and anniversary Vitality Fund Boost schedule."
+            ],
+            "sourceRefs": [
+              {
+                "page": 15,
+                "section": "Vitality Fund Boost",
+                "excerpt": "units, also known as Vitality Fund Boost. The Vitality Fund Boost will be payable up to the first 5 policy years upon meeting certain criteria. This product summary is meant to be read together with Product Summary for A"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "regular-premium-charge",
+            "label": "Regular Premium Charge",
+            "basis": "annual-contribution",
+            "yearBasis": "premium-year",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.06
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": null,
+                "rate": 0.03
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published regular premium charge schedule for the supported regular-pay corridor.",
+              "If regular premiums are missed and later resumed, the charge schedule continues from the rate band immediately after the last accepted premium."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Regular premium and top-up allocation",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+              },
+              {
+                "page": 4,
+                "section": "Premium charge and charge schedule",
+                "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+              }
+            ]
+          },
+          {
+            "id": "administration-charge",
+            "label": "Administration Charge",
+            "basis": "insured-amount-at-issue",
+            "rate": 0,
+            "amount": 0,
+            "issueAgeRateTiers": [
+              {
+                "minIssueAgeNextBirthday": 1,
+                "maxIssueAgeNextBirthday": 20,
+                "rate": 0.0016
+              },
+              {
+                "minIssueAgeNextBirthday": 21,
+                "maxIssueAgeNextBirthday": 25,
+                "rate": 0.0018
+              },
+              {
+                "minIssueAgeNextBirthday": 26,
+                "maxIssueAgeNextBirthday": 30,
+                "rate": 0.0024
+              },
+              {
+                "minIssueAgeNextBirthday": 31,
+                "maxIssueAgeNextBirthday": 35,
+                "rate": 0.0032
+              },
+              {
+                "minIssueAgeNextBirthday": 36,
+                "maxIssueAgeNextBirthday": 40,
+                "rate": 0.004
+              },
+              {
+                "minIssueAgeNextBirthday": 41,
+                "maxIssueAgeNextBirthday": 45,
+                "rate": 0.0053
+              },
+              {
+                "minIssueAgeNextBirthday": 46,
+                "maxIssueAgeNextBirthday": 50,
+                "rate": 0.0066
+              },
+              {
+                "minIssueAgeNextBirthday": 51,
+                "maxIssueAgeNextBirthday": 60,
+                "rate": 0.0092
+              },
+              {
+                "minIssueAgeNextBirthday": 61,
+                "maxIssueAgeNextBirthday": 65,
+                "rate": 0.0104
+              },
+              {
+                "minIssueAgeNextBirthday": 66,
+                "maxIssueAgeNextBirthday": 70,
+                "rate": 0.0126
+              }
+            ],
+            "carryForwardOnInsufficientDeductionWithinPolicyYears": {
+              "startPolicyYear": 1,
+              "endPolicyYear": 15
+            },
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": 4,
+            "notes": [
+              "Models the published first-layer administration charge as insured amount at issue multiplied by the issue-age annual administration-charge rate during the first four policy years.",
+              "This executable slice assumes the original issue-date insured amount only. Change-of-insured layering and new-layer resets remain informational only.",
+              "The engine derives issue age from current Age Next Birthday and Current Policy Year, and needs the initial insured amount at issue to price the charge."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium charge and charge schedule",
+                "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+              }
+            ]
+          },
+          {
+            "id": "insurance-risk-charge",
+            "label": "Insurance Risk Charge",
+            "basis": "fixed-annual",
+            "rate": 0,
+            "amount": 0,
+            "carryForwardOnInsufficientDeductionWithinPolicyYears": {
+              "startPolicyYear": 1,
+              "endPolicyYear": 15
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Manual-input approximation for the monthly Insurance Risk Charge deducted on the prevailing insured-amount-less-policy-value corridor.",
+              "Enter the annualized Insurance Risk Charge from the policy illustration. If the illustration shows a monthly amount, multiply it by 12.",
+              "Applicable rates depend on underwriting class, Free Legacy Cover waiver state, and other illustration factors that are not fully published in the summary."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium charge and charge schedule",
+                "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 3% premium charge deducted from each accepted ad hoc top-up premium.",
+              "Ad hoc top-ups are blocked in policy months where due regular premiums are not paid up to date."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Regular premium and top-up allocation",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium mechanics",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+              }
+            ]
+          },
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "yearBasis": "premium-year",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 4,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": null,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Charged monthly during premium holiday based on the annualised regular premium.",
+              "The charge stops once all outstanding regular premiums are fully repaid."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium holiday and surrender mechanics",
+                "excerpt": "6.2. Premium Holiday Charge Single Premium Not Applicable. Regular Premium If you missed paying premium when due, a Premium Holiday Charge will be charged on monthly basis. This charge will be stopped once you resume the"
+              },
+              {
+                "page": 9,
+                "section": "Premium holiday continuation and non-payment",
+                "excerpt": "When your policy is on Premium Holiday, the premiums payable for any premium-paying supplementary agreements (if any) will be deducted by cancellation of units. Your policy will remain on Premium Holiday until you resume"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.667
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.429
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.111
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": null,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published partial withdrawal charge factor on withdrawn regular-premium policy value.",
+              "Single-premium and top-up withdrawal behavior remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium holiday and surrender mechanics",
+                "excerpt": "6.2. Premium Holiday Charge Single Premium Not Applicable. Regular Premium If you missed paying premium when due, a Premium Holiday Charge will be charged on monthly basis. This charge will be stopped once you resume the"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium mechanics",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+              }
+            ]
+          }
+        ],
+        "policyStateSupport": {
+          "automaticLapseOnAccountValueDepletion": true,
+          "accountValueDepletionNonLapseWindows": [
+            {
+              "startPolicyYear": 1,
+              "endPolicyYear": 15
+            }
+          ],
+          "blockTopUpsWhenPremiumsNotPaidUpToDate": true
+        },
+        "eecTable": [
+          0.5,
+          0.4,
+          0.3,
+          0.2,
+          0.1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "warnings": [
+          "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5 to 10-year corridors plus the single-pay corridor. The parser captures premium-year regular premium charges across the regular-pay 5 to 10-year corridors, the 5% single-premium charge on the single-pay corridor, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule on the regular-pay corridor, the published regular-premium and single-premium withdrawal / surrender charge schedules, the first-layer administration charge via issue-age and initial insured-amount inputs with no-lapse fixed-charge carry during the published privilege window, a manual-input insurance-risk-charge placeholder sourced from the policy illustration with the same fixed-charge carry seam, a static-assumption Vitality Fund Boost schedule for both the regular-pay and single-pay corridors, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs that remain user-supplied by design in this app, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs are supplied, while Free Legacy Cover waivers, no-lapse activation history, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface."
+        ],
+        "unsupportedItems": [
+          "Administration charge is modeled for the first issue-date insured-amount layer only. Change-of-insured layering and new-layer charge resets remain informational only.",
+          "Insurance Risk Charge is modeled only as a manual-input annualized placeholder because the applicable insurer illustration rate depends on underwriting and Free Legacy Cover state. Free Legacy Cover, no-lapse activation history, and non-manual charge indebtedness remain informational only.",
+          "Income Withdrawal Privilege and change-of-insured effects remain informational only, while Vitality Fund Boost is modeled under a static assumed status for the regular-pay and single-pay corridors only.",
+          "The current death benefit keeps manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs because withdrawals, debt, no-lapse status, Income Withdrawal Privilege usage, and claim-side reductions change the live corridor in ways this app cannot observe; those inputs are manual by design in V1.",
+          "Death Benefit Bequest Option and other protection-side payout handling remain informational only.",
+          "The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both keep manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs because the live insured amount, debt, no-lapse status, and cross-policy TI usage are current policy facts this app cannot observe; those inputs are manual by design in V1.",
+          "Terminal-illness claim exclusions, settlement workflow, and non-manual post-claim state remain informational only beyond the modeled current terminal-illness and residual-after-TI snapshot surface.",
+          "Fund-level management charges, fund switching, and automatic fund re-balancing remain informational only."
+        ],
+        "sourceRefs": [
+          {
+            "page": 1,
+            "section": "Plan overview and product structure",
+            "excerpt": "Product Summary for Platinum Wealth Elite 2.0 Version 2.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.ai"
+          },
+          {
+            "page": 4,
+            "section": "Regular premium and top-up allocation",
+            "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+          },
+          {
+            "page": 4,
+            "section": "Premium charge and charge schedule",
+            "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+          },
+          {
+            "page": 5,
+            "section": "Premium holiday and surrender mechanics",
+            "excerpt": "6.2. Premium Holiday Charge Single Premium Not Applicable. Regular Premium If you missed paying premium when due, a Premium Holiday Charge will be charged on monthly basis. This charge will be stopped once you resume the"
+          },
+          {
+            "page": 8,
+            "section": "Top-up premium mechanics",
+            "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+          },
+          {
+            "page": 9,
+            "section": "Premium holiday continuation and non-payment",
+            "excerpt": "When your policy is on Premium Holiday, the premiums payable for any premium-paying supplementary agreements (if any) will be deducted by cancellation of units. Your policy will remain on Premium Holiday until you resume"
+          }
+        ]
+      },
+      {
+        "id": "sgd-mip-10",
+        "currency": "SGD",
+        "mipLength": 10,
+        "paymentStructure": "ppt",
+        "premiumPaymentTermYears": 10,
+        "contributionMode": "regular-pay",
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "policy",
+            "label": "Regular Premium Policy Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "after-icp",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              },
+              {
+                "phase": "top-up",
+                "targetAccountId": "policy",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Plan overview and product structure",
+                "excerpt": "Product Summary for Platinum Wealth Elite 2.0 Version 2.0 To help you understand Investment-linked policies better, please refer to `Your Guide To Investment-Linked Insurance Plans’ (YGILIP), which can be found at www.ai"
+              },
+              {
+                "page": 4,
+                "section": "Regular premium and top-up allocation",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium mechanics",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "vitality-fund-boost",
+            "type": "allocation",
+            "label": "Vitality Fund Boost",
+            "mode": "premium-allocation",
+            "appliesTo": [
+              "policy"
+            ],
+            "startPolicyYear": 1,
+            "endPolicyYear": 5,
+            "requiresPremiumsPaidUpToDate": true,
+            "rate": 0,
+            "amount": 0,
+            "tieredRates": [],
+            "vitalityStatusRateSchedule": [
+              {
+                "status": "bronze",
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0
+              },
+              {
+                "status": "bronze",
+                "startPolicyYear": 2,
+                "endPolicyYear": 5,
+                "rate": 0
+              },
+              {
+                "status": "silver",
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.01
+              },
+              {
+                "status": "silver",
+                "startPolicyYear": 2,
+                "endPolicyYear": 5,
+                "rate": 0
+              },
+              {
+                "status": "gold",
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.01
+              },
+              {
+                "status": "gold",
+                "startPolicyYear": 2,
+                "endPolicyYear": 5,
+                "rate": 0.01
+              },
+              {
+                "status": "platinum",
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.01
+              },
+              {
+                "status": "platinum",
+                "startPolicyYear": 2,
+                "endPolicyYear": 5,
+                "rate": 0.02
+              }
+            ],
+            "notes": [
+              "Rate is re-rated annually by Vitality status 45 days before each policy anniversary. This model uses a static assumption for the entire projection.",
+              "The published Jul 2025 summary shows Silver status only receiving the boost in policy year 1, with years 2-5 marked not applicable.",
+              "No-status termination, post-termination reinstatement rules, change-of-insured eligibility, and layer-specific exclusions remain informational only in this corridor.",
+              "This modeled bonus applies to the supported regular-pay corridors only. The single-pay corridor uses its own published issue-date and anniversary Vitality Fund Boost schedule."
+            ],
+            "sourceRefs": [
+              {
+                "page": 15,
+                "section": "Vitality Fund Boost",
+                "excerpt": "units, also known as Vitality Fund Boost. The Vitality Fund Boost will be payable up to the first 5 policy years upon meeting certain criteria. This product summary is meant to be read together with Product Summary for A"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "regular-premium-charge",
+            "label": "Regular Premium Charge",
+            "basis": "annual-contribution",
+            "yearBasis": "premium-year",
+            "rate": 0,
+            "amount": 0,
+            "appliesTo": [
+              "policy"
+            ],
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.3
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.06
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": null,
+                "rate": 0.03
+              }
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published regular premium charge schedule for the supported regular-pay corridor.",
+              "If regular premiums are missed and later resumed, the charge schedule continues from the rate band immediately after the last accepted premium."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Regular premium and top-up allocation",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+              },
+              {
+                "page": 4,
+                "section": "Premium charge and charge schedule",
+                "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+              }
+            ]
+          },
+          {
+            "id": "administration-charge",
+            "label": "Administration Charge",
+            "basis": "insured-amount-at-issue",
+            "rate": 0,
+            "amount": 0,
+            "issueAgeRateTiers": [
+              {
+                "minIssueAgeNextBirthday": 1,
+                "maxIssueAgeNextBirthday": 20,
+                "rate": 0.0016
+              },
+              {
+                "minIssueAgeNextBirthday": 21,
+                "maxIssueAgeNextBirthday": 25,
+                "rate": 0.0018
+              },
+              {
+                "minIssueAgeNextBirthday": 26,
+                "maxIssueAgeNextBirthday": 30,
+                "rate": 0.0024
+              },
+              {
+                "minIssueAgeNextBirthday": 31,
+                "maxIssueAgeNextBirthday": 35,
+                "rate": 0.0032
+              },
+              {
+                "minIssueAgeNextBirthday": 36,
+                "maxIssueAgeNextBirthday": 40,
+                "rate": 0.004
+              },
+              {
+                "minIssueAgeNextBirthday": 41,
+                "maxIssueAgeNextBirthday": 45,
+                "rate": 0.0053
+              },
+              {
+                "minIssueAgeNextBirthday": 46,
+                "maxIssueAgeNextBirthday": 50,
+                "rate": 0.0066
+              },
+              {
+                "minIssueAgeNextBirthday": 51,
+                "maxIssueAgeNextBirthday": 60,
+                "rate": 0.0092
+              },
+              {
+                "minIssueAgeNextBirthday": 61,
+                "maxIssueAgeNextBirthday": 65,
+                "rate": 0.0104
+              },
+              {
+                "minIssueAgeNextBirthday": 66,
+                "maxIssueAgeNextBirthday": 70,
+                "rate": 0.0126
+              }
+            ],
+            "carryForwardOnInsufficientDeductionWithinPolicyYears": {
+              "startPolicyYear": 1,
+              "endPolicyYear": 15
+            },
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": 4,
+            "notes": [
+              "Models the published first-layer administration charge as insured amount at issue multiplied by the issue-age annual administration-charge rate during the first four policy years.",
+              "This executable slice assumes the original issue-date insured amount only. Change-of-insured layering and new-layer resets remain informational only.",
+              "The engine derives issue age from current Age Next Birthday and Current Policy Year, and needs the initial insured amount at issue to price the charge."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium charge and charge schedule",
+                "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+              }
+            ]
+          },
+          {
+            "id": "insurance-risk-charge",
+            "label": "Insurance Risk Charge",
+            "basis": "fixed-annual",
+            "rate": 0,
+            "amount": 0,
+            "carryForwardOnInsufficientDeductionWithinPolicyYears": {
+              "startPolicyYear": 1,
+              "endPolicyYear": 15
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "policy"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Manual-input approximation for the monthly Insurance Risk Charge deducted on the prevailing insured-amount-less-policy-value corridor.",
+              "Enter the annualized Insurance Risk Charge from the policy illustration. If the illustration shows a monthly amount, multiply it by 12.",
+              "Applicable rates depend on underwriting class, Free Legacy Cover waiver state, and other illustration factors that are not fully published in the summary."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Premium charge and charge schedule",
+                "excerpt": "100% of Single Premium less Premium Charge will be used to purchase single premium units at bid price in the ILP sub-fund that you have chosen. 5.2. Regular Premiums 100% of Regular Premium less Premium Charge will be us"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 3% premium charge deducted from each accepted ad hoc top-up premium.",
+              "Ad hoc top-ups are blocked in policy months where due regular premiums are not paid up to date."
+            ],
+            "sourceRefs": [
+              {
+                "page": 4,
+                "section": "Regular premium and top-up allocation",
+                "excerpt": "100% of Regular Premium less Premium Charge will be used to purchase regular premium units at bid price in the ILP sub-fund that you have chosen. As an example, the number of units in an ILP sub-fund you will receive bas"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium mechanics",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+              }
+            ]
+          },
+          {
+            "id": "premium-holiday-charge",
+            "label": "Premium Holiday Charge",
+            "trigger": "premium-holiday",
+            "basis": "annual-premium-with-overlap-months",
+            "yearBasis": "premium-year",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 4,
+                "rate": 0.35
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": null,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "pro-rata-by-value",
+            "notes": [
+              "Charged monthly during premium holiday based on the annualised regular premium.",
+              "The charge stops once all outstanding regular premiums are fully repaid."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium holiday and surrender mechanics",
+                "excerpt": "6.2. Premium Holiday Charge Single Premium Not Applicable. Regular Premium If you missed paying premium when due, a Premium Holiday Charge will be charged on monthly basis. This charge will be stopped once you resume the"
+              },
+              {
+                "page": 9,
+                "section": "Premium holiday continuation and non-payment",
+                "excerpt": "When your policy is on Premium Holiday, the premiums payable for any premium-paying supplementary agreements (if any) will be deducted by cancellation of units. Your policy will remain on Premium Holiday until you resume"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "policy"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 1
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.667
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.429
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.25
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.111
+              },
+              {
+                "startPolicyYear": 6,
+                "endPolicyYear": null,
+                "rate": 0
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published partial withdrawal charge factor on withdrawn regular-premium policy value.",
+              "Single-premium and top-up withdrawal behavior remains informational only in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 5,
+                "section": "Premium holiday and surrender mechanics",
+                "excerpt": "6.2. Premium Holiday Charge Single Premium Not Applicable. Regular Premium If you missed paying premium when due, a Premium Holiday Charge will be charged on monthly basis. This charge will be stopped once you resume the"
+              },
+              {
+                "page": 8,
+                "section": "Top-up premium mechanics",
+                "excerpt": "You may request to pay additional top-up premium on an ad-hoc basis, provided all regular premiums are paid when they fall due. 100% of top-up premium less premium charge will be used to purchase of units in ILP sub-fund"
+              }
+            ]
+          }
+        ],
+        "policyStateSupport": {
+          "automaticLapseOnAccountValueDepletion": true,
+          "accountValueDepletionNonLapseWindows": [
+            {
+              "startPolicyYear": 1,
+              "endPolicyYear": 15
+            }
+          ],
+          "blockTopUpsWhenPremiumsNotPaidUpToDate": true
+        },
+        "eecTable": [
+          0.5,
+          0.4,
+          0.3,
+          0.2,
+          0.1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "warnings": [
+          "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5 to 10-year corridors plus the single-pay corridor. The parser captures premium-year regular premium charges across the regular-pay 5 to 10-year corridors, the 5% single-premium charge on the single-pay corridor, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule on the regular-pay corridor, the published regular-premium and single-premium withdrawal / surrender charge schedules, the first-layer administration charge via issue-age and initial insured-amount inputs with no-lapse fixed-charge carry during the published privilege window, a manual-input insurance-risk-charge placeholder sourced from the policy illustration with the same fixed-charge carry seam, a static-assumption Vitality Fund Boost schedule for both the regular-pay and single-pay corridors, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs that remain user-supplied by design in this app, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs are supplied, while Free Legacy Cover waivers, no-lapse activation history, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface."
+        ],
+        "unsupportedItems": [
           "Administration charge is modeled for the first issue-date insured-amount layer only. Change-of-insured layering and new-layer charge resets remain informational only.",
           "Insurance Risk Charge is modeled only as a manual-input annualized placeholder because the applicable insurer illustration rate depends on underwriting and Free Legacy Cover state. Free Legacy Cover, no-lapse activation history, and non-manual charge indebtedness remain informational only.",
           "Income Withdrawal Privilege and change-of-insured effects remain informational only, while Vitality Fund Boost is modeled under a static assumed status for the regular-pay and single-pay corridors only.",
@@ -3972,10 +6488,9 @@
           0
         ],
         "warnings": [
-          "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the single-pay corridor. The parser captures the 5% single-premium charge, the 3% top-up premium charge, the published single-pay partial-withdrawal / surrender charge schedules, the first-layer administration charge via issue-age and initial insured-amount inputs with no-lapse fixed-charge carry during the published privilege window, a manual-input insurance-risk-charge placeholder sourced from the policy illustration with the same fixed-charge carry seam, a static-assumption Vitality Fund Boost schedule for the single-pay corridor, and the current-state death benefit corridor plus terminal-illness and residual-after-TI snapshots via the same manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs, while premium-term extension, Free Legacy Cover waivers, no-lapse activation history, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface."
+          "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the single-pay corridor. The parser captures the 5% single-premium charge, the 3% top-up premium charge, the published single-pay partial-withdrawal / surrender charge schedules, the first-layer administration charge via issue-age and initial insured-amount inputs with no-lapse fixed-charge carry during the published privilege window, a manual-input insurance-risk-charge placeholder sourced from the policy illustration with the same fixed-charge carry seam, a static-assumption Vitality Fund Boost schedule for the single-pay corridor, and the current-state death benefit corridor plus terminal-illness and residual-after-TI snapshots via the same manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs, while Free Legacy Cover waivers, no-lapse activation history, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface."
         ],
         "unsupportedItems": [
-          "Premium-term extension remains informational only in V1 because it applies to the regular-pay corridor only.",
           "Administration charge is modeled for the first issue-date insured-amount layer only. Change-of-insured layering and new-layer charge resets remain informational only.",
           "Insurance Risk Charge is modeled only as a manual-input annualized placeholder because the applicable insurer illustration rate depends on underwriting and Free Legacy Cover state. Free Legacy Cover, no-lapse activation history, and non-manual charge indebtedness remain informational only.",
           "Income Withdrawal Privilege and change-of-insured effects remain informational only, while Vitality Fund Boost is modeled under a static assumed status for the single-pay corridor only.",
@@ -4020,93 +6535,6 @@
             "page": 15,
             "section": "Vitality Fund Boost",
             "excerpt": "Single Premium (SP) The Vitality Fund Boost will be paid to your Basic Policy as single premium units on the issue date and for subsequent policy th anniversaries, up to the 5 policy year, depending on your AIA Vitality "
-          }
-        ]
-      }
-    ],
-    "publishedUnmodeledCorridors": [
-      {
-        "id": "sgd-mip-6",
-        "label": "SGD / Regular Pay 6 years",
-        "paymentStructure": "ppt",
-        "currency": "SGD",
-        "premiumPaymentTermYears": 6,
-        "contributionMode": "regular-pay",
-        "status": "not-modeled-yet",
-        "reason": "Published in product summary, not modeled yet",
-        "sourceRefs": [
-          {
-            "page": 1,
-            "section": "Published corridor family",
-            "excerpt": "Single-pay and regular-pay 6 to 10 year corridors are published, while only the SGD 5-year corridor is executable today."
-          }
-        ]
-      },
-      {
-        "id": "sgd-mip-7",
-        "label": "SGD / Regular Pay 7 years",
-        "paymentStructure": "ppt",
-        "currency": "SGD",
-        "premiumPaymentTermYears": 7,
-        "contributionMode": "regular-pay",
-        "status": "not-modeled-yet",
-        "reason": "Published in product summary, not modeled yet",
-        "sourceRefs": [
-          {
-            "page": 1,
-            "section": "Published corridor family",
-            "excerpt": "Single-pay and regular-pay 6 to 10 year corridors are published, while only the SGD 5-year corridor is executable today."
-          }
-        ]
-      },
-      {
-        "id": "sgd-mip-8",
-        "label": "SGD / Regular Pay 8 years",
-        "paymentStructure": "ppt",
-        "currency": "SGD",
-        "premiumPaymentTermYears": 8,
-        "contributionMode": "regular-pay",
-        "status": "not-modeled-yet",
-        "reason": "Published in product summary, not modeled yet",
-        "sourceRefs": [
-          {
-            "page": 1,
-            "section": "Published corridor family",
-            "excerpt": "Single-pay and regular-pay 6 to 10 year corridors are published, while only the SGD 5-year corridor is executable today."
-          }
-        ]
-      },
-      {
-        "id": "sgd-mip-9",
-        "label": "SGD / Regular Pay 9 years",
-        "paymentStructure": "ppt",
-        "currency": "SGD",
-        "premiumPaymentTermYears": 9,
-        "contributionMode": "regular-pay",
-        "status": "not-modeled-yet",
-        "reason": "Published in product summary, not modeled yet",
-        "sourceRefs": [
-          {
-            "page": 1,
-            "section": "Published corridor family",
-            "excerpt": "Single-pay and regular-pay 6 to 10 year corridors are published, while only the SGD 5-year corridor is executable today."
-          }
-        ]
-      },
-      {
-        "id": "sgd-mip-10",
-        "label": "SGD / Regular Pay 10 years",
-        "paymentStructure": "ppt",
-        "currency": "SGD",
-        "premiumPaymentTermYears": 10,
-        "contributionMode": "regular-pay",
-        "status": "not-modeled-yet",
-        "reason": "Published in product summary, not modeled yet",
-        "sourceRefs": [
-          {
-            "page": 1,
-            "section": "Published corridor family",
-            "excerpt": "Single-pay and regular-pay 6 to 10 year corridors are published, while only the SGD 5-year corridor is executable today."
           }
         ]
       }
@@ -4155,6 +6583,9 @@
         "id": "sgd-mip-5",
         "currency": "SGD",
         "mipLength": 5,
+        "paymentStructure": "ppt",
+        "premiumPaymentTermYears": 5,
+        "contributionMode": "regular-pay",
         "icpMonths": 1,
         "accounts": [
           {
@@ -4240,7 +6671,7 @@
             ],
             "activeWindow": "policy-term",
             "notes": [
-              "Models the published regular premium charge schedule for the regular-pay 5-year corridor only.",
+              "Models the published regular premium charge schedule for the supported regular-pay corridor.",
               "If regular premiums are missed and later resumed, the charge schedule continues from the rate band immediately after the last accepted premium."
             ],
             "sourceRefs": [

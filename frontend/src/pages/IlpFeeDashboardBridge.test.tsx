@@ -145,7 +145,7 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(screen.getByText(/aia elite secure income - 5 pay is cataloged as supported in v1/i)).toBeInTheDocument()
   })
 
-  it('renders disabled corridor rows under supported cards and keeps them non-selectable', async () => {
+  it('promotes AIA Platinum Wealth Elite 2.0 regular-pay corridors into executable templates', async () => {
     const user = userEvent.setup()
     const onSelect = vi.fn()
 
@@ -159,20 +159,14 @@ describe('ILP fee dashboard blog bridge', () => {
 
     const card = getProductCard('AIA Platinum Wealth Elite 2.0')
 
-    expect(within(card).getByText('5 published corridors not modeled')).toBeInTheDocument()
+    expect(within(card).queryByText(/published corridors not modeled/i)).not.toBeInTheDocument()
+    expect(within(card).getByRole('button', { name: /SGD \/ Premium Payment Term 10 years/i })).toBeEnabled()
 
-    const disabledCorridor = within(card).getByRole('button', { name: /SGD \/ Regular Pay 6 years/i })
-    expect(disabledCorridor).toBeDisabled()
-
-    await user.click(disabledCorridor)
-    expect(onSelect).not.toHaveBeenCalled()
-
-    const enabledTemplateButton = within(card).getAllByRole('button', { name: /Use template/i })[0]
-    await user.click(enabledTemplateButton)
+    await user.click(within(card).getByRole('button', { name: /SGD \/ Premium Payment Term 10 years/i }))
 
     expect(onSelect).toHaveBeenCalledTimes(1)
     expect(onSelect.mock.calls[0]?.[0].id).toBe('aia-platinum-wealth-elite-2')
-    expect(onSelect.mock.calls[0]?.[1].id).toBe('sgd-mip-5')
+    expect(onSelect.mock.calls[0]?.[1].id).toBe('sgd-mip-10')
   })
 
   it('promotes AIA Platinum Wealth Elite 2.0 single-pay corridor into an executable template', async () => {

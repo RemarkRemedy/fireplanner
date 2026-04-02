@@ -1080,7 +1080,7 @@ describe('IlpReviewPage', () => {
     await user.click(screen.getByRole('button', { name: /choose product/i }))
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Invest starter')
-    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ premium payment term 5 yearsuse template$/i }))
     await confirmSeededPolicy(user)
     await screen.findByText('Seeded from catalog template')
 
@@ -1116,7 +1116,7 @@ describe('IlpReviewPage', () => {
     await user.click(screen.getByRole('button', { name: /choose product/i }))
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Invest starter')
-    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ premium payment term 5 yearsuse template$/i }))
     await confirmSeededPolicy(user)
     await screen.findByText('Seeded from catalog template')
 
@@ -1148,7 +1148,7 @@ describe('IlpReviewPage', () => {
     await user.click(screen.getByRole('button', { name: /choose product/i }))
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Invest starter')
-    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ premium payment term 5 yearsuse template$/i }))
     await confirmSeededPolicy(user)
     await screen.findByText('Seeded from catalog template')
 
@@ -4257,7 +4257,7 @@ describe('IlpReviewPage', () => {
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Wealth Venture 2.0')
 
     expect(within(dialog).getByText('AIA Platinum Wealth Venture 2.0')).toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ premium payment term 5 yearsuse template$/i }))
     await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('AIA Platinum Wealth Venture 2.0 (SGD / MIP 5)').length).toBeGreaterThan(0)
@@ -4290,7 +4290,7 @@ describe('IlpReviewPage', () => {
     await user.click(screen.getByRole('button', { name: /choose product/i }))
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Wealth Venture 2.0')
-    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ premium payment term 5 yearsuse template$/i }))
     await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Accidental Death Benefit Today').length).toBeGreaterThan(0)
@@ -4305,7 +4305,7 @@ describe('IlpReviewPage', () => {
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Legacy Flex Solitaire')
 
     expect(within(dialog).getByText('Legacy Flex Solitaire (VA3S / VA3R)')).toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ premium payment term 5 yearsuse template$/i }))
     await confirmSeededPolicy(user)
 
     expect(screen.getAllByText('Legacy Flex Solitaire (VA3S / VA3R) (SGD / MIP 5)').length).toBeGreaterThan(0)
@@ -4360,7 +4360,7 @@ describe('IlpReviewPage', () => {
     await user.click(screen.getByRole('button', { name: /choose product/i }))
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Legacy Flex Solitaire')
-    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ premium payment term 5 yearsuse template$/i }))
     await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
@@ -4391,7 +4391,7 @@ describe('IlpReviewPage', () => {
     await user.click(screen.getByRole('button', { name: /choose product/i }))
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Legacy Flex Solitaire')
-    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ premium payment term 5 yearsuse template$/i }))
     await confirmSeededPolicy(user)
     await screen.findByText('Seeded from catalog template')
 
@@ -4426,7 +4426,7 @@ describe('IlpReviewPage', () => {
     await user.click(screen.getByRole('button', { name: /choose product/i }))
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Legacy Flex Solitaire')
-    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await user.click(within(dialog).getByRole('button', { name: /premium payment term 5 years/i }))
     await confirmSeededPolicy(user)
     await screen.findByText('Seeded from catalog template')
 
@@ -7059,7 +7059,7 @@ describe('IlpReviewPage', () => {
     expect(screen.getAllByText('Accidental Death Benefit Today').length).toBeGreaterThan(0)
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
-  it('seeds AIA Platinum Wealth Elite 2.0 as a supported catalog product with premium-term extension warnings', async () => {
+  it('seeds AIA Platinum Wealth Elite 2.0 as a supported catalog product across the widened regular-pay corridors', async () => {
     const user = userEvent.setup()
     renderIlpReviewPage()
 
@@ -7068,30 +7068,18 @@ describe('IlpReviewPage', () => {
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Wealth Elite 2.0')
 
     expect(within(dialog).getByText('AIA Platinum Wealth Elite 2.0')).toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await user.click(within(dialog).getByRole('button', { name: /premium payment term 10 years/i }))
     await confirmSeededPolicy(user)
 
-    expect(screen.getAllByText('AIA Platinum Wealth Elite 2.0 (SGD / MIP 5)').length).toBeGreaterThan(0)
-    const seededAlert = (await screen.findByText('Seeded from catalog template')).closest('[role="alert"]')
-    expect(seededAlert).not.toBeNull()
-    expect(seededAlert?.textContent).toContain('Supported template')
-    expect(seededAlert?.textContent).toContain('premium-year regular premium charges')
-    expect(seededAlert?.textContent).toContain('3% top-up premium charge')
-    expect(seededAlert?.textContent).toContain('premium-holiday charge schedule')
-    expect(seededAlert?.textContent).toContain('no-lapse fixed-charge carry')
-    expect(seededAlert?.textContent).toContain('current-state death benefit corridor via manual current insured amount')
-    expect(seededAlert?.textContent).toContain('current amount owing')
-    expect(seededAlert?.textContent).toContain('current No Lapse Privilege mode inputs')
-    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after manual current insured amount')
-    expect(seededAlert?.textContent).toContain('remaining aggregate TI cap inputs are supplied')
-    expect(seededAlert?.textContent).toContain('current insured amount before the current death-benefit estimate can be trusted')
-    expect(seededAlert?.textContent).toContain('current amount owing')
-    expect(seededAlert?.textContent).toContain('current No Lapse Privilege mode')
-    expect(seededAlert?.textContent).toContain('optional extension of the regular premium term beyond five years')
+    expect(screen.getAllByText('AIA Platinum Wealth Elite 2.0 (SGD / Premium Payment Term 10 years)').length).toBeGreaterThan(0)
     expect(screen.queryByText('Death Benefit Today')).not.toBeInTheDocument()
-    expect(screen.getByLabelText('Current Insured Amount (SGD)')).toBeInTheDocument()
-    expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
-    expect(screen.getByText('Current No Lapse Privilege Mode')).toBeInTheDocument()
+    const state = useIlpStore.getState()
+    const seededPolicy = state.policies.find((policy) => policy.catalogSource?.variantId === 'sgd-mip-10')
+    expect(seededPolicy?.name).toBe('AIA Platinum Wealth Elite 2.0 (SGD / Premium Payment Term 10 years)')
+    expect(seededPolicy?.catalogSource?.productName).toBe('AIA Platinum Wealth Elite 2.0')
+    expect(seededPolicy?.catalogSource?.premiumPaymentTermYears).toBe(10)
+    expect(seededPolicy?.catalogSource?.variantId).toBe('sgd-mip-10')
+    expect(seededPolicy?.catalogSource?.variantLabel).toBe('SGD / Premium Payment Term 10 years')
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds AIA Platinum Wealth Legacy as a supported catalog product with informational withdrawal-table warnings', async () => {
@@ -7103,7 +7091,7 @@ describe('IlpReviewPage', () => {
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Wealth Legacy')
 
     expect(within(dialog).getByText('AIA Platinum Wealth Legacy')).toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await user.click(within(dialog).getByRole('button', { name: /premium payment term 5 years/i }))
     await confirmSeededPolicy(user)
 
     expect(screen.getAllByText(/AIA Platinum Wealth Legacy/i).length).toBeGreaterThan(0)
@@ -7165,7 +7153,7 @@ describe('IlpReviewPage', () => {
     await user.click(screen.getByRole('button', { name: /choose product/i }))
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Wealth Elite 2.0')
-    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await user.click(within(dialog).getByRole('button', { name: /premium payment term 5 years/i }))
     await confirmSeededPolicy(user)
 
     expect(screen.queryByText('TI Benefit Today')).not.toBeInTheDocument()
@@ -7201,7 +7189,7 @@ describe('IlpReviewPage', () => {
     await user.click(screen.getByRole('button', { name: /choose product/i }))
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Wealth Elite 2.0')
-    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await user.click(within(dialog).getByRole('button', { name: /premium payment term 5 years/i }))
     await confirmSeededPolicy(user)
 
     expect(screen.queryByText('Death Benefit After TI Claim Today')).not.toBeInTheDocument()
@@ -7237,7 +7225,7 @@ describe('IlpReviewPage', () => {
     await user.click(screen.getByRole('button', { name: /choose product/i }))
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'AIA Platinum Wealth Elite 2.0')
-    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ mip 5use template$/i }))
+    await user.click(within(dialog).getByRole('button', { name: /premium payment term 5 years/i }))
     await confirmSeededPolicy(user)
 
     act(() => {

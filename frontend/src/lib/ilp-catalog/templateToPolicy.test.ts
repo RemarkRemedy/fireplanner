@@ -11607,6 +11607,8 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-elite-2-protection-benefits')
     expect(seed.monthlyContribution).toBe(350)
     expect(seed.mipLength).toBe(5)
+    expect(seed.catalogSource?.paymentStructure).toBe('ppt')
+    expect(seed.catalogSource?.premiumPaymentTermYears).toBe(5)
     expect(seed.vitalityStatus).toBe('silver')
     expect(seed.policyStateSupport).toEqual({
       automaticLapseOnAccountValueDepletion: true,
@@ -11682,7 +11684,42 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogWarnings?.some((warning) => warning.includes('static-assumption Vitality Fund Boost schedule'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current residual death-benefit estimate after a TI claim today'))).toBe(true)
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('premium-term extension'))).toBe(true)
+  })
+
+  it('maps AIA Platinum Wealth Elite 2.0 into a widened long-tenor regular-pay supported seed', () => {
+    const { manifest, products } = getIlpCatalog()
+    const product = products.find((entry) => entry.id === 'aia-platinum-wealth-elite-2')
+    expect(product).toBeDefined()
+
+    const variant = product?.variants.find((entry) => entry.id === 'sgd-mip-10')
+    expect(variant).toBeDefined()
+
+    const seed = templateVariantToPolicySeed(product!, variant!, manifest)
+    expect(seed.catalogSource?.supportStatus).toBe('supported')
+    expect(seed.catalogSource?.paymentStructure).toBe('ppt')
+    expect(seed.catalogSource?.premiumPaymentTermYears).toBe(10)
+    expect(seed.mipLength).toBe(10)
+    const regularPremiumChargeRule = seed.chargeRules?.find((rule) => rule.id === 'regular-premium-charge')
+    expect(regularPremiumChargeRule).toMatchObject({
+      basis: 'annual-contribution',
+      yearBasis: 'premium-year',
+      rateSchedule: expect.arrayContaining([
+        expect.objectContaining({ startPolicyYear: 6, endPolicyYear: null, rate: 0.03 }),
+      ]),
+    })
+    const premiumHolidayChargeRule = seed.eventChargeRules?.find((rule) => rule.id === 'premium-holiday-charge')
+    expect(premiumHolidayChargeRule).toMatchObject({
+      basis: 'annual-premium-with-overlap-months',
+      rateSchedule: expect.arrayContaining([
+        expect.objectContaining({ startPolicyYear: 5, endPolicyYear: null, rate: 0 }),
+      ]),
+    })
+    const partialWithdrawalChargeRule = seed.eventChargeRules?.find((rule) => rule.id === 'partial-withdrawal-charge')
+    expect(partialWithdrawalChargeRule).toMatchObject({
+      rateSchedule: expect.arrayContaining([
+        expect.objectContaining({ startPolicyYear: 6, endPolicyYear: null, rate: 0 }),
+      ]),
+    })
   })
 
   it('maps AIA Platinum Wealth Elite 2.0 into a supported single-pay seed', () => {
@@ -11699,7 +11736,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:aia-platinum-wealth-elite-2-single-premium-charge')
     expect(seed.catalogSource?.modeledEconomics).toContain('kernel:no-lapse-fixed-charge-debt-carry')
     expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-elite-2-single-premium-corridor')
-    expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('aia-platinum-wealth-elite-2-premium-term-extension')
+    expect(seed.catalogSource?.metadataOnlyBehaviors).not.toContain('aia-platinum-wealth-elite-2-premium-term-extension')
     expect(seed.monthlyContribution).toBe(0)
     expect(seed.catalogSource?.contributionMode).toBe('single-pay')
     expect(seed.catalogSource?.paymentStructure).toBe('single-pay')
@@ -11754,7 +11791,6 @@ describe('templateVariantToPolicySeed', () => {
     ])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('5% single-premium charge'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('single-pay partial-withdrawal / surrender charge schedules'))).toBe(true)
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('premium-term extension'))).toBe(true)
   })
 
   it('maps AIA Platinum Wealth Legacy into a supported regular-pay seed', () => {
