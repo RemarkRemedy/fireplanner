@@ -227,6 +227,35 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(onSelect.mock.calls[0]?.[1].id).toBe('sgd-single-pay')
   })
 
+  it('promotes Singlife Legacy Invest single-premium and regular-pay policy-term corridors into executable templates', async () => {
+    const user = userEvent.setup()
+    const onSelect = vi.fn()
+
+    render(
+      <MemoryRouter>
+        <ProductPickerDialog open onOpenChange={() => {}} onSelect={onSelect} />
+      </MemoryRouter>,
+    )
+
+    await user.type(screen.getByPlaceholderText(/search insurer or product name/i), 'Singlife Legacy Invest')
+
+    const card = getProductCard('Singlife Legacy Invest')
+
+    expect(within(card).queryByText(/published corridors not modeled/i)).not.toBeInTheDocument()
+
+    const singlePremiumTemplate = within(card).getByRole('button', { name: /SGD \/ Single Pay \/ Policy Term 15 years/i })
+    const regularPayTemplate = within(card).getByRole('button', { name: /SGD \/ Premium Payment Term 10 years \/ Policy Term 25 years/i })
+
+    expect(singlePremiumTemplate).toBeEnabled()
+    expect(regularPayTemplate).toBeEnabled()
+
+    await user.click(singlePremiumTemplate)
+
+    expect(onSelect).toHaveBeenCalledTimes(1)
+    expect(onSelect.mock.calls[0]?.[0].id).toBe('singlife-legacy-invest')
+    expect(onSelect.mock.calls[0]?.[1].id).toBe('sgd-single-premium-term-15')
+  })
+
   it('promotes AIA Pro Achiever 3.0 IIP 15-year and 20-year corridors into executable templates', async () => {
     const user = userEvent.setup()
     const onSelect = vi.fn()

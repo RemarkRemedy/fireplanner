@@ -21,7 +21,10 @@ function deriveMetadataVariantLabel(variant: IlpTemplateVariant): string | null 
     return parts.join(' / ')
   }
 
-  if (variant.paymentStructure === 'single-pay' && variant.mipBasis !== 'open-ended') {
+  if (
+    variant.paymentStructure === 'single-pay'
+    && (variant.mipLength != null || variant.policyTermYears != null || variant.mipBasis !== 'open-ended')
+  ) {
     const parts = [`${variant.currency} / Single Pay`]
     if (variant.mipLength != null) {
       parts.push(`MIP ${formatYearCount(variant.mipLength)}`)

@@ -300,18 +300,6 @@ function buildPhase0PublishedUnmodeledRegistry(): Record<string, IlpCatalogPubli
         sourceRefs: aiaPwe2Refs,
       })),
     ],
-    'singlife-legacy-invest': [
-      corridor({ id: 'sgd-single-premium-term-10', label: 'SGD / Single Premium / Policy Term 10 years', paymentStructure: 'single-pay', currency: 'SGD', contributionMode: 'single-pay', policyTermYears: 10, sourceRefs: singlifeRefs }),
-      corridor({ id: 'sgd-single-premium-term-15', label: 'SGD / Single Premium / Policy Term 15 years', paymentStructure: 'single-pay', currency: 'SGD', contributionMode: 'single-pay', policyTermYears: 15, sourceRefs: singlifeRefs }),
-      corridor({ id: 'sgd-mip-3-term-10', label: 'SGD / Premium Payment Term 3 years / Policy Term 10 years', paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: 3, contributionMode: 'regular-pay', policyTermYears: 10, sourceRefs: singlifeRefs }),
-      corridor({ id: 'sgd-mip-3-term-15', label: 'SGD / Premium Payment Term 3 years / Policy Term 15 years', paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: 3, contributionMode: 'regular-pay', policyTermYears: 15, sourceRefs: singlifeRefs }),
-      corridor({ id: 'sgd-mip-3-term-20', label: 'SGD / Premium Payment Term 3 years / Policy Term 20 years', paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: 3, contributionMode: 'regular-pay', policyTermYears: 20, sourceRefs: singlifeRefs }),
-      corridor({ id: 'sgd-mip-5-term-10', label: 'SGD / Premium Payment Term 5 years / Policy Term 10 years', paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: 5, contributionMode: 'regular-pay', policyTermYears: 10, sourceRefs: singlifeRefs }),
-      corridor({ id: 'sgd-mip-5-term-15', label: 'SGD / Premium Payment Term 5 years / Policy Term 15 years', paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: 5, contributionMode: 'regular-pay', policyTermYears: 15, sourceRefs: singlifeRefs }),
-      corridor({ id: 'sgd-mip-5-term-20', label: 'SGD / Premium Payment Term 5 years / Policy Term 20 years', paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: 5, contributionMode: 'regular-pay', policyTermYears: 20, sourceRefs: singlifeRefs }),
-      corridor({ id: 'sgd-mip-10-term-20', label: 'SGD / Premium Payment Term 10 years / Policy Term 20 years', paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: 10, contributionMode: 'regular-pay', policyTermYears: 20, sourceRefs: singlifeRefs }),
-      corridor({ id: 'sgd-mip-10-term-25', label: 'SGD / Premium Payment Term 10 years / Policy Term 25 years', paymentStructure: 'ppt', currency: 'SGD', premiumPaymentTermYears: 10, contributionMode: 'regular-pay', policyTermYears: 25, sourceRefs: singlifeRefs }),
-    ],
     'hsbc-life-wealth-focus-flexi-2': [
       corridor({ id: 'sgd-mip-10', label: 'SGD / MIP 10 years', paymentStructure: 'flexi', currency: 'SGD', mipLength: 10, flexiTerm: 2, contributionMode: 'regular-pay', sourceRefs: hsbcWealthFocusRefs }),
       corridor({ id: 'usd-mip-10', label: 'USD / MIP 10 years', paymentStructure: 'flexi', currency: 'USD', mipLength: 10, flexiTerm: 2, contributionMode: 'regular-pay', sourceRefs: hsbcWealthFocusRefs }),

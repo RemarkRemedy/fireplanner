@@ -5899,25 +5899,159 @@ function manulifeInvestreadyIiiSep2025StressPolicy(
   )
 }
 
+const SINGLIFE_LEGACY_VARIANT_BASELINE_CONFIG = {
+  'sgd-single-premium-term-10': {
+    label: 'SGD / Single Premium / Policy Term 10 years',
+    goldenLabel: 'SGD / Single Pay / Term 10',
+    initialSinglePremium: 100_000,
+    monthlyContribution: 0,
+    currentPolicyYear: 4,
+    monthsAlreadyPaid: 0,
+    currentValue: 98_000,
+    policyTermYears: 10,
+  },
+  'sgd-single-premium-term-15': {
+    label: 'SGD / Single Premium / Policy Term 15 years',
+    goldenLabel: 'SGD / Single Pay / Term 15',
+    initialSinglePremium: 100_000,
+    monthlyContribution: 0,
+    currentPolicyYear: 6,
+    monthsAlreadyPaid: 0,
+    currentValue: 102_000,
+    policyTermYears: 15,
+  },
+  'sgd-mip-3-term-10': {
+    label: 'SGD / Premium Payment Term 3 years / Policy Term 10 years',
+    goldenLabel: 'SGD / PPT 3 / Term 10',
+    initialSinglePremium: 0,
+    monthlyContribution: 1_200,
+    currentPolicyYear: 2,
+    monthsAlreadyPaid: 18,
+    currentValue: 28_000,
+    policyTermYears: 10,
+  },
+  'sgd-mip-3-term-15': {
+    label: 'SGD / Premium Payment Term 3 years / Policy Term 15 years',
+    goldenLabel: 'SGD / PPT 3 / Term 15',
+    initialSinglePremium: 0,
+    monthlyContribution: 1_200,
+    currentPolicyYear: 2,
+    monthsAlreadyPaid: 18,
+    currentValue: 34_000,
+    policyTermYears: 15,
+  },
+  'sgd-mip-3-term-20': {
+    label: 'SGD / Premium Payment Term 3 years / Policy Term 20 years',
+    goldenLabel: 'SGD / PPT 3 / Term 20',
+    initialSinglePremium: 0,
+    monthlyContribution: 1_200,
+    currentPolicyYear: 2,
+    monthsAlreadyPaid: 18,
+    currentValue: 41_000,
+    policyTermYears: 20,
+  },
+  'sgd-mip-5-term-10': {
+    label: 'SGD / Premium Payment Term 5 years / Policy Term 10 years',
+    goldenLabel: 'SGD / PPT 5 / Term 10',
+    initialSinglePremium: 0,
+    monthlyContribution: 1_350,
+    currentPolicyYear: 4,
+    monthsAlreadyPaid: 42,
+    currentValue: 30_000,
+    policyTermYears: 10,
+  },
+  'sgd-mip-5-term-15': {
+    label: 'SGD / Premium Payment Term 5 years / Policy Term 15 years',
+    goldenLabel: 'SGD / PPT 5 / Term 15',
+    initialSinglePremium: 0,
+    monthlyContribution: 1_350,
+    currentPolicyYear: 4,
+    monthsAlreadyPaid: 42,
+    currentValue: 39_000,
+    policyTermYears: 15,
+  },
+  'sgd-mip-5-term-20': {
+    label: 'SGD / Premium Payment Term 5 years / Policy Term 20 years',
+    goldenLabel: 'SGD / PPT 5 / Term 20',
+    initialSinglePremium: 0,
+    monthlyContribution: 1_350,
+    currentPolicyYear: 4,
+    monthsAlreadyPaid: 42,
+    currentValue: 48_000,
+    policyTermYears: 20,
+  },
+  'sgd-mip-10-term-15': {
+    label: 'SGD / Premium Payment Term 10 years / Policy Term 15 years',
+    goldenLabel: 'SGD / PPT 10 / Term 15',
+    initialSinglePremium: 0,
+    monthlyContribution: 1_500,
+    currentPolicyYear: 9,
+    monthsAlreadyPaid: 96,
+    currentValue: 42_000,
+    policyTermYears: 15,
+  },
+  'sgd-mip-10-term-20': {
+    label: 'SGD / Premium Payment Term 10 years / Policy Term 20 years',
+    goldenLabel: 'SGD / PPT 10 / Term 20',
+    initialSinglePremium: 0,
+    monthlyContribution: 1_500,
+    currentPolicyYear: 9,
+    monthsAlreadyPaid: 96,
+    currentValue: 53_000,
+    policyTermYears: 20,
+  },
+  'sgd-mip-10-term-25': {
+    label: 'SGD / Premium Payment Term 10 years / Policy Term 25 years',
+    goldenLabel: 'SGD / PPT 10 / Term 25',
+    initialSinglePremium: 0,
+    monthlyContribution: 1_500,
+    currentPolicyYear: 9,
+    monthsAlreadyPaid: 96,
+    currentValue: 58_000,
+    policyTermYears: 25,
+  },
+} as const
+
+type SinglifeLegacyVariantId = keyof typeof SINGLIFE_LEGACY_VARIANT_BASELINE_CONFIG
+
+const SINGLIFE_LEGACY_VARIANT_IDS: SinglifeLegacyVariantId[] = [
+  'sgd-single-premium-term-10',
+  'sgd-single-premium-term-15',
+  'sgd-mip-3-term-10',
+  'sgd-mip-3-term-15',
+  'sgd-mip-3-term-20',
+  'sgd-mip-5-term-10',
+  'sgd-mip-5-term-15',
+  'sgd-mip-5-term-20',
+  'sgd-mip-10-term-15',
+  'sgd-mip-10-term-20',
+  'sgd-mip-10-term-25',
+]
+
 function singlifeLegacyInvestBasePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: SinglifeLegacyVariantId,
   id: string,
   funds: IlpFund[],
   overrides: Partial<IlpPolicyInput> = {},
 ): IlpPolicyInput {
-  const base = seedPolicy(snapshot, 'singlife-legacy-invest', 'sgd-mip-10-term-15', id, {
-    monthlyContribution: 1_500,
-    currentPolicyYear: 9,
-    monthsAlreadyPaid: 96,
+  const config = SINGLIFE_LEGACY_VARIANT_BASELINE_CONFIG[variantId]
+  const scheduledPayoutStartPolicyYear = Math.min(Math.max(config.currentPolicyYear + 2, 6), config.policyTermYears - 4)
+  const scheduledPayoutDurationYears = Math.min(5, config.policyTermYears - scheduledPayoutStartPolicyYear + 1)
+  const base = seedPolicy(snapshot, 'singlife-legacy-invest', variantId, id, {
+    initialSinglePremium: config.initialSinglePremium,
+    monthlyContribution: config.monthlyContribution,
+    currentPolicyYear: config.currentPolicyYear,
+    monthsAlreadyPaid: config.monthsAlreadyPaid,
   })
 
   return withFunds(
     ilpPolicySchema.parse({
       ...base,
-      name: 'Golden Singlife Legacy Invest (SGD / MIP 10 Term 15)',
+      name: `Golden Singlife Legacy Invest (${config.goldenLabel})`,
       accounts: base.accounts.map((account) => ({
         ...account,
-        currentValue: 42_000,
+        currentValue: config.currentValue,
       })),
       distributionAssumption: {
         mode: 'cash-payout',
@@ -5928,8 +6062,8 @@ function singlifeLegacyInvestBasePolicy(
         mode: 'scheduled-redemption',
         source: 'manual-assumption',
         accountId: 'policy',
-        startPolicyYear: 11,
-        durationYears: 5,
+        startPolicyYear: scheduledPayoutStartPolicyYear,
+        durationYears: scheduledPayoutDurationYears,
         annualPayoutAmount: 6_000,
       },
       policyEvents: [],
@@ -5941,10 +6075,11 @@ function singlifeLegacyInvestBasePolicy(
 
 function singlifeLegacyInvestBaselinePolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
+  variantId: SinglifeLegacyVariantId,
   id: string,
 ): IlpPolicyInput {
-  return singlifeLegacyInvestBasePolicy(snapshot, id, MANULIFE_BALANCED_FUNDS, {
-    name: 'Golden Singlife Legacy Invest (SGD / MIP 10 Term 15 Baseline)',
+  return singlifeLegacyInvestBasePolicy(snapshot, variantId, id, MANULIFE_BALANCED_FUNDS, {
+    name: `Golden Singlife Legacy Invest (${SINGLIFE_LEGACY_VARIANT_BASELINE_CONFIG[variantId].goldenLabel} Baseline)`,
   })
 }
 
@@ -5952,8 +6087,8 @@ function singlifeLegacyInvestEventHeavyPolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
 ): IlpPolicyInput {
-  return singlifeLegacyInvestBasePolicy(snapshot, id, MANULIFE_BALANCED_FUNDS, {
-    name: 'Golden Singlife Legacy Invest (SGD / MIP 10 Term 15 Event Heavy)',
+  return singlifeLegacyInvestBasePolicy(snapshot, 'sgd-mip-10-term-25', id, MANULIFE_BALANCED_FUNDS, {
+    name: 'Golden Singlife Legacy Invest (SGD / PPT 10 / Term 25 Event Heavy)',
     policyEvents: [
       {
         id: 'holiday-1',
@@ -5984,8 +6119,8 @@ function singlifeLegacyInvestStressPolicy(
   snapshot: Pick<IlpCatalogSnapshot, 'manifest' | 'products'>,
   id: string,
 ): IlpPolicyInput {
-  return singlifeLegacyInvestBasePolicy(snapshot, id, MANULIFE_STRESS_FUNDS, {
-    name: 'Golden Singlife Legacy Invest (SGD / MIP 10 Term 15 OCF Stress)',
+  return singlifeLegacyInvestBasePolicy(snapshot, 'sgd-mip-10-term-25', id, MANULIFE_STRESS_FUNDS, {
+    name: 'Golden Singlife Legacy Invest (SGD / PPT 10 / Term 25 OCF Stress)',
   })
 }
 
@@ -13453,11 +13588,11 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
     coverageTags: ['baseline'],
     description: 'Manulife InvestReady (III) Sep-2025 13 Years Flexi 10 baseline scenario under supported post-MIP distribution assumptions.',
   },
-  {
-    productId: 'singlife-legacy-invest',
-    variantId: 'sgd-mip-10-term-15',
-    scenarioId: 'baseline',
-    fixtureClass: 'supported',
+  ...SINGLIFE_LEGACY_VARIANT_IDS.map((variantId) => ({
+    productId: 'singlife-legacy-invest' as const,
+    variantId,
+    scenarioId: 'baseline' as const,
+    fixtureClass: 'supported' as const,
     coverageTags: [
       'baseline',
       'kernel:scheduled-payout-manual-assumption',
@@ -13470,17 +13605,21 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'branch:singlife-legacy-invest-maturity-bonus',
       'branch:singlife-legacy-invest-administrative-charge',
     ],
-    description: 'Singlife Legacy Invest baseline scenario covering the supported SGD / regular-pay-10-years / policy-term-15-years corridor with scheduled-redemption and cash-payout distribution assumptions.',
+    description: `Singlife Legacy Invest baseline scenario covering the supported ${SINGLIFE_LEGACY_VARIANT_BASELINE_CONFIG[variantId].label} corridor with scheduled-redemption and cash-payout distribution assumptions.`,
     integrityChecks: [
       {
         description: 'baseline policy produces annual withdrawals under the scheduled-redemption assumption',
-        test: (_, artifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+        test: (_: unknown, artifact: GoldenFixtureArtifact) => artifact.expected.projections.mid.rows.some((row) => row.annualWithdrawals > 0),
+      },
+      {
+        description: 'baseline policy incurs positive cumulative fees under the supported Singlife charge corridor',
+        test: (_: unknown, artifact: GoldenFixtureArtifact) => artifact.expected.projections.mid.rows.some((row) => row.cumulativeGrossFees > 0),
       },
     ],
-  },
+  })),
   {
     productId: 'singlife-legacy-invest',
-    variantId: 'sgd-mip-10-term-15',
+    variantId: 'sgd-mip-10-term-25',
     scenarioId: 'event-heavy',
     fixtureClass: 'supported',
     coverageTags: [
@@ -13490,7 +13629,7 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
       'branch:singlife-legacy-invest-surrender-charge',
       'branch:singlife-legacy-invest-premium-shortfall-charge',
     ],
-    description: 'Singlife Legacy Invest event-heavy scenario covering premium holiday, charged top-up, charged withdrawal, and the same supported payout corridor.',
+    description: 'Singlife Legacy Invest event-heavy scenario covering premium holiday, charged top-up, charged withdrawal, and the long-tenor supported payout corridor.',
     integrityChecks: [
       {
         description: 'event-heavy policy records annual contribution above scheduled premium from the seeded top-up event',
@@ -13504,11 +13643,11 @@ const GOLDEN_FIXTURE_MANIFEST: GoldenFixtureDefinition[] = [
   },
   {
     productId: 'singlife-legacy-invest',
-    variantId: 'sgd-mip-10-term-15',
+    variantId: 'sgd-mip-10-term-25',
     scenarioId: 'ocf-stress',
     fixtureClass: 'supported',
     coverageTags: ['ocf-stress'],
-    description: 'Singlife Legacy Invest alternate-fund high-OCF stress scenario through the supported SGD corridor.',
+    description: 'Singlife Legacy Invest alternate-fund high-OCF stress scenario through the supported long-tenor SGD corridor.',
   },
   {
     productId: 'singlife-savvy-invest-ii',
@@ -18075,7 +18214,7 @@ function buildPolicyForDefinition(
     return manulifeInvestreadyIiiSep2025StressPolicy(snapshot, id)
   }
   if (definition.productId === 'singlife-legacy-invest' && definition.scenarioId === 'baseline') {
-    return singlifeLegacyInvestBaselinePolicy(snapshot, id)
+    return singlifeLegacyInvestBaselinePolicy(snapshot, definition.variantId as SinglifeLegacyVariantId, id)
   }
   if (definition.productId === 'singlife-legacy-invest' && definition.scenarioId === 'event-heavy') {
     return singlifeLegacyInvestEventHeavyPolicy(snapshot, id)

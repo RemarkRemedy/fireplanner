@@ -9577,7 +9577,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.name).toBe('Singlife Legacy Invest (SGD / MIP 10 (Term 15))')
+    expect(seed.name).toBe('Singlife Legacy Invest (SGD / Premium Payment Term 10 years / Policy Term 15 years)')
     expect(seed.catalogSource?.supportStatus).toBe('supported')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:singlife-legacy-invest-welcome-bonus')
     expect(seed.catalogSource?.modeledEconomics).toContain('branch:singlife-legacy-invest-special-booster')
@@ -9597,7 +9597,7 @@ describe('templateVariantToPolicySeed', () => {
       expect.objectContaining({
         id: 'administrative-charge',
         basis: 'account-value',
-        activeWindow: 'during-mip',
+        activeWindow: 'policy-term',
         rateSchedule: [
           { startPolicyYear: 1, endPolicyYear: 10, rate: 0.03 },
         ],
@@ -9623,7 +9623,7 @@ describe('templateVariantToPolicySeed', () => {
           id: 'special-booster',
           mode: 'one-time',
           oneTimePayoutBasis: 'committed-annual-premium-at-issue',
-          rate: 0.25,
+          rate: 0.025,
           startPolicyYear: 10,
           endPolicyYear: 10,
           requiresPremiumsPaidUpToDate: true,
@@ -9684,8 +9684,8 @@ describe('templateVariantToPolicySeed', () => {
       mode: 'reinvest',
       source: 'catalog-default',
     })
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('policy-term-15-years corridor only'))).toBe(true)
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('published $1,000 minimum remaining account-value floor'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('SGD / Premium Payment Term 10 years / Policy Term 15 years is cataloged as a supported V1 corridor'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('published $500 per-withdrawal minimum and $1,000 minimum remaining policy value'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('manual annual distribution-yield assumption'))).toBe(true)
   })
 
@@ -9856,7 +9856,7 @@ describe('templateVariantToPolicySeed', () => {
     expect(variant).toBeDefined()
 
     const seed = templateVariantToPolicySeed(product!, variant!, manifest)
-    expect(seed.name).toBe('Singlife Legacy Invest (SGD / MIP 10 (Term 15))')
+    expect(seed.name).toBe('Singlife Legacy Invest (SGD / Premium Payment Term 10 years / Policy Term 15 years)')
     expect(seed.catalogSource?.metadataOnlyBehaviors).toContain('singlife-legacy-invest-free-partial-withdrawal-benefit-eligibility-and-limits')
     expect(seed.eventChargeRules).toEqual(
       expect.arrayContaining([

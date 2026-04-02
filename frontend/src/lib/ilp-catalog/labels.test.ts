@@ -45,6 +45,19 @@ describe('formatCatalogVariantLabel', () => {
     expect(label).toBe('SGD / Single Pay / Policy Term 10 years')
   })
 
+  it('formats open-ended single-pay corridors when a policy term is authored', () => {
+    const label = formatCatalogVariantLabel(makeVariant({
+      id: 'sgd-single-premium-term-15',
+      paymentStructure: 'single-pay',
+      mipBasis: 'open-ended',
+      mipLength: null,
+      policyTermYears: 15,
+      contributionMode: 'single-pay',
+    }))
+
+    expect(label).toBe('SGD / Single Pay / Policy Term 15 years')
+  })
+
   it('keeps legacy MIP-based fallback labels when no lane metadata is authored', () => {
     const label = formatCatalogVariantLabel(makeVariant({
       id: 'sgd-mip-10-term-15',
