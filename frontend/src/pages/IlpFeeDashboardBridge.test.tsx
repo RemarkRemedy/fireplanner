@@ -536,11 +536,18 @@ describe('ILP fee dashboard blog bridge', () => {
     await user.type(screen.getByPlaceholderText(/search insurer or product name/i), 'Wealth Focus (Flexi 4)')
 
     const card = getProductCard('Wealth Focus (Flexi 4)')
+    const sgdCorridor = within(card).getByRole('button', { name: /SGD \/ MIP 10 years/i })
 
     expect(within(card).getByText('Published only')).toBeInTheDocument()
     expect(within(card).queryByRole('button', { name: /Use template/i })).not.toBeInTheDocument()
-    expect(within(card).getByRole('button', { name: /SGD \/ MIP 10 years/i })).toBeDisabled()
+    expect(sgdCorridor).toBeDisabled()
     expect(within(card).getByRole('button', { name: /USD \/ MIP 10 years/i })).toBeDisabled()
+
+    await user.hover(sgdCorridor.parentElement as HTMLElement)
+
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(
+      'Source file not found. This is intentionally kept disabled until the product summary is available.',
+    )
   })
 
   it('keeps large TM Atlas Wealth corridor families directly selectable without disabled expansion affordances', async () => {

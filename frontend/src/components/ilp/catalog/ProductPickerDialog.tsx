@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
 import { formatCatalogPublishedCorridorLabel, formatCatalogVariantLabel } from '@/lib/ilp-catalog/labels'
-import type { IlpCatalogResolvedProduct, IlpTemplateVariant } from '@/lib/ilp-catalog/types'
+import type { IlpCatalogPublishedCorridor, IlpCatalogResolvedProduct, IlpTemplateVariant } from '@/lib/ilp-catalog/types'
 import { cn } from '@/lib/utils'
 
 const INITIAL_VISIBLE_DISABLED_CORRIDORS = 6
@@ -33,6 +34,22 @@ function supportCopy(product: IlpCatalogResolvedProduct): string {
   }
 
   return 'Needs source review for some summary-described behaviors. The dashboard keeps claims narrow to the slice modeled today.'
+}
+
+function disabledCorridorTooltip(
+  product: IlpCatalogResolvedProduct,
+  corridor: IlpCatalogPublishedCorridor,
+): string | null {
+  if (isPublishedOnlyProduct(product) && product.sourceClass === 'brochure-only') {
+    return 'Source file not found. This is intentionally kept disabled until the product summary is available.'
+  }
+
+  const normalizedReason = corridor.reason.trim().toLowerCase()
+  if (normalizedReason.includes('source file')) {
+    return 'Source file not found. This is intentionally kept disabled until the product summary is available.'
+  }
+
+  return null
 }
 
 export function ProductPickerDialog({ open, onOpenChange, onSelect }: ProductPickerDialogProps) {
@@ -146,118 +163,141 @@ export function ProductPickerDialog({ open, onOpenChange, onSelect }: ProductPic
 
                             return (
                               <>
-                          <div className="space-y-1">
-                            <div className="text-sm text-muted-foreground">{product.insurer}</div>
-                            <div className="font-semibold">{product.productName}</div>
-                            <div className="flex flex-wrap gap-2">
-                              <Badge variant={publishedOnly ? 'secondary' : product.supportStatus === 'supported' ? 'default' : 'secondary'}>
-                                {publishedOnly ? 'Published only' : product.supportStatus === 'supported' ? 'Supported' : 'Needs review'}
-                              </Badge>
-                              <Badge variant="outline">
-                                {publishedOnly
-                                  ? 'Disabled corridors only'
-                                  : product.economicsStatus === 'supported'
-                                    ? 'Modeled economics'
-                                    : 'Narrower modeled scope'}
-                              </Badge>
-                              {publishedCorridors.length > 0 && !publishedOnly && (
-                                <Badge variant="outline">
-                                  {publishedCorridors.length} published corridors not modeled
-                                </Badge>
-                              )}
-                            </div>
-                            {(supportCopy(product) || product.warnings.length > 0) && (
-                              <div className="pt-1">
-                                <button
-                                  type="button"
-                                  className="text-xs font-medium text-muted-foreground hover:text-foreground"
-                                  onClick={() => setExpandedProductId((current) => (current === product.id ? null : product.id))}
-                                >
-                                  {expandedProductId === product.id ? 'Hide model notes' : 'Show model notes'}
-                                </button>
-                              </div>
-                            )}
-                            {expandedProductId === product.id && (
-                              <div className="space-y-2 pt-1">
-                                <div className="text-xs text-muted-foreground">
-                                  {supportCopy(product)}
+                                <div className="space-y-1">
+                                  <div className="text-sm text-muted-foreground">{product.insurer}</div>
+                                  <div className="font-semibold">{product.productName}</div>
+                                  <div className="flex flex-wrap gap-2">
+                                    <Badge variant={publishedOnly ? 'secondary' : product.supportStatus === 'supported' ? 'default' : 'secondary'}>
+                                      {publishedOnly ? 'Published only' : product.supportStatus === 'supported' ? 'Supported' : 'Needs review'}
+                                    </Badge>
+                                    <Badge variant="outline">
+                                      {publishedOnly
+                                        ? 'Disabled corridors only'
+                                        : product.economicsStatus === 'supported'
+                                          ? 'Modeled economics'
+                                          : 'Narrower modeled scope'}
+                                    </Badge>
+                                    {publishedCorridors.length > 0 && !publishedOnly && (
+                                      <Badge variant="outline">
+                                        {publishedCorridors.length} published corridors not modeled
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  {(supportCopy(product) || product.warnings.length > 0) && (
+                                    <div className="pt-1">
+                                      <button
+                                        type="button"
+                                        className="text-xs font-medium text-muted-foreground hover:text-foreground"
+                                        onClick={() => setExpandedProductId((current) => (current === product.id ? null : product.id))}
+                                      >
+                                        {expandedProductId === product.id ? 'Hide model notes' : 'Show model notes'}
+                                      </button>
+                                    </div>
+                                  )}
+                                  {expandedProductId === product.id && (
+                                    <div className="space-y-2 pt-1">
+                                      <div className="text-xs text-muted-foreground">
+                                        {supportCopy(product)}
+                                      </div>
+                                      {product.warnings.length > 0 && (
+                                        <div className="text-xs text-muted-foreground">
+                                          {product.warnings[0]}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
-                                {product.warnings.length > 0 && (
-                                  <div className="text-xs text-muted-foreground">
-                                    {product.warnings[0]}
+
+                                {product.variants.length > 0 && (
+                                  <div className="space-y-2">
+                                    <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                      Executable templates
+                                    </div>
+                                    <div className="grid gap-2 md:grid-cols-2">
+                                      {product.variants.map((variant) => (
+                                        <Button
+                                          key={variant.id}
+                                          type="button"
+                                          variant="outline"
+                                          className="h-auto justify-between whitespace-normal text-left"
+                                          onClick={() => onSelect(product, variant)}
+                                        >
+                                          <span>{formatCatalogVariantLabel(variant)}</span>
+                                          <span className="text-xs text-muted-foreground">Use template</span>
+                                        </Button>
+                                      ))}
+                                    </div>
                                   </div>
                                 )}
-                              </div>
-                            )}
-                          </div>
 
-                          {product.variants.length > 0 && (
-                            <div className="space-y-2">
-                              <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                Executable templates
-                              </div>
-                              <div className="grid gap-2 md:grid-cols-2">
-                                {product.variants.map((variant) => (
-                                  <Button
-                                    key={variant.id}
-                                    type="button"
-                                    variant="outline"
-                                    className="h-auto justify-between whitespace-normal text-left"
-                                    onClick={() => onSelect(product, variant)}
-                                  >
-                                    <span>{formatCatalogVariantLabel(variant)}</span>
-                                    <span className="text-xs text-muted-foreground">Use template</span>
-                                  </Button>
-                                ))}
-                              </div>
-                            </div>
-                          )}
+                                {publishedCorridors.length > 0 && (
+                                  <div className={cn('space-y-2 border-t pt-4', product.variants.length === 0 && 'border-dashed')}>
+                                    <div className="flex items-center justify-between gap-3">
+                                      <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                        Published in source, not modeled yet
+                                      </div>
+                                      <div className="text-xs text-muted-foreground">
+                                        {publishedCorridors.length} corridors
+                                      </div>
+                                    </div>
+                                    <TooltipProvider delayDuration={150}>
+                                      <div className="grid gap-2 md:grid-cols-2">
+                                        {visiblePublishedCorridors.map((corridor) => {
+                                          const tooltip = disabledCorridorTooltip(product, corridor)
+                                          const button = (
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              disabled
+                                              className="h-auto w-full justify-between whitespace-normal border-dashed text-left text-muted-foreground disabled:opacity-100"
+                                            >
+                                              <span className="flex flex-col items-start gap-1">
+                                                <span>{formatCatalogPublishedCorridorLabel(corridor)}</span>
+                                                <span className="text-xs text-muted-foreground">{corridor.reason}</span>
+                                              </span>
+                                              <span className="text-xs text-muted-foreground">Unavailable</span>
+                                            </Button>
+                                          )
 
-                          {publishedCorridors.length > 0 && (
-                            <div className={cn('space-y-2 border-t pt-4', product.variants.length === 0 && 'border-dashed')}>
-                              <div className="flex items-center justify-between gap-3">
-                                <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                  Published in source, not modeled yet
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {publishedCorridors.length} corridors
-                                </div>
-                              </div>
-                              <div className="grid gap-2 md:grid-cols-2">
-                                {visiblePublishedCorridors.map((corridor) => (
-                                  <Button
-                                    key={corridor.id}
-                                    type="button"
-                                    variant="outline"
-                                    disabled
-                                    className="h-auto justify-between whitespace-normal border-dashed text-left text-muted-foreground disabled:opacity-100"
-                                  >
-                                    <span className="flex flex-col items-start gap-1">
-                                      <span>{formatCatalogPublishedCorridorLabel(corridor)}</span>
-                                      <span className="text-xs text-muted-foreground">{corridor.reason}</span>
-                                    </span>
-                                    <span className="text-xs text-muted-foreground">Unavailable</span>
-                                  </Button>
-                                ))}
-                              </div>
-                              {publishedCorridors.length > INITIAL_VISIBLE_DISABLED_CORRIDORS && (
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  className="px-0 text-xs text-muted-foreground hover:text-foreground"
-                                  onClick={() => setExpandedDisabledProductIds((current) => (
-                                    current.includes(product.id)
-                                      ? current.filter((productId) => productId !== product.id)
-                                      : [...current, product.id]
-                                  ))}
-                                >
-                                  {disabledExpanded
-                                    ? 'Show fewer corridors'
-                                    : `Show ${publishedCorridors.length - INITIAL_VISIBLE_DISABLED_CORRIDORS} more corridors`}
-                                </Button>
-                              )}
-                            </div>
-                          )}
+                                          if (tooltip == null) {
+                                            return (
+                                              <div key={corridor.id}>
+                                                {button}
+                                              </div>
+                                            )
+                                          }
+
+                                          return (
+                                            <Tooltip key={corridor.id}>
+                                              <TooltipTrigger asChild>
+                                                <span tabIndex={0} className="block">
+                                                  {button}
+                                                </span>
+                                              </TooltipTrigger>
+                                              <TooltipContent>{tooltip}</TooltipContent>
+                                            </Tooltip>
+                                          )
+                                        })}
+                                      </div>
+                                    </TooltipProvider>
+                                    {publishedCorridors.length > INITIAL_VISIBLE_DISABLED_CORRIDORS && (
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        className="px-0 text-xs text-muted-foreground hover:text-foreground"
+                                        onClick={() => setExpandedDisabledProductIds((current) => (
+                                          current.includes(product.id)
+                                            ? current.filter((productId) => productId !== product.id)
+                                            : [...current, product.id]
+                                        ))}
+                                      >
+                                        {disabledExpanded
+                                          ? 'Show fewer corridors'
+                                          : `Show ${publishedCorridors.length - INITIAL_VISIBLE_DISABLED_CORRIDORS} more corridors`}
+                                      </Button>
+                                    )}
+                                  </div>
+                                )}
                               </>
                             )
                           })()}
