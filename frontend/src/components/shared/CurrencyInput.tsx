@@ -1,19 +1,20 @@
-import { useState, useId } from 'react'
-import { Label } from '@/components/ui/label'
-import { NumberInput } from '@/components/shared/NumberInput'
-import { InfoTooltip } from '@/components/shared/InfoTooltip'
-import { cn } from '@/lib/utils'
+import { useState, useId } from "react";
+import { Label } from "@/components/ui/label";
+import { NumberInput } from "@/components/shared/NumberInput";
+import { InfoTooltip } from "@/components/shared/InfoTooltip";
+import { cn } from "@/lib/utils";
 
 interface CurrencyInputProps {
-  label: string
-  value: number
-  onChange: (value: number) => void
-  placeholder?: string
-  currency?: 'SGD' | 'USD'
-  error?: string
-  tooltip?: string
-  className?: string
-  disabled?: boolean
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+  placeholder?: string;
+  currency?: "SGD" | "USD";
+  error?: string;
+  tooltip?: string;
+  className?: string;
+  labelClassName?: string;
+  disabled?: boolean;
 }
 
 export function CurrencyInput({
@@ -21,24 +22,31 @@ export function CurrencyInput({
   value,
   onChange,
   placeholder,
-  currency = 'SGD',
+  currency = "SGD",
   error,
   tooltip,
   className,
+  labelClassName,
   disabled,
 }: CurrencyInputProps) {
-  const inputId = useId()
-  const [touched, setTouched] = useState(false)
-  const errorId = `${inputId}-error`
+  const inputId = useId();
+  const [touched, setTouched] = useState(false);
+  const errorId = `${inputId}-error`;
   return (
-    <div className={cn('flex flex-col gap-2', className)}>
-      <Label htmlFor={inputId} className="flex min-h-[4.5rem] items-start gap-1 text-sm leading-snug">
+    <div className={cn("flex flex-col gap-2", className)}>
+      <Label
+        htmlFor={inputId}
+        className={cn(
+          "flex min-h-[4.5rem] items-start gap-1 text-sm leading-snug",
+          labelClassName,
+        )}
+      >
         {label}
         {tooltip && <InfoTooltip text={tooltip} />}
       </Label>
       <div className="relative" onBlur={() => setTouched(true)}>
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-          {currency === 'USD' ? 'US$' : 'S$'}
+          {currency === "USD" ? "US$" : "S$"}
         </span>
         <NumberInput
           id={inputId}
@@ -48,13 +56,17 @@ export function CurrencyInput({
           integer
           formatWithCommas
           className={cn(
-            'pl-7 border-blue-300',
-            touched && error && 'border-destructive'
+            "pl-7 border-blue-300",
+            touched && error && "border-destructive",
           )}
           disabled={disabled}
         />
       </div>
-      {touched && error && <p id={errorId} className="text-xs text-destructive">{error}</p>}
+      {touched && error && (
+        <p id={errorId} className="text-xs text-destructive">
+          {error}
+        </p>
+      )}
     </div>
-  )
+  );
 }

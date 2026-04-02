@@ -8,6 +8,7 @@ interface FundFeeAssumptionFieldProps {
   onChange: (value: number) => void;
   note?: string;
   className?: string;
+  inputLabelClassName?: string;
 }
 
 export function FundFeeAssumptionField({
@@ -15,6 +16,7 @@ export function FundFeeAssumptionField({
   onChange,
   note = "Starts at 1.5% p.a. as a usable default. Adjust it if your fund mix is closer to fixed income, multi-asset, or equity funds, or replace it with the actual fee from the product documents.",
   className,
+  inputLabelClassName,
 }: FundFeeAssumptionFieldProps) {
   return (
     <div className={cn("space-y-3", className)}>
@@ -22,6 +24,7 @@ export function FundFeeAssumptionField({
         label="Fund management fee (p.a.)"
         value={value}
         onChange={onChange}
+        labelClassName={inputLabelClassName}
         tooltip="Annual fee charged by the fund manager. This affects the fund-fee drag in the ILP fee story. Use the exact rate if you have it, or start from a typical range."
       />
       <div className="rounded-md border border-slate-200 bg-slate-50/80 p-3 dark:border-slate-800 dark:bg-slate-950/60">

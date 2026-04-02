@@ -11,6 +11,9 @@ import {
   scaleFundsToBlendedOcf,
 } from "@/components/ilp/fundFeeAssumptions";
 
+const SETUP_LABEL_CLASS =
+  "min-h-0 text-sm font-medium leading-tight text-slate-700 dark:text-slate-200";
+
 interface PolicySetupGateProps {
   seed: IlpPolicySeed;
   onConfirm: (adjustedSeed: IlpPolicySeed) => void;
@@ -100,13 +103,14 @@ export function PolicySetupGate({
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 sm:[&>div>label]:min-h-12 sm:[&>div>label]:items-start">
+        <div className="grid gap-5 sm:grid-cols-2">
           {isSinglePremium ? (
             <CurrencyInput
               label="Initial Single Premium"
               value={initialSinglePremium}
               onChange={setInitialSinglePremium}
               currency={seed.currency}
+              labelClassName={SETUP_LABEL_CLASS}
             />
           ) : (
             <CurrencyInput
@@ -114,9 +118,14 @@ export function PolicySetupGate({
               value={monthlyContribution}
               onChange={setMonthlyContribution}
               currency={seed.currency}
+              labelClassName={SETUP_LABEL_CLASS}
             />
           )}
-          <FundFeeAssumptionField value={fundFee} onChange={setFundFee} />
+          <FundFeeAssumptionField
+            value={fundFee}
+            onChange={setFundFee}
+            inputLabelClassName={SETUP_LABEL_CLASS}
+          />
           {prospect ? (
             <NumberInput
               label="Projection Horizon"
@@ -128,6 +137,7 @@ export function PolicySetupGate({
               integer
               min={seed.mipLength ?? 1}
               suffix="years"
+              labelClassName={SETUP_LABEL_CLASS}
             />
           ) : (
             <>
@@ -137,6 +147,7 @@ export function PolicySetupGate({
                 onChange={setCurrentPolicyYear}
                 integer
                 min={1}
+                labelClassName={SETUP_LABEL_CLASS}
               />
               <NumberInput
                 label="Months Already Paid"
@@ -144,6 +155,7 @@ export function PolicySetupGate({
                 onChange={setMonthsAlreadyPaid}
                 integer
                 min={0}
+                labelClassName={SETUP_LABEL_CLASS}
               />
               <div className="flex items-end">
                 <div className="space-y-1 text-sm">

@@ -32,6 +32,9 @@ import {
   scaleFundsToBlendedOcf,
 } from "@/components/ilp/fundFeeAssumptions";
 
+const EXIT_SETUP_LABEL_CLASS =
+  "min-h-0 text-sm font-medium leading-tight text-slate-700 dark:text-slate-200";
+
 // --- Exit Setup Form: extends PolicySetupGate with per-account balances ---
 
 interface ExitSetupFormProps {
@@ -119,6 +122,7 @@ function ExitSetupForm({ seed, onConfirm, onCancel }: ExitSetupFormProps) {
               value={initialSinglePremium}
               onChange={setInitialSinglePremium}
               currency={seed.currency}
+              labelClassName={EXIT_SETUP_LABEL_CLASS}
             />
           ) : (
             <CurrencyInput
@@ -126,6 +130,7 @@ function ExitSetupForm({ seed, onConfirm, onCancel }: ExitSetupFormProps) {
               value={monthlyContribution}
               onChange={setMonthlyContribution}
               currency={seed.currency}
+              labelClassName={EXIT_SETUP_LABEL_CLASS}
             />
           )}
           <NumberInput
@@ -134,6 +139,7 @@ function ExitSetupForm({ seed, onConfirm, onCancel }: ExitSetupFormProps) {
             onChange={setCurrentPolicyYear}
             integer
             min={1}
+            labelClassName={EXIT_SETUP_LABEL_CLASS}
           />
           <NumberInput
             label="Months Already Paid"
@@ -141,10 +147,12 @@ function ExitSetupForm({ seed, onConfirm, onCancel }: ExitSetupFormProps) {
             onChange={setMonthsAlreadyPaid}
             integer
             min={0}
+            labelClassName={EXIT_SETUP_LABEL_CLASS}
           />
           <FundFeeAssumptionField
             value={fundFee}
             onChange={setFundFee}
+            inputLabelClassName={EXIT_SETUP_LABEL_CLASS}
             note="Starts at 1.5% p.a. as a usable default for current-policy review. Replace it with the fund fee from your policy documents if you have it, or use one of the typical shortcuts as a starting point."
           />
           <div className="flex items-end">

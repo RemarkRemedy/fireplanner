@@ -1,27 +1,28 @@
-import { useState, useCallback, useId } from 'react'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { InfoTooltip } from '@/components/shared/InfoTooltip'
-import { cn } from '@/lib/utils'
+import { useState, useCallback, useId } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { InfoTooltip } from "@/components/shared/InfoTooltip";
+import { cn } from "@/lib/utils";
 
 interface NumberInputProps {
-  value: number
-  onChange: (value: number) => void
-  placeholder?: string
+  value: number;
+  onChange: (value: number) => void;
+  placeholder?: string;
   /** If true, parse as integer. Default: false (float). */
-  integer?: boolean
+  integer?: boolean;
   /** If true, display with commas on blur, strip on focus. Uses type="text" + inputMode="numeric". */
-  formatWithCommas?: boolean
-  min?: number
-  max?: number
-  step?: number
-  className?: string
-  disabled?: boolean
-  id?: string
-  label?: string
-  tooltip?: string
-  error?: string
-  suffix?: string
+  formatWithCommas?: boolean;
+  min?: number;
+  max?: number;
+  step?: number;
+  className?: string;
+  disabled?: boolean;
+  id?: string;
+  label?: string;
+  labelClassName?: string;
+  tooltip?: string;
+  error?: string;
+  suffix?: string;
 }
 
 /**
@@ -43,94 +44,116 @@ export function NumberInput({
   disabled,
   id,
   label,
+  labelClassName,
   tooltip,
   error,
   suffix,
 }: NumberInputProps) {
-  const autoId = useId()
-  const inputId = id ?? autoId
-  const effectiveInteger = integer || formatWithCommas
-  const format = useCallback((v: number) => {
-    if (formatWithCommas) return Math.round(v).toLocaleString('en-SG')
-    return effectiveInteger ? String(Math.round(v)) : String(v)
-  }, [formatWithCommas, effectiveInteger])
+  const autoId = useId();
+  const inputId = id ?? autoId;
+  const effectiveInteger = integer || formatWithCommas;
+  const format = useCallback(
+    (v: number) => {
+      if (formatWithCommas) return Math.round(v).toLocaleString("en-SG");
+      return effectiveInteger ? String(Math.round(v)) : String(v);
+    },
+    [formatWithCommas, effectiveInteger],
+  );
   const displayFromValue = useCallback(
-    (nextValue: number) => (placeholder && nextValue === 0 ? '' : format(nextValue)),
+    (nextValue: number) =>
+      placeholder && nextValue === 0 ? "" : format(nextValue),
     [placeholder, format],
-  )
+  );
 
-  const [localValue, setLocalValue] = useState(() => displayFromValue(value))
-  const [prevValue, setPrevValue] = useState(value)
-  const [isFocused, setIsFocused] = useState(false)
-  const [touched, setTouched] = useState(false)
-  const errorId = `${inputId}-error`
+  const [localValue, setLocalValue] = useState(() => displayFromValue(value));
+  const [prevValue, setPrevValue] = useState(value);
+  const [isFocused, setIsFocused] = useState(false);
+  const [touched, setTouched] = useState(false);
+  const errorId = `${inputId}-error`;
 
   // Sync from props when NOT focused (handles resets, rehydration, external changes)
   if (value !== prevValue) {
-    setPrevValue(value)
+    setPrevValue(value);
     if (!isFocused) {
-      setLocalValue(displayFromValue(value))
-      setTouched(false)
+      setLocalValue(displayFromValue(value));
+      setTouched(false);
     }
   }
 
-  const clamp = useCallback((v: number) => {
-    let clamped = v
-    if (min !== undefined && clamped < min) clamped = min
-    if (max !== undefined && clamped > max) clamped = max
-    return clamped
-  }, [min, max])
+  const clamp = useCallback(
+    (v: number) => {
+      let clamped = v;
+      if (min !== undefined && clamped < min) clamped = min;
+      if (max !== undefined && clamped > max) clamped = max;
+      return clamped;
+    },
+    [min, max],
+  );
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const raw = e.target.value
-      setLocalValue(raw)
+      const raw = e.target.value;
+      setLocalValue(raw);
 
-      const stripped = formatWithCommas ? raw.replace(/,/g, '') : raw
-      const parsed = effectiveInteger ? parseInt(stripped, 10) : parseFloat(stripped)
+      const stripped = formatWithCommas ? raw.replace(/,/g, "") : raw;
+      const parsed = effectiveInteger
+        ? parseInt(stripped, 10)
+        : parseFloat(stripped);
       if (!isNaN(parsed)) {
-        onChange(clamp(parsed))
+        onChange(clamp(parsed));
       }
     },
-    [onChange, effectiveInteger, formatWithCommas, clamp]
-  )
+    [onChange, effectiveInteger, formatWithCommas, clamp],
+  );
 
   const handleFocus = useCallback(() => {
-    setIsFocused(true)
+    setIsFocused(true);
     if (formatWithCommas) {
-      setLocalValue((prev) => prev.replace(/,/g, ''))
+      setLocalValue((prev) => prev.replace(/,/g, ""));
     }
-  }, [formatWithCommas])
+  }, [formatWithCommas]);
 
   const handleBlur = useCallback(() => {
-    setTouched(true)
-    setIsFocused(false)
-    const stripped = formatWithCommas ? localValue.replace(/,/g, '') : localValue
-    const parsed = effectiveInteger ? parseInt(stripped, 10) : parseFloat(stripped)
-    if (isNaN(parsed) || stripped.trim() === '') {
-      setLocalValue(displayFromValue(value))
+    setTouched(true);
+    setIsFocused(false);
+    const stripped = formatWithCommas
+      ? localValue.replace(/,/g, "")
+      : localValue;
+    const parsed = effectiveInteger
+      ? parseInt(stripped, 10)
+      : parseFloat(stripped);
+    if (isNaN(parsed) || stripped.trim() === "") {
+      setLocalValue(displayFromValue(value));
     } else {
-      const clamped = clamp(parsed)
+      const clamped = clamp(parsed);
       if (clamped !== parsed) {
-        onChange(clamped)
+        onChange(clamped);
       }
-      setLocalValue(displayFromValue(clamped))
+      setLocalValue(displayFromValue(clamped));
     }
-  }, [localValue, value, effectiveInteger, formatWithCommas, clamp, onChange, displayFromValue])
+  }, [
+    localValue,
+    value,
+    effectiveInteger,
+    formatWithCommas,
+    clamp,
+    onChange,
+    displayFromValue,
+  ]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') {
-        e.currentTarget.blur()
+      if (e.key === "Enter") {
+        e.currentTarget.blur();
       }
     },
-    []
-  )
+    [],
+  );
 
   const inputControl = (
     <Input
       id={inputId}
-      type={formatWithCommas ? 'text' : 'number'}
+      type={formatWithCommas ? "text" : "number"}
       inputMode="numeric"
       value={localValue}
       onChange={handleChange}
@@ -142,15 +165,15 @@ export function NumberInput({
       step={formatWithCommas ? undefined : step}
       placeholder={placeholder}
       className={cn(
-        'border-blue-300',
-        suffix && 'pr-12',
-        touched && error && 'border-destructive',
+        "border-blue-300",
+        suffix && "pr-12",
+        touched && error && "border-destructive",
         className,
       )}
       disabled={disabled}
       aria-describedby={touched && error ? errorId : undefined}
     />
-  )
+  );
 
   const input = suffix ? (
     <div className="relative">
@@ -159,18 +182,30 @@ export function NumberInput({
         {suffix}
       </span>
     </div>
-  ) : inputControl
+  ) : (
+    inputControl
+  );
 
-  if (!label) return input
+  if (!label) return input;
 
   return (
     <div className="flex flex-col gap-2">
-      <Label htmlFor={inputId} className="flex min-h-[4.5rem] items-start gap-1 text-sm leading-snug">
+      <Label
+        htmlFor={inputId}
+        className={cn(
+          "flex min-h-[4.5rem] items-start gap-1 text-sm leading-snug",
+          labelClassName,
+        )}
+      >
         {label}
         {tooltip && <InfoTooltip text={tooltip} />}
       </Label>
       <div>{input}</div>
-      {touched && error && <p id={errorId} className="text-xs text-destructive">{error}</p>}
+      {touched && error && (
+        <p id={errorId} className="text-xs text-destructive">
+          {error}
+        </p>
+      )}
     </div>
-  )
+  );
 }

@@ -1,23 +1,24 @@
-import { useState, useCallback, useId } from 'react'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { InfoTooltip } from '@/components/shared/InfoTooltip'
-import { cn } from '@/lib/utils'
+import { useState, useCallback, useId } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { InfoTooltip } from "@/components/shared/InfoTooltip";
+import { cn } from "@/lib/utils";
 
 interface PercentInputProps {
-  label?: string
+  label?: string;
   /** Stored as decimal (e.g. 0.04 for 4%) */
-  value: number
-  onChange: (value: number) => void
-  error?: string
-  tooltip?: string
-  className?: string
-  step?: number
-  disabled?: boolean
+  value: number;
+  onChange: (value: number) => void;
+  error?: string;
+  tooltip?: string;
+  className?: string;
+  labelClassName?: string;
+  step?: number;
+  disabled?: boolean;
 }
 
 function toDisplay(decimal: number): string {
-  return parseFloat((decimal * 100).toPrecision(12)).toFixed(1)
+  return parseFloat((decimal * 100).toPrecision(12)).toFixed(1);
 }
 
 export function PercentInput({
@@ -27,68 +28,75 @@ export function PercentInput({
   error,
   tooltip,
   className,
+  labelClassName,
   step = 0.1,
   disabled,
 }: PercentInputProps) {
-  const inputId = useId()
-  const [localValue, setLocalValue] = useState(() => toDisplay(value))
-  const [prevValue, setPrevValue] = useState(value)
-  const [isFocused, setIsFocused] = useState(false)
-  const [touched, setTouched] = useState(false)
-  const errorId = `${inputId}-error`
+  const inputId = useId();
+  const [localValue, setLocalValue] = useState(() => toDisplay(value));
+  const [prevValue, setPrevValue] = useState(value);
+  const [isFocused, setIsFocused] = useState(false);
+  const [touched, setTouched] = useState(false);
+  const errorId = `${inputId}-error`;
 
   // Sync from props during render when NOT focused (handles resets, rehydration, external changes)
   if (value !== prevValue) {
-    setPrevValue(value)
+    setPrevValue(value);
     if (!isFocused) {
-      setLocalValue(toDisplay(value))
-      setTouched(false)
+      setLocalValue(toDisplay(value));
+      setTouched(false);
     }
   }
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const raw = e.target.value
-      setLocalValue(raw)
+      const raw = e.target.value;
+      setLocalValue(raw);
 
-      const pct = parseFloat(raw)
+      const pct = parseFloat(raw);
       if (!isNaN(pct)) {
-        onChange(pct / 100)
+        onChange(pct / 100);
       }
     },
-    [onChange]
-  )
+    [onChange],
+  );
 
   const handleFocus = useCallback(() => {
-    setIsFocused(true)
-  }, [])
+    setIsFocused(true);
+  }, []);
 
   const handleBlur = useCallback(() => {
-    setTouched(true)
-    setIsFocused(false)
-    const pct = parseFloat(localValue)
-    if (isNaN(pct) || localValue.trim() === '') {
+    setTouched(true);
+    setIsFocused(false);
+    const pct = parseFloat(localValue);
+    if (isNaN(pct) || localValue.trim() === "") {
       // Revert to current store value
-      setLocalValue(toDisplay(value))
+      setLocalValue(toDisplay(value));
     } else {
       // Reformat to canonical display
-      setLocalValue(toDisplay(pct / 100))
+      setLocalValue(toDisplay(pct / 100));
     }
-  }, [localValue, value])
+  }, [localValue, value]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') {
-        e.currentTarget.blur()
+      if (e.key === "Enter") {
+        e.currentTarget.blur();
       }
     },
-    []
-  )
+    [],
+  );
 
   return (
-    <div className={cn('flex flex-col gap-2', className)}>
+    <div className={cn("flex flex-col gap-2", className)}>
       {label && (
-        <Label htmlFor={inputId} className="flex min-h-[4.5rem] items-start gap-1 text-sm leading-snug">
+        <Label
+          htmlFor={inputId}
+          className={cn(
+            "flex min-h-[4.5rem] items-start gap-1 text-sm leading-snug",
+            labelClassName,
+          )}
+        >
           {label}
           {tooltip && <InfoTooltip text={tooltip} />}
         </Label>
@@ -105,8 +113,8 @@ export function PercentInput({
           onKeyDown={handleKeyDown}
           step={step}
           className={cn(
-            'pr-7 border-blue-300',
-            touched && error && 'border-destructive'
+            "pr-7 border-blue-300",
+            touched && error && "border-destructive",
           )}
           disabled={disabled}
           aria-describedby={touched && error ? errorId : undefined}
@@ -115,7 +123,11 @@ export function PercentInput({
           %
         </span>
       </div>
-      {touched && error && <p id={errorId} className="text-xs text-destructive">{error}</p>}
+      {touched && error && (
+        <p id={errorId} className="text-xs text-destructive">
+          {error}
+        </p>
+      )}
     </div>
-  )
+  );
 }
