@@ -303,17 +303,6 @@ function buildPhase0PublishedUnmodeledRegistry(): Record<string, IlpCatalogPubli
     'aia-platinum-wealth-legacy': [
       corridor({ id: 'sgd-single-pay', label: 'SGD / Single Pay', paymentStructure: 'single-pay', currency: 'SGD', contributionMode: 'single-pay', sourceRefs: aiaPwlRefs }),
     ],
-    'income-legacy-flex-solitaire': [
-      corridor({
-        id: 'sgd-mip-5-single-premium',
-        label: 'SGD / Single Premium / MIP 5 years',
-        paymentStructure: 'single-pay',
-        currency: 'SGD',
-        mipLength: 5,
-        contributionMode: 'single-pay',
-        sourceRefs: legacyFlexRefs,
-      }),
-    ],
     'singlife-legacy-invest': [
       corridor({ id: 'sgd-single-premium-term-10', label: 'SGD / Single Premium / Policy Term 10 years', paymentStructure: 'single-pay', currency: 'SGD', contributionMode: 'single-pay', policyTermYears: 10, sourceRefs: singlifeRefs }),
       corridor({ id: 'sgd-single-premium-term-15', label: 'SGD / Single Premium / Policy Term 15 years', paymentStructure: 'single-pay', currency: 'SGD', contributionMode: 'single-pay', policyTermYears: 15, sourceRefs: singlifeRefs }),

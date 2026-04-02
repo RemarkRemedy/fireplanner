@@ -43447,6 +43447,7 @@
     "economicsStatus": "supported",
     "modeledEconomics": [
       "branch:income-legacy-flex-solitaire-regular-premium-charge",
+      "branch:income-legacy-flex-solitaire-single-premium-charge",
       "branch:income-legacy-flex-solitaire-policy-fee",
       "branch:income-legacy-flex-solitaire-insurance-cover-charge",
       "branch:income-legacy-flex-solitaire-loyalty-bonus",
@@ -43459,7 +43460,6 @@
     ],
     "coveredElsewhereBehaviors": [],
     "metadataOnlyBehaviors": [
-      "income-legacy-flex-solitaire-single-premium-corridor",
       "income-legacy-flex-solitaire-no-lapse-guarantee",
       "income-legacy-flex-solitaire-future-premium-option",
       "income-legacy-flex-solitaire-withdrawal-access-option",
@@ -43471,7 +43471,7 @@
       "income-legacy-flex-solitaire-terminal-illness-and-claim-settlement"
     ],
     "warnings": [
-      "Legacy Flex Solitaire (VA3S / VA3R) is cataloged as supported in V1 for the regular-premium 5-year and 10-year corridors. The current parser models the premium-year regular premium charges, manual-input policy-fee and Appendix 1 insurance-cover-charge corridors, the current-state death and terminal-illness benefit estimate as the higher of adjusted sum assured or policy value via a manual current adjusted sum assured input, the current admitted-state TI payable amount through the published full-termination TI corridor after manual claim-amount entry, an admitted-and-settled TI claim as a current policy-termination state, the published Loyalty Bonus rate with the supported partial-withdrawal suspension subset, the top-up premium charge, premium-holiday charge, premium-account Appendix 2 withdrawal / surrender charges, and the published reinvest-only distribution baseline. The single-premium corridor, automatic adjusted-sum-assured updates, No Lapse Guarantee, retirement-option payout elections, top-up-account first-12-month charge timing, and broader claim-side settlement / continuation mechanics remain outside the current engine.",
+      "Legacy Flex Solitaire (VA3S / VA3R) is cataloged as supported in V1 for the regular-premium 5-year and 10-year corridors plus the 5-year single-premium corridor. The current parser models the premium-year regular premium charges, the 4% single-premium charge, manual-input policy-fee and Appendix 1 insurance-cover-charge corridors, the current-state death and terminal-illness benefit estimate as the higher of adjusted sum assured or policy value via a manual current adjusted sum assured input, the current admitted-state TI payable amount through the published full-termination TI corridor after manual claim-amount entry, an admitted-and-settled TI claim as a current policy-termination state, the published Loyalty Bonus rate with the supported partial-withdrawal suspension subset, the top-up premium charge, regular-corridor premium-holiday charge, premium-account Appendix 2 withdrawal / surrender charges, and the published reinvest-only distribution baseline. Automatic adjusted-sum-assured updates, No Lapse Guarantee, retirement-option payout elections, top-up-account first-12-month charge timing, and broader claim-side settlement / continuation mechanics remain outside the current engine.",
       "Qualifying Withdrawal Access Option withdrawals can be represented in V1 with event-level charge and loyalty-bonus-suspension waivers, and qualifying top-up-account withdrawals can be represented with event-level loyalty-bonus-suspension waivers, while timing, caps, adjusted-sum-assured exceptions, No Lapse Guarantee exceptions, and retirement-option distribution behavior remain informational only."
     ],
     "archived": false,
@@ -43480,6 +43480,8 @@
         "id": "sgd-regular-mip-5",
         "currency": "SGD",
         "mipLength": 5,
+        "paymentStructure": "mip",
+        "contributionMode": "regular-pay",
         "icpMonths": 1,
         "accounts": [
           {
@@ -43614,8 +43616,7 @@
             ],
             "activeWindow": "policy-term",
             "notes": [
-              "Models the published regular premium charge schedule by accepted regular-premium year for the regular-premium corridors only.",
-              "The separate single-premium corridor remains informational only in V1."
+              "Models the published regular premium charge schedule by accepted regular-premium year for the regular-premium corridors only."
             ],
             "sourceRefs": [
               {
@@ -43886,10 +43887,9 @@
         "warnings": [
           "Legacy Flex Solitaire is cataloged as supported in V1 for the 5-year regular-premium corridor. The parser captures the premium-year regular premium charge schedule, a manual-input policy-fee amount for policy years 1-4, the manual-input Appendix 1 insurance-cover-charge corridor, the current-state death and terminal-illness benefit estimate as the higher of adjusted sum assured or policy value via a manual current adjusted sum assured input, the published Loyalty Bonus rate with the supported partial-withdrawal suspension subset, the top-up premium charge, the premium-holiday charge schedule, the premium-account Appendix 2 partial-withdrawal / surrender charge schedule, and the published reinvest-only distribution baseline.",
           "Qualifying Withdrawal Access Option withdrawals can be represented in V1 with event-level charge and loyalty-bonus-suspension waivers, and qualifying top-up-account withdrawals can be represented with event-level loyalty-bonus-suspension waivers, while timing, caps, once-per-policy-year administration, adjusted-sum-assured exceptions, and No Lapse Guarantee exceptions remain informational only.",
-          "Single-premium charging, automatic adjusted-sum-assured changes after top-ups and withdrawals, No Lapse Guarantee behavior, top-up-account first-12-month charge timing, and retirement-option distribution payouts remain informational only in V1. The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state."
+          "Automatic adjusted-sum-assured changes after top-ups and withdrawals, No Lapse Guarantee behavior, top-up-account first-12-month charge timing, and retirement-option distribution payouts remain informational only in V1. The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state."
         ],
         "unsupportedItems": [
-          "Single-premium corridor remains informational only in V1, including the 4% single-premium charge and the single-premium Appendix 2 charge schedule.",
           "Withdrawal Access Option timing, 5%-of-prevailing-premium-account-value limits, once-per-policy-year administration, and top-up-account first-12-month charge timing remain informational only in V1.",
           "Automatic adjusted-sum-assured updates after top-ups, charged withdrawals, withdrawal-access exceptions, and sum-assured reductions remain informational only, so the current adjusted sum assured must be maintained manually for the insurance-cover-charge corridor and current death / terminal-illness benefit estimate.",
           "The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state, but terminal-illness definitions, exclusions, insurer-side settlement, secondary-insured continuation, bequest option behavior, and other protection-side claim mechanics remain informational only beyond the supported current death / terminal-illness benefit estimate and insurance-cover-charge corridor.",
@@ -43941,6 +43941,8 @@
         "id": "sgd-regular-mip-10",
         "currency": "SGD",
         "mipLength": 10,
+        "paymentStructure": "mip",
+        "contributionMode": "regular-pay",
         "icpMonths": 1,
         "accounts": [
           {
@@ -44100,8 +44102,7 @@
             ],
             "activeWindow": "policy-term",
             "notes": [
-              "Models the published regular premium charge schedule by accepted regular-premium year for the regular-premium corridors only.",
-              "The separate single-premium corridor remains informational only in V1."
+              "Models the published regular premium charge schedule by accepted regular-premium year for the regular-premium corridors only."
             ],
             "sourceRefs": [
               {
@@ -44427,10 +44428,9 @@
         "warnings": [
           "Legacy Flex Solitaire is cataloged as supported in V1 for the 10-year regular-premium corridor. The parser captures the premium-year regular premium charge schedule, a manual-input policy-fee amount for policy years 1-4, the manual-input Appendix 1 insurance-cover-charge corridor, the current-state death and terminal-illness benefit estimate as the higher of adjusted sum assured or policy value via a manual current adjusted sum assured input, the published Loyalty Bonus rate with the supported partial-withdrawal suspension subset, the top-up premium charge, the premium-holiday charge schedule, the premium-account Appendix 2 partial-withdrawal / surrender charge schedule, and the published reinvest-only distribution baseline.",
           "Qualifying Withdrawal Access Option withdrawals can be represented in V1 with event-level charge and loyalty-bonus-suspension waivers, and qualifying top-up-account withdrawals can be represented with event-level loyalty-bonus-suspension waivers, while timing, caps, once-per-policy-year administration, adjusted-sum-assured exceptions, and No Lapse Guarantee exceptions remain informational only.",
-          "Single-premium charging, automatic adjusted-sum-assured changes after top-ups and withdrawals, No Lapse Guarantee behavior, top-up-account first-12-month charge timing, and retirement-option distribution payouts remain informational only in V1. The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state."
+          "Automatic adjusted-sum-assured changes after top-ups and withdrawals, No Lapse Guarantee behavior, top-up-account first-12-month charge timing, and retirement-option distribution payouts remain informational only in V1. The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state."
         ],
         "unsupportedItems": [
-          "Single-premium corridor remains informational only in V1, including the 4% single-premium charge and the single-premium Appendix 2 charge schedule.",
           "Withdrawal Access Option timing, 5%-of-prevailing-premium-account-value limits, once-per-policy-year administration, and top-up-account first-12-month charge timing remain informational only in V1.",
           "Automatic adjusted-sum-assured updates after top-ups, charged withdrawals, withdrawal-access exceptions, and sum-assured reductions remain informational only, so the current adjusted sum assured must be maintained manually for the insurance-cover-charge corridor and current death / terminal-illness benefit estimate.",
           "The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state, but terminal-illness definitions, exclusions, insurer-side settlement, secondary-insured continuation, bequest option behavior, and other protection-side claim mechanics remain informational only beyond the supported current death / terminal-illness benefit estimate and insurance-cover-charge corridor.",
@@ -44477,23 +44477,371 @@
             "excerpt": "Appendix 2 – Surrender Charge, Partial Withdrawal Charge and Premium Holiday Charge The table below shows the percentage to be applied for charges. • For full surrender and partial withdrawal, the percentage is applied t"
           }
         ]
-      }
-    ],
-    "publishedUnmodeledCorridors": [
+      },
       {
         "id": "sgd-mip-5-single-premium",
-        "label": "SGD / Single Premium / MIP 5 years",
-        "paymentStructure": "single-pay",
         "currency": "SGD",
         "mipLength": 5,
+        "paymentStructure": "single-pay",
         "contributionMode": "single-pay",
-        "status": "not-modeled-yet",
-        "reason": "Published in product summary, not modeled yet",
+        "icpMonths": 1,
+        "accounts": [
+          {
+            "id": "premium",
+            "label": "Premium Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": true,
+            "contributionRules": [
+              {
+                "phase": "during-icp",
+                "targetAccountId": "premium",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 1,
+                "section": "Policy description and product structure",
+                "excerpt": "Legacy Flex Solitaire is a whole life investment-linked plan (ILP) that provides protection and investment opportunities. You can choose either single premium or regular premium for this plan. If your policy is a regular"
+              },
+              {
+                "page": 12,
+                "section": "Subscription of premium and top-up units",
+                "excerpt": "100% of your single premium less any premium charge will be placed into the premium account and used to buy units (at bid price) in the ILP sub-funds you have chosen. 8.1.2 Regular Premium 100% of your regular premium le"
+              }
+            ]
+          },
+          {
+            "id": "topup",
+            "label": "Top-up Account",
+            "feeRate": null,
+            "postMipFeeRate": null,
+            "subjectToEec": false,
+            "contributionRules": [
+              {
+                "phase": "top-up",
+                "targetAccountId": "topup",
+                "contributionShare": 1
+              }
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Loyalty bonus, top-ups, and future premium option",
+                "excerpt": "Approximate excerpt; keyword \"We will provide an annual loyalty bonus\" not found on page. Version 1.26 Your policy must meet all the following conditions to receive the loyalty bonus: • This policy must not have ended wh"
+              },
+              {
+                "page": 12,
+                "section": "Subscription of premium and top-up units",
+                "excerpt": "100% of your single premium less any premium charge will be placed into the premium account and used to buy units (at bid price) in the ILP sub-funds you have chosen. 8.1.2 Regular Premium 100% of your regular premium le"
+              }
+            ]
+          }
+        ],
+        "bonuses": [
+          {
+            "id": "loyalty-bonus",
+            "type": "loyalty",
+            "label": "Loyalty Bonus",
+            "mode": "annual-rate",
+            "appliesTo": [
+              "premium"
+            ],
+            "startPolicyYear": 6,
+            "endPolicyYear": null,
+            "rate": 0.0025,
+            "amount": null,
+            "tieredRates": [],
+            "suspensionRules": [
+              {
+                "trigger": "partial-withdrawal",
+                "suspensionMonths": 12
+              }
+            ],
+            "notes": [
+              "Applied annually from the end of the 5-year MIP on the premium-account policy value.",
+              "Qualifying Withdrawal Access Option withdrawals and top-up-account withdrawals can be represented in V1 by setting bonusSuspensionWaived on the recorded partial-withdrawal event."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Loyalty bonus, top-ups, and future premium option",
+                "excerpt": "Approximate excerpt; keyword \"We will provide an annual loyalty bonus\" not found on page. Version 1.26 Your policy must meet all the following conditions to receive the loyalty bonus: • This policy must not have ended wh"
+              }
+            ]
+          }
+        ],
+        "feeRules": [
+          {
+            "id": "single-premium-charge",
+            "label": "Single Premium Charge",
+            "basis": "initial-single-premium",
+            "rate": 0.04,
+            "amount": 0,
+            "appliesTo": [
+              "premium"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published 4% premium charge deducted from the accepted single premium before units are purchased."
+            ],
+            "sourceRefs": [
+              {
+                "page": 9,
+                "section": "Single-premium charge schedule and policy fee",
+                "excerpt": "For single premium policy: 4% of single premium For regular premium policy: Regular premiums paid for Minimum Investment Period (MIP) the corresponding years 5 Years 10 Years 1 28% 35% 2 23% 26% 3 14% 15% 4 7% 10% 5 5% 4"
+              },
+              {
+                "page": 12,
+                "section": "Subscription of premium and top-up units",
+                "excerpt": "100% of your single premium less any premium charge will be placed into the premium account and used to buy units (at bid price) in the ILP sub-funds you have chosen. 8.1.2 Regular Premium 100% of your regular premium le"
+              }
+            ]
+          },
+          {
+            "id": "policy-fee",
+            "label": "Policy Fee",
+            "basis": "fixed-annual",
+            "rate": 0,
+            "amount": 0,
+            "requiresManualInput": true,
+            "appliesTo": [
+              "premium"
+            ],
+            "fallbackAppliesTo": [
+              "topup"
+            ],
+            "activeWindow": "policy-term",
+            "startPolicyYear": 1,
+            "endPolicyYear": 4,
+            "notes": [
+              "Models the published monthly policy fee as a manual annual amount for the first four policy years only.",
+              "Enter the annual policy fee amount using the published sum-assured-at-entry and original-insured entry-age table because the rate depends on policy-entry inputs rather than prevailing account balances.",
+              "The policy fee is deducted from the premium account first and falls back to the top-up account if the premium account is insufficient."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Policy fee and insurance cover charge",
+                "excerpt": "7.2 Policy Fee You must pay a policy fee based on the sum assured at policy entry date and the original insured’s entry age. The policy fee payable is calculated using the sum assured at policy entry date multiplied by t"
+              }
+            ]
+          },
+          {
+            "id": "insurance-cover-charge",
+            "label": "Insurance Cover Charge",
+            "basis": "assurance-sum-at-risk",
+            "rate": 0,
+            "amount": 0,
+            "assuranceConfig": {
+              "formula": "income-legacy-flex-solitaire-death-ti",
+              "monthlyModalFactor": 0.08333333333333333,
+              "maxAgeNextBirthday": 120
+            },
+            "requiresManualInput": true,
+            "appliesTo": [
+              "premium"
+            ],
+            "assuranceValueAppliesTo": [
+              "premium",
+              "topup"
+            ],
+            "fallbackAppliesTo": [
+              "topup"
+            ],
+            "activeWindow": "policy-term",
+            "notes": [
+              "Models the published Appendix 1 monthly insurance cover charge after entering the insured-life details and the current adjusted sum assured.",
+              "Enter the current adjusted sum assured manually because the published protection base changes after top-ups, charged withdrawals, and other policy alterations outside the current automatic state surface.",
+              "The insurance cover charge is deducted from the premium account first and falls back to the top-up account if the premium account is insufficient."
+            ],
+            "sourceRefs": [
+              {
+                "page": 10,
+                "section": "Policy fee and insurance cover charge",
+                "excerpt": "7.2 Policy Fee You must pay a policy fee based on the sum assured at policy entry date and the original insured’s entry age. The policy fee payable is calculated using the sum assured at policy entry date multiplied by t"
+              },
+              {
+                "page": 21,
+                "section": "Appendix 1 insurance cover charge rates",
+                "excerpt": "Appendix 1 – Yearly insurance cover charge rates for death and TI based on $1,000 sum at risk The table below shows the insurance cover charge rates for age up to 120 years. For age after 120 years, we will apply the rat"
+              }
+            ]
+          }
+        ],
+        "eventChargeRules": [
+          {
+            "id": "top-up-premium-charge",
+            "label": "Top-up Premium Charge",
+            "trigger": "top-up",
+            "basis": "event-amount",
+            "appliesTo": [
+              "topup"
+            ],
+            "rate": 0.03,
+            "amount": 0,
+            "activeWindow": "policy-term",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published 3% premium charge on each accepted top-up premium allocated into the top-up account."
+            ],
+            "sourceRefs": [
+              {
+                "page": 2,
+                "section": "Loyalty bonus, top-ups, and future premium option",
+                "excerpt": "Approximate excerpt; keyword \"We will provide an annual loyalty bonus\" not found on page. Version 1.26 Your policy must meet all the following conditions to receive the loyalty bonus: • This policy must not have ended wh"
+              },
+              {
+                "page": 9,
+                "section": "Single-premium charge schedule and policy fee",
+                "excerpt": "For single premium policy: 4% of single premium For regular premium policy: Regular premiums paid for Minimum Investment Period (MIP) the corresponding years 5 Years 10 Years 1 28% 35% 2 23% 26% 3 14% 15% 4 7% 10% 5 5% 4"
+              },
+              {
+                "page": 12,
+                "section": "Subscription of premium and top-up units",
+                "excerpt": "100% of your single premium less any premium charge will be placed into the premium account and used to buy units (at bid price) in the ILP sub-funds you have chosen. 8.1.2 Regular Premium 100% of your regular premium le"
+              }
+            ]
+          },
+          {
+            "id": "partial-withdrawal-charge",
+            "label": "Partial Withdrawal Charge",
+            "trigger": "partial-withdrawal",
+            "basis": "event-amount",
+            "appliesTo": [
+              "premium"
+            ],
+            "rate": 0,
+            "rateSchedule": [
+              {
+                "startPolicyYear": 1,
+                "endPolicyYear": 1,
+                "rate": 0.19
+              },
+              {
+                "startPolicyYear": 2,
+                "endPolicyYear": 2,
+                "rate": 0.15
+              },
+              {
+                "startPolicyYear": 3,
+                "endPolicyYear": 3,
+                "rate": 0.12
+              },
+              {
+                "startPolicyYear": 4,
+                "endPolicyYear": 4,
+                "rate": 0.08
+              },
+              {
+                "startPolicyYear": 5,
+                "endPolicyYear": 5,
+                "rate": 0.04
+              }
+            ],
+            "amount": 0,
+            "activeWindow": "during-mip",
+            "allocation": "equal-split",
+            "notes": [
+              "Models the published Appendix 2 charge factor on partial withdrawals from the premium account during the 5-year single-premium minimum investment period.",
+              "Top-up-account withdrawals after 12 months are charge-free, but first-12-month top-up-account withdrawal charges remain informational only in V1.",
+              "Qualifying Withdrawal Access Option withdrawals can be represented in V1 by setting chargeWaived on the premium-account partial-withdrawal event.",
+              "Withdrawal Access Option timing, 5%-of-prevailing-premium-account-value limits, and once-per-policy-year administration remain manual in V1."
+            ],
+            "sourceRefs": [
+              {
+                "page": 11,
+                "section": "Partial withdrawal mechanics",
+                "excerpt": "7.7 Partial Withdrawal Charge During the MIP, we will apply a partial withdrawal charge for each partial withdrawal of the units in your ILP sub-fund(s) you make. The partial withdrawal charge will be taken from the acco"
+              },
+              {
+                "page": 25,
+                "section": "Appendix 2 surrender and partial withdrawal charges",
+                "excerpt": "Policy year Single Premium Regular Premium 5 years 5 years 10 years (%) (%) (%) 1 19% 90% 90% 2 15% 80% 80% 3 12% 60% 70% 4 8% 40% 60% 5 4% 20% 55% 6 NA NA 50% 7 NA NA 45% 8 NA NA 40% 9 NA NA 30% 10 NA NA 20%"
+              }
+            ]
+          }
+        ],
+        "distributionSupport": {
+          "mode": "manual-assumption",
+          "accountIds": [
+            "premium",
+            "topup"
+          ],
+          "defaultMode": "reinvest",
+          "cashPayoutAllowedDuringMip": false,
+          "cashPayoutAllowedAfterMip": false,
+          "source": "distribution-paying-funds",
+          "notes": [
+            "Legacy Flex Solitaire reinvests declared distributions into the same ILP sub-fund by default.",
+            "Published payout distributions are available only after exercising the retirement option and meeting the insurer-set minimum distribution amount, so V1 models only the reinvested baseline."
+          ],
+          "sourceRefs": [
+            {
+              "page": 17,
+              "section": "Declaration and Reinvesting of Distributions",
+              "excerpt": "Approximate excerpt; keyword \"Declaration and Reinvesting of Distributions\" not found on page. Version 1.26 During this time, if you choose to cancel the policy, we will refund you: a) The premiums you have paid; or b) T"
+            }
+          ]
+        },
+        "eecTable": [
+          0.19,
+          0.15,
+          0.12,
+          0.08,
+          0.04
+        ],
+        "warnings": [
+          "Legacy Flex Solitaire is cataloged as supported in V1 for the 5-year single-premium corridor. The parser captures the 4% single-premium charge, a manual-input policy-fee amount for policy years 1-4, the manual-input Appendix 1 insurance-cover-charge corridor, the current-state death and terminal-illness benefit estimate as the higher of adjusted sum assured or policy value via a manual current adjusted sum assured input, the published Loyalty Bonus rate with the supported partial-withdrawal suspension subset, the top-up premium charge, the premium-account Appendix 2 partial-withdrawal / surrender charge schedule, and the published reinvest-only distribution baseline.",
+          "Qualifying Withdrawal Access Option withdrawals can be represented in V1 with event-level charge and loyalty-bonus-suspension waivers, and qualifying top-up-account withdrawals can be represented with event-level loyalty-bonus-suspension waivers, while timing, caps, once-per-policy-year administration, adjusted-sum-assured exceptions, and No Lapse Guarantee exceptions remain informational only.",
+          "Automatic adjusted-sum-assured changes after top-ups and withdrawals, No Lapse Guarantee behavior, top-up-account first-12-month charge timing, and retirement-option distribution payouts remain informational only in V1. The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state."
+        ],
+        "unsupportedItems": [
+          "Withdrawal Access Option timing, 5%-of-prevailing-premium-account-value limits, once-per-policy-year administration, and top-up-account first-12-month charge timing remain informational only in V1.",
+          "Automatic adjusted-sum-assured updates after top-ups, charged withdrawals, withdrawal-access exceptions, and sum-assured reductions remain informational only, so the current adjusted sum assured must be maintained manually for the insurance-cover-charge corridor and current death / terminal-illness benefit estimate.",
+          "The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state, but terminal-illness definitions, exclusions, insurer-side settlement, secondary-insured continuation, bequest option behavior, and other protection-side claim mechanics remain informational only beyond the supported current death / terminal-illness benefit estimate and insurance-cover-charge corridor.",
+          "No Lapse Guarantee debt carry and termination behavior remain informational only.",
+          "Future Premium Option and recurring top-up enrollment remain informational only.",
+          "Withdrawal Access Option, retirement-option distribution payout elections, and the insurer-set minimum distribution payout threshold remain informational only.",
+          "Fund-level annual management fees, fund switching, and suspension of dealings remain informational only.",
+          "Top-up-account withdrawals and surrenders within the first 12 months remain informational only because the current executable slice treats the top-up account as charge-free throughout."
+        ],
         "sourceRefs": [
           {
             "page": 1,
-            "section": "Published corridor family",
-            "excerpt": "The family includes a single-premium MIP 5 corridor in addition to the executable regular-pay corridors."
+            "section": "Policy description and product structure",
+            "excerpt": "Legacy Flex Solitaire is a whole life investment-linked plan (ILP) that provides protection and investment opportunities. You can choose either single premium or regular premium for this plan. If your policy is a regular"
+          },
+          {
+            "page": 2,
+            "section": "Loyalty bonus, top-ups, and future premium option",
+            "excerpt": "Approximate excerpt; keyword \"We will provide an annual loyalty bonus\" not found on page. Version 1.26 Your policy must meet all the following conditions to receive the loyalty bonus: • This policy must not have ended wh"
+          },
+          {
+            "page": 9,
+            "section": "Single-premium charge schedule and policy fee",
+            "excerpt": "For single premium policy: 4% of single premium For regular premium policy: Regular premiums paid for Minimum Investment Period (MIP) the corresponding years 5 Years 10 Years 1 28% 35% 2 23% 26% 3 14% 15% 4 7% 10% 5 5% 4"
+          },
+          {
+            "page": 11,
+            "section": "Partial withdrawal mechanics",
+            "excerpt": "7.7 Partial Withdrawal Charge During the MIP, we will apply a partial withdrawal charge for each partial withdrawal of the units in your ILP sub-fund(s) you make. The partial withdrawal charge will be taken from the acco"
+          },
+          {
+            "page": 12,
+            "section": "Subscription of premium and top-up units",
+            "excerpt": "100% of your single premium less any premium charge will be placed into the premium account and used to buy units (at bid price) in the ILP sub-funds you have chosen. 8.1.2 Regular Premium 100% of your regular premium le"
+          },
+          {
+            "page": 17,
+            "section": "Declaration and Reinvesting of Distributions",
+            "excerpt": "Approximate excerpt; keyword \"Declaration and Reinvesting of Distributions\" not found on page. Version 1.26 During this time, if you choose to cancel the policy, we will refund you: a) The premiums you have paid; or b) T"
+          },
+          {
+            "page": 25,
+            "section": "Appendix 2 surrender and partial withdrawal charges",
+            "excerpt": "Policy year Single Premium Regular Premium 5 years 5 years 10 years (%) (%) (%) 1 19% 90% 90% 2 15% 80% 80% 3 12% 60% 70% 4 8% 40% 60% 5 4% 20% 55% 6 NA NA 50% 7 NA NA 45% 8 NA NA 40% 9 NA NA 30% 10 NA NA 20%"
           }
         ]
       }

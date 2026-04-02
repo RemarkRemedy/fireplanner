@@ -13,7 +13,7 @@ async function sha256(filePath: string): Promise<string> {
 }
 
 describe('parseIncomeLegacyFlexSolitaire', () => {
-  it('builds a valid supported regular-premium corridor from the source PDF', async () => {
+  it('builds valid supported regular-premium and single-premium corridors from the source PDF', async () => {
     const document = await extractPdfText(SOURCE_PATH)
     const product = parseIncomeLegacyFlexSolitaire({
       document,
@@ -27,6 +27,7 @@ describe('parseIncomeLegacyFlexSolitaire', () => {
     expect(product.economicsStatus).toBe('supported')
     expect(product.modeledEconomics).toEqual([
       'branch:income-legacy-flex-solitaire-regular-premium-charge',
+      'branch:income-legacy-flex-solitaire-single-premium-charge',
       'branch:income-legacy-flex-solitaire-policy-fee',
       'branch:income-legacy-flex-solitaire-insurance-cover-charge',
       'branch:income-legacy-flex-solitaire-loyalty-bonus',
@@ -37,7 +38,7 @@ describe('parseIncomeLegacyFlexSolitaire', () => {
       'branch:income-legacy-flex-solitaire-appendix-2-withdrawal-and-surrender-charge',
       'kernel:distribution-mode-assumption',
     ])
-    expect(product.metadataOnlyBehaviors).toContain('income-legacy-flex-solitaire-single-premium-corridor')
+    expect(product.metadataOnlyBehaviors).not.toContain('income-legacy-flex-solitaire-single-premium-corridor')
     expect(product.metadataOnlyBehaviors).toContain('income-legacy-flex-solitaire-terminal-illness-and-claim-settlement')
     expect(product.metadataOnlyBehaviors).not.toContain('income-legacy-flex-solitaire-loyalty-bonus')
     expect(product.metadataOnlyBehaviors).not.toContain('income-legacy-flex-solitaire-policy-fee')
@@ -46,6 +47,7 @@ describe('parseIncomeLegacyFlexSolitaire', () => {
     expect(product.variants.map((variant) => variant.id)).toEqual([
       'sgd-regular-mip-5',
       'sgd-regular-mip-10',
+      'sgd-mip-5-single-premium',
     ])
 
     const term10 = product.variants.find((variant) => variant.id === 'sgd-regular-mip-10')
@@ -174,5 +176,90 @@ describe('parseIncomeLegacyFlexSolitaire', () => {
       'Qualifying Withdrawal Access Option withdrawals can be represented in V1 by setting chargeWaived on the premium-account partial-withdrawal event.',
     )
     expect(term10?.eecTable).toEqual([0.9, 0.8, 0.7, 0.6, 0.55, 0.5, 0.45, 0.4, 0.3, 0.2])
+
+    const singlePremium = product.variants.find((variant) => variant.id === 'sgd-mip-5-single-premium')
+    expect(singlePremium?.paymentStructure).toBe('single-pay')
+    expect(singlePremium?.contributionMode).toBe('single-pay')
+    expect(singlePremium?.accounts).toEqual([
+      expect.objectContaining({
+        id: 'premium',
+        subjectToEec: true,
+        contributionRules: [
+          { phase: 'during-icp', targetAccountId: 'premium', contributionShare: 1 },
+        ],
+      }),
+      expect.objectContaining({
+        id: 'topup',
+        subjectToEec: false,
+        contributionRules: [
+          { phase: 'top-up', targetAccountId: 'topup', contributionShare: 1 },
+        ],
+      }),
+    ])
+    expect(singlePremium?.feeRules).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'single-premium-charge',
+        basis: 'initial-single-premium',
+        rate: 0.04,
+        appliesTo: ['premium'],
+      }),
+      expect.objectContaining({
+        id: 'policy-fee',
+        basis: 'fixed-annual',
+        requiresManualInput: true,
+        startPolicyYear: 1,
+        endPolicyYear: 4,
+        appliesTo: ['premium'],
+        fallbackAppliesTo: ['topup'],
+      }),
+      expect.objectContaining({
+        id: 'insurance-cover-charge',
+        basis: 'assurance-sum-at-risk',
+        requiresManualInput: true,
+        appliesTo: ['premium'],
+        assuranceValueAppliesTo: ['premium', 'topup'],
+        fallbackAppliesTo: ['topup'],
+      }),
+    ]))
+    expect(singlePremium?.eventChargeRules).toEqual([
+      expect.objectContaining({
+        id: 'top-up-premium-charge',
+        trigger: 'top-up',
+        basis: 'event-amount',
+        appliesTo: ['topup'],
+        rate: 0.03,
+      }),
+      expect.objectContaining({
+        id: 'partial-withdrawal-charge',
+        trigger: 'partial-withdrawal',
+        basis: 'event-amount',
+        appliesTo: ['premium'],
+        rateSchedule: [
+          { startPolicyYear: 1, endPolicyYear: 1, rate: 0.19 },
+          { startPolicyYear: 2, endPolicyYear: 2, rate: 0.15 },
+          { startPolicyYear: 3, endPolicyYear: 3, rate: 0.12 },
+          { startPolicyYear: 4, endPolicyYear: 4, rate: 0.08 },
+          { startPolicyYear: 5, endPolicyYear: 5, rate: 0.04 },
+        ],
+      }),
+    ])
+    expect(singlePremium?.eventChargeRules.map((rule) => rule.id)).not.toContain('premium-holiday-charge')
+    expect(singlePremium?.bonuses).toEqual([
+      expect.objectContaining({
+        id: 'loyalty-bonus',
+        mode: 'annual-rate',
+        appliesTo: ['premium'],
+        startPolicyYear: 6,
+        endPolicyYear: null,
+        rate: 0.0025,
+      }),
+    ])
+    expect(singlePremium?.warnings).toContain(
+      'Legacy Flex Solitaire is cataloged as supported in V1 for the 5-year single-premium corridor. The parser captures the 4% single-premium charge, a manual-input policy-fee amount for policy years 1-4, the manual-input Appendix 1 insurance-cover-charge corridor, the current-state death and terminal-illness benefit estimate as the higher of adjusted sum assured or policy value via a manual current adjusted sum assured input, the published Loyalty Bonus rate with the supported partial-withdrawal suspension subset, the top-up premium charge, the premium-account Appendix 2 partial-withdrawal / surrender charge schedule, and the published reinvest-only distribution baseline.',
+    )
+    expect(singlePremium?.unsupportedItems).not.toContain(
+      'Single-premium corridor remains informational only in V1, including the 4% single-premium charge and the single-premium Appendix 2 charge schedule.',
+    )
+    expect(singlePremium?.eecTable).toEqual([0.19, 0.15, 0.12, 0.08, 0.04])
   }, 30_000)
 })

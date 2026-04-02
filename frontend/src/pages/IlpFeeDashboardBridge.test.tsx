@@ -175,6 +175,32 @@ describe('ILP fee dashboard blog bridge', () => {
     expect(onSelect.mock.calls[0]?.[1].id).toBe('sgd-mip-5')
   })
 
+  it('promotes Legacy Flex Solitaire single-premium corridor into an executable template', async () => {
+    const user = userEvent.setup()
+    const onSelect = vi.fn()
+
+    render(
+      <MemoryRouter>
+        <ProductPickerDialog open onOpenChange={() => {}} onSelect={onSelect} />
+      </MemoryRouter>,
+    )
+
+    await user.type(screen.getByPlaceholderText(/search insurer or product name/i), 'Legacy Flex Solitaire')
+
+    const card = getProductCard('Legacy Flex Solitaire (VA3S / VA3R)')
+
+    expect(within(card).queryByText(/published corridors not modeled/i)).not.toBeInTheDocument()
+
+    const singlePremiumTemplate = within(card).getByRole('button', { name: /SGD \/ Single Pay \/ MIP 5 years/i })
+    expect(singlePremiumTemplate).toBeEnabled()
+
+    await user.click(singlePremiumTemplate)
+
+    expect(onSelect).toHaveBeenCalledTimes(1)
+    expect(onSelect.mock.calls[0]?.[0].id).toBe('income-legacy-flex-solitaire')
+    expect(onSelect.mock.calls[0]?.[1].id).toBe('sgd-mip-5-single-premium')
+  })
+
   it('promotes AIA Pro Achiever 3.0 IIP 15-year and 20-year corridors into executable templates', async () => {
     const user = userEvent.setup()
     const onSelect = vi.fn()

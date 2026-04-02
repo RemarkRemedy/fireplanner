@@ -13,6 +13,7 @@
       "branch:income-legacy-flex-solitaire-policy-fee",
       "branch:income-legacy-flex-solitaire-insurance-cover-charge",
       "kernel:distribution-mode-assumption",
+      "branch:income-legacy-flex-solitaire-single-premium-charge",
       "branch:income-legacy-flex-solitaire-loyalty-bonus",
       "kernel:current-death-benefit-estimate",
       "kernel:current-ti-benefit-estimate",
@@ -124,6 +125,18 @@
             "trigger": "partial-withdrawal",
             "suspensionMonths": 12
           }
+        ],
+        "sourceRefs": [
+          {
+            "page": 2,
+            "section": "Loyalty bonus, top-ups, and future premium option",
+            "excerpt": "Approximate excerpt; keyword \"We will provide an annual loyalty bonus\" not found on page. Version 1.26 Your policy must meet all the following conditions to receive the loyalty bonus: • This policy must not have ended wh"
+          }
+        ],
+        "notes": [
+          "Applied annually from the end of the 5-year MIP on the premium-account policy value.",
+          "Qualifying Withdrawal Access Option withdrawals and top-up-account withdrawals can be represented in V1 by setting bonusSuspensionWaived on the recorded partial-withdrawal event.",
+          "Premium holidays do not suspend Loyalty Bonus eligibility in the published summary."
         ]
       }
     ],
@@ -167,7 +180,22 @@
         "rate": 0,
         "amount": 0,
         "requiresManualInput": false,
-        "allocation": "equal-split"
+        "allocation": "equal-split",
+        "sourceRefs": [
+          {
+            "page": 9,
+            "section": "Premium charge schedule and policy fee",
+            "excerpt": "7.1 Premium Charge You must pay a premium charge based on a percentage of your premium(s). For single premium policy: 4% of single premium For regular premium policy: Regular premiums paid for Minimum Investment Period ("
+          },
+          {
+            "page": 12,
+            "section": "Subscription of premium and top-up units",
+            "excerpt": "100% of your regular premium less any premium charge will be placed into the premium account and used to buy units (at bid price) in the ILP sub-funds you have chosen."
+          }
+        ],
+        "notes": [
+          "Models the published regular premium charge schedule by accepted regular-premium year for the regular-premium corridors only."
+        ]
       },
       {
         "id": "policy-fee",
@@ -185,7 +213,19 @@
         "rate": 0,
         "amount": 480,
         "requiresManualInput": false,
-        "allocation": "pro-rata-by-value"
+        "allocation": "pro-rata-by-value",
+        "sourceRefs": [
+          {
+            "page": 10,
+            "section": "Policy fee and insurance cover charge",
+            "excerpt": "7.2 Policy Fee You must pay a policy fee based on the sum assured at policy entry date and the original insured’s entry age. The policy fee payable is calculated using the sum assured at policy entry date multiplied by t"
+          }
+        ],
+        "notes": [
+          "Models the published monthly policy fee as a manual annual amount for the first four policy years only.",
+          "Enter the annual policy fee amount using the published sum-assured-at-entry and original-insured entry-age table because the rate depends on policy-entry inputs rather than prevailing account balances.",
+          "The policy fee is deducted from the premium account first and falls back to the top-up account if the premium account is insufficient."
+        ]
       },
       {
         "id": "insurance-cover-charge",
@@ -210,7 +250,24 @@
           "maxAgeNextBirthday": 120
         },
         "requiresManualInput": false,
-        "allocation": "pro-rata-by-value"
+        "allocation": "pro-rata-by-value",
+        "sourceRefs": [
+          {
+            "page": 10,
+            "section": "Policy fee and insurance cover charge",
+            "excerpt": "7.2 Policy Fee You must pay a policy fee based on the sum assured at policy entry date and the original insured’s entry age. The policy fee payable is calculated using the sum assured at policy entry date multiplied by t"
+          },
+          {
+            "page": 21,
+            "section": "Appendix 1 insurance cover charge rates",
+            "excerpt": "Appendix 1 – Yearly insurance cover charge rates for death and TI based on $1,000 sum at risk The table below shows the insurance cover charge rates for age up to 120 years. For age after 120 years, we will apply the rat"
+          }
+        ],
+        "notes": [
+          "Models the published Appendix 1 monthly insurance cover charge after entering the insured-life details and the current adjusted sum assured.",
+          "Enter the current adjusted sum assured manually because the published protection base changes after top-ups, charged withdrawals, and other policy alterations outside the current automatic state surface.",
+          "The insurance cover charge is deducted from the premium account first and falls back to the top-up account if the premium account is insufficient."
+        ]
       }
     ],
     "policyEvents": [],
@@ -320,12 +377,15 @@
       "productName": "Legacy Flex Solitaire (VA3S / VA3R)",
       "variantId": "sgd-regular-mip-5",
       "variantLabel": "SGD / MIP 5",
+      "paymentStructure": "mip",
+      "contributionMode": "regular-pay",
       "catalogVersion": "0.1.0",
       "supportStatus": "supported",
       "economicsStatus": "supported",
       "structureStatus": "structured",
       "modeledEconomics": [
         "branch:income-legacy-flex-solitaire-regular-premium-charge",
+        "branch:income-legacy-flex-solitaire-single-premium-charge",
         "branch:income-legacy-flex-solitaire-policy-fee",
         "branch:income-legacy-flex-solitaire-insurance-cover-charge",
         "branch:income-legacy-flex-solitaire-loyalty-bonus",
@@ -338,7 +398,6 @@
       ],
       "coveredElsewhereBehaviors": [],
       "metadataOnlyBehaviors": [
-        "income-legacy-flex-solitaire-single-premium-corridor",
         "income-legacy-flex-solitaire-no-lapse-guarantee",
         "income-legacy-flex-solitaire-future-premium-option",
         "income-legacy-flex-solitaire-withdrawal-access-option",
@@ -351,13 +410,12 @@
       ]
     },
     "catalogWarnings": [
-      "Legacy Flex Solitaire (VA3S / VA3R) is cataloged as supported in V1 for the regular-premium 5-year and 10-year corridors. The current parser models the premium-year regular premium charges, manual-input policy-fee and Appendix 1 insurance-cover-charge corridors, the current-state death and terminal-illness benefit estimate as the higher of adjusted sum assured or policy value via a manual current adjusted sum assured input, the current admitted-state TI payable amount through the published full-termination TI corridor after manual claim-amount entry, an admitted-and-settled TI claim as a current policy-termination state, the published Loyalty Bonus rate with the supported partial-withdrawal suspension subset, the top-up premium charge, premium-holiday charge, premium-account Appendix 2 withdrawal / surrender charges, and the published reinvest-only distribution baseline. The single-premium corridor, automatic adjusted-sum-assured updates, No Lapse Guarantee, retirement-option payout elections, top-up-account first-12-month charge timing, and broader claim-side settlement / continuation mechanics remain outside the current engine.",
+      "Legacy Flex Solitaire (VA3S / VA3R) is cataloged as supported in V1 for the regular-premium 5-year and 10-year corridors plus the 5-year single-premium corridor. The current parser models the premium-year regular premium charges, the 4% single-premium charge, manual-input policy-fee and Appendix 1 insurance-cover-charge corridors, the current-state death and terminal-illness benefit estimate as the higher of adjusted sum assured or policy value via a manual current adjusted sum assured input, the current admitted-state TI payable amount through the published full-termination TI corridor after manual claim-amount entry, an admitted-and-settled TI claim as a current policy-termination state, the published Loyalty Bonus rate with the supported partial-withdrawal suspension subset, the top-up premium charge, regular-corridor premium-holiday charge, premium-account Appendix 2 withdrawal / surrender charges, and the published reinvest-only distribution baseline. Automatic adjusted-sum-assured updates, No Lapse Guarantee, retirement-option payout elections, top-up-account first-12-month charge timing, and broader claim-side settlement / continuation mechanics remain outside the current engine.",
       "Qualifying Withdrawal Access Option withdrawals can be represented in V1 with event-level charge and loyalty-bonus-suspension waivers, and qualifying top-up-account withdrawals can be represented with event-level loyalty-bonus-suspension waivers, while timing, caps, adjusted-sum-assured exceptions, No Lapse Guarantee exceptions, and retirement-option distribution behavior remain informational only.",
       "Legacy Flex Solitaire is cataloged as supported in V1 for the 5-year regular-premium corridor. The parser captures the premium-year regular premium charge schedule, a manual-input policy-fee amount for policy years 1-4, the manual-input Appendix 1 insurance-cover-charge corridor, the current-state death and terminal-illness benefit estimate as the higher of adjusted sum assured or policy value via a manual current adjusted sum assured input, the published Loyalty Bonus rate with the supported partial-withdrawal suspension subset, the top-up premium charge, the premium-holiday charge schedule, the premium-account Appendix 2 partial-withdrawal / surrender charge schedule, and the published reinvest-only distribution baseline.",
       "Qualifying Withdrawal Access Option withdrawals can be represented in V1 with event-level charge and loyalty-bonus-suspension waivers, and qualifying top-up-account withdrawals can be represented with event-level loyalty-bonus-suspension waivers, while timing, caps, once-per-policy-year administration, adjusted-sum-assured exceptions, and No Lapse Guarantee exceptions remain informational only.",
-      "Single-premium charging, automatic adjusted-sum-assured changes after top-ups and withdrawals, No Lapse Guarantee behavior, top-up-account first-12-month charge timing, and retirement-option distribution payouts remain informational only in V1. The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state.",
+      "Automatic adjusted-sum-assured changes after top-ups and withdrawals, No Lapse Guarantee behavior, top-up-account first-12-month charge timing, and retirement-option distribution payouts remain informational only in V1. The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state.",
       "This product supports distribution-paying fund elections. V1 seeds reinvest by default; cash payout requires a manual annual distribution-yield assumption and the published minimum-payout threshold remains informational only.",
-      "Single-premium corridor remains informational only in V1, including the 4% single-premium charge and the single-premium Appendix 2 charge schedule.",
       "Withdrawal Access Option timing, 5%-of-prevailing-premium-account-value limits, once-per-policy-year administration, and top-up-account first-12-month charge timing remain informational only in V1.",
       "Automatic adjusted-sum-assured updates after top-ups, charged withdrawals, withdrawal-access exceptions, and sum-assured reductions remain informational only, so the current adjusted sum assured must be maintained manually for the insurance-cover-charge corridor and current death / terminal-illness benefit estimate.",
       "The current admitted-state TI payable amount is supported through the published full-termination TI corridor after manual claim-amount entry, and an admitted-and-settled TI claim is supported as a current policy-termination state, but terminal-illness definitions, exclusions, insurer-side settlement, secondary-insured continuation, bequest option behavior, and other protection-side claim mechanics remain informational only beyond the supported current death / terminal-illness benefit estimate and insurance-cover-charge corridor.",
@@ -374,8 +432,16 @@
       "totalFeesCharged": 2718.6,
       "totalBonusesReceived": 1642.57,
       "netFeeDrag": 1076.03,
+      "realGrossFees": 9649.53,
+      "realBonuses": 1353.64,
+      "realNetFeeDrag": 8295.89,
+      "inceptionCharges": 0,
+      "realFundCharges": 7132.59,
+      "realWrapperFees": 2516.94,
       "currentSurrenderValue": 20800,
-      "cancelNowPenalty": 11200
+      "cancelNowPenalty": 11200,
+      "currentDeathBenefitEstimate": 150000,
+      "currentTiBenefitEstimate": 150000
     },
     "npvAnalysis": {
       "surrenderNow": {

@@ -4316,13 +4316,41 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('current-state death and terminal-illness benefit estimate as the higher of adjusted sum assured or policy value via a manual current adjusted sum assured input')
     expect(seededAlert?.textContent).toContain('published Loyalty Bonus rate with the supported partial-withdrawal suspension subset')
     expect(seededAlert?.textContent).toContain('reinvest-only distribution baseline')
-    expect(seededAlert?.textContent).toContain('automatic adjusted-sum-assured updates')
-    expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
+    expect(seededAlert?.textContent).toContain('Automatic adjusted-sum-assured updates')
     expect(getCatalogValue('Regular Premium Charge')).toBeInTheDocument()
     expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
     expect(getCatalogValue('Premium Holiday Charge')).toBeInTheDocument()
     expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
     expect(screen.getByLabelText('Current Adjusted Sum Assured (SGD)')).toBeInTheDocument()
+  }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
+
+  it('seeds Legacy Flex Solitaire (VA3S / VA3R) single-pay as a supported catalog product with single-premium charge support', async () => {
+    const user = userEvent.setup()
+    renderIlpReviewPage()
+
+    await user.click(screen.getByRole('button', { name: /choose product/i }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByPlaceholderText(/search insurer or product name/i), 'Legacy Flex Solitaire')
+
+    expect(within(dialog).getByText('Legacy Flex Solitaire (VA3S / VA3R)')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /^sgd \/ single pay \/ mip 5 yearsuse template$/i }))
+    await confirmSeededPolicy(user)
+
+    expect(screen.getAllByText('Legacy Flex Solitaire (VA3S / VA3R) (SGD / Single Pay / MIP 5 years)').length).toBeGreaterThan(0)
+    const seededAlert = screen.getByText('Seeded from catalog template').closest('[role="alert"]')
+    expect(seededAlert).not.toBeNull()
+    expect(seededAlert?.textContent).toContain('Supported template')
+    expect(seededAlert?.textContent).toContain('4% single-premium charge')
+    expect(seededAlert?.textContent).toContain('current-state death and terminal-illness benefit estimate as the higher of adjusted sum assured or policy value via a manual current adjusted sum assured input')
+    expect(seededAlert?.textContent).toContain('published Loyalty Bonus rate with the supported partial-withdrawal suspension subset')
+    expect(seededAlert?.textContent).toContain('premium-account Appendix 2 partial-withdrawal / surrender charge schedule')
+    expect(seededAlert?.textContent).toContain('reinvest-only distribution baseline')
+    expect(screen.getByLabelText(/^Initial Single Premium \(Gross Lump Sum, /i)).toBeInTheDocument()
+    expect(screen.getByLabelText('Current Adjusted Sum Assured (SGD)')).toBeInTheDocument()
+    expect(getCatalogValue('Single Premium Charge')).toBeInTheDocument()
+    expect(getCatalogValue('Top-up Premium Charge')).toBeInTheDocument()
+    expect(screen.queryByText('Premium Holiday Charge')).not.toBeInTheDocument()
+    expect(getCatalogValue('Partial Withdrawal Charge')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('shows Legacy Flex Solitaire TI Benefit Today once current adjusted sum assured is filled', async () => {
