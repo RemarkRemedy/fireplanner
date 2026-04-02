@@ -11,8 +11,8 @@ import { DecisionPanel } from '@/components/ilp/DecisionPanel'
 import { FeeBreakdownSection } from '@/components/ilp/FeeBreakdownSection'
 import { HeadlineInsight } from '@/components/ilp/HeadlineInsight'
 import { IllustrativeChartsGroup } from '@/components/ilp/IllustrationOnlyChartFrame'
+import { IlpIllustrativeDisclosureBanner } from '@/components/ilp/IlpIllustrativeDisclosureBanner'
 import { OpportunityCostCard } from '@/components/ilp/OpportunityCostCard'
-import { Checkbox } from '@/components/ui/checkbox'
 import { usePageMeta } from '@/hooks/usePageMeta'
 import { useIlpFeesIllustrativeDisclosure } from '@/hooks/useIlpFeesIllustrativeDisclosure'
 import { analyzeIlpPolicy } from '@/lib/calculations/ilp'
@@ -299,26 +299,14 @@ export function IlpExitCalculatorPage() {
           </p>
         </div>
 
-        <div className="rounded-lg border border-border/70 bg-muted/20 p-4 sm:p-5">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div className="space-y-1">
-              <p className="text-sm font-semibold">Illustrative charts</p>
-              <p className="text-sm text-muted-foreground">
-                The charts across the ILP Fees section are illustrative summaries of the modeled scenario. Acknowledge them once, then use the `Illustrative` badges on each chart as a reminder.
-              </p>
-            </div>
-            <div className="flex max-w-md items-start gap-3 rounded-lg border border-border/70 bg-background px-3 py-2 shadow-sm">
-              <Checkbox
-                id="exit-analysis-illustrative"
-                checked={illustrativeChartsRevealed}
-                onCheckedChange={(value) => setIllustrativeChartsRevealed(value === true)}
-              />
-              <label htmlFor="exit-analysis-illustrative" className="cursor-pointer text-sm leading-6 text-foreground">
-                Show illustrative charts across ILP Fees
-              </label>
-            </div>
-          </div>
-        </div>
+        <IlpIllustrativeDisclosureBanner
+          id="exit-analysis-illustrative"
+          checked={illustrativeChartsRevealed}
+          title="Illustrative charts across ILP Fees"
+          description="These charts are modeled illustrations, not policy statements. Acknowledge them once here and the whole ILP Fees section will stay unlocked while each chart keeps a visible `Illustrative` label."
+          onCheckedChange={setIllustrativeChartsRevealed}
+          scopeLabel="ILP Fees"
+        />
 
         <IllustrativeChartsGroup revealed={illustrativeChartsRevealed}>
           <div className="space-y-6">

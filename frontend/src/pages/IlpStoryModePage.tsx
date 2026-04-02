@@ -3,10 +3,10 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowRight, BadgeDollarSign, ChartColumnBig, Clock3, Play, Receipt, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { InterpretationCallout } from '@/components/shared/InterpretationCallout'
 import { CurrencyInput } from '@/components/shared/CurrencyInput'
+import { IlpIllustrativeDisclosureBanner } from '@/components/ilp/IlpIllustrativeDisclosureBanner'
 import { IlpFeeStory } from '@/components/ilp/IlpFeeStory'
 import { FeeBreakdownSection } from '@/components/ilp/FeeBreakdownSection'
 import { FeeImpactChart } from '@/components/ilp/FeeImpactChart'
@@ -1198,26 +1198,14 @@ function StoryDetailView({
             </p>
           </div>
         )}
-        <div className="rounded-lg border border-border/70 bg-muted/20 p-4 sm:p-5">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div className="space-y-1">
-              <p className="text-sm font-semibold">Illustrative charts</p>
-              <p className="text-sm text-muted-foreground">
-                The charts across the ILP Fees section are illustrative summaries of the modeled scenario. Acknowledge them once here, then use the `Illustrative` badges on each chart as a reminder.
-              </p>
-            </div>
-            <div className="flex max-w-md items-start gap-3 rounded-lg border border-border/70 bg-background px-3 py-2 shadow-sm">
-              <Checkbox
-                id="story-detail-illustrative"
-                checked={detailChartsRevealed}
-                onCheckedChange={(value) => setDetailChartsRevealed(value === true)}
-              />
-              <label htmlFor="story-detail-illustrative" className="cursor-pointer text-sm leading-6 text-foreground">
-                Show illustrative charts across ILP Fees
-              </label>
-            </div>
-          </div>
-        </div>
+        <IlpIllustrativeDisclosureBanner
+          id="story-detail-illustrative"
+          checked={detailChartsRevealed}
+          title="Illustrative charts across ILP Fees"
+          description="These charts are modeled illustrations, not policy statements. Acknowledge them once here and the whole ILP Fees section will stay unlocked while each chart keeps a visible `Illustrative` label."
+          onCheckedChange={setDetailChartsRevealed}
+          scopeLabel="ILP Fees"
+        />
       </section>
 
       <IllustrativeChartsGroup revealed={detailChartsRevealed}>
