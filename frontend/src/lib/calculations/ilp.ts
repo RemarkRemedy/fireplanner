@@ -8003,16 +8003,10 @@ export function computeCurrentDeathBenefitEstimate(
     return Math.max(totalCurrentValue, Math.max(0, profile.currentSumAssured))
   }
 
-  if (input.catalogSource?.productId === 'aia-platinum-wealth-elite-2') {
-    const profile = input.assuranceProfile
-    if (profile?.currentSumAssured == null) {
-      return undefined
-    }
-
-    return Math.max(totalCurrentValue, Math.max(0, profile.currentSumAssured))
-  }
-
-  if (input.catalogSource?.productId === 'aia-platinum-wealth-legacy') {
+  if (
+    input.catalogSource?.productId === 'aia-platinum-wealth-elite-2'
+    || input.catalogSource?.productId === 'aia-platinum-wealth-legacy'
+  ) {
     const profile = input.assuranceProfile
     if (
       profile?.currentSumAssured == null

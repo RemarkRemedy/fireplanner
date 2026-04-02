@@ -558,6 +558,7 @@ function supportsCurrentAmountOwingDeathBenefit(policy: IlpPolicyInput): boolean
     || policy.catalogSource?.productId === 'great-eastern-great-invest-advantage-2-rsp'
     || policy.catalogSource?.productId === 'hsbc-life-wealth-invest-cpf'
     || policy.catalogSource?.productId === 'hsbc-life-wealth-invest-cash-srs'
+    || policy.catalogSource?.productId === 'aia-platinum-wealth-elite-2'
     || policy.catalogSource?.productId === 'aia-platinum-wealth-legacy'
 }
 
@@ -627,7 +628,8 @@ function supportsCurrentSumAssuredDeathBenefit(policy: IlpPolicyInput): boolean 
 }
 
 function supportsCurrentNoLapsePrivilegeModeDeathBenefit(policy: IlpPolicyInput): boolean {
-  return policy.catalogSource?.productId === 'aia-platinum-wealth-legacy'
+  return policy.catalogSource?.productId === 'aia-platinum-wealth-elite-2'
+    || policy.catalogSource?.productId === 'aia-platinum-wealth-legacy'
 }
 
 function supportsCurrentBasicSumAssuredDeathBenefit(policy: IlpPolicyInput): boolean {
@@ -1731,8 +1733,8 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                                     What is included
                                   </p>
                                   <ul className="list-disc space-y-1 pl-5 leading-6">
-                                    {note.bullets.map((bullet) => (
-                                      <li key={bullet}>{bullet}</li>
+                                    {note.bullets.map((bullet, bulletIndex) => (
+                                      <li key={`${index}-${bulletIndex}-${bullet}`}>{bullet}</li>
                                     ))}
                                   </ul>
                                 </div>

@@ -26584,10 +26584,10 @@ describe('computeSummaryMetrics', () => {
     expect(analysis.summary.currentAccidentalDeathBenefitEstimate).toBe(23_140)
   })
 
-  it('models AIA Platinum Wealth Elite 2.0 death benefit today as the higher of current insured amount or policy value', () => {
+  it('models AIA Platinum Wealth Elite 2.0 death benefit today from the current insured amount, amount owing, and No Lapse Privilege mode', () => {
     const policy = makeDefaultPolicy({
-      currentPolicyYear: 4,
-      monthsAlreadyPaid: 48,
+      currentPolicyYear: 6,
+      monthsAlreadyPaid: 72,
       monthlyContribution: 350,
       mipLength: 5,
       accounts: [
@@ -26595,7 +26595,7 @@ describe('computeSummaryMetrics', () => {
           id: 'policy',
           label: 'Regular Premium Policy Account',
           feeRate: 0,
-          currentValue: 40_000,
+          currentValue: 60_000,
           contributionShare: 1,
           subjectToEec: true,
           postMipFeeRate: null,
@@ -26611,10 +26611,12 @@ describe('computeSummaryMetrics', () => {
       chargeRules: [],
       eventChargeRules: [],
       assuranceProfile: {
-        currentAgeNextBirthday: 45,
+        currentAgeNextBirthday: 90,
         sex: 'female',
         smokerStatus: 'non-smoker',
-        currentSumAssured: 55_000,
+        currentSumAssured: 100_000,
+        currentAmountOwing: 5_000,
+        currentNoLapsePrivilegeMode: 'expiry-age-100',
       },
       catalogSource: {
         productId: 'aia-platinum-wealth-elite-2',
@@ -26632,13 +26634,13 @@ describe('computeSummaryMetrics', () => {
 
     const analysis = analyzeCurrentOnlyIlpPolicy(policy)
 
-    expect(analysis.summary.currentDeathBenefitEstimate).toBe(55_000)
+    expect(analysis.summary.currentDeathBenefitEstimate).toBe(95_000)
   })
 
-  it('omits AIA Platinum Wealth Elite 2.0 death benefit today without the current insured amount input', () => {
+  it('omits AIA Platinum Wealth Elite 2.0 death benefit today without the current No Lapse Privilege mode input', () => {
     const policy = makeDefaultPolicy({
-      currentPolicyYear: 4,
-      monthsAlreadyPaid: 48,
+      currentPolicyYear: 6,
+      monthsAlreadyPaid: 72,
       monthlyContribution: 350,
       mipLength: 5,
       accounts: [
@@ -26646,7 +26648,7 @@ describe('computeSummaryMetrics', () => {
           id: 'policy',
           label: 'Regular Premium Policy Account',
           feeRate: 0,
-          currentValue: 40_000,
+          currentValue: 60_000,
           contributionShare: 1,
           subjectToEec: true,
           postMipFeeRate: null,
@@ -26662,9 +26664,11 @@ describe('computeSummaryMetrics', () => {
       chargeRules: [],
       eventChargeRules: [],
       assuranceProfile: {
-        currentAgeNextBirthday: 45,
+        currentAgeNextBirthday: 90,
         sex: 'female',
         smokerStatus: 'non-smoker',
+        currentSumAssured: 100_000,
+        currentAmountOwing: 5_000,
       },
       catalogSource: {
         productId: 'aia-platinum-wealth-elite-2',
@@ -26687,8 +26691,8 @@ describe('computeSummaryMetrics', () => {
 
   it('models AIA Platinum Wealth Elite 2.0 TI Benefit Today as the lower of the current death benefit and the remaining aggregate TI cap', () => {
     const policy = makeDefaultPolicy({
-      currentPolicyYear: 4,
-      monthsAlreadyPaid: 48,
+      currentPolicyYear: 6,
+      monthsAlreadyPaid: 72,
       monthlyContribution: 350,
       mipLength: 5,
       accounts: [
@@ -26696,7 +26700,7 @@ describe('computeSummaryMetrics', () => {
           id: 'policy',
           label: 'Regular Premium Policy Account',
           feeRate: 0,
-          currentValue: 40_000,
+          currentValue: 60_000,
           contributionShare: 1,
           subjectToEec: true,
           postMipFeeRate: null,
@@ -26712,13 +26716,15 @@ describe('computeSummaryMetrics', () => {
       chargeRules: [],
       eventChargeRules: [],
       assuranceProfile: {
-        currentAgeNextBirthday: 45,
+        currentAgeNextBirthday: 90,
         sex: 'female',
         smokerStatus: 'non-smoker',
-        currentSumAssured: 55_000,
+        currentSumAssured: 100_000,
+        currentAmountOwing: 5_000,
+        currentNoLapsePrivilegeMode: 'expiry-age-100',
       },
       claimProfile: {
-        remainingAggregateTiCap: 50_000,
+        remainingAggregateTiCap: 80_000,
       },
       catalogSource: {
         productId: 'aia-platinum-wealth-elite-2',
@@ -26736,13 +26742,13 @@ describe('computeSummaryMetrics', () => {
 
     const analysis = analyzeCurrentOnlyIlpPolicy(policy)
 
-    expect(analysis.summary.currentTiBenefitEstimate).toBe(50_000)
+    expect(analysis.summary.currentTiBenefitEstimate).toBe(80_000)
   })
 
-  it('models AIA Platinum Wealth Elite 2.0 residual death benefit after a TI claim today from the same current insured-amount corridor', () => {
+  it('models AIA Platinum Wealth Elite 2.0 residual death benefit after a TI claim today from the same current insured amount, amount owing, and No Lapse Privilege corridor', () => {
     const policy = makeDefaultPolicy({
-      currentPolicyYear: 4,
-      monthsAlreadyPaid: 48,
+      currentPolicyYear: 6,
+      monthsAlreadyPaid: 72,
       monthlyContribution: 350,
       mipLength: 5,
       accounts: [
@@ -26750,7 +26756,7 @@ describe('computeSummaryMetrics', () => {
           id: 'policy',
           label: 'Regular Premium Policy Account',
           feeRate: 0,
-          currentValue: 40_000,
+          currentValue: 60_000,
           contributionShare: 1,
           subjectToEec: true,
           postMipFeeRate: null,
@@ -26766,13 +26772,15 @@ describe('computeSummaryMetrics', () => {
       chargeRules: [],
       eventChargeRules: [],
       assuranceProfile: {
-        currentAgeNextBirthday: 45,
+        currentAgeNextBirthday: 90,
         sex: 'female',
         smokerStatus: 'non-smoker',
-        currentSumAssured: 55_000,
+        currentSumAssured: 100_000,
+        currentAmountOwing: 5_000,
+        currentNoLapsePrivilegeMode: 'expiry-age-100',
       },
       claimProfile: {
-        remainingAggregateTiCap: 50_000,
+        remainingAggregateTiCap: 80_000,
       },
       catalogSource: {
         productId: 'aia-platinum-wealth-elite-2',
@@ -26794,7 +26802,7 @@ describe('computeSummaryMetrics', () => {
 
     const analysis = analyzeCurrentOnlyIlpPolicy(policy)
 
-    expect(analysis.summary.currentResidualDeathBenefitAfterTiEstimate).toBe(5_000)
+    expect(analysis.summary.currentResidualDeathBenefitAfterTiEstimate).toBe(15_000)
   })
 
   it('omits AIA Platinum Wealth Elite 2.0 current death benefit after an admitted TI claim until the current residual death amount is supplied', () => {

@@ -7078,12 +7078,20 @@ describe('IlpReviewPage', () => {
     expect(seededAlert?.textContent).toContain('premium-year regular premium charges')
     expect(seededAlert?.textContent).toContain('3% top-up premium charge')
     expect(seededAlert?.textContent).toContain('premium-holiday charge schedule')
-    expect(seededAlert?.textContent).toContain('current-state death benefit as the higher of current insured amount or policy value via a manual current insured amount input')
-    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied')
+    expect(seededAlert?.textContent).toContain('no-lapse fixed-charge carry')
+    expect(seededAlert?.textContent).toContain('current-state death benefit corridor via manual current insured amount')
+    expect(seededAlert?.textContent).toContain('current amount owing')
+    expect(seededAlert?.textContent).toContain('current No Lapse Privilege mode inputs')
+    expect(seededAlert?.textContent).toContain('current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after manual current insured amount')
+    expect(seededAlert?.textContent).toContain('remaining aggregate TI cap inputs are supplied')
     expect(seededAlert?.textContent).toContain('current insured amount before the current death-benefit estimate can be trusted')
+    expect(seededAlert?.textContent).toContain('current amount owing')
+    expect(seededAlert?.textContent).toContain('current No Lapse Privilege mode')
     expect(seededAlert?.textContent).toContain('optional extension of the regular premium term beyond five years')
-    expect(screen.getAllByText('Death Benefit Today').length).toBeGreaterThan(0)
+    expect(screen.queryByText('Death Benefit Today')).not.toBeInTheDocument()
     expect(screen.getByLabelText('Current Insured Amount (SGD)')).toBeInTheDocument()
+    expect(screen.getByLabelText('Current Amount Owing (SGD)')).toBeInTheDocument()
+    expect(screen.getByText('Current No Lapse Privilege Mode')).toBeInTheDocument()
   }, ILP_REVIEW_PAGE_TEST_TIMEOUT_MS)
 
   it('seeds AIA Platinum Wealth Legacy as a supported catalog product with informational withdrawal-table warnings', async () => {
@@ -7174,6 +7182,8 @@ describe('IlpReviewPage', () => {
           sex: 'female',
           smokerStatus: 'non-smoker',
           currentSumAssured: 55_000,
+          currentAmountOwing: 0,
+          currentNoLapsePrivilegeMode: 'not-in-effect',
         },
         claimProfile: {
           remainingAggregateTiCap: 50_000,
@@ -7208,6 +7218,8 @@ describe('IlpReviewPage', () => {
           sex: 'female',
           smokerStatus: 'non-smoker',
           currentSumAssured: 55_000,
+          currentAmountOwing: 0,
+          currentNoLapsePrivilegeMode: 'not-in-effect',
         },
         claimProfile: {
           remainingAggregateTiCap: 50_000,

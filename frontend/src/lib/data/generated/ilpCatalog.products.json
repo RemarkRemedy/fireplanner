@@ -3090,9 +3090,10 @@
       "branch:aia-platinum-wealth-elite-2-partial-withdrawal-charge",
       "branch:aia-platinum-wealth-elite-2-full-surrender-charge",
       "branch:aia-platinum-wealth-elite-2-vitality-bonus",
-      "branch:aia-platinum-wealth-elite-2-administration-charge",
+      "branch:aia-platinum-wealth-elite-2-no-lapse-administration-charge-carry",
       "branch:aia-platinum-wealth-elite-2-insurance-risk-charge-manual-input",
       "kernel:top-up-paid-up-to-date-block",
+      "kernel:no-lapse-fixed-charge-debt-carry",
       "kernel:current-death-benefit-estimate",
       "kernel:current-ti-benefit-estimate",
       "kernel:current-residual-death-benefit-after-ti-estimate"
@@ -3104,14 +3105,14 @@
       "aia-platinum-wealth-elite-2-single-premium-corridor",
       "aia-platinum-wealth-elite-2-premium-term-extension",
       "aia-platinum-wealth-elite-2-free-legacy-cover",
-      "aia-platinum-wealth-elite-2-no-lapse-privilege",
+      "aia-platinum-wealth-elite-2-no-lapse-history-and-non-manual-charge-indebtedness",
       "aia-platinum-wealth-elite-2-income-withdrawal-privilege",
       "aia-platinum-wealth-elite-2-death-benefit-bequest-option",
       "aia-platinum-wealth-elite-2-change-of-insured-and-layering",
       "aia-platinum-wealth-elite-2-fund-switching-and-rebalancing"
     ],
     "warnings": [
-      "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the regular-premium withdrawal / surrender charge schedules, the first-layer administration charge via issue-age and initial insured-amount inputs, a manual-input insurance-risk-charge placeholder sourced from the policy illustration, a static-assumption Vitality Fund Boost schedule for the regular-pay corridor, the current-state death benefit as the higher of current insured amount or policy value via a manual current insured amount input that remains user-supplied by design in this app, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, premium-term extension, Free Legacy Cover waivers, no-lapse mechanics, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface."
+      "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the regular-premium withdrawal / surrender charge schedules, the first-layer administration charge via issue-age and initial insured-amount inputs with no-lapse fixed-charge carry during the published privilege window, a manual-input insurance-risk-charge placeholder sourced from the policy illustration with the same fixed-charge carry seam, a static-assumption Vitality Fund Boost schedule for the regular-pay corridor, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs that remain user-supplied by design in this app, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs are supplied, while the single-pay corridor, premium-term extension, Free Legacy Cover waivers, no-lapse activation history, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface."
     ],
     "archived": false,
     "variants": [
@@ -3357,6 +3358,10 @@
                 "rate": 0.0126
               }
             ],
+            "carryForwardOnInsufficientDeductionWithinPolicyYears": {
+              "startPolicyYear": 1,
+              "endPolicyYear": 15
+            },
             "appliesTo": [
               "policy"
             ],
@@ -3382,6 +3387,10 @@
             "basis": "fixed-annual",
             "rate": 0,
             "amount": 0,
+            "carryForwardOnInsufficientDeductionWithinPolicyYears": {
+              "startPolicyYear": 1,
+              "endPolicyYear": 15
+            },
             "requiresManualInput": true,
             "appliesTo": [
               "policy"
@@ -3536,7 +3545,13 @@
           }
         ],
         "policyStateSupport": {
-          "automaticLapseOnAccountValueDepletion": false,
+          "automaticLapseOnAccountValueDepletion": true,
+          "accountValueDepletionNonLapseWindows": [
+            {
+              "startPolicyYear": 1,
+              "endPolicyYear": 15
+            }
+          ],
           "blockTopUpsWhenPremiumsNotPaidUpToDate": true
         },
         "eecTable": [
@@ -3548,18 +3563,18 @@
           0
         ],
         "warnings": [
-          "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the regular-premium withdrawal / surrender charge schedules, the first-layer administration charge via issue-age and initial insured-amount inputs, a manual-input insurance-risk-charge placeholder sourced from the policy illustration, a static-assumption Vitality Fund Boost schedule for the regular-pay corridor, the current-state death benefit as the higher of current insured amount or policy value via a manual current insured amount input that remains user-supplied by design in this app, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after a manual remaining aggregate TI cap is supplied, while the single-pay corridor, premium-term extension, Free Legacy Cover waivers, no-lapse mechanics, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.",
+          "AIA Platinum Wealth Elite 2.0 is cataloged as a supported V1 product for the regular-pay 5-year corridor. The parser captures premium-year regular premium charges, the 3% top-up premium charge with blocking in months where regular premiums are not paid when due, the premium-holiday charge schedule, the regular-premium withdrawal / surrender charge schedules, the first-layer administration charge via issue-age and initial insured-amount inputs with no-lapse fixed-charge carry during the published privilege window, a manual-input insurance-risk-charge placeholder sourced from the policy illustration with the same fixed-charge carry seam, a static-assumption Vitality Fund Boost schedule for the regular-pay corridor, the current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs that remain user-supplied by design in this app, and the current terminal-illness snapshot plus the current residual death-benefit estimate after a TI claim today from the same supported acceleration corridor after manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs are supplied, while the single-pay corridor, premium-term extension, Free Legacy Cover waivers, no-lapse activation history, bequest elections, and terminal-illness claim exclusions / settlement workflow remain informational only beyond the modeled current ordinary death, terminal-illness, and residual-after-TI snapshot surface.",
           "The current executable slice intentionally excludes the optional extension of the regular premium term beyond five years."
         ],
         "unsupportedItems": [
           "Single-pay corridor and the 5% single-premium charge remain informational only in V1.",
           "Optional extension of the regular premium term beyond five years remains informational only in V1.",
           "Administration charge is modeled for the first issue-date insured-amount layer only. Change-of-insured layering and new-layer charge resets remain informational only.",
-          "Insurance Risk Charge is modeled only as a manual-input annualized placeholder because the applicable insurer illustration rate depends on underwriting and Free Legacy Cover state. Free Legacy Cover and No Lapse Privilege debt accrual remain informational only.",
+          "Insurance Risk Charge is modeled only as a manual-input annualized placeholder because the applicable insurer illustration rate depends on underwriting and Free Legacy Cover state. Free Legacy Cover, no-lapse activation history, and non-manual charge indebtedness remain informational only.",
           "Income Withdrawal Privilege and change-of-insured effects remain informational only, while Vitality Fund Boost is modeled under a static assumed status for the regular-pay corridor only.",
-          "The current death benefit keeps a manual current insured amount input because withdrawals, Income Withdrawal Privilege usage, and claim-side reductions change the live insured amount in ways this app cannot observe; that field is manual by design in V1.",
+          "The current death benefit keeps manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs because withdrawals, debt, no-lapse status, Income Withdrawal Privilege usage, and claim-side reductions change the live corridor in ways this app cannot observe; those inputs are manual by design in V1.",
           "Death Benefit Bequest Option and other protection-side payout handling remain informational only.",
-          "The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both keep manual current insured amount and remaining aggregate TI cap inputs because the live insured amount and cross-policy TI usage are current policy facts this app cannot observe; those inputs are manual by design in V1.",
+          "The current terminal-illness snapshot and current residual death-benefit estimate after a TI claim today both keep manual current insured amount, current amount owing, current No Lapse Privilege mode, and remaining aggregate TI cap inputs because the live insured amount, debt, no-lapse status, and cross-policy TI usage are current policy facts this app cannot observe; those inputs are manual by design in V1.",
           "Terminal-illness claim exclusions, settlement workflow, and non-manual post-claim state remain informational only beyond the modeled current terminal-illness and residual-after-TI snapshot surface.",
           "Fund-level management charges, fund switching, and automatic fund re-balancing remain informational only."
         ],

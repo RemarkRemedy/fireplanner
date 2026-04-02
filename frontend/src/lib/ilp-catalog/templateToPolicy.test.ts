@@ -11611,6 +11611,9 @@ describe('templateVariantToPolicySeed', () => {
     expect(seed.policyStateSupport).toEqual({
       automaticLapseOnAccountValueDepletion: true,
       blockTopUpsWhenPremiumsNotPaidUpToDate: true,
+      accountValueDepletionNonLapseWindows: [
+        { startPolicyYear: 1, endPolicyYear: 15 },
+      ],
     })
     expect(seed.chargeRules).toEqual(expect.arrayContaining([
       expect.objectContaining({
@@ -11677,7 +11680,7 @@ describe('templateVariantToPolicySeed', () => {
     ])
     expect(seed.catalogWarnings?.some((warning) => warning.includes('3% top-up premium charge with blocking in months where regular premiums are not paid when due'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('static-assumption Vitality Fund Boost schedule'))).toBe(true)
-    expect(seed.catalogWarnings?.some((warning) => warning.includes('current-state death benefit as the higher of current insured amount or policy value, using manual current No Lapse Privilege status'))).toBe(true)
+    expect(seed.catalogWarnings?.some((warning) => warning.includes('current-state death benefit corridor via manual current insured amount, current amount owing, and current No Lapse Privilege mode inputs'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('current residual death-benefit estimate after a TI claim today'))).toBe(true)
     expect(seed.catalogWarnings?.some((warning) => warning.includes('premium-term extension'))).toBe(true)
   })
