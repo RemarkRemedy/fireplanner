@@ -8,6 +8,7 @@ import { WrappedProgressBar } from '@/components/wrapped/WrappedProgressBar'
 import { AnimatedNumber } from '@/components/wrapped/AnimatedNumber'
 import { staggerChild } from '@/components/wrapped/wrappedAnimations'
 import type { IlpPolicyAnalysis, IlpPolicyInput } from '@/lib/calculations/ilp'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { useFeeImpact } from '@/hooks/useFeeImpact'
 import { IllustrationOnlyChartFrame, IllustrativeChartsGroup } from './IllustrationOnlyChartFrame'
 import { formatIlpCurrency, formatIlpPercent } from './formatters'
@@ -78,9 +79,11 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
   const [direction, setDirection] = useState(1)
   const [yardstickIndex, setYardstickIndex] = useState(0)
   const [excludeStoryFundFees, setExcludeStoryFundFees] = useState(false)
+  const [mobileExitSummaryIndex, setMobileExitSummaryIndex] = useState(0)
   const isTransitioning = useRef(false)
   const pointerStart = useRef<{ x: number; y: number; time: number } | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const isMobile = useIsMobile()
   const feeImpact = useFeeImpact(policy, analysis, false)
 
   const activeCards = BASE_CARDS
@@ -180,6 +183,70 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
   useEffect(() => {
     setYardstickIndex(0)
   }, [realTotalEstimatedFees, horizonYears, policy.currency])
+
+  useEffect(() => {
+    if (activeCards[currentIndex] === 'exit') {
+      setMobileExitSummaryIndex(0)
+    }
+  }, [activeCards, currentIndex])
+
+  function renderExitSummaryCard(kind: 'skip' | 'penalty' | 'burden') {
+    if (kind === 'skip') {
+      return (
+        <div className="flex min-h-[9.25rem] flex-col rounded-xl border border-white/10 bg-white/[0.05] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:min-h-[10.5rem] sm:p-5">
+          <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/45">Skip this product</div>
+          <div className="mt-2 text-[2rem] font-semibold leading-none tracking-tight sm:text-3xl">
+            {formatIlpCurrency(0, policy.currency)}
+          </div>
+          <div className="mt-2 text-sm leading-5 text-white/70">
+            No fees, no surrender charges, no policy value
+          </div>
+          <div className="mt-4 border-t border-white/10 pt-3 text-sm text-white/60 sm:mt-auto">
+            Your premiums stay in your own hands
+          </div>
+        </div>
+      )
+    }
+
+    if (kind === 'penalty') {
+      return (
+        <div className="flex min-h-[9.25rem] flex-col rounded-xl border border-white/10 bg-white/[0.05] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:min-h-[10.5rem] sm:p-5">
+          <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/45">First penalty-free exit</div>
+          {firstPenaltyFreeExitOption ? (
+            <>
+              <div className="mt-2 text-[2rem] font-semibold leading-none tracking-tight sm:text-3xl">Year {firstPenaltyFreeExitOption.policyYear}</div>
+              <div className="mt-2 text-sm leading-5 text-white/70">
+                First year the surrender penalty drops to zero
+              </div>
+              <div className="mt-4 border-t border-white/10 pt-3 text-sm text-white/60 sm:mt-auto">
+                Value available {formatIlpCurrency(firstPenaltyFreeExitOption.netSurrenderValue, policy.currency)}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="mt-2 text-2xl font-semibold leading-tight tracking-tight">Not within horizon</div>
+              <div className="mt-4 border-t border-white/10 pt-3 text-sm text-white/60 sm:mt-auto">
+                A surrender charge still applies through Year {horizonYear}
+              </div>
+            </>
+          )}
+        </div>
+      )
+    }
+
+    return (
+      <div className="flex min-h-[9.25rem] flex-col rounded-xl border border-white/10 bg-white/[0.05] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:min-h-[10.5rem] sm:p-5">
+        <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/45">Lowest fee-burden exit</div>
+        <div className="mt-2 text-[2rem] font-semibold leading-none tracking-tight sm:text-3xl">Year {projectedAnalysis?.npvAnalysis.bestExitYear}</div>
+        <div className="mt-2 text-sm leading-5 text-white/70">
+          Lowest modeled fee burden, not necessarily the best overall outcome
+        </div>
+        <div className="mt-4 border-t border-white/10 pt-3 text-sm text-white/60 sm:mt-auto">
+          Value available {formatIlpCurrency(bestExitOption?.netSurrenderValue ?? 0, policy.currency)}
+        </div>
+      </div>
+    )
+  }
 
   const isInteractiveTarget = useCallback((target: EventTarget | null) => {
     return target instanceof Element
@@ -533,53 +600,46 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                 {isProjected && bestExitOption ? (
                   <>
                     <motion.div variants={staggerChild} className="w-full max-w-5xl text-left">
-                      <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 pl-4 pr-4 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-2.5 sm:overflow-visible sm:p-0 xl:grid-cols-3 [&::-webkit-scrollbar]:hidden">
-                        <div className="flex min-h-[9.25rem] min-w-[82vw] snap-center flex-col rounded-xl border border-white/10 bg-white/[0.05] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:min-h-[10.5rem] sm:min-w-0 sm:p-5">
-                          <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/45">Skip this product</div>
-                          <div className="mt-2 text-[2rem] font-semibold leading-none tracking-tight sm:text-3xl">
-                            {formatIlpCurrency(0, policy.currency)}
+                      {isMobile ? (
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-3 gap-2" data-story-interactive>
+                            {[
+                              { label: 'Skip', value: 'skip' },
+                              { label: 'No penalty', value: 'penalty' },
+                              { label: 'Lowest fee', value: 'burden' },
+                            ].map((option, index) => (
+                              <button
+                                key={option.value}
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  setMobileExitSummaryIndex(index)
+                                }}
+                                className={`rounded-full border px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] transition ${
+                                  mobileExitSummaryIndex === index
+                                    ? 'border-white/30 bg-white/16 text-white'
+                                    : 'border-white/10 bg-white/[0.04] text-white/55'
+                                }`}
+                              >
+                                {option.label}
+                              </button>
+                            ))}
                           </div>
-                          <div className="mt-2 text-sm leading-5 text-white/70">
-                            No fees, no surrender charges, no policy value
-                          </div>
-                          <div className="mt-4 border-t border-white/10 pt-3 text-sm text-white/60 sm:mt-auto">
-                            Your premiums stay in your own hands
-                          </div>
-                        </div>
-
-                        <div className="flex min-h-[9.25rem] min-w-[82vw] snap-center flex-col rounded-xl border border-white/10 bg-white/[0.05] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:min-h-[10.5rem] sm:min-w-0 sm:p-5">
-                          <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/45">First penalty-free exit</div>
-                          {firstPenaltyFreeExitOption ? (
-                            <>
-                              <div className="mt-2 text-[2rem] font-semibold leading-none tracking-tight sm:text-3xl">Year {firstPenaltyFreeExitOption.policyYear}</div>
-                              <div className="mt-2 text-sm leading-5 text-white/70">
-                                First year the surrender penalty drops to zero
-                              </div>
-                              <div className="mt-4 border-t border-white/10 pt-3 text-sm text-white/60 sm:mt-auto">
-                                Value available {formatIlpCurrency(firstPenaltyFreeExitOption.netSurrenderValue, policy.currency)}
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              <div className="mt-2 text-2xl font-semibold leading-tight tracking-tight">Not within horizon</div>
-                              <div className="mt-4 border-t border-white/10 pt-3 text-sm text-white/60 sm:mt-auto">
-                                A surrender charge still applies through Year {horizonYear}
-                              </div>
-                            </>
+                          {renderExitSummaryCard(
+                            mobileExitSummaryIndex === 0
+                              ? 'skip'
+                              : mobileExitSummaryIndex === 1
+                                ? 'penalty'
+                                : 'burden',
                           )}
                         </div>
-
-                        <div className="flex min-h-[9.25rem] min-w-[82vw] snap-center flex-col rounded-xl border border-white/10 bg-white/[0.05] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:min-h-[10.5rem] sm:min-w-0 sm:p-5 xl:min-h-[10.5rem]">
-                          <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/45">Lowest fee-burden exit</div>
-                          <div className="mt-2 text-[2rem] font-semibold leading-none tracking-tight sm:text-3xl">Year {projectedAnalysis.npvAnalysis.bestExitYear}</div>
-                          <div className="mt-2 text-sm leading-5 text-white/70">
-                            Lowest modeled fee burden, not necessarily the best overall outcome
-                          </div>
-                          <div className="mt-4 border-t border-white/10 pt-3 text-sm text-white/60 sm:mt-auto">
-                            Value available {formatIlpCurrency(bestExitOption.netSurrenderValue, policy.currency)}
-                          </div>
+                      ) : (
+                        <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+                          {renderExitSummaryCard('skip')}
+                          {renderExitSummaryCard('penalty')}
+                          {renderExitSummaryCard('burden')}
                         </div>
-                      </div>
+                      )}
 
                       <div className="mt-2.5 rounded-xl border border-white/10 bg-white/[0.05] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:p-5">
                         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(18rem,0.9fr)] xl:items-end">
