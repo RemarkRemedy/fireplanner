@@ -4,11 +4,13 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { ProductPickerDialog } from '@/components/ilp/catalog/ProductPickerDialog'
 import { PolicySetupGate } from '@/components/ilp/PolicySetupGate'
 import { ComparisonTable } from '@/components/ilp/ComparisonTable'
 import { DecisionPanel } from '@/components/ilp/DecisionPanel'
 import { FeeWaterfallChart } from '@/components/ilp/FeeWaterfallChart'
+import { IllustrativeChartsGroup } from '@/components/ilp/IllustrationOnlyChartFrame'
 import { NpvTimelineChart } from '@/components/ilp/NpvTimelineChart'
 import { OpportunityCostCard } from '@/components/ilp/OpportunityCostCard'
 import { PolicyInputForm } from '@/components/ilp/PolicyInputForm'
@@ -391,6 +393,7 @@ export function IlpReviewPage() {
   const [catalogError, setCatalogError] = useState<string | null>(null)
   const [receiptOpen, setReceiptOpen] = useState(false)
   const [manualRequirementCount, setManualRequirementCount] = useState(0)
+  const [advancedChartsRevealed, setAdvancedChartsRevealed] = useState(false)
 
   function handleCatalogPick(product: ReturnType<typeof getIlpCatalog>['products'][number], variant: ReturnType<typeof getIlpCatalog>['products'][number]['variants'][number]) {
     const seed = templateVariantToPolicySeed(product, variant, getIlpCatalog().manifest)
@@ -673,9 +676,33 @@ export function IlpReviewPage() {
                   </Button>
                 </div>
               )}
-              <FeeWaterfallChart policy={displayPolicy} analysis={displayAnalysis} />
+              <div className="rounded-lg border border-border/70 bg-muted/20 p-4 sm:p-5">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold">Illustrative charts</p>
+                    <p className="text-sm text-muted-foreground">
+                      The chart cards below visualize the modeled scenario from your current assumptions. Reveal them once for this review session, then use the chart badges as a reminder that the views are illustrative.
+                    </p>
+                  </div>
+                  <div className="flex max-w-md items-start gap-3 rounded-lg border border-border/70 bg-background px-3 py-2 shadow-sm">
+                    <Checkbox
+                      id="advanced-review-illustrative"
+                      checked={advancedChartsRevealed}
+                      onCheckedChange={(value) => setAdvancedChartsRevealed(value === true)}
+                    />
+                    <label htmlFor="advanced-review-illustrative" className="cursor-pointer text-sm leading-6 text-foreground">
+                      Show illustrative charts in Advanced review
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <IllustrativeChartsGroup revealed={advancedChartsRevealed}>
+                <div className="space-y-4">
+                  <FeeWaterfallChart policy={displayPolicy} analysis={displayAnalysis} />
+                  <NpvTimelineChart analyses={analysisResult.analysis?.policies.filter((analysis): analysis is IlpProjectedPolicyAnalysis => analysis.mode === 'projected') ?? []} />
+                </div>
+              </IllustrativeChartsGroup>
               <DecisionPanel policy={displayPolicy} analysis={displayAnalysis} />
-              <NpvTimelineChart analyses={analysisResult.analysis?.policies.filter((analysis): analysis is IlpProjectedPolicyAnalysis => analysis.mode === 'projected') ?? []} />
               <ProjectionTable policy={displayPolicy} analysis={displayAnalysis} />
               <OpportunityCostCard policy={displayPolicy} analysis={displayAnalysis} />
             </>
