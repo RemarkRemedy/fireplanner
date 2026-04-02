@@ -1,68 +1,97 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowRight, Calculator } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { CurrencyInput } from '@/components/shared/CurrencyInput'
-import { NumberInput } from '@/components/shared/NumberInput'
-import { ProductPickerDialog } from '@/components/ilp/catalog/ProductPickerDialog'
-import { CurrentBalanceAttributionCard } from '@/components/ilp/CurrentBalanceAttributionCard'
-import { DecisionPanel } from '@/components/ilp/DecisionPanel'
-import { FeeBreakdownSection } from '@/components/ilp/FeeBreakdownSection'
-import { HeadlineInsight } from '@/components/ilp/HeadlineInsight'
-import { IllustrativeChartsGroup } from '@/components/ilp/IllustrationOnlyChartFrame'
-import { IlpIllustrativeDisclosureBanner } from '@/components/ilp/IlpIllustrativeDisclosureBanner'
-import { OpportunityCostCard } from '@/components/ilp/OpportunityCostCard'
-import { usePageMeta } from '@/hooks/usePageMeta'
-import { useIlpFeesIllustrativeDisclosure } from '@/hooks/useIlpFeesIllustrativeDisclosure'
-import { analyzeIlpPolicy } from '@/lib/calculations/ilp'
-import type { IlpPolicyAnalysis, IlpPolicyInput } from '@/lib/calculations/ilp'
-import { getIlpCatalog } from '@/lib/ilp-catalog/getIlpCatalog'
-import type { IlpPolicySeed } from '@/lib/ilp-catalog/policySeedSchema'
-import { templateVariantToPolicySeed } from '@/lib/ilp-catalog/templateToPolicy'
-import type { IlpCatalogProduct, IlpTemplateVariant } from '@/lib/ilp-catalog/types'
-import { useIlpStore } from '@/stores/useIlpStore'
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowRight, Calculator } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FundFeeAssumptionField } from "@/components/ilp/FundFeeAssumptionField";
+import { CurrencyInput } from "@/components/shared/CurrencyInput";
+import { NumberInput } from "@/components/shared/NumberInput";
+import { ProductPickerDialog } from "@/components/ilp/catalog/ProductPickerDialog";
+import { CurrentBalanceAttributionCard } from "@/components/ilp/CurrentBalanceAttributionCard";
+import { DecisionPanel } from "@/components/ilp/DecisionPanel";
+import { FeeBreakdownSection } from "@/components/ilp/FeeBreakdownSection";
+import { HeadlineInsight } from "@/components/ilp/HeadlineInsight";
+import { IllustrativeChartsGroup } from "@/components/ilp/IllustrationOnlyChartFrame";
+import { IlpIllustrativeDisclosureBanner } from "@/components/ilp/IlpIllustrativeDisclosureBanner";
+import { OpportunityCostCard } from "@/components/ilp/OpportunityCostCard";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { useIlpFeesIllustrativeDisclosure } from "@/hooks/useIlpFeesIllustrativeDisclosure";
+import { analyzeIlpPolicy } from "@/lib/calculations/ilp";
+import type { IlpPolicyAnalysis, IlpPolicyInput } from "@/lib/calculations/ilp";
+import { getIlpCatalog } from "@/lib/ilp-catalog/getIlpCatalog";
+import type { IlpPolicySeed } from "@/lib/ilp-catalog/policySeedSchema";
+import { templateVariantToPolicySeed } from "@/lib/ilp-catalog/templateToPolicy";
+import type {
+  IlpCatalogProduct,
+  IlpTemplateVariant,
+} from "@/lib/ilp-catalog/types";
+import { useIlpStore } from "@/stores/useIlpStore";
+import {
+  DEFAULT_ILP_FUND_FEE,
+  scaleFundsToBlendedOcf,
+} from "@/components/ilp/fundFeeAssumptions";
 
 // --- Exit Setup Form: extends PolicySetupGate with per-account balances ---
 
 interface ExitSetupFormProps {
-  seed: IlpPolicySeed
-  onConfirm: (adjustedSeed: IlpPolicySeed, accountBalances: Record<string, number>) => void
-  onCancel: () => void
+  seed: IlpPolicySeed;
+  onConfirm: (
+    adjustedSeed: IlpPolicySeed,
+    accountBalances: Record<string, number>,
+  ) => void;
+  onCancel: () => void;
 }
 
 function ExitSetupForm({ seed, onConfirm, onCancel }: ExitSetupFormProps) {
-  const isSinglePremium = (seed.initialSinglePremium ?? 0) > 0 || seed.monthlyContribution === 0
-  const [monthlyContribution, setMonthlyContribution] = useState(seed.monthlyContribution)
-  const [initialSinglePremium, setInitialSinglePremium] = useState(seed.initialSinglePremium ?? 0)
-  const [currentPolicyYear, setCurrentPolicyYear] = useState(seed.currentPolicyYear)
-  const [monthsAlreadyPaid, setMonthsAlreadyPaid] = useState(seed.monthsAlreadyPaid)
+  const isSinglePremium =
+    (seed.initialSinglePremium ?? 0) > 0 || seed.monthlyContribution === 0;
+  const [monthlyContribution, setMonthlyContribution] = useState(
+    seed.monthlyContribution,
+  );
+  const [initialSinglePremium, setInitialSinglePremium] = useState(
+    seed.initialSinglePremium ?? 0,
+  );
+  const [currentPolicyYear, setCurrentPolicyYear] = useState(
+    seed.currentPolicyYear,
+  );
+  const [monthsAlreadyPaid, setMonthsAlreadyPaid] = useState(
+    seed.monthsAlreadyPaid,
+  );
+  const [fundFee, setFundFee] = useState(DEFAULT_ILP_FUND_FEE);
 
   // Per-account balances for existing holders
-  const [accountBalances, setAccountBalances] = useState<Record<string, number>>(() => {
-    const balances: Record<string, number> = {}
+  const [accountBalances, setAccountBalances] = useState<
+    Record<string, number>
+  >(() => {
+    const balances: Record<string, number> = {};
     for (const account of seed.accounts ?? []) {
-      balances[account.id] = 0
+      balances[account.id] = 0;
     }
-    return balances
-  })
-  const hasMultipleAccounts = (seed.accounts?.length ?? 0) > 1
+    return balances;
+  });
+  const hasMultipleAccounts = (seed.accounts?.length ?? 0) > 1;
 
   function handleConfirm() {
     const adjustedSeed: IlpPolicySeed = {
       ...seed,
       monthlyContribution,
-      initialSinglePremium: isSinglePremium ? initialSinglePremium : seed.initialSinglePremium,
+      initialSinglePremium: isSinglePremium
+        ? initialSinglePremium
+        : seed.initialSinglePremium,
       currentPolicyYear,
       monthsAlreadyPaid,
-    }
-    onConfirm(adjustedSeed, accountBalances)
+      funds: scaleFundsToBlendedOcf(seed.funds, fundFee),
+    };
+    onConfirm(adjustedSeed, accountBalances);
   }
 
-  const horizonYears = Math.max(1, seed.mipLength != null
-    ? seed.mipLength + (seed.postMipYears ?? 0) - (currentPolicyYear - 1)
-    : (seed.postMipYears ?? 20))
+  const horizonYears = Math.max(
+    1,
+    seed.mipLength != null
+      ? seed.mipLength + (seed.postMipYears ?? 0) - (currentPolicyYear - 1)
+      : (seed.postMipYears ?? 20),
+  );
 
   return (
     <Card className="border-primary/30">
@@ -78,7 +107,8 @@ function ExitSetupForm({ seed, onConfirm, onCancel }: ExitSetupFormProps) {
         <div className="space-y-1">
           <p className="text-sm font-medium">Your current policy details</p>
           <p className="text-xs text-muted-foreground">
-            Enter your current policy year, premiums paid, and account balances from your latest policy statement.
+            Enter your current policy year, premiums paid, and account balances
+            from your latest policy statement.
           </p>
         </div>
 
@@ -112,6 +142,11 @@ function ExitSetupForm({ seed, onConfirm, onCancel }: ExitSetupFormProps) {
             integer
             min={0}
           />
+          <FundFeeAssumptionField
+            value={fundFee}
+            onChange={setFundFee}
+            note="Starts at 1.5% p.a. as a usable default for current-policy review. Replace it with the fund fee from your policy documents if you have it, or use one of the typical shortcuts as a starting point."
+          />
           <div className="flex items-end">
             <div className="space-y-1 text-sm">
               <div className="text-muted-foreground">Projection horizon</div>
@@ -124,12 +159,15 @@ function ExitSetupForm({ seed, onConfirm, onCancel }: ExitSetupFormProps) {
         <div className="space-y-3">
           <div className="space-y-1">
             <p className="text-sm font-medium">
-              {hasMultipleAccounts ? 'Current account balances' : 'Current account balance'}
+              {hasMultipleAccounts
+                ? "Current account balances"
+                : "Current account balance"}
             </p>
             <p className="text-xs text-muted-foreground">
-              Find these on your latest policy statement. {hasMultipleAccounts
-                ? 'EEC (early exit charge) applies only to accounts marked as subject to EEC, so entering accurate per-account values matters for exit calculations.'
-                : 'This is used to calculate your surrender value and exit options.'}
+              Find these on your latest policy statement.{" "}
+              {hasMultipleAccounts
+                ? "EEC (early exit charge) applies only to accounts marked as subject to EEC, so entering accurate per-account values matters for exit calculations."
+                : "This is used to calculate your surrender value and exit options."}
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -138,7 +176,12 @@ function ExitSetupForm({ seed, onConfirm, onCancel }: ExitSetupFormProps) {
                 key={account.id}
                 label={`${account.label} balance`}
                 value={accountBalances[account.id] ?? 0}
-                onChange={(value) => setAccountBalances((prev) => ({ ...prev, [account.id]: value }))}
+                onChange={(value) =>
+                  setAccountBalances((prev) => ({
+                    ...prev,
+                    [account.id]: value,
+                  }))
+                }
                 currency={seed.currency}
               />
             ))}
@@ -156,89 +199,102 @@ function ExitSetupForm({ seed, onConfirm, onCancel }: ExitSetupFormProps) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 // --- Main page ---
 
 export function IlpExitCalculatorPage() {
   usePageMeta({
-    title: 'ILP Exit Calculator: SG FIRE Planner',
-    description: 'Calculate exit scenarios for your existing ILP policy.',
-    path: '/ilp-fees/exit',
-  })
+    title: "ILP Exit Calculator: SG FIRE Planner",
+    description: "Calculate exit scenarios for your existing ILP policy.",
+    path: "/ilp-fees/exit",
+  });
 
-  const addPolicyFromSeed = useIlpStore((state) => state.addPolicyFromSeed)
-  const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const addPolicyFromSeed = useIlpStore((state) => state.addPolicyFromSeed);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
-  const [pickerOpen, setPickerOpen] = useState(false)
-  const [pendingSeed, setPendingSeed] = useState<IlpPolicySeed | null>(null)
-  const [selectedProduct, setSelectedProduct] = useState<IlpCatalogProduct | null>(null)
-  const [exitPolicy, setExitPolicy] = useState<IlpPolicyInput | null>(null)
-  const { revealed: illustrativeChartsRevealed, setRevealed: setIllustrativeChartsRevealed } = useIlpFeesIllustrativeDisclosure()
-  const requestedProductId = searchParams.get('productId')
-  const requestedVariantId = searchParams.get('variantId')
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pendingSeed, setPendingSeed] = useState<IlpPolicySeed | null>(null);
+  const [selectedProduct, setSelectedProduct] =
+    useState<IlpCatalogProduct | null>(null);
+  const [exitPolicy, setExitPolicy] = useState<IlpPolicyInput | null>(null);
+  const {
+    revealed: illustrativeChartsRevealed,
+    setRevealed: setIllustrativeChartsRevealed,
+  } = useIlpFeesIllustrativeDisclosure();
+  const requestedProductId = searchParams.get("productId");
+  const requestedVariantId = searchParams.get("variantId");
 
   const routeSelection = useMemo(() => {
     if (!requestedProductId || !requestedVariantId) {
-      return null
+      return null;
     }
 
-    const { products, manifest } = getIlpCatalog()
-    const product = products.find((candidate) => candidate.id === requestedProductId)
+    const { products, manifest } = getIlpCatalog();
+    const product = products.find(
+      (candidate) => candidate.id === requestedProductId,
+    );
     if (!product) {
-      return null
+      return null;
     }
 
-    const variant = product.variants.find((candidate) => candidate.id === requestedVariantId)
+    const variant = product.variants.find(
+      (candidate) => candidate.id === requestedVariantId,
+    );
     if (!variant) {
-      return null
+      return null;
     }
 
     return {
       product,
       seed: templateVariantToPolicySeed(product, variant, manifest),
-    }
-  }, [requestedProductId, requestedVariantId])
+    };
+  }, [requestedProductId, requestedVariantId]);
 
   useEffect(() => {
     if (!routeSelection || pendingSeed || exitPolicy) {
-      return
+      return;
     }
 
-    setSelectedProduct(routeSelection.product)
-    setPendingSeed(routeSelection.seed)
-    setPickerOpen(false)
-  }, [exitPolicy, pendingSeed, routeSelection])
+    setSelectedProduct(routeSelection.product);
+    setPendingSeed(routeSelection.seed);
+    setPickerOpen(false);
+  }, [exitPolicy, pendingSeed, routeSelection]);
 
   const analysis: IlpPolicyAnalysis | null = useMemo(() => {
-    if (!exitPolicy) return null
+    if (!exitPolicy) return null;
     try {
-      return analyzeIlpPolicy(exitPolicy)
+      return analyzeIlpPolicy(exitPolicy);
     } catch {
-      return null
+      return null;
     }
-  }, [exitPolicy])
+  }, [exitPolicy]);
 
   function handleCatalogPick(
     product: IlpCatalogProduct,
     variant: IlpTemplateVariant,
   ) {
-    const { manifest } = getIlpCatalog()
-    const seed = templateVariantToPolicySeed(product, variant, manifest)
-    setSelectedProduct(product)
-    setPendingSeed(seed)
-    setPickerOpen(false)
+    const { manifest } = getIlpCatalog();
+    const seed = templateVariantToPolicySeed(product, variant, manifest);
+    setSelectedProduct(product);
+    setPendingSeed(seed);
+    setPickerOpen(false);
   }
 
-  function handleExitSetupConfirm(adjustedSeed: IlpPolicySeed, accountBalances: Record<string, number>) {
+  function handleExitSetupConfirm(
+    adjustedSeed: IlpPolicySeed,
+    accountBalances: Record<string, number>,
+  ) {
     // Add to store to get a validated IlpPolicyInput, then immediately read it back
-    const result = addPolicyFromSeed(adjustedSeed)
-    if (!result.success) return
+    const result = addPolicyFromSeed(adjustedSeed);
+    if (!result.success) return;
 
     // Read the policy once and apply account balances locally (no second store write)
-    const policy = useIlpStore.getState().policies.find((p) => p.id === result.policyId)
+    const policy = useIlpStore
+      .getState()
+      .policies.find((p) => p.id === result.policyId);
     if (policy) {
       const policyWithBalances: IlpPolicyInput = {
         ...policy,
@@ -246,11 +302,11 @@ export function IlpExitCalculatorPage() {
           ...account,
           currentValue: accountBalances[account.id] ?? account.currentValue,
         })),
-      }
-      setExitPolicy(policyWithBalances)
+      };
+      setExitPolicy(policyWithBalances);
     }
 
-    setPendingSeed(null)
+    setPendingSeed(null);
   }
 
   // --- Product picker ---
@@ -260,7 +316,8 @@ export function IlpExitCalculatorPage() {
         <div className="space-y-2">
           <h1 className="text-2xl font-bold">ILP Exit Calculator</h1>
           <p className="text-muted-foreground">
-            Compare hold and exit scenarios using your own policy inputs and the assumptions in this tool.
+            Compare hold and exit scenarios using your own policy inputs and the
+            assumptions in this tool.
           </p>
         </div>
 
@@ -283,7 +340,9 @@ export function IlpExitCalculatorPage() {
         <Card>
           <CardContent className="pt-6">
             <p className="text-xs text-muted-foreground">
-              This tool compares scenarios based on your inputs and standardized assumptions. It does not tell you whether you should stay, exit, or switch.
+              This tool compares scenarios based on your inputs and standardized
+              assumptions. It does not tell you whether you should stay, exit,
+              or switch.
             </p>
           </CardContent>
         </Card>
@@ -294,7 +353,7 @@ export function IlpExitCalculatorPage() {
           onSelect={handleCatalogPick}
         />
       </div>
-    )
+    );
   }
 
   // --- Setup form ---
@@ -311,21 +370,22 @@ export function IlpExitCalculatorPage() {
           seed={pendingSeed}
           onConfirm={handleExitSetupConfirm}
           onCancel={() => {
-            setPendingSeed(null)
-            setSelectedProduct(null)
+            setPendingSeed(null);
+            setSelectedProduct(null);
             if (requestedProductId || requestedVariantId) {
-              navigate('/ilp-fees/exit', { replace: true })
+              navigate("/ilp-fees/exit", { replace: true });
             }
           }}
         />
       </div>
-    )
+    );
   }
 
   // --- Results ---
   if (exitPolicy && analysis) {
-    const isSinglePremium = (exitPolicy.initialSinglePremium ?? 0) > 0
-      || exitPolicy.accounts.every((a) => a.contributionShare === 0)
+    const isSinglePremium =
+      (exitPolicy.initialSinglePremium ?? 0) > 0 ||
+      exitPolicy.accounts.every((a) => a.contributionShare === 0);
 
     return (
       <div className="mx-auto max-w-5xl space-y-6 px-4 py-8">
@@ -335,7 +395,8 @@ export function IlpExitCalculatorPage() {
             <Badge variant="outline">{exitPolicy.name}</Badge>
           </div>
           <p className="text-sm text-muted-foreground">
-            {exitPolicy.insurer} · Policy year {exitPolicy.currentPolicyYear} · {exitPolicy.currency}
+            {exitPolicy.insurer} · Policy year {exitPolicy.currentPolicyYear} ·{" "}
+            {exitPolicy.currency}
           </p>
         </div>
 
@@ -350,11 +411,14 @@ export function IlpExitCalculatorPage() {
 
         <IllustrativeChartsGroup revealed={illustrativeChartsRevealed}>
           <div className="space-y-6">
-            <CurrentBalanceAttributionCard policy={exitPolicy} analysis={analysis} />
+            <CurrentBalanceAttributionCard
+              policy={exitPolicy}
+              analysis={analysis}
+            />
 
             <HeadlineInsight policy={exitPolicy} analysis={analysis} />
 
-            {analysis.mode === 'projected' && (
+            {analysis.mode === "projected" && (
               <FeeBreakdownSection policy={exitPolicy} analysis={analysis} />
             )}
           </div>
@@ -368,15 +432,21 @@ export function IlpExitCalculatorPage() {
         {!isSinglePremium && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Premium holiday scenario</CardTitle>
+              <CardTitle className="text-base">
+                Premium holiday scenario
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Taking a premium holiday (pausing contributions) may affect charges and bonus eligibility.
-                Premium holiday impact is not fully modelled for all products. Use the full dashboard
-                for manual scenario modelling with premium holiday events.
+                Taking a premium holiday (pausing contributions) may affect
+                charges and bonus eligibility. Premium holiday impact is not
+                fully modelled for all products. Use the full dashboard for
+                manual scenario modelling with premium holiday events.
               </p>
-              <Link to="/ilp-review" className="mt-3 inline-flex items-center gap-1 text-sm text-primary hover:underline">
+              <Link
+                to="/ilp-review"
+                className="mt-3 inline-flex items-center gap-1 text-sm text-primary hover:underline"
+              >
                 Open full dashboard
                 <ArrowRight className="h-3 w-3" />
               </Link>
@@ -387,7 +457,10 @@ export function IlpExitCalculatorPage() {
         <Card>
           <CardContent className="pt-6">
             <p className="text-xs text-muted-foreground">
-              Not financial advice. These calculations are based on your inputs and standardized assumptions. Insurance coverage loss is not factored into the fee comparison. Consult a licensed financial adviser before making policy decisions.
+              Not financial advice. These calculations are based on your inputs
+              and standardized assumptions. Insurance coverage loss is not
+              factored into the fee comparison. Consult a licensed financial
+              adviser before making policy decisions.
             </p>
           </CardContent>
         </Card>
@@ -402,11 +475,11 @@ export function IlpExitCalculatorPage() {
           <Button
             variant="ghost"
             onClick={() => {
-              setExitPolicy(null)
-              setPendingSeed(null)
-              setSelectedProduct(null)
+              setExitPolicy(null);
+              setPendingSeed(null);
+              setSelectedProduct(null);
               if (requestedProductId || requestedVariantId) {
-                navigate('/ilp-fees/exit', { replace: true })
+                navigate("/ilp-fees/exit", { replace: true });
               }
             }}
           >
@@ -414,7 +487,7 @@ export function IlpExitCalculatorPage() {
           </Button>
         </div>
       </div>
-    )
+    );
   }
 
   // Loading state
@@ -422,5 +495,5 @@ export function IlpExitCalculatorPage() {
     <div className="flex min-h-[50vh] items-center justify-center">
       <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
     </div>
-  )
+  );
 }
