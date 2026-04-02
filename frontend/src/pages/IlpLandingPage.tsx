@@ -20,7 +20,7 @@ export function IlpLandingPage() {
   const directComparisonViews = [
     {
       title: 'Policy charges',
-      description: 'Compare policy-level charges, bonuses, and exit timing on a shared basis.',
+      description: 'Compare policy-level charges across products on a shared basis, then follow through to sub-fund fees and benchmark-relative returns.',
       href: '/ilp-fees/compare',
       icon: WalletCards,
     },
@@ -209,12 +209,12 @@ export function IlpLandingPage() {
 
       <section className="space-y-4">
         <div className="rounded-md border border-slate-200/80 bg-slate-50/80 px-4 py-3 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-300">
-          Comparing multiple products side by side? Use the views below.
+          Comparing multiple products side by side? Start here, then follow through to sub-fund fee and benchmark checks.
         </div>
         <div className="space-y-2">
           <h3 className="text-base font-semibold text-slate-950 dark:text-white">Direct comparison views</h3>
           <p className="max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-            Use these when you want standardized fee, sub-fund, and benchmark data directly without the guided workflow framing.
+            Use these when you want standardized market-wide comparisons first, without the guided workflow framing.
           </p>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
