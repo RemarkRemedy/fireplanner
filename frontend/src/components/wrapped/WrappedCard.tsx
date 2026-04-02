@@ -8,12 +8,14 @@ interface WrappedCardProps {
   children: ReactNode
   /** Use compact spacing for content-heavy cards (e.g. summary). */
   compact?: boolean
+  /** Allow wider content when a slide contains richer layouts like grids or charts. */
+  wide?: boolean
 }
 
-export function WrappedCard({ gradient, direction, children, compact }: WrappedCardProps) {
+export function WrappedCard({ gradient, direction, children, compact, wide }: WrappedCardProps) {
   return (
     <motion.div
-      className="absolute inset-0 flex flex-col items-center justify-center px-8 text-white"
+      className="absolute inset-0 flex flex-col items-stretch justify-start overflow-y-auto px-4 pb-8 pt-14 text-white sm:px-6 sm:pb-10 sm:pt-16 md:items-center md:justify-center md:px-8 md:py-10"
       style={{ background: gradient, boxShadow: 'inset 0 0 60px rgba(255,255,255,0.04)' }}
       custom={direction}
       variants={cardVariants}
@@ -32,7 +34,7 @@ export function WrappedCard({ gradient, direction, children, compact }: WrappedC
         }}
       />
       <motion.div
-        className={`flex flex-col items-center text-center max-w-lg w-full z-10 ${compact ? 'gap-3' : 'gap-6'}`}
+        className={`z-10 mx-auto flex w-full flex-col items-center text-center ${wide ? 'max-w-5xl' : 'max-w-lg'} ${compact ? 'gap-3 md:gap-4' : 'gap-4 md:gap-6'}`}
         variants={staggerContainer}
         initial="enter"
         animate="center"
