@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowRight, BadgeDollarSign, ChartColumnBig, Clock3, Play, Receipt, ShieldCheck } from 'lucide-react'
+import { ArrowRight, BadgeDollarSign, Calculator, ChartColumnBig, Clock3, Play, Receipt, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -36,6 +36,7 @@ import { mergePolicySeed } from '@/stores/useIlpStore'
 import { useHouseholdPlanStore } from '@/stores/useHouseholdPlanStore'
 
 type StoryDetailMode = 'walkthrough' | 'detailed'
+type SetupIntent = 'explore' | 'review'
 type CashFlowQuickEntry = {
   monthlyIncome: number
   monthlyExpenses: number
@@ -209,6 +210,86 @@ function ProspectSetupPreview({ seed }: { seed: IlpPolicySeed }) {
   )
 }
 
+function CurrentPolicyPreview({ seed }: { seed: IlpPolicySeed }) {
+  const statementItems = [
+    {
+      title: 'Where the policy stands today',
+      detail: 'Enter your current policy year and how many months you have already paid so the review starts from your actual point in the policy.',
+      icon: Clock3,
+    },
+    {
+      title: 'What your balance may be made of',
+      detail: 'We estimate how much may have come from premiums, bonuses, fees, and investment performance so far.',
+      icon: BadgeDollarSign,
+    },
+    {
+      title: 'What staying or exiting may look like next',
+      detail: 'You will see the current balance attribution, fee path, and hold-versus-exit framing using the same product rules.',
+      icon: ShieldCheck,
+    },
+  ]
+
+  return (
+    <div className="space-y-6">
+      <div className="space-y-3">
+        <div className="inline-flex items-center gap-2 rounded-full border border-slate-300/80 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-slate-600 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-300">
+          <Calculator className="h-3.5 w-3.5" />
+          Current policy review
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-3xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-4xl">
+            Review what you already own
+          </h2>
+          <p className="max-w-xl text-base leading-7 text-slate-600 dark:text-slate-300">
+            Use your latest policy statement to review where you are today before deciding whether to keep going, hold, or exit.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="rounded-md border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Product</div>
+          <div className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{seed.name}</div>
+          <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            {seed.insurer} · {seed.currency}
+            {seed.mipLength != null && ` · MIP ${seed.mipLength} years`}
+          </div>
+        </div>
+        <div className="rounded-md border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">You will need</div>
+          <div className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">Your policy statement</div>
+          <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">Policy year, paid months, and current account balance</div>
+        </div>
+      </div>
+
+      <div className="space-y-3 rounded-md border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-900/60">
+        <div>
+          <p className="text-sm font-semibold text-slate-950 dark:text-white">What you’ll see next</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            This review starts from your current policy position, not from a fresh buyer walkthrough.
+          </p>
+        </div>
+        <div className="grid gap-3">
+          {statementItems.map((card) => {
+            const Icon = card.icon
+            return (
+              <div key={card.title} className="flex items-start gap-3 rounded-md border border-white/80 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
+                <div className="rounded-md bg-slate-100 p-2.5 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                  <Icon className="h-4 w-4" />
+                </div>
+                <div className="space-y-1">
+                  <div className="font-medium text-slate-950 dark:text-white">{card.title}</div>
+                  <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">{card.detail}</p>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // --- Variant picker (when product has multiple variants) ---
 
 function VariantPicker({
@@ -245,27 +326,47 @@ function VariantPicker({
 
 function ReviewModeBranch({
   exitHref,
+  onSwitchToExplore,
 }: {
   exitHref: string
+  onSwitchToExplore: () => void
 }) {
   return (
-    <Card className="border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/80 dark:bg-emerald-950/20">
-      <CardContent className="space-y-4 p-5">
-        <div className="space-y-2">
-          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-            Already have this ILP?
+    <div className="space-y-3">
+      <Card className="border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/80 dark:bg-emerald-950/20">
+        <CardContent className="space-y-4 p-5">
+          <div className="space-y-2">
+            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+              Review my current ILP
+            </div>
+            <h3 className="text-base font-semibold text-slate-950 dark:text-white">Use your policy statement</h3>
           </div>
-          <h3 className="text-base font-semibold text-slate-950 dark:text-white">Use your policy statement instead</h3>
-        </div>
-        <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
-          Enter where you are in the policy today, how much you have paid so far, and your current balance. We will use that to show what you may have put in, what fees and bonuses may have done so far, and what staying or exiting could look like next.
-        </p>
-        <Link to={exitHref} className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
-          Review my current policy
-          <ArrowRight className="h-4 w-4" />
-        </Link>
-      </CardContent>
-    </Card>
+          <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
+            Enter where you are in the policy today, how much you have paid so far, and your current balance. We will use that to estimate what may have come from premiums, bonuses, fees, and returns, then show what staying or exiting could look like next.
+          </p>
+          <div className="space-y-2 rounded-md border border-white/80 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
+            <div className="text-sm font-medium text-slate-950 dark:text-white">What to prepare</div>
+            <ul className="space-y-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+              <li>Your current policy year</li>
+              <li>How many months you have already paid</li>
+              <li>Your latest account balance or balances</li>
+            </ul>
+          </div>
+          <Link to={exitHref} className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+            Review my current policy
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </CardContent>
+      </Card>
+
+      <button
+        type="button"
+        onClick={onSwitchToExplore}
+        className="w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-left text-sm text-slate-600 transition-colors hover:border-primary hover:text-slate-950 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:text-white"
+      >
+        Prefer the product walkthrough first? Switch to the standard fee story.
+      </button>
+    </div>
   )
 }
 
@@ -276,6 +377,7 @@ export function IlpStoryModePage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const requestedVariantId = searchParams.get('variantId')
+  const requestedIntent: SetupIntent = searchParams.get('intent') === 'review' ? 'review' : 'explore'
 
   usePageMeta({
     title: 'ILP Fee Story: SG FIRE Planner',
@@ -290,6 +392,7 @@ export function IlpStoryModePage() {
   const [storyPolicy, setStoryPolicy] = useState<IlpPolicyInput | null>(null)
   const [showFeeStory, setShowFeeStory] = useState(true)
   const [detailMode, setDetailMode] = useState<StoryDetailMode>('walkthrough')
+  const [setupIntent, setSetupIntent] = useState<SetupIntent>(requestedIntent)
 
   // No persistence — always fresh from setup gate
   const activePolicy = storyPolicy
@@ -323,6 +426,12 @@ export function IlpStoryModePage() {
   const exitHref = productId && requestedVariantId
     ? `/ilp-fees/exit?productId=${productId}&variantId=${encodeURIComponent(requestedVariantId)}`
     : '/ilp-fees/exit'
+
+  useEffect(() => {
+    if (!storyPolicy) {
+      setSetupIntent(requestedIntent)
+    }
+  }, [requestedIntent, storyPolicy])
 
   // --- Product not found ---
   if (!productId || !catalogProduct) {
@@ -359,32 +468,62 @@ export function IlpStoryModePage() {
   // --- Step 2: Setup gate (confirm premium etc.) ---
   if (effectiveSeed && !storyPolicy) {
     return (
-      <div className="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-6xl items-center px-4 py-8">
-        <div className="grid w-full gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(22rem,30rem)] lg:items-start">
-          <ProspectSetupPreview seed={effectiveSeed} />
-          <div className="space-y-3">
-            <ReviewModeBranch exitHref={exitHref} />
-            <PolicySetupGate
-              seed={effectiveSeed}
-              prospect
-              onConfirm={(adjustedSeed) => {
-                // Build policy in-memory only — no store persistence for story mode
-                const policy = mergePolicySeed(adjustedSeed)
-                setStoryPolicy(policy)
-                setShowFeeStory(true)
-                setDetailMode('walkthrough')
-                setPendingSeed(null)
-              }}
-              onCancel={() => {
-                setPendingSeed(null)
-                if (requestedVariantId && productId) {
-                  navigate(`/ilp-fees/story/${productId}`, { replace: true })
-                }
-              }}
-            />
-            <p className="px-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
-              No login, no saved lead form, and no adviser handoff. This route just turns the product template into a visible fee scenario.
+      <div className="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-6xl px-4 py-8">
+        <div className="w-full space-y-6">
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-3xl">
+              {catalogProduct.productName}
+            </h1>
+            <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
+              Choose how you want to review this product. You can start with the fee story or jump straight into current-policy review using your statement.
             </p>
+          </div>
+
+          <Tabs value={setupIntent} onValueChange={(value) => setSetupIntent(value as SetupIntent)}>
+            <TabsList>
+              <TabsTrigger value="explore">Understand this product</TabsTrigger>
+              <TabsTrigger value="review">Review my current ILP</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          <div className="grid w-full gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(22rem,30rem)] lg:items-start">
+            {setupIntent === 'review' ? (
+              <CurrentPolicyPreview seed={effectiveSeed} />
+            ) : (
+              <ProspectSetupPreview seed={effectiveSeed} />
+            )}
+            <div className="space-y-3">
+              {setupIntent === 'review' ? (
+                <ReviewModeBranch
+                  exitHref={exitHref}
+                  onSwitchToExplore={() => setSetupIntent('explore')}
+                />
+              ) : (
+                <>
+                  <PolicySetupGate
+                    seed={effectiveSeed}
+                    prospect
+                    onConfirm={(adjustedSeed) => {
+                      // Build policy in-memory only — no store persistence for story mode
+                      const policy = mergePolicySeed(adjustedSeed)
+                      setStoryPolicy(policy)
+                      setShowFeeStory(true)
+                      setDetailMode('walkthrough')
+                      setPendingSeed(null)
+                    }}
+                    onCancel={() => {
+                      setPendingSeed(null)
+                      if (requestedVariantId && productId) {
+                        navigate(`/ilp-fees/story/${productId}`, { replace: true })
+                      }
+                    }}
+                  />
+                  <p className="px-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                    No login, no saved lead form, and no adviser handoff. This route just turns the product template into a visible fee scenario.
+                  </p>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
