@@ -1675,6 +1675,133 @@ describe('projectIlpPolicy', () => {
     expect(policyYear14?.policyState).toBe('lapsed')
   })
 
+  it('carries fixed annual charges as debt within a non-lapse window and repays the carried balance after value recovers', () => {
+    const policy = makeOpenEndedPolicy({
+      currentPolicyYear: 1,
+      monthsAlreadyPaid: 0,
+      monthlyContribution: 0,
+      postMipYears: 3,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 50,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+            { phase: 'top-up', contributionShare: 1 },
+          ],
+        },
+      ],
+      chargeRules: [
+        {
+          id: 'admin-charge',
+          label: 'Administration Charge',
+          basis: 'fixed-annual',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 100,
+          allocation: 'pro-rata-by-value',
+          carryForwardOnInsufficientDeductionWithinPolicyYears: {
+            startPolicyYear: 1,
+            endPolicyYear: 2,
+          },
+        },
+      ],
+      eventChargeRules: [],
+      policyEvents: [
+        {
+          id: 'recovery-top-up',
+          type: 'top-up',
+          startPolicyMonth: 13,
+          durationMonths: 1,
+          amount: 300,
+        },
+      ],
+      policyStateSupport: {
+        automaticLapseOnAccountValueDepletion: true,
+        accountValueDepletionNonLapseWindows: [
+          { startPolicyYear: 1, endPolicyYear: 2 },
+        ],
+      },
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows[0]?.policyState).toBe('in-force')
+    expect(accountRow(result.rows[0], 'policy').grossFee).toBe(50)
+    expect(accountRow(result.rows[0], 'policy').close).toBe(0)
+
+    expect(result.rows[1]?.policyState).toBe('in-force')
+    expect(result.rows[1]?.annualContribution).toBe(300)
+    expect(accountRow(result.rows[1], 'policy').grossFee).toBe(0)
+    expect(accountRow(result.rows[1], 'policy').close).toBe(300)
+
+    expect(result.rows[2]?.policyState).toBe('in-force')
+    expect(accountRow(result.rows[2], 'policy').grossFee).toBe(250)
+    expect(accountRow(result.rows[2], 'policy').close).toBe(50)
+  })
+
+  it('still lapses on the next row when a fixed annual charge depletes value outside any non-lapse window', () => {
+    const policy = makeOpenEndedPolicy({
+      currentPolicyYear: 1,
+      monthsAlreadyPaid: 0,
+      monthlyContribution: 0,
+      postMipYears: 2,
+      accounts: [
+        {
+          id: 'policy',
+          label: 'Policy Account',
+          feeRate: 0,
+          currentValue: 50,
+          contributionShare: 0,
+          subjectToEec: false,
+          postMipFeeRate: null,
+          contributionRules: [
+            { phase: 'during-icp', contributionShare: 1 },
+            { phase: 'after-icp', contributionShare: 1 },
+          ],
+        },
+      ],
+      chargeRules: [
+        {
+          id: 'admin-charge',
+          label: 'Administration Charge',
+          basis: 'fixed-annual',
+          activeWindow: 'policy-term',
+          appliesTo: ['policy'],
+          rate: 0,
+          amount: 100,
+          allocation: 'pro-rata-by-value',
+          carryForwardOnInsufficientDeductionWithinPolicyYears: {
+            startPolicyYear: 1,
+            endPolicyYear: 2,
+          },
+        },
+      ],
+      eventChargeRules: [],
+      policyStateSupport: {
+        automaticLapseOnAccountValueDepletion: true,
+      },
+      funds: [ZERO_RETURN_FUND],
+      bonuses: [],
+    })
+
+    const result = projectIlpPolicy(policy, 'mid')
+
+    expect(result.rows[0]?.policyState).toBe('in-force')
+    expect(accountRow(result.rows[0], 'policy').grossFee).toBe(50)
+    expect(accountRow(result.rows[0], 'policy').close).toBe(0)
+    expect(result.rows[1]?.policyState).toBe('lapsed')
+  })
+
   it.each([
     ['aia-invest-easy-cash-srs', 'sgd-open-ended-cash-srs', 'AIA Invest Easy (Cash/SRS)'],
     ['aia-invest-easy-cpf', 'sgd-open-ended-cpf', 'AIA Invest Easy (CPF)'],

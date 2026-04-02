@@ -6186,7 +6186,8 @@ function computeMonthlyRateBonusProjectionForAccount(
       monthContext,
       new Map([[accountId, balance]]),
       monthlyContributionByAccount,
-    ).get(accountId) ?? 0
+      new Map<string, number>(),
+    ).charges.get(accountId) ?? 0
     const monthlyGrossFee = monthlyAdditionalCharge + (annualAssuranceCharge / 12)
     const monthlyBonusCredit = monthlyBonuses.reduce((sum, normalizedBonus) => (
       sum + computeMonthlyRateBonusCreditForRuleAtMonth(
@@ -11404,9 +11405,14 @@ function computeAdditionalChargeByAccount(
   context: IlpCashflowYearContext,
   openBalances: Map<string, number>,
   contributionByAccount: Map<string, number>,
-): Map<string, number> {
+  accruedChargeBalanceByRule: Map<string, number>,
+): {
+  charges: Map<string, number>
+  nextAccruedChargeBalanceByRule: Map<string, number>
+} {
   const { input } = normalized
   const charges = new Map<string, number>(input.accounts.map((account) => [account.id, 0]))
+  const nextAccruedChargeBalanceByRule = new Map(accruedChargeBalanceByRule)
   const chargeRules = normalizeRecurringChargeRules(normalized, context)
 
   for (const { rule, appliesTo, fallbackAppliesTo } of chargeRules) {
@@ -11435,8 +11441,47 @@ function computeAdditionalChargeByAccount(
         break
 
       case 'fixed-annual': {
+        const currentYearCharge = resolveChargeAmount(rule, context) * suspensionMultiplier
+        const carryForwardConfig = rule.carryForwardOnInsufficientDeductionWithinPolicyYears
+        const carriedCharge = Math.max(0, accruedChargeBalanceByRule.get(rule.id) ?? 0)
+        const canAccrueCarryForwardDebtThisYear = carryForwardConfig != null
+          && context.policyYear >= carryForwardConfig.startPolicyYear
+          && context.policyYear <= carryForwardConfig.endPolicyYear
+
+        if (carryForwardConfig) {
+          const totalChargeDue = carriedCharge + currentYearCharge
+          const remainingOpenBalances = new Map(
+            input.accounts.map((account) => [
+              account.id,
+              Math.max((openBalances.get(account.id) ?? 0) - (charges.get(account.id) ?? 0), 0),
+            ]),
+          )
+          const { allocations } = applyChargeAllocationsWithFallbackDetailed(
+            totalChargeDue,
+            rule.allocation,
+            appliesTo,
+            fallbackAppliesTo,
+            remainingOpenBalances,
+            true,
+          )
+          const appliedCharge = Array.from(allocations.values()).reduce((sum, value) => sum + value, 0)
+          const appliedTowardCurrentCharge = Math.max(0, appliedCharge - carriedCharge)
+          const remainingCarriedCharge = Math.max(0, carriedCharge - appliedCharge)
+          const remainingCurrentCharge = Math.max(0, currentYearCharge - appliedTowardCurrentCharge)
+
+          for (const [accountId, amount] of allocations.entries()) {
+            charges.set(accountId, (charges.get(accountId) ?? 0) + amount)
+          }
+
+          nextAccruedChargeBalanceByRule.set(
+            rule.id,
+            remainingCarriedCharge + (canAccrueCarryForwardDebtThisYear ? remainingCurrentCharge : 0),
+          )
+          break
+        }
+
         const allocations = applyChargeAllocationsWithFallback(
-          resolveChargeAmount(rule, context) * suspensionMultiplier,
+          currentYearCharge,
           rule.allocation,
           appliesTo,
           fallbackAppliesTo,
@@ -11535,7 +11580,10 @@ function computeAdditionalChargeByAccount(
     }
   }
 
-  return charges
+  return {
+    charges,
+    nextAccruedChargeBalanceByRule,
+  }
 }
 
 function computeEventChargeByAccount(
@@ -11915,6 +11963,9 @@ export function projectIlpPolicy(
   let assuranceSumAssured = input.assuranceProfile?.currentSumAssured ?? input.assuranceProfile?.currentBasicSumAssured
   let assuranceWealthAssureValue = input.assuranceProfile?.currentWealthAssureValue
   let assuranceGrowthFrozen = false
+  let recurringAccruedChargeBalanceByRule = new Map<string, number>(
+    normalized.input.chargeRules?.map((rule) => [rule.id, 0]) ?? [],
+  )
   let assuranceAccruedChargeBalanceByRule = new Map<string, number>(
     normalized.assurance.rules.map(({ rule }) => [rule.id, 0]),
   )
@@ -12130,12 +12181,15 @@ export function projectIlpPolicy(
     const reinvestedDividendWithdrawalsThisYear = Array.from(reinvestedDividendWithdrawalByAccount.values()).reduce((sum, value) => sum + value, 0)
     const distributionPayoutByAccount = getDistributionPayoutsByAccount(normalized, year, openBalances)
     const distributionPayoutsThisYear = Array.from(distributionPayoutByAccount.values()).reduce((sum, value) => sum + value, 0)
-    const additionalChargeByAccount = computeAdditionalChargeByAccount(
+    const additionalChargeResult = computeAdditionalChargeByAccount(
       normalized,
       context,
       openBalances,
       regularContributionByAccount,
+      recurringAccruedChargeBalanceByRule,
     )
+    const additionalChargeByAccount = additionalChargeResult.charges
+    recurringAccruedChargeBalanceByRule = additionalChargeResult.nextAccruedChargeBalanceByRule
     const eventChargeByAccount = computeEventChargeByAccount(
       normalized,
       context,
