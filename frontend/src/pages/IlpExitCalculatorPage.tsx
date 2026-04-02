@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CurrencyInput } from '@/components/shared/CurrencyInput'
 import { NumberInput } from '@/components/shared/NumberInput'
 import { ProductPickerDialog } from '@/components/ilp/catalog/ProductPickerDialog'
+import { CurrentBalanceAttributionCard } from '@/components/ilp/CurrentBalanceAttributionCard'
 import { DecisionPanel } from '@/components/ilp/DecisionPanel'
 import { FeeBreakdownSection } from '@/components/ilp/FeeBreakdownSection'
 import { HeadlineInsight } from '@/components/ilp/HeadlineInsight'
@@ -349,6 +350,8 @@ export function IlpExitCalculatorPage() {
 
         <IllustrativeChartsGroup revealed={illustrativeChartsRevealed}>
           <div className="space-y-6">
+            <CurrentBalanceAttributionCard policy={exitPolicy} analysis={analysis} />
+
             <HeadlineInsight policy={exitPolicy} analysis={analysis} />
 
             {analysis.mode === 'projected' && (
