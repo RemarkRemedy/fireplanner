@@ -47,6 +47,30 @@ function humanizeBonusTag(tag: string): string {
   return parts.slice(-2).join(' ')
 }
 
+function formatCompactStoryAxisTick(value: number) {
+  return new Intl.NumberFormat('en-SG', {
+    notation: 'compact',
+    maximumFractionDigits: value < 10_000 ? 1 : 0,
+  }).format(value).replace('k', 'K')
+}
+
+function resolveNiceStoryAxisMax(values: number[]) {
+  const maxValue = Math.max(...values, 1000)
+  const targetMax = maxValue * 1.12
+  const roughStep = targetMax / 4
+  const magnitude = 10 ** Math.floor(Math.log10(roughStep))
+  const normalizedStep = roughStep / magnitude
+
+  let niceStepFactor = 1
+  if (normalizedStep > 1) niceStepFactor = 2
+  if (normalizedStep > 2) niceStepFactor = 2.5
+  if (normalizedStep > 2.5) niceStepFactor = 5
+  if (normalizedStep > 5) niceStepFactor = 10
+
+  const step = niceStepFactor * magnitude
+  return Math.ceil(targetMax / step) * step
+}
+
 export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
   const { summary } = analysis
   const unmodeledBonuses = countMetadataOnlyBonuses(policy)
@@ -111,6 +135,10 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
   const discountedChargeTimeline = projectedAnalysis
     ? buildDiscountedChargeTimeline(policy, projectedAnalysis, { includeFundFees: !excludeStoryFundFees })
     : []
+  const discountedChargeAxisMax = useMemo(
+    () => resolveNiceStoryAxisMax(discountedChargeTimeline.map((point) => point.totalDiscountedCharges)),
+    [discountedChargeTimeline],
+  )
 
   const goForward = useCallback(() => {
     if (isTransitioning.current) return
@@ -416,20 +444,24 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                         dark
                       >
                         <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={discountedChargeTimeline} margin={{ top: 8, right: 20, bottom: 8, left: 12 }}>
+                          <LineChart data={discountedChargeTimeline} margin={{ top: 14, right: 10, bottom: 8, left: 2 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
                             <XAxis
                               dataKey="exitYear"
                               tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.55)' }}
                               tickLine={false}
                               axisLine={false}
+                              padding={{ left: 6, right: 6 }}
                             />
                             <YAxis
-                              width={80}
-                              tickFormatter={(value: number) => `${Math.round(value / 1000)}K`}
+                              width={54}
+                              domain={[0, discountedChargeAxisMax]}
+                              tickCount={5}
+                              tickFormatter={formatCompactStoryAxisTick}
                               tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.55)' }}
                               tickLine={false}
                               axisLine={false}
+                              tickMargin={8}
                             />
                             <Tooltip
                               content={({ active, payload, label }) => {
