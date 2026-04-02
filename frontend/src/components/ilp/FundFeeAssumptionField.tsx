@@ -7,15 +7,17 @@ interface FundFeeAssumptionFieldProps {
   value: number;
   onChange: (value: number) => void;
   note?: string;
+  className?: string;
 }
 
 export function FundFeeAssumptionField({
   value,
   onChange,
   note = "Starts at 1.5% p.a. as a usable default. Adjust it if your fund mix is closer to fixed income, multi-asset, or equity funds, or replace it with the actual fee from the product documents.",
+  className,
 }: FundFeeAssumptionFieldProps) {
   return (
-    <div className="space-y-3 sm:col-span-2">
+    <div className={cn("space-y-3", className)}>
       <PercentInput
         label="Fund management fee (p.a.)"
         value={value}
