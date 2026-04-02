@@ -5,6 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { IlpPolicyInput, IlpProjectedPolicyAnalysis } from '@/lib/calculations/ilp'
 import { useChartColors } from '@/lib/chartTheme'
+import { IllustrationOnlyChartFrame } from './IllustrationOnlyChartFrame'
 import { formatIlpCurrency } from './formatters'
 import { buildDiscountedChargeTimeline } from './discountedChargeTimeline'
 
@@ -48,7 +49,10 @@ export function DiscountedChargeTimelineSection({
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="h-80" role="img" aria-label="Line chart showing total out-of-pocket ILP fees by exit year">
+        <IllustrationOnlyChartFrame
+          className="h-80"
+          ariaLabel="Line chart showing total out-of-pocket ILP fees by exit year"
+        >
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={timeline} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
@@ -102,7 +106,7 @@ export function DiscountedChargeTimelineSection({
               />
             </LineChart>
           </ResponsiveContainer>
-        </div>
+        </IllustrationOnlyChartFrame>
 
         <div className="overflow-x-auto rounded-lg border border-border/60">
           <table className="min-w-full text-sm">

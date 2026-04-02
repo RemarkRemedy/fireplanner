@@ -15,6 +15,7 @@ import {
   Cell,
   Line,
   LineChart,
+  Rectangle,
   ReferenceDot,
   ReferenceLine,
   ResponsiveContainer,
@@ -24,6 +25,8 @@ import {
 } from 'recharts'
 import type { IlpPolicyInput, IlpProjectedPolicyAnalysis } from '@/lib/calculations/ilp'
 import { ChartTooltipContent } from './ChartTooltip'
+import { IllustrationOnlyChartFrame } from './IllustrationOnlyChartFrame'
+import { ILP_VERTICAL_BAR_RADIUS, ILP_VERTICAL_NEGATIVE_BAR_RADIUS } from './chartBarRadii'
 import { formatIlpCurrency, formatIlpPercent } from './formatters'
 
 interface ExitTimingExplorerProps {
@@ -34,6 +37,8 @@ interface ExitTimingExplorerProps {
 
 export function ExitTimingExplorer({ policy, analysis, useReal = false }: ExitTimingExplorerProps) {
   const colors = useChartColors()
+  const belowContributionColor = 'rgb(100 116 139)'
+  const belowContributionMutedColor = 'rgba(100, 116, 139, 0.38)'
   const horizonYear = analysis.projections.mid.rows.at(-1)?.policyYear ?? analysis.npvAnalysis.bestExitYear
   const paidSoFarEstimate = (policy.initialSinglePremium ?? 0) + (policy.monthlyContribution * policy.monthsAlreadyPaid)
   const discountMoney = (value: number, year: number) => useReal ? value / Math.pow(1 + policy.inflationRate, year) : value
@@ -173,7 +178,10 @@ export function ExitTimingExplorer({ policy, analysis, useReal = false }: ExitTi
               Positive bars mean the exit value is higher than the additional contributions you would make from now to that year.
             </p>
           </div>
-          <div className={chartPanelClassName} role="img" aria-label="Bar chart showing net gap by exit year">
+          <IllustrationOnlyChartFrame
+            className={chartPanelClassName}
+            ariaLabel="Bar chart showing net gap by exit year"
+          >
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-3">
               <div className="text-sm text-muted-foreground">
                 Year{' '}
@@ -188,7 +196,7 @@ export function ExitTimingExplorer({ policy, analysis, useReal = false }: ExitTi
                   Above added contributions
                 </span>
                 <span className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/20 px-2.5 py-1">
-                  <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors.danger }} />
+                  <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: belowContributionColor }} />
                   Below added contributions
                 </span>
               </div>
@@ -225,7 +233,12 @@ export function ExitTimingExplorer({ policy, analysis, useReal = false }: ExitTi
                 />
                 <Bar
                   dataKey="netGap"
-                  radius={[6, 6, 0, 0]}
+                  shape={(props: any) => (
+                    <Rectangle
+                      {...props}
+                      radius={props.payload?.netGap >= 0 ? ILP_VERTICAL_BAR_RADIUS : ILP_VERTICAL_NEGATIVE_BAR_RADIUS}
+                    />
+                  )}
                   onClick={(point) => {
                     selectExitYear(point?.exitYear)
                   }}
@@ -234,15 +247,21 @@ export function ExitTimingExplorer({ policy, analysis, useReal = false }: ExitTi
                     const selected = String(entry.exitYear) === selectedExitYear
                     const positive = entry.netGap >= 0
                     const fill = selected
-                      ? (positive ? colors.success : colors.danger)
-                      : (positive ? 'rgba(34, 197, 94, 0.45)' : 'rgba(239, 68, 68, 0.45)')
-                    return <Cell key={entry.exitYear} fill={fill} className="cursor-pointer" />
+                      ? (positive ? colors.success : belowContributionColor)
+                      : (positive ? 'rgba(34, 197, 94, 0.45)' : belowContributionMutedColor)
+                    return (
+                      <Cell
+                        key={entry.exitYear}
+                        fill={fill}
+                        className="cursor-pointer"
+                      />
+                    )
                   })}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
             </div>
-          </div>
+          </IllustrationOnlyChartFrame>
         </div>
 
         <div className="space-y-3">
@@ -296,7 +315,10 @@ export function ExitTimingExplorer({ policy, analysis, useReal = false }: ExitTi
               </div>
             </div>
           </div>
-          <div className={chartPanelClassName} role="img" aria-label="Line chart showing withdrawable value, added contributions, and ETF benchmark by exit year">
+          <IllustrationOnlyChartFrame
+            className={chartPanelClassName}
+            ariaLabel="Line chart showing withdrawable value, added contributions, and ETF benchmark by exit year"
+          >
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-3">
               <div>
                 <div className="text-sm font-semibold text-foreground">
@@ -422,7 +444,7 @@ export function ExitTimingExplorer({ policy, analysis, useReal = false }: ExitTi
               </LineChart>
             </ResponsiveContainer>
             </div>
-          </div>
+          </IllustrationOnlyChartFrame>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

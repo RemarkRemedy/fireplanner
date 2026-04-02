@@ -9,6 +9,7 @@ import { AnimatedNumber } from '@/components/wrapped/AnimatedNumber'
 import { staggerChild } from '@/components/wrapped/wrappedAnimations'
 import type { IlpPolicyAnalysis, IlpPolicyInput } from '@/lib/calculations/ilp'
 import { useFeeImpact } from '@/hooks/useFeeImpact'
+import { IllustrationOnlyChartFrame } from './IllustrationOnlyChartFrame'
 import { formatIlpCurrency, formatIlpPercent } from './formatters'
 import { buildIlpFeeYardstickMatches } from './ilpFeeYardsticks'
 import { buildDiscountedChargeTimeline } from './discountedChargeTimeline'
@@ -409,7 +410,11 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                       </label>
                     </motion.div>
                     <motion.div variants={staggerChild} className="w-full max-w-4xl rounded-xl border border-white/10 bg-white/[0.04] p-4">
-                      <div className="h-72 w-full" role="img" aria-label="Line chart showing total out-of-pocket fees by exit year">
+                      <IllustrationOnlyChartFrame
+                        className="h-72 w-full"
+                        ariaLabel="Line chart showing total out-of-pocket fees by exit year"
+                        dark
+                      >
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={discountedChargeTimeline} margin={{ top: 8, right: 20, bottom: 8, left: 12 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
@@ -462,7 +467,7 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                             />
                           </LineChart>
                         </ResponsiveContainer>
-                      </div>
+                      </IllustrationOnlyChartFrame>
                     </motion.div>
                     <motion.p variants={staggerChild} className="max-w-2xl text-sm text-white/62">
                       Lower points can highlight potentially better exit windows, but this is only one lens. You still need to weigh the value available, what you would keep contributing, and the role this policy plays in your plan.

@@ -25,6 +25,8 @@ import { buildFeeBreakdown } from '@/lib/calculations/ilpFeeBreakdown'
 import { useChartColors } from '@/lib/chartTheme'
 import { FeeRuleTooltip, BonusRuleTooltip, EventRuleTooltip, FundFeeTooltip } from './FeeRuleTooltip'
 import { ChartTooltipContent } from './ChartTooltip'
+import { IllustrationOnlyChartFrame } from './IllustrationOnlyChartFrame'
+import { ILP_VERTICAL_BAR_RADIUS, ILP_VERTICAL_NEGATIVE_BAR_RADIUS } from './chartBarRadii'
 import { formatIlpCurrency, formatIlpPercent } from './formatters'
 
 interface FeeBreakdownSectionProps {
@@ -229,10 +231,9 @@ export function FeeBreakdownSection({
   }, [breakdown, hasInception, inceptionTotal, includeOcf, useRealValues, inflationRate])
 
   const renderAnnualFeesChart = (expanded = false) => (
-    <div
+    <IllustrationOnlyChartFrame
       className={cn(expanded ? 'min-h-[26rem] h-[70vh] max-h-[70vh]' : 'h-72')}
-      role="img"
-      aria-label="Stacked bar chart of annual ILP fees by category"
+      ariaLabel="Stacked bar chart of annual ILP fees by category"
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={stackedBarData} margin={{ top: 10, right: 24, bottom: 10, left: 24 }}>
@@ -255,32 +256,63 @@ export function FeeBreakdownSection({
               value === 'bonusCredits' ? 'Bonus Credits' : value === 'additionalCharges' ? feeColumnInfo.additional.label : DEFAULT_FEE_CATEGORIES.find((c) => c.key === value)?.label ?? value
             }
           />
+          {(() => {
+            const topAnnualFeeKey = visibleAnnualFeeCategoryKeys.at(-1)
+            return (
+              <>
           {visibleAnnualFeeCategoryKeys.includes('accountFee') && (
-            <Bar dataKey="accountFee" stackId="fees" fill={categoryColors.accountFee} />
+            <Bar
+              dataKey="accountFee"
+              stackId="fees"
+              fill={categoryColors.accountFee}
+              radius={topAnnualFeeKey === 'accountFee' ? ILP_VERTICAL_BAR_RADIUS : undefined}
+            />
           )}
           {visibleAnnualFeeCategoryKeys.includes('additionalCharges') && (
-            <Bar dataKey="additionalCharges" stackId="fees" fill={categoryColors.additionalCharges} />
+            <Bar
+              dataKey="additionalCharges"
+              stackId="fees"
+              fill={categoryColors.additionalCharges}
+              radius={topAnnualFeeKey === 'additionalCharges' ? ILP_VERTICAL_BAR_RADIUS : undefined}
+            />
           )}
           {visibleAnnualFeeCategoryKeys.includes('assuranceCharges') && (
-            <Bar dataKey="assuranceCharges" stackId="fees" fill={categoryColors.assuranceCharges} />
+            <Bar
+              dataKey="assuranceCharges"
+              stackId="fees"
+              fill={categoryColors.assuranceCharges}
+              radius={topAnnualFeeKey === 'assuranceCharges' ? ILP_VERTICAL_BAR_RADIUS : undefined}
+            />
           )}
           {visibleAnnualFeeCategoryKeys.includes('eventCharges') && (
-            <Bar dataKey="eventCharges" stackId="fees" fill={categoryColors.eventCharges} />
+            <Bar
+              dataKey="eventCharges"
+              stackId="fees"
+              fill={categoryColors.eventCharges}
+              radius={topAnnualFeeKey === 'eventCharges' ? ILP_VERTICAL_BAR_RADIUS : undefined}
+            />
           )}
           {visibleAnnualFeeCategoryKeys.includes('implicitFundFee') && (
-            <Bar dataKey="implicitFundFee" stackId="fees" fill={categoryColors.implicitFundFee} />
+            <Bar
+              dataKey="implicitFundFee"
+              stackId="fees"
+              fill={categoryColors.implicitFundFee}
+              radius={topAnnualFeeKey === 'implicitFundFee' ? ILP_VERTICAL_BAR_RADIUS : undefined}
+            />
           )}
-          <Bar dataKey="bonusCredits" stackId="fees" fill={colors.success} />
+          <Bar dataKey="bonusCredits" stackId="fees" fill={colors.success} radius={ILP_VERTICAL_NEGATIVE_BAR_RADIUS} />
+              </>
+            )
+          })()}
         </BarChart>
       </ResponsiveContainer>
-    </div>
+    </IllustrationOnlyChartFrame>
   )
 
   const renderCumulativeFeesChart = (expanded = false) => (
-    <div
+    <IllustrationOnlyChartFrame
       className={cn(expanded ? 'min-h-[24rem] h-[66vh] max-h-[66vh]' : 'h-64')}
-      role="img"
-      aria-label="Line chart of cumulative ILP fees and bonuses over time"
+      ariaLabel="Line chart of cumulative ILP fees and bonuses over time"
     >
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={cumulativeData} margin={{ top: 10, right: 24, bottom: 10, left: 24 }}>
@@ -315,7 +347,7 @@ export function FeeBreakdownSection({
           <Line type="monotone" dataKey="netFees" stroke={colors.warning} strokeWidth={3} strokeDasharray="6 3" dot={false} />
         </LineChart>
       </ResponsiveContainer>
-    </div>
+    </IllustrationOnlyChartFrame>
   )
 
   const renderFeeTable = (showAllRows = false) => {

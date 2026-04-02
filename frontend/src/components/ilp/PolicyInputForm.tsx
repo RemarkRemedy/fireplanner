@@ -26,6 +26,7 @@ import { EEC_PRESETS } from '@/lib/data/ilpDefaults'
 import { useIlpStore } from '@/stores/useIlpStore'
 import { cn } from '@/lib/utils'
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { IllustrationOnlyChartFrame } from './IllustrationOnlyChartFrame'
 import { formatIlpPercent } from './formatters'
 import { mergeSupportNotes } from './supportNoteUtils'
 import { Badge } from '@/components/ui/badge'
@@ -3103,7 +3104,10 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                   <Lock className="h-4 w-4 shrink-0" />
                   <span>{policy.eecTable.length}-year early exit charge schedule from catalog template.</span>
                 </div>
-                <div className="h-44 rounded-md border p-2">
+                <IllustrationOnlyChartFrame
+                  className="h-44 rounded-md border p-2"
+                  ariaLabel="Line chart showing early exit charge schedule by policy year"
+                >
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={eecChartData}>
                       <XAxis dataKey="year" />
@@ -3112,7 +3116,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                       <Line type="monotone" dataKey="rate" stroke="hsl(var(--chart-danger))" strokeWidth={2} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
-                </div>
+                </IllustrationOnlyChartFrame>
                 <button
                   type="button"
                   className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
@@ -3172,7 +3176,10 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                 </p>
               </div>
 
-              <div className="h-44 rounded-md border p-2">
+              <IllustrationOnlyChartFrame
+                className="h-44 rounded-md border p-2"
+                ariaLabel="Line chart showing early exit charge schedule by policy year"
+              >
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={eecChartData}>
                     <XAxis dataKey="year" />
@@ -3181,7 +3188,7 @@ export function PolicyInputForm({ policy, issues, onManualRequirementCountChange
                     <Line type="monotone" dataKey="rate" stroke="hsl(var(--chart-danger))" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
-              </div>
+              </IllustrationOnlyChartFrame>
             </div>
 
             <div className="overflow-auto rounded-md border">

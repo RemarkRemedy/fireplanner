@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import type { IlpPolicyAnalysis, IlpPolicyInput } from '@/lib/calculations/ilp'
 import { useChartColors } from '@/lib/chartTheme'
 import { computeAnnualFeeDragPct } from '@/lib/calculations/ilpFeeImpact'
+import { IllustrationOnlyChartFrame } from './IllustrationOnlyChartFrame'
 import { formatIlpCurrency, formatIlpPercent } from './formatters'
 
 interface HeadlineInsightProps {
@@ -206,7 +207,10 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
             </div>
 
             {/* Growth divergence chart */}
-            <div className="mt-4 h-48" role="img" aria-label="Portfolio growth comparison at different fee levels">
+            <IllustrationOnlyChartFrame
+              className="mt-4 h-48"
+              ariaLabel="Portfolio growth comparison at different fee levels"
+            >
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={feeImpactTimeSeries} margin={{ top: 5, right: 10, bottom: 5, left: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -247,7 +251,7 @@ export function HeadlineInsight({ policy, analysis }: HeadlineInsightProps) {
                   ))}
                 </LineChart>
               </ResponsiveContainer>
-            </div>
+            </IllustrationOnlyChartFrame>
           </div>
         )}
 
