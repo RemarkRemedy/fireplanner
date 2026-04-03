@@ -2,6 +2,8 @@ import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { IlpPolicyInput, IlpProjectedPolicyAnalysis } from '@/lib/calculations/ilp'
 import { useChartColors } from '@/lib/chartTheme'
+import { IllustrationOnlyChartFrame } from './IllustrationOnlyChartFrame'
+import { ILP_HORIZONTAL_BAR_RADIUS } from './chartBarRadii'
 import { formatIlpCurrency } from './formatters'
 
 interface FeeWaterfallChartProps {
@@ -27,7 +29,10 @@ export function FeeWaterfallChart({ policy, analysis }: FeeWaterfallChartProps) 
         </p>
       </CardHeader>
       <CardContent>
-        <div className="h-72" role="img" aria-label="Bar chart comparing premiums, fees, bonuses, and projected value at the analysis horizon">
+        <IllustrationOnlyChartFrame
+          className="h-72"
+          ariaLabel="Bar chart comparing premiums, fees, bonuses, and projected value at the analysis horizon"
+        >
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} layout="vertical" margin={{ top: 10, right: 24, bottom: 10, left: 24 }}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -39,14 +44,14 @@ export function FeeWaterfallChart({ policy, analysis }: FeeWaterfallChartProps) 
               <Tooltip
                 formatter={(value: number) => formatIlpCurrency(value, policy.currency)}
               />
-              <Bar dataKey="value" radius={[0, 6, 6, 0]}>
+              <Bar dataKey="value" radius={ILP_HORIZONTAL_BAR_RADIUS}>
                 {data.map((entry) => (
                   <Cell key={entry.label} fill={entry.fill} />
                 ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
-        </div>
+        </IllustrationOnlyChartFrame>
       </CardContent>
     </Card>
   )

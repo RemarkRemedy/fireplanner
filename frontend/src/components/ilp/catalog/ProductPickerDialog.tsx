@@ -93,16 +93,11 @@ export function ProductPickerDialog({ open, onOpenChange, onSelect }: ProductPic
   const [openGroups, setOpenGroups] = useState<string[]>([])
 
   useEffect(() => {
-    const desiredOpenGroups = normalizedQuery
-      ? allInsurerKeys
-      : open && openGroups.length === 0 && allInsurerKeys.length > 0
-        ? allInsurerKeys
-        : null
-
-    if (desiredOpenGroups == null) {
+    if (normalizedQuery.length === 0) {
       return
     }
 
+    const desiredOpenGroups = allInsurerKeys
     const matchesDesiredGroups =
       desiredOpenGroups.length === openGroups.length
       && desiredOpenGroups.every((group, index) => openGroups[index] === group)
@@ -110,7 +105,18 @@ export function ProductPickerDialog({ open, onOpenChange, onSelect }: ProductPic
     if (!matchesDesiredGroups) {
       setOpenGroups(desiredOpenGroups)
     }
-  }, [allInsurerKeys, normalizedQuery, open, openGroups])
+  }, [allInsurerKeys, normalizedQuery, openGroups])
+
+  useEffect(() => {
+    if (open) {
+      return
+    }
+
+    setQuery('')
+    setOpenGroups([])
+    setExpandedProductId(null)
+    setExpandedDisabledProductIds([])
+  }, [open])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

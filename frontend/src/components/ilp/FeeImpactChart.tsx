@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import type { FeeImpactTier } from '@/hooks/useFeeImpact'
+import { IllustrationOnlyChartFrame } from './IllustrationOnlyChartFrame'
 import { formatIlpCurrency, formatIlpPercent } from './formatters'
 
 interface FeeImpactChartProps {
@@ -53,7 +54,11 @@ export function FeeImpactChart({
     : 'rounded-md border border-border/60 bg-background/70 px-4 py-3'
 
   const renderChart = (expanded = false) => (
-    <div className={expanded ? 'h-[65vh] min-h-[32rem] w-full' : `${comparisonBlockClass} h-56`}>
+    <IllustrationOnlyChartFrame
+      className={expanded ? 'h-[65vh] min-h-[32rem] w-full' : `${comparisonBlockClass} h-56`}
+      ariaLabel="Line chart showing portfolio growth comparison at different fee levels"
+      dark={Boolean(dark)}
+    >
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={timeSeries} margin={{ top: 5, right: 10, bottom: 5, left: 10 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} className={dark ? '' : 'stroke-muted'} />
@@ -97,7 +102,7 @@ export function FeeImpactChart({
           ))}
         </LineChart>
       </ResponsiveContainer>
-    </div>
+    </IllustrationOnlyChartFrame>
   )
 
   const renderComparisonRows = (expanded = false) => {

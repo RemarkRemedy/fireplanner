@@ -2,6 +2,7 @@ import { Fragment } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useChartColors } from '@/lib/chartTheme'
 import type { IlpProjectedPolicyAnalysis } from '@/lib/calculations/ilp'
+import { IllustrationOnlyChartFrame } from './IllustrationOnlyChartFrame'
 import { formatIlpCurrency } from './formatters'
 import {
   CartesianGrid,
@@ -49,7 +50,10 @@ export function NpvTimelineChart({ analyses }: NpvTimelineChartProps) {
         </p>
       </CardHeader>
       <CardContent>
-        <div className="h-80" role="img" aria-label="Line chart showing net present value of fee drag by exit year">
+        <IllustrationOnlyChartFrame
+          className="h-80"
+          ariaLabel="Line chart showing net present value of fee drag by exit year"
+        >
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ top: 10, right: 20, left: 20, bottom: 10 }}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -108,7 +112,7 @@ export function NpvTimelineChart({ analyses }: NpvTimelineChartProps) {
               })}
             </LineChart>
           </ResponsiveContainer>
-        </div>
+        </IllustrationOnlyChartFrame>
       </CardContent>
     </Card>
   )

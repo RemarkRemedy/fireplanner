@@ -8,7 +8,9 @@ import { WrappedProgressBar } from '@/components/wrapped/WrappedProgressBar'
 import { AnimatedNumber } from '@/components/wrapped/AnimatedNumber'
 import { staggerChild } from '@/components/wrapped/wrappedAnimations'
 import type { IlpPolicyAnalysis, IlpPolicyInput } from '@/lib/calculations/ilp'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useFeeImpact } from '@/hooks/useFeeImpact'
+import { IllustrationOnlyChartFrame, IllustrativeChartsGroup } from './IllustrationOnlyChartFrame'
 import { formatIlpCurrency, formatIlpPercent } from './formatters'
 import { buildIlpFeeYardstickMatches } from './ilpFeeYardsticks'
 import { buildDiscountedChargeTimeline } from './discountedChargeTimeline'
@@ -46,6 +48,30 @@ function humanizeBonusTag(tag: string): string {
   return parts.slice(-2).join(' ')
 }
 
+function formatCompactStoryAxisTick(value: number) {
+  return new Intl.NumberFormat('en-SG', {
+    notation: 'compact',
+    maximumFractionDigits: value < 10_000 ? 1 : 0,
+  }).format(value).replace('k', 'K')
+}
+
+function resolveNiceStoryAxisMax(values: number[]) {
+  const maxValue = Math.max(...values, 1000)
+  const targetMax = maxValue * 1.12
+  const roughStep = targetMax / 4
+  const magnitude = 10 ** Math.floor(Math.log10(roughStep))
+  const normalizedStep = roughStep / magnitude
+
+  let niceStepFactor = 1
+  if (normalizedStep > 1) niceStepFactor = 2
+  if (normalizedStep > 2) niceStepFactor = 2.5
+  if (normalizedStep > 2.5) niceStepFactor = 5
+  if (normalizedStep > 5) niceStepFactor = 10
+
+  const step = niceStepFactor * magnitude
+  return Math.ceil(targetMax / step) * step
+}
+
 export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
   const { summary } = analysis
   const unmodeledBonuses = countMetadataOnlyBonuses(policy)
@@ -53,9 +79,11 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
   const [direction, setDirection] = useState(1)
   const [yardstickIndex, setYardstickIndex] = useState(0)
   const [excludeStoryFundFees, setExcludeStoryFundFees] = useState(false)
+  const [mobileExitSummaryIndex, setMobileExitSummaryIndex] = useState(0)
   const isTransitioning = useRef(false)
   const pointerStart = useRef<{ x: number; y: number; time: number } | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const useCompactExitSummaries = useMediaQuery('(max-width: 1279px)')
   const feeImpact = useFeeImpact(policy, analysis, false)
 
   const activeCards = BASE_CARDS
@@ -110,6 +138,10 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
   const discountedChargeTimeline = projectedAnalysis
     ? buildDiscountedChargeTimeline(policy, projectedAnalysis, { includeFundFees: !excludeStoryFundFees })
     : []
+  const discountedChargeAxisMax = useMemo(
+    () => resolveNiceStoryAxisMax(discountedChargeTimeline.map((point) => point.totalDiscountedCharges)),
+    [discountedChargeTimeline],
+  )
 
   const goForward = useCallback(() => {
     if (isTransitioning.current) return
@@ -151,6 +183,70 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
   useEffect(() => {
     setYardstickIndex(0)
   }, [realTotalEstimatedFees, horizonYears, policy.currency])
+
+  useEffect(() => {
+    if (activeCards[currentIndex] === 'exit') {
+      setMobileExitSummaryIndex(0)
+    }
+  }, [activeCards, currentIndex])
+
+  function renderExitSummaryCard(kind: 'skip' | 'penalty' | 'burden') {
+    if (kind === 'skip') {
+      return (
+        <div className="flex min-h-[9.25rem] flex-col rounded-xl border border-white/10 bg-white/[0.05] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:min-h-[10.5rem] sm:p-5">
+          <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/45">Skip this product</div>
+          <div className="mt-2 text-[2rem] font-semibold leading-none tracking-tight sm:text-3xl">
+            {formatIlpCurrency(0, policy.currency)}
+          </div>
+          <div className="mt-2 text-sm leading-5 text-white/70">
+            No fees, no surrender charges, no policy value
+          </div>
+          <div className="mt-4 border-t border-white/10 pt-3 text-sm text-white/60 sm:mt-auto">
+            Your premiums stay in your own hands
+          </div>
+        </div>
+      )
+    }
+
+    if (kind === 'penalty') {
+      return (
+        <div className="flex min-h-[9.25rem] flex-col rounded-xl border border-white/10 bg-white/[0.05] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:min-h-[10.5rem] sm:p-5">
+          <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/45">First penalty-free exit</div>
+          {firstPenaltyFreeExitOption ? (
+            <>
+              <div className="mt-2 text-[2rem] font-semibold leading-none tracking-tight sm:text-3xl">Year {firstPenaltyFreeExitOption.policyYear}</div>
+              <div className="mt-2 text-sm leading-5 text-white/70">
+                First year the surrender penalty drops to zero
+              </div>
+              <div className="mt-4 border-t border-white/10 pt-3 text-sm text-white/60 sm:mt-auto">
+                Value available {formatIlpCurrency(firstPenaltyFreeExitOption.netSurrenderValue, policy.currency)}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="mt-2 text-2xl font-semibold leading-tight tracking-tight">Not within horizon</div>
+              <div className="mt-4 border-t border-white/10 pt-3 text-sm text-white/60 sm:mt-auto">
+                A surrender charge still applies through Year {horizonYear}
+              </div>
+            </>
+          )}
+        </div>
+      )
+    }
+
+    return (
+      <div className="flex min-h-[9.25rem] flex-col rounded-xl border border-white/10 bg-white/[0.05] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:min-h-[10.5rem] sm:p-5">
+        <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/45">Lowest fee-burden exit</div>
+        <div className="mt-2 text-[2rem] font-semibold leading-none tracking-tight sm:text-3xl">Year {projectedAnalysis?.npvAnalysis.bestExitYear}</div>
+        <div className="mt-2 text-sm leading-5 text-white/70">
+          Lowest modeled fee burden, not necessarily the best overall outcome
+        </div>
+        <div className="mt-4 border-t border-white/10 pt-3 text-sm text-white/60 sm:mt-auto">
+          Value available {formatIlpCurrency(bestExitOption?.netSurrenderValue ?? 0, policy.currency)}
+        </div>
+      </div>
+    )
+  }
 
   const isInteractiveTarget = useCallback((target: EventTarget | null) => {
     return target instanceof Element
@@ -408,61 +504,81 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
                         Exclude fund fees (OCF) from this view
                       </label>
                     </motion.div>
+                    <motion.div
+                      variants={staggerChild}
+                      className="w-full max-w-4xl rounded-xl border border-white/10 bg-white/[0.04] p-4"
+                      onPointerDown={(event) => event.stopPropagation()}
+                      onPointerUp={(event) => event.stopPropagation()}
+                    >
+                      <p className="text-sm leading-6 text-white/68">
+                        Illustrative chart. This visual shows the modeled scenario from the current story assumptions and should not be read as a policy statement.
+                      </p>
+                    </motion.div>
                     <motion.div variants={staggerChild} className="w-full max-w-4xl rounded-xl border border-white/10 bg-white/[0.04] p-4">
-                      <div className="h-72 w-full" role="img" aria-label="Line chart showing total out-of-pocket fees by exit year">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={discountedChargeTimeline} margin={{ top: 8, right: 20, bottom: 8, left: 12 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
-                            <XAxis
-                              dataKey="exitYear"
-                              tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.55)' }}
-                              tickLine={false}
-                              axisLine={false}
-                            />
-                            <YAxis
-                              width={80}
-                              tickFormatter={(value: number) => `${Math.round(value / 1000)}K`}
-                              tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.55)' }}
-                              tickLine={false}
-                              axisLine={false}
-                            />
-                            <Tooltip
-                              content={({ active, payload, label }) => {
-                                if (!active || !payload?.length) return null
-                                const point = payload[0]?.payload
-                                if (!point) return null
-                                const rows = [
-                                  { label: 'Total', value: formatIlpCurrency(point.totalDiscountedCharges, policy.currency), bold: true },
-                                  { label: 'Policy charges', value: formatIlpCurrency(point.discountedPolicyCharges, policy.currency) },
-                                  ...(!excludeStoryFundFees ? [{ label: 'Fund charges', value: formatIlpCurrency(point.discountedFundCharges, policy.currency) }] : []),
-                                  { label: 'Bonuses offset', value: `-${formatIlpCurrency(point.discountedBonuses, policy.currency)}` },
-                                  { label: 'Initial charges', value: formatIlpCurrency(point.discountedInceptionCharges, policy.currency) },
-                                  { label: 'Early-exit charge', value: formatIlpCurrency(point.discountedEec, policy.currency) },
-                                ]
-                                return (
-                                  <div style={{ background: 'rgba(11, 14, 28, 0.94)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '10px 14px', color: 'white', fontSize: 13 }}>
-                                    <div style={{ fontWeight: 600, marginBottom: 6 }}>Exit in Year {label}</div>
-                                    {rows.map((row) => (
-                                      <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, opacity: row.bold ? 1 : 0.7, fontWeight: row.bold ? 600 : 400 }}>
-                                        <span>{row.label}</span>
-                                        <span style={{ fontVariantNumeric: 'tabular-nums' }}>{row.value}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )
-                              }}
-                            />
-                            <Line
-                              type="monotone"
-                              dataKey="totalDiscountedCharges"
-                              stroke="#F9A8D4"
-                              strokeWidth={3}
-                              dot={false}
-                              activeDot={{ r: 5, fill: '#F9A8D4', stroke: '#FFFFFF', strokeWidth: 1.5 }}
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
+                      <IllustrativeChartsGroup revealed>
+                        <IllustrationOnlyChartFrame
+                          className="h-72 w-full"
+                          ariaLabel="Line chart showing total out-of-pocket fees by exit year"
+                          dark
+                        >
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={discountedChargeTimeline} margin={{ top: 14, right: 10, bottom: 8, left: 2 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
+                              <XAxis
+                                dataKey="exitYear"
+                                tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.55)' }}
+                                tickLine={false}
+                                axisLine={false}
+                                padding={{ left: 6, right: 6 }}
+                              />
+                              <YAxis
+                                width={54}
+                                domain={[0, discountedChargeAxisMax]}
+                                tickCount={5}
+                                tickFormatter={formatCompactStoryAxisTick}
+                                tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.55)' }}
+                                tickLine={false}
+                                axisLine={false}
+                                tickMargin={8}
+                              />
+                              <Tooltip
+                                content={({ active, payload, label }) => {
+                                  if (!active || !payload?.length) return null
+                                  const point = payload[0]?.payload
+                                  if (!point) return null
+                                  const rows = [
+                                    { label: 'Total', value: formatIlpCurrency(point.totalDiscountedCharges, policy.currency), bold: true },
+                                    { label: 'Policy charges', value: formatIlpCurrency(point.discountedPolicyCharges, policy.currency) },
+                                    ...(!excludeStoryFundFees ? [{ label: 'Fund charges', value: formatIlpCurrency(point.discountedFundCharges, policy.currency) }] : []),
+                                    { label: 'Bonuses offset', value: `-${formatIlpCurrency(point.discountedBonuses, policy.currency)}` },
+                                    { label: 'Initial charges', value: formatIlpCurrency(point.discountedInceptionCharges, policy.currency) },
+                                    { label: 'Early-exit charge', value: formatIlpCurrency(point.discountedEec, policy.currency) },
+                                  ]
+                                  return (
+                                    <div style={{ background: 'rgba(11, 14, 28, 0.94)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '10px 14px', color: 'white', fontSize: 13 }}>
+                                      <div style={{ fontWeight: 600, marginBottom: 6 }}>Exit in Year {label}</div>
+                                      {rows.map((row) => (
+                                        <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, opacity: row.bold ? 1 : 0.7, fontWeight: row.bold ? 600 : 400 }}>
+                                          <span>{row.label}</span>
+                                          <span style={{ fontVariantNumeric: 'tabular-nums' }}>{row.value}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )
+                                }}
+                              />
+                              <Line
+                                type="monotone"
+                                dataKey="totalDiscountedCharges"
+                                stroke="#F9A8D4"
+                                strokeWidth={3}
+                                dot={false}
+                                activeDot={{ r: 5, fill: '#F9A8D4', stroke: '#FFFFFF', strokeWidth: 1.5 }}
+                              />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </IllustrationOnlyChartFrame>
+                      </IllustrativeChartsGroup>
                     </motion.div>
                     <motion.p variants={staggerChild} className="max-w-2xl text-sm text-white/62">
                       Lower points can highlight potentially better exit windows, but this is only one lens. You still need to weigh the value available, what you would keep contributing, and the role this policy plays in your plan.
@@ -477,75 +593,79 @@ export function IlpFeeStory({ policy, analysis, onClose }: IlpFeeStoryProps) {
             )}
 
             {activeCards[currentIndex] === 'exit' && (
-              <WrappedCard gradient={currentGradient} direction={direction}>
+              <WrappedCard gradient={currentGradient} direction={direction} compact wide>
                 <motion.p variants={staggerChild} className="text-xs font-medium uppercase tracking-widest text-white/60">
                   What happens if you stop early
                 </motion.p>
                 {isProjected && bestExitOption ? (
                   <>
-                    <motion.div variants={staggerChild} className="grid w-full max-w-3xl grid-cols-1 gap-3 text-left sm:grid-cols-2">
-                      <div className="flex min-h-[12.5rem] flex-col rounded-md border border-white/10 bg-white/[0.05] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-                        <div className="text-[11px] font-medium uppercase tracking-wide text-white/45">Skip this product</div>
-                        <div className="mt-3 text-3xl font-semibold leading-none tracking-tight">
-                          {formatIlpCurrency(0, policy.currency)}
-                        </div>
-                        <div className="mt-2 text-sm text-white/70">
-                          No fees, no surrender charges, no policy value
-                        </div>
-                        <div className="mt-auto border-t border-white/10 pt-3 text-sm text-white/60">
-                          Your premiums stay in your own hands
-                        </div>
-                      </div>
-                      <div className="flex min-h-[12.5rem] flex-col rounded-md border border-white/10 bg-white/[0.05] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-                        <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-white/45">First penalty-free exit</div>
-                        {firstPenaltyFreeExitOption ? (
-                          <>
-                            <div className="mt-3 text-3xl font-semibold leading-none tracking-tight">Year {firstPenaltyFreeExitOption.policyYear}</div>
-                            <div className="mt-2 text-sm text-white/70">
-                              First year the surrender penalty drops to zero
-                            </div>
-                            <div className="mt-auto border-t border-white/10 pt-3 text-sm text-white/60">
-                              Value available {formatIlpCurrency(firstPenaltyFreeExitOption.netSurrenderValue, policy.currency)}
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="mt-3 text-2xl font-semibold leading-tight tracking-tight">Not within horizon</div>
-                            <div className="mt-auto border-t border-white/10 pt-3 text-sm text-white/60">
-                              A surrender charge still applies through Year {horizonYear}
-                            </div>
-                          </>
-                        )}
-                      </div>
-                      <div className="flex min-h-[12.5rem] flex-col rounded-md border border-white/10 bg-white/[0.05] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-                        <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-white/45">Lowest fee-burden exit</div>
-                        <div className="mt-3 text-3xl font-semibold leading-none tracking-tight">Year {projectedAnalysis.npvAnalysis.bestExitYear}</div>
-                        <div className="mt-2 text-sm text-white/70">
-                          Lowest modeled fee burden, not necessarily the best overall outcome
-                        </div>
-                        <div className="mt-auto border-t border-white/10 pt-3 text-sm text-white/60">
-                          Value available {formatIlpCurrency(bestExitOption.netSurrenderValue, policy.currency)}
-                        </div>
-                      </div>
-                      <div className="flex min-h-[12.5rem] flex-col rounded-md border border-white/10 bg-white/[0.05] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-                        <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-white/45">If you keep the policy</div>
-                        <div className="mt-3 text-3xl font-semibold leading-none tracking-tight">
-                          {formatIlpCurrency(horizonProjectedValue, policy.currency)}
-                        </div>
-                        <div className="mt-2 text-sm text-white/70">Projected value after {horizonYear} years</div>
-                        <div className="mt-auto space-y-2 border-t border-white/10 pt-3 text-sm text-white/60">
-                          <div className="flex items-center justify-between gap-4">
-                            <span>Total contributions</span>
-                            <span className="font-medium text-white/80">{formatIlpCurrency(horizonProjectedContributions, policy.currency)}</span>
+                    <motion.div variants={staggerChild} className="w-full max-w-5xl text-left">
+                      {useCompactExitSummaries ? (
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-3 gap-2" data-story-interactive>
+                            {[
+                              { label: 'Skip', value: 'skip' },
+                              { label: 'No penalty', value: 'penalty' },
+                              { label: 'Lowest fee', value: 'burden' },
+                            ].map((option, index) => (
+                              <button
+                                key={option.value}
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  setMobileExitSummaryIndex(index)
+                                }}
+                                className={`rounded-full border px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] transition ${
+                                  mobileExitSummaryIndex === index
+                                    ? 'border-white/30 bg-white/16 text-white'
+                                    : 'border-white/10 bg-white/[0.04] text-white/55'
+                                }`}
+                              >
+                                {option.label}
+                              </button>
+                            ))}
                           </div>
-                          <div className="flex items-center justify-between gap-4">
-                            <span>Total fee cost</span>
-                            <span className="font-medium text-white/80">{formatIlpCurrency(totalEstimatedFees, policy.currency)}</span>
+                          {renderExitSummaryCard(
+                            mobileExitSummaryIndex === 0
+                              ? 'skip'
+                              : mobileExitSummaryIndex === 1
+                                ? 'penalty'
+                                : 'burden',
+                          )}
+                        </div>
+                      ) : (
+                        <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+                          {renderExitSummaryCard('skip')}
+                          {renderExitSummaryCard('penalty')}
+                          {renderExitSummaryCard('burden')}
+                        </div>
+                      )}
+
+                      <div className="mt-2.5 rounded-xl border border-white/10 bg-white/[0.05] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:p-5">
+                        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(18rem,0.9fr)] xl:items-end">
+                          <div>
+                            <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/45">If you keep the policy</div>
+                            <div className="mt-2 text-[2.25rem] font-semibold leading-none tracking-tight sm:text-[2.75rem]">
+                              {formatIlpCurrency(horizonProjectedValue, policy.currency)}
+                            </div>
+                            <div className="mt-2 text-sm leading-5 text-white/70">
+                              Projected value after {horizonYear} years
+                            </div>
+                          </div>
+                          <div className="grid gap-2 rounded-lg border border-white/10 bg-black/10 p-3 text-sm text-white/65">
+                            <div className="flex items-center justify-between gap-4">
+                              <span>Total contributions</span>
+                              <span className="font-medium text-white/85">{formatIlpCurrency(horizonProjectedContributions, policy.currency)}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-4">
+                              <span>Total fee cost</span>
+                              <span className="font-medium text-white/85">{formatIlpCurrency(totalEstimatedFees, policy.currency)}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </motion.div>
-                    <motion.p variants={staggerChild} className="max-w-2xl text-balance text-base text-white/70">
+                    <motion.p variants={staggerChild} className="max-w-3xl text-balance text-sm leading-6 text-white/70 sm:text-base">
                       Early exit can still leave a meaningful surrender deduction. The first penalty-free exit and the lowest fee-burden exit are not always the same choice, and holding to {horizonYear} years still means contributing {formatIlpCurrency(horizonProjectedContributions, policy.currency)} and carrying {formatIlpCurrency(totalEstimatedFees, policy.currency)} of nominal fee cost in this estimate.
                     </motion.p>
                   </>

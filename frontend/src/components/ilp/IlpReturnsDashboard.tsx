@@ -161,10 +161,56 @@ export function IlpReturnsDashboard({ data }: Props) {
         : `As of: ${asOfDate}`),
     [asOfDate, asOfDates, recentReportDates],
   )
+  const visibleFamilyCount = useMemo(
+    () => new Set(
+      visibleRows.map((row) => row.returns?.groupingKey || row.returns?.fundFamily || row.id),
+    ).size,
+    [visibleRows],
+  )
+  const hasActiveFilters = search.trim().length > 0
+    || insurer !== 'all'
+    || asOfDate !== 'recent_reports'
+    || returnWindow !== 'since_inception'
+    || sort !== 'gap-desc'
+    || quickFilter !== 'all'
+  const activeViewBadges = [
+    search.trim() ? `Search: ${search.trim()}` : null,
+    insurer !== 'all' ? insurer : null,
+    asOfDate === 'all'
+      ? 'Mixed report dates'
+      : asOfDate !== 'recent_reports'
+        ? `As of ${asOfDate}`
+        : null,
+    returnWindow !== 'since_inception' ? currentWindowLabel : null,
+    quickFilter !== 'all'
+      ? ({
+          outperform: 'Beating benchmark',
+          proxy: 'ETF proxy mapped',
+          'low-fee': 'Fee at or below 1.00%',
+        } as const)[quickFilter]
+      : null,
+    sort !== 'gap-desc'
+      ? ({
+          'gap-asc': 'Sorted by lowest return gap',
+          'fund-desc': 'Sorted by highest fund return',
+          'fund-asc': 'Sorted by lowest fund return',
+          alpha: 'Sorted A to Z',
+        } as const)[sort]
+      : null,
+  ].filter((value): value is string => Boolean(value))
   const openRow = (row: IlpMasterRow) => {
     const nextParams = new URLSearchParams(searchParams)
     nextParams.set('fund', row.id)
     setSearchParams(nextParams, { replace: true })
+  }
+
+  const resetFilters = () => {
+    setSearch('')
+    setInsurer('all')
+    setAsOfDate('recent_reports')
+    setReturnWindow('since_inception')
+    setSort('gap-desc')
+    setQuickFilter('all')
   }
 
   return (
@@ -280,10 +326,39 @@ export function IlpReturnsDashboard({ data }: Props) {
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-        <span><strong className="text-foreground">{visibleRows.length}</strong> rows</span>
-        <span>Window: {currentWindowLabel}</span>
-        <span>{asOfSummary}</span>
+      <div className="rounded-lg border bg-card p-4 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+              <span><strong className="text-foreground">{visibleRows.length}</strong> rows</span>
+              <span><strong className="text-foreground">{visibleFamilyCount}</strong> family groups</span>
+              <span>Window: {currentWindowLabel}</span>
+            </div>
+            {hasActiveFilters ? (
+              <div className="flex flex-wrap gap-2">
+                {activeViewBadges.map((badge) => (
+                  <span key={badge} className="inline-flex rounded-full border bg-muted/40 px-3 py-1 text-xs font-medium text-foreground">
+                    {badge}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Default view keeps the latest reporting cohort and sorts by strongest benchmark outperformance first.
+              </p>
+            )}
+            <p className="text-sm text-muted-foreground">{asOfSummary}</p>
+          </div>
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="inline-flex rounded-full border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+            >
+              Reset filters
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="rounded-lg border bg-card p-4 text-sm text-muted-foreground shadow-sm">
@@ -332,16 +407,28 @@ export function IlpReturnsDashboard({ data }: Props) {
                       openRow(row)
                     }
                   }}
-                  className="cursor-pointer border-b align-top transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-                >
-                  <td className="px-4 py-4">
+                className="cursor-pointer border-b align-top transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              >
+                <td className="px-4 py-4">
+                  <div className="flex flex-wrap items-center gap-2">
                     <div className="font-medium text-foreground">{row.subFund}</div>
+                    {row.returns?.shareClassOrCurrency && (
+                      <span className="inline-flex rounded-full border bg-muted/40 px-2 py-0.5 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                        {row.returns.shareClassOrCurrency}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {row.insurer}
+                  </div>
+                  {row.returns?.fundFamily && row.returns.fundFamily !== row.subFund && (
                     <div className="mt-1 text-xs text-muted-foreground">
-                      {row.insurer} • {row.returns?.shareClassOrCurrency || 'SGD'}
+                      Family: {row.returns.fundFamily}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => openRow(row)}
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => openRow(row)}
                       className="mt-2 text-xs font-medium text-foreground underline underline-offset-2"
                     >
                       Open details
@@ -409,14 +496,22 @@ export function IlpReturnsDashboard({ data }: Props) {
                   openRow(row)
                 }
               }}
-              className="cursor-pointer rounded-lg border bg-card p-4 shadow-sm transition-colors hover:bg-muted/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h3 className="text-base font-semibold text-foreground">{row.subFund}</h3>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {row.insurer} • {row.returns?.shareClassOrCurrency || 'SGD'}
-                  </p>
+            className="cursor-pointer rounded-lg border bg-card p-4 shadow-sm transition-colors hover:bg-muted/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-base font-semibold text-foreground">{row.subFund}</h3>
+                    {row.returns?.shareClassOrCurrency && (
+                      <span className="inline-flex rounded-full border bg-muted/40 px-2 py-0.5 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                        {row.returns.shareClassOrCurrency}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">{row.insurer}</p>
+                  {row.returns?.fundFamily && row.returns.fundFamily !== row.subFund && (
+                    <p className="mt-1 text-xs text-muted-foreground">Family: {row.returns.fundFamily}</p>
+                  )}
                   <button
                     type="button"
                     onClick={() => openRow(row)}

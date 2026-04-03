@@ -29,6 +29,9 @@ type FeeRow = {
   sourceUrl: string
   sourcePage: number | null
   sourceNote: string
+  fundFamily: string
+  shareClassOrCurrency: string
+  groupingKey: string
 }
 
 function compareNullable(left: number | null | undefined, right: number | null | undefined, direction: 'asc' | 'desc') {
@@ -67,6 +70,9 @@ export function IlpOcfDashboard({ data }: Props) {
           sourceUrl: row.feeSource?.url || '#',
           sourcePage: row.feeSource?.page ? Number(row.feeSource.page) : null,
           sourceNote: row.feeSource?.note || '',
+          fundFamily: row.returns?.fundFamily || '',
+          shareClassOrCurrency: row.returns?.shareClassOrCurrency || '',
+          groupingKey: row.returns?.groupingKey || row.returns?.fundFamily || row.id,
         })),
     [data.rows],
   )
@@ -161,11 +167,55 @@ export function IlpOcfDashboard({ data }: Props) {
     () => verifiedRows.filter((row) => row.externalManager && row.externalManager !== 'Not stated').length,
     [verifiedRows],
   )
+  const visibleFamilyCount = useMemo(
+    () => new Set(visibleRows.map((row) => row.groupingKey)).size,
+    [visibleRows],
+  )
+  const hasActiveFilters = search.trim().length > 0
+    || insurer !== 'all'
+    || feeLabel !== 'all'
+    || asOfDate !== 'all'
+    || structure !== 'all'
+    || sort !== 'fee-asc'
+    || quickFilter !== 'all'
+  const activeViewBadges = [
+    search.trim() ? `Search: ${search.trim()}` : null,
+    insurer !== 'all' ? insurer : null,
+    feeLabel !== 'all' ? feeLabel : null,
+    asOfDate !== 'all' ? `As of ${asOfDate}` : null,
+    structure !== 'all' ? structure : null,
+    quickFilter !== 'all'
+      ? ({
+          'low-fee': 'Fee at or below 1.00%',
+          proxy: 'ETF proxy mapped',
+          manager: 'Manager shown',
+          all: null,
+        } satisfies Record<QuickFilter, string | null>)[quickFilter]
+      : null,
+    sort !== 'fee-asc'
+      ? ({
+          'fee-desc': 'Sorted by highest fee',
+          alpha: 'Sorted A to Z',
+          insurer: 'Grouped by insurer',
+          'fee-asc': null,
+        } satisfies Record<SortMode, string | null>)[sort]
+      : null,
+  ].filter((value): value is string => Boolean(value))
 
   const openRow = (row: FeeRow) => {
     const nextParams = new URLSearchParams(searchParams)
     nextParams.set('fund', row.id)
     setSearchParams(nextParams, { replace: true })
+  }
+
+  const resetFilters = () => {
+    setSearch('')
+    setInsurer('all')
+    setFeeLabel('all')
+    setAsOfDate('all')
+    setStructure('all')
+    setSort('fee-asc')
+    setQuickFilter('all')
   }
 
   return (
@@ -313,10 +363,38 @@ export function IlpOcfDashboard({ data }: Props) {
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-        <span><strong className="text-foreground">{visibleRows.length}</strong> rows</span>
-        <span>Verified fee rows only</span>
-        <span>{asOfDate === 'all' ? 'All dates' : `As of: ${asOfDate}`}</span>
+      <div className="rounded-lg border bg-card p-4 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+              <span><strong className="text-foreground">{visibleRows.length}</strong> rows</span>
+              <span><strong className="text-foreground">{visibleFamilyCount}</strong> family groups</span>
+              <span>{asOfDate === 'all' ? 'All dates' : `As of: ${asOfDate}`}</span>
+            </div>
+            {hasActiveFilters ? (
+              <div className="flex flex-wrap gap-2">
+                {activeViewBadges.map((badge) => (
+                  <span key={badge} className="inline-flex rounded-full border bg-muted/40 px-3 py-1 text-xs font-medium text-foreground">
+                    {badge}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Default view shows every verified fee row, sorted from lowest fee upward so cheaper candidates surface first.
+              </p>
+            )}
+          </div>
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="inline-flex rounded-full border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+            >
+              Reset filters
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="rounded-lg border bg-card p-4 text-sm text-muted-foreground shadow-sm">
@@ -363,10 +441,22 @@ export function IlpOcfDashboard({ data }: Props) {
                 className="cursor-pointer border-b align-top transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               >
                 <td className="px-4 py-4">
-                  <div className="font-medium text-foreground">{row.subFund}</div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="font-medium text-foreground">{row.subFund}</div>
+                    {row.shareClassOrCurrency && (
+                      <span className="inline-flex rounded-full border bg-muted/40 px-2 py-0.5 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                        {row.shareClassOrCurrency}
+                      </span>
+                    )}
+                  </div>
                   <div className="mt-1 text-xs text-muted-foreground">
                     {row.insurer} • {row.externalManager}
                   </div>
+                  {row.fundFamily && row.fundFamily !== row.subFund && (
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      Family: {row.fundFamily}
+                    </div>
+                  )}
                   <div className="mt-1 text-xs text-muted-foreground">
                     {row.etfProxy || 'No ETF proxy mapped'}
                   </div>
@@ -431,8 +521,18 @@ export function IlpOcfDashboard({ data }: Props) {
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="text-base font-semibold text-foreground">{row.subFund}</h3>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-base font-semibold text-foreground">{row.subFund}</h3>
+                  {row.shareClassOrCurrency && (
+                    <span className="inline-flex rounded-full border bg-muted/40 px-2 py-0.5 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                      {row.shareClassOrCurrency}
+                    </span>
+                  )}
+                </div>
                 <p className="mt-1 text-xs text-muted-foreground">{row.insurer}</p>
+                {row.fundFamily && row.fundFamily !== row.subFund && (
+                  <p className="mt-1 text-xs text-muted-foreground">Family: {row.fundFamily}</p>
+                )}
                 <button
                   type="button"
                   onClick={() => openRow(row)}

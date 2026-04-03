@@ -25,6 +25,8 @@ import { PercentInput } from '@/components/shared/PercentInput'
 import { useChartColors } from '@/lib/chartTheme'
 import type { IlpProjectedPolicyAnalysis, IlpPolicyInput } from '@/lib/calculations/ilp'
 import { ChartTooltipContent } from './ChartTooltip'
+import { IllustrationOnlyChartFrame } from './IllustrationOnlyChartFrame'
+import { ILP_VERTICAL_BAR_RADIUS } from './chartBarRadii'
 import { formatIlpCurrency, formatIlpPercent } from './formatters'
 import {
   buildExitReinvestmentBenchmark,
@@ -255,7 +257,10 @@ export function ExitReinvestmentBenchmarkSection({
               The first bar is the clean "never enter ILP" baseline. The rest show what the portfolio could be worth by year {benchmark.horizonYear} if you entered the ILP under the {ilpRateKey}% gross case, then exited in that year and invested outside at {outsideRateKey}% gross less TER. Click a bar to inspect that path below.
             </p>
           </div>
-          <div className="h-80 rounded-lg border border-border/60 p-4" role="img" aria-label="Bar chart showing horizon value for each exit year">
+          <IllustrationOnlyChartFrame
+            className="h-80 rounded-lg border border-border/60 p-4"
+            ariaLabel="Bar chart showing horizon value for each exit year"
+          >
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={horizonBarData} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
@@ -287,7 +292,11 @@ export function ExitReinvestmentBenchmarkSection({
                   ifOverflow="extendDomain"
                   label={{ value: `Keep ILP ${formatIlpCurrency(benchmark.holdValueAtHorizon, policy.currency)}`, position: 'insideTopRight' }}
                 />
-                <Bar dataKey="horizonValue" onClick={(point) => setSelectedExitYear(String(point?.exitYear))}>
+                <Bar
+                  dataKey="horizonValue"
+                  radius={ILP_VERTICAL_BAR_RADIUS}
+                  onClick={(point) => setSelectedExitYear(String(point?.exitYear))}
+                >
                   {horizonBarData.map((entry) => (
                     <Cell
                       key={entry.exitYear}
@@ -298,7 +307,7 @@ export function ExitReinvestmentBenchmarkSection({
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-          </div>
+          </IllustrationOnlyChartFrame>
         </div>
 
         <div className="space-y-3">
@@ -308,7 +317,10 @@ export function ExitReinvestmentBenchmarkSection({
               The purple line keeps the ILP all the way to year {benchmark.horizonYear} under the {ilpRateKey}% gross ILP assumption. One faint line shows the never-enter path, and the other faint lines show exit-and-invest alternatives at {outsideRateKey}% gross outside return less TER. The highlighted teal line is the currently selected path.
             </p>
           </div>
-          <div className="h-72 rounded-lg border border-border/60 p-4" role="img" aria-label="Line chart showing ILP hold value and selected exit-and-invest-outside path">
+          <IllustrationOnlyChartFrame
+            className="h-72 rounded-lg border border-border/60 p-4"
+            ariaLabel="Line chart showing ILP hold value and selected exit-and-invest-outside path"
+          >
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={combinedPathData} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
@@ -365,7 +377,7 @@ export function ExitReinvestmentBenchmarkSection({
                 })}
               </LineChart>
             </ResponsiveContainer>
-          </div>
+          </IllustrationOnlyChartFrame>
         </div>
       </CardContent>
     </Card>
